@@ -1284,7 +1284,7 @@ function folSpring(){ // 每帧：拖拽期继续 EMA 贴合；松开后弹簧�
 let bkDrag=null, bkRaf=null;
 function bkApply(f){ f.spr.style.transform=`translate(${f.x.toFixed(2)}px,${f.y.toFixed(2)}px) rotate(${clamp(f.x*0.8,-16,16).toFixed(2)}deg) scale(${f.scale})`; }
 function bkStart(e){
-  const pic=e.target.closest&&e.target.closest('.bcard:not(.locked) .pic');
+  const pic=e.target.closest&&e.target.closest('.bcard:not(.locked) .pic, .fd-pic');
   if(!pic)return;
   const spr=pic.querySelector('span');
   if(!spr)return;
@@ -2264,8 +2264,8 @@ function init(){
   // 松手/取消可能发生在场地层之外（工具条/底部提示等），故挂到 window 保证必然触发回弹
   window.addEventListener('pointerup',folEnd);
   window.addEventListener('pointercancel',folEnd);
-  // 图鉴月巴可拖拽（委托到弹窗体；拖动时不触发详情）
-  const bkWrap=$('modal-body');
+  // 图鉴/详情悬浮层月巴可拖拽（委托到弹窗体；拖动时不触发详情/误关）
+  const bkWrap=$('modal');
   if(bkWrap && bkWrap.addEventListener){
     bkWrap.addEventListener('pointerdown',bkStart);
     bkWrap.addEventListener('pointermove',bkMove);
