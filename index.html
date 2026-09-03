@@ -196,10 +196,10 @@
   /* 图鉴 */
   .book{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;}
   .bcard{background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:14px;padding:8px;text-align:center;}
-  .bcard .pic{height:56px;display:flex;align-items:center;justify-content:center;}
-  .bcard .pic svg{width:54px;height:54px;}
+  .bcard .pic{height:52px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .bcard .pic svg{width:42px!important;height:42px!important;}
   .ybimg{width:100%;height:100%;object-fit:contain;display:block;}
-  .bcard .pic .ybimg{width:52px;height:52px;}
+  .bcard .pic .ybimg{width:48px;height:48px;}
   .bcard .nm{font-size:12px;font-weight:800;color:var(--purple2);margin-top:2px;}
   .bcard .cnt{font-size:11px;color:var(--dim);}
   .bcard .stats{font-size:10px;color:var(--dim);margin-top:4px;line-height:1.5;text-align:left;background:rgba(149,117,205,.08);border-radius:8px;padding:4px 6px;}
@@ -582,9 +582,9 @@ const TYPES=[
   {id:'mb_wenshi',  name:'温室月巴',   r:3, v:55, t:420, cond:{t:'zone',z:3}, color:'#6fbe7a', shape:'cube'},
   {id:'mb_wuding',  name:'屋顶月巴',   r:3, v:60, t:450, cond:{t:'zone',z:4}, color:'#5f9ed1', shape:'tall'},
   {id:'mb_senlin',  name:'森林月巴',   r:3, v:70, t:480, cond:{t:'zone',z:5}, color:'#5c8a64', shape:'spike'},
-  {id:'mb_bing',    name:'冰窖月巴',   r:4, v:80, t:540, cond:{t:'zone',z:6}, color:'#7cc4e8', shape:'star'},
-  {id:'mb_yanjiang',name:'岩浆月巴',   r:4, v:90, t:600, cond:{t:'zone',z:7}, color:'#d15852', shape:'spike'},
-  {id:'mb_yunduan', name:'云端月巴',   r:4, v:110,t:720, cond:{t:'zone',z:8}, color:'#b39ddb', shape:'rainbow'},
+  {id:'mb_bing',    name:'冰冷月巴',   r:4, v:80, t:540, cond:{t:'zone',z:6}, color:'#7cc4e8', shape:'star'},
+  {id:'mb_yanjiang',name:'滚烫月巴',   r:4, v:90, t:600, cond:{t:'zone',z:7}, color:'#d15852', shape:'spike'},
+  {id:'mb_yunduan', name:'会飞月巴',   r:4, v:110,t:720, cond:{t:'zone',z:8}, color:'#b39ddb', shape:'rainbow'},
 
   {id:'mb_kafei', name:'咖啡月巴', r:4, v:80,  t:540,  cond:{t:'item',i:'coffee'},    color:'#b98a76', shape:'cube'},
   {id:'mb_wanou', name:'玩偶月巴', r:4, v:90,  t:600,  cond:{t:'item',i:'doll'},      color:'#e88aa8', shape:'heart'},
