@@ -1702,6 +1702,15 @@ function openHelp(){
       稀有月巴依赖<b>游戏时间</b>（季节/昼夜）、<b>天气</b>（雨/雪/雷/雨后彩虹）、<b>场地</b>、<b>道具</b>与<b>累计收获</b>。状态栏与图鉴有提示。
       <div class="sec">💡 小技巧</div>
       想触发天气月巴可买「天气瓶」；游戏时间过得很快，季节与昼夜月巴很容易等到。
+      <div class="sec">💾 存档备份</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+        <button class="btn" onclick="exportSave()">📋 复制存档</button>
+        <button class="btn" onclick="toggleImport()">📥 导入存档</button>
+      </div>
+      <div id="importWrap" style="display:none;margin-top:8px">
+        <textarea id="importBox" rows="4" style="width:100%;box-sizing:border-box;font-size:11px;font-family:monospace;border-radius:8px;border:1px solid var(--line);background:rgba(255,255,255,.7);color:var(--text);padding:8px;outline:none" placeholder="粘贴存档 JSON 到此处…"></textarea>
+        <button class="btn" style="margin-top:6px;color:var(--danger)" onclick="importSave()">✅ 确认导入（覆盖当前存档）</button>
+      </div>
       <div class="sec" style="color:var(--danger)">⚠️ 重置存档</div>
       <button class="btn" style="color:var(--danger)" onclick="resetSave()">🗑️ 重置全部存档</button>
     </div>`);
@@ -1710,6 +1719,48 @@ function resetSave(){
   if(confirm('确定重置全部存档吗？此操作不可撤销！')){
     localStorage.removeItem(SAVE_KEY); localStorage.removeItem('idle-yueba-save-v1'); location.reload();
   }
+}
+function exportSave(){
+  save();
+  const json=JSON.stringify(S);
+  const ok=()=>toast('✅ 存档已复制到剪贴板');
+  const fallback=()=>{
+    try{
+      const ta=document.createElement('textarea');
+      ta.value=json; ta.style.position='fixed'; ta.style.opacity='0';
+      if(document.body) document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy'); ok();
+    }catch(e){ toast('❌ 复制失败，请手动复制'); }
+    finally{ if(document.body) document.body.removeChild(ta); }
+  };
+  if(typeof navigator!=='undefined' && navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(json).then(ok).catch(fallback); }
+  else fallback();
+}
+function toggleImport(){
+  const w=$('importWrap'); if(!w)return;
+  const show=w.style.display==='none';
+  w.style.display=show?'block':'none';
+  if(show) $('importBox').value='';
+}
+function importSave(){
+  const raw=($('importBox').value||'').trim();
+  if(!raw){ toast('⚠️ 请先粘贴存档内容'); return; }
+  try{
+    const d=JSON.parse(raw);
+    if(!d||typeof d!=='object'||!Array.isArray(d.zones)) throw 0;
+    // 与 load() 相同的旧版迁移
+    if(d.collection) for(const k in d.collection){
+      if(typeof d.collection[k]==='number') d.collection[k]={count:d.collection[k]};
+    }
+    if(d.zones) for(const z of d.zones) for(const w of (z.woods||[])) for(const c of w.cells){
+      if(c&&c.t&&c.dur&&c.dur<10000) c.dur=c.dur*(1000/BASE_SPEED);
+    }
+    const merged=Object.assign(defaultState(),d);
+    merged.pomo=Object.assign(defaultState().pomo,d.pomo||{});
+    S=merged; save();
+    toast('✅ 导入成功，正在刷新…');
+    setTimeout(()=>location.reload(),600);
+  }catch(e){ toast('❌ 存档格式无效，导入失败'); }
 }
 
 /* ---------------- 番茄钟 ---------------- */
