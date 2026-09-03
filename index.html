@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>放置月巴 🍄</title>
+<title>放置月巴 🐰</title>
 <style>
   /* ========== 主题：灰白 + 浅紫，磨砂玻璃 ========== */
   :root{
@@ -256,7 +256,10 @@
   #toast.show{opacity:1;}
 
   /* ---------- 番茄钟 ---------- */
-  .pomo-wrap{text-align:center;}
+  .pomo-wrap{text-align:center;position:relative;}
+  .pomo-pipbtn{position:absolute;top:2px;right:2px;width:30px;height:30px;border:none;border-radius:50%;
+    background:rgba(149,117,205,.14);color:var(--purple2);font-size:16px;line-height:1;cursor:pointer;z-index:5;}
+  .pomo-pipbtn:hover{background:rgba(149,117,205,.26);}
   .pomo-hero{position:relative;width:216px;height:216px;margin:6px auto 2px;}
   .pomo-ring{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);}
   .pomo-ring .ring-bg{fill:none;stroke:rgba(149,117,205,.15);stroke-width:11;}
@@ -1598,11 +1601,11 @@ function pushPiP(){ // 主窗 tick 时把最新剩余时间/名称/状态推向�
   }
 }
 function updatePipoButton(){
-  const b=$('pipOpenBtn'); if(!b) return;
+  const b=$('pipOpenBtn'), mb=$('pomoPipBtn');
+  const vis=supportsPiP() && (S.pomo.running||S.pomo.remain>0);
   const has=pipping();
-  b.style.display=(supportsPiP() && (S.pomo.running||S.pomo.remain>0))?'':'none';
-  b.textContent= has?'📌 收起置顶':'📌 置顶小窗';
-  b.title= supportsPiP()?'':'当前环境不支持置顶（需 https + 新版浏览器）';
+  if(b){ b.style.display=vis?'':'none'; b.textContent=has?'📌 收起置顶':'📌 置顶小窗'; b.title=supportsPiP()?'':'当前环境不支持置顶（需 https + 新版浏览器）'; }
+  if(mb){ mb.style.display=supportsPiP()?'':'none'; mb.title=has?'收起置顶小窗':'置顶小窗'; mb.textContent=has?'收起':'📌'; }
 }
 function pipping(){ return !!(pipWin && !pipWin.closed); }
 function updatePomoUI(){
@@ -1650,6 +1653,7 @@ function openPomo(){
   pomoModalOpen=true;
   openModal('⏰ 番茄钟',
     `<div class="pomo-wrap">
+      <button class="pomo-pipbtn" id="pomoPipBtn" onclick="pomopipToggle()" title="置顶小窗">📌</button>
       <div class="pomo-hero">
         <svg class="pomo-ring" viewBox="0 0 200 200">
           <defs><linearGradient id="pomoGrad" x1="0" y1="0" x2="1" y2="1">
@@ -1705,7 +1709,6 @@ function openPomo(){
         <button class="btn" onclick="openPomoCheckin()">✅ 打卡</button>
         <button class="btn" onclick="openPomoCalendar()">📅 日历</button>
         <button class="btn" onclick="openPomoStats('day')">📊 统计</button>
-        <button class="btn" onclick="pomopipToggle()">📌 置顶小窗</button>
       </div>
     </div>`);
   renderPomoModal();
