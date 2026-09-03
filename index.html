@@ -215,6 +215,29 @@
   .bcard.locked .nm{color:var(--dim);}
   .bcard.epic{box-shadow:0 0 0 1px #b39ddb;}
   .bcard.legend{box-shadow:0 0 12px rgba(149,117,205,.5),0 0 0 1px #9575cd;}
+  .bcard:not(.locked){cursor:pointer;}
+  .bcard:not(.locked):hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(90,70,150,.18);}
+  .bcard{transition:transform .15s,box-shadow .15s;}
+  /* 图鉴详情弹窗 */
+  .fd{text-align:center;}
+  .fd-pic{width:120px;height:120px;margin:2px auto 6px;display:flex;align-items:center;justify-content:center;
+    border-radius:18px;background:rgba(149,117,205,.1);overflow:hidden;border:1px solid var(--line);}
+  .fd-pic svg{width:96px!important;height:96px!important;}
+  .fd-pic .ybimg{width:96px;height:96px;object-fit:contain;}
+  .fd-pic.epic{border-color:#b39ddb;}
+  .fd-pic.legend{border-color:#9575cd;box-shadow:0 0 16px rgba(149,117,205,.45);}
+  .fd-meta{display:flex;align-items:center;justify-content:center;gap:8px;margin:4px 0 8px;}
+  .fd-cnt{font-size:12px;color:var(--dim);font-weight:700;}
+  .fd-stats{font-size:12px;color:var(--dim);line-height:1.7;text-align:left;background:rgba(149,117,205,.08);
+    border-radius:10px;padding:8px 10px;margin-bottom:8px;}
+  .fd-stats .gold{color:var(--gold);font-weight:900;}
+  .fd-stats .t{font-size:10px;color:#a89fc2;margin-left:2px;}
+  .fd-cond{font-size:11px;color:var(--dim);background:rgba(255,255,255,.6);border:1px dashed var(--line);
+    border-radius:10px;padding:5px 8px;margin-bottom:8px;}
+  .fd-intro{font-size:12px;color:var(--purple2);text-align:left;background:linear-gradient(180deg,rgba(255,239,181,.5),rgba(255,224,130,.35));
+    border-radius:10px;padding:8px 10px;}
+  .fd-intro b{color:#8a6a00;}
+  .fd-intro p{margin:4px 0 0;color:#6b5a2e;line-height:1.6;}
   .rar-tag{font-size:9px;font-weight:800;padding:1px 6px;border-radius:99px;color:#fff;}
   .rr1{background:#a5a0bd;} .rr2{background:#6fb26a;} .rr3{background:#4fa8c9;}
   .rr4{background:#9575cd;} .rr5{background:#7e57c2;} .rr6{background:#e05b6f;}
@@ -626,6 +649,72 @@ const RAR_NAME={1:'普通',2:'常见',3:'稀有',4:'史诗',5:'传说',6:'活动
 const R_H={1:[2,5],2:[4,8],3:[6,12],4:[10,20],5:[16,30],6:[22,40]};   // 身高 cm 范围
 const R_W={1:[3,8],2:[6,15],3:[10,25],4:[20,50],5:[40,90],6:[60,150]}; // 体重 g 范围
 
+/* 每种月巴的简介（图鉴详情弹窗展示） */
+const FAT_INTRO={
+  mb_xiaoyue:'据说迷你得能站在硬币上，元气满满地蹦跶一整天也不累。',
+  mb_xian:'每次被发现都想找个地缝钻进去，可惜圆滚滚的身材卡住了。',
+  mb_chi:'嘴巴永远在嚼东西，专家怀疑它的胃连着四次元口袋。',
+  mb_shui:'一天能睡 23 小时，剩下 1 小时用来找更舒服的枕头。',
+  mb_wan:'无论发生什么都保持微笑，是月巴界的正能量担当。',
+  mb_pang:'体重是同类平均值的两倍，但自称「只是骨架大」。',
+  mb_xin:'眨眼卖萌是它的绝活，据说电力能点亮一盏小夜灯。',
+  mb_gao:'鹤立鸡群般的存在，低头时能看见其他月巴的头顶。',
+  mb_ku:'每天用露水给自己梳大背头，仪式感满满。',
+  mb_lan:'穿着拖鞋躺平的姿势无人能敌，移动全靠滑行。',
+  mb_tan:'软趴趴的一团，据说融化速度比冰淇淋还快。',
+  mb_jian:'凌晨四点的栽培木上总有它撸铁的身影。',
+  mb_zao:'太阳刚探头就精神百倍，是天然的早起闹钟。',
+  mb_lu:'喜欢清晨的露水，身上总挂着亮晶晶的水珠。',
+  mb_wu:'正午时分最活跃，靠晒太阳补充能量。',
+  mb_hun:'黄昏时最感性，总对着晚霞发呆叹气。',
+  mb_ye:'昼伏夜出，眼睛在黑暗里会发出幽幽的光。',
+  mb_ling:'只挑天没亮的时候游荡，是夜猫子们的同伴。',
+  mb_wuye:'午夜十二点准时报到，据说见过它会有好运。',
+  mb_qing:'阳光越灿烂它越开心，阴天就蔫蔫的。',
+  mb_yun:'走路轻飘飘，仿佛踩在棉花糖上。',
+  mb_yu:'下雨时兴奋得转圈圈，尾巴会卷起小水花。',
+  mb_bao:'心情不好就来一场倾盆大雨，记得带伞。',
+  mb_xue:'能在雪地上滑出完美弧线，冬天的最爱。',
+  mb_caihong:'出现后总会留下七彩的小脚印，遇见即是好运。',
+  mb_chun:'所到之处野花绽放，自带春天的气息。',
+  mb_xia:'浑身滚烫却爱蹦跶，自带空调技能但总是坏。',
+  mb_qiu:'收集落叶拼成画，是文艺的收藏家。',
+  mb_dong:'呼气会结冰，但暖洋洋的肚皮很受欢迎。',
+  mb_dishui:'喜欢阴暗角落，经常在床底出没。',
+  mb_wenshi:'只在温暖的温室里生活，怕冷怕得要命。',
+  mb_wuding:'最爱吹天台的风，视野开阔心情就好。',
+  mb_senlin:'全身长满青苔和小花，森林就是它的家。',
+  mb_bing:'体温常年零下，抱一下会被冻住。',
+  mb_yanjiang:'岩浆是它的浴缸，小心别靠太近。',
+  mb_yunduan:'靠一朵小云朵飞行，从不落地。',
+  mb_kafei:'喝了咖啡就像装了火箭，日夜加班不喊累。',
+  mb_wanou:'软乎乎的，是番茄最喜欢的手感。',
+  mb_jin:'浑身金灿灿，是月巴界的富豪。',
+  mb_xing:'喜欢发亮的星星，靠星光补充体力。',
+  mb_da:'块头不小，胃口更大，一顿能吃三份番茄。',
+  mb_ju:'一步一个脚印，大地都为之颤抖。',
+  mb_chao:'体型堪比小山，据说只存在于传说里。',
+  mb_lian:'遇到它的人都会交好运，记得许愿。',
+  mb_kuanglian:'幸运值爆表，路过的彩票都会中奖。',
+  mb_shenlian:'传说中的幸运之神，可遇不可求。',
+  mb_fanben:'酷酷的墨镜从不摘下，它可没有哭哦。',
+  mb_guai:'行为古怪，没人猜得到它下一秒想干嘛。',
+  mb_shizhe:'无论走多远都会回到最初的栽培木。',
+  mb_zhoumo:'只在周末出现，其他时间都在享受生活。',
+  mb_zhengdian:'只在整点冒头，守时得像个闹钟。',
+  mb_xinnian:'每年元旦才会现身，带来新年的祝福。',
+  mb_qingren:'情人节限定，据说能让空气变甜。',
+  mb_wuyi:'劳动节专属，热爱劳动充满干劲。',
+  mb_guoqing:'喜欢庆典，最爱放烟花庆祝，烧烤大会也可以。',
+  mb_wansheng:'万圣节出没，专挑胆小鬼吓唬。',
+  mb_shengdan:'圣诞限定，背着礼物袋满世界跑。',
+  mb_zhongqiu:'中秋夜抬头望月，和月球上的月兔似乎很像？',
+  mb_wen:'夏夜最烦人的存在，嗡嗡嗡个不停。',
+  mb_shan:'暴风雨夜的闪电里诞生，快如闪电。',
+  mb_pingguo:'最爱秋天，一口一个番茄茄。',
+  mb_chaos:'连科学家都无法解释的存在，别细想。',
+};
+
 /* ---------------- 全局状态 ---------------- */
 const SAVE_KEY='idle-yueba-save-v2';
 const OFFLINE_CAP=12*3600*1000;
@@ -769,6 +858,10 @@ const sfx={
   ready(){ tone(660,0.14,'sine',0.05); },
   reveal(){ tone(880,0.12,'triangle',0.1); tone(1320,0.16,'triangle',0.08,0.08); },
   unlock(){ [523,659,784,1046,1318].forEach((f,i)=>tone(f,0.16,'triangle',0.16,i*0.09)); },
+  // 可爱的嫩芽交互音
+  grab(){ tone(520,0.08,'sine',0.16,0); tone(790,0.1,'sine',0.13,0.035); },
+  drag(){ tone(960,0.045,'sine',0.05,0); tone(1180,0.05,'sine',0.04,0.03); },
+  spring(){ tone(600,0.07,'sine',0.14,0); tone(900,0.08,'sine',0.12,0.05); tone(1240,0.12,'sine',0.09,0.1); },
 };
 
 /* ---------------- 轻提示 ---------------- */
@@ -911,6 +1004,7 @@ function rollStats(r){
 }
 
 /* ---------------- 核心逻辑：生长 / 收获 ---------------- */
+const SCENE_FAT_ZOOM=1.5; // 栽种场景中成熟月巴的显示倍率（图鉴不受影响），可手动调整
 function availableTypes(){ return TYPES.filter(t=>condOk(t.cond)); }
 function weightOf(t){ return t.weight!=null?t.weight:({1:100,2:45,3:14,4:4,5:1.2,6:0.9}[t.r]||1); }
 function weightedPick(list){
@@ -1070,7 +1164,7 @@ function renderCell(z,w,i){
     const stage=cellStage(cell);
     if(stage==='mature'){
       const type=TYPES.find(x=>x.id===cell.t);
-      const s=hScale(cell.h)*(type.size||1);
+      const s=hScale(cell.h)*(type.size||1)*SCENE_FAT_ZOOM;
       el.className='wcell mature';
       el.innerHTML=`<span class="spr" style="transform:scale(${s})">${fatSVG(type)}</span>
         <span class="val">+${fmt(type.v)}</span>`;
@@ -1079,7 +1173,7 @@ function renderCell(z,w,i){
       const s=stage==='baby'?0.62:0.88;
       const p=clamp((now()-cell.start)/(cell.dur/speedMult()),0,1);
       el.className='wcell grow';
-      el.innerHTML=`<span class="spr" style="transform:scale(${s})">${sproutSVG()}</span>
+      el.innerHTML=`<span class="spr" data-s="${s}" style="transform:scale(${s})">${sproutSVG()}</span>
         <span class="pg"><i style="width:${p*100}%"></i></span>`;
       el.title='生长中…';
     }
@@ -1096,6 +1190,155 @@ function clickCell(z,w,i){
   const cell=S.zones[z].woods[w].cells[i];
   if(cell&&cell.t&&cellReady(cell)){ doHarvest(z,w,i,cell,cellEls[`${z}-${w}-${i}`]); }
   else sfx.click();
+}
+
+/* 未成熟月巴交互：按住时 1:1 贴合手指（EMA 去抖），松开弹性回位（rAF 弹簧） */
+const FOL_MAX=26;    // 手指拖拽最大偏移（px）
+const FOL_EMA=0.8;   // 跟随平滑系数：越高越贴合手指、越低越柔（兼去抖）
+const FOL_K_R=200;   // 松开回位刚度
+const FOL_C_R=10;    // 松开阻尼：欠阻尼 → 弹性回弹
+const FOL_VMAX=3200; // 回弹限速，极端甩动不跳变
+let fol=null;        // 当前拖拽中的月巴
+let folRaf=null;     // 动画循环句柄
+function folApply(f){
+  f.spr.style.transform=`translate(${f.x.toFixed(2)}px,${f.y.toFixed(2)}px) rotate(${clamp(f.x*0.8,-16,16).toFixed(2)}deg) scale(${f.s})`;
+}
+function folStart(e){
+  const btn=e.target.closest&&e.target.closest('.wcell.grow');
+  if(!btn)return;
+  const spr=btn.querySelector('.spr');
+  if(!spr)return;
+  const r=btn.getBoundingClientRect();
+  fol={spr,s:parseFloat(spr.getAttribute('data-s')||'0.75'),ptr:e.pointerId,
+       cx:r.left+r.width/2, cy:r.top+r.height/2,
+       x:0,y:0,vx:0,vy:0,tx:0,ty:0,lastX:0,lastY:0,lastEvtT:e.timeStamp||0,
+       state:'drag',lastT:performance.now(),lastSnd:0,lastDX:0,lastDY:0};
+  spr.style.animation='none'; spr.style.transition='none';
+  if(!folRaf) folRaf=requestAnimationFrame(folSpring);
+  sfx.grab();
+  try{ btn.setPointerCapture(e.pointerId); }catch(err){}
+  e.preventDefault();
+}
+function folMove(e){
+  if(!fol||fol.ptr!==e.pointerId)return;
+  let dx=e.clientX-fol.cx, dy=e.clientY-fol.cy;
+  const d=Math.hypot(dx,dy);
+  if(d>FOL_MAX){ dx=dx/d*FOL_MAX; dy=dy/d*FOL_MAX; }
+  fol.tx=dx; fol.ty=dy;
+  // 直接贴合手指 + 轻度 EMA 去抖（响应 ~1 帧内，轨迹高度一致且不跳变）
+  fol.x+=(dx-fol.x)*FOL_EMA; fol.y+=(dy-fol.y)*FOL_EMA;
+  folApply(fol);
+  // 记录手指速度，松开后作为回弹初速度（自然延续）
+  const evtDt=((e.timeStamp||0)-fol.lastEvtT)/1000||0.016;
+  if(evtDt>0){ fol.vx=(dx-fol.lastX)/evtDt; fol.vy=(dy-fol.lastY)/evtDt; }
+  fol.lastX=dx; fol.lastY=dy; fol.lastEvtT=e.timeStamp||0;
+  const t=performance.now();
+  if(t-fol.lastSnd>130 && Math.hypot(dx-fol.lastDX,dy-fol.lastDY)>3){
+    fol.lastSnd=t; fol.lastDX=dx; fol.lastDY=dy; sfx.drag();
+  }
+}
+function folEnd(e){
+  if(!fol||fol.ptr!==e.pointerId)return;
+  fol.state='release';
+  sfx.spring();
+}
+function folSpring(){ // 每帧：拖拽期继续 EMA 贴合；松开后弹簧积分回位
+  const f=fol;
+  if(!f || !f.spr.isConnected){ fol=null; folRaf=null; return; }
+  if(f.state==='drag'){
+    // 无移动事件时仍朝目标收敛，保持贴合
+    f.x+=(f.tx-f.x)*FOL_EMA; f.y+=(f.ty-f.y)*FOL_EMA;
+    folApply(f);
+    folRaf=requestAnimationFrame(folSpring);
+    return;
+  }
+  // 松开：半隐式欧拉弹簧积分（欠阻尼 → 弹回过冲）
+  let dt=((performance.now()-f.lastT)/1000)||0.016; f.lastT=performance.now();
+  if(dt>0.032) dt=0.032; // 帧率骤降仍稳定
+  f.vx+=(FOL_K_R*(0-f.x)-FOL_C_R*f.vx)*dt; f.vy+=(FOL_K_R*(0-f.y)-FOL_C_R*f.vy)*dt;
+  if(!isFinite(f.vx))f.vx=0; if(!isFinite(f.vy))f.vy=0;
+  const v=Math.hypot(f.vx,f.vy);
+  if(v>FOL_VMAX){ f.vx*=FOL_VMAX/v; f.vy*=FOL_VMAX/v; }
+  f.x+=f.vx*dt; f.y+=f.vy*dt;
+  if(!isFinite(f.x))f.x=0; if(!isFinite(f.y))f.y=0;
+  folApply(f);
+  if(Math.abs(f.x)<0.06 && Math.abs(f.y)<0.06 && Math.abs(f.vx)<0.06 && Math.abs(f.vy)<0.06){
+    f.spr.style.transform=`translate(0,0) rotate(0deg) scale(${f.s})`;
+    f.spr.style.animation=''; // 恢复嫩芽呼吸动画
+    fol=null; folRaf=null;
+  }else{
+    folRaf=requestAnimationFrame(folSpring);
+  }
+}
+
+/* 图鉴月巴可拖拽：按住跟随手指、松开弹回；拖动时不触发详情弹窗 */
+let bkDrag=null, bkRaf=null;
+function bkApply(f){ f.spr.style.transform=`translate(${f.x.toFixed(2)}px,${f.y.toFixed(2)}px) rotate(${clamp(f.x*0.8,-16,16).toFixed(2)}deg) scale(${f.scale})`; }
+function bkStart(e){
+  const pic=e.target.closest&&e.target.closest('.bcard:not(.locked) .pic');
+  if(!pic)return;
+  const spr=pic.querySelector('span');
+  if(!spr)return;
+  const r=pic.getBoundingClientRect();
+  const m=spr.style.transform.match(/scale\(([\d.]+)\)/);
+  bkDrag={pic,spr,scale:m?+m[1]:1,ptr:e.pointerId,cx:r.left+r.width/2,cy:r.top+r.height/2,
+          x:0,y:0,tx:0,ty:0,vx:0,vy:0,moved:false,state:'drag',lastT:performance.now(),
+          lastEvtT:e.timeStamp||0,lastX:0,lastY:0,lastSnd:0,lastDX:0,lastDY:0};
+  spr.style.transition='none';
+  if(!bkRaf) bkRaf=requestAnimationFrame(bkSpring);
+  sfx.grab();
+  try{ pic.setPointerCapture(e.pointerId); }catch(err){}
+  e.preventDefault();
+}
+function bkMove(e){
+  if(!bkDrag||bkDrag.ptr!==e.pointerId)return;
+  let dx=e.clientX-bkDrag.cx, dy=e.clientY-bkDrag.cy;
+  const d=Math.hypot(dx,dy);
+  if(d>30){ dx=dx/d*30; dy=dy/d*30; }
+  if(!bkDrag.moved && Math.hypot(dx,dy)>5) bkDrag.moved=true; // 超过阈值视为拖动
+  bkDrag.tx=dx; bkDrag.ty=dy;
+  bkDrag.x+=(dx-bkDrag.x)*FOL_EMA; bkDrag.y+=(dy-bkDrag.y)*FOL_EMA;
+  bkApply(bkDrag);
+  const evtDt=((e.timeStamp||0)-bkDrag.lastEvtT)/1000||0.016;
+  if(evtDt>0){ bkDrag.vx=(dx-bkDrag.lastX)/evtDt; bkDrag.vy=(dy-bkDrag.lastY)/evtDt; }
+  bkDrag.lastX=dx; bkDrag.lastY=dy; bkDrag.lastEvtT=e.timeStamp||0;
+  const t=performance.now();
+  if(t-bkDrag.lastSnd>130 && Math.hypot(dx-bkDrag.lastDX,dy-bkDrag.lastDY)>3){
+    bkDrag.lastSnd=t; bkDrag.lastDX=dx; bkDrag.lastDY=dy; sfx.drag();
+  }
+}
+function bkEnd(e){
+  if(!bkDrag||bkDrag.ptr!==e.pointerId)return;
+  bkDrag.state='release';
+  sfx.spring();
+}
+function bkSpring(){
+  const f=bkDrag;
+  if(!f || !f.spr.isConnected){ bkDrag=null; bkRaf=null; return; }
+  if(f.state==='drag'){
+    f.x+=(f.tx-f.x)*FOL_EMA; f.y+=(f.ty-f.y)*FOL_EMA;
+    bkApply(f);
+    bkRaf=requestAnimationFrame(bkSpring);
+    return;
+  }
+  let dt=((performance.now()-f.lastT)/1000)||0.016; f.lastT=performance.now();
+  if(dt>0.032) dt=0.032;
+  f.vx+=(FOL_K_R*(0-f.x)-FOL_C_R*f.vx)*dt; f.vy+=(FOL_K_R*(0-f.y)-FOL_C_R*f.vy)*dt;
+  if(!isFinite(f.vx))f.vx=0; if(!isFinite(f.vy))f.vy=0; // 防御：极端速度不产生 NaN
+  const v=Math.hypot(f.vx,f.vy);
+  if(v>FOL_VMAX){ f.vx*=FOL_VMAX/v; f.vy*=FOL_VMAX/v; }
+  f.x+=f.vx*dt; f.y+=f.vy*dt;
+  if(!isFinite(f.x))f.x=0; if(!isFinite(f.y))f.y=0;
+  bkApply(f);
+  if(Math.abs(f.x)<0.06 && Math.abs(f.y)<0.06 && Math.abs(f.vx)<0.06 && Math.abs(f.vy)<0.06){
+    f.spr.style.transform=`translate(0,0) rotate(0deg) scale(${f.scale})`;
+    bkDrag=null; bkRaf=null;
+  }else{
+    bkRaf=requestAnimationFrame(bkSpring);
+  }
+}
+function bkClickGuard(e){ // 拖动后的 click 不触发卡片详情（捕获阶段，先于卡片 onclick）
+  if(bkDrag && bkDrag.moved){ e.stopPropagation(); e.preventDefault(); bkDrag.moved=false; }
 }
 
 /* ---------------- 头部 / 状态 ---------------- */
@@ -1296,7 +1539,7 @@ function openBook(){
         ⚖️ 最轻 ${ss(rec.lightest, gL,'g')} · ${rec.lightest?fmtTS(rec.lightest.t):''}
       </div>`;
     }
-    rows+=`<div class="bcard ${c?'':'locked'} ${t.r>=4?'epic':''} ${t.r===5?'legend':''}${allGold?' allgold':''}">
+    rows+=`<div class="bcard ${c?'':'locked'} ${t.r>=4?'epic':''} ${t.r===5?'legend':''}${allGold?' allgold':''}" ${c?`onclick="openFatDetail('${t.id}')"`:''}>
       <div class="pic">${c?`<span style="display:inline-block;transform:scale(${t.size||1})">${fatSVG(t)}</span>`:lockedSVG()}</div>
       <div class="nm">${c?t.name:'???'}</div>
       <div class="cnt">${c?('收获 x'+c):'未发现'} <span class="rar-tag ${rcl}">${RAR_NAME[t.r]}</span></div>
@@ -1306,6 +1549,36 @@ function openBook(){
   }
   openModal(`📗 图鉴 · ${got}/${TYPES.length} (${Math.round(got/TYPES.length*100)}%)`,
     `<div class="book">${rows}</div>`);
+}
+function openFatDetail(id){ // 图鉴点开某月巴：放大图 + 记录 + 简介
+  const t=TYPES.find(x=>x.id===id);
+  if(!t)return;
+  const rec=S.collection[t.id];
+  if(!rec)return;
+  const rcl={1:'rr1',2:'rr2',3:'rr3',4:'rr4',5:'rr5',6:'rr6'}[t.r];
+  const [hLo,hHi]=R_H[t.r], [wLo,wHi]=R_W[t.r];
+  const gH=rec.tallest&&rec.tallest.v>=hHi-0.001, gS=rec.shortest&&rec.shortest.v<=hLo+0.001;
+  const gW=rec.heaviest&&rec.heaviest.v>=wHi-0.001, gL=rec.lightest&&rec.lightest.v<=wLo+0.001;
+  const ss=(e,k,unit)=>e?(k?`<span class="gold">${e.v+unit}</span>`:e.v+unit):'--';
+  const ts=e=>e?`<span class="t">${fmtTS(e.t)}</span>`:'';
+  const cd=t.weight!=null&&t.weight<1?'✨ 概率极低 · 永久可遇':('条件：'+condText(t.cond));
+  openModal(`📖 ${t.name}`,
+    `<div class="fd">
+      <div class="fd-pic ${t.r>=4?'epic':''} ${t.r===5?'legend':''}"><span style="display:inline-block;transform:scale(${t.size||1})">${fatSVG(t)}</span></div>
+      <div class="fd-meta">
+        <span class="rar-tag ${rcl}">${RAR_NAME[t.r]}</span>
+        <span class="fd-cnt">收获 x${rec.count}</span>
+      </div>
+      <div class="fd-stats">
+        ${rec.last?`📍 最近 ${rec.last.h}cm · ${rec.last.w}g<br>`:''}
+        📏 最高 ${ss(rec.tallest,gH,'cm')} ${ts(rec.tallest)}<br>
+        📏 最矮 ${ss(rec.shortest,gS,'cm')} ${ts(rec.shortest)}<br>
+        ⚖️ 最重 ${ss(rec.heaviest,gW,'g')} ${ts(rec.heaviest)}<br>
+        ⚖️ 最轻 ${ss(rec.lightest,gL,'g')} ${ts(rec.lightest)}
+      </div>
+      <div class="fd-cond">${cd}</div>
+      <div class="fd-intro"><b>📜 简介</b><p>${FAT_INTRO[t.id]||'关于它的来历仍是个谜…'}</p></div>
+    </div>`);
 }
 function openShop(){
   pomoModalOpen=false;
@@ -1966,6 +2239,24 @@ function init(){
   if(hasSave) offlineSettle();
   renderOverview(); updateHeader(); updateStatus(); updatePomoUI(); updateSceneBar(); updateWeatherHold();
   setInterval(tick,250);
+  // 未成熟月巴：按住跟随手指、松开弹回（事件委托到场地层）
+  const folWrap=$('sceneWoods');
+  if(folWrap && folWrap.addEventListener){
+    folWrap.addEventListener('pointerdown',folStart);
+    folWrap.addEventListener('pointermove',folMove);
+    folWrap.addEventListener('pointerup',folEnd);
+    folWrap.addEventListener('pointercancel',folEnd);
+  }
+  // 图鉴月巴可拖拽（委托到弹窗体；拖动时不触发详情）
+  const bkWrap=$('modal-body');
+  if(bkWrap && bkWrap.addEventListener){
+    bkWrap.addEventListener('pointerdown',bkStart);
+    bkWrap.addEventListener('pointermove',bkMove);
+    bkWrap.addEventListener('click',bkClickGuard,true);
+  }
+  // 松手/取消可能发生在弹窗边界外，故挂到 window 保证必然触发回弹
+  window.addEventListener('pointerup',bkEnd);
+  window.addEventListener('pointercancel',bkEnd);
   window.addEventListener('beforeunload',save);
   document.addEventListener('visibilitychange',()=>{
     // 置顶小窗存在期间，切到别处不自动暂停（小窗即计时焦点）；否则原规则：失焦暂停、回来自动继续
