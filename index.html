@@ -310,6 +310,8 @@
   .pomo-lbl b{color:var(--purple2);font-size:14px;}
   .pomo-controls{display:flex;gap:10px;justify-content:center;margin:14px 0 8px;flex-wrap:wrap;align-items:center;}
   .pomo-controls .btn{min-width:110px;font-size:15px;padding:10px 16px;}
+  .pip-open{font-size:11px;font-weight:800;color:var(--purple2);border:1px solid var(--purple2);background:transparent;border-radius:8px;padding:2px 7px;cursor:pointer;white-space:nowrap;}
+  .pip-open:hover{background:rgba(149,117,205,.15);}
   .pomo-big{width:88px;height:88px;border-radius:50%;border:none;cursor:pointer;font-size:32px;color:#fff;
     background:linear-gradient(180deg,#f06292,#9575cd);box-shadow:0 10px 24px rgba(149,117,205,.4),inset 0 -4px 8px rgba(0,0,0,.12);
     transition:.2s;}
@@ -391,6 +393,7 @@
     <span class="st frost" id="stSeason">🍃 春季</span>
     <span class="st frost" id="stWeather">☀️ 晴</span>
     <span class="st frost" id="stPomo" style="display:none"></span>
+    <button class="pip-open frost" id="pipOpenBtn" style="display:none" onclick="pomopipToggle()">📌 置顶小窗</button>
     <span class="st frost" id="stHint">点击场地查看月巴生长…</span>
   </div>
 
@@ -553,7 +556,7 @@ const TYPES=[
   {id:'mb_pang',   name:'胖月巴', r:2, v:14, t:150, cond:null, color:'#e7a3b8', shape:'squish'},
   {id:'mb_xin',    name:'wink月巴',img:'https://origin.picgo.net/2026/09/03/37e1be2540efa2177.th.png', r:2, v:15, t:160, cond:null, color:'#f0a8c0', shape:'heart'},
   {id:'mb_gao',    name:'高月巴', r:2, v:16, t:180, cond:null, color:'#b8a9e0', shape:'tall'},
-  {id:'mb_ku',     name:'酷月巴', r:2, v:18, t:200, cond:null, color:'#a9c7ea', shape:'cube'},
+  {id:'mb_ku',     name:'背头月巴', r:2, v:18, t:200, cond:null, color:'#a9c7ea', shape:'cube'},
   {id:'mb_lan',    name:'休闲月巴', img:'https://origin.picgo.net/2026/09/03/10a99395fea8f81ac7.th.png', r:2, v:12, t:140, cond:null, color:'#c3a7c9', shape:'squish'},
   {id:'mb_tan',    name:'一坨月巴', r:2, v:20, t:240, cond:null, color:'#a5c3e8', shape:'wide'},
   {id:'mb_jian',   name:'健身月巴', img:'https://origin.picgo.net/2026/09/03/9935aafd50857466b.th.png', r:3, v:30, t:300, cond:{t:'day'}, color:'#9ec48f', shape:'tall'},
@@ -578,10 +581,10 @@ const TYPES=[
   {id:'mb_qiu',  name:'秋月巴', r:3, v:35, t:360, cond:{t:'season',s:'autumn'}, color:'#e89b52', shape:'round'},
   {id:'mb_dong', name:'冬月巴', r:3, v:35, t:360, cond:{t:'season',s:'winter'}, color:'#7fa0b8', shape:'cube'},
 
-  {id:'mb_dishui',  name:'地下室月巴', r:3, v:50, t:400, cond:{t:'zone',z:2}, color:'#9575cd', shape:'round'},
+  {id:'mb_dishui',  name:'阴湿月巴', r:3, v:50, t:400, cond:{t:'zone',z:2}, color:'#9575cd', shape:'round'},
   {id:'mb_wenshi',  name:'温室月巴',   r:3, v:55, t:420, cond:{t:'zone',z:3}, color:'#6fbe7a', shape:'cube'},
   {id:'mb_wuding',  name:'屋顶月巴',   r:3, v:60, t:450, cond:{t:'zone',z:4}, color:'#5f9ed1', shape:'tall'},
-  {id:'mb_senlin',  name:'森林月巴',   r:3, v:70, t:480, cond:{t:'zone',z:5}, color:'#5c8a64', shape:'spike'},
+  {id:'mb_senlin',  name:'森系月巴',   r:3, v:70, t:480, cond:{t:'zone',z:5}, color:'#5c8a64', shape:'spike'},
   {id:'mb_bing',    name:'冰冷月巴',   r:4, v:80, t:540, cond:{t:'zone',z:6}, color:'#7cc4e8', shape:'star'},
   {id:'mb_yanjiang',name:'滚烫月巴',   r:4, v:90, t:600, cond:{t:'zone',z:7}, color:'#d15852', shape:'spike'},
   {id:'mb_yunduan', name:'会飞月巴',   r:4, v:110,t:720, cond:{t:'zone',z:8}, color:'#b39ddb', shape:'rainbow'},
@@ -601,10 +604,10 @@ const TYPES=[
   {id:'mb_guai',     name:'奇怪月巴',   r:4, v:90,  t:600,  cond:{t:'count',id:'mb_pang',n:15}, color:'#b89a55', shape:'bean'},
   {id:'mb_shizhe',   name:'归家月巴', img:'https://origin.picgo.net/2026/09/03/2b384c6d07a3d397b.th.png', r:5, v:130, t:840,  cond:{t:'count',id:'mb_ye',n:10},   color:'#5f44a6', shape:'moon'},
 
-  {id:'mb_zhoumo',   name:'周末月巴', r:4, v:120, t:720, cond:null, weight:0.1,  color:'#8fc9c9', shape:'cube'},
+  {id:'mb_zhoumo',   name:'双休月巴', r:4, v:120, t:720, cond:null, weight:0.1,  color:'#8fc9c9', shape:'cube'},
   {id:'mb_zhengdian',name:'整点月巴', r:4, v:300, t:900, cond:null, weight:0.05, color:'#e0d24e', shape:'star'},
   {id:'mb_xinnian',  name:'新年月巴', r:6, v:500, t:600, cond:null, weight:0.02, color:'#d94a6b', shape:'star'},
-  {id:'mb_qingren',  name:'情二月巴', r:6, v:500, t:600, cond:null, weight:0.02, color:'#e06b9c', shape:'heart'},
+  {id:'mb_qingren',  name:'爱情月巴', r:6, v:500, t:600, cond:null, weight:0.02, color:'#e06b9c', shape:'heart'},
   {id:'mb_wuyi',     name:'劳动月巴', r:6, v:400, t:600, cond:null, weight:0.02, color:'#d98a5f', shape:'cube'},
   {id:'mb_guoqing',  name:'庆祝月巴', r:6, v:500, t:600, cond:null, weight:0.02, color:'#c9536b', shape:'star'},
   {id:'mb_wansheng', name:'万圣月巴', r:6, v:600, t:600, cond:null, weight:0.02, color:'#8f74c9', shape:'moon'},
@@ -1535,6 +1538,57 @@ function syncPomoSegs(){
     for(const s of f.querySelectorAll('.seg')) s.classList.toggle('on', parseInt(s.dataset.min,10)*60000===ft); }
   if(b){ for(const s of b.querySelectorAll('.seg')) s.classList.toggle('on', parseInt(s.dataset.min,10)===(S.pomo.breakMin||5)); }
 }
+let pipWin=null; // 置顶小窗（Document Picture-in-Picture）窗口句柄（运行时变量，不入存档）
+const PIP_CSS=`.pipcard{min-height:150px;box-sizing:border-box;padding:18px 20px;border-radius:14px;
+  background:rgba(28,24,42,.86);border:1px solid rgba(255,255,255,.12);color:#fff;
+  display:flex;flex-direction:column;justify-content:center;gap:6px;
+  font-family:system-ui,-apple-system,'Segoe UI',sans-serif;}
+  .pipname{font-size:13px;font-weight:800;color:#c9b1f0;letter-spacing:.5px;}
+  .piptime{font-size:54px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;color:#fff;}
+  .pipstate{font-size:11px;font-weight:700;color:#ff6d6d;}
+  body{margin:0;background:#17141f;}`;
+function supportsPiP(){ // 置顶小窗需 https 安全上下文 + 新版 Chromium 的 Document Picture-in-Picture
+  try{ return location.protocol==='https:' && 'documentPictureInPicture' in window; }catch(e){ return false; }
+}
+function pipBuild(win){ // 在小窗文档中铺入样式与倒计时卡片（主窗与小窗同源，可直接写其 DOM）
+  const css=win.document.createElement('style'); css.textContent=PIP_CSS; win.document.head.appendChild(css);
+  const root=win.document.createElement('div'); root.id='pipcard'; root.className='pipcard';
+  root.innerHTML='<div class="pipname" id="pipName"></div><div class="piptime" id="pipTime">25:00</div><div class="pipstate" id="pipState"></div>';
+  win.document.body.appendChild(root); win.document.body.style.margin='0';
+}
+function openPomoPiP(){
+  if(!supportsPiP()){ toast('当前环境不支持置顶小窗（需 https + 新版浏览器）'); return; }
+  if(pipWin && !pipWin.closed){ try{ pipWin.focus(); }catch(e){} return; }
+  documentPictureInPicture.requestWindow({width:340,height:160}).then(pip=>{
+    pipWin=pip; pip.document.title='番茄钟';
+    pipBuild(pip); pushPiP();
+    const clean=()=>{ if(pipWin===pip) pipWin=null; };
+    pip.addEventListener('pagehide',clean);
+    pip.addEventListener('unload',clean);
+    sfx.click();
+  }).catch(()=>{ toast('无法开启置顶小窗'); pipWin=null; });
+}
+function pomopipToggle(){
+  if(pipWin && !pipWin.closed){ try{ pipWin.close(); }catch(e){} pipWin=null; return; }
+  openPomoPiP();
+}
+function pushPiP(){ // 主窗 tick 时把最新剩余时间/名称推向小窗
+  if(pipWin && !pipWin.closed && pipWin.document && pipWin.document.getElementById) {
+    const d=pipWin.document, inBreak=S.pomo.mode==='break';
+    const name=d.getElementById('pipName'), t=d.getElementById('pipTime'), st=d.getElementById('pipState');
+    if(name) name.textContent= inBreak?'☕ 休息':(S.pomo.name||'专注');
+    if(t) t.textContent=fmtDur(pomoRemaining());
+    if(st) st.textContent= !S.pomo.running?'⏸ 已暂停':(inBreak?'休息中 · 可跳過':'专注中 · 生长 x2');
+  }
+}
+function updatePipoButton(){
+  const b=$('pipOpenBtn'); if(!b) return;
+  const has=pipping();
+  b.style.display=(supportsPiP() && (S.pomo.running||S.pomo.remain>0))?'':'none';
+  b.textContent= has?'📌 收起置顶':'📌 置顶小窗';
+  b.title= supportsPiP()?'':'当前环境不支持置顶（需 https + 新版浏览器）';
+}
+function pipping(){ return !!(pipWin && !pipWin.closed); }
 function updatePomoUI(){
   const chip=$('stPomo');
   const inBreak=S.pomo.mode==='break';
@@ -1546,6 +1600,8 @@ function updatePomoUI(){
     chip.style.display='none';
   }
   if(pomoModalOpen && $('pomoTime')) $('pomoTime').textContent=fmtDur(pomoRemaining());
+  pushPiP();
+  updatePipoButton();
 }
 /* 常用项目（打卡内容）预设 */
 function presetsRowHTML(delFn,useFn){
@@ -1633,6 +1689,7 @@ function openPomo(){
         <button class="btn" onclick="openPomoCheckin()">✅ 打卡</button>
         <button class="btn" onclick="openPomoCalendar()">📅 日历</button>
         <button class="btn" onclick="openPomoStats('day')">📊 统计</button>
+        <button class="btn" onclick="pomopipToggle()">📌 置顶小窗</button>
       </div>
     </div>`);
   renderPomoModal();
