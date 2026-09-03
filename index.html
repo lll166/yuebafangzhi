@@ -2244,9 +2244,10 @@ function init(){
   if(folWrap && folWrap.addEventListener){
     folWrap.addEventListener('pointerdown',folStart);
     folWrap.addEventListener('pointermove',folMove);
-    folWrap.addEventListener('pointerup',folEnd);
-    folWrap.addEventListener('pointercancel',folEnd);
   }
+  // 松手/取消可能发生在场地层之外（工具条/底部提示等），故挂到 window 保证必然触发回弹
+  window.addEventListener('pointerup',folEnd);
+  window.addEventListener('pointercancel',folEnd);
   // 图鉴月巴可拖拽（委托到弹窗体；拖动时不触发详情）
   const bkWrap=$('modal-body');
   if(bkWrap && bkWrap.addEventListener){
