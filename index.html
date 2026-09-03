@@ -1,2301 +1,478 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>放置月巴 🐰</title>
-<style>
-  /* ========== 主题：灰白 + 浅紫，磨砂玻璃 ========== */
-  :root{
-    --bg:#ece9f6; --bg2:#e2ddf2;
-    --panel:#ffffff; --panel2:#f5f2fc;
-    --line:#ddd6ef; --text:#413c5b; --dim:#8d86ab;
-    --purple:#9575cd; --purple2:#7e57c2; --accent:#b39ddb;
-    --gold:#c9971c; --good:#6fb26a; --danger:#e05b6f;
-  }
-  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;}
-  html,body{height:100%;}
-  body{
-    font-family:'Segoe UI','Microsoft YaHei',system-ui,sans-serif;
-    background:
-      radial-gradient(900px 520px at 85% -8%, rgba(149,117,205,.20), transparent 60%),
-      radial-gradient(800px 480px at -8% 108%, rgba(179,157,219,.22), transparent 60%),
-      linear-gradient(180deg,var(--bg),var(--bg2));
-    color:var(--text); overflow-x:hidden; padding-bottom:92px;
-  }
-  /* 磨砂玻璃通用 */
-  .frost{
-    background:rgba(255,255,255,.55);
-    backdrop-filter:blur(16px) saturate(160%);
-    -webkit-backdrop-filter:blur(16px) saturate(160%);
-    border:1px solid rgba(255,255,255,.65);
-    box-shadow:0 10px 32px rgba(100,80,160,.14);
-  }
-  #fx{position:fixed;inset:0;pointer-events:none;z-index:80;}
-  #collectFeed{position:fixed;top:70px;right:12px;z-index:65;display:flex;flex-direction:column;gap:6px;align-items:flex-end;pointer-events:none;}
-  .cf-item{font-size:12px;font-weight:800;color:var(--text);background:rgba(255,255,255,.9);
-    backdrop-filter:blur(8px);border:1px solid rgba(149,117,205,.35);border-radius:99px;padding:5px 11px;
-    box-shadow:0 4px 14px rgba(100,80,160,.14);display:flex;align-items:center;gap:6px;
-    animation:cfin .28s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;}
-  .cf-item.out{opacity:0;transform:translateY(-6px);transition:all .3s;}
-  @keyframes cfin{0%{transform:translateY(-8px) scale(.8);opacity:0;}100%{transform:translateY(0) scale(1);opacity:1;}}
-  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:0 0 auto;}
-  .rsum{padding:4px 0;}
-  .rsum-row{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:var(--text);
-    padding:7px 10px;border-radius:10px;background:rgba(149,117,205,.08);margin-bottom:6px;}
-  .rsum-row b{margin-left:auto;color:var(--purple2);}
-  .rsum-total{font-size:13px;font-weight:800;color:var(--purple2);text-align:center;margin:10px 0 12px;}
+// v2 逻辑自测：阶段、身高体重、极值记录、存档迁移、场景渲染
+const fs = require('fs');
+const html = fs.readFileSync('d:/小工具/月巴放置/index.html', 'utf8');
+const js = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 
-  #app{max-width:1020px;margin:0 auto;padding:10px 12px 24px;}
+function fakeCtx(){ return {
+  setTransform(){}, clearRect(){}, save(){}, restore(){}, translate(){}, rotate(){},
+  globalAlpha:0, fillStyle:'', fillRect(){}, beginPath(){}, arc(){}, fill(){},
+  font:'', textAlign:'', lineWidth:0, strokeStyle:'', strokeText(){}, fillText(){},
+}; }
+function fakeEl(){ const cl=new Set(); return {
+  innerHTML:'', textContent:'', className:'', style:{}, dataset:{}, offsetWidth:0, title:'',
+  children:[], firstChild:{remove(){}},
+  classList:{ add(c){cl.add(c)}, remove(c){cl.delete(c)}, toggle(c,f){ if(f===undefined){ cl.has(c)?cl.delete(c):cl.add(c); } else if(f){cl.add(c);} else {cl.delete(c);} }, contains(c){ return cl.has(c); } },
+  appendChild(el){ this.children.push(el); },
+  remove(){},
+  getContext: fakeCtx,
+  querySelector(){ return { style:{} }; },
+  querySelectorAll(){ return []; },
+  getBoundingClientRect(){ return { left:0, top:0, width:40, height:40 }; },
+}; }
+global.window = { addEventListener(){}, innerWidth:800, innerHeight:600, devicePixelRatio:1 };
+global.innerWidth = 800; global.innerHeight = 600; global.devicePixelRatio = 1;
+global.addEventListener = ()=>{};
+global.requestAnimationFrame = ()=>{};
+global.setInterval = ()=>{};
+global.confirm = ()=>true;
+global.localStorage = { _d:{}, getItem(k){ return this._d[k]||null; }, setItem(k,v){ this._d[k]=v; }, removeItem(k){ delete this._d[k]; } };
+const elCache = {};
+global.document = { getElementById(id){ return elCache[id] || (elCache[id]=fakeEl()); }, addEventListener(){}, createElement(){ return fakeEl(); },
+  documentElement:{ style:{ _v:{}, setProperty(k,v){ this._v[k]=v; }, getPropertyValue(k){ return this._v[k]||''; } } } };
+global.AudioContext = undefined;
+global.location = { reload(){} };
 
-  /* ---------- 顶栏 ---------- */
-  #topbar{
-    position:sticky;top:8px;z-index:40;
-    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-    border-radius:16px;padding:10px 14px;
-  }
-  #topbar .title{font-weight:800;font-size:18px;letter-spacing:1px;color:var(--purple2);}
-  #topbar .title span{color:var(--gold);}
-  .coinbox{display:flex;align-items:center;gap:6px;font-weight:800;font-size:19px;color:var(--gold);}
-  .coinbox .cico{font-size:20px;}
-  .coinbox.pulse{animation:coinpop .35s ease;}
-  @keyframes coinpop{0%{transform:scale(1.35);}100%{transform:scale(1);}}
-  .chip{
-    display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:700;
-    border-radius:999px;padding:5px 12px;color:var(--text);
-  }
-  .collbox{flex:1;min-width:130px;}
-  .collbox .top{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);margin-bottom:4px;}
-  .bar{height:9px;background:#e6e0f5;border-radius:99px;overflow:hidden;}
-  .bar i{display:block;height:100%;background:linear-gradient(90deg,#b39ddb,#7e57c2);border-radius:99px;transition:width .4s ease;}
-  .iconbtn{
-    background:rgba(255,255,255,.65);border:1px solid var(--line);color:var(--purple2);
-    border-radius:12px;width:40px;height:40px;font-size:18px;cursor:pointer;
-    display:inline-flex;align-items:center;justify-content:center;transition:.15s;
-  }
-  .iconbtn:hover{transform:translateY(-1px);border-color:var(--purple);}
-  .iconbtn:active{transform:scale(.92);}
+const tests = `
+(function(){
+  let failures=0;
+  const check=(n,c,e)=>{ if(c){console.log('  ok '+n);} else {failures++; console.log('  FAIL '+n+(e?(' -> '+e):''));} };
 
-  /* ---------- 状态条 ---------- */
-  #statusbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0 4px;font-size:13px;}
-  #statusbar .st{color:var(--text);border-radius:12px;padding:5px 12px;display:inline-flex;align-items:center;gap:5px;font-weight:600;}
+  // 1. 数据完整性
+  const ids=TYPES.map(t=>t.id);
+  check('TYPES 数量 >= 60', TYPES.length>=60, TYPES.length);
+  check('id 唯一', new Set(ids).size===ids.length);
+  const shapes=['round','tall','wide','squish','cube','big','bean','heart','drop','star','spike','crown','moon','ghost','rainbow','chaos'];
+  check('shape 合法', TYPES.every(t=>shapes.includes(t.shape)));
+  check('color 合法', TYPES.every(t=>/^#[0-9a-f]{6}$/i.test(t.color)));
+  check('稀有度 1-6', TYPES.every(t=>t.r>=1&&t.r<=6));
+  check('ZONES=8 且含背景描述与位置', ZONES.length===8 && ZONES.every(z=>typeof z.bg==='string'&&z.bg.length>5 && z.spots.length>=6));
+  check('身高体重区间齐全', Object.keys(R_H).length===6 && Object.keys(R_W).length===6);
 
-  /* ---------- 场地卡片（总览） ---------- */
-  .zonegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin-top:14px;}
-  .zcard{
-    position:relative;border-radius:18px;overflow:hidden;cursor:pointer;aspect-ratio:4/3;
-    border:1px solid var(--line);box-shadow:0 8px 24px rgba(100,80,160,.10);
-    transition:transform .18s;
-  }
-  .zcard:hover{transform:translateY(-3px);}
-  .zcard:active{transform:scale(.97);}
-  .zcard .zbg{position:absolute;inset:0;background-size:cover;background-position:center;transition:transform .35s;}
-  .zcard:hover .zbg{transform:scale(1.08);}
-  .zcard .zover{position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.05) 30%,rgba(235,228,250,.78));}
-  .zcard .zinfo{
-    position:absolute;left:8px;right:8px;bottom:8px;border-radius:14px;
-    padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px;
-  }
-  .zcard .zn{font-weight:800;font-size:14px;color:var(--purple2);}
-  .zcard .zs{font-size:11px;color:var(--dim);margin-top:1px;}
-  .zcard .zb{font-size:12px;font-weight:800;color:var(--purple2);white-space:nowrap;}
-  .zcard.locked .zover{background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(220,214,240,.85));}
-  .zcard .lock{position:absolute;top:10px;right:10px;font-size:16px;background:rgba(255,255,255,.75);
-    border-radius:99px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;}
-
-  /* ---------- 底部 dock ---------- */
-  #weatherHold{
-    position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:45;
-    font-size:12px;font-weight:800;color:var(--purple2);
-    background:rgba(255,255,255,.88);backdrop-filter:blur(10px);
-    border:1px solid rgba(149,117,205,.35);border-radius:99px;padding:6px 14px;
-    box-shadow:0 4px 14px rgba(100,80,160,.14);white-space:nowrap;
-    animation:whpop .3s cubic-bezier(.34,1.56,.64,1);
-  }
-  @keyframes whpop{0%{transform:translate(-50%,6px) scale(.8);opacity:0;}100%{transform:translate(-50%,0) scale(1);opacity:1;}}
-  #dock{
-    position:fixed;left:12px;right:12px;bottom:12px;z-index:40;
-    display:flex;justify-content:center;gap:8px;flex-wrap:wrap;border-radius:18px;
-    padding:8px 10px calc(8px + env(safe-area-inset-bottom));
-  }
-  .dockbtn{
-    background:rgba(255,255,255,.72);border:1px solid var(--line);color:var(--purple2);
-    border-radius:14px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;
-    display:inline-flex;flex-direction:column;align-items:center;gap:2px;min-width:60px;transition:.15s;
-  }
-  .dockbtn b{font-size:17px;}
-  .dockbtn small{font-size:10px;color:var(--dim);font-weight:600;}
-  .dockbtn:hover{transform:translateY(-2px);border-color:var(--purple);}
-  .dockbtn:active{transform:scale(.93);}
-  .dockbtn.cta{background:linear-gradient(180deg,#ffe9a8,#f2c94c);color:#6b4e00;border-color:#e6c04a;}
-
-  /* ========== 场地场景视图 ========== */
-  #scene{position:fixed;inset:0;z-index:55;display:none;}
-  #scene.show{display:block;}
-  #scene .bg{position:absolute;inset:0;background-size:cover;background-position:center;}
-  #scene .scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.06));}
-  #scene .sbar{
-    position:absolute;top:10px;left:10px;right:10px;z-index:5;border-radius:16px;
-    display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;
-  }
-  #scene .sbar .sname{font-weight:800;font-size:15px;color:var(--purple2);flex:1;min-width:90px;}
-  #scene .sbar .btn{padding:6px 10px;font-size:12px;}
-  #sceneWoods{position:absolute;inset:0;z-index:3;}
-
-  .wood{position:absolute;height:150px;transform-origin:center;transition:opacity .3s;}
-  .wood.pop{animation:woodpop .35s cubic-bezier(.34,1.56,.64,1);}
-  @keyframes woodpop{0%{transform:scale(.6);}100%{transform:scale(1);}}
-  .wimg{position:absolute;left:0;right:0;bottom:0;height:46px;border-radius:14px;z-index:1;
-    background-size:cover;background-position:center;
-    box-shadow:inset 0 3px 8px rgba(120,90,60,.25), inset 0 -5px 10px rgba(0,0,0,.18);}
-  .wslots{position:absolute;left:0;right:0;bottom:46px;height:70px;z-index:4;}
-  .wcell{
-    position:absolute;width:42px;height:56px;transform-origin:50% 100%;z-index:4;
-    cursor:pointer;border:none;background:transparent;padding:0;
-  }
-  .wcell .spr{position:absolute;left:0;top:0;width:100%;height:100%;}
-  .wcell .pg{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:34px;height:4px;
-    background:rgba(255,255,255,.55);border-radius:99px;overflow:hidden;box-shadow:0 1px 2px rgba(90,70,150,.2);}
-  .wcell .pg i{display:block;height:100%;background:linear-gradient(90deg,#b39ddb,#7e57c2);width:0%;}
-  .wcell .val{position:absolute;top:-2px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:800;
-    color:var(--gold);text-shadow:0 1px 2px rgba(255,255,255,.8);white-space:nowrap;}
-  .wcell.grow .spr{animation:bob 2.4s ease-in-out infinite;}
-  .wcell.mature .spr{animation:readyBounce .5s cubic-bezier(.34,1.56,.64,1);}
-  .wcell.mature:hover .spr{transform:scale(1.1);}
-  @keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-3px);}}
-  @keyframes readyBounce{0%{transform:scale(.4);}60%{transform:scale(1.2);}100%{transform:scale(1);}}
-  .scenefoot{
-    position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:5;
-    border-radius:99px;padding:6px 14px;font-size:12px;color:var(--dim);font-weight:600;white-space:nowrap;
-  }
-
-  /* ---------- 按钮 ---------- */
-  .btn{
-    background:linear-gradient(180deg,#ffffff,#efeafc);color:var(--purple2);
-    border:1px solid var(--line);border-radius:11px;padding:7px 12px;
-    font-size:13px;font-weight:700;cursor:pointer;transition:.15s;
-  }
-  .btn:hover{transform:translateY(-1px);border-color:var(--purple);}
-  .btn:active{transform:scale(.95);}
-  .btn.gold{background:linear-gradient(180deg,#ffe9a8,#f2c94c);color:#6b4e00;border-color:#e6c04a;}
-  .btn:disabled{opacity:.45;cursor:not-allowed;transform:none;border-color:var(--line);}
-
-  /* ---------- 弹窗（磨砂玻璃） ---------- */
-  #overlay{position:fixed;inset:0;background:rgba(90,70,150,.28);z-index:60;display:none;align-items:center;justify-content:center;padding:14px;}
-  #overlay.show{display:flex;}
-  #modal{
-    border-radius:20px;max-width:700px;width:100%;
-    max-height:88vh;display:flex;flex-direction:column;overflow:hidden;position:relative;
-    animation:popin .25s ease;
-  }
-  @keyframes popin{0%{transform:scale(.86);opacity:0;}100%{transform:scale(1);opacity:1;}}
-  #modal-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(149,117,205,.18);}
-  #modal-head h2{font-size:16px;color:var(--purple2);}
-  #modal-body{padding:14px;overflow-y:auto;}
-  /* 图鉴详情悬浮层（叠在图鉴之上，不关闭图鉴） */
-  #fdOverlay{position:absolute;inset:0;display:none;z-index:30;}
-  #fdOverlay.show{display:flex;align-items:center;justify-content:center;}
-  #fdOverlay .fd-back{position:absolute;inset:0;background:rgba(26,18,40,.5);backdrop-filter:blur(2px);}
-  #fdOverlay .fd-card{position:relative;width:min(340px,86%);max-height:80vh;overflow-y:auto;border-radius:18px;
-    background:linear-gradient(180deg,var(--bg),var(--bg2));border:1px solid var(--line);
-    box-shadow:0 14px 44px rgba(0,0,0,.35);padding:14px;animation:popin .22s ease;}
-  #fdOverlay .fd-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-weight:800;color:var(--purple2);font-size:15px;}
-
-  /* 图鉴 */
-  .book{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;}
-  .bcard{background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:14px;padding:8px;text-align:center;}
-  .bcard .pic{height:52px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
-  .bcard .pic svg{width:42px!important;height:42px!important;}
-  .ybimg{width:100%;height:100%;object-fit:contain;display:block;}
-  .bcard .pic .ybimg{width:48px;height:48px;}
-  .bcard .nm{font-size:12px;font-weight:800;color:var(--purple2);margin-top:2px;}
-  .bcard .cnt{font-size:11px;color:var(--dim);}
-  .bcard .stats{font-size:10px;color:var(--dim);margin-top:4px;line-height:1.5;text-align:left;background:rgba(149,117,205,.08);border-radius:8px;padding:4px 6px;}
-  .bcard .stats b{color:var(--purple2);}
-  .bcard .stats .gold{color:var(--gold);font-weight:900;}
-  .bcard .cd{font-size:10px;color:var(--dim);margin-top:3px;line-height:1.3;}
-  .bcard.allgold{background:linear-gradient(180deg,rgba(255,239,181,.75),rgba(255,224,130,.7));
-    border-color:#e6b84c;animation:goldbox 1.8s ease-in-out infinite;}
-  .bcard.allgold .cd{color:#8a6a00;font-weight:800;}
-  @keyframes goldbox{0%,100%{box-shadow:0 0 8px rgba(245,200,60,.6),0 0 0 1.5px rgba(230,184,76,.9);}
-    50%{box-shadow:0 0 20px rgba(255,215,70,.95),0 0 30px rgba(255,190,50,.55),0 0 0 2px rgba(230,184,76,1);}}
-  .bcard.locked{opacity:.65;filter:saturate(0);}
-  .bcard.locked .nm{color:var(--dim);}
-  .bcard.epic{box-shadow:0 0 0 1px #b39ddb;}
-  .bcard.legend{box-shadow:0 0 12px rgba(149,117,205,.5),0 0 0 1px #9575cd;}
-  .bcard:not(.locked){cursor:pointer;}
-  .bcard:not(.locked):hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(90,70,150,.18);}
-  .bcard{transition:transform .15s,box-shadow .15s;}
-  /* 图鉴详情弹窗 */
-  .fd{text-align:center;}
-  .fd-pic{width:120px;height:120px;margin:2px auto 6px;display:flex;align-items:center;justify-content:center;
-    border-radius:18px;background:rgba(149,117,205,.1);overflow:hidden;border:1px solid var(--line);}
-  .fd-pic svg{width:96px!important;height:96px!important;}
-  .fd-pic .ybimg{width:96px;height:96px;object-fit:contain;}
-  .fd-pic.epic{border-color:#b39ddb;}
-  .fd-pic.legend{border-color:#9575cd;box-shadow:0 0 16px rgba(149,117,205,.45);}
-  .fd-meta{display:flex;align-items:center;justify-content:center;gap:8px;margin:4px 0 8px;}
-  .fd-cnt{font-size:12px;color:var(--dim);font-weight:700;}
-  .fd-stats{font-size:12px;color:var(--dim);line-height:1.7;text-align:left;background:rgba(149,117,205,.08);
-    border-radius:10px;padding:8px 10px;margin-bottom:8px;}
-  .fd-stats .gold{color:var(--gold);font-weight:900;}
-  .fd-stats .t{font-size:10px;color:#a89fc2;margin-left:2px;}
-  .fd-cond{font-size:11px;color:var(--dim);background:rgba(255,255,255,.6);border:1px dashed var(--line);
-    border-radius:10px;padding:5px 8px;margin-bottom:8px;}
-  .fd-intro{font-size:12px;color:var(--purple2);text-align:left;background:linear-gradient(180deg,rgba(255,239,181,.5),rgba(255,224,130,.35));
-    border-radius:10px;padding:8px 10px;}
-  .fd-intro b{color:#8a6a00;}
-  .fd-intro p{margin:4px 0 0;color:#6b5a2e;line-height:1.6;}
-  .rar-tag{font-size:9px;font-weight:800;padding:1px 6px;border-radius:99px;color:#fff;}
-  .rr1{background:#a5a0bd;} .rr2{background:#6fb26a;} .rr3{background:#4fa8c9;}
-  .rr4{background:#9575cd;} .rr5{background:#7e57c2;} .rr6{background:#e05b6f;}
-
-  /* 商店 */
-  .shoprow{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:8px;}
-  .shoprow .ico{font-size:26px;width:44px;text-align:center;}
-  .shoprow .info{flex:1;}
-  .shoprow .info .t{font-weight:800;font-size:14px;color:var(--purple2);}
-  .shoprow .info .d{font-size:12px;color:var(--dim);margin-top:2px;}
-  .shoprow .btn{flex-shrink:0;}
-  .shoprow.owned{border-color:rgba(111,178,106,.6);}
-  .shoprow.owned .t::after{content:' ✓';color:var(--good);}
-  .hintline{font-size:12px;color:var(--dim);margin:4px 0 10px;line-height:1.5;}
-
-  /* 横幅 / 提示 */
-  #banner{
-    position:fixed;top:14%;left:50%;transform:translateX(-50%) scale(.6);z-index:85;
-    background:linear-gradient(180deg,#f1ecfb,#e4dcf5);border:2px solid var(--purple);border-radius:18px;
-    padding:14px 26px;text-align:center;opacity:0;pointer-events:none;
-    box-shadow:0 0 40px rgba(149,117,205,.5);width:min(320px,86vw);color:var(--text);
-  }
-  #banner.show{animation:bannerin 4s ease forwards;}
-  @keyframes bannerin{
-    0%{opacity:0;transform:translateX(-50%) scale(.5);}
-    12%{opacity:1;transform:translateX(-50%) scale(1.05);}
-    20%{transform:translateX(-50%) scale(1);}
-    82%{opacity:1;transform:translateX(-50%) scale(1);}
-    100%{opacity:0;transform:translateX(-50%) scale(.8);}
-  }
-  #banner .bt{font-size:13px;font-weight:800;color:var(--purple2);letter-spacing:2px;}
-  #banner .pic{width:92px;height:92px;margin:6px auto;}
-  #banner .bnm{font-size:22px;font-weight:900;color:var(--purple2);}
-  #banner .bd{font-size:12px;color:var(--dim);margin-top:4px;}
-  #banner .bn{font-size:13px;font-weight:800;color:var(--gold);margin-top:6px;}
-  #toast{position:fixed;left:50%;bottom:106px;transform:translateX(-50%);z-index:90;
-    background:rgba(65,60,91,.92);color:#fff;padding:8px 16px;border-radius:99px;font-size:13px;font-weight:700;
-    opacity:0;pointer-events:none;transition:opacity .3s;box-shadow:0 8px 24px rgba(0,0,0,.25);}
-  #toast.show{opacity:1;}
-
-  /* ---------- 番茄钟 ---------- */
-  .pomo-wrap{text-align:center;position:relative;}
-  .pomo-pipbtn{position:absolute;top:2px;right:2px;width:30px;height:30px;border:none;border-radius:50%;
-    background:rgba(149,117,205,.14);color:var(--purple2);font-size:16px;line-height:1;cursor:pointer;z-index:5;}
-  .pomo-pipbtn:hover{background:rgba(149,117,205,.26);}
-  .pomo-hero{position:relative;width:216px;height:216px;margin:6px auto 2px;}
-  .pomo-ring{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);}
-  .pomo-ring .ring-bg{fill:none;stroke:rgba(149,117,205,.15);stroke-width:11;}
-  .pomo-ring .ring-fg{fill:none;stroke:url(#pomoGrad);stroke-width:11;stroke-linecap:round;
-    stroke-dasharray:553;stroke-dashoffset:0;transition:stroke-dashoffset .5s linear;}
-  .pomo-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;}
-  .pomo-name{font-size:14px;font-weight:800;color:var(--purple2);display:flex;align-items:center;gap:4px;}
-  .pomo-time{font-size:46px;font-weight:900;color:var(--text);font-variant-numeric:tabular-nums;
-    letter-spacing:1px;line-height:1.05;}
-  .pomo-state{font-size:12px;font-weight:700;color:#e57373;background:rgba(229,115,115,.12);
-    border:1px solid rgba(229,115,115,.3);border-radius:999px;padding:2px 10px;}
-  .pomo-state.brk{color:#43a047;background:rgba(102,187,106,.14);border-color:rgba(102,187,106,.35);}
-  .pomo-state.rdy{color:var(--dim);background:rgba(149,117,205,.08);border-color:rgba(149,117,205,.2);}
-  .pomo-sec{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:800;color:var(--dim);
-    letter-spacing:1px;margin:13px 0 4px;}
-  .pomo-sec::before,.pomo-sec::after{content:'';flex:1;height:1px;
-    background:linear-gradient(90deg,transparent,rgba(149,117,205,.35),transparent);}
-  .pomo-presets{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:6px 0;}
-  .preset-chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--purple2);
-    background:rgba(255,255,255,.65);border:1px solid rgba(149,117,205,.35);border-radius:999px;padding:5px 12px;cursor:pointer;
-    box-shadow:0 2px 6px rgba(100,80,160,.06);transition:.15s;}
-  .preset-chip:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(100,80,160,.14);}
-  .preset-chip.on{background:linear-gradient(180deg,#b39ddb,#9575cd);color:#fff;border-color:var(--purple);}
-  .preset-chip .del{font-size:10px;color:inherit;opacity:.7;margin-left:2px;}
-  .preset-chip .del:hover{opacity:1;}
-  .pomo-none{font-size:11px;color:var(--dim);}
-  .pomo-name-in{margin:4px 0;}
-  .pomo-name-in input{
-    width:100%;max-width:280px;text-align:center;border:1px solid var(--line);border-radius:11px;
-    padding:10px 12px;font-size:14px;font-weight:700;color:var(--text);background:rgba(255,255,255,.8);
-    outline:none;user-select:text;transition:.15s;}
-  .pomo-name-in input:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(149,117,205,.15);}
-  .pomo-sec-row{display:flex;align-items:center;justify-content:space-between;margin:13px 0 4px;}
-  .pomo-sec-lbl{font-size:11px;font-weight:800;color:var(--dim);letter-spacing:1px;}
-  .pomo-sec-row .btn{padding:6px 14px;font-size:12px;min-width:0;}
-  .pomo-slider{display:flex;align-items:center;gap:10px;justify-content:center;margin:10px auto 2px;max-width:300px;}
-  .pomo-slider input[type=range]{flex:1;accent-color:var(--purple);height:6px;cursor:pointer;}
-  .pomo-slider b{font-size:14px;color:var(--purple2);min-width:46px;text-align:left;}
-  .pomo-row{display:flex;gap:8px;justify-content:center;margin-top:6px;}
-  .pomo-row input{flex:1;max-width:170px;text-align:center;border:1px solid var(--line);border-radius:11px;
-    padding:10px 10px;font-size:13px;font-weight:700;color:var(--text);background:rgba(255,255,255,.8);outline:none;}
-  .pomo-row input:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(149,117,205,.15);}
-  .pomo-row .btn{padding:8px 14px;font-size:13px;}
-  .pomo-quick{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0;}
-  .seg{min-width:56px;font-size:13px;font-weight:800;color:var(--purple2);background:rgba(255,255,255,.65);
-    border:1px solid rgba(149,117,205,.3);border-radius:999px;padding:8px 14px;cursor:pointer;transition:.15s;box-shadow:0 2px 6px rgba(100,80,160,.05);}
-  .seg:hover{border-color:var(--purple);}
-  .seg.on{background:linear-gradient(180deg,#b39ddb,#9575cd);color:#fff;border-color:var(--purple);
-    box-shadow:0 4px 12px rgba(149,117,205,.35);}
-  .pomo-lbl{font-size:12px;font-weight:700;color:var(--dim);align-self:center;}
-  .pomo-lbl b{color:var(--purple2);font-size:14px;}
-  .pomo-controls{display:flex;gap:10px;justify-content:center;margin:14px 0 8px;flex-wrap:wrap;align-items:center;}
-  .pomo-controls .btn{min-width:110px;font-size:15px;padding:10px 16px;}
-  .pip-open{font-size:11px;font-weight:800;color:var(--purple2);border:1px solid var(--purple2);background:transparent;border-radius:8px;padding:2px 7px;cursor:pointer;white-space:nowrap;}
-  .pip-open:hover{background:rgba(149,117,205,.15);}
-  .pomo-big{width:88px;height:88px;border-radius:50%;border:none;cursor:pointer;font-size:32px;color:#fff;
-    background:linear-gradient(180deg,#f06292,#9575cd);box-shadow:0 10px 24px rgba(149,117,205,.4),inset 0 -4px 8px rgba(0,0,0,.12);
-    transition:.2s;}
-  .pomo-big:hover{transform:scale(1.06);}
-  .pomo-big:active{transform:scale(.96);}
-  .pomo-big.brk{background:linear-gradient(180deg,#81c784,#66bb6a);box-shadow:0 10px 24px rgba(102,187,106,.4),inset 0 -4px 8px rgba(0,0,0,.12);}
-  .pomo-big.pause{background:linear-gradient(180deg,#ffb74d,#ff7043);box-shadow:0 10px 24px rgba(255,138,101,.4),inset 0 -4px 8px rgba(0,0,0,.12);}
-  .pomo-note{font-size:12px;color:var(--dim);background:rgba(149,117,205,.08);border-radius:10px;
-    padding:8px 10px;margin:8px 0;line-height:1.7;text-align:left;}
-  .pomo-note b{color:var(--purple2);}
-  .pomo-tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 4px;}
-  .pomo-tools .btn{font-size:13px;padding:9px 6px;}
-  /* 天气瓶自选 */
-  .wgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:6px 0 12px;}
-  .wopt{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 4px;border-radius:14px;cursor:pointer;
-    font-size:13px;font-weight:800;color:var(--purple2);background:rgba(255,255,255,.7);
-    border:1.5px solid var(--line);transition:.15s;box-shadow:0 2px 6px rgba(100,80,160,.05);}
-  .wopt .wico{font-size:24px;}
-  .wopt small{font-size:10px;color:var(--good);font-weight:700;}
-  .wopt:hover{border-color:var(--purple);}
-  .wopt.on{background:linear-gradient(180deg,#b39ddb,#9575cd);color:#fff;border-color:var(--purple);
-    box-shadow:0 4px 12px rgba(149,117,205,.35);}
-  .wopt.on small{color:#fff;}
-  /* 统计 */
-  .pstat-tabs{display:flex;gap:8px;justify-content:center;margin-bottom:12px;}
-  .pstat-tab.on{background:linear-gradient(180deg,#b39ddb,#9575cd);color:#fff;border-color:var(--purple);}
-  .pstat-total{text-align:center;font-size:14px;color:var(--dim);margin-bottom:10px;}
-  .pstat-total b{color:var(--purple2);font-size:18px;}
-  .pstat-list{max-height:52vh;overflow-y:auto;}
-  .pstat-row{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.7);
-    border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin-bottom:6px;}
-  .pstat-row b{flex:1;color:var(--purple2);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .pstat-row span{font-size:11px;color:var(--dim);white-space:nowrap;}
-  .pstat-row em{font-style:normal;font-weight:800;color:var(--gold);font-size:13px;white-space:nowrap;}
-  .pstat-list .empty{text-align:center;color:var(--dim);padding:24px 0;font-size:13px;}
-  /* 打卡日历 */
-  .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-  .cal-head span{font-weight:800;color:var(--purple2);font-size:15px;}
-  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
-  .cal-wd{text-align:center;font-size:11px;color:var(--dim);font-weight:700;padding:2px 0;}
-  .cal-cell{border:1px solid var(--line);border-radius:10px;padding:6px 2px;text-align:center;
-    background:rgba(255,255,255,.6);cursor:pointer;min-height:46px;display:flex;flex-direction:column;justify-content:space-between;
-    position:relative;overflow:hidden;}
-  .cal-cell b{font-size:13px;color:var(--text);position:relative;z-index:1;}
-  .cal-cell span{font-size:10px;color:var(--purple2);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative;z-index:1;}
-  .cal-cell em{font-size:9px;color:var(--dim);font-style:normal;position:relative;z-index:1;}
-  .calfill{position:absolute;left:0;right:0;bottom:0;transition:height .3s ease;}
-  .cal-cell.has{border-color:var(--purple);}
-  .cal-cell.today{box-shadow:0 0 0 2px var(--purple);}
-  .cal-cell.empty{border-color:transparent;background:transparent;cursor:default;}
-  .cal-detail{margin-top:10px;}
-  .cal-dtitle{font-size:13px;font-weight:800;color:var(--purple2);margin-bottom:6px;text-align:center;}
-  .cal-legend{font-size:11px;color:var(--dim);text-align:center;margin-top:8px;}
-
-  .helplines{font-size:13px;line-height:1.8;color:var(--text);}
-  .helplines b{color:var(--gold);}
-  .helplines .sec{font-weight:800;color:var(--purple2);margin-top:10px;}
-</style>
-</head>
-<body>
-
-<canvas id="fx"></canvas>
-<div id="collectFeed"></div>
-
-<div id="app">
-  <div id="topbar" class="frost">
-    <div class="title">放置<span>月巴</span> 🍄</div>
-    <div class="coinbox" id="coinbox"><span class="cico">🪙</span><span id="coinTxt">0</span></div>
-    <div class="collbox">
-      <div class="top"><span>📖 图鉴收集</span><span id="collTxt">0/0 (0%)</span></div>
-      <div class="bar"><i id="collBar" style="width:0%"></i></div>
-    </div>
-    <button class="iconbtn" id="btnHelp" title="帮助">❓</button>
-    <button class="iconbtn" id="btnMute" title="声音">🔊</button>
-  </div>
-
-  <div id="statusbar">
-    <span class="st frost" id="stTime">🕐 --:--</span>
-    <span class="st frost" id="stSeason">🍃 春季</span>
-    <span class="st frost" id="stWeather">☀️ 晴</span>
-    <span class="st frost" id="stPomo" style="display:none"></span>
-    <button class="pip-open frost" id="pipOpenBtn" style="display:none" onclick="pomopipToggle()">📌 置顶小窗</button>
-    <span class="st frost" id="stHint">点击场地查看月巴生长…</span>
-  </div>
-
-  <div class="zonegrid" id="board"></div>
-
-  <div id="weatherHold" class="frost" style="display:none"></div>
-</div>
-
-<div id="dock" class="frost">
-  <button class="dockbtn" id="btnBook"><b>📗</b><small>图鉴</small></button>
-  <button class="dockbtn" id="btnShop"><b>🛒</b><small>商店</small></button>
-  <button class="dockbtn cta" id="btnFast"><b>🍅</b><small>快长肥 200🪙</small></button>
-  <button class="dockbtn" id="btnWeather"><b>🌦️</b><small>天气瓶 500🪙</small></button>
-  <button class="dockbtn" id="btnPomo"><b>⏰</b><small>番茄钟</small></button>
-</div>
-
-<!-- 场地场景视图 -->
-<div id="scene">
-  <div class="bg" id="sceneBg"></div>
-  <div class="scrim"></div>
-  <div class="sbar frost">
-    <button class="btn" id="sceneBack">← 返回</button>
-    <span class="sname" id="sceneName"></span>
-    <button class="btn" id="sceneWoodBtn">🪵 新木头</button>
-    <button class="btn" id="slotBtn">🪵 槽位购买</button>
-    <button class="btn cta" id="sceneFast" style="background:linear-gradient(180deg,#ffe9a8,#f2c94c);color:#6b4e00;border-color:#e6c04a;">🍅 快长肥</button>
-    <button class="btn" id="sceneWeather">🌦️ 天气瓶</button>
-  </div>
-  <div id="sceneWoods"></div>
-  <div class="scenefoot frost">🌱 月巴需经过 幼年 → 成长 → 成熟 才能收割，成熟后才会露出真面目</div>
-</div>
-
-<div id="banner">
-  <div class="bt">✦ 图鉴新增 ✦</div>
-  <div class="pic" id="bannerPic"></div>
-  <div class="bnm" id="bannerName"></div>
-  <div class="bd" id="bannerDesc"></div>
-  <div class="bn" id="bannerReward"></div>
-</div>
-
-<div id="toast"></div>
-
-<div id="overlay">
-  <div id="modal" class="frost">
-    <div id="modal-head">
-      <h2 id="modalTitle">标题</h2>
-      <button class="iconbtn" onclick="closeModal()">✕</button>
-    </div>
-    <div id="modal-body"></div>
-    <div id="fdOverlay"></div>
-  </div>
-</div>
-
-<script>
-'use strict';
-/* ============================================================
-   放置月巴 🍄 — 时间驱动的放置收集游戏（单文件 HTML）
-   玩法参考「菇菇栽培」：月巴在木头上随时间生长 → 收获换金币 →
-   金币扩建/加速 → 解锁新月巴条件 → 图鉴收集
-   v2：灰白浅紫磨砂玻璃 UI · 场地场景化（外链背景图/木头图）
-   月巴三阶段（幼年/成长/成熟）· 随机身高体重与图鉴极值记录
-   ============================================================ */
-
-/* ---------------- 工具函数 ---------------- */
-const $=id=>document.getElementById(id);
-const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-const rand=(a,b)=>a+Math.random()*(b-a);
-const randi=(a,b)=>Math.floor(rand(a,b+1));
-const now=()=>Date.now();
-const pad=n=>String(n).padStart(2,'0');
-const pick=a=>a[Math.floor(Math.random()*a.length)];
-function fmt(n){
-  if(n>=1e9)return (n/1e9).toFixed(2).replace(/\.?0+$/,'')+'亿';
-  if(n>=1e8)return (n/1e8).toFixed(1)+'亿';
-  if(n>=1e6)return (n/1e6).toFixed(2).replace(/\.?0+$/,'')+'M';
-  if(n>=1e4)return (n/1e3).toFixed(1)+'k';
-  return Math.floor(n).toLocaleString();
-}
-function hashStr(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return Math.abs(h);}
-function shade(hex,amt){
-  const n=parseInt(hex.slice(1),16);
-  const r=clamp((n>>16)+amt,0,255), g=clamp(((n>>8)&255)+amt,0,255), b=clamp((n&255)+amt,0,255);
-  return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
-}
-function fmtTS(ts){ const d=new Date(ts); return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
-function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-function inpVal(id,def){ const el=$(id); const v=el&&el.value?String(el.value).trim():''; return v||def; }
-function fmtDur(ms){
-  if(!(ms>0))return '00:00';
-  const s=Math.ceil(ms/1000);
-  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60;
-  return h>0?`${h}:${pad(m)}:${pad(sec)}`:`${pad(m)}:${pad(sec)}`;
-}
-
-/* ---------------- 数据：场地（含背景图与木头摆放位） ---------------- */
-/*
-  bg：场地背景图（真实图片直链，非 AI，来源 Wikimedia Commons / 开放版权协议，
-  可免费商用；部分 CC 协议可能要求署名，商用前请核对各图许可，见下方注释）
-*/
-const ZONES=[
-  {name:'初始庭院', icon:'🏡', cost:0,     woodBase:300,   woodMult:2.2,
-   // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/1_FotoSketcherdd5b7aa2f895b494.jpg',
-   spots:[[15,60],[33,52],[52,62],[70,54],[86,61],[25,40],[62,40],[44,75]]},
-  {name:'潮湿地下室', icon:'🕳️', cost:2000,   woodBase:900,   woodMult:2.3,
-   // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/__128135210_FotoSketcherc9f81392cbdead6a.jpg',
-   spots:[[16,62],[34,54],[53,63],[71,55],[87,62],[26,42],[63,42],[45,76]]},
-  {name:'玻璃温室', icon:'🌱', cost:12000,  woodBase:2600,  woodMult:2.4,
-   // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/_1788429025766_35140043_FotoSketchere2f4a0425f632220.jpg',
-   spots:[[14,60],[31,52],[50,62],[68,54],[85,61],[24,40],[61,40],[43,75]]},
-  {name:'天台风场', icon:'🌬️', cost:60000,  woodBase:8000,  woodMult:2.5,
-   // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/__183720300_FotoSketcherf4ae1401dd537290.jpg',
-   spots:[[15,61],[33,53],[52,63],[70,55],[86,62],[26,41],[63,41],[45,76]]},
-  {name:'幽暗森林', icon:'🌲', cost:300000, woodBase:26000, woodMult:2.6,
-   // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/_-_194310583_FotoSketcher982611e1ba4e7a12.jpg',
-   spots:[[14,60],[32,52],[51,62],[69,54],[85,61],[24,40],[61,40],[43,75]]},
-  {name:'冰雪洞穴', icon:'❄️', cost:1500000, woodBase:90000, woodMult:2.7,
-   // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/__131195802_FotoSketcherd1e880cdc7babeca.jpg',
-   spots:[[15,61],[33,53],[52,63],[70,55],[86,62],[26,41],[63,41],[45,76]]},
-  {name:'熔岩深坑', icon:'🌋', cost:7000000, woodBase:300000,woodMult:2.8,
-   // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/__1714459_FotoSketcherdaa767a1a264dfaf.jpg',
-   spots:[[14,60],[32,52],[51,62],[69,54],[85,61],[24,40],[61,40],[43,75]]},
-  {name:'云端之上', icon:'☁️', cost:30000000,woodBase:1000000,woodMult:3,
-   // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/_-_194592063_FotoSketcher96545d1331d68cfd.jpg',
-   spots:[[15,61],[33,53],[52,63],[70,55],[86,62],[26,41],[63,41],[45,76]]},
-];
-// 木头图（自定义图片直链，玩家提供）
-const WOOD_IMG='https://origin.picgo.net/2026/09/03/58512f7c468327988fd65ba259f261417096759aace686b4.jpg';
-
-/* ---------------- 数据：道具/装饰 ---------------- */
-const FAST_COST=200, WEATHER_COST=500, ACCEL_BASE=2000, ACCEL_MULT=2.2, ACCEL_MAX=15;
-const ITEMS=[
-  {id:'coffee',    name:'咖啡机',   icon:'☕', cost:4000,  desc:'解锁「咖啡月巴」的出现条件'},
-  {id:'doll',      name:'玩偶架',   icon:'🧸', cost:15000, desc:'解锁「玩偶月巴」的出现条件'},
-  {id:'goldfert',  name:'金色肥料', icon:'🌟', cost:40000, desc:'解锁「金月巴」的出现条件'},
-  {id:'starlight', name:'星星灯',   icon:'✨', cost:80000, desc:'解锁「星月巴」的出现条件'},
-];
-
-/* ---------------- 数据：月巴种类 ---------------- */
-/*
-  字段：id 名称 r稀有度 v基础价值 t生长秒数 cond条件 color颜色 shape形状
-  稀有度：1普通 2常见 3稀有 4史诗 5传说 6活动
-  条件 cond：见 condOk()
-  // ⭐ 外链说明（玩家不可见）：每种月巴可额外带一个 `img` 字段，填外部 PNG 图片
-  //    地址即可用真实图片代替默认 SVG（例：img:'https://xxx.com/path.png'）。
-  //    不填则回退到程序化绘制的默认外形。该字段仅存在于代码中，不会展示给玩家。
-*/
-const TYPES=[
-  {id:'mb_xiaoyue',name:'小月巴',img:'https://origin.picgo.net/2026/09/03/1512e4bde4713ba02.th.png', r:1, v:5,  t:45,  cond:null, color:'#c9b2e8', shape:'round', size:0.333},
-  {id:'mb_xian',   name:'尴尬月巴', img:'https://origin.picgo.net/2026/09/03/4059f70dff59ca4a4.th.png', r:1, v:6,  t:60,  cond:null, color:'#d9c7f2', shape:'round'},
-  {id:'mb_chi',    name:'进食月巴', img:'https://origin.picgo.net/2026/09/03/15b077f9364349ae92.th.png', r:1, v:7,  t:80,  cond:null, color:'#e8c39e', shape:'wide'},
-  {id:'mb_shui',   name:'睡觉月巴', r:1, v:8,  t:90,  cond:null, color:'#e3b8c9', shape:'squish'},
-  {id:'mb_wan',    name:'微笑月巴',img:'https://origin.picgo.net/2026/09/03/1512e4bde4713ba02.th.png', r:1, v:10, t:110, cond:null, color:'#c9b2e8', shape:'round'},
-  {id:'mb_pang',   name:'胖月巴', r:2, v:14, t:150, cond:null, color:'#e7a3b8', shape:'squish'},
-  {id:'mb_xin',    name:'wink月巴',img:'https://origin.picgo.net/2026/09/03/37e1be2540efa2177.th.png', r:2, v:15, t:160, cond:null, color:'#f0a8c0', shape:'heart'},
-  {id:'mb_gao',    name:'高月巴', r:2, v:16, t:180, cond:null, color:'#b8a9e0', shape:'tall'},
-  {id:'mb_ku',     name:'背头月巴', r:2, v:18, t:200, cond:null, color:'#a9c7ea', shape:'cube'},
-  {id:'mb_lan',    name:'休闲月巴', img:'https://origin.picgo.net/2026/09/03/10a99395fea8f81ac7.th.png', r:2, v:12, t:140, cond:null, color:'#c3a7c9', shape:'squish'},
-  {id:'mb_tan',    name:'一坨月巴', r:2, v:20, t:240, cond:null, color:'#a5c3e8', shape:'wide'},
-  {id:'mb_jian',   name:'健身月巴', img:'https://origin.picgo.net/2026/09/03/9935aafd50857466b.th.png', r:3, v:30, t:300, cond:{t:'day'}, color:'#9ec48f', shape:'tall'},
-
-  {id:'mb_zao',  name:'晨月巴', r:3, v:25, t:300, cond:{t:'time',a:6,b:10},  color:'#e8c39e', shape:'round'},
-  {id:'mb_lu',   name:'露月巴', r:3, v:40, t:360, cond:{t:'time',a:4,b:8},   color:'#9fd4e8', shape:'drop'},
-  {id:'mb_wu',   name:'午月巴', r:3, v:28, t:300, cond:{t:'time',a:11,b:14}, color:'#f2b87a', shape:'round'},
-  {id:'mb_hun',  name:'昏月巴', r:3, v:30, t:300, cond:{t:'time',a:16,b:19}, color:'#e8a0bc', shape:'round'},
-  {id:'mb_ye',   name:'夜月巴', r:3, v:35, t:360, cond:{t:'night'},          color:'#8f74c9', shape:'moon'},
-  {id:'mb_ling', name:'凌晨月巴',r:3,v:45,t:480, cond:{t:'time',a:3,b:6},   color:'#6f6799', shape:'squish'},
-  {id:'mb_wuye', name:'午夜月巴',r:4,v:60,t:600, cond:{t:'time',a:23,b:2},  color:'#7e57c2', shape:'moon'},
-
-  {id:'mb_qing', name:'晴月巴', r:3, v:30, t:300, cond:{t:'weather',w:'sunny'},  color:'#f2c46a', shape:'round'},
-  {id:'mb_yun',  name:'云月巴', r:3, v:32, t:320, cond:{t:'weather',w:'cloudy'}, color:'#b9b2c9', shape:'cube'},
-  {id:'mb_yu',   name:'雨月巴', r:3, v:40, t:360, cond:{t:'weather',w:'rain'},   color:'#8fc9e8', shape:'drop'},
-  {id:'mb_bao',  name:'暴雨月巴',r:4,v:70, t:600, cond:{t:'weather',w:'storm'},  color:'#5f9ed1', shape:'spike'},
-  {id:'mb_xue',  name:'雪月巴', r:4, v:55, t:480, cond:{t:'weather',w:'snow'},   color:'#eef1f7', shape:'star'},
-  {id:'mb_caihong',name:'彩虹月巴',r:4,v:120,t:720, cond:{t:'rainbow'},          color:'#e06b9c', shape:'rainbow'},
-
-  {id:'mb_chun', name:'春月巴', r:3, v:35, t:360, cond:{t:'season',s:'spring'}, color:'#8fc48a', shape:'round'},
-  {id:'mb_xia',  name:'夏月巴', r:3, v:35, t:360, cond:{t:'season',s:'summer'}, color:'#f0857f', shape:'wide'},
-  {id:'mb_qiu',  name:'秋月巴', r:3, v:35, t:360, cond:{t:'season',s:'autumn'}, color:'#e89b52', shape:'round'},
-  {id:'mb_dong', name:'冬月巴', r:3, v:35, t:360, cond:{t:'season',s:'winter'}, color:'#7fa0b8', shape:'cube'},
-
-  {id:'mb_dishui',  name:'阴湿月巴', r:3, v:50, t:400, cond:{t:'zone',z:2}, color:'#9575cd', shape:'round'},
-  {id:'mb_wenshi',  name:'温室月巴',   r:3, v:55, t:420, cond:{t:'zone',z:3}, color:'#6fbe7a', shape:'cube'},
-  {id:'mb_wuding',  name:'屋顶月巴',   r:3, v:60, t:450, cond:{t:'zone',z:4}, color:'#5f9ed1', shape:'tall'},
-  {id:'mb_senlin',  name:'森系月巴',   r:3, v:70, t:480, cond:{t:'zone',z:5}, color:'#5c8a64', shape:'spike'},
-  {id:'mb_bing',    name:'冰冷月巴',   r:4, v:80, t:540, cond:{t:'zone',z:6}, color:'#7cc4e8', shape:'star'},
-  {id:'mb_yanjiang',name:'滚烫月巴',   r:4, v:90, t:600, cond:{t:'zone',z:7}, color:'#d15852', shape:'spike'},
-  {id:'mb_yunduan', name:'会飞月巴',   r:4, v:110,t:720, cond:{t:'zone',z:8}, color:'#b39ddb', shape:'rainbow'},
-
-  {id:'mb_kafei', name:'咖啡月巴', r:4, v:80,  t:540,  cond:{t:'item',i:'coffee'},    color:'#b98a76', shape:'cube'},
-  {id:'mb_wanou', name:'玩偶月巴', r:4, v:90,  t:600,  cond:{t:'item',i:'doll'},      color:'#e88aa8', shape:'heart'},
-  {id:'mb_jin',   name:'金月巴',   r:4, v:200, t:1200, cond:{t:'item',i:'goldfert'},  color:'#e6c44c', shape:'star'},
-  {id:'mb_xing',   name:'巴中月巴',   img:'https://origin.picgo.net/2026/09/03/127d7a0746c5de2434.th.png', r:4, v:150, t:900,  cond:{t:'item',i:'starlight'}, color:'#c9a8ea', shape:'star'},
-
-  {id:'mb_da',       name:'大月巴',   r:4, v:80,  t:600,  cond:{t:'harvest',n:50},  color:'#e8a89a', shape:'wide'},
-  {id:'mb_ju',       name:'巨月巴',   r:4, v:150, t:900,  cond:{t:'harvest',n:200}, color:'#d98a86', shape:'big'},
-  {id:'mb_chao',     name:'超巨月巴', r:4, v:300, t:1500, cond:{t:'harvest',n:500}, color:'#e0a34e', shape:'big'},
-  {id:'mb_lian',     name:'幸运月巴', r:4, v:60,  t:480,  cond:null, weight:0.05, color:'#e8a8c4', shape:'round'},
-  {id:'mb_kuanglian',name:'极运月巴', r:4, v:130, t:840,  cond:null, weight:0.03, color:'#d9799f', shape:'spike'},
-  {id:'mb_shenlian', name:'神运月巴', r:5, v:400, t:2400, cond:null, weight:0.015, color:'#b54b7e', shape:'rainbow'},
-  {id:'mb_fanben',   name:'墨镜月巴', img:'https://origin.picgo.net/2026/09/03/1115555fb4ab3b2731.th.png', r:4, v:70,  t:540,  cond:{t:'count',id:'mb_xian',n:20}, color:'#d9b45a', shape:'round'},
-  {id:'mb_guai',     name:'奇怪月巴',   r:4, v:90,  t:600,  cond:{t:'count',id:'mb_pang',n:15}, color:'#b89a55', shape:'bean'},
-  {id:'mb_shizhe',   name:'归家月巴', img:'https://origin.picgo.net/2026/09/03/2b384c6d07a3d397b.th.png', r:5, v:130, t:840,  cond:{t:'count',id:'mb_ye',n:10},   color:'#5f44a6', shape:'moon'},
-
-  {id:'mb_zhoumo',   name:'双休月巴', r:4, v:120, t:720, cond:null, weight:0.1,  color:'#8fc9c9', shape:'cube'},
-  {id:'mb_zhengdian',name:'整点月巴', r:4, v:300, t:900, cond:null, weight:0.05, color:'#e0d24e', shape:'star'},
-  {id:'mb_xinnian',  name:'新年月巴', r:6, v:500, t:600, cond:null, weight:0.02, color:'#d94a6b', shape:'star'},
-  {id:'mb_qingren',  name:'爱情月巴', r:6, v:500, t:600, cond:null, weight:0.02, color:'#e06b9c', shape:'heart'},
-  {id:'mb_wuyi',     name:'劳动月巴', r:6, v:400, t:600, cond:null, weight:0.02, color:'#d98a5f', shape:'cube'},
-  {id:'mb_guoqing',  name:'庆祝月巴', r:6, v:500, t:600, cond:null, weight:0.02, color:'#c9536b', shape:'star'},
-  {id:'mb_wansheng', name:'万圣月巴', r:6, v:600, t:600, cond:null, weight:0.02, color:'#8f74c9', shape:'moon'},
-  {id:'mb_shengdan', name:'圣诞月巴', r:6, v:700, t:600, cond:null, weight:0.02, color:'#c95f8a', shape:'star'},
-  {id:'mb_zhongqiu', name:'中秋月巴', r:6, v:550, t:600, cond:null, weight:0.02, color:'#d9a44e', shape:'moon'},
-
-  {id:'mb_wen',  name:'蚊月巴',   r:3, v:45, t:420, cond:{t:'season',s:'summer',night:1}, color:'#8fb4c9', shape:'bean'},
-  {id:'mb_shan', name:'闪电月巴', r:5, v:150,t:900, cond:{t:'weather',w:'storm',night:1}, color:'#e0d24e', shape:'spike'},
-  {id:'mb_pingguo',name:'吃茄月巴',img:'https://origin.picgo.net/2026/09/03/1618abd45272691005.th.png',r:3,v:45,t:420, cond:{t:'season',s:'autumn',day:1},    color:'#c96a73', shape:'round'},
-  {id:'mb_chaos',name:'混沌月巴', r:5, v:1000,t:5400, cond:null, weight:0.003, color:'#5a5470', shape:'chaos'},
-];
-const RAR_NAME={1:'普通',2:'常见',3:'稀有',4:'史诗',5:'传说',6:'活动'};
-const R_H={1:[2,5],2:[4,8],3:[6,12],4:[10,20],5:[16,30],6:[22,40]};   // 身高 cm 范围
-const R_W={1:[3,8],2:[6,15],3:[10,25],4:[20,50],5:[40,90],6:[60,150]}; // 体重 g 范围
-
-/* 每种月巴的简介（图鉴详情弹窗展示） */
-const FAT_INTRO={
-  mb_xiaoyue:'据说迷你得能站在硬币上，元气满满地蹦跶一整天也不累。',
-  mb_xian:'每次被发现都想找个地缝钻进去，可惜圆滚滚的身材卡住了。',
-  mb_chi:'嘴巴永远在嚼东西，专家怀疑它的胃连着四次元口袋。',
-  mb_shui:'一天能睡 23 小时，剩下 1 小时用来找更舒服的枕头。',
-  mb_wan:'无论发生什么都保持微笑，是月巴界的正能量担当。',
-  mb_pang:'体重是同类平均值的两倍，但自称「只是骨架大」。',
-  mb_xin:'眨眼卖萌是它的绝活，据说电力能点亮一盏小夜灯。',
-  mb_gao:'鹤立鸡群般的存在，低头时能看见其他月巴的头顶。',
-  mb_ku:'每天用露水给自己梳大背头，仪式感满满。',
-  mb_lan:'穿着拖鞋躺平的姿势无人能敌，移动全靠滑行。',
-  mb_tan:'软趴趴的一团，据说融化速度比冰淇淋还快。',
-  mb_jian:'凌晨四点的栽培木上总有它撸铁的身影。',
-  mb_zao:'太阳刚探头就精神百倍，是天然的早起闹钟。',
-  mb_lu:'喜欢清晨的露水，身上总挂着亮晶晶的水珠。',
-  mb_wu:'正午时分最活跃，靠晒太阳补充能量。',
-  mb_hun:'黄昏时最感性，总对着晚霞发呆叹气。',
-  mb_ye:'昼伏夜出，眼睛在黑暗里会发出幽幽的光。',
-  mb_ling:'只挑天没亮的时候游荡，是夜猫子们的同伴。',
-  mb_wuye:'午夜十二点准时报到，据说见过它会有好运。',
-  mb_qing:'阳光越灿烂它越开心，阴天就蔫蔫的。',
-  mb_yun:'走路轻飘飘，仿佛踩在棉花糖上。',
-  mb_yu:'下雨时兴奋得转圈圈，尾巴会卷起小水花。',
-  mb_bao:'心情不好就来一场倾盆大雨，记得带伞。',
-  mb_xue:'能在雪地上滑出完美弧线，冬天的最爱。',
-  mb_caihong:'出现后总会留下七彩的小脚印，遇见即是好运。',
-  mb_chun:'所到之处野花绽放，自带春天的气息。',
-  mb_xia:'浑身滚烫却爱蹦跶，自带空调技能但总是坏。',
-  mb_qiu:'收集落叶拼成画，是文艺的收藏家。',
-  mb_dong:'呼气会结冰，但暖洋洋的肚皮很受欢迎。',
-  mb_dishui:'喜欢阴暗角落，经常在床底出没。',
-  mb_wenshi:'只在温暖的温室里生活，怕冷怕得要命。',
-  mb_wuding:'最爱吹天台的风，视野开阔心情就好。',
-  mb_senlin:'全身长满青苔和小花，森林就是它的家。',
-  mb_bing:'体温常年零下，抱一下会被冻住。',
-  mb_yanjiang:'岩浆是它的浴缸，小心别靠太近。',
-  mb_yunduan:'靠一朵小云朵飞行，从不落地。',
-  mb_kafei:'喝了咖啡就像装了火箭，日夜加班不喊累。',
-  mb_wanou:'软乎乎的，是番茄最喜欢的手感。',
-  mb_jin:'浑身金灿灿，是月巴界的富豪。',
-  mb_xing:'喜欢发亮的星星，靠星光补充体力。',
-  mb_da:'块头不小，胃口更大，一顿能吃三份番茄。',
-  mb_ju:'一步一个脚印，大地都为之颤抖。',
-  mb_chao:'体型堪比小山，据说只存在于传说里。',
-  mb_lian:'遇到它的人都会交好运，记得许愿。',
-  mb_kuanglian:'幸运值爆表，路过的彩票都会中奖。',
-  mb_shenlian:'传说中的幸运之神，可遇不可求。',
-  mb_fanben:'酷酷的墨镜从不摘下，它可没有哭哦。',
-  mb_guai:'行为古怪，没人猜得到它下一秒想干嘛。',
-  mb_shizhe:'无论走多远都会回到最初的栽培木。',
-  mb_zhoumo:'只在周末出现，其他时间都在享受生活。',
-  mb_zhengdian:'只在整点冒头，守时得像个闹钟。',
-  mb_xinnian:'每年元旦才会现身，带来新年的祝福。',
-  mb_qingren:'情人节限定，据说能让空气变甜。',
-  mb_wuyi:'劳动节专属，热爱劳动充满干劲。',
-  mb_guoqing:'喜欢庆典，最爱放烟花庆祝，烧烤大会也可以。',
-  mb_wansheng:'万圣节出没，专挑胆小鬼吓唬。',
-  mb_shengdan:'圣诞限定，背着礼物袋满世界跑。',
-  mb_zhongqiu:'中秋夜抬头望月，和月球上的月兔似乎很像？',
-  mb_wen:'夏夜最烦人的存在，嗡嗡嗡个不停。',
-  mb_shan:'暴风雨夜的闪电里诞生，快如闪电。',
-  mb_pingguo:'最爱秋天，一口一个番茄。',
-  mb_chaos:'连科学家都无法解释的存在，别细想。',
-};
-
-/* ---------------- 全局状态 ---------------- */
-const SAVE_KEY='idle-yueba-save-v2';
-const OFFLINE_CAP=12*3600*1000;
-let S;
-function defaultState(){
-  return {
-    coins:0, accelLv:0, boughtItems:[], collection:{}, totalHarvest:0,
-    weather:'sunny', lastRainAt:-1e12, weatherHoldEnd:0,
-    nextWeatherAt:now()+rand(2,4)*60000, muted:false, lastSave:now(),
-    seenHelp:false, starter:true,
-    gameStart:now(), gameEpoch:now(),
-    pomo:{name:'专注', total:25*60000, remain:25*60000, running:false, end:0, start:0, pausedByBlur:false,
-      history:[], presets:['工作','学习'], mode:'focus', breakMin:5, focusTotal:25*60000, roundItems:[]},
-    zones:ZONES.map((z,i)=>({id:i, bought:i===0, woods: i===0?[{cells:[null,null,null]}]:[]})),
-  };
-}
-function save(){ S.lastSave=now(); try{localStorage.setItem(SAVE_KEY,JSON.stringify(S));}catch(e){} }
-function load(){
-  try{
-    const raw=localStorage.getItem(SAVE_KEY)||localStorage.getItem('idle-yueba-save-v1');
-    if(raw){
-      const d=JSON.parse(raw);
-      // 迁移旧版存档：collection 由 {id:数量} 升级为 {id:{count,极值}}
-      if(d.collection) for(const k in d.collection){
-        if(typeof d.collection[k]==='number') d.collection[k]={count:d.collection[k]};
-      }
-      // 迁移旧版生长时长单位（秒 -> 毫秒）
-      if(d.zones) for(const z of d.zones) for(const w of (z.woods||[])) for(const c of w.cells){
-        if(c && c.t && c.dur && c.dur<10000) c.dur=c.dur*(1000/BASE_SPEED);
-      }
-      S=Object.assign(defaultState(),d);
-      // 深合并番茄钟字段，旧存档缺少 presets/mode/breakMin/focusTotal 时补默认值
-      S.pomo=Object.assign(defaultState().pomo, d.pomo||{});
-      return true;
-    }
-  }catch(e){}
-  S=defaultState();
-  return false;
-}
-function speedMult(){ return (1+S.accelLv*0.1) * (S.pomo && S.pomo.running && S.pomo.mode==='focus' ? 2 : 1); }
-// 番茄钟专注时段（非休息）自动收集成熟月巴；其余时段必须手动
-function autoCollectActive(){ return !!(S.pomo && S.pomo.running && S.pomo.mode==='focus'); }
-function woodCost(z,w){ const zone=ZONES[z]; return Math.round(zone.woodBase*Math.pow(zone.woodMult,w)); }
-function slotCost(z,w){ const slots=S.zones[z].woods[w].cells.length; return Math.round(120*Math.pow(1.9,slots-1)); }
-function accelCost(){ return Math.round(ACCEL_BASE*Math.pow(ACCEL_MULT,S.accelLv)); }
-const MAX_SLOTS=8;
-
-/* ---------------- 时间/季节/天气 ---------------- */
-/* 虚拟游戏时钟：约 2 现实小时 = 1 游戏年（季节/昼夜/时间条件都走虚拟时钟）
-   天气变化维持原速（现实 8~18 分钟），番茄钟仍按现实时间 */
-const VIRT_MS_PER_REAL_MS=4383; // 365.25天*24h*3600s*1000 / (2h*3600s*1000)
-function gameNow(){ return new Date((S.gameEpoch||now()) + (now()-S.gameStart)*VIRT_MS_PER_REAL_MS); }
-function seasonOf(d){
-  const m=d.getMonth()+1;
-  if(m>=3&&m<=5)return 'spring';
-  if(m>=6&&m<=8)return 'summer';
-  if(m>=9&&m<=11)return 'autumn';
-  return 'winter';
-}
-const SEASON_NAME={spring:'🌱 春季',summer:'☀️ 夏季',autumn:'🍂 秋季',winter:'❄️ 冬季'};
-function condOk(c){
-  if(!c)return true;
-  const d=gameNow(), h=d.getHours();
-  switch(c.t){
-    case 'day': return h>=6&&h<18;
-    case 'night': return !(h>=6&&h<18);
-    case 'time': { if(c.a<=c.b)return h>=c.a&&h<c.b; return h>=c.a||h<c.b; }
-    case 'weather': {
-      if(S.weather!==c.w) return false;
-      if(c.night && h>=6&&h<18) return false;
-      if(c.day && !(h>=6&&h<18)) return false;
-      return true;
-    }
-    case 'rainbow': return S.weather==='sunny' && (now()-S.lastRainAt<30*60000);
-    case 'season': return seasonOf(d)===c.s && (c.night? !(h>=6&&h<18):true) && (c.day? (h>=6&&h<18):true);
-    case 'zone': return !!(S.zones[c.z-1]&&S.zones[c.z-1].bought);
-    case 'item': return S.boughtItems.includes(c.i);
-    case 'harvest': return S.totalHarvest>=c.n;
-    case 'count': return colCount(c.id)>=c.n;
-  }
-  return false;
-}
-function condText(c){
-  if(!c)return '随时可长';
-  switch(c.t){
-    case 'day': return '白天(6-18点)';
-    case 'night': return '夜晚(18-6点)';
-    case 'time': return c.a<=c.b? `${c.a}:00-${c.b}:00` : `${c.a}:00-次日${c.b}:00`;
-    case 'weather': return ({sunny:'晴天',cloudy:'多云',rain:'雨天',storm:'暴雨',snow:'下雪'})[c.w];
-    case 'rainbow': return '雨后天晴';
-    case 'season': return ({spring:'春季',summer:'夏季',autumn:'秋季',winter:'冬季'})[c.s]+(c.night?'(夜晚)':'')+(c.day?'(白天)':'');
-    case 'zone': return `需要「${ZONES[c.z-1].name}」`;
-    case 'item': return `需要道具「${ITEMS.find(i=>i.id===c.i).name}」`;
-    case 'harvest': return `累计收获 ${c.n} 次`;
-    case 'count': { const t=TYPES.find(x=>x.id===c.id); return `收获「${t.name}」${c.n} 次`; }
-  }
-  return '';
-}
-
-/* ---------------- 天气模拟 ---------------- */
-function changeWeather(force){
-  const gd=gameNow(), nowH=gd.getHours(), sea=seasonOf(gd);
-  const seq=['sunny','cloudy','rain','storm','cloudy','sunny'];
-  let idx=seq.indexOf(S.weather);
-  if(force){
-    S.weather=pick(['sunny','cloudy','rain','storm','snow']);
-  }else{
-    S.weatherHoldEnd=0; // 自然轮换时清除天气瓶倒计时
-    let next=seq[clamp(idx+randi(1,2),0,seq.length-1)];
-    if(sea==='winter' && next!=='sunny' && Math.random()<0.4) next='snow';
-    if(nowH>=19||nowH<5){ if(next==='storm')next='cloudy'; }
-    S.weather=next;
-  }
-  if(S.weather==='rain'||S.weather==='storm') S.lastRainAt=now();
-  S.nextWeatherAt=now()+rand(8,18)*60000;
-}
-function weatherTick(){
-  if(now()>=S.nextWeatherAt) changeWeather(false);
-}
-
-/* ---------------- 音频（WebAudio 合成） ---------------- */
-let AC=null;
-function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return AC; }
-function tone(freq,dur,type,vol,when,slide){
-  if(S.muted)return; const c=ac(); if(!c)return;
-  const o=c.createOscillator(), g=c.createGain();
-  const t0=c.currentTime+(when||0);
-  o.type=type||'sine'; o.frequency.setValueAtTime(freq,t0);
-  if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,freq+slide),t0+dur);
-  g.gain.setValueAtTime(vol||0.12,t0);
-  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
-  o.connect(g); g.connect(c.destination);
-  o.start(t0); o.stop(t0+dur+0.02);
-}
-const sfx={
-  click(){ tone(720,0.05,'square',0.05); },
-  buy(){ tone(440,0.08,'square',0.08); tone(660,0.1,'square',0.08,0.07); },
-  error(){ tone(170,0.16,'sawtooth',0.12); },
-  harvest(combo){ const p=440+clamp(combo,0,60)*18; tone(p,0.09,'triangle',0.18); tone(p*1.5,0.12,'triangle',0.14,0.05); },
-  coin(){ tone(880,0.07,'sine',0.1); tone(1318,0.09,'sine',0.08,0.05); },
-  ready(){ tone(660,0.14,'sine',0.05); },
-  reveal(){ tone(880,0.12,'triangle',0.1); tone(1320,0.16,'triangle',0.08,0.08); },
-  unlock(){ [523,659,784,1046,1318].forEach((f,i)=>tone(f,0.16,'triangle',0.16,i*0.09)); },
-  // 可爱的嫩芽交互音
-  grab(){ tone(520,0.08,'sine',0.16,0); tone(790,0.1,'sine',0.13,0.035); },
-  drag(){ tone(960,0.045,'sine',0.05,0); tone(1180,0.05,'sine',0.04,0.03); },
-  spring(){ tone(600,0.07,'sine',0.14,0); tone(900,0.08,'sine',0.12,0.05); tone(1240,0.12,'sine',0.09,0.1); },
-};
-
-/* ---------------- 轻提示 ---------------- */
-let _toastT=null;
-function toast(msg){
-  const t=$('toast'); t.textContent=msg; t.classList.add('show');
-  clearTimeout(_toastT); _toastT=setTimeout(()=>t.classList.remove('show'),2200);
-}
-
-/* ---------------- 粒子特效（canvas 覆盖层） ---------------- */
-const fx=[]; const cv=$('fx'), ctx=cv.getContext('2d');
-function resizeFx(){ cv.width=innerWidth*devicePixelRatio; cv.height=innerHeight*devicePixelRatio; cv.style.width=innerWidth+'px'; cv.style.height=innerHeight+'px'; ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0); }
-addEventListener('resize',resizeFx); resizeFx();
-function burst(x,y,colors,n,speed){
-  for(let i=0;i<n;i++){
-    const a=rand(0,Math.PI*2), sp=rand(1,speed);
-    fx.push({k:'p',x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-rand(0,1),g:0.06,life:rand(40,70),c:colors[i%colors.length],s:rand(2,5),r:rand(0,Math.PI),vr:rand(-.2,.2)});
-  }
-}
-function coinFly(x,y,target){
-  fx.push({k:'c',x,y,tx:target.x,ty:target.y,t0:now(),dur:700,life:40});
-}
-function floatText(x,y,text,color,big){
-  fx.push({k:'t',x,y,text,color,c0:1,big:big||false,vy:-0.9,life:70});
-}
-function fxLoop(){
-  requestAnimationFrame(fxLoop);
-  ctx.clearRect(0,0,innerWidth,innerHeight);
-  for(let i=fx.length-1;i>=0;i--){
-    const p=fx[i]; p.life--;
-    if(p.life<=0){ fx.splice(i,1); continue; }
-    if(p.k==='p'){
-      p.x+=p.vx; p.y+=p.vy; p.vy+=p.g; p.r+=p.vr;
-      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r);
-      ctx.globalAlpha=clamp(p.life/50,0,1);
-      ctx.fillStyle=p.c; ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s); ctx.restore();
-    }else if(p.k==='c'){
-      const t=clamp((now()-p.t0)/p.dur,0,1);
-      const e=1-Math.pow(1-t,3);
-      const x=p.x+(p.tx-p.x)*e, y=p.y+(p.ty-p.y)*e-20*Math.sin(Math.PI*t);
-      ctx.globalAlpha=clamp(p.life/25,0,1);
-      ctx.fillStyle='#e6c44c'; ctx.beginPath(); ctx.arc(x,y,4.5,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle='#c9a227'; ctx.beginPath(); ctx.arc(x,y,2.2,0,Math.PI*2); ctx.fill();
-    }else if(p.k==='t'){
-      p.y+=p.vy;
-      ctx.globalAlpha=clamp(p.life/40,0,1)*p.c0;
-      ctx.font=(p.big?'800 24px':'800 16px')+' "Segoe UI","Microsoft YaHei",sans-serif';
-      ctx.textAlign='center';
-      ctx.lineWidth=4; ctx.strokeStyle='rgba(255,255,255,.65)'; ctx.strokeText(p.text,p.x,p.y);
-      ctx.fillStyle=p.color; ctx.fillText(p.text,p.x,p.y);
+  // 2. 随机身高体重
+  for(let r=1;r<=6;r++){
+    for(let k=0;k<50;k++){
+      const st=rollStats(r);
+      if(st.h<R_H[r][0]||st.h>R_H[r][1]){ check('r'+r+' 身高范围',false,st.h); }
+      if(st.w<R_W[r][0]||st.w>R_W[r][1]){ check('r'+r+' 体重范围',false,st.w); }
     }
   }
-}
-fxLoop();
-function coinTarget(){ const r=$('coinbox').getBoundingClientRect(); return {x:r.left+r.width/2, y:r.top+r.height/2}; }
+  check('rollStats 返回有效数字', (function(){ const st=rollStats(3); return isFinite(st.h)&&isFinite(st.w); })());
 
-/* ---------------- 月巴 SVG 渲染 ---------------- */
-function shapeBody(sh,c,dk,lt){
-  const f=`fill="${c}"`, s=`stroke="${dk}" stroke-width="1.4"`;
-  switch(sh){
-    case 'round':  return `<circle cx="20" cy="21" r="13" ${f} ${s}/>`;
-    case 'tall':   return `<ellipse cx="20" cy="22" rx="9.5" ry="14" ${f} ${s}/>`;
-    case 'wide':   return `<ellipse cx="20" cy="22" rx="15" ry="10.5" ${f} ${s}/>`;
-    case 'squish': return `<ellipse cx="20" cy="24" rx="13.5" ry="9" ${f} ${s}/>`;
-    case 'cube':   return `<rect x="8" y="9" width="24" height="25" rx="5" ${f} ${s}/>`;
-    case 'big':    return `<ellipse cx="20" cy="22" rx="16" ry="13" ${f} ${s}/>`;
-    case 'bean':   return `<circle cx="15.5" cy="22" r="9.5" ${f} ${s}/><circle cx="24.5" cy="22" r="9.5" ${f} ${s}/>`;
-    case 'heart':  return `<path d="M20 32 C10 24 6 17 9 12 C12 7.5 17 8 20 12 C23 8 28 7.5 31 12 C34 17 30 24 20 32 Z" ${f} ${s}/>`;
-    case 'drop':   return `<path d="M20 7 C26 15 29 20 29 25 A9 9 0 1 1 11 25 C11 20 14 15 20 7 Z" ${f} ${s}/>`;
-    case 'star':   return `<path d="M20 8 L23.6 16.8 L32.6 17.2 L25.6 22.9 L28.4 31.4 L20 26.6 L11.6 31.4 L14.4 22.9 L7.4 17.2 L16.4 16.8 Z" ${f} ${s}/>`;
-    case 'spike':  return `<circle cx="20" cy="25" r="10" ${f} ${s}/><path d="M14 11 L16 4 L20 10 L24 3 L27 11 L25 14 L15 14 Z" ${f} ${s}/>`;
-    case 'crown':  return `<circle cx="20" cy="25" r="11" ${f} ${s}/><path d="M13 13 L16 6 L20 11 L24 5 L27 12 Z" ${f} ${s}/>`;
-    case 'moon':   return `<path d="M27 5 A14 14 0 1 0 27 35 A11 11 0 1 1 27 5 Z" ${f} ${s}/>`;
-    case 'ghost':  return `<path d="M8 12 A12 12 0 0 1 32 12 L32 30 L27 25 L22 30 L17 25 L12 30 L8 26 Z" ${f} ${s}/>`;
-    case 'rainbow':return `<path d="M12 27 A10 10 0 0 1 28 27 L25 27 A7 7 0 0 0 15 27 Z" ${f} ${s}/>`;
-    case 'chaos':  return `<circle cx="20" cy="21" r="12.5" ${f} ${s}/>`;
-    default:       return `<circle cx="20" cy="21" r="13" ${f} ${s}/>`;
-  }
-}
-function fatSVG(type){
-  if(type.img){ // 外链 PNG（玩家不可见，仅代码内配置），未配置则走默认 SVG
-    return `<img class="fat ybimg" src="${type.img}" alt="">`;
-  }
-  const h=hashStr(type.id), c=type.color, dk=shade(c,-26);
-  const body=shapeBody(type.shape||'round',c,dk,shade(c,26));
-  const eye=(h%4), mouth=((h>>2)%4);
-  const ex1=type.shape==='tall'?11:type.shape==='wide'?12:10;
-  const ex2=30-ex1;
-  let eyes, mm;
-  if(eye===0) eyes=`<circle cx="${ex1}" cy="18" r="2.4" fill="#3b3654"/><circle cx="${ex2}" cy="18" r="2.4" fill="#3b3654"/>`;
-  else if(eye===1) eyes=`<ellipse cx="${ex1}" cy="18" rx="2.5" ry="3" fill="#3b3654"/><ellipse cx="${ex2}" cy="18" rx="2.5" ry="3" fill="#3b3654"/>`;
-  else if(eye===2) eyes=`<path d="M${ex1} 15.5 l2.4 2.5 l-2.4 2.5 l-2.4 -2.5 z" fill="#3b3654"/><path d="M${ex2} 15.5 l2.4 2.5 l-2.4 2.5 l-2.4 -2.5 z" fill="#3b3654"/>`;
-  else eyes=`<path d="M${ex1-2} 18 h4 M${ex2-2} 18 h4" stroke="#3b3654" stroke-width="1.8" stroke-linecap="round"/>`;
-  if(mouth===0) mm=`<path d="M14 23.5 Q17 27 20 23.5 Q23 27 26 23.5" stroke="#3b3654" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
-  else if(mouth===1) mm=`<circle cx="20" cy="24.5" r="2.4" fill="#3b3654"/>`;
-  else if(mouth===2) mm=`<path d="M15 25.5 Q20 29 25 25.5 L25 26.5 Q20 30 15 26.5 Z" fill="#3b3654"/>`;
-  else mm=`<path d="M15 26 Q20 24.5 25 26" stroke="#3b3654" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
-  const hi=`<circle cx="13.5" cy="10.5" r="2.1" fill="rgba(255,255,255,.5)"/>`;
-  return `<svg viewBox="0 0 40 40" class="fat" style="width:100%;height:100%">${body}${eyes}${mm}${hi}</svg>`;
-}
-/* 幼年期/成长期共用的通用嫩芽（所有月巴长得一样，仅大小不同） */
-function sproutSVG(){
-  return `<svg viewBox="0 0 40 40" style="width:100%;height:100%">
-    <path d="M20 33 Q20 27 20 24" stroke="#a9bd8b" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-    <path d="M20 27 Q12 24 11 18 Q18 20 20 27 Z" fill="#c3d6a4"/>
-    <path d="M20 27 Q28 24 29 18 Q22 20 20 27 Z" fill="#cddbb0"/>
-    <ellipse cx="20" cy="16" rx="9" ry="8.6" fill="#e2d9f4" stroke="#b8a9e0" stroke-width="1.4"/>
-    <ellipse cx="16.6" cy="12.6" rx="2.4" ry="1.9" fill="#f5f0ff"/>
-    <circle cx="17.2" cy="16.2" r="1.5" fill="#6b5e93"/>
-    <circle cx="22.8" cy="16.2" r="1.5" fill="#6b5e93"/>
-    <path d="M17.5 19.4 Q20 21 22.5 19.4" stroke="#6b5e93" stroke-width="1.3" fill="none" stroke-linecap="round"/>
-  </svg>`;
-}
-function lockedSVG(){
-  return `<svg viewBox="0 0 40 40" style="width:100%;height:100%"><circle cx="20" cy="21" r="13" fill="#d5cee8" stroke="#c2b8dd" stroke-width="1.4"/><circle cx="15.5" cy="18" r="2.2" fill="#a79cc9"/><circle cx="24.5" cy="18" r="2.2" fill="#a79cc9"/><path d="M15 25 Q20 28 25 25" stroke="#a79cc9" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>`;
-}
-function hScale(h){ return clamp(0.7+(h-2)/38,0.7,1.7); }
+  // 3. 极值记录（极值低频化通过 rollNum 向中段偏置实现，非时间冷却）
+  const cid='mb_xian';
+  let beats=recordExtremes(cid,10,5);
+  check('首收四项极值', beats.length===4 && beats.join(',')==='最高,最矮,最重,最轻', beats.join(','));
+  let c=S.collection[cid];
+  check('最高10/最矮10/最重5/最轻5', c.tallest.v===10&&c.shortest.v===10&&c.heaviest.v===5&&c.lightest.v===5);
+  beats=recordExtremes(cid,20,1);
+  check('更高/更轻 触发2项', beats.join(',')==='最高,最轻', beats.join(','));
+  beats=recordExtremes(cid,3,50);
+  check('更矮/更重 触发2项', beats.join(',')==='最矮,最重', beats.join(','));
+  c=S.collection[cid];
+  check('极值更新正确', c.tallest.v===20&&c.shortest.v===3&&c.heaviest.v===50&&c.lightest.v===1);
+  check('极值记录时间戳', c.tallest.t>0 && fmtTS(c.tallest.t).length>5);
+  // 极值不再靠时间冷却抑制，而是靠 rollNum 向中段偏置：越靠近区间两端概率越低
+  check('rollNum 有界且向中段集中', (function(){ let sum=0,n=2000; for(let i=0;i<n;i++){ const v=rollNum(0,100); if(v<0||v>100) return false; sum+=v; } const mean=sum/n; return mean>42&&mean<58; })());
 
-/* ---------------- 图鉴数据（含极值） ---------------- */
-function colGet(id){ if(!S.collection[id]) S.collection[id]={count:0}; return S.collection[id]; }
-function colCount(id){ return (S.collection[id]&&S.collection[id].count)||0; }
-function rollNum(lo,hi){ // 取值向中段集中：越接近上下极值概率越低（极值低频化，非时间冷却）
-  return (lo+Math.random()*(hi-lo) + lo+Math.random()*(hi-lo))/2;
-}
-function rollStats(r){
-  const [ha,hb]=R_H[r], [wa,wb]=R_W[r];
-  return {h:+rollNum(ha,hb).toFixed(1), w:+rollNum(wa,wb).toFixed(1)};
-}
-function recordExtremes(id,h,w){
-  const c=colGet(id), beats=[];
-  if(!c.tallest  || h>c.tallest.v)  { c.tallest ={v:h,t:now()}; beats.push('最高'); }
-  if(!c.shortest || h<c.shortest.v){ c.shortest={v:h,t:now()}; beats.push('最矮'); }
-  if(!c.heaviest || w>c.heaviest.v){ c.heaviest={v:w,t:now()}; beats.push('最重'); }
-  if(!c.lightest || w<c.lightest.v){ c.lightest={v:w,t:now()}; beats.push('最轻'); }
-  return beats;
-}
-function rollStats(r){
-  const [ha,hb]=R_H[r], [wa,wb]=R_W[r];
-  return {h:+rand(ha,hb).toFixed(1), w:+rand(wa,wb).toFixed(1)};
-}
+  // 3b. 图鉴四金词条 → 卡片泛金光
+  const setExt=function(id,hHi,hLo,wHi,wLo){ S.collection[id]={count:1,
+    tallest:{v:hHi,t:now()}, shortest:{v:hLo,t:now()}, heaviest:{v:wHi,t:now()}, lightest:{v:wLo,t:now()}}; };
+  const goldFor=function(html,name){ const s=html.indexOf('nm">'+name); const a=html.lastIndexOf('class="bcard',s); let e=html.indexOf('class="bcard',s+1); if(e<0)e=html.length; const block=html.slice(a,e); return {gold:(block.match(/class="gold"/g)||[]).length, all:block.includes('allgold')}; };
+  const hiT=TYPES.find(t=>t.r===2), hiR=R_H[2], hiW=R_W[2];
+  setExt(hiT.id, hiR[1], hiR[0], hiW[1], hiW[0]);
+  document.getElementById('modal-body').innerHTML=''; document.getElementById('modalTitle').textContent='';
+  openBook();
+  const allCard=document.getElementById('modal-body').innerHTML, hiRes=goldFor(allCard,hiT.name);
+  check('四金词条卡含 allgold', hiRes.all, 'gold='+hiRes.gold);
+  check('四金词条卡四项全 gold', hiRes.gold===4, 'gold='+hiRes.gold);
+  const loT=TYPES.find(t=>t.r===3), loR=R_H[3], loW=R_W[3];
+  setExt(loT.id, loR[0], loR[0], loW[1], loW[0]); // 最高未达顶 → 最矮/最重/最轻 3 金
+  document.getElementById('modal-body').innerHTML=''; openBook();
+  const partCard=document.getElementById('modal-body').innerHTML, loRes=goldFor(partCard,loT.name);
+  check('未全金不加 allgold', !loRes.all, 'gold='+loRes.gold);
+  check('部分金仅3项gold', loRes.gold===3, 'gold='+loRes.gold);
+  S.collection={}; load();
 
-/* ---------------- 核心逻辑：生长 / 收获 ---------------- */
-const SCENE_FAT_ZOOM=1.5; // 栽种场景中成熟月巴的显示倍率（图鉴不受影响），可手动调整
-function availableTypes(){ return TYPES.filter(t=>condOk(t.cond)); }
-function weightOf(t){ return t.weight!=null?t.weight:({1:100,2:45,3:14,4:4,5:1.2,6:0.9}[t.r]||1); }
-function weightedPick(list){
-  let sum=0; for(const t of list) sum+=weightOf(t);
-  let r=Math.random()*sum;
-  for(const t of list){ r-=weightOf(t); if(r<=0)return t; }
-  return list[list.length-1];
-}
-const BASE_SPEED=0.5; // 全部月巴基础生长速度（倍）：0.5 倍时间，即生长时长翻倍
-function spawnIn(zone,wood,cell){
-  const t=weightedPick(availableTypes());
-  const st=rollStats(t.r);
-  cell.t=t.id; cell.start=now(); cell.dur=t.t*(1000/BASE_SPEED); cell.h=st.h; cell.w=st.w; cell.delay=0;
-}
-function cellRemaining(cell){ return (cell.dur/speedMult())-(now()-cell.start); }
-function cellReady(cell){ return cell.t && cellRemaining(cell)<=0; }
-function cellStage(cell){
-  if(!cell||!cell.t)return 'empty';
-  if(cellReady(cell))return 'mature';
-  const p=clamp((now()-cell.start)/(cell.dur/speedMult()),0,1);
-  return p<0.34?'baby':'grow';
-}
+  // 3c. 外链 PNG 支持
+  check('外链月巴渲染 <img>', (function(){ const s=fatSVG({id:'x',img:'https://a.b/y.png'}); return s.includes('<img')&&s.includes('class="fat ybimg"')&&s.includes('https://a.b/y.png'); })());
+  check('无外链回退 SVG', fatSVG({id:'mb_xian',name:'闲月巴',r:1,v:6,t:60,cond:null,color:'#d9c7f2',shape:'round'}).startsWith('<svg'));
+  check('图鉴外链卡渲染图片', (function(){ const ti=TYPES.find(x=>x.id==='mb_xian'); S.collection['mb_xian']={count:1}; ti.img='https://a.b/y.png'; openBook(); const h=document.getElementById('modal-body').innerHTML; S.collection={}; delete ti.img; return h.includes('class="fat ybimg"')&&h.includes('https://a.b/y.png'); })());
 
-function addCoins(n){
-  S.coins+=n;
-  const el=$('coinbox'); el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse');
-  $('coinTxt').textContent=fmt(S.coins);
-}
-function doHarvest(z,w,i,cell,el,quiet){
-  const type=TYPES.find(x=>x.id===cell.t);
-  const isNew=!S.collection[type.id];
-  if(!cell.h||!cell.w){ const st=rollStats(type.r); cell.h=st.h; cell.w=st.w; }
-  const beats=recordExtremes(type.id,cell.h,cell.w);
-  const val=Math.round(type.v*(isNew?3:1));
-  addCoins(val);
-  S.totalHarvest++;
-  const c=colGet(type.id); c.count++;
-  c.last={h:cell.h,w:cell.w,t:now()};
-  // 特效（非可见槽位自动收集时跳过；静默自动收集时不出声）
-  if(el){
-    const r=el.getBoundingClientRect();
-    const x=r.left+r.width/2, y=r.top+r.height/2;
-    const col=[type.color,shade(type.color,20),'#e6c44c'];
-    burst(x,y,col,isNew?26:14,isNew?5:3.4);
-    floatText(x,y-8,`+${fmt(val)} 🪙 · ${cell.h}cm`,isNew?'#e6c44c':'#7e57c2');
-    coinFly(x,y,coinTarget());
-    if(!quiet) sfx.harvest(0);
-  }
-  if(beats.length) toast(`📐 新纪录！「${type.name}」${beats.join('、')} ${cell.h}cm / ${cell.w}g`);
-  if(isNew){ unlockBanner(type,cell); if(!quiet) sfx.unlock(); } else if(!quiet) sfx.coin();
-  cell.t=null; cell.delay=now()+rand(900,2600);
-  updateHeader();
-  renderCell(z,w,i);
-  return {id:type.id,name:type.name,color:type.color,val};
-}
-function unlockBanner(type,cell){
-  $('bannerPic').innerHTML=fatSVG(type);
-  $('bannerName').textContent=`${type.name} (${cell.h}cm · ${cell.w}g)`;
-  $('bannerDesc').textContent=condText(type.cond);
-  $('bannerReward').textContent=`首次收获 x3 · ${fmt(type.v*3)} 🪙`;
-  const b=$('banner'); b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
-}
+  // 3d. 图鉴详情弹窗：简介全覆盖 + 点卡弹窗
+  check('每种月巴都有简介', TYPES.every(t=>typeof FAT_INTRO[t.id]==='string'&&FAT_INTRO[t.id].length>0), TYPES.filter(t=>!FAT_INTRO[t.id]).map(t=>t.id).join(','));
+  check('图鉴卡点击绑定详情', (function(){ S.collection['mb_xian']={count:1,tallest:{v:10,t:now()},shortest:{v:10,t:now()},heaviest:{v:5,t:now()},lightest:{v:5,t:now()},last:{h:7,w:4}}; openBook(); const h=document.getElementById('modal-body').innerHTML; return h.includes("openFatDetail('mb_xian')"); })());
+  check('详情悬浮层含放大图/记录/简介且图鉴不关闭', (function(){ S.collection['mb_xian']={count:3,tallest:{v:10,t:now()},shortest:{v:10,t:now()},heaviest:{v:5,t:now()},lightest:{v:5,t:now()},last:{h:7,w:4}}; openBook(); const bookHTML=document.getElementById('modal-body').innerHTML; openFatDetail('mb_xian'); const h=document.getElementById('fdOverlay').innerHTML; return h.includes('fd-pic')&&h.includes('收获 x3')&&h.includes('简介')&&h.includes(FAT_INTRO['mb_xian'])&&h.includes('10cm')&&h.includes('7cm · 4g')&&document.getElementById('fdOverlay').classList.contains('show')&&document.getElementById('modal-body').innerHTML===bookHTML; })());
+  check('详情悬浮层未发现时安全', (function(){ delete S.collection['mb_xian']; const ov=document.getElementById('fdOverlay'); ov.classList.remove('show'); ov.innerHTML=''; openFatDetail('mb_xian'); return !ov.classList.contains('show')&&ov.innerHTML===''; })());
+  check('图鉴拖拽安全：空目标不报错', (function(){ try{ bkStart({target:{}}); bkEnd({pointerId:1}); bkClickGuard({stopPropagation(){},preventDefault(){}}); return bkDrag===null; }catch(err){ return false; } })());
+  check('图鉴拖拽移动需匹配指针', (function(){ try{ bkMove({pointerId:99,clientX:0,clientY:0,timeStamp:0}); return true; }catch(err){ return false; } })());
+  check('图鉴拖拽松开后归位(含边界外松手)', (function(){
+    const spr={style:{transform:'scale(1)'},isConnected:true};
+    const pic={querySelector:()=>spr,getBoundingClientRect:()=>({left:100,top:100,width:120,height:120}),setPointerCapture(){},style:{}};
+    const ev=(x,y)=>({clientX:x,clientY:y,pointerId:1,target:{closest:()=>pic},preventDefault(){},stopPropagation(){},timeStamp:performance.now()});
+    const _raf=globalThis.requestAnimationFrame, _perf=globalThis.performance;
+    let q=[], t=0;
+    globalThis.requestAnimationFrame=fn=>{q.push(fn);return q.length;};
+    globalThis.performance={now:()=>t};
+    const step=()=>{t+=16;const a=q;q=[];a.forEach(f=>f());};
+    try{
+      bkStart(ev(110,110));
+      for(let i=1;i<=10;i++)bkMove(ev(100+i*2,100+i*2));
+      bkEnd(ev(130,130)); // 模拟弹窗边界外松手
+      let n=0;
+      while(bkDrag&&n<600){step();n++;}
+      return bkDrag===null && spr.style.transform==='translate(0,0) rotate(0deg) scale(1)';
+    }finally{ globalThis.requestAnimationFrame=_raf; globalThis.performance=_perf; }
+  })());
+  check('详情悬浮层月巴可拖拽且归位', (function(){
+    const spr={style:{transform:'scale(0.333)'},isConnected:true};
+    const pic={querySelector:()=>spr,getBoundingClientRect:()=>({left:100,top:100,width:120,height:120}),setPointerCapture(){},style:{}};
+    const ev=(x,y)=>({clientX:x,clientY:y,pointerId:1,target:{closest:()=>pic},preventDefault(){},stopPropagation(){},timeStamp:performance.now()});
+    const _raf=globalThis.requestAnimationFrame, _perf=globalThis.performance;
+    let q=[], t=0;
+    globalThis.requestAnimationFrame=fn=>{q.push(fn);return q.length;};
+    globalThis.performance={now:()=>t};
+    const step=()=>{t+=16;const a=q;q=[];a.forEach(f=>f());};
+    try{
+      bkStart(ev(110,110));
+      for(let i=1;i<=10;i++)bkMove(ev(100+i*2,100+i*2));
+      bkEnd(ev(130,130));
+      let n=0;
+      while(bkDrag&&n<600){step();n++;}
+      return bkDrag===null && spr.style.transform==='translate(0,0) rotate(0deg) scale(0.333)';
+    }finally{ globalThis.requestAnimationFrame=_raf; globalThis.performance=_perf; }
+  })());
+  check('场景拖拽松开后归位(含场地外松手)', (function(){
+    const spr={style:{},getAttribute:()=> '0.75',isConnected:true};
+    const btn={querySelector:()=>spr,getBoundingClientRect:()=>({left:100,top:100,width:80,height:80}),setPointerCapture(){},className:''};
+    const ev=(x,y)=>({clientX:x,clientY:y,pointerId:1,target:{closest:()=>btn},preventDefault(){},stopPropagation(){},timeStamp:performance.now()});
+    const _raf=globalThis.requestAnimationFrame, _perf=globalThis.performance;
+    let q=[], t=0;
+    globalThis.requestAnimationFrame=fn=>{q.push(fn);return q.length;};
+    globalThis.performance={now:()=>t};
+    const step=()=>{t+=16;const a=q;q=[];a.forEach(f=>f());};
+    try{
+      folStart(ev(120,120));
+      for(let i=1;i<=10;i++)folMove(ev(110+i*2,110+i*2));
+      folEnd(ev(140,140)); // 模拟场地工具条/底部等场地外松手
+      let n=0;
+      while(fol&&n<600){step();n++;}
+      return fol===null && spr.style.transform==='translate(0,0) rotate(0deg) scale(0.75)';
+    }finally{ globalThis.requestAnimationFrame=_raf; globalThis.performance=_perf; }
+  })());
 
-/* ---------------- DOM 渲染：总览场地卡片 ---------------- */
-const cellEls={}; // key `${z}-${w}-${i}` -> 场景中月巴元素
-function renderOverview(){
-  const board=$('board'); let html='';
-  for(let z=0;z<S.zones.length;z++){
-    const zone=S.zones[z], zd=ZONES[z];
-    let woodCnt=0, slotCnt=0;
-    for(const w of zone.woods){ woodCnt++; slotCnt+=w.cells.length; }
-    const bgUrl=zd.bg;
-    html+=`<div class="zcard ${zone.bought?'':'locked'}" onclick="onZoneCard(${z})">
-      <div class="zbg" style="background-image:url('${bgUrl}')"></div>
-      <div class="zover"></div>
-      ${zone.bought?'':'<div class="lock">🔒</div>'}
-      <div class="zinfo frost">
-        <div>
-          <div class="zn">${zd.icon} ${zd.name}</div>
-          <div class="zs">${zone.bought?('🪵'+woodCnt+' 木头 · '+slotCnt+' 槽位'):'尚未解锁'}</div>
-        </div>
-        <div class="zb">${zone.bought?'👀 查看':'🔓 '+fmt(zd.cost)+'🪙'}</div>
-      </div>
-    </div>`;
-  }
-  board.innerHTML=html;
-}
-function onZoneCard(z){
-  const zone=S.zones[z];
-  if(!zone.bought){ tryBuyZone(z); return; }
-  sfx.click(); openScene(z);
-}
-function tryBuyZone(z){
-  const zd=ZONES[z];
-  if(S.coins<zd.cost){ sfx.error(); toast('金币不足，还差 '+fmt(zd.cost-S.coins)+'🪙'); return; }
-  S.coins-=zd.cost; S.zones[z].bought=true; S.zones[z].woods.push({cells:[null,null,null]});
-  sfx.unlock(); save(); renderOverview(); updateHeader();
-  toast(`解锁「${zd.name}」！`); openScene(z);
-}
+  // 4. 阶段判定（dur 为毫秒）
+  const base=TYPES.find(t=>!t.cond);
+  const mk=(frac)=>({t:base.id,start:now()-frac*base.t*1000,dur:base.t*1000,h:5,w:5});
+  check('幼年期 (<1/3)', cellStage(mk(0.2))==='baby', cellStage(mk(0.2)));
+  check('成长期 (1/3~1)', cellStage(mk(0.6))==='grow', cellStage(mk(0.6)));
+  check('成熟期 (=1)', cellStage(mk(1))==='mature', cellStage(mk(1)));
+  check('空槽 empty', cellStage(null)==='empty');
+  check('刚出生为幼年(时长单位毫秒修复)', cellStage({t:base.id,start:now(),dur:base.t*1000,h:5,w:5})==='baby');
+  check('全时长后才成熟', cellReady({t:base.id,start:now()-base.t*1000,dur:base.t*1000})===true);
 
-/* ---------------- 场地场景视图 ---------------- */
-let currentZone=-1;
-function openScene(z){
-  currentZone=z;
-  $('sceneName').textContent=`${ZONES[z].icon} ${ZONES[z].name}`;
-  $('sceneBg').style.backgroundImage=`url('${ZONES[z].bg}')`;
-  $('scene').classList.add('show');
-  renderSceneWoods();
-  updateSceneBar();
-  sfx.click();
-}
-function closeScene(){ $('scene').classList.remove('show'); currentZone=-1; for(const k in cellEls) delete cellEls[k]; }
-function woodSpot(z,wi){
-  const spots=ZONES[z].spots;
-  const base=spots[wi%spots.length];
-  const extra=Math.floor(wi/spots.length);
-  // 限制最低位置，避免手机端木头/月巴被屏幕底缘遮挡
-  return {l:base[0], t:Math.min(base[1]+extra*2, 70)};
-}
-function renderSceneWoods(){
-  const wrap=$('sceneWoods');
-  let html='';
-  for(let w=0;w<S.zones[currentZone].woods.length;w++){
-    const wood=S.zones[currentZone].woods[w];
-    const n=wood.cells.length;
-    const sp=woodSpot(currentZone,w);
-    html+=`<div class="wood" id="wood-${currentZone}-${w}" style="left:calc(${sp.l}% - ${(110+n*22)/2}px);top:calc(${sp.t}% - 75px);width:${110+n*22}px">
-      <div class="wslots">`;
-    for(let i=0;i<n;i++){
-      const left=(i+0.5)/n*100;
-      const jx=((i*37)%21)-10;
-      html+=`<button class="wcell" id="cell-${currentZone}-${w}-${i}" data-z="${currentZone}" data-w="${w}" data-i="${i}"
-        style="left:${left}%;bottom:${4+jx}px" onclick="clickCell(${currentZone},${w},${i})"></button>`;
-    }
-    html+=`</div>
-      <div class="wimg" style="background-image:url('${WOOD_IMG}'),linear-gradient(180deg,#cdb9e6,#a58fd0)"></div>
-    </div>`;
-  }
-  wrap.innerHTML=html;
-  // 重建 cell 引用
-  for(const k in cellEls) delete cellEls[k];
-  for(let w=0;w<S.zones[currentZone].woods.length;w++){
-    const wood=S.zones[currentZone].woods[w];
-    for(let i=0;i<wood.cells.length;i++){
-      const el=document.getElementById(`cell-${currentZone}-${w}-${i}`);
-      if(el){ cellEls[`${currentZone}-${w}-${i}`]=el; renderCell(currentZone,w,i); }
-    }
-  }
-  // 新木头入场动画
-  const last=wrap.querySelectorAll('.wood'); if(last.length) last[last.length-1].classList.add('pop');
-}
-function renderCell(z,w,i){
-  const cell=S.zones[z].woods[w].cells[i];
-  const el=cellEls[`${z}-${w}-${i}`];
-  if(!el)return;
-  if(cell && cell.t){
-    const stage=cellStage(cell);
-    if(stage==='mature'){
-      const type=TYPES.find(x=>x.id===cell.t);
-      const s=hScale(cell.h)*(type.size||1)*SCENE_FAT_ZOOM;
-      el.className='wcell mature';
-      el.innerHTML=`<span class="spr" style="transform:scale(${s})">${fatSVG(type)}</span>
-        <span class="val">+${fmt(type.v)}</span>`;
-      el.title=`${type.name} · ${cell.h}cm · ${cell.w}g`;
-    }else{
-      const s=stage==='baby'?0.62:0.88;
-      const p=clamp((now()-cell.start)/(cell.dur/speedMult()),0,1);
-      el.className='wcell grow';
-      el.innerHTML=`<span class="spr" data-s="${s}" style="transform:scale(${s})">${sproutSVG()}</span>
-        <span class="pg"><i style="width:${p*100}%"></i></span>`;
-      el.title='生长中…';
-    }
-  }else if(cell && cell.delay){
-    el.className='wcell';
-    el.innerHTML=`<span class="spr" style="transform:scale(.4);opacity:.35">${lockedSVG()}</span>`;
-    el.title='';
-  }else{
-    el.className='wcell';
-    el.innerHTML=''; el.title='';
-  }
-}
-function clickCell(z,w,i){
-  const cell=S.zones[z].woods[w].cells[i];
-  if(cell&&cell.t&&cellReady(cell)){ doHarvest(z,w,i,cell,cellEls[`${z}-${w}-${i}`]); }
-  else sfx.click();
-}
+  // 5. renderCell 三阶段标记
+  const fe=(()=>{ const o={className:'',innerHTML:'',title:'',querySelector:()=>({style:{}}),getBoundingClientRect:()=>({left:0,top:0,width:40,height:40})}; cellEls['0-0-0']=o; return o; })();
+  S.zones[0].woods[0].cells[0]=mk(0.2); renderCell(0,0,0);
+  check('幼年渲染为通用嫩芽', fe.className==='wcell grow' && fe.innerHTML.includes('e2d9f4') && fe.innerHTML.includes('scale(0.62)'));
+  S.zones[0].woods[0].cells[0]=mk(0.6); renderCell(0,0,0);
+  check('成长渲染为通用嫩芽(更大)', fe.className==='wcell grow' && fe.innerHTML.includes('scale(0.88)'));
+  S.zones[0].woods[0].cells[0]=mk(1); renderCell(0,0,0);
+  check('成熟渲染为真实月巴', fe.className==='wcell mature' && fe.innerHTML.includes('class="fat'));
+  check('hScale 边界', hScale(2)===0.7 && hScale(40)===1.7 && hScale(21)===1.2);
+  // 5b. 未成熟月巴「跟随手指弹回」交互：无目标/无拖拽时安全不抛错
+  check('拖拽交互空目标安全', (function(){ try{ folStart({target:{}}); folEnd({pointerId:1}); return fol===null; }catch(err){ return false; } })());
+  check('拖拽最大偏移常量', FOL_MAX>0 && FOL_MAX<=40, FOL_MAX);
+  check('小月巴场景缩放=1/3并乘场景倍率', (function(){ const o={className:'',innerHTML:'',title:'',querySelector:()=>({style:{}}),getBoundingClientRect:()=>({left:0,top:0,width:40,height:40})}; cellEls['1-0-0']=o; S.zones[1]={woods:[{cells:[]}]}; S.zones[1].woods[0].cells[0]=mk(1); S.zones[1].woods[0].cells[0].t='mb_xiaoyue'; renderCell(1,0,0); S.zones=S.zones.slice(0,1); const mm=o.innerHTML.indexOf('scale('); const num=parseFloat(o.innerHTML.slice(mm+6)); return Math.abs(num-0.333*hScale(5)*SCENE_FAT_ZOOM)<0.002; })());
+  check('小月巴图鉴缩放=1/3', (function(){ const md=S.collection||{}; document.getElementById('modal-body'); S.collection['mb_xiaoyue']={count:1}; openBook(); const h=document.getElementById('modal-body').innerHTML; S.collection=md; return h.includes('transform:scale(0.333)') && h.includes('小月巴'); })());
 
-/* 未成熟月巴交互：按住时 1:1 贴合手指（EMA 去抖），松开弹性回位（rAF 弹簧） */
-const FOL_MAX=26;    // 手指拖拽最大偏移（px）
-const FOL_EMA=0.8;   // 跟随平滑系数：越高越贴合手指、越低越柔（兼去抖）
-const FOL_K_R=200;   // 松开回位刚度
-const FOL_C_R=10;    // 松开阻尼：欠阻尼 → 弹性回弹
-const FOL_VMAX=3200; // 回弹限速，极端甩动不跳变
-let fol=null;        // 当前拖拽中的月巴
-let folRaf=null;     // 动画循环句柄
-function folApply(f){
-  f.spr.style.transform=`translate(${f.x.toFixed(2)}px,${f.y.toFixed(2)}px) rotate(${clamp(f.x*0.8,-16,16).toFixed(2)}deg) scale(${f.s})`;
-}
-function folStart(e){
-  const btn=e.target.closest&&e.target.closest('.wcell.grow');
-  if(!btn)return;
-  const spr=btn.querySelector('.spr');
-  if(!spr)return;
-  const r=btn.getBoundingClientRect();
-  fol={spr,s:parseFloat(spr.getAttribute('data-s')||'0.75'),ptr:e.pointerId,
-       cx:r.left+r.width/2, cy:r.top+r.height/2,
-       x:0,y:0,vx:0,vy:0,tx:0,ty:0,lastX:0,lastY:0,lastEvtT:e.timeStamp||0,
-       state:'drag',lastT:performance.now(),lastSnd:0,lastDX:0,lastDY:0};
-  spr.style.animation='none'; spr.style.transition='none';
-  if(!folRaf) folRaf=requestAnimationFrame(folSpring);
-  sfx.grab();
-  try{ btn.setPointerCapture(e.pointerId); }catch(err){}
-  e.preventDefault();
-}
-function folMove(e){
-  if(!fol||fol.ptr!==e.pointerId)return;
-  let dx=e.clientX-fol.cx, dy=e.clientY-fol.cy;
-  const d=Math.hypot(dx,dy);
-  if(d>FOL_MAX){ dx=dx/d*FOL_MAX; dy=dy/d*FOL_MAX; }
-  fol.tx=dx; fol.ty=dy;
-  // 直接贴合手指 + 轻度 EMA 去抖（响应 ~1 帧内，轨迹高度一致且不跳变）
-  fol.x+=(dx-fol.x)*FOL_EMA; fol.y+=(dy-fol.y)*FOL_EMA;
-  folApply(fol);
-  // 记录手指速度，松开后作为回弹初速度（自然延续）
-  const evtDt=((e.timeStamp||0)-fol.lastEvtT)/1000||0.016;
-  if(evtDt>0){ fol.vx=(dx-fol.lastX)/evtDt; fol.vy=(dy-fol.lastY)/evtDt; }
-  fol.lastX=dx; fol.lastY=dy; fol.lastEvtT=e.timeStamp||0;
-  const t=performance.now();
-  if(t-fol.lastSnd>130 && Math.hypot(dx-fol.lastDX,dy-fol.lastDY)>3){
-    fol.lastSnd=t; fol.lastDX=dx; fol.lastDY=dy; sfx.drag();
-  }
-}
-function folEnd(e){
-  if(!fol||fol.ptr!==e.pointerId)return;
-  fol.state='release';
-  sfx.spring();
-}
-function folSpring(){ // 每帧：拖拽期继续 EMA 贴合；松开后弹簧积分回位
-  const f=fol;
-  if(!f || !f.spr.isConnected){ fol=null; folRaf=null; return; }
-  if(f.state==='drag'){
-    // 无移动事件时仍朝目标收敛，保持贴合
-    f.x+=(f.tx-f.x)*FOL_EMA; f.y+=(f.ty-f.y)*FOL_EMA;
-    folApply(f);
-    folRaf=requestAnimationFrame(folSpring);
-    return;
-  }
-  // 松开：半隐式欧拉弹簧积分（欠阻尼 → 弹回过冲）
-  let dt=((performance.now()-f.lastT)/1000)||0.016; f.lastT=performance.now();
-  if(dt>0.032) dt=0.032; // 帧率骤降仍稳定
-  f.vx+=(FOL_K_R*(0-f.x)-FOL_C_R*f.vx)*dt; f.vy+=(FOL_K_R*(0-f.y)-FOL_C_R*f.vy)*dt;
-  if(!isFinite(f.vx))f.vx=0; if(!isFinite(f.vy))f.vy=0;
-  const v=Math.hypot(f.vx,f.vy);
-  if(v>FOL_VMAX){ f.vx*=FOL_VMAX/v; f.vy*=FOL_VMAX/v; }
-  f.x+=f.vx*dt; f.y+=f.vy*dt;
-  if(!isFinite(f.x))f.x=0; if(!isFinite(f.y))f.y=0;
-  folApply(f);
-  if(Math.abs(f.x)<0.06 && Math.abs(f.y)<0.06 && Math.abs(f.vx)<0.06 && Math.abs(f.vy)<0.06){
-    f.spr.style.transform=`translate(0,0) rotate(0deg) scale(${f.s})`;
-    f.spr.style.animation=''; // 恢复嫩芽呼吸动画
-    fol=null; folRaf=null;
-  }else{
-    folRaf=requestAnimationFrame(folSpring);
-  }
-}
+  // 6. 存档迁移（v1 -> v2）
+  localStorage._d={};
+  localStorage.setItem('idle-yueba-save-v1', JSON.stringify({collection:{mb_xian:7, mb_ye:3}, coins:123, zones:defaultState().zones}));
+  load();
+  check('v1 数字存档迁移为对象', S.collection.mb_xian.count===7 && S.collection.mb_ye.count===3);
+  check('colCount 读取', colCount('mb_xian')===7 && colCount('不存在')===0);
+  localStorage._d={};
+  load();
 
-/* 图鉴月巴可拖拽：按住跟随手指、松开弹回；拖动时不触发详情弹窗 */
-let bkDrag=null, bkRaf=null;
-function bkApply(f){ f.spr.style.transform=`translate(${f.x.toFixed(2)}px,${f.y.toFixed(2)}px) rotate(${clamp(f.x*0.8,-16,16).toFixed(2)}deg) scale(${f.scale})`; }
-function bkStart(e){
-  const pic=e.target.closest&&e.target.closest('.bcard:not(.locked) .pic, .fd-pic');
-  if(!pic)return;
-  const spr=pic.querySelector('span');
-  if(!spr)return;
-  const r=pic.getBoundingClientRect();
-  const m=spr.style.transform.match(/scale\(([\d.]+)\)/);
-  bkDrag={pic,spr,scale:m?+m[1]:1,ptr:e.pointerId,cx:r.left+r.width/2,cy:r.top+r.height/2,
-          x:0,y:0,tx:0,ty:0,vx:0,vy:0,moved:false,state:'drag',lastT:performance.now(),
-          lastEvtT:e.timeStamp||0,lastX:0,lastY:0,lastSnd:0,lastDX:0,lastDY:0};
-  spr.style.transition='none';
-  if(!bkRaf) bkRaf=requestAnimationFrame(bkSpring);
-  sfx.grab();
-  try{ pic.setPointerCapture(e.pointerId); }catch(err){}
-  e.preventDefault();
-}
-function bkMove(e){
-  if(!bkDrag||bkDrag.ptr!==e.pointerId)return;
-  let dx=e.clientX-bkDrag.cx, dy=e.clientY-bkDrag.cy;
-  const d=Math.hypot(dx,dy);
-  if(d>30){ dx=dx/d*30; dy=dy/d*30; }
-  if(!bkDrag.moved && Math.hypot(dx,dy)>5) bkDrag.moved=true; // 超过阈值视为拖动
-  bkDrag.tx=dx; bkDrag.ty=dy;
-  bkDrag.x+=(dx-bkDrag.x)*FOL_EMA; bkDrag.y+=(dy-bkDrag.y)*FOL_EMA;
-  bkApply(bkDrag);
-  const evtDt=((e.timeStamp||0)-bkDrag.lastEvtT)/1000||0.016;
-  if(evtDt>0){ bkDrag.vx=(dx-bkDrag.lastX)/evtDt; bkDrag.vy=(dy-bkDrag.lastY)/evtDt; }
-  bkDrag.lastX=dx; bkDrag.lastY=dy; bkDrag.lastEvtT=e.timeStamp||0;
-  const t=performance.now();
-  if(t-bkDrag.lastSnd>130 && Math.hypot(dx-bkDrag.lastDX,dy-bkDrag.lastDY)>3){
-    bkDrag.lastSnd=t; bkDrag.lastDX=dx; bkDrag.lastDY=dy; sfx.drag();
-  }
-}
-function bkEnd(e){
-  if(!bkDrag||bkDrag.ptr!==e.pointerId)return;
-  bkDrag.state='release';
-  sfx.spring();
-}
-function bkSpring(){
-  const f=bkDrag;
-  if(!f || !f.spr.isConnected){ bkDrag=null; bkRaf=null; return; }
-  if(f.state==='drag'){
-    f.x+=(f.tx-f.x)*FOL_EMA; f.y+=(f.ty-f.y)*FOL_EMA;
-    bkApply(f);
-    bkRaf=requestAnimationFrame(bkSpring);
-    return;
-  }
-  let dt=((performance.now()-f.lastT)/1000)||0.016; f.lastT=performance.now();
-  if(dt>0.032) dt=0.032;
-  f.vx+=(FOL_K_R*(0-f.x)-FOL_C_R*f.vx)*dt; f.vy+=(FOL_K_R*(0-f.y)-FOL_C_R*f.vy)*dt;
-  if(!isFinite(f.vx))f.vx=0; if(!isFinite(f.vy))f.vy=0; // 防御：极端速度不产生 NaN
-  const v=Math.hypot(f.vx,f.vy);
-  if(v>FOL_VMAX){ f.vx*=FOL_VMAX/v; f.vy*=FOL_VMAX/v; }
-  f.x+=f.vx*dt; f.y+=f.vy*dt;
-  if(!isFinite(f.x))f.x=0; if(!isFinite(f.y))f.y=0;
-  bkApply(f);
-  if(Math.abs(f.x)<0.06 && Math.abs(f.y)<0.06 && Math.abs(f.vx)<0.06 && Math.abs(f.vy)<0.06){
-    f.spr.style.transform=`translate(0,0) rotate(0deg) scale(${f.scale})`;
-    bkDrag=null; bkRaf=null;
-  }else{
-    bkRaf=requestAnimationFrame(bkSpring);
-  }
-}
-function bkClickGuard(e){ // 拖动后的 click 不触发卡片详情（捕获阶段，先于卡片 onclick）
-  if(bkDrag && bkDrag.moved){ e.stopPropagation(); e.preventDefault(); bkDrag.moved=false; }
-}
+  // 7. 离线结算填充 h/w
+  S.zones[0].woods[0].cells=[null,null,null];
+  S.lastSave=now()-3600*1000;
+  offlineSettle();
+  const after=S.zones[0].woods[0].cells;
+  check('离线后槽位填充且带身高体重', after.every(c=>c&&c.t&&c.h>0&&c.w>0));
+  check('离线1h后成熟', after.every(c=>cellReady(c)));
 
-/* ---------------- 头部 / 状态 ---------------- */
-function updateHeader(){
-  $('coinTxt').textContent=fmt(S.coins);
-  const got=Object.keys(S.collection).length, total=TYPES.length;
-  $('collTxt').textContent=`${got}/${total} (${Math.round(got/total*100)}%)`;
-  $('collBar').style.width=(got/total*100)+'%';
-  const mut=$('btnMute'); mut.textContent=S.muted?'🔇':'🔊';
-  const wb=$('btnWeather');
-  if(wb) wb.innerHTML= weatherActive()?'<b>🌦️</b><small>自选天气</small>':'<b>🌦️</b><small>天气瓶 '+fmt(WEATHER_COST)+'🪙</small>';
-}
-/* 场景顶栏道具按钮标注价格 */
-function updateSceneBar(){
-  const wb=$('sceneWoodBtn');
-  if(wb && currentZone>=0) wb.textContent=`🪵 新木头 ${fmt(woodCost(currentZone,S.zones[currentZone].woods.length))}🪙`;
-  const we=$('sceneWeather');
-  if(we) we.textContent= weatherActive()?'🌦️ 自选天气':'🌦️ 天气瓶 '+fmt(WEATHER_COST)+'🪙';
-  const sf=$('sceneFast');
-  if(sf) sf.textContent=`🍅 快长肥 ${fmt(FAST_COST)}🪙`;
-}
-function periodOf(h){
-  if(h<5)return '凌晨';
-  if(h<12)return '上午';
-  if(h<14)return '中午';
-  if(h<18)return '下午';
-  if(h<20)return '傍晚';
-  return '晚上';
-}
-function updateStatus(){
-  const d=gameNow();
-  const h=d.getHours();
-  $('stTime').textContent=`📅 ${d.getMonth()+1}/${d.getDate()} · ${periodOf(h)}`;
-  $('stSeason').textContent=SEASON_NAME[seasonOf(d)];
-  const wmap={sunny:['☀️','晴'],cloudy:['☁️','多云'],rain:['🌧️','雨'],storm:['⛈️','暴雨'],snow:['❄️','下雪']};
-  const [wi,wn]=wmap[S.weather];
-  $('stWeather').textContent=`${wi} ${wn}${S.weather==='sunny'&&now()-S.lastRainAt<30*60000?'(雨后)':''}`;
-  const rareNow=availableTypes().filter(t=>t.r>=4).slice(0,3);
-  const autoTxt=autoCollectActive()?'⚡ 自动收集 · ':'';
-  $('stHint').textContent=rareNow.length?autoTxt+`✨ 现在有机会：${rareNow.map(t=>t.name).join('、')}`:autoTxt+'等待月巴生长…';
-}
-/* 天气瓶生效倒计时（主页下方） */
-function updateWeatherHold(){
-  const el=$('weatherHold');
-  if(!el)return;
-  const rem=S.weatherHoldEnd-now();
-  if(rem>0){
-    el.style.display='';
-    el.innerHTML=`🌦️ 天气瓶生效中 · 剩余 ${fmtDur(rem)}`;
-  }else{
-    el.style.display='none';
-  }
-}
+  // 8. 经济与条件
+  check('woodCost 递增', woodCost(0,1)>woodCost(0,0));
+  check('条件判定正常', condOk({t:'weather',w:S.weather})===true);
+  check('pick 返回成员', pick(['a','b','c']).length===1);
 
-/* ---------------- 经济操作 ---------------- */
-function buyWood(z){
-  const zone=S.zones[z]; if(!zone.bought){ sfx.error(); return; }
-  const c=woodCost(z,zone.woods.length);
-  if(S.coins<c){ sfx.error(); toast('金币不足'); return; }
-  S.coins-=c; zone.woods.push({cells:[null,null,null]});
-  sfx.buy(); save(); renderOverview(); updateHeader();
-  if(currentZone===z){ renderSceneWoods(); updateSceneBar(); }
-}
-function upgradeSlots(z,w){
-  const wood=S.zones[z].woods[w];
-  if(wood.cells.length>=MAX_SLOTS){ sfx.error(); return; }
-  const c=slotCost(z,w);
-  if(S.coins<c){ sfx.error(); toast('金币不足'); return; }
-  S.coins-=c; wood.cells.push(null);
-  sfx.buy(); save(); renderOverview(); updateHeader();
-  if(currentZone===z) renderSceneWoods();
-}
-/* 槽位购买弹窗 */
-function openSlotMenu(){
-  const z=currentZone; if(z<0) return;
-  const zone=S.zones[z]; if(!zone.bought){ toast('先解锁场地'); return; }
-  let rows='';
-  for(let w=0;w<zone.woods.length;w++){
-    const wood=zone.woods[w];
-    const n=wood.cells.length;
-    const full=n>=MAX_SLOTS;
-    rows+=`<div class="shoprow">
-      <div class="ico">🪵</div>
-      <div class="info">
-        <div class="t">栽培木 #${w+1} · ${n} 槽</div>
-        <div class="d">${full?'已达到最大槽位 ('+MAX_SLOTS+' 槽)':'购买后增加 1 个种植槽'}</div>
-      </div>
-      ${full?`<span class="btn" style="opacity:.5;cursor:default">已满</span>`:
-        `<button class="btn gold" onclick="buySlotFromMenu(${z},${w})">槽位+ ${fmt(slotCost(z,w))}🪙</button>`}
-    </div>`;
-  }
-  openModal(`🪵 槽位购买 · ${ZONES[z].name}`,
-    `<div class="hintline">💰 金币：${fmt(S.coins)} · 点击下方按钮即可为新槽位购入</div>${rows||'<div class="hintline">还没有栽培木</div>'}`);
-}
-function buySlotFromMenu(z,w){
-  const wood=S.zones[z].woods[w];
-  if(wood.cells.length>=MAX_SLOTS){ sfx.error(); return; }
-  const c=slotCost(z,w);
-  if(S.coins<c){ sfx.error(); toast('金币不足'); return; }
-  S.coins-=c; wood.cells.push(null);
-  sfx.buy(); save(); renderOverview(); updateHeader();
-  if(currentZone===z) renderSceneWoods();
-  openSlotMenu();
-}
-function useFast(){
-  if(S.coins<FAST_COST){ sfx.error(); toast('金币不足'); return; }
-  S.coins-=FAST_COST;
-  let n=0;
-  for(const zone of S.zones) for(const wood of zone.woods) for(const cell of wood.cells){
-    if(cell&&cell.t&&!cellReady(cell)){
-      const rem=cellRemaining(cell);
-      cell.start=now()-(cell.dur/speedMult()-rem*0.5);
-      n++;
-    }
-  }
-  sfx.buy(); save(); updateHeader();
-  if(currentZone>=0) renderSceneWoods();
-  toast(n?`快长肥生效：${n} 个生长中的月巴加速了！`:'没有生长中的月巴');
-}
-const W_NAMES={sunny:['☀️','晴'],cloudy:['☁️','多云'],rain:['🌧️','雨'],storm:['⛈️','暴雨'],snow:['❄️','雪']};
-const WEATHER_HOLD=2*3600*1000; // 天气瓶选定的天气持续 2 现实小时
-function weatherActive(){ return S.weatherHoldEnd>now(); }
-function useWeather(){
-  openWeatherPicker();
-}
-function openWeatherPicker(){
-  pomoModalOpen=false;
-  const act=weatherActive();
-  const opts=Object.keys(W_NAMES).map(w=>{
-    const [ic,nm]=W_NAMES[w];
-    return `<button class="wopt ${S.weather===w?'on':''}" onclick="setWeather('${w}')">
-      <span class="wico">${ic}</span>${nm}${S.weather===w?'<small>当前</small>':''}
-    </button>`;
-  }).join('');
-  const state=act?`天气瓶已生效，重新选择会重置为新的 2 小时。`
-    :`选择天气需消耗 1 瓶（${fmt(WEATHER_COST)}🪙），生效 2 现实小时。`;
-  openModal('🌦️ 天气瓶 · 选择天气',
-    `<div class="wgrid">${opts}</div>
-     <div class="hintline">${state} 时间结束后瓶即失效，需重新购入。</div>`);
-}
-function setWeather(w){
-  if(!weatherActive()){
-    if(S.coins<WEATHER_COST){ sfx.error(); toast('金币不足'); closeModal(); return; }
-    S.coins-=WEATHER_COST; sfx.unlock();
-  }
-  S.weather=w;
-  if(w==='rain'||w==='storm') S.lastRainAt=now();
-  S.nextWeatherAt=now()+WEATHER_HOLD;
-  S.weatherHoldEnd=now()+WEATHER_HOLD;
-  sfx.buy(); save(); updateStatus(); updateHeader(); updateSceneBar(); updateWeatherHold(); closeModal();
-  toast(`🌦️ 天气已设为：${W_NAMES[w][1]}（持续2小时）`);
-}
-function buyAccel(){
-  const c=accelCost();
-  if(S.accelLv>=ACCEL_MAX){ sfx.error(); toast('已满级'); return; }
-  if(S.coins<c){ sfx.error(); toast('金币不足'); return; }
-  S.coins-=c; S.accelLv++; sfx.buy(); save();
-  updateHeader(); openShop(); toast(`常驻加速器升至 Lv.${S.accelLv}（速度+${S.accelLv*10}%）`);
-}
-function buyItem(id){
-  const it=ITEMS.find(x=>x.id===id);
-  if(S.boughtItems.includes(id)){ sfx.click(); return; }
-  if(S.coins<it.cost){ sfx.error(); toast('金币不足'); return; }
-  S.coins-=it.cost; S.boughtItems.push(id); sfx.unlock(); save();
-  updateHeader(); updateSceneBar(); openShop(); toast(`获得「${it.name}」！`);
-}
-
-/* ---------------- 弹窗 ---------------- */
-function openModal(title,html){
-  closeFatDetail();
-  $('modalTitle').textContent=title;
-  $('modal-body').innerHTML=html;
-  $('overlay').classList.add('show');
-}
-function closeModal(){ $('overlay').classList.remove('show'); closeFatDetail(); pomoModalOpen=false; }
-function openBook(){
-  pomoModalOpen=false;
-  const got=Object.keys(S.collection).length;
-  let rows='';
-  for(const t of TYPES){
-    const c=colCount(t.id);
-    const rec=S.collection[t.id];
-    const rcl={1:'rr1',2:'rr2',3:'rr3',4:'rr4',5:'rr5',6:'rr6'}[t.r];
-    let stats='';
-    let allGold=false;
-    if(rec){
-      const [hLo,hHi]=R_H[t.r], [wLo,wHi]=R_W[t.r];
-      const gH=rec.tallest&&rec.tallest.v>=hHi-0.001;
-      const gS=rec.shortest&&rec.shortest.v<=hLo+0.001;
-      const gW=rec.heaviest&&rec.heaviest.v>=wHi-0.001;
-      const gL=rec.lightest&&rec.lightest.v<=wLo+0.001;
-      allGold=!!(gH&&gS&&gW&&gL);
-      const ss=(e,k,unit)=>{ if(!e)return '--'; const txt=e.v+unit; return k?`<span class="gold">${txt}</span>`:txt; };
-      stats=`<div class="stats">
-        ${rec.last?`📍 最近 ${rec.last.h}cm · ${rec.last.w}g<br>`:''}
-        📏 最高 ${ss(rec.tallest, gH,'cm')} · ${rec.tallest?fmtTS(rec.tallest.t):''}<br>
-        📏 最矮 ${ss(rec.shortest, gS,'cm')} · ${rec.shortest?fmtTS(rec.shortest.t):''}<br>
-        ⚖️ 最重 ${ss(rec.heaviest, gW,'g')} · ${rec.heaviest?fmtTS(rec.heaviest.t):''}<br>
-        ⚖️ 最轻 ${ss(rec.lightest, gL,'g')} · ${rec.lightest?fmtTS(rec.lightest.t):''}
-      </div>`;
-    }
-    rows+=`<div class="bcard ${c?'':'locked'} ${t.r>=4?'epic':''} ${t.r===5?'legend':''}${allGold?' allgold':''}" ${c?`onclick="openFatDetail('${t.id}')"`:''}>
-      <div class="pic">${c?`<span style="display:inline-block;transform:scale(${t.size||1})">${fatSVG(t)}</span>`:lockedSVG()}</div>
-      <div class="nm">${c?t.name:'???'}</div>
-      <div class="cnt">${c?('收获 x'+c):'未发现'} <span class="rar-tag ${rcl}">${RAR_NAME[t.r]}</span></div>
-      ${stats}
-      <div class="cd">${t.weight!=null&&t.weight<1?'✨ 概率极低 · 永久可遇':('条件：'+condText(t.cond))}</div>
-    </div>`;
-  }
-  openModal(`📗 图鉴 · ${got}/${TYPES.length} (${Math.round(got/TYPES.length*100)}%)`,
-    `<div class="book">${rows}</div>`);
-}
-function openFatDetail(id){ // 图鉴点开某月巴：悬浮层放大图 + 记录 + 简介（图鉴不关闭）
-  const t=TYPES.find(x=>x.id===id);
-  if(!t)return;
-  const rec=S.collection[t.id];
-  if(!rec)return;
-  const rcl={1:'rr1',2:'rr2',3:'rr3',4:'rr4',5:'rr5',6:'rr6'}[t.r];
-  const [hLo,hHi]=R_H[t.r], [wLo,wHi]=R_W[t.r];
-  const gH=rec.tallest&&rec.tallest.v>=hHi-0.001, gS=rec.shortest&&rec.shortest.v<=hLo+0.001;
-  const gW=rec.heaviest&&rec.heaviest.v>=wHi-0.001, gL=rec.lightest&&rec.lightest.v<=wLo+0.001;
-  const ss=(e,k,unit)=>e?(k?`<span class="gold">${e.v+unit}</span>`:e.v+unit):'--';
-  const ts=e=>e?`<span class="t">${fmtTS(e.t)}</span>`:'';
-  const cd=t.weight!=null&&t.weight<1?'✨ 概率极低 · 永久可遇':('条件：'+condText(t.cond));
-  const ov=$('fdOverlay');
-  ov.innerHTML=`<div class="fd-back" onclick="closeFatDetail()"></div>
-    <div class="fd-card">
-      <div class="fd-head"><span>📖 ${t.name}</span><button class="iconbtn" onclick="closeFatDetail()">✕</button></div>
-      <div class="fd">
-        <div class="fd-pic ${t.r>=4?'epic':''} ${t.r===5?'legend':''}"><span style="display:inline-block;transform:scale(${t.size||1})">${fatSVG(t)}</span></div>
-        <div class="fd-meta">
-          <span class="rar-tag ${rcl}">${RAR_NAME[t.r]}</span>
-          <span class="fd-cnt">收获 x${rec.count}</span>
-        </div>
-        <div class="fd-stats">
-          ${rec.last?`📍 最近 ${rec.last.h}cm · ${rec.last.w}g<br>`:''}
-          📏 最高 ${ss(rec.tallest,gH,'cm')} ${ts(rec.tallest)}<br>
-          📏 最矮 ${ss(rec.shortest,gS,'cm')} ${ts(rec.shortest)}<br>
-          ⚖️ 最重 ${ss(rec.heaviest,gW,'g')} ${ts(rec.heaviest)}<br>
-          ⚖️ 最轻 ${ss(rec.lightest,gL,'g')} ${ts(rec.lightest)}
-        </div>
-        <div class="fd-cond">${cd}</div>
-        <div class="fd-intro"><b>📜 简介</b><p>${FAT_INTRO[t.id]||'关于它的来历仍是个谜…'}</p></div>
-      </div>
-    </div>`;
-  ov.classList.add('show');
-}
-function closeFatDetail(){ const ov=$('fdOverlay'); if(ov){ ov.classList.remove('show'); ov.innerHTML=''; } }
-function openShop(){
-  pomoModalOpen=false;
-  const items=ITEMS.map(it=>{
-    const owned=S.boughtItems.includes(it.id);
-    return `<div class="shoprow ${owned?'owned':''}">
-      <span class="ico">${it.icon}</span>
-      <div class="info"><div class="t">${it.name}</div><div class="d">${it.desc}</div></div>
-      <button class="btn" ${owned?'disabled':''} onclick="buyItem('${it.id}')">${owned?'已拥有':fmt(it.cost)+'🪙'}</button>
-    </div>`;
-  }).join('');
-  const accel=`<div class="shoprow">
-      <span class="ico">⚙️</span>
-      <div class="info"><div class="t">常驻加速器 Lv.${S.accelLv}${S.accelLv>=ACCEL_MAX?'（满级）':''}</div>
-      <div class="d">所有月巴生长速度永久 +10%/级，当前共 +${S.accelLv*10}%</div></div>
-      <button class="btn" ${S.accelLv>=ACCEL_MAX?'disabled':''} onclick="buyAccel()">${S.accelLv>=ACCEL_MAX?'已满级':fmt(accelCost())+'🪙'}</button>
-    </div>`;
-  openModal('🛒 商店',
-    `<div class="hintline">🍅快长肥(${fmt(FAST_COST)}🪙) 让所有生长中的月巴剩余时间减半 · 🌦️天气瓶(${fmt(WEATHER_COST)}🪙) 购买后自选天气</div>
-     ${accel}${items}`);
-}
-function openHelp(){
-  pomoModalOpen=false;
-  openModal('❓ 玩法说明',
-    `<div class="helplines">
-      <div class="sec">🎯 目标</div>
-      收集图鉴里的所有月巴！每发现新种类，首收 3 倍金币。图鉴会记录每种月巴的<b>最高/最矮/最重/最轻</b>极值与出现时间。<b>部分极稀有月巴</b>任何条件都满足、但概率极低（图鉴标注「✨ 概率极低」）。
-      <div class="sec">🌱 生长阶段</div>
-      月巴在木头上经历<b>幼年期 → 成长期 → 成熟期</b>三个阶段。幼年与成长长得都一样，<b>只有成熟后</b>才能看到真面目并收割。每只月巴都随机拥有<b>身高与体重</b>。
-      <div class="sec">⏰ 番茄钟</div>
-      点底部「⏰ 番茄钟」开始专注，可自定义<b>名称与时长</b>。专注期间<b>月巴生长速度 x2</b>；<b>切出界面计时自动暂停</b>，回来自动继续。<b>只有完成的番茄才记满时长</b>；中途停止只记录已专注的时间，也可<b>手动打卡</b>。所有记录可在<b>打卡日历</b>与统计（今日/本周/本月）里复盘。
-      <div class="sec">🕰️ 游戏时间</div>
-      游戏内时间以<b>约 2 现实小时 = 1 游戏年</b>的速度流逝，季节与昼夜快速轮转；天气每 8~18 分钟变化一次（与现实同速），番茄钟按现实时间计时。
-      <div class="sec">🏡 场地</div>
-      点击总览中的场地卡片进入场景，背景与木头会显示出来，直观看到月巴生长。买新木头、升级槽位都在场景里完成。<b>离线也会继续生长</b>（最多结算12小时）。
-      <div class="sec">🪙 经济</div>
-      收获得金币 → 买新木头、升级槽位、解锁新场地、买道具与加速 → 触发新月巴条件 → 图鉴推进。
-      <div class="sec">🗓️ 条件</div>
-      稀有月巴依赖<b>游戏时间</b>（季节/昼夜）、<b>天气</b>（雨/雪/雷/雨后彩虹）、<b>场地</b>、<b>道具</b>与<b>累计收获</b>。状态栏与图鉴有提示。
-      <div class="sec">💡 小技巧</div>
-      想触发天气月巴可买「天气瓶」；游戏时间过得很快，季节与昼夜月巴很容易等到。
-      <div class="sec" style="color:var(--danger)">⚠️ 重置存档</div>
-      <button class="btn" style="color:var(--danger)" onclick="resetSave()">🗑️ 重置全部存档</button>
-    </div>`);
-}
-function resetSave(){
-  if(confirm('确定重置全部存档吗？此操作不可撤销！')){
-    localStorage.removeItem(SAVE_KEY); localStorage.removeItem('idle-yueba-save-v1'); location.reload();
-  }
-}
-
-/* ---------------- 番茄钟 ---------------- */
-let pomoModalOpen=false;
-const POMO_REC_MIN=5*60000; // 番茄钟不足5分钟不记录（打卡/日历）
-function pomoRemaining(){ return S.pomo.running ? Math.max(0,S.pomo.end-now()) : S.pomo.remain; }
-function pomoStart(name,dur){
-  S.pomo.name=name||'专注';
-  S.pomo.total=dur; S.pomo.remain=dur; S.pomo.focusTotal=dur;
-  S.pomo.mode='focus';
-  S.pomo.start=now(); S.pomo.end=now()+dur;
-  S.pomo.running=true; S.pomo.pausedByBlur=false;
-  S.pomo.roundItems=[];
-  sfx.click(); save();
-  toast(`🍅 番茄开始：「${S.pomo.name}」专注中，月巴生长 x2`);
-  renderPomoModal(); updatePomoUI();
-}
-function pomoPause(byBlur){
-  if(!S.pomo.running)return;
-  S.pomo.remain=Math.max(0,S.pomo.end-now());
+  // 9. 番茄钟
+  S.pomo=Object.assign({history:[]}, defaultState().pomo);
+  const mb=1+S.accelLv*0.1;
+  S.pomo.running=true;
+  check('番茄钟生长翻倍', Math.abs(speedMult()-mb*2)<1e-9, speedMult());
   S.pomo.running=false;
-  if(byBlur) S.pomo.pausedByBlur=true;
-  save(); renderPomoModal(); updatePomoUI();
-}
-function pomoResume(){
-  if(S.pomo.running||S.pomo.remain<=0)return;
-  S.pomo.end=now()+S.pomo.remain;
-  S.pomo.running=true; S.pomo.pausedByBlur=false;
-  save(); renderPomoModal(); updatePomoUI();
-}
-function pomoStop(){
-  const elapsed=S.pomo.total-S.pomo.remain; // 已专注时间（完成或中途停止都按实际经过计）
-  const active=S.pomo.running || S.pomo.remain>0;
-  if(!active){ sfx.click(); return; }
-  // 只有专注阶段的中途停止才记录已过时间；休息阶段停止不记录
-  let stoppedRound=false;
-  if(elapsed>0 && S.pomo.mode==='focus'){
-    stoppedRound=true;
-    if(elapsed>=POMO_REC_MIN){
-      const t=now(), s=t-elapsed;
-      S.pomo.history.push({n:S.pomo.name, s, d:elapsed, t});
-      if(S.pomo.history.length>5000) S.pomo.history.shift();
-      save(); sfx.unlock();
-      toast(`⏹ 已停止：「${S.pomo.name}」记录已专注 ${fmtDur(elapsed)}`);
-    }else{
-      save(); sfx.click();
-      toast(`⏹ 已停止：「${S.pomo.name}」专注不足 5 分钟，未记录`);
-    }
-  }else if(S.pomo.mode==='focus'){
-    sfx.error();
-  }else{
-    sfx.click(); toast('☕ 已跳过休息，准备开始下一个番茄');
-  }
-  S.pomo.running=false; S.pomo.remain=0; S.pomo.mode='focus';
-  S.pomo.total=S.pomo.focusTotal||S.pomo.total||25*60000; S.pomo.pausedByBlur=false;
-  save(); renderPomoModal(); updatePomoUI();
-  if(stoppedRound) pomoRoundSummary();
-}
-function pomoEnterBreak(){
-  const b=(S.pomo.breakMin||5)*60000;
-  S.pomo.mode='break';
-  S.pomo.total=b; S.pomo.remain=b;
-  S.pomo.start=now(); S.pomo.end=now()+b;
-  S.pomo.running=true; S.pomo.pausedByBlur=false;
-  save(); renderPomoModal(); updatePomoUI();
-}
-function pomoComplete(){
-  if(S.pomo.mode==='focus'){
-    if(S.pomo.total>=POMO_REC_MIN){
-      S.pomo.history.push({n:S.pomo.name, s:S.pomo.start||now()-S.pomo.total, d:S.pomo.total, t:now()});
-      if(S.pomo.history.length>5000) S.pomo.history.shift();
-    }
-    sfx.unlock(); save();
-    toast(`🍅 完成「${S.pomo.name}」！休息 ${S.pomo.breakMin||5} 分钟 ☕`);
-    pomoEnterBreak();
-    pomoRoundSummary();
-  }else{
-    // 休息结束 → 回到就绪，可开始下一个番茄
-    S.pomo.mode='focus';
-    S.pomo.total=S.pomo.focusTotal||25*60000;
-    S.pomo.remain=0; S.pomo.running=false; S.pomo.pausedByBlur=false;
-    save();
-    toast(`☕ 休息结束！准备开始下一个番茄钟`);
-    renderPomoModal(); updatePomoUI();
-  }
-}
-function pomoNext(){
-  if(S.pomo.mode==='break') sfx.unlock();
-  pomoStart(S.pomo.name, S.pomo.focusTotal||S.pomo.total||25*60000);
-}
-/* 番茄钟面板打开时，自动收集的月巴静默并在右上角弹出记录 */
-function feedCollect(got){
-  const feed=$('collectFeed');
-  if(!feed)return;
-  const el=document.createElement('div');
-  el.className='cf-item';
-  el.innerHTML=`<span class="dot" style="background:${got.color}"></span>🍄 ${esc(got.name)} +${fmt(got.val)}🪙`;
-  feed.appendChild(el);
-  setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(),320); },2200);
-  while(feed.children.length>6) feed.firstChild.remove();
-}
-/* 一轮番茄钟结束：弹出本轮收获的月巴记录 */
-function pomoRoundSummary(){
-  const items=S.pomo.roundItems||[];
-  if(!items.length)return;
-  const byId={}; let total=0, n=0;
-  for(const g of items){ byId[g.id]=(byId[g.id]||0)+1; total+=g.val; n++; }
-  let rows='';
-  for(const id in byId){
-    const t=TYPES.find(x=>x.id===id); if(!t)continue;
-    rows+=`<div class="rsum-row"><span class="dot" style="background:${t.color}"></span>${esc(t.name)} <b>x${byId[id]}</b></div>`;
-  }
-  openModal(`🍅 「${esc(S.pomo.name||'专注')}」本轮收获`, `
-    <div class="rsum">${rows}
-      <div class="rsum-total">共 ${n} 个月巴 · 收获 +${fmt(total)}🪙</div>
-      <button class="btn" style="width:100%" onclick="closeModal();openPomo()">👍 好的</button>
-    </div>`);
-}
-function pomoBreakPreset(min){
-  S.pomo.breakMin=min;
-  if(S.pomo.mode==='break' && !S.pomo.running && S.pomo.remain>0){ S.pomo.total=min*60000; S.pomo.remain=min*60000; }
-  sfx.click(); save();
-  const lbl=$('pomoBreakLbl'); if(lbl) lbl.textContent=`${min}分`;
-  syncPomoSegs(); renderPomoModal(); updatePomoUI();
-  toast(`☕ 休息时长设为 ${min} 分钟`);
-}
-function pomoTick(){
-  if(S.pomo.running && now()>=S.pomo.end) pomoComplete();
-  updatePomoUI();
-}
-function pomoToggle(){
-  const name=inpVal('pomoName','专注');
-  if(S.pomo.running){ sfx.click(); pomoPause(false); }
-  else if(S.pomo.remain>0){ S.pomo.name=name; sfx.click(); pomoResume(); }
-  else {
-    // 专注时长来自滑杆（默认25分钟）
-    const min=(parseInt(inpVal('pomoCustom','25'),10)||25);
-    const dur=min*60000;
-    S.pomo.focusTotal=dur;
-    pomoStart(name, dur);
-  }
-}
-function renderPomoModal(){
-  if(!pomoModalOpen)return;
-  const t=$('pomoTime'), st=$('pomoState'), big=$('pomoStartBtn'), nb=$('pomoNextBtn'), ring=$('pomoRing');
-  if(t) t.textContent=fmtDur(pomoRemaining());
-  const inBreak=S.pomo.mode==='break';
-  if(ring){
-    const total=S.pomo.total>0?S.pomo.total:((S.pomo.mode==='break'?(S.pomo.breakMin||5):(S.pomo.focusTotal/60000||25))*60000);
-    const ratio=total>0?Math.max(0,S.pomo.remain)/total:0;
-    const C=2*Math.PI*88;
-    ring.style.strokeDashoffset=(C*(1-ratio)).toFixed(1);
-  }
-  if(st){
-    st.classList.remove('brk','rdy');
-    if(inBreak){ st.textContent=S.pomo.running?'☕ 休息中 · 时长 '+S.pomo.breakMin+'分':'☕ 休息暂停'; st.classList.add('brk'); }
-    else if(S.pomo.running){ st.textContent='⏳ 专注中 · 生长 x2 · 自动收集'; }
-    else if(S.pomo.remain>0){ st.textContent='⏸ 已暂停'; st.classList.add('rdy'); }
-    else { st.textContent='就绪 · 点击开始专注'; st.classList.add('rdy'); }
-  }
-  if(big){
-    big.classList.toggle('brk', inBreak);
-    big.classList.toggle('pause', !S.pomo.running && !inBreak && S.pomo.remain>0);
-    big.textContent=S.pomo.running?'⏸':'▶';
-  }
-  if(nb){ nb.style.display= inBreak?'':'none'; nb.textContent='⏭ 跳过休息 · 下一个番茄'; }
-}
-function pomoPreset(min){
-  S.pomo.focusTotal=min*60000; S.pomo.total=min*60000; S.pomo.remain=min*60000;
-  const sl=$('pomoCustom'); if(sl) sl.value=min;
-  const lbl=$('pomoCustomLbl'); if(lbl) lbl.textContent=min+'分';
-  sfx.click(); syncPomoSegs(); renderPomoModal(); updatePomoUI();
-  toast(`⏱️ 专注时长设为 ${min} 分钟`);
-}
-function pomoCustomChange(){
-  const v=parseInt(inpVal('pomoCustom','25'),10)||25;
-  S.pomo.focusTotal=v*60000; S.pomo.total=v*60000; S.pomo.remain=v*60000;
-  const lbl=$('pomoCustomLbl'); if(lbl) lbl.textContent=v+'分';
-  syncPomoSegs(); renderPomoModal(); updatePomoUI();
-}
-function syncPomoSegs(){
-  const f=$('pomoFocusSegs'), b=$('pomoBreakSegs');
-  if(f){ const ft=S.pomo.focusTotal||S.pomo.total||25*60000;
-    for(const s of f.querySelectorAll('.seg')) s.classList.toggle('on', parseInt(s.dataset.min,10)*60000===ft); }
-  if(b){ for(const s of b.querySelectorAll('.seg')) s.classList.toggle('on', parseInt(s.dataset.min,10)===(S.pomo.breakMin||5)); }
-}
-let pipWin=null; // 置顶小窗（Document Picture-in-Picture）窗口句柄（运行时变量，不入存档）
-const PIP_CSS=`.pipcard{min-height:150px;box-sizing:border-box;padding:18px 20px;border-radius:14px;
-  background:rgba(28,24,42,.86);border:1px solid rgba(255,255,255,.12);color:#fff;
-  display:flex;flex-direction:column;justify-content:center;gap:6px;
-  font-family:system-ui,-apple-system,'Segoe UI',sans-serif;}
-  .pipname{font-size:13px;font-weight:800;color:#c9b1f0;letter-spacing:.5px;}
-  .piptime{font-size:54px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;color:#fff;}
-  .pipstate{font-size:11px;font-weight:700;color:#ff6d6d;}
-  .pipctrl{display:flex;gap:8px;margin-top:4px;}
-  .pipbtn{flex:1;border:none;border-radius:9px;padding:8px 0;font-size:18px;cursor:pointer;font-weight:800;}
-  .pipbtn.pause{background:linear-gradient(180deg,#ffb74d,#ff7043);color:#fff;}
-  .pipbtn.resume{background:linear-gradient(180deg,#81c784,#66bb6a);color:#fff;}
-  .pipbtn.stop{background:linear-gradient(180deg,#f06292,#d81b60);color:#fff;}
-  .pipbtn.close{flex:0 0 46px;background:rgba(255,255,255,.12);color:#d6d0e8;}
-  body{margin:0;background:#17141f;}`;
-function supportsPiP(){ // 置顶小窗需 https 安全上下文 + 新版 Chromium 的 Document Picture-in-Picture
-  try{ return location.protocol==='https:' && 'documentPictureInPicture' in window; }catch(e){ return false; }
-}
-function pipBuild(win){ // 在小窗文档中铺入样式与倒计时卡片（主窗与小窗同源，可直接写其 DOM）
-  const css=win.document.createElement('style'); css.textContent=PIP_CSS; win.document.head.appendChild(css);
-  const root=win.document.createElement('div'); root.id='pipcard'; root.className='pipcard';
-  root.innerHTML='<div class="pipname" id="pipName"></div><div class="piptime" id="pipTime">25:00</div>'
-    +'<div class="pipstate" id="pipState"></div>'
-    +'<div class="pipctrl"><button id="pipPause" class="pipbtn pause">⏸</button>'
-    +'<button id="pipStop" class="pipbtn stop">⏹</button>'
-    +'<button id="pipClose" class="pipbtn close">✕</button></div>';
-  win.document.body.appendChild(root); win.document.body.style.margin='0';
-  // 小窗按钮：用主窗作用域的闭包直接调用番茄钟控制（同源可访问）
-  win.document.getElementById('pipPause').onclick=()=>pomoToggle();
-  win.document.getElementById('pipStop').onclick=()=>{ pomoStop(); try{ if(pipWin) pipWin.close(); }catch(e){} pipWin=null; updatePomoUI(); };
-  win.document.getElementById('pipClose').onclick=()=>{ try{ if(pipWin) pipWin.close(); }catch(e){} pipWin=null; updatePomoUI(); };
-}
-function openPomoPiP(){
-  if(!supportsPiP()){ toast('当前环境不支持置顶小窗（需 https + 新版浏览器）'); return; }
-  if(pipWin && !pipWin.closed){ try{ pipWin.focus(); }catch(e){} return; }
-  documentPictureInPicture.requestWindow({width:340,height:160}).then(pip=>{
-    pipWin=pip; pip.document.title='番茄钟';
-    pipBuild(pip); pushPiP();
-    const clean=()=>{ if(pipWin===pip) pipWin=null; };
-    pip.addEventListener('pagehide',clean);
-    pip.addEventListener('unload',clean);
-    sfx.click();
-  }).catch(()=>{ toast('无法开启置顶小窗'); pipWin=null; });
-}
-function pomopipToggle(){
-  if(pipWin && !pipWin.closed){ try{ pipWin.close(); }catch(e){} pipWin=null; return; }
-  openPomoPiP();
-}
-function pushPiP(){ // 主窗 tick 时把最新剩余时间/名称/状态推向小窗
-  if(pipWin && !pipWin.closed && pipWin.document && pipWin.document.getElementById) {
-    const d=pipWin.document, inBreak=S.pomo.mode==='break';
-    const name=d.getElementById('pipName'), t=d.getElementById('pipTime'), st=d.getElementById('pipState');
-    if(name) name.textContent= inBreak?'☕ 休息':(S.pomo.name||'专注');
-    if(t) t.textContent=fmtDur(pomoRemaining());
-    if(st) st.textContent= !S.pomo.running?'⏸ 已暂停':(inBreak?'休息中 · 自动收集':'专注中 · 生长 x2');
-    const pp=d.getElementById('pipPause');
-    if(pp){ pp.textContent= S.pomo.running?'⏸':'▶'; pp.className='pipbtn '+(S.pomo.running?'pause':'resume'); }
-  }
-}
-function updatePipoButton(){
-  const b=$('pipOpenBtn'), mb=$('pomoPipBtn');
-  const vis=supportsPiP() && (S.pomo.running||S.pomo.remain>0);
-  const has=pipping();
-  if(b){ b.style.display=vis?'':'none'; b.textContent=has?'📌 收起置顶':'📌 置顶小窗'; b.title=supportsPiP()?'':'当前环境不支持置顶（需 https + 新版浏览器）'; }
-  if(mb){ mb.style.display=supportsPiP()?'':'none'; mb.title=has?'收起置顶小窗':'置顶小窗'; mb.textContent=has?'收起':'📌'; }
-}
-function pipping(){ return !!(pipWin && !pipWin.closed); }
-function updatePomoUI(){
-  const chip=$('stPomo');
-  const inBreak=S.pomo.mode==='break';
-  if(S.pomo.running||S.pomo.remain>0){
-    chip.style.display='';
-    const icon= inBreak ? '☕' : (S.pomo.running?'⏰':'⏸');
-    chip.textContent=icon+' '+(inBreak?'休息':S.pomo.name)+' '+fmtDur(pomoRemaining());
-  }else{
-    chip.style.display='none';
-  }
-  if(pomoModalOpen && $('pomoTime')) $('pomoTime').textContent=fmtDur(pomoRemaining());
-  pushPiP();
-  updatePipoButton();
-}
-/* 常用项目（打卡内容）预设 */
-function presetsRowHTML(delFn,useFn){
-  const cur=S.pomo.name;
-  return (S.pomo.presets||[]).map((p,i)=>
-    `<button type="button" class="preset-chip ${p===cur?'on':''}" onclick="${useFn}(${i})">${esc(p)}<span class="del" onclick="event.stopPropagation();${delFn}(${i})">✕</span></button>`
-  ).join('')||'<span class="pomo-none">暂无常用项目，输入名称后点「➕ 存为常用」</span>';
-}
-function renderPresets(){ const el=$('pomoPresets'); if(el) el.innerHTML=presetsRowHTML('pomoDelPreset','pomoUsePreset'); }
-function pomoUsePreset(i){
-  const p=(S.pomo.presets||[])[i]; if(!p)return;
-  S.pomo.name=p;
-  const inp=$('pomoName'); if(inp) inp.value=p;
-  sfx.click();
-  renderPomoModal(); renderPresets(); updatePomoUI();
-  toast(`🗂️ 项目已切换：「${p}」`);
-}
-function pomoDelPreset(i){
-  (S.pomo.presets||[]).splice(i,1); save(); sfx.click(); renderPresets();
-}
-function pomoAddPreset(){
-  const v=inpVal('pomoName','').trim();
-  if(!v){ sfx.error(); toast('请先输入项目名称'); return; }
-  const arr=S.pomo.presets||[];
-  if(arr.includes(v)){ sfx.error(); toast('已是常用项目'); return; }
-  arr.push(v); save(); sfx.click(); renderPresets();
-  toast(`🗂️ 已存为常用：「${v}」`);
-}
-function openPomo(){
-  pomoModalOpen=true;
-  openModal('⏰ 番茄钟',
-    `<div class="pomo-wrap">
-      <button class="pomo-pipbtn" id="pomoPipBtn" onclick="pomopipToggle()" title="置顶小窗">📌</button>
-      <div class="pomo-hero">
-        <svg class="pomo-ring" viewBox="0 0 200 200">
-          <defs><linearGradient id="pomoGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#f48fb1"/><stop offset="100%" stop-color="#9575cd"/>
-          </linearGradient></defs>
-          <circle class="ring-bg" cx="100" cy="100" r="88"/>
-          <circle class="ring-fg" id="pomoRing" cx="100" cy="100" r="88"/>
-        </svg>
-        <div class="pomo-inner">
-          <div class="pomo-name" id="pomoNameShow">🍅 ${esc(S.pomo.name)}</div>
-          <div class="pomo-time" id="pomoTime">${fmtDur(pomoRemaining())}</div>
-          <div class="pomo-state" id="pomoState"></div>
-        </div>
-      </div>
+  check('番茄钟关闭后恢复', Math.abs(speedMult()-mb)<1e-9, speedMult());
+  pomoStart('工作',25*60000);
+  check('番茄开始 running/名称/时长', S.pomo.running===true && S.pomo.name==='工作' && S.pomo.remain===25*60000);
+  pomoPause(true);
+  check('切出界面暂停', S.pomo.running===false && S.pomo.pausedByBlur===true && Math.abs(S.pomo.remain-25*60000)<4000, S.pomo.remain);
+  pomoResume();
+  check('回来自动继续', S.pomo.running===true && S.pomo.pausedByBlur===false && Math.abs((S.pomo.end-now())-S.pomo.remain)<4000);
+  S.pomo.end=now()-1; pomoTick();
+  const prec=S.pomo.history[0];
+  check('完成自动记录', !!prec && prec.n==='工作' && prec.d===25*60000 && prec.t>0, JSON.stringify(prec));
+  check('完成后进入休息', S.pomo.mode==='break' && S.pomo.running===true && Math.abs(S.pomo.remain-5*60000)<2000, S.pomo.remain);
+  check('休息时不翻倍', Math.abs(speedMult()-mb)<1e-9, speedMult());
+  check('fmtDur 格式', fmtDur(25*60000)==='25:00' && fmtDur(0)==='00:00' && fmtDur(3660000)==='1:01:00', fmtDur(3660000));
+  check('dayKey 长度', dayKey(now()).length===10);
+  const ws=startOfWeek(now()); check('周起始为周一', new Date(ws).getDay()===1, new Date(ws).toString());
+  check('月起始为1号', new Date(startOfMonth(now())).getDate()===1);
+  S.pomo.history.push({n:'学习',s:startOfDay(now()),d:15*60000,t:now()});
+  check('今日统计含记录', (function(){ const el=document.getElementById('modal-body'); openPomoStats('day'); return el.innerHTML.includes('学习') && el.innerHTML.includes('今日'); })());
 
-      <div class="pomo-sec">常用项目</div>
-      <div class="pomo-presets" id="pomoPresets"></div>
+  // 9b. 停止记录规则：中途停止只记已过时间；空闲停止不记录
+  pomoStart('阅读',25*60000);
+  S.pomo.end=now()-10*60000; S.pomo.remain=15*60000; S.pomo.running=false; // 模拟已专注10分钟
+  const h1=S.pomo.history.length;
+  pomoStop();
+  const rec2=S.pomo.history[h1];
+  check('中途停止只记已过时间', !!rec2 && rec2.n==='阅读' && rec2.d===10*60000, JSON.stringify(rec2));
+  const h2=S.pomo.history.length;
+  pomoStop();
+  check('空闲停止不记录', S.pomo.history.length===h2);
 
-      <div class="pomo-sec-row">
-        <span class="pomo-sec-lbl">本次专注</span>
-        <button class="btn" onclick="pomoAddPreset()" title="将当前名称存为常用项目">＋ 存为常用</button>
-      </div>
-      <div class="pomo-name-in"><input id="pomoName" value="${esc(S.pomo.name)}" placeholder="项目名称，如：工作 / 学习"></div>
-      <div class="pomo-slider">
-        <input id="pomoCustom" type="range" min="5" max="120" step="5" value="25" oninput="pomoCustomChange()">
-        <b id="pomoCustomLbl">25分</b>
-      </div>
-      <div class="pomo-quick" id="pomoFocusSegs">
-        <button class="seg" data-min="15" onclick="pomoPreset(15)">15分</button>
-        <button class="seg" data-min="25" onclick="pomoPreset(25)">25分</button>
-        <button class="seg" data-min="45" onclick="pomoPreset(45)">45分</button>
-        <button class="seg" data-min="60" onclick="pomoPreset(60)">60分</button>
-      </div>
-
-      <div class="pomo-sec">休息时长</div>
-      <div class="pomo-quick" id="pomoBreakSegs">
-        <button class="seg" data-min="5" onclick="pomoBreakPreset(5)">5分</button>
-        <button class="seg" data-min="10" onclick="pomoBreakPreset(10)">10分</button>
-        <button class="seg" data-min="15" onclick="pomoBreakPreset(15)">15分</button>
-        <span class="pomo-lbl">当前 <b id="pomoBreakLbl">${S.pomo.breakMin||5}分</b></span>
-      </div>
-
-      <div class="pomo-controls">
-        <button class="pomo-big" id="pomoStartBtn" onclick="pomoToggle()">▶</button>
-      </div>
-      <div class="pomo-quick" style="margin-top:2px">
-        <button class="btn" id="pomoNextBtn" onclick="pomoNext()" style="display:none">⏭ 跳过休息 · 下一个番茄</button>
-        <button class="btn" onclick="pomoStop()">⏹ 停止</button>
-      </div>
-
-      <div class="pomo-note">⏰ 专注期间<b>月巴生长 x2 且成熟自动收集</b>；切出界面计时自动暂停。其余时段月巴需<b>手动收集</b>。<b>完成的番茄才记满时长</b>，中途停止只记已专注时间。完成后<b>自动进入休息</b>，休息结束可开始<b>下一个番茄</b>。</div>
-      <div class="pomo-tools">
-        <button class="btn" onclick="openPomoCheckin()">✅ 打卡</button>
-        <button class="btn" onclick="openPomoCalendar()">📅 日历</button>
-        <button class="btn" onclick="openPomoStats('day')">📊 统计</button>
-      </div>
-    </div>`);
-  renderPomoModal();
-  renderPresets();
-  syncPomoSegs();
-  const sl=$('pomoCustom'); const curMin=Math.round((S.pomo.focusTotal||25*60000)/60000);
-  if(sl) sl.value=curMin;
-  const ckLbl=$('pomoCustomLbl'); if(ckLbl) ckLbl.textContent=curMin+'分';
-}
-function dayKey(ts){ const d=new Date(ts); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
-function startOfDay(ts){ const d=new Date(ts); d.setHours(0,0,0,0); return d.getTime(); }
-function startOfWeek(ts){ const d=new Date(ts); d.setHours(0,0,0,0); const wd=d.getDay()||7; d.setDate(d.getDate()-wd+1); return d.getTime(); }
-function startOfMonth(ts){ const d=new Date(ts); d.setHours(0,0,0,0); d.setDate(1); return d.getTime(); }
-function openPomoStats(period){
-  const hist=S.pomo.history.slice().sort((a,b)=>b.t-a.t);
-  const nowTs=now();
-  let title='', rows='', total=0, cnt=0;
-  if(period==='day'){
-    const s=startOfDay(nowTs);
-    const list=hist.filter(r=>r.t>=s);
-    total=list.reduce((a,r)=>a+r.d,0); cnt=list.length;
-    title='📊 今日统计';
-    rows=list.length? list.map(r=>`<div class="pstat-row"><b>${esc(r.n)}</b><span>${fmtTS(r.s)} ~ ${fmtTS(r.t)}</span><em>${fmtDur(r.d)}</em></div>`).join('')
-      : `<div class="empty">今天还没有番茄记录，开始一个吧~</div>`;
-  }else if(period==='week'){
-    const s=startOfWeek(nowTs);
-    const wd=['日','一','二','三','四','五','六'];
-    title='📊 本周统计';
-    const dayRows=[];
-    for(let i=0;i<7;i++){
-      const ds=s+i*86400000;
-      const list=hist.filter(r=>r.t>=ds && r.t<ds+86400000);
-      if(!list.length)continue;
-      const dsum=list.reduce((a,r)=>a+r.d,0);
-      total+=dsum; cnt+=list.length;
-      const dt=new Date(ds);
-      dayRows.push(`<div class="pstat-row"><b>周${wd[dt.getDay()]} · ${dt.getMonth()+1}/${dt.getDate()}</b><span>${list.length}次</span><em>${fmtDur(dsum)}</em></div>`);
-    }
-    rows=dayRows.length?dayRows.join(''):`<div class="empty">本周还没有番茄记录</div>`;
-  }else{
-    const s=startOfMonth(nowTs);
-    const map={};
-    title='📊 本月统计';
-    for(const r of hist){
-      if(r.t<s)continue;
-      const k=dayKey(r.t);
-      map[k]=(map[k]||0)+r.d; total+=r.d; cnt++;
-    }
-    const dayRows=Object.keys(map).sort().map(k=>`<div class="pstat-row"><b>${k}</b><span></span><em>${fmtDur(map[k])}</em></div>`);
-    rows=dayRows.length?dayRows.join(''):`<div class="empty">本月还没有番茄记录</div>`;
-  }
-  const tabs=[['day','今日'],['week','本周'],['month','本月']]
-    .map(([p,lab])=>`<button class="btn pstat-tab ${p===period?'on':''}" onclick="openPomoStats('${p}')">${lab}</button>`).join('');
-  openModal(title,
-    `<div class="pstat-tabs">${tabs}</div>
-     <div class="pstat-total">共 <b>${cnt}</b> 次专注 · 累计 <b>${fmtDur(total)}</b></div>
-     <div class="pstat-list">${rows}</div>
-     <button class="btn" style="width:100%;margin-top:8px" onclick="openPomo()">⏰ 返回番茄钟</button>`);
-  pomoModalOpen=false;
-}
-
-/* ---------------- 番茄钟：打卡与日历 ---------------- */
-function renderCheckinPresets(){ const el=$('ckPresets'); if(el) el.innerHTML=presetsRowHTML('ckDelPreset','ckUsePreset'); }
-function ckUsePreset(i){
-  const p=(S.pomo.presets||[])[i]; if(!p)return;
-  const inp=$('ckName'); if(inp) inp.value=p;
-  sfx.click();
-}
-function ckDelPreset(i){ (S.pomo.presets||[]).splice(i,1); save(); sfx.click(); renderCheckinPresets(); }
-function openPomoCheckin(){
-  openModal('✅ 打卡',
-    `<div class="pomo-wrap">
-      <div class="pomo-presets" id="ckPresets"></div>
-      <div class="pomo-name-in"><input id="ckName" value="${esc(S.pomo.name)}" placeholder="专注项目，如：工作 / 学习"></div>
-      <div class="pomo-name-in"><input id="ckMin" type="number" min="1" max="600" value="25" placeholder="专注分钟"></div>
-      <div class="pomo-name-in"><input id="ckNote" placeholder="打卡内容 / 备注（可选）"></div>
-      <div class="pomo-note">打卡会记录<b>项目、专注时长、打卡内容与时间</b>，可在日历中回顾复盘。</div>
-      <div class="pomo-controls">
-        <button class="btn cta" onclick="pomoDoCheckin()">✅ 保存打卡</button>
-        <button class="btn" onclick="openPomo()">返回</button>
-      </div>
-    </div>`);
-  pomoModalOpen=false;
-  renderCheckinPresets();
-}
-function pomoDoCheckin(){
-  const name=inpVal('ckName','专注');
-  const min=parseInt(inpVal('ckMin','25'),10)||25;
-  const note=inpVal('ckNote','');
-  const d=Math.max(1,Math.min(600,min))*60000;
-  const t=now(), s=t-d;
-  S.pomo.history.push({n:name, s, d, t, c:note});
-  if(S.pomo.history.length>5000) S.pomo.history.shift();
-  save(); sfx.unlock();
-  toast(`✅ 打卡成功：「${name}」${fmtDur(d)}${note?' · '+note:''}`);
+  // 9c. 休息结束 / 休息停止不记录 / 下一个番茄 / 常用项目
+  S.pomo.end=now()-1; pomoTick(); // 休息结束
+  check('休息结束回就绪', S.pomo.mode==='focus' && S.pomo.running===false && S.pomo.remain===0 && S.pomo.total===25*60000, JSON.stringify(S.pomo).slice(0,80));
+  const h3=S.pomo.history.length;
+  pomoStart('锻炼',20*60000);
+  S.pomo.mode='break'; S.pomo.total=5*60000; S.pomo.remain=2*60000; S.pomo.running=true;
+  pomoStop();
+  check('休息停止不记录', S.pomo.history.length===h3 && S.pomo.mode==='focus', S.pomo.history.length-h3);
+  pomoStart('锻炼',20*60000);
+  S.pomo.mode='break'; S.pomo.running=true;
+  pomoNext();
+  check('下一个番茄开始', S.pomo.mode==='focus' && S.pomo.running===true && S.pomo.name==='锻炼' && S.pomo.total===20*60000, JSON.stringify(S.pomo).slice(0,80));
+  S.pomo.presets=['工作','学习'];
+  pomoAddPreset(); // 无名称 → 不添加
+  check('空名不添加常用', S.pomo.presets.length===2);
+  S.pomo.presets.push('写作');
+  pomoUsePreset(2);
+  check('使用常用项目', S.pomo.name==='写作');
+  pomoDelPreset(2);
+  check('删除常用项目', S.pomo.presets.length===2);
+  pomoPreset(45);
+  check('pomoPreset 设定时长', S.pomo.focusTotal===45*60000 && S.pomo.total===45*60000 && S.pomo.remain===45*60000);
+  pomoBreakPreset(10);
+  check('pomoBreakPreset 设定休息', S.pomo.breakMin===10);
+  document.getElementById('pomoCustom').value=40;
+  pomoCustomChange();
+  check('滑杆设定时长', S.pomo.focusTotal===40*60000 && S.pomo.total===40*60000);
+  pomoPreset(25);
+  check('预设联动滑杆', document.getElementById('pomoCustom').value===25 && S.pomo.focusTotal===25*60000);
   openPomo();
-}
-let calY=0, calM=0;
-function openPomoCalendar(){
-  const gd=gameNow();
-  calY=gd.getFullYear(); calM=gd.getMonth();
-  renderPomoCalendar();
-}
-const CAL_COLORS=['rgba(102,187,106,.5)','rgba(66,165,245,.5)','rgba(255,167,38,.5)','rgba(239,83,80,.5)'];
-/* 日历填充：8小时=100%，每满8小时换一种颜色继续填充 */
-function calFill(total){
-  if(!(total>0))return '';
-  const bucket=8*3600*1000;
-  const completed=Math.floor(total/bucket);
-  const within=total-completed*bucket;
-  let bi, frac;
-  if(within===0){ bi=Math.max(0,completed-1); frac=1; }
-  else{ bi=completed; frac=within/bucket; }
-  const pct=Math.round(frac*100);
-  return `<div class="calfill" style="height:${pct}%;background:${CAL_COLORS[bi%CAL_COLORS.length]}"></div>`;
-}
-function renderPomoCalendar(){
-  const first=new Date(calY,calM,1);
-  const startWd=(first.getDay()+6)%7; // 周一开头
-  const days=new Date(calY,calM+1,0).getDate();
-  const map={};
-  for(const r of S.pomo.history){
-    const dd=new Date(r.t);
-    if(dd.getFullYear()===calY && dd.getMonth()===calM){
-      (map[dd.getDate()]=map[dd.getDate()]||[]).push(r);
-    }
-  }
-  let grid='';
-  for(let i=0;i<startWd;i++) grid+='<div class="cal-cell empty"></div>';
-  const gd=gameNow();
-  for(let day=1;day<=days;day++){
-    const recs=map[day]||[];
-    const total=recs.reduce((a,r)=>a+r.d,0);
-    const isToday=(gd.getFullYear()===calY&&gd.getMonth()===calM&&gd.getDate()===day);
-    grid+=`<div class="cal-cell ${total?'has':''} ${isToday?'today':''}" onclick="calDetail(${day})">
-      ${calFill(total)}
-      <b>${day}</b>
-      ${recs.length?`<span>${fmtDur(total)}</span><em>${recs.length}次</em>`:'<em>·</em>'}
-    </div>`;
-  }
-  openModal(`📅 打卡日历 · ${calY}年${calM+1}月`,
-    `<div class="cal-head">
-      <button class="btn" onclick="calMove(-1)">‹ 上月</button>
-      <span>${calY} / ${calM+1}</span>
-      <button class="btn" onclick="calMove(1)">下月 ›</button>
-    </div>
-    <div class="cal-grid">
-      ${['一','二','三','四','五','六','日'].map(w=>`<div class="cal-wd">${w}</div>`).join('')}
-      ${grid}
-    </div>
-    <div class="cal-detail" id="calDetail"></div>
-    <div class="cal-legend">🎨 每 8 小时换一种颜色 · 一天最多 4 色（24 小时）</div>
-    <div class="pomo-controls">
-      <button class="btn" onclick="openPomo()">⏰ 返回番茄钟</button>
-      <button class="btn" onclick="openPomoStats('day')">📊 统计</button>
-    </div>`);
+  const pomoBody=document.getElementById('modal-body').innerHTML;
+  check('番茄钟含常用项目/休息按钮', pomoBody.includes('pomoPresets') && pomoBody.includes('休息时长') && pomoBody.includes('pomoNextBtn') && pomoBody.includes('pomoRing'));
+  check('番茄钟新结构:滑杆/存为常用同行/休息5-10-15', pomoBody.includes('type="range"') && pomoBody.includes('pomoCustomLbl') && pomoBody.includes('pomo-sec-row') && pomoBody.includes('pomoBreakPreset(15)'));
+  check('置顶图标位于番茄钟右上侧', pomoBody.includes('pomo-pipbtn') && pomoBody.includes('pomoPipBtn') && !pomoBody.includes('>📌 置顶小窗<'));
+
+  // 10. 虚拟时间（约2现实小时=1游戏年）
+  const g0=gameNow();
+  S.gameStart=now()-2*3600*1000;
+  const g1=gameNow();
+  check('2现实小时≈1游戏年', g1.getFullYear()===g0.getFullYear()+1, g0.toString()+' -> '+g1.toString());
+  S.gameStart=now();
+  check('虚拟时间可回拨', gameNow().getFullYear()===g0.getFullYear());
+  check('天气间隔为现实分钟级', (function(){ const b=S.nextWeatherAt-now(); return b>0 && b<20*60000; })());
+
+  // 11. 连击/节日月巴改为低概率永久可遇
+  const comboIds=['mb_lian','mb_kuanglian','mb_shenlian'];
+  const eventIds=['mb_zhoumo','mb_zhengdian','mb_xinnian','mb_qingren','mb_wuyi','mb_guoqing','mb_wansheng','mb_shengdan','mb_zhongqiu'];
+  const conv=[...comboIds,...eventIds].map(id=>TYPES.find(t=>t.id===id));
+  check('连击/节日月巴条件全空', conv.every(t=>t.cond===null));
+  check('概率均<1', conv.every(t=>t.weight!=null && t.weight<1));
+  check('移除combo/event条件类型', (function(){ const cs=new Set(); TYPES.forEach(t=>t.cond&&cs.add(t.cond.t)); return !cs.has('combo') && !cs.has('event'); })());
+  check('无连击状态字段', !('combo' in defaultState()) && !('lastHarvest' in defaultState()));
+  check('低概率月巴在可遇列表', availableTypes().some(t=>t.id==='mb_lian'));
+
+  // 12. 打卡与日历
+  S.pomo.history.push({n:'健身', s:now()-30*60000, d:30*60000, t:now(), c:'跑步30分钟'});
+  openPomoCalendar();
+  const calEl=document.getElementById('modal-body');
+  const calTitle=document.getElementById('modalTitle').textContent;
+  check('日历渲染', calEl.innerHTML.includes('cal-cell') && calEl.innerHTML.includes('cal-grid') && calTitle.includes('打卡日历'), calTitle);
+  calDetail(new Date().getDate());
+  const detEl=document.getElementById('calDetail');
+  check('日历含打卡内容', detEl.innerHTML.includes('健身') && detEl.innerHTML.includes('跑步30分钟'));
+  check('打卡总时长显示', detEl.innerHTML.includes(fmtDur(30*60000)));
+
+  // 12b. 日历按专注时长变色填充（8小时=100%，满8小时换色）
+  const H=3600*1000;
+  check('1小时填充1/8(色1)', calFill(1*H).includes('height:13%') && calFill(1*H).includes(CAL_COLORS[0]), calFill(1*H));
+  check('8小时填满(色1)', calFill(8*H).includes('height:100%') && calFill(8*H).includes(CAL_COLORS[0]), calFill(8*H));
+  check('9小时填充1/8(色2)', calFill(9*H).includes('height:13%') && calFill(9*H).includes(CAL_COLORS[1]), calFill(9*H));
+  check('16小时填满(色2)', calFill(16*H).includes('height:100%') && calFill(16*H).includes(CAL_COLORS[1]), calFill(16*H));
+  check('17小时填充1/8(色3)', calFill(17*H).includes('height:13%') && calFill(17*H).includes(CAL_COLORS[2]), calFill(17*H));
+  check('24小时填满(色3)', calFill(24*H).includes('height:100%') && calFill(24*H).includes(CAL_COLORS[2]), calFill(24*H));
+  check('超24小时用第4色', calFill(25*H).includes('height:13%') && calFill(25*H).includes(CAL_COLORS[3]), calFill(25*H));
+  check('仅4种颜色', CAL_COLORS.length===4, CAL_COLORS.length);
+  check('填充色为半透明', CAL_COLORS.every(c=>/rgba\\(.*,\\s*0?\\.?\\d+\\)/.test(c)), CAL_COLORS.join(','));
+  check('0小时无填充', calFill(0)==='');
+  check('日历格含填充层', (function(){ openPomoCalendar(); return document.getElementById('modal-body').innerHTML.includes('calfill'); })());
+  check('日历填充图例', (function(){ openPomoCalendar(); return document.getElementById('modal-body').innerHTML.includes('cal-legend'); })());
+
+  // 13. woodSpot 手机端不越界
+  check('woodSpot 最低限70%', ZONES.every((z,i)=>woodSpot(i,5).t<=70));
+
+  // 14. 时间显示改为时段词
+  check('时段词:上午/下午等', periodOf(9)==='上午' && periodOf(15)==='下午' && periodOf(1)==='凌晨' && periodOf(21)==='晚上', periodOf(9)+'/'+periodOf(15));
+  check('状态栏无具体时间', (function(){ updateStatus(); const t=document.getElementById('stTime').textContent; return !/:\d\d/.test(t) && /上午|下午|中午|傍晚|晚上|凌晨/.test(t); })());
+
+  // 15. 老存档 pomo 深合并（缺少 presets/mode 时补默认值）
+  const oldPomo={name:'旧专注', total:1, remain:1, running:false, history:[{n:'旧',s:1,d:1,t:1}]};
+  const merged=Object.assign({}, defaultState());
+  merged.pomo=Object.assign(defaultState().pomo, oldPomo||{});
+  check('老存档pomo深合并', merged.pomo.presets.length===2 && merged.pomo.mode==='focus' && merged.pomo.breakMin===5 && merged.pomo.history.length===1 && merged.pomo.name==='旧专注');
+
+  // 16. 番茄钟专注时段自动收集 / 其余时段手动
+  S.pomo=Object.assign({history:[]}, defaultState().pomo);
+  S.coins=0; S.totalHarvest=0;
+  const t16=TYPES.find(t=>!t.cond);
+  const mkMature=()=>({t:t16.id,start:now()-t16.t*1000,dur:t16.t*1000,h:5,w:5});
+  // 未启动：成熟不自动收
+  S.zones[0].woods[0].cells=[mkMature()];
+  S.pomo.running=false; S.pomo.mode='focus'; S.pomo.end=0;
+  tick();
+  check('未启动不自动收集', S.zones[0].woods[0].cells[0].t!==null && S.totalHarvest===0 && S.coins===0);
+  // 休息时段：不自动收
+  S.pomo.running=true; S.pomo.mode='break'; S.pomo.end=now()+60*60000;
+  S.zones[0].woods[0].cells[0]=mkMature();
+  tick();
+  check('休息时不自动收集', S.zones[0].woods[0].cells[0].t!==null && S.totalHarvest===0);
+  check('休息时 autoCollectActive=false', autoCollectActive()===false);
+  // 专注时段：成熟自动收（含未打开场地，静默收割）
+  S.pomo.mode='focus'; S.pomo.end=now()+60*60000;
+  tick();
+  check('专注时成熟自动收集', S.zones[0].woods[0].cells[0].t===null && S.totalHarvest===1 && S.coins>=t16.v, JSON.stringify(S.zones[0].woods[0].cells[0])+' coins='+S.coins);
+  check('专注时 autoCollectActive=true', autoCollectActive()===true);
+  check('自动收集记录最近身高体重', (function(){ const rec=S.collection[t16.id]; return rec && rec.last && rec.last.h===5 && rec.last.w===5 && (openBook(), document.getElementById('modal-body').innerHTML.includes('📍 最近 5cm · 5g')); })());
+  // 未成熟不自动收
+  S.zones[0].woods[0].cells[0]={t:t16.id,start:now(),dur:t16.t*1000,h:5,w:5};
+  tick();
+  check('未成熟不自动收', S.zones[0].woods[0].cells[0].t!==null && S.totalHarvest===1);
+  S.pomo.running=false;
+  check('停止后 autoCollectActive=false', autoCollectActive()===false);
+
+  // 16b. 番茄钟面板打开时：自动收集记入本轮 + 右上角记录；轮结束弹出汇总
+  S.pomo=Object.assign({history:[]}, defaultState().pomo);
+  S.coins=0; S.totalHarvest=0;
+  S.zones[0].woods[0].cells=[mkMature()];
+  S.pomo.running=true; S.pomo.mode='focus'; S.pomo.end=now()+60*60000;
+  pomoModalOpen=true;
+  tick();
+  check('面板打开时自动收集记入本轮', S.pomo.roundItems.length===1 && S.pomo.roundItems[0].id===t16.id, JSON.stringify(S.pomo.roundItems));
+  check('右上角记录出现', document.getElementById('collectFeed').children.length>=1, String(document.getElementById('collectFeed').children.length));
+  check('无收获时汇总不弹', (function(){ document.getElementById('modal-body').innerHTML=''; S.pomo.roundItems=[]; pomoRoundSummary(); return !document.getElementById('modal-body').innerHTML.includes('本轮收获'); })());
+  S.pomo.name='测试';
+  S.pomo.roundItems=[{id:t16.id,name:t16.name,color:t16.color,val:10}];
+  pomoRoundSummary();
+  check('轮结束弹出收获汇总', document.getElementById('modalTitle').textContent.includes('本轮收获') && document.getElementById('modal-body').innerHTML.includes('共 1 个月巴'), document.getElementById('modalTitle').textContent+' | '+document.getElementById('modal-body').innerHTML);
+  // 中途停止也弹汇总
+  S.pomo.mode='focus'; S.pomo.running=true; S.pomo.total=60000; S.pomo.remain=30000; S.pomo.end=now()+30000;
+  S.pomo.roundItems=[{id:t16.id,name:t16.name,color:t16.color,val:10}];
+  pomoStop();
+  check('中途停止也弹汇总', document.getElementById('modalTitle').textContent.includes('本轮收获'), document.getElementById('modalTitle').textContent);
   pomoModalOpen=false;
-}
-function calMove(delta){ calM+=delta; if(calM<0){calM=11;calY--;} if(calM>11){calM=0;calY++;} renderPomoCalendar(); }
-function calDetail(day){
-  const el=$('calDetail'); if(!el)return;
-  const recs=S.pomo.history.filter(r=>{ const d=new Date(r.t); return d.getFullYear()===calY&&d.getMonth()===calM&&d.getDate()===day; }).sort((a,b)=>b.t-a.t);
-  const total=recs.reduce((a,r)=>a+r.d,0);
-  el.innerHTML=`<div class="cal-dtitle">${calY}/${calM+1}/${day} · ${recs.length}次 · 共${fmtDur(total)}</div>
-    ${recs.map(r=>`<div class="pstat-row"><b>${esc(r.n)}</b><span>${r.c?esc(r.c):''}</span><em>${fmtDur(r.d)}</em></div>`).join('')||'<div class="empty">当天没有打卡</div>'}`;
-}
 
-/* ---------------- 主循环 ---------------- */
-let lastReadySfx=0, lastRevealSfx=0;
-function tick(){
-  weatherTick();
-  pomoTick();
-  for(let z=0;z<S.zones.length;z++){
-    for(let w=0;w<S.zones[z].woods.length;w++){
-      for(let i=0;i<S.zones[z].woods[w].cells.length;i++){
-        const cell=S.zones[z].woods[w].cells[i];
-        if(!cell){
-          S.zones[z].woods[w].cells[i]={delay:now()+rand(900,2600)};
-          renderCell(z,w,i);
-        }else if(cell.delay && now()>=cell.delay){
-          spawnIn(S.zones[z],S.zones[z].woods[w],cell);
-          renderCell(z,w,i);
-        }else if(cell.t){
-          // 番茄钟专注时段：成熟即自动收集（含未打开的场地）；番茄钟面板打开时静默并在右上角记录
-          if(autoCollectActive() && cellReady(cell)){
-            const quiet=pomoModalOpen;
-            const got=doHarvest(z,w,i,cell,cellEls[`${z}-${w}-${i}`],quiet);
-            if(got){
-              S.pomo.roundItems.push(got);
-              if(quiet) feedCollect(got);
-            }
-            continue;
-          }
-          const el=cellEls[`${z}-${w}-${i}`];
-          if(!el)continue;
-          const stage=cellStage(cell);
-          const prev=el._stage;
-          if(stage!==prev){
-            renderCell(z,w,i); el._stage=stage;
-            if(stage==='mature'){
-              if(now()-lastReadySfx>1200){ lastReadySfx=now(); sfx.ready(); }
-              // 揭示特效：白色星点
-              const r=el.getBoundingClientRect();
-              burst(r.left+r.width/2,r.top+r.height/2,['#ffffff','#e6d9ff','#c9b2e8'],12,3);
-            }
-          }else if(stage!=='mature'){
-            const iw=el.querySelector('.pg i');
-            if(iw){ const p=clamp((now()-cell.start)/(cell.dur/speedMult()),0,1); iw.style.width=(p*100)+'%'; }
-          }
-        }
-      }
-    }
-  }
-  updateStatus();
-  updateWeatherHold();
-  if(now()-S.lastSave>5000) save();
-}
+  // 16c. 番茄钟不足5分钟不记录（打卡/日历均读 history）
+  S.pomo=Object.assign({history:[]}, defaultState().pomo);
+  S.pomo.mode='focus'; S.pomo.running=true; S.pomo.total=60000; S.pomo.remain=30000; S.pomo.end=now()+30000; S.pomo.start=now()-30000;
+  pomoStop();
+  check('停止<5分钟不记录', S.pomo.history.length===0, JSON.stringify(S.pomo.history));
+  S.pomo=Object.assign({history:[]}, defaultState().pomo);
+  S.pomo.mode='focus'; S.pomo.running=true; S.pomo.total=10*60000; S.pomo.remain=60000; S.pomo.end=now()+60000; S.pomo.start=now()-9*60000;
+  pomoStop();
+  check('停止>=5分钟记录', S.pomo.history.length===1 && S.pomo.history[0].d===9*60000, JSON.stringify(S.pomo.history));
 
-/* ---------------- 离线结算 ---------------- */
-function offlineSettle(){
-  const elapsed=now()-S.lastSave;
-  if(elapsed<=2000)return;
-  const capped=Math.min(elapsed,OFFLINE_CAP);
-  const backAt=new Date(now()-capped);
-  let readyCount=0;
-  for(let z=0;z<S.zones.length;z++){
-    for(let w=0;w<S.zones[z].woods.length;w++){
-      for(let i=0;i<S.zones[z].woods[w].cells.length;i++){
-        const cell=S.zones[z].woods[w].cells[i];
-        if(!cell||cell.delay){
-          const list=availableTypes();
-          const t=weightedPick(list);
-          const st=rollStats(t.r);
-          S.zones[z].woods[w].cells[i]={t:t.id,start:backAt.getTime(),dur:t.t*(1000/BASE_SPEED),h:st.h,w:st.w};
-          if(now()-backAt.getTime()>=t.t*(1000/BASE_SPEED)/speedMult()) readyCount++;
-        }else if(cell.t&&cellReady(cell)){
-          readyCount++;
-        }
-      }
-    }
-  }
-  const mins=Math.floor(capped/60000);
-  if(mins>=1){
-    toast(`欢迎回来！你离开了 ${mins>=60?(Math.floor(mins/60)+'小时'+((mins%60)?(''+mins%60+'分'):'')):(mins+'分')}，${readyCount} 个月巴已成熟待收~`);
-  }
-}
+  // 16d. 置顶小窗（Document PiP）：测试环境无 https/API，应优雅降级不抛错
+  check('supportsPiP 在测试环境为 false', supportsPiP()===false, String(supportsPiP()));
+  check('非支持环境点击置顶不弹窗且不报错', (function(){ pipWin=null; pomopipToggle(); return pipWin===null; })());
+  check('openPomoPiP 非支持环境安全', (function(){ pipWin=null; return (openPomoPiP(), pipWin===null); })());
+  // 16e. 置顶小窗存在时，页面失焦不自动暂停
+  check('无小窗时失焦仍自动暂停', (function(){ pipWin=null; S.pomo.running=true; S.pomo.mode='focus'; S.pomo.total=10*60000; S.pomo.remain=10*60000; S.pomo.end=now()+10*60000; pomoPause(true); const p=S.pomo.running===false && S.pomo.pausedByBlur===true; if(p){S.pomo.running=true; S.pomo.pausedByBlur=false; S.pomo.end=now()+S.pomo.remain;} return p; })());
+  check('有置顶小窗时失焦不暂停(依赖 pipping)', (function(){ pipWin={closed:false}; const r=pipping()===true; pipWin=null; return r; })());
+  check('小窗暂停/继续切换逻辑(使用主窗 pomoToggle)', (function(){
+    S.pomo.running=true; S.pomo.total=60000; S.pomo.remain=30000; S.pomo.end=now()+30000;
+    pomoToggle(); const paused=!S.pomo.running;
+    return paused;
+  })());
+  S.pomo=Object.assign({history:[]}, defaultState().pomo);
+  S.pomo.mode='focus'; S.pomo.running=true; S.pomo.total=2*60000; S.pomo.remain=2*60000; S.pomo.start=now()-2*60000; S.pomo.end=now()-1000;
+  pomoComplete();
+  check('完成<5分钟不记录', S.pomo.history.length===0, JSON.stringify(S.pomo.history));
+  S.pomo=Object.assign({history:[]}, defaultState().pomo);
+  S.pomo.mode='focus'; S.pomo.running=true; S.pomo.total=25*60000; S.pomo.remain=25*60000; S.pomo.start=now()-25*60000; S.pomo.end=now()-1000;
+  pomoComplete();
+  check('完成>=5分钟记录', S.pomo.history.length===1 && S.pomo.history[0].d===25*60000, JSON.stringify(S.pomo.history));
 
-/* ---------------- 初始化 ---------------- */
-function init(){
-  const hasSave=load();
-  if(!S.seenHelp){
-    S.coins+=100; S.seenHelp=true;
-    openHelp();
-  }
-  if(hasSave) offlineSettle();
-  renderOverview(); updateHeader(); updateStatus(); updatePomoUI(); updateSceneBar(); updateWeatherHold();
-  setInterval(tick,250);
-  // 未成熟月巴：按住跟随手指、松开弹回（事件委托到场地层）
-  const folWrap=$('sceneWoods');
-  if(folWrap && folWrap.addEventListener){
-    folWrap.addEventListener('pointerdown',folStart);
-    folWrap.addEventListener('pointermove',folMove);
-  }
-  // 松手/取消可能发生在场地层之外（工具条/底部提示等），故挂到 window 保证必然触发回弹
-  window.addEventListener('pointerup',folEnd);
-  window.addEventListener('pointercancel',folEnd);
-  // 图鉴/详情悬浮层月巴可拖拽（委托到弹窗体；拖动时不触发详情/误关）
-  const bkWrap=$('modal');
-  if(bkWrap && bkWrap.addEventListener){
-    bkWrap.addEventListener('pointerdown',bkStart);
-    bkWrap.addEventListener('pointermove',bkMove);
-    bkWrap.addEventListener('click',bkClickGuard,true);
-  }
-  // 松手/取消可能发生在弹窗边界外，故挂到 window 保证必然触发回弹
-  window.addEventListener('pointerup',bkEnd);
-  window.addEventListener('pointercancel',bkEnd);
-  window.addEventListener('beforeunload',save);
-  document.addEventListener('visibilitychange',()=>{
-    // 置顶小窗存在期间，切到别处不自动暂停（小窗即计时焦点）；否则原规则：失焦暂停、回来自动继续
-    if(document.hidden){ if(S.pomo.running && !pipping()) pomoPause(true); save(); }
-    else if(S.pomo.pausedByBlur){ pomoResume(); }
-  });
-  $('btnBook').onclick=()=>{ sfx.click(); openBook(); };
-  $('btnShop').onclick=()=>{ sfx.click(); openShop(); };
-  $('btnFast').onclick=useFast;
-  $('btnWeather').onclick=useWeather;
-  $('btnPomo').onclick=()=>{ sfx.click(); openPomo(); };
-  $('btnHelp').onclick=()=>{ sfx.click(); openHelp(); };
-  $('btnMute').onclick=()=>{ S.muted=!S.muted; updateHeader(); sfx.click(); save(); };
-  $('overlay').onclick=(e)=>{ if(e.target===$('overlay'))closeModal(); };
-  $('sceneBack').onclick=closeScene;
-  $('sceneWoodBtn').onclick=()=>buyWood(currentZone);
-  $('sceneFast').onclick=useFast;
-  $('sceneWeather').onclick=useWeather;
-  $('slotBtn').onclick=openSlotMenu;
-  save();
-}
-init();
-</script>
-</body>
-</html>
+  // 17. 天气瓶：购买后自选天气
+  S.boughtItems=[]; S.coins=1000;
+  useWeather();
+  check('天气瓶未持有先购买', S.boughtItems.includes('weather') && S.coins===500, 'coins='+S.coins);
+  check('购买后打开自选面板', document.getElementById('modal-body').innerHTML.includes('wgrid') && document.getElementById('modalTitle').textContent.includes('天气瓶'));
+  check('自选面板含5种天气', (function(){ const b=document.getElementById('modal-body').innerHTML; return ['sunny','cloudy','rain','storm','snow'].every(w=>b.includes("setWeather('"+w+"')")); })());
+  S.weather='sunny'; S.lastRainAt=-1e12;
+  setWeather('rain');
+  check('setWeather 设为雨天', S.weather==='rain' && S.lastRainAt>0, S.weather);
+  check('天气瓶效果持续2小时', Math.abs((S.nextWeatherAt-now())-2*3600*1000)<4000, (S.nextWeatherAt-now()));
+  check('天气瓶倒计时出现', (function(){ updateWeatherHold(); const el=document.getElementById('weatherHold'); return el.style.display==='' && el.innerHTML.includes('剩余') && el.innerHTML.includes(fmtDur(S.weatherHoldEnd-now())); })());
+  S.weatherHoldEnd=now()-1000;
+  check('倒计时结束自动隐藏', (function(){ updateWeatherHold(); return document.getElementById('weatherHold').style.display==='none'; })());
+  S.weatherHoldEnd=now()+WEATHER_HOLD;
+  changeWeather(false);
+  check('自然轮换清除倒计时', S.weatherHoldEnd===0);
+  S.coins=500;
+  useWeather();
+  check('已持有不再扣费', S.coins===500 && S.boughtItems.length===1, 'coins='+S.coins+' n='+S.boughtItems.length);
+
+  // 18. 场景按钮标注价格
+  currentZone=0; S.boughtItems=[];
+  updateSceneBar();
+  const sWB=document.getElementById('sceneWoodBtn').textContent;
+  const sWE=document.getElementById('sceneWeather').textContent;
+  const sSF=document.getElementById('sceneFast').textContent;
+  check('新木头标注价格', sWB.includes('新木头') && sWB.includes('🪙') && sWB.includes(String(woodCost(0,S.zones[0].woods.length))), sWB);
+  check('快长肥标注价格', sSF.includes(String(FAST_COST)), sSF);
+  check('天气瓶按钮标注价格', sWE.includes(String(WEATHER_COST)), sWE);
+  S.boughtItems.push('weather');
+  updateSceneBar();
+  check('持有后场景按钮变自选', document.getElementById('sceneWeather').textContent.includes('自选天气'));
+  S.boughtItems=[];
+
+  // 20. 界面皮肤（图鉴解锁）
+  check('默认皮肤始终可用', skinMet('default')===true);
+  check('未达阈值不可用', (function(){ S.collection.mb_chun={count:499}; return skinMet('spring')===false; })());
+  check('达阈值可领取', (function(){ S.collection.mb_chun={count:500}; return skinMet('spring')===true; })());
+  check('useSkin 领取并启用', (function(){
+    S.skins={unlocked:[],active:null};
+    useSkin('spring');
+    return S.skins.unlocked.includes('spring') && S.skins.active==='spring';
+  })());
+  check('applySkin 设置CSS变量', (function(){
+    applySkin('winter');
+    return document.documentElement.style.getPropertyValue('--bg')==='#f0f2f5';
+  })());
+  check('未达阈值 useSkin 不生效', (function(){
+    S.skins={unlocked:[],active:null};
+    S.collection.mb_xia={count:999};
+    useSkin('summer');
+    return !S.skins.unlocked.includes('summer') && S.skins.active===null;
+  })());
+
+  console.log(failures? '\\n❌ 失败数: '+failures : '\\n✅ 全部通过');
+  return failures;
+})();
+`;
+eval(js + '\n' + tests);
