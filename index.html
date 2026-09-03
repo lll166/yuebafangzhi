@@ -884,17 +884,19 @@ function hScale(h){ return clamp(0.7+(h-2)/38,0.7,1.7); }
 /* ---------------- 图鉴数据（含极值） ---------------- */
 function colGet(id){ if(!S.collection[id]) S.collection[id]={count:0}; return S.collection[id]; }
 function colCount(id){ return (S.collection[id]&&S.collection[id].count)||0; }
-const EXTREME_MIN_H=3; // 极值记录最小现实间隔（小时）：约 8 小时刷出 1~3 个
+function rollNum(lo,hi){ // 取值向中段集中：越接近上下极值概率越低（极值低频化，非时间冷却）
+  return (lo+Math.random()*(hi-lo) + lo+Math.random()*(hi-lo))/2;
+}
+function rollStats(r){
+  const [ha,hb]=R_H[r], [wa,wb]=R_W[r];
+  return {h:+rollNum(ha,hb).toFixed(1), w:+rollNum(wa,wb).toFixed(1)};
+}
 function recordExtremes(id,h,w){
-  const nr=now();
-  // 极值低频化：两次极值记录之间至少间隔 EXTREME_MIN_H 现实小时，约 8 小时刷出 1~3 个
-  if(S.lastExtreme && nr-S.lastExtreme < EXTREME_MIN_H*3600000) return [];
   const c=colGet(id), beats=[];
-  if(!c.tallest  || h>c.tallest.v)  { c.tallest ={v:h,t:nr}; beats.push('最高'); }
-  if(!c.shortest || h<c.shortest.v){ c.shortest={v:h,t:nr}; beats.push('最矮'); }
-  if(!c.heaviest || w>c.heaviest.v){ c.heaviest={v:w,t:nr}; beats.push('最重'); }
-  if(!c.lightest || w<c.lightest.v){ c.lightest={v:w,t:nr}; beats.push('最轻'); }
-  if(beats.length) S.lastExtreme=nr;
+  if(!c.tallest  || h>c.tallest.v)  { c.tallest ={v:h,t:now()}; beats.push('最高'); }
+  if(!c.shortest || h<c.shortest.v){ c.shortest={v:h,t:now()}; beats.push('最矮'); }
+  if(!c.heaviest || w>c.heaviest.v){ c.heaviest={v:w,t:now()}; beats.push('最重'); }
+  if(!c.lightest || w<c.lightest.v){ c.lightest={v:w,t:now()}; beats.push('最轻'); }
   return beats;
 }
 function rollStats(r){
@@ -939,7 +941,8 @@ function doHarvest(z,w,i,cell,el,quiet){
   const val=Math.round(type.v*(isNew?3:1));
   addCoins(val);
   S.totalHarvest++;
-  colGet(type.id).count++;
+  const c=colGet(type.id); c.count++;
+  c.last={h:cell.h,w:cell.w,t:now()};
   // 特效（非可见槽位自动收集时跳过；静默自动收集时不出声）
   if(el){
     const r=el.getBoundingClientRect();
@@ -1280,6 +1283,7 @@ function openBook(){
       allGold=!!(gH&&gS&&gW&&gL);
       const ss=(e,k,unit)=>{ if(!e)return '--'; const txt=e.v+unit; return k?`<span class="gold">${txt}</span>`:txt; };
       stats=`<div class="stats">
+        ${rec.last?`📍 最近 ${rec.last.h}cm · ${rec.last.w}g<br>`:''}
         📏 最高 ${ss(rec.tallest, gH,'cm')} · ${rec.tallest?fmtTS(rec.tallest.t):''}<br>
         📏 最矮 ${ss(rec.shortest, gS,'cm')} · ${rec.shortest?fmtTS(rec.shortest.t):''}<br>
         ⚖️ 最重 ${ss(rec.heaviest, gW,'g')} · ${rec.heaviest?fmtTS(rec.heaviest.t):''}<br>
