@@ -1960,6 +1960,7 @@ const PIP_CSS=`.pipcard{min-height:150px;box-sizing:border-box;padding:18px 20px
   .pipbtn.pause{background:linear-gradient(180deg,#ffb74d,#ff7043);color:#fff;}
   .pipbtn.resume{background:linear-gradient(180deg,#81c784,#66bb6a);color:#fff;}
   .pipbtn.stop{background:linear-gradient(180deg,#f06292,#d81b60);color:#fff;}
+  .pipbtn.skip{background:linear-gradient(180deg,#64b5f6,#1e88e5);color:#fff;}
   .pipbtn.close{flex:0 0 46px;background:rgba(255,255,255,.12);color:#d6d0e8;}
   body{margin:0;background:#17141f;}`;
 function supportsPiP(){ // 置顶小窗需 https 安全上下文 + 新版 Chromium 的 Document Picture-in-Picture
@@ -1971,11 +1972,13 @@ function pipBuild(win){ // 在小窗文档中铺入样式与倒计时卡片（�
   root.innerHTML='<div class="pipname" id="pipName"></div><div class="piptime" id="pipTime">25:00</div>'
     +'<div class="pipstate" id="pipState"></div>'
     +'<div class="pipctrl"><button id="pipPause" class="pipbtn pause">⏸</button>'
+    +'<button id="pipSkip" class="pipbtn skip" style="display:none" title="跳过休息，继续番茄钟">⏭</button>'
     +'<button id="pipStop" class="pipbtn stop">⏹</button>'
     +'<button id="pipClose" class="pipbtn close">✕</button></div>';
   win.document.body.appendChild(root); win.document.body.style.margin='0';
   // 小窗按钮：用主窗作用域的闭包直接调用番茄钟控制（同源可访问）
   win.document.getElementById('pipPause').onclick=()=>pomoToggle();
+  win.document.getElementById('pipSkip').onclick=()=>pomoNext();
   win.document.getElementById('pipStop').onclick=()=>{ pomoStop(); try{ if(pipWin) pipWin.close(); }catch(e){} pipWin=null; updatePomoUI(); };
   win.document.getElementById('pipClose').onclick=()=>{ try{ if(pipWin) pipWin.close(); }catch(e){} pipWin=null; updatePomoUI(); };
 }
@@ -2004,6 +2007,8 @@ function pushPiP(){ // 主窗 tick 时把最新剩余时间/名称/状态推向�
     if(st) st.textContent= !S.pomo.running?'⏸ 已暂停':(inBreak?'休息中 · 自动收集':'专注中 · 生长 x2');
     const pp=d.getElementById('pipPause');
     if(pp){ pp.textContent= S.pomo.running?'⏸':'▶'; pp.className='pipbtn '+(S.pomo.running?'pause':'resume'); }
+    const sk=d.getElementById('pipSkip');
+    if(sk) sk.style.display= inBreak?'':'none';
   }
 }
 function updatePipoButton(){
@@ -2214,7 +2219,7 @@ function pomoDoCheckin(){
 }
 let calY=0, calM=0;
 function openPomoCalendar(){
-  const gd=gameNow();
+  const gd=new Date(now());
   calY=gd.getFullYear(); calM=gd.getMonth();
   renderPomoCalendar();
 }
@@ -2244,7 +2249,7 @@ function renderPomoCalendar(){
   }
   let grid='';
   for(let i=0;i<startWd;i++) grid+='<div class="cal-cell empty"></div>';
-  const gd=gameNow();
+  const gd=new Date(now());
   for(let day=1;day<=days;day++){
     const recs=map[day]||[];
     const total=recs.reduce((a,r)=>a+r.d,0);
