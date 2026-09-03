@@ -548,7 +548,7 @@ const TYPES=[
   {id:'mb_xiaoyue',name:'小月巴',img:'https://origin.picgo.net/2026/09/03/1512e4bde4713ba02.th.png', r:1, v:5,  t:45,  cond:null, color:'#c9b2e8', shape:'round', size:0.333},
   {id:'mb_xian',   name:'尴尬月巴', img:'https://origin.picgo.net/2026/09/03/4059f70dff59ca4a4.th.png', r:1, v:6,  t:60,  cond:null, color:'#d9c7f2', shape:'round'},
   {id:'mb_chi',    name:'进食月巴', img:'https://origin.picgo.net/2026/09/03/15b077f9364349ae92.th.png', r:1, v:7,  t:80,  cond:null, color:'#e8c39e', shape:'wide'},
-  {id:'mb_shui',   name:'睡月巴', r:1, v:8,  t:90,  cond:null, color:'#e3b8c9', shape:'squish'},
+  {id:'mb_shui',   name:'睡觉月巴', r:1, v:8,  t:90,  cond:null, color:'#e3b8c9', shape:'squish'},
   {id:'mb_wan',    name:'微笑月巴',img:'https://origin.picgo.net/2026/09/03/1512e4bde4713ba02.th.png', r:1, v:10, t:110, cond:null, color:'#c9b2e8', shape:'round'},
   {id:'mb_pang',   name:'胖月巴', r:2, v:14, t:150, cond:null, color:'#e7a3b8', shape:'squish'},
   {id:'mb_xin',    name:'wink月巴',img:'https://origin.picgo.net/2026/09/03/37e1be2540efa2177.th.png', r:2, v:15, t:160, cond:null, color:'#f0a8c0', shape:'heart'},
@@ -648,7 +648,7 @@ function load(){
       }
       // 迁移旧版生长时长单位（秒 -> 毫秒）
       if(d.zones) for(const z of d.zones) for(const w of (z.woods||[])) for(const c of w.cells){
-        if(c && c.t && c.dur && c.dur<10000) c.dur=c.dur*1000;
+        if(c && c.t && c.dur && c.dur<10000) c.dur=c.dur*(1000/BASE_SPEED);
       }
       S=Object.assign(defaultState(),d);
       // 深合并番茄钟字段，旧存档缺少 presets/mode/breakMin/focusTotal 时补默认值
@@ -884,12 +884,17 @@ function hScale(h){ return clamp(0.7+(h-2)/38,0.7,1.7); }
 /* ---------------- 图鉴数据（含极值） ---------------- */
 function colGet(id){ if(!S.collection[id]) S.collection[id]={count:0}; return S.collection[id]; }
 function colCount(id){ return (S.collection[id]&&S.collection[id].count)||0; }
+const EXTREME_MIN_H=3; // 极值记录最小现实间隔（小时）：约 8 小时刷出 1~3 个
 function recordExtremes(id,h,w){
+  const nr=now();
+  // 极值低频化：两次极值记录之间至少间隔 EXTREME_MIN_H 现实小时，约 8 小时刷出 1~3 个
+  if(S.lastExtreme && nr-S.lastExtreme < EXTREME_MIN_H*3600000) return [];
   const c=colGet(id), beats=[];
-  if(!c.tallest  || h>c.tallest.v)  { c.tallest ={v:h,t:now()}; beats.push('最高'); }
-  if(!c.shortest || h<c.shortest.v){ c.shortest={v:h,t:now()}; beats.push('最矮'); }
-  if(!c.heaviest || w>c.heaviest.v){ c.heaviest={v:w,t:now()}; beats.push('最重'); }
-  if(!c.lightest || w<c.lightest.v){ c.lightest={v:w,t:now()}; beats.push('最轻'); }
+  if(!c.tallest  || h>c.tallest.v)  { c.tallest ={v:h,t:nr}; beats.push('最高'); }
+  if(!c.shortest || h<c.shortest.v){ c.shortest={v:h,t:nr}; beats.push('最矮'); }
+  if(!c.heaviest || w>c.heaviest.v){ c.heaviest={v:w,t:nr}; beats.push('最重'); }
+  if(!c.lightest || w<c.lightest.v){ c.lightest={v:w,t:nr}; beats.push('最轻'); }
+  if(beats.length) S.lastExtreme=nr;
   return beats;
 }
 function rollStats(r){
@@ -906,10 +911,11 @@ function weightedPick(list){
   for(const t of list){ r-=weightOf(t); if(r<=0)return t; }
   return list[list.length-1];
 }
+const BASE_SPEED=0.5; // 全部月巴基础生长速度（倍）：0.5 倍时间，即生长时长翻倍
 function spawnIn(zone,wood,cell){
   const t=weightedPick(availableTypes());
   const st=rollStats(t.r);
-  cell.t=t.id; cell.start=now(); cell.dur=t.t*1000; cell.h=st.h; cell.w=st.w; cell.delay=0;
+  cell.t=t.id; cell.start=now(); cell.dur=t.t*(1000/BASE_SPEED); cell.h=st.h; cell.w=st.w; cell.delay=0;
 }
 function cellRemaining(cell){ return (cell.dur/speedMult())-(now()-cell.start); }
 function cellReady(cell){ return cell.t && cellRemaining(cell)<=0; }
@@ -1856,8 +1862,8 @@ function offlineSettle(){
           const list=availableTypes();
           const t=weightedPick(list);
           const st=rollStats(t.r);
-          S.zones[z].woods[w].cells[i]={t:t.id,start:backAt.getTime(),dur:t.t*1000,h:st.h,w:st.w};
-          if(now()-backAt.getTime()>=t.t*1000/speedMult()) readyCount++;
+          S.zones[z].woods[w].cells[i]={t:t.id,start:backAt.getTime(),dur:t.t*(1000/BASE_SPEED),h:st.h,w:st.w};
+          if(now()-backAt.getTime()>=t.t*(1000/BASE_SPEED)/speedMult()) readyCount++;
         }else if(cell.t&&cellReady(cell)){
           readyCount++;
         }
