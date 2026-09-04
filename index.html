@@ -486,6 +486,13 @@
   .slot-track{flex:1;height:14px;border-radius:999px;background:rgba(120,120,140,.12);overflow:hidden;}
   .slot-bar{height:100%;border-radius:999px;background:linear-gradient(90deg,#b39ddb,#7e57c2);transition:width .3s ease;}
   .slot-val{flex:0 0 92px;font-size:11px;color:var(--dim);font-weight:700;text-align:right;white-space:nowrap;}
+  .slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:6px 8px;}
+  .slot-row.mini{gap:6px;margin-bottom:0;}
+  .slot-row.mini .slot-lbl{flex:0 0 30px;font-size:10px;color:var(--dim);}
+  .slot-row.mini .slot-track{flex:1;min-width:0;}
+  .slot-row.mini .slot-val{flex:0 0 56px;font-size:10px;text-align:right;}
+  .slot-row.mini.on .slot-lbl{color:var(--gold);}
+  .slot-bar.on{background:linear-gradient(90deg,#ffd54f,#f57c00);}
   /* 统计：目标环提示 / 热力图 / 周报 */
   .goal-note{text-align:center;font-size:12px;font-weight:700;color:var(--dim);margin:2px 0 10px;}
   .goal-note b{color:var(--gold);}
@@ -644,6 +651,13 @@ function fmtDur(ms){
   const s=Math.ceil(ms/1000);
   const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60;
   return h>0?`${h}:${pad(m)}:${pad(sec)}`:`${pad(m)}:${pad(sec)}`;
+}
+function fmtDurTrend(ms){ // 趋势图紧凑格式：长时长用中文单位，避免超出列宽
+  if(!(ms>0))return '00:00';
+  const s=Math.ceil(ms/1000), h=Math.floor(s/3600), m=Math.floor((s%3600)/60);
+  if(h>=10) return m?`${h}时${m}分`:`${h}时`;
+  if(h>0) return `${h}:${pad(m)}`;
+  return `${pad(m)}:${pad(s%60)}`;
 }
 
 /* ---------------- 数据：场地（含背景图与木头摆放位） ---------------- */
@@ -1042,6 +1056,7 @@ function toast(msg){
 const fx=[]; const cv=$('fx'), ctx=cv.getContext('2d');
 function resizeFx(){ cv.width=innerWidth*devicePixelRatio; cv.height=innerHeight*devicePixelRatio; cv.style.width=innerWidth+'px'; cv.style.height=innerHeight+'px'; ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0); }
 addEventListener('resize',resizeFx); resizeFx();
+addEventListener('resize',fitTrendVals);
 function burst(x,y,colors,n,speed){
   for(let i=0;i<n;i++){
     const a=rand(0,Math.PI*2), sp=rand(1,speed);
@@ -2720,7 +2735,7 @@ function calDetail(day){
 
 /* ---------------- 统计与日历 ---------------- */
 let stCalType='pomo', stCalY=0, stCalM=0, stCalDay=0; // 统计页日历：类型/年月/选中日
-let stMainTab='overview', stTrendMode='7d', stSlotMode='all'; // 主tab / 趋势维度 / 时段范围
+let stMainTab='overview', stTrendMode='7d', stSlotMode='all', stSlotView='period'; // 主tab / 趋势维度 / 时段范围 / 时段视图
 function startOfYear(ts){ const d=new Date(ts); d.setHours(0,0,0,0); d.setMonth(0,1); return d.getTime(); }
 function statRange(ms){ const list=S.pomo.history.filter(r=>r.t>=ms); return {cnt:list.length, dur:list.reduce((a,r)=>a+r.d,0)}; }
 function trendLastNDays(n){
@@ -2743,8 +2758,11 @@ function trendMonths(n){
   }
   return rows;
 }
-function timeSlotDist(mode){
-  const slots=[{k:'🌅 上午',ms:0},{k:'☀️ 下午',ms:0},{k:'🌙 晚上',ms:0}];
+function timeSlotDist(mode, view){
+  view=view||'period';
+  const slots=view==='hour'
+    ? Array.from({length:24},(_,h)=>({k:`${h}时`,ms:0}))
+    : [{k:'🌅 上午',ms:0},{k:'☀️ 下午',ms:0},{k:'🌙 晚上',ms:0}];
   let list=S.pomo.history;
   if(mode==='month'){
     const s=startOfMonth(now());
@@ -2755,7 +2773,8 @@ function timeSlotDist(mode){
   }
   for(const r of list){
     const h=new Date(r.s).getHours();
-    slots[h>=5&&h<12?0:(h>=12&&h<18?1:2)].ms+=r.d;
+    if(view==='hour') slots[h].ms+=r.d;
+    else slots[h>=5&&h<12?0:(h>=12&&h<18?1:2)].ms+=r.d;
   }
   return slots;
 }
@@ -2768,7 +2787,7 @@ function trendBarHTML(rows, dense){
     const showVal=!dense && rows.length<=7;
     const showLbl=!(dense && rows.length>7);
     return `<div class="trend-col" title="${r.key} · ${fmtDur(r.dur)}">
-      ${showVal?`<div class="trend-val">${r.dur>0?fmtDur(r.dur):''}</div>`:''}
+      ${showVal?`<div class="trend-val">${r.dur>0?fmtDurTrend(r.dur):''}</div>`:''}
       <div class="trend-bar ${on?'on':''}" style="height:${h}%"></div>
       <div class="trend-wd ${on?'on':''}">${showLbl?r.label:''}</div>
     </div>`;
@@ -2782,23 +2801,41 @@ function renderTrendChart(){
   if(stTrendMode==='mon') chart=trendBarHTML(trendMonths(12), false);
   else chart=trendBarHTML(trendLastNDays(stTrendMode==='30d'?30:7), stTrendMode==='30d');
   box.innerHTML=`<div class="pstat-tabs" style="margin:4px 0 8px">${tabs}</div>${chart}`;
+  fitTrendVals();
+}
+function fitTrendVals(){ // 趋势数值自适应缩放：超宽时按列宽等比缩小，保证数字完整显示
+  if(!document.querySelectorAll)return; // 测试环境无真实DOM时跳过
+  document.querySelectorAll('.trend-val').forEach(el=>{
+    el.style.transform='';
+    const col=el.parentElement;
+    if(!col)return;
+    const avail=col.clientWidth;
+    if(avail>0 && el.scrollWidth>avail) el.style.transform=`scale(${(avail-1)/el.scrollWidth})`;
+  });
 }
 function stTrendSet(m){ stTrendMode=m; renderTrendChart(); sfx.click(); }
 function renderSlotDist(){
   const box=$('stSlotBox'); if(!box)return;
   const opts=[['all','📅 全部'],['month','本月'],['day','所选日']]
     .map(([m,lab])=>`<button class="btn pstat-tab ${stSlotMode===m?'on':''}" onclick="stSlotSet('${m}')">${lab}</button>`).join('');
-  const slots=timeSlotDist(stSlotMode);
+  const views=[['period','⏱ 时段'],['hour','🕐 每小时']]
+    .map(([v,lab])=>`<button class="btn pstat-tab ${stSlotView===v?'on':''}" onclick="stSlotViewSet('${v}')">${lab}</button>`).join('');
+  const slots=timeSlotDist(stSlotMode, stSlotView);
   const total=slots.reduce((a,s)=>a+s.ms,0)||1;
+  const max=slots.reduce((a,s)=>Math.max(a,s.ms),0);
+  const rows=slots.map(s=>{
+    const pct=Math.round(s.ms/total*100);
+    const on=stSlotView==='hour' && s.ms>0 && s.ms===max;
+    return `<div class="slot-row ${stSlotView==='hour'?'mini':''} ${on?'on':''}"><span class="slot-lbl">${s.k}</span>
+      <div class="slot-track"><div class="slot-bar ${on?'on':''}" style="width:${pct}%"></div></div>
+      <span class="slot-val">${stSlotView==='hour'?(s.ms>0?fmtDurTrend(s.ms):''):fmtDur(s.ms)+(s.ms>0?' · '+pct+'%':'')}</span></div>`;
+  }).join('');
   box.innerHTML=`<div class="pstat-tabs" style="margin:4px 0 8px">${opts}</div>
-    ${slots.map(s=>{
-      const pct=Math.round(s.ms/total*100);
-      return `<div class="slot-row"><span class="slot-lbl">${s.k}</span>
-        <div class="slot-track"><div class="slot-bar" style="width:${pct}%"></div></div>
-        <span class="slot-val">${fmtDur(s.ms)}${s.ms>0?' · '+pct+'%':''}</span></div>`;
-    }).join('')}`;
+    <div class="pstat-tabs" style="margin:0 0 8px">${views}</div>
+    ${stSlotView==='hour'?`<div class="slot-grid">${rows}</div>`:rows}`;
 }
 function stSlotSet(m){ stSlotMode=m; renderSlotDist(); sfx.click(); }
+function stSlotViewSet(v){ stSlotView=v; renderSlotDist(); sfx.click(); }
 function statCalGrid(){
   const Y=stCalY, M=stCalM;
   const first=new Date(Y,M,1);
