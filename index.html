@@ -3078,7 +3078,6 @@ function pomoReport(period){
     <div class="task-sec">🏆 专注 TOP 项目</div>
     ${top||'<div class="empty">本期还没有打卡记录</div>'}
     <div class="pomo-controls">
-      <button class="btn cta" onclick="shareReportCard('${period}')">📸 生成成就卡</button>
       <button class="btn" onclick="openStats()">返回统计</button>
     </div>`);
 }
@@ -3096,54 +3095,6 @@ function pomoReportCheck(){
     if(rw.month!==mk){ rw.month=mk; save(); pomoReport('month'); }
   }
 }
-/* 成就卡：canvas 绘制并导出图片 */
-function fmtDate(ts){ const d=new Date(ts); return `${d.getMonth()+1}/${d.getDate()}`; }
-function roundRect(c,x,y,w,h,r){
-  c.beginPath();
-  c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r);
-  c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath();
-}
-function shareReportCard(period){
-  const isWeek=period==='week';
-  const nowTs=now();
-  const curS=isWeek?startOfWeek(nowTs):startOfMonth(nowTs);
-  const curE=isWeek?curS+7*86400000:new Date(new Date(nowTs).getFullYear(), new Date(nowTs).getMonth()+1, 1).getTime();
-  const cur=S.pomo.history.filter(r=>r.t>=curS && r.t<curE);
-  const curDur=cur.reduce((a,r)=>a+r.d,0);
-  const done=(S.tasks||[]).filter(t=>t.doneAt && t.doneAt>=curS && t.doneAt<curE).length;
-  const W=720,H=960;
-  const cv=document.createElement('canvas');
-  cv.width=W; cv.height=H;
-  const ctx=cv.getContext('2d');
-  const g=ctx.createLinearGradient(0,0,0,H);
-  g.addColorStop(0,'#f3eefb'); g.addColorStop(1,'#dcd0f0');
-  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-  ctx.textAlign='center';
-  ctx.fillStyle='#7e57c2'; ctx.font='800 46px sans-serif';
-  ctx.fillText(isWeek?'🍅 本周专注成就卡':'🍅 本月专注成就卡',W/2,96);
-  ctx.fillStyle='#a496c8'; ctx.font='22px sans-serif';
-  ctx.fillText(isWeek?`${fmtDate(curS)} - ${fmtDate(curE-1)}`:`${new Date(curS).getMonth()+1}月`,W/2,140);
-  const data=[['专注时长',fmtDur(curDur)],['打卡次数',cur.length+' 次'],['完成任务',done+' 个'],['连续打卡',pomoStreak()+' 天']];
-  const cw=300, ch=150, gap=24, x0=(W-2*cw-gap)/2;
-  data.forEach((d,i)=>{
-    const x=i%2?x0+cw+gap:x0, y=200+Math.floor(i/2)*(ch+gap);
-    ctx.fillStyle='rgba(255,255,255,.85)';
-    roundRect(ctx,x,y,cw,ch,22); ctx.fill();
-    ctx.fillStyle='#7e57c2'; ctx.font='800 20px sans-serif';
-    ctx.fillText(d[0],x+cw/2,y+50);
-    ctx.fillStyle='#5e35b1'; ctx.font='800 52px sans-serif';
-    ctx.fillText(d[1],x+cw/2,y+124);
-  });
-  ctx.fillStyle='#a496c8'; ctx.font='20px sans-serif';
-  ctx.fillText(`月巴放置 · ${new Date(nowTs).getFullYear()}`,W/2,H-40);
-  const url=cv.toDataURL('image/png');
-  openModal('📸 专注成就卡', `<img src="${url}" style="width:100%;border-radius:14px;display:block">
-    <div class="pomo-controls">
-      <a class="btn cta" href="${url}" download="专注成就卡.png" style="text-align:center">💾 保存图片</a>
-      <button class="btn" onclick="openStats()">返回统计</button>
-    </div>`);
-}
-
 /* ---------------- 主循环 ---------------- */
 let lastReadySfx=0, lastRevealSfx=0;
 function tick(){
