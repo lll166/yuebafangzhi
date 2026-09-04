@@ -399,6 +399,17 @@
   .cal-detail{margin-top:10px;}
   .cal-dtitle{font-size:13px;font-weight:800;color:var(--purple2);margin-bottom:6px;text-align:center;}
   .cal-legend{font-size:11px;color:var(--dim);text-align:center;margin-top:8px;}
+  /* 打卡概览 */
+  .ck-summary{display:flex;gap:8px;margin:2px 0 10px;}
+  .ck-card{flex:1;text-align:center;padding:10px 6px;border-radius:12px;
+    background:rgba(255,255,255,.65);border:1px solid var(--line);}
+  .ck-card b{display:block;font-size:19px;color:var(--purple2);}
+  .ck-card small{font-size:11px;color:var(--dim);font-weight:700;}
+  /* 打卡记录操作按钮 */
+  .pstat-row .op{flex:0 0 auto;border:none;background:rgba(149,117,205,.12);color:var(--purple2);
+    border-radius:8px;padding:4px 7px;font-size:12px;cursor:pointer;line-height:1;}
+  .pstat-row .op.del{background:rgba(239,83,80,.12);color:#e57373;}
+  .pstat-row .op:hover{filter:brightness(1.08);}
 
   .helplines{font-size:13px;line-height:1.8;color:var(--text);}
   .helplines b{color:var(--gold);}
@@ -1069,7 +1080,7 @@ function weightedPick(list){
   for(const t of list){ r-=weightOf(t); if(r<=0)return t; }
   return list[list.length-1];
 }
-const BASE_SPEED=0.5; // 全部月巴基础生长速度（倍）：0.5 倍时间，即生长时长翻倍
+const BASE_SPEED=0.3; // 全部月巴基础生长速度（倍）：0.5 倍时间，即生长时长翻倍
 function spawnIn(zone,wood,cell){
   const t=weightedPick(availableTypes());
   const st=rollStats(t.r);
@@ -2190,8 +2201,14 @@ function ckUsePreset(i){
 }
 function ckDelPreset(i){ (S.pomo.presets||[]).splice(i,1); save(); sfx.click(); renderCheckinPresets(); }
 function openPomoCheckin(){
+  const sum=pomoTodaySummary(), streak=pomoStreak();
   openModal('✅ 打卡',
     `<div class="pomo-wrap">
+      <div class="ck-summary">
+        <div class="ck-card"><b>${sum.cnt}次</b><small>今日专注</small></div>
+        <div class="ck-card"><b>${fmtDur(sum.total)}</b><small>今日累计</small></div>
+        <div class="ck-card"><b>${streak}天</b><small>🔥 连续打卡</small></div>
+      </div>
       <div class="pomo-presets" id="ckPresets"></div>
       <div class="pomo-name-in"><input id="ckName" value="${esc(S.pomo.name)}" placeholder="专注项目，如：工作 / 学习"></div>
       <div class="pomo-name-in"><input id="ckMin" type="number" min="1" max="600" value="25" placeholder="专注分钟"></div>
@@ -2216,6 +2233,55 @@ function pomoDoCheckin(){
   save(); sfx.unlock();
   toast(`✅ 打卡成功：「${name}」${fmtDur(d)}${note?' · '+note:''}`);
   openPomo();
+}
+/* 今日专注概览：次数与累计时长 */
+function pomoTodaySummary(){
+  const s=startOfDay(now());
+  const list=S.pomo.history.filter(r=>r.t>=s);
+  return {cnt:list.length, total:list.reduce((a,r)=>a+r.d,0)};
+}
+/* 连续打卡天数：今天没打卡则从昨天起算，避免未到当天就断签 */
+function pomoStreak(){
+  const days=new Set(S.pomo.history.map(r=>dayKey(r.t)));
+  const d=new Date(now());
+  if(!days.has(dayKey(d.getTime()))) d.setDate(d.getDate()-1);
+  let n=0;
+  while(days.has(dayKey(d.getTime()))){ n++; d.setDate(d.getDate()-1); }
+  return n;
+}
+function pomoEditRecord(idx){
+  const r=S.pomo.history[idx]; if(!r)return;
+  const min=Math.max(1,Math.round(r.d/60000));
+  openModal('✏️ 编辑打卡',
+    `<div class="pomo-wrap">
+      <div class="pomo-name-in"><input id="edName" value="${esc(r.n)}" placeholder="专注项目"></div>
+      <div class="pomo-name-in"><input id="edMin" type="number" min="1" max="600" value="${min}" placeholder="专注分钟"></div>
+      <div class="pomo-name-in"><input id="edNote" value="${esc(r.c||'')}" placeholder="打卡内容 / 备注（可选）"></div>
+      <div class="pomo-note">修改时长后结束时间自动重算，开始时间不变。</div>
+      <div class="pomo-controls">
+        <button class="btn cta" onclick="pomoSaveRecord(${idx})">💾 保存</button>
+        <button class="btn" onclick="renderPomoCalendar()">取消</button>
+      </div>
+    </div>`);
+  pomoModalOpen=false;
+}
+function pomoSaveRecord(idx){
+  const r=S.pomo.history[idx];
+  if(!r){ renderPomoCalendar(); return; }
+  const name=inpVal('edName','').trim()||r.n;
+  const min=parseInt(inpVal('edMin',''),10)||Math.round(r.d/60000);
+  r.n=name; r.d=Math.max(1,Math.min(600,min))*60000; r.c=inpVal('edNote',''); r.t=r.s+r.d;
+  save(); sfx.unlock();
+  toast('✅ 打卡已更新');
+  renderPomoCalendar();
+}
+function pomoDelRecord(idx){
+  const r=S.pomo.history[idx]; if(!r)return;
+  if(!confirm(`确定删除这条打卡吗？\n「${r.n}」 ${fmtDur(r.d)}`))return;
+  S.pomo.history.splice(idx,1);
+  save(); sfx.unlock();
+  toast('🗑 打卡已删除');
+  renderPomoCalendar();
 }
 let calY=0, calM=0;
 function openPomoCalendar(){
@@ -2281,10 +2347,14 @@ function renderPomoCalendar(){
 function calMove(delta){ calM+=delta; if(calM<0){calM=11;calY--;} if(calM>11){calM=0;calY++;} renderPomoCalendar(); }
 function calDetail(day){
   const el=$('calDetail'); if(!el)return;
-  const recs=S.pomo.history.filter(r=>{ const d=new Date(r.t); return d.getFullYear()===calY&&d.getMonth()===calM&&d.getDate()===day; }).sort((a,b)=>b.t-a.t);
-  const total=recs.reduce((a,r)=>a+r.d,0);
-  el.innerHTML=`<div class="cal-dtitle">${calY}/${calM+1}/${day} · ${recs.length}次 · 共${fmtDur(total)}</div>
-    ${recs.map(r=>`<div class="pstat-row"><b>${esc(r.n)}</b><span>${r.c?esc(r.c):''}</span><em>${fmtDur(r.d)}</em></div>`).join('')||'<div class="empty">当天没有打卡</div>'}`;
+  const list=[];
+  S.pomo.history.forEach((r,idx)=>{ const d=new Date(r.t); if(d.getFullYear()===calY&&d.getMonth()===calM&&d.getDate()===day) list.push({idx,r}); });
+  list.sort((a,b)=>b.r.t-a.r.t);
+  const total=list.reduce((a,x)=>a+x.r.d,0);
+  el.innerHTML=`<div class="cal-dtitle">${calY}/${calM+1}/${day} · ${list.length}次 · 共${fmtDur(total)}</div>
+    ${list.map(x=>`<div class="pstat-row"><b>${esc(x.r.n)}</b><span>${x.r.c?esc(x.r.c):''}</span><em>${fmtDur(x.r.d)}</em>
+      <button class="op" onclick="pomoEditRecord(${x.idx})" title="编辑">✏️</button>
+      <button class="op del" onclick="pomoDelRecord(${x.idx})" title="删除">🗑</button></div>`).join('')||'<div class="empty">当天没有打卡</div>'}`;
 }
 
 /* ---------------- 主循环 ---------------- */
