@@ -493,6 +493,18 @@
   .slot-row.mini .slot-val{flex:0 0 56px;font-size:10px;text-align:right;}
   .slot-row.mini.on .slot-lbl{color:var(--gold);}
   .slot-bar.on{background:linear-gradient(90deg,#ffd54f,#f57c00);}
+  /* 每日时间线 */
+  .tl{position:relative;height:672px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.55);overflow:hidden;margin-bottom:6px;}
+  .tl-grid{position:absolute;left:56px;right:0;top:0;bottom:0;background:repeating-linear-gradient(to bottom,transparent 0 27px,rgba(120,120,140,.12) 27px 28px);}
+  .tl-h{position:absolute;left:6px;top:0;font-size:9px;color:var(--dim);font-weight:700;width:44px;text-align:right;transform:translateY(-50%);}
+  .tl-bar{position:absolute;left:56px;right:8px;border-radius:6px;color:#fff;padding:2px 6px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.25);}
+  .tl-bar b{font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tl-bar em{font-size:9px;font-style:normal;opacity:.9;font-weight:600;}
+  .tl-now{position:absolute;left:56px;right:0;height:0;border-top:2px solid #f57c00;z-index:3;}
+  .tl-now::after{content:'现在';position:absolute;right:4px;top:-9px;font-size:9px;font-weight:800;color:#f57c00;}
+  .tl-legend{display:flex;flex-wrap:wrap;gap:4px 10px;margin-bottom:8px;}
+  .tl-leg{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:var(--dim);}
+  .tl-leg i{width:10px;height:10px;border-radius:3px;display:inline-block;}
   /* 统计：目标环提示 / 热力图 / 周报 */
   .goal-note{text-align:center;font-size:12px;font-weight:700;color:var(--dim);margin:2px 0 10px;}
   .goal-note b{color:var(--gold);}
@@ -2864,6 +2876,31 @@ function statCalGrid(){
   }
   return `<div class="cal-grid">${['一','二','三','四','五','六','日'].map(w=>`<div class="cal-wd">${w}</div>`).join('')}${grid}</div>`;
 }
+/* 每日时间线：把某天打卡记录按开始时间定位成色块，拼成 0-24 点时间轴 */
+const TL_PALETTE=['#e57373','#f06292','#ba68c8','#9575cd','#7986cb','#64b5f6','#4fc3f7','#4dd0e1','#4db6ac','#81c784','#aed581','#dce775','#ffd54f','#ffb74d','#ff8a65'];
+function tlColor(n){ let h=0; const s=String(n||''); for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return TL_PALETTE[h%TL_PALETTE.length]; }
+function statTimelineHTML(recs, dayTs){
+  const DAY=1440, TL=672; // 24 小时 * 28px
+  const fmtHm=m=>`${pad(Math.floor(m/60)%24)}:${pad(Math.floor(m%60))}`;
+  const selTs=dayTs||(stCalDay?new Date(stCalY,stCalM,stCalDay).getTime():now());
+  const isToday=dayKey(selTs)===dayKey(now());
+  const nowMin=new Date(now()).getHours()*60+new Date(now()).getMinutes();
+  let hrs='', bars='';
+  for(let h=0;h<24;h++) hrs+=`<div class="tl-h" style="top:${h*28}px">${pad(h)}:00</div>`;
+  const names=[...new Set(recs.map(r=>r.n))];
+  for(const r of recs){
+    const st=r.s||r.t-r.d;
+    const sm=new Date(st).getHours()*60+new Date(st).getMinutes();
+    const dm=r.d/60000;
+    const top=sm/DAY*TL, hgt=Math.max(dm/DAY*TL,14);
+    const c=tlColor(r.n);
+    const inside=hgt>=22?`<b>${esc(r.n)}</b><em>${fmtHm(sm)} - ${fmtHm(sm+dm)}</em>`:'';
+    bars+=`<div class="tl-bar" style="top:${top}px;height:${hgt}px;background:${c}" title="${esc(r.n)} ${fmtHm(sm)} - ${fmtHm(sm+dm)} · ${fmtDur(r.d)}">${inside}</div>`;
+  }
+  const legend=names.map(n=>`<span class="tl-leg"><i style="background:${tlColor(n)}"></i>${esc(n)}</span>`).join('');
+  return `<div class="tl"><div class="tl-grid"></div>${hrs}${bars}${isToday?`<div class="tl-now" style="top:${nowMin/DAY*TL}px"></div>`:''}</div>
+    ${legend?`<div class="tl-legend">${legend}</div>`:''}`;
+}
 function statCalDetailHTML(){
   const day=stCalDay;
   const key=`${stCalY}-${pad(stCalM+1)}-${pad(day)}`;
@@ -2874,7 +2911,10 @@ function statCalDetailHTML(){
     list.sort((a,b)=>b.r.t-a.r.t);
     const total=list.reduce((a,x)=>a+x.r.d,0);
     const done=(S.tasks||[]).filter(t=>t.doneAt && t.doneAt>=dayS && t.doneAt<dayS+86400000);
+    const tlRecs=list.map(x=>x.r).sort((a,b)=>(a.s||a.t-a.d)-(b.s||b.t-b.d));
+    const tlHTML=tlRecs.length?`<div class="task-sec">🕒 每日时间线</div>${statTimelineHTML(tlRecs)}`:'';
     return `<div class="cal-dtitle">${key} · ${list.length}次打卡 · 共${fmtDur(total)}</div>
+      ${tlHTML}
       ${list.map(x=>`<div class="pstat-row"><b>${esc(x.r.n)}</b><span>${x.r.c?esc(x.r.c):''}</span><em>${fmtDur(x.r.d)}</em></div>`).join('')||'<div class="empty">当天没有打卡</div>'}
       ${done.length?`<div class="cal-dtitle">✅ 当天完成任务（${done.length}）</div>${done.map(t=>taskRowHTML(t,1)).join('')}`:''}`;
   }
@@ -2982,13 +3022,22 @@ function renderStBody(){
       <div class="task-sec">📈 专注时长趋势</div>
       <div id="stTrendBox"></div>
       <div class="task-sec">⏳ 专注时段分布</div>
-      <div id="stSlotBox"></div>`:`
+      <div id="stSlotBox"></div>
+      <div class="task-sec">🕒 今日时间线</div>
+      <div id="stTodayTL"></div>`:`
       <div class="task-sec">🔥 专注热力图 · 近12个月</div>
       <div id="stHeatBox"></div>
       <div class="task-sec">📅 日历</div>
       <div id="stCalBox"></div>`}`;
-  if(stMainTab==='overview'){ renderTrendChart(); renderSlotDist(); }
+  if(stMainTab==='overview'){ renderTrendChart(); renderSlotDist(); renderTodayTL(); }
   else { renderHeatmap(); renderStatCal(); }
+}
+/* 今日时间线：概览页展示今天全天的专注色块 */
+function renderTodayTL(){
+  const box=$('stTodayTL'); if(!box)return;
+  const dayS=startOfDay(now()), dayE=dayS+86400000;
+  const recs=S.pomo.history.filter(r=>r.t>=dayS && r.t<dayE).sort((a,b)=>(a.s||a.t-a.d)-(b.s||b.t-b.d));
+  box.innerHTML=recs.length?statTimelineHTML(recs, now()):'<div class="empty">今天还没有打卡记录</div>';
 }
 function renderHeatmap(){
   const box=$('stHeatBox'); if(!box)return;
