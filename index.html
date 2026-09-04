@@ -1859,6 +1859,7 @@ function openHelp(){
       <div class="sec">💡 小技巧</div>
       想触发天气月巴可买「天气瓶」；游戏时间过得很快，季节与昼夜月巴很容易等到。
       <div class="sec">💾 存档备份</div>
+      <div style="font-size:11px;color:var(--dim);margin:4px 0 2px">📦 备份内容：图鉴 ${Object.keys(S.collection).length} 种 · 场地 ${S.zones.filter(z=>z.bought).length}/${ZONES.length} · 🍅 打卡 ${S.pomo.history.length} 条 · 任务 ${(S.tasks||[]).length} 条 · 番茄钟设置</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
         <button class="btn" onclick="exportSave()">📋 复制存档</button>
         <button class="btn" onclick="toggleImport()">📥 导入存档</button>
@@ -1879,7 +1880,7 @@ function resetSave(){
 function exportSave(){
   save();
   const json=JSON.stringify(S);
-  const ok=()=>toast('✅ 存档已复制到剪贴板');
+  const ok=()=>toast(`✅ 存档已复制（🍅 打卡 ${S.pomo.history.length} 条 · 任务 ${(S.tasks||[]).length} 条）`);
   const fallback=()=>{
     try{
       const ta=document.createElement('textarea');
@@ -1914,7 +1915,7 @@ function importSave(){
     const merged=Object.assign(defaultState(),d);
     merged.pomo=Object.assign(defaultState().pomo,d.pomo||{});
     S=merged; save();
-    toast('✅ 导入成功，正在刷新…');
+    toast(`✅ 导入成功（🍅 打卡 ${(d.pomo&&d.pomo.history||[]).length} 条 · 任务 ${(d.tasks||[]).length} 条），正在刷新…`);
     setTimeout(()=>location.reload(),600);
   }catch(e){ toast('❌ 存档格式无效，导入失败'); }
 }
