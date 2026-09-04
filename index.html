@@ -581,7 +581,7 @@
 
 <div id="dock" class="frost">
   <button class="dockbtn" id="btnBook"><b>📗</b><small>图鉴</small></button>
-  <button class="dockbtn pomo" id="btnPomo"><b>⏰</b><small>番茄钟</small></button>
+  <button class="dockbtn pomo" id="btnPomo"><b>🍅</b><small>番茄钟</small></button>
   <button class="dockbtn hasbadge" id="btnTask"><b>✅</b><small>待办</small><span class="dock-badge" id="taskBadge" style="display:none"></span></button>
   <button class="dockbtn" id="btnStats"><b>📊</b><small>统计</small></button>
   <button class="dockbtn" id="btnShop"><b>🛒</b><small>商店</small></button>
@@ -1846,8 +1846,8 @@ function openHelp(){
       收集图鉴里的所有月巴！每发现新种类，首收 3 倍金币。图鉴会记录每种月巴的<b>最高/最矮/最重/最轻</b>极值与出现时间。<b>部分极稀有月巴</b>任何条件都满足、但概率极低（图鉴标注「✨ 概率极低」）。
       <div class="sec">🌱 生长阶段</div>
       月巴在木头上经历<b>幼年期 → 成长期 → 成熟期</b>三个阶段。幼年与成长长得都一样，<b>只有成熟后</b>才能看到真面目并收获。每只月巴都随机拥有<b>身高与体重</b>。
-      <div class="sec">⏰ 番茄钟</div>
-      点底部「⏰ 番茄钟」开始专注，可自定义<b>名称与时长</b>。专注期间<b>月巴生长速度 x2</b>；<b>切出界面计时自动暂停</b>，回来自动继续。<b>只有完成的番茄才记满时长</b>；中途停止只记录已专注的时间，也可<b>手动打卡</b>。所有记录可在<b>打卡日历</b>与统计（今日/本周/本月）里复盘。
+      <div class="sec">🍅 番茄钟</div>
+      点底部「🍅 番茄钟」开始专注，可自定义<b>名称与时长</b>。专注期间<b>月巴生长速度 x2</b>；<b>切出界面计时自动暂停</b>，回来自动继续。<b>只有完成的番茄才记满时长</b>；中途停止只记录已专注的时间，也可<b>手动打卡</b>。所有记录可在<b>打卡日历</b>与统计（今日/本周/本月）里复盘。
       <div class="sec">🕰️ 游戏时间</div>
       游戏内时间以<b>约 2 现实小时 = 1 游戏年</b>的速度流逝，季节与昼夜快速轮转；天气每 8~18 分钟变化一次（与现实同速），番茄钟按现实时间计时。
       <div class="sec">🏡 场地</div>
@@ -2183,7 +2183,7 @@ function updatePomoUI(){
   const inBreak=S.pomo.mode==='break';
   if(S.pomo.running||S.pomo.remain>0){
     chip.style.display='';
-    const icon= inBreak ? '☕' : (S.pomo.running?'⏰':'⏸');
+    const icon= inBreak ? '☕' : (S.pomo.running?'🍅':'⏸');
     chip.textContent=icon+' '+(inBreak?'休息':S.pomo.name)+' '+fmtDur(pomoRemaining());
   }else{
     chip.style.display='none';
@@ -2462,7 +2462,7 @@ function pomoTaskSelChange(){
 }
 function openPomo(){
   pomoModalOpen=true;
-  openModal('⏰ 番茄钟',
+  openModal('🍅 番茄钟',
     `<div class="pomo-wrap">
       <button class="pomo-pipbtn" id="pomoPipBtn" onclick="pomopipToggle()" title="置顶小窗">📌</button>
       <div class="pomo-hero">
@@ -2516,7 +2516,7 @@ function openPomo(){
         <button class="btn" onclick="pomoStop()">⏹ 停止</button>
       </div>
 
-      <div class="pomo-note">⏰ 专注期间<b>月巴生长 x2 且成熟自动收集</b>；切出界面计时自动暂停。其余时段月巴需<b>手动收集</b>。<b>完成的番茄才记满时长</b>，中途停止只记已专注时间。完成后<b>自动进入休息</b>，休息结束可开始<b>下一个番茄</b>。</div>
+      <div class="pomo-note">🍅 专注期间<b>月巴生长 x2 且成熟自动收集</b>；切出界面计时自动暂停。其余时段月巴需<b>手动收集</b>。<b>完成的番茄才记满时长</b>，中途停止只记已专注时间。完成后<b>自动进入休息</b>，休息结束可开始<b>下一个番茄</b>。</div>
       <div class="pomo-tools">
         <button class="btn" onclick="openPomoCheckin()">✅ 打卡</button>
       </div>
@@ -2577,7 +2577,7 @@ function openPomoStats(period){
     `<div class="pstat-tabs">${tabs}</div>
      <div class="pstat-total">共 <b>${cnt}</b> 次专注 · 累计 <b>${fmtDur(total)}</b></div>
      <div class="pstat-list">${rows}</div>
-     <button class="btn" style="width:100%;margin-top:8px" onclick="openPomo()">⏰ 返回番茄钟</button>`);
+     <button class="btn" style="width:100%;margin-top:8px" onclick="openPomo()">🍅 返回番茄钟</button>`);
   pomoModalOpen=false;
 }
 
@@ -2728,7 +2728,7 @@ function renderPomoCalendar(){
     <div class="cal-detail" id="calDetail"></div>
     <div class="cal-legend">🎨 每 8 小时换一种颜色 · 一天最多 4 色（24 小时）</div>
     <div class="pomo-controls">
-      <button class="btn" onclick="openPomo()">⏰ 返回番茄钟</button>
+      <button class="btn" onclick="openPomo()">🍅 返回番茄钟</button>
       <button class="btn" onclick="openPomoStats('day')">📊 统计</button>
     </div>`);
   pomoModalOpen=false;
