@@ -236,12 +236,8 @@
   #travel .tv-btn:hover{background:#eef7ec;border-color:#68906b;}
   #travel .tv-mail{position:absolute;right:12px;bottom:64px;font-size:24px;background:#fff;border:2px solid #c78b4a;border-radius:50%;width:46px;height:46px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;}
   #travel .tv-mail span{position:absolute;top:-2px;right:-2px;width:13px;height:13px;border-radius:50%;background:#e53935;border:2px solid #fff;}
-  .tvyard{position:absolute;inset:0;background:linear-gradient(180deg,#bfe0b0,#8fc477 60%,#79b260);overflow:hidden;}
-  .tvg-tree{position:absolute;left:6%;bottom:20%;width:16px;height:94px;background:#7d5a38;border-radius:4px;}
-  .tvg-tree::before{content:'';position:absolute;left:-34px;top:-26px;width:84px;height:64px;background:#5d9c4a;border-radius:50% 50% 30% 30%;}
-  .tvg-bush{position:absolute;left:70%;bottom:20%;width:74px;height:40px;background:#5d9c4a;border-radius:50% 50% 0 0;}
-  .tvg-pond{position:absolute;right:10%;bottom:9%;width:92px;height:52px;background:#9ad7ea;border-radius:50%;}
-  .tvg-home{position:absolute;left:9%;bottom:22%;width:96px;height:70px;background:#d9b078;border-radius:6px;border:2px solid #b07b3f;}
+  .tvyard{position:absolute;inset:0;overflow:hidden;}
+  .tvg-bg{position:absolute;inset:0;width:100%;height:100%;}
   .tvg-tom{position:absolute;font-size:26px;cursor:pointer;filter:drop-shadow(0 1px 1px rgba(0,0,0,.2));animation:tomp .3s ease;text-shadow:0 1px 0 #fff;}
   @keyframes tomp{0%{transform:scale(0)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
   .tv-note{position:absolute;left:6%;right:6%;top:6%;background:rgba(255,255,255,.8);padding:9px 12px;border-radius:10px;font-size:13px;color:#3e5c3f;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.12);}
@@ -665,8 +661,8 @@
   <div class="tv-nav">
     <button class="tv-btn" onclick="tvTab("yard")">🏠 庭院</button>
     <button class="tv-btn" onclick="tvTab("home")">🛋 室内</button>
-    <button class="tv-btn" onclick="tvOpenShop()">🛍 商店</button>
-    <button class="tv-btn" onclick="tvOpenBag()">💼 行囊</button>
+    <button class="tv-btn" onclick="tvShop()">🛍 商店</button>
+    <button class="tv-btn" onclick="tvBag()">💼 行囊</button>
     <button class="tv-btn" onclick="tvOpenBook()">🏷 图鉴</button>
   </div>
   <button class="tv-mail" id="tvMail" onclick="tvOpenMail()" title="信箱">📮<span id="tvMailDot" style="display:none"></span></button>
@@ -3382,7 +3378,28 @@ function tvRenderAll(){ tvRenderScene(); tvUpdateBar(); }
 function tvUpdateBar(){ const t=tvFresh(); const e=$('tvTomato'); if(e)e.textContent=t.tomato; const s=$('tvState'); if(s)s.textContent=t.frog.status==='away'?'旅途中':(t.frog.status==='pack'?'准备行囊':'在家'); }
 function tvTab(v){ tvView=v; tvRenderScene(); }
 function tvYardHTML(t){
-  let h='<div class="tvyard"><div class="tvg-tree"></div><div class="tvg-bush"></div><div class="tvg-pond"></div><div class="tvg-home"></div>';
+  let h='<div class="tvyard"><svg viewBox="0 0 400 240" preserveAspectRatio="xMidYMid slice" class="tvg-bg">'
+    +'<defs><linearGradient id="tgSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9e8f0"/><stop offset="1" stop-color="#eaf6dc"/></linearGradient>'
+    +'<linearGradient id="tgGrass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9ed478"/><stop offset="1" stop-color="#69a94e"/></linearGradient></defs>'
+    +'<rect x="0" y="0" width="400" height="64" fill="url(#tgSky)"/>'
+    +'<rect x="0" y="54" width="400" height="186" fill="url(#tgGrass)"/>'
+    +'<path d="M168 240 C164 185 220 150 236 66" stroke="#e9d6ae" stroke-width="30" fill="none" stroke-linecap="round" opacity=".9"/>'
+    +'<path d="M176 220 C200 168 216 180 232 150" stroke="#c9ab7a" stroke-width="5" fill="none" stroke-linecap="round" opacity=".5"/>'
+    +'<ellipse cx="66" cy="218" rx="42" ry="15" fill="url(#tgSky)"/>'
+    +'<ellipse cx="66" cy="213" rx="34" ry="10" fill="#9ed8ee"/>'
+    +'<path d="M50 210 q5-6 11 0 M62 214 q5-6 11 0" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".8"/>'
+    +'<rect x="20" y="128" width="108" height="82" fill="#e8c998" stroke="#c18a4a" stroke-width="3"/>'
+    +'<polygon points="12,130 74,70 136,130" fill="#d97b5a" stroke="#b5532f" stroke-width="3"/>'
+    +'<rect x="58" y="168" width="32" height="42" fill="#8a5a33"/>'
+    +'<rect x="32" y="142" width="24" height="24" fill="#bfe8f3" stroke="#c18a4a" stroke-width="3"/>'
+    +'<rect x="230" y="150" width="14" height="56" fill="#7d5a38"/>'
+    +'<circle cx="246" cy="128" r="34" fill="#5d9c4a"/>'
+    +'<circle cx="226" cy="146" r="20" fill="#4e8b3d"/>'
+    +'<circle cx="266" cy="142" r="18" fill="#6fb05b"/>'
+    +'<ellipse cx="344" cy="222" rx="46" ry="15" fill="#4e8b3d"/>'
+    +'<ellipse cx="322" cy="226" rx="26" ry="12" fill="#5d9c4a"/>'
+    +'<ellipse cx="364" cy="226" rx="24" ry="11" fill="#66a651"/>'
+    +'</svg>';
   (t.yard||[]).forEach(function(p){ h+='<span class="tvg-tom" style="left:'+p.x+'%;top:'+p.y+'%" data-i="'+p.i+'" onclick="tvPick(this)">🍅</span>'; });
   h+='</div>';
   if(t.frog.status==='away')h+='<div class="tv-note">✈️ 月巴去「'+tvDestOf(t.bag).n+'」旅行啦，留话：'+t.frog.mood+'</div>';
@@ -3397,13 +3414,12 @@ function tvHomeHTML(t){
   return h;
 }
 function tvRenderScene(){ const sc=$('tvScene'); if(!sc)return; const t=tvFresh(); sc.innerHTML=tvView==='yard'?tvYardHTML(t):tvHomeHTML(t); }
-function tvPick(el){ const t=tvFresh(); const i=el.getAttribute('data-i'); t.yard=(t.yard||[]).filter(function(p){return String(p.i)!==String(i);}); tvTomato(1); sfx.tap&&sfx.tap(); }
-function tvTickYard(){ const t=tvFresh(); const nowT=now(); if(!t.vineT)t.vineT=nowT+rand(0,2)*60000; if(nowT>=t.vineT){ const n=1+(Math.random()*6|0); for(let k=0;k<n;k++){ t.yard.push({i:nowT+'_'+k+'_'+(Math.random()*1e4|0),x:8+Math.random()*84,y:28+Math.random()*52}); } t.vineT=nowT+rand(8,12)*60000; save(); } }
+function tvPick(el){ const t=tvFresh(); const i=el.getAttribute('data-i'); t.yard=(t.yard||[]).filter(function(p){return String(p.i)!==String(i);}); tvTomato(1); sfx.tap&&sfx.tap(); tvRenderScene(); }
+function tvTickYard(){ const t=tvFresh(); const nowT=now(); if(!t.vineT)t.vineT=nowT+rand(0,2)*60000; if(nowT>=t.vineT){ const n=1+(Math.random()*6|0); for(let k=0;k<n;k++){ t.yard.push({i:nowT+'_'+k+'_'+(Math.random()*1e4|0),x:8+Math.random()*84,y:28+Math.random()*52}); } t.vineT=nowT+rand(8,12)*60000; save(); return true; } return false; }
 function tvDestOf(bag){ bag=bag||tvFresh().bag; const has=function(k){return bag.indexOf(k)>=0;}; if(has('charm')&&has('food3'))return TV_DESTS[3]; if(has('lamp'))return TV_DESTS[1]; if(has('bell'))return TV_DESTS[2]; return TV_DESTS[0]; }
 function travelSettleIf(){ const t=tvFresh(); if(t.frog.status==='away' && t.frog.ret && now()>=t.frog.ret) tvSettle(); }
-function travelTick(){ if(!S.travel||!S.travel.frog)return; const t=S.travel; travelSettleIf(); tvTickYard(); if(t.frog.status==='away'&&now()>=(t.cardT||0)){ t.cardT=now()+rand(10,20)*60000; tvSendCardIf(); } const vis=$('travel'); if(vis&&vis.style.display==='flex'){ if(t.frog.status==='away'&&!t._lastCard){ } tvRenderScene(); tvUpdateBar(); } }
+function travelTick(){ if(!S.travel||!S.travel.frog)return; const t=S.travel; travelSettleIf(); const grew=tvTickYard(); if(t.frog.status==='away'&&now()>=(t.cardT||0)){ t.cardT=now()+rand(10,20)*60000; tvSendCardIf(); } const vis=$('travel'); if(vis&&vis.style.display==='flex'){ tvFriendPop(); if(grew)tvRenderScene(); tvUpdateBar(); } }
 function tvSendCardIf(){ const t=tvFresh(); if(t.frog.status!=='away')return; const d=tvDestOf(t.bag); const got=d.cards.filter(function(c){return t.cards.indexOf(c)<0;}); if(got.length) t.cards.push(got[Math.floor(Math.random()*got.length)]); save(); }
-function travelTick(){ if(!S.travel||!S.travel.frog)return; const t=S.travel; travelSettleIf(); tvTickYard(); if(t.frog.status==='away'&&now()>=(t.cardT||0)){ t.cardT=now()+rand(10,20)*60000; tvSendCardIf(); } const vis=$('travel'); if(vis&&vis.style.display==='flex'){ tvFriendPop(); tvRenderScene(); tvUpdateBar(); } }
 function tvUpdateBar(){ const t=tvFresh(); const e=$('tvTomato'); if(e)e.textContent=t.tomato; const s=$('tvState'); if(s)s.textContent=t.frog.status==='away'?'旅途中':(t.frog.status==='pack'?'准备行囊':'在家'); const d=$('tvMailDot'); if(d)d.style.display=(t.cards.length>(t.seenCards||0))?'block':'none'; }
 function tvSeenMail(){ const t=tvFresh(); t.seenCards=t.cards.length; const d=$('tvMailDot'); if(d)d.style.display='none'; save(); }
 function tvOpenBook(){ openModal('🏷 旅行图鉴', tvBookHTML()); }
