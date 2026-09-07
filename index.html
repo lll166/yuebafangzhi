@@ -225,6 +225,43 @@
   .pomo-mini input:checked+.tk{background:var(--purple2);}
   .pomo-mini input:checked+.tk::after{left:14px;}
   .pomo-mini:hover .tk{box-shadow:inset 0 0 0 1px rgba(149,117,205,.5);}
+  #travel{position:fixed;inset:0;display:none;flex-direction:column;z-index:60;background:linear-gradient(180deg,#e6f2e0,#b4d9a8);}
+  #travel .tv-top{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,255,255,.65);font-weight:700;color:#3c5a3f;}
+  #travel .tv-cur{font-size:15px;}
+  #travel .tv-tom{color:#d0342c;}
+  #travel .tv-st{margin-left:auto;font-size:12px;color:#6b8f52;}
+  #travel .tv-scene{flex:1;position:relative;overflow:hidden;}
+  #travel .tv-nav{display:flex;gap:6px;justify-content:center;padding:8px;background:rgba(255,255,255,.7);}
+  #travel .tv-btn{border:1px solid #8fae8a;background:#fff;color:#48614a;border-radius:10px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;}
+  #travel .tv-btn:hover{background:#eef7ec;border-color:#68906b;}
+  #travel .tv-mail{position:absolute;right:12px;bottom:64px;font-size:24px;background:#fff;border:2px solid #c78b4a;border-radius:50%;width:46px;height:46px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;}
+  #travel .tv-mail span{position:absolute;top:-2px;right:-2px;width:13px;height:13px;border-radius:50%;background:#e53935;border:2px solid #fff;}
+  .tvyard{position:absolute;inset:0;background:linear-gradient(180deg,#bfe0b0,#8fc477 60%,#79b260);overflow:hidden;}
+  .tvg-tree{position:absolute;left:6%;bottom:20%;width:16px;height:94px;background:#7d5a38;border-radius:4px;}
+  .tvg-tree::before{content:'';position:absolute;left:-34px;top:-26px;width:84px;height:64px;background:#5d9c4a;border-radius:50% 50% 30% 30%;}
+  .tvg-bush{position:absolute;left:70%;bottom:20%;width:74px;height:40px;background:#5d9c4a;border-radius:50% 50% 0 0;}
+  .tvg-pond{position:absolute;right:10%;bottom:9%;width:92px;height:52px;background:#9ad7ea;border-radius:50%;}
+  .tvg-home{position:absolute;left:9%;bottom:22%;width:96px;height:70px;background:#d9b078;border-radius:6px;border:2px solid #b07b3f;}
+  .tvg-tom{position:absolute;font-size:26px;cursor:pointer;filter:drop-shadow(0 1px 1px rgba(0,0,0,.2));animation:tomp .3s ease;text-shadow:0 1px 0 #fff;}
+  @keyframes tomp{0%{transform:scale(0)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+  .tv-note{position:absolute;left:6%;right:6%;top:6%;background:rgba(255,255,255,.8);padding:9px 12px;border-radius:10px;font-size:13px;color:#3e5c3f;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.12);}
+  .tvhome{position:absolute;inset:0;background:linear-gradient(180deg,#faefd2,#ecd5a0);overflow:hidden;}
+  .tvh-desk{position:absolute;left:15%;bottom:18%;font-size:40px;}
+  .tvh-bed{position:absolute;right:13%;bottom:18%;font-size:40px;}
+  .tvh-door{position:absolute;right:5%;top:5%;width:54px;height:76px;background:#8a5a33;border-radius:6px;}
+  .tvh-empty{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);font-size:18px;color:#7a6a4a;white-space:nowrap;}
+  .tv-fat.in{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);filter:drop-shadow(0 2px 2px rgba(0,0,0,.2));}
+  .sh-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .sh-card{border:1px solid #cfd8c0;border-radius:10px;padding:8px;text-align:center;background:#fff;}
+  .sh-ic{font-size:26px;}
+  .sh-n{font-size:13px;font-weight:700;color:#3e5c3f;}
+  .sh-d{font-size:11px;color:#8a9a80;margin:2px 0;}
+  .sh-price{font-size:12px;color:#c0392b;}
+  .pc{border:1px solid #ddd;border-radius:8px;padding:6px;text-align:center;min-height:42px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+  .pc.on{background:#fff7e0;border-color:#e6c04a;color:#8a6d1a;}
+  .pc.off{background:#f0f0f0;color:#b9b9b9;}
+  .sh-card.rose{border-color:#eaa7a7;background:#fff0f0;}
+  .tv-tom{color:#d0342c;}
   .bcard{background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:14px;padding:8px;text-align:center;}
   .bcard .pic{height:52px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
   .bcard .pic svg{width:42px!important;height:42px!important;}
@@ -599,6 +636,7 @@
   <button class="dockbtn hasbadge" id="btnTask"><b>✅</b><small>待办</small><span class="dock-badge" id="taskBadge" style="display:none"></span></button>
   <button class="dockbtn" id="btnStats"><b>📊</b><small>统计</small></button>
   <button class="dockbtn" id="btnShop"><b>🛒</b><small>商店</small></button>
+  <button class="dockbtn" id="btnTravel" onclick="travelEntry()"><b>🧳</b><small>旅行</small></button>
 </div>
 
 <!-- 场地场景视图 -->
@@ -615,6 +653,23 @@
   </div>
   <div id="sceneWoods"></div>
   <div class="scenefoot frost">🌱 月巴需经过 幼年 → 成长 → 成熟 才能收获，成熟后才会露出真面目</div>
+</div>
+
+<div id="travel" class="frost">
+  <div class="tv-top">
+    <span class="tv-cur">🍅 <b id="tvTomato" class="tv-tom">0</b></span>
+    <span id="tvState" class="tv-st">在家</span>
+    <button class="iconbtn" onclick="closeTravel()" style="margin-left:auto">✕</button>
+  </div>
+  <div class="tv-scene" id="tvScene"></div>
+  <div class="tv-nav">
+    <button class="tv-btn" onclick="tvTab("yard")">🏠 庭院</button>
+    <button class="tv-btn" onclick="tvTab("home")">🛋 室内</button>
+    <button class="tv-btn" onclick="tvOpenShop()">🛍 商店</button>
+    <button class="tv-btn" onclick="tvOpenBag()">💼 行囊</button>
+    <button class="tv-btn" onclick="tvOpenBook()">🏷 图鉴</button>
+  </div>
+  <button class="tv-mail" id="tvMail" onclick="tvOpenMail()" title="信箱">📮<span id="tvMailDot" style="display:none"></span></button>
 </div>
 
 <div id="banner">
@@ -1273,6 +1328,8 @@ function colGet(id){
 }
 function colCount(id){ const c=isDex2(id)?S.collection2:S.collection; return (c[id]&&c[id].count)||0; }
 function colRec(id){ return isDex2(id)?S.collection2[id]:S.collection[id]; }
+/* ===== 调试预留（不向玩家展示）：在控制台调用 debugUnlockAll()，或在 URL 后加 #debugall 自动执行 ===== */
+function debugUnlockAll(){ for(const t of TYPES){ const c=colGet(t.id); if(!c.count)c.count=1; if(!c.last)c.last={h:50,w:50,t:now()}; } for(const t of TYPES2){ const c=colGet(t.id); if(!c.count)c.count=1; if(!c.last)c.last={h:50,w:50,t:now()}; } if(!S.dex2Celebrated)S.dex2Celebrated=true; save(); updateTravelIcon(); return '🧪 已解锁全部图鉴：第一页 '+Object.keys(S.collection).length+'/'+TYPES.length+'，第二页 '+Object.keys(S.collection2).length+'/'+TYPES2.length; }
 function rollNum(lo,hi){ // 取值向中段集中：越接近上下极值概率越低（极值低频化，非时间冷却）
   return (lo+Math.random()*(hi-lo) + lo+Math.random()*(hi-lo))/2;
 }
@@ -3290,7 +3347,87 @@ function pomoReportCheck(){
 }
 /* ---------------- 主循环 ---------------- */
 let lastReadySfx=0, lastRevealSfx=0;
+/* ================= 旅行月巴（小游戏） ================= */
+const TV_FOODS={food1:{n:'饭团便当',p:50,dur:20*60000,rn:.4},food2:{n:'时蔬便当',p:150,dur:32*60000,rn:.6},food3:{n:'豪华便当',p:400,dur:46*60000,rn:.85}};
+const TV_ITEMS={lamp:{n:'油灯',p:300},charm:{n:'幸运护身符',p:500,durab:3},bell:{n:'铃铛',p:200}};
+const TV_DESTS=[
+ {id:'forest',n:'森林',need:'',specials:['野果'],cards:['A1','A2','A3','A4','A5']},
+ {id:'sea',n:'大海',need:'lamp',specials:['海贝','海盐'],cards:['B1','B2','B3','B4','B5']},
+ {id:'town',n:'小镇',need:'bell',specials:['果子面包'],cards:['C1','C2','C3','C4']},
+ {id:'snow',n:'雪山',need:'charm',needF:'food3',specials:['雪绒花'],cards:['D1','D2','D3']}
+];
+const TV_FRIENDS=[
+ {id:'snail',n:'蜗牛师父',like:['野果','果子面包'],rare:'A5',t:'……你回来了，这野果够新鲜。'},
+ {id:'cat',n:'黑猫',like:['海贝','雪绒花'],rare:'B5',t:'喵——海贝留下，这颗糖果送你。'},
+ {id:'bear',n:'棕熊',like:['海盐','果子面包'],rare:'C3',t:'嘿嘿，棒极了！'},
+ {id:'owl',n:'猫头鹰',like:['雪绒花','野果'],rare:'D1',t:'呜呼，久违的美味。'}
+];
+function tvFresh(){
+  if(!S.travel)S.travel={tomato:300,wh:{food1:0,food2:0,food3:0,lamp:0,charm:0,bell:0},bag:[],frog:{status:'home',depart:null,ret:null,mood:''},cards:[],specials:[],destCount:{},friends:[],yard:[],vineT:now()} ;
+  const t=S.travel;
+  t.wh=t.wh||{food1:0,food2:0,food3:0,lamp:0,charm:0,bell:0};
+  t.bag=t.bag||[];t.cards=t.cards||[];t.specials=t.specials||[];t.destCount=t.destCount||{};
+  t.friends=t.friends||[];t.yard=t.yard||[];
+  if(!t.frog)t.frog={status:'home',depart:null,ret:null,mood:''};
+  if(t.tomato==null)t.tomato=300;
+  return t;
+}
+function tvTomato(d){ const t=tvFresh(); t.tomato=Math.max(0,(t.tomato||0)+d); const e=$('tvTomato'); if(e)e.textContent=t.tomato; save(); }
+function updateTravelIcon(){ const el=$('btnTravel'); if(!el)return; el.innerHTML=dex2Unlocked()?'<b>🧳</b><small>旅行</small>':'<b>❓</b><small>旅行</small>'; }
+function travelEntry(){ if(!dex2Unlocked()){ toast('🔒 收集齐全第一图鉴所有月巴后可解锁旅行！'); return; } openTravel(); }
+let tvView='yard';
+function openTravel(){ if(!dex2Unlocked())return; tvFresh(); travelSettleIf(); updateTravelIcon(); tvRenderAll(); $('travel').style.display='flex'; }
+function closeTravel(){ $('travel').style.display='none'; }
+function tvRenderAll(){ tvRenderScene(); tvUpdateBar(); }
+function tvUpdateBar(){ const t=tvFresh(); const e=$('tvTomato'); if(e)e.textContent=t.tomato; const s=$('tvState'); if(s)s.textContent=t.frog.status==='away'?'旅途中':(t.frog.status==='pack'?'准备行囊':'在家'); }
+function tvTab(v){ tvView=v; tvRenderScene(); }
+function tvYardHTML(t){
+  let h='<div class="tvyard"><div class="tvg-tree"></div><div class="tvg-bush"></div><div class="tvg-pond"></div><div class="tvg-home"></div>';
+  (t.yard||[]).forEach(function(p){ h+='<span class="tvg-tom" style="left:'+p.x+'%;top:'+p.y+'%" data-i="'+p.i+'" onclick="tvPick(this)">🍅</span>'; });
+  h+='</div>';
+  if(t.frog.status==='away')h+='<div class="tv-note">✈️ 月巴去「'+tvDestOf(t.bag).n+'」旅行啦，留话：'+t.frog.mood+'</div>';
+  if(t.frog.status==='pack')h+='<div class="tv-note">🧳 月巴正在收拾行囊…</div>';
+  return h;
+}
+function tvHomeHTML(t){
+  let h='<div class="tvhome"><div class="tvh-desk">📚</div><div class="tvh-bed">🛏</div><div class="tvh-door"></div>';
+  if(t.frog.status==='away')h+='<div class="tvh-empty">✈️ 外出旅行中</div>';
+  else h+='<div class="tv-fat in" style="font-size:46px">🐸</div>';
+  h+='</div>';
+  return h;
+}
+function tvRenderScene(){ const sc=$('tvScene'); if(!sc)return; const t=tvFresh(); sc.innerHTML=tvView==='yard'?tvYardHTML(t):tvHomeHTML(t); }
+function tvPick(el){ const t=tvFresh(); const i=el.getAttribute('data-i'); t.yard=(t.yard||[]).filter(function(p){return String(p.i)!==String(i);}); tvTomato(1); sfx.tap&&sfx.tap(); }
+function tvTickYard(){ const t=tvFresh(); const nowT=now(); if(!t.vineT)t.vineT=nowT+rand(0,2)*60000; if(nowT>=t.vineT){ const n=1+(Math.random()*6|0); for(let k=0;k<n;k++){ t.yard.push({i:nowT+'_'+k+'_'+(Math.random()*1e4|0),x:8+Math.random()*84,y:28+Math.random()*52}); } t.vineT=nowT+rand(8,12)*60000; save(); } }
+function tvDestOf(bag){ bag=bag||tvFresh().bag; const has=function(k){return bag.indexOf(k)>=0;}; if(has('charm')&&has('food3'))return TV_DESTS[3]; if(has('lamp'))return TV_DESTS[1]; if(has('bell'))return TV_DESTS[2]; return TV_DESTS[0]; }
+function travelSettleIf(){ const t=tvFresh(); if(t.frog.status==='away' && t.frog.ret && now()>=t.frog.ret) tvSettle(); }
+function travelTick(){ if(!S.travel||!S.travel.frog)return; const t=S.travel; travelSettleIf(); tvTickYard(); if(t.frog.status==='away'&&now()>=(t.cardT||0)){ t.cardT=now()+rand(10,20)*60000; tvSendCardIf(); } const vis=$('travel'); if(vis&&vis.style.display==='flex'){ if(t.frog.status==='away'&&!t._lastCard){ } tvRenderScene(); tvUpdateBar(); } }
+function tvSendCardIf(){ const t=tvFresh(); if(t.frog.status!=='away')return; const d=tvDestOf(t.bag); const got=d.cards.filter(function(c){return t.cards.indexOf(c)<0;}); if(got.length) t.cards.push(got[Math.floor(Math.random()*got.length)]); save(); }
+function travelTick(){ if(!S.travel||!S.travel.frog)return; const t=S.travel; travelSettleIf(); tvTickYard(); if(t.frog.status==='away'&&now()>=(t.cardT||0)){ t.cardT=now()+rand(10,20)*60000; tvSendCardIf(); } const vis=$('travel'); if(vis&&vis.style.display==='flex'){ tvFriendPop(); tvRenderScene(); tvUpdateBar(); } }
+function tvUpdateBar(){ const t=tvFresh(); const e=$('tvTomato'); if(e)e.textContent=t.tomato; const s=$('tvState'); if(s)s.textContent=t.frog.status==='away'?'旅途中':(t.frog.status==='pack'?'准备行囊':'在家'); const d=$('tvMailDot'); if(d)d.style.display=(t.cards.length>(t.seenCards||0))?'block':'none'; }
+function tvSeenMail(){ const t=tvFresh(); t.seenCards=t.cards.length; const d=$('tvMailDot'); if(d)d.style.display='none'; save(); }
+function tvOpenBook(){ openModal('🏷 旅行图鉴', tvBookHTML()); }
+function tvBookHTML(){ const t=tvFresh(); let h='<p style="color:#48614a;font-size:13px;margin:2px 0">明信片 '+t.cards.length+'/17 · 特产 '+t.specials.length+' 种</p><div class="sh-grid">'; for(const d of TV_DESTS){ h+='<div style="grid-column:1/-1;color:#6b5b3e;font-size:13px;margin-top:6px;font-weight:700">🗺 '+d.n+'系列</div>'; for(const c of d.cards){ const got=t.cards.indexOf(c)>=0; h+='<div class="pc '+(got?'on':'off')+'">'+(got?'🖼 '+c:'❔ ???')+'</div>'; } } h+='</div><p style="color:#48614a;font-size:13px;margin:8px 0 2px">🍎 已收获特产</p><div class="sh-grid">'; const all=['野果','海贝','海盐','果子面包','雪绒花']; for(const s of all){ const got=t.specials.indexOf(s)>=0; h+='<div class="sh-card '+(got?'rose':'')+'"><div style="font-size:26px">'+(got?'🌿':'❔')+'</div><div class="sh-n">'+(got?s:'???')+'</div></div>'; } h+='</div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'; return h; }
+function tvOpenMail(){ tvSeenMail(); openModal('📮 信箱 · 明信片', tvMailHTML()); }
+function tvMailHTML(){ const t=tvFresh(); let h='<p style="color:#48614a;font-size:13px">月巴旅行途中寄回的明信片：</p><div class="sh-grid">'; if(!t.cards.length)h+='<p style="color:#999;text-align:center;grid-column:1/-1">还没有任何明信片</p>'; for(const c of t.cards)h+='<div class="pc on" style="font-size:20px">🖼 '+c+'</div>'; h+='</div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'; return h; }
+function tvFriendPop(){ const t=tvFresh(); if(!t.nextVisit)t.nextVisit=now()+rand(3,8)*60000; if(now()<t.nextVisit)return; const f=TV_FRIENDS[Math.floor(Math.random()*TV_FRIENDS.length)]; t.nextVisit=now()+rand(7,15)*60000; save(); const fr=t.friends.find(function(x){return x.id===f.id;}); const fc=fr?fr.count:0; const emo=f.id==='cat'?'🐱':f.id==='bear'?'🐻':f.id==='owl'?'🦉':'🐌'; let h='<p style="text-align:center;font-size:40px">'+emo+'</p><p style="text-align:center"><b>'+f.n+'</b>'+(fc?'（第 '+(fc+1)+' 次来访）':'（第一次来访）')+'</p><p style="text-align:center;color:#48614a">'+f.t+'</p><p style="text-align:center;font-size:12px;color:#48614a">喂它喜欢的特产可回礼 🍅</p><div class="sh-grid">'; for(const s of f.like){ const has=t.specials.indexOf(s)>=0; h+='<div class="sh-card"><div class="sh-n">'+(has?('🌿 '+s):'❔ ???')+'</div><button class="btn" '+(has?'':'disabled')+' onclick="tvFeed(\''+f.id+'\',\''+s+'\')">招待</button></div>'; } h+='</div><p style="text-align:center;margin-top:6px"><button class="btn" onclick="closeModal()">让它等下次</button></p>'; openModal('👋 朋友来访', h); }
+function tvFeed(fid,s){ const t=tvFresh(); const f=TV_FRIENDS.find(function(x){return x.id===fid;}); if(!f||t.specials.indexOf(s)<0)return; let fr=t.friends.find(function(x){return x.id===fid;}); if(!fr){ fr={id:fid,count:0}; t.friends.push(fr); } fr.count++; const gain=15+Math.floor(Math.random()*20); let h='<p style="text-align:center;color:#3e5c3f">'+f.n+' 很开心，回礼 🍅 +'+gain+'</p>'; if(Math.random()<0.35&&f.rare&&t.cards.indexOf(f.rare)<0){ t.cards.push(f.rare); h+='<p style="text-align:center">💌 还得到一张明信片 <b>'+f.rare+'</b>！</p>'; } h+='<p style="text-align:center"><button class="btn" onclick="closeModal()">收下</button></p>'; openModal('🎁 回礼', h); tvTomato(gain); save(); }
+function tvLabel(f){ return f.id==='cat'?'🐱':f.id==='bear'?'🐻':f.id==='owl'?'🦉':'🐌'; }
+function tvDestOf(bag){ bag=bag||tvFresh().bag; const ks=bag.map(function(x){return x&&x.k||x;}); const has=function(k){return ks.indexOf(k)>=0;}; if(has('charm')&&has('food3'))return TV_DESTS[3]; if(has('lamp'))return TV_DESTS[1]; if(has('bell'))return TV_DESTS[2]; return TV_DESTS[0]; }
+function tvGo(mood){ const t=tvFresh(); const kinds=tvDestKinds(t.bag); const food=t.bag.find(function(x){return x.k==='food1'||x.k==='food2'||x.k==='food3';}); if(!food){ toast('🍙 至少带上 1 个便当才能出发！'); return; } t.frog.status='away'; t.frog.depart=now(); t.frog.ret=now()+TV_FOODS[food.k].dur; t.frog.mood=mood||'我想去看看'; t.bag=t.bag.filter(function(x){return !(x.k==='food1'||x.k==='food2'||x.k==='food3'||x.k==='lamp'||x.k==='bell');}); t.cardT=now()+rand(8,14)*60000; const m=TV_FOODS[food.k].dur; save(); closeModal(); toast('✈️ 月巴出发去旅行啦！约 '+fmtDur(m)+' 后归来'); tvRenderScene(); tvUpdateBar(); }
+function tvDepart(){ const e=$('tvMood'); tvGo(e?e.value.trim():''); }
+function tvDestKinds(bag){ return bag.map(function(x){return x.k;}); }
+function tvSettle(){ const t=tvFresh(); const kinds=tvDestKinds(t.bag); const d=tvDestOf(t.bag); let gain=1+(kinds.indexOf('charm')>=0?1:0); const got=[]; for(let i=0;i<gain;i++){ const s=d.specials[Math.floor(Math.random()*d.specials.length)]; if(t.specials.indexOf(s)<0){ t.specials.push(s); got.push(s); } } const dc=d.cards.filter(function(c){return t.cards.indexOf(c)<0;}); let newCard=null; if(dc.length){ newCard=dc[Math.floor(Math.random()*dc.length)]; t.cards.push(newCard); } t.destCount[d.id]=(t.destCount[d.id]||0)+1; if(kinds.indexOf('charm')>=0 && (t.wh.charm||0)>0) t.wh.charm--; t.frog={status:'home',depart:null,ret:null,mood:t.frog.mood||''}; t.bag=[]; save(); let h='<p style="text-align:center;color:#48614a">月巴从<b>「'+d.n+'」</b>回来了！（第 '+t.destCount[d.id]+' 次旅行）</p>'; h+='<p style="text-align:center">🎁 带回特产：'+(got.length?got.join('、'):'这次带回了温暖的问候')+'</p>'; if(newCard)h+='<p style="text-align:center">💌 新的明信片：<b>'+newCard+'</b></p>'; h+='<p style="text-align:center"><button class="btn cta" onclick="closeModal()">收下</button></p>'; openModal('🎉 旅行归来',h); tvRenderScene(); tvUpdateBar(); }
+function tvShop(){ openModal('🛍 商店 · 用 🍅 购买', tvShopHTML()); }
+function tvShopHTML(){ const t=tvFresh(); let h='<p style="color:#48614a;font-size:13px">🍅 番茄余额：<b class="tv-tom">'+t.tomato+'</b></p><div class="sh-grid">'; const list=[['food1','🍙','饭团便当',50,'基础旅行时长'],['food2','🍱','时蔬便当',150,'中等时长·特产概率+'],['food3','🥡','豪华便当',400,'长时间·稀有明信片+'],['lamp','🏮','油灯',300,'解锁大海'],['charm','🍀','幸运护身符',500,'特产+1（耐久3）'],['bell','🔔','铃铛',200,'解锁小镇']]; for(const r of list){ h+='<div class="sh-card"><div class="sh-ic">'+r[1]+'</div><div class="sh-n">'+r[2]+'</div><div class="sh-d">'+r[4]+'</div><div class="sh-price">🍅 '+r[3]+'</div><button class="btn" onclick="tvBuy(\''+r[0]+'\')">购买</button></div>'; } h+='</div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'; return h; }
+function tvBuy(k){ const t=tvFresh(); const it=TV_FOODS[k]||TV_ITEMS[k]; if(!it)return; if(t.tomato<it.p){ toast('🍅 番茄不够'); return; } t.tomato-=it.p; t.wh[k]=(t.wh[k]||0)+1; save(); tvTomato(0); openModal('🛍 商店 · 用 🍅 购买', tvShopHTML()); }
+function tvBag(){ openModal('💼 仓库与行囊', tvBagHTML()); }
+function tvBagHTML(){ const t=tvFresh(); let h='<p style="color:#48614a;font-size:13px">🍅 番茄：<b class="tv-tom">'+t.tomato+'</b></p><div class="sh-grid">'; let any=false; for(const k in t.wh){ const c=t.wh[k]; if(c<=0)continue; any=true; const it=TV_FOODS[k]||TV_ITEMS[k]; const isF=!!TV_FOODS[k]; h+='<div class="sh-card"><div class="sh-ic">'+(isF?'🍙':'🧰')+'</div><div class="sh-n">'+it.n+'</div><div class="sh-d">仓库 ×'+c+'</div><button class="btn" onclick="tvPack(\''+k+'\')">装进行囊</button></div>'; } if(!any)h+='<p style="color:#999;text-align:center;grid-column:1/-1">仓库空空的，去 🛍 商店买点物资吧</p>'; h+='</div><p style="color:#48614a;font-size:13px">🎒 行囊（'+t.bag.length+'/4）</p><div class="sh-grid">'; if(!t.bag.length)h+='<p style="color:#999;text-align:center;grid-column:1/-1">还没有带任何东西</p>'; t.bag.forEach(function(x){ const it=TV_FOODS[x.k]||TV_ITEMS[x.k]; const isF=!!TV_FOODS[x.k]; h+='<div class="sh-card"><div class="sh-ic">'+(isF?'🍙':'🧰')+'</div><div class="sh-n">'+it.n+'</div><button class="btn" onclick="tvUnpack(\''+x.k+'\')">取出</button></div>'; }); h+='</div><div style="text-align:center;margin-top:10px"><input id="tvMood" placeholder="出发留言…" style="padding:7px;border:1px solid #ccc;border-radius:8px;width:70%"></div><div style="text-align:center;margin-top:8px"><button class="btn cta" onclick="tvDepart()">✈️ 出发（需 1 个便当）</button></div>'; return h; }
+function tvPack(k){ const t=tvFresh(); if(t.bag.length>=4){ toast('行囊已满（最多4件）'); return; } if(t.wh[k]<=0)return; const need=(k==='food1'||k==='food2'||k==='food3'); if(need && t.bag.some(function(x){return x.k==='food1'||x.k==='food2'||x.k==='food3';})){ toast('已装便当，最多带 1 份'); return; } t.wh[k]--; t.bag.push({k:k}); save(); tvBag(); }
+function tvUnpack(k){ const t=tvFresh(); const i=t.bag.findIndex(function(x){return x.k===k;}); if(i<0)return; t.bag.splice(i,1); t.wh[k]=(t.wh[k]||0)+1; save(); tvBag(); }
+
 function tick(){
+  travelTick();
   pomoReportCheck();
   weatherTick();
   pomoTick();
@@ -3381,6 +3518,8 @@ function init(){
   if(dex2Unlocked() && !S.dex2Celebrated){ S.dex2Celebrated=true; setTimeout(openDex2Celebrate,900); }
   applySkin(S.skins.active);
   renderOverview(); updateHeader(); updateStatus(); updatePomoUI(); updateSceneBar(); updateWeatherHold();
+  updateTravelIcon();
+  if(typeof location!=='undefined' && location.hash && location.hash.indexOf('#debugall')>=0) setTimeout(debugUnlockAll,300);
   setInterval(tick,250);
   // 未成熟月巴：按住跟随手指、松开弹回（事件委托到场地层）
   const folWrap=$('sceneWoods');
