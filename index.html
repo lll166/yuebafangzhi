@@ -216,6 +216,10 @@
   .btab.on{background:var(--purple2);color:#fff;border-color:var(--purple2);}
   .btab.lock{opacity:.55;cursor:not-allowed;}
   .pip-pause *{animation-play-state:paused!important;}
+  /* 置顶小窗期间只暂停循环动画以节约资源；弹窗/反馈等一次性入场动画需保持运行，否则弹窗停在 opacity:0 无法打开 */
+  .pip-pause #modal,.pip-pause .fd-card,.pip-pause .cf-item,.pip-pause #weatherHold,.pip-pause #banner.show,
+  .pip-pause .tvg-tom,.pip-pause .coinbox.pulse,.pip-pause .wood.pop,.pip-pause .wcell.mature .spr,
+  .pip-pause .tvg-reel.land{animation-play-state:running!important;}
   .pomo-mini{position:absolute;top:7px;right:36px;display:flex;align-items:center;cursor:pointer;z-index:2;}
   .pomo-mini .itext{font-size:11px;font-weight:700;color:var(--dim);margin-right:4px;white-space:nowrap;}
   .pomo-mini:hover .itext{color:var(--purple2);}
@@ -253,9 +257,9 @@
   .tv-fatpick .nm{font-size:11px;font-weight:700;color:#48614a;margin-top:2px;}
   .tvg-slot{background:linear-gradient(180deg,#fff3d6,#ffe0a3);border:2px solid #e6c04a;border-radius:14px;padding:10px;margin:2px auto;max-width:260px;box-shadow:inset 0 0 0 3px #fff,0 4px 14px rgba(214,150,60,.25);}
   .tvg-reels{display:flex;gap:8px;justify-content:center;}
-  .tvg-reel{width:62px;height:62px;background:#fff;border:2px solid #c79640;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:700;color:#e08a3c;box-shadow:0 3px 0 #c79640;}
-  .tvg-reel.spin{animation:tvsh .12s linear infinite;}
-  @keyframes tvsh{from{transform:translateY(-2px)}to{transform:translateY(2px)}}
+  .tvg-reel{width:62px;height:62px;background:#fff;border:2px solid #c79640;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:700;color:#e08a3c;box-shadow:0 3px 0 #c79640;overflow:hidden;position:relative;}
+  .tvg-strip{position:absolute;left:0;top:0;width:100%;will-change:transform;}
+  .tvg-strip>div{height:62px;display:flex;align-items:center;justify-content:center;font-size:34px;}
   .tvg-reel.land{animation:tvsb .4s cubic-bezier(.2,1.6,.4,1);}
   @keyframes tvsb{0%{transform:scale(1.25)}100%{transform:scale(1)}}
   .tvg-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(16px) brightness(.9) saturate(.85);transform:scale(1.07);}
@@ -3607,7 +3611,12 @@ let slotShown=false;
 function tvSlotReady(){ const t=tvFresh(); return now()>=(t.harvestT); }
 function tvSlotOpen(){ if(!tvSlotReady()){ toast('🧺 月巴们还在攒番茄，稍后再来'); return; } slotShown=true; openModal('🎰 好运收获', tvSlotHTML()); }
 function tvSlotHTML(){ let h='<p style="text-align:center;color:#48614a;font-size:13px">月巴们为你攒好了惊喜，拉杆收获 🍅！</p><div class="tvg-slot"><div class="tvg-reels">'; for(let i=0;i<3;i++)h+='<div class="tvg-reel" id="tvReel'+i+'">🍅</div>'; h+='</div></div><p id="tvSlotResult" style="text-align:center;min-height:20px;color:#e08a3c;font-weight:700"></p><div style="text-align:center;margin-top:6px"><button class="btn cta" id="tvSpinBtn" onclick="tvSpin()">🕹 拉杆！</button></div><p style="text-align:center;margin-top:4px"><button class="btn" onclick="closeModal()">收下离开</button></p>'; return h; }
-function tvSpin(){ if(!tvSlotReady())return; const btn=$('tvSpinBtn'); if(btn)btn.disabled=true; const r=$('tvSlotResult'); if(r)r.textContent=''; const cols=[0,1,2].map(function(){return TV_SLOTS[(Math.random()*TV_SLOTS.length)|0];}); const el=[0,1,2].map(function(i){return $('tvReel'+i);}); const stops=[12,22,32]; let frame=0; const iv=setInterval(function(){ frame++; for(let i=0;i<3;i++){ if(frame<stops[i]){ if(el[i]){ el[i].classList.remove('land'); el[i].classList.add('spin'); el[i].textContent=TV_SLOTS[(Math.random()*TV_SLOTS.length)|0]; } } else if(frame===stops[i]){ if(el[i]){ el[i].classList.remove('spin'); el[i].classList.add('land'); el[i].textContent=cols[i]; } } } if(frame>=stops[2]+4){ clearInterval(iv); tvSlotResult(cols); if(btn)btn.disabled=false; } },80); }
+function tvSpin(){ if(!tvSlotReady())return; const btn=$('tvSpinBtn'); if(btn)btn.disabled=true; const r=$('tvSlotResult'); if(r)r.textContent=''; const cols=[0,1,2].map(function(){return TV_SLOTS[(Math.random()*TV_SLOTS.length)|0];}); const els=[0,1,2].map(function(i){return $('tvReel'+i);}); const pool=TV_SLOTS;
+  // 构建转轮条：一次性写DOM，之后仅靠 transform 滑动，避免逐帧改文字导致的掉帧卡顿
+  for(let i=0;i<3;i++){ const e=els[i]; if(!e)continue; e.classList.remove('land'); e.innerHTML='<div class="tvg-strip">'+pool.concat(pool,[cols[i]]).map(function(s){return '<div>'+s+'</div>';}).join('')+'</div>'; }
+  const ICON=62, MAX=pool.length*2*ICON, stops=[900,1500,2100], dur=2200, t0=performance.now();
+  const step=function(t){ const p=Math.min(1,(t-t0)/dur); for(let i=0;i<3;i++){ const e=els[i]; if(!e)continue; const sp=e.firstChild; if(!sp||!sp.style)continue; const pt=Math.min(1,p*dur/stops[i]); sp.style.transform='translateY('+(-pt*MAX).toFixed(1)+'px)'; if(pt>=1&&!e.classList.contains('land'))e.classList.add('land'); } if(p<1)requestAnimationFrame(step); else { tvSlotResult(cols); if(btn)btn.disabled=false; } };
+  requestAnimationFrame(step); }
 function tvSlotResult(cols){ const t=tvFresh(); const s0=cols[0],s1=cols[1],s2=cols[2]; let gain; if(s0===s1&&s1===s2)gain=8+(Math.random()*3|0); else if(s0===s1||s1===s2||s0===s2)gain=4+(Math.random()*4|0); else gain=1+(Math.random()*3|0); t.tomato+=gain; t.harvestT=now()+rand(10,30)*60000; slotShown=false; save(); const r=$('tvSlotResult'); if(r)r.innerHTML=(s0===s1&&s1===s2)?('🎉🎉 JACKPOT！收获 '+gain+' 🍅'):('🎉 收获 '+gain+' 个 🍅'); burst(innerWidth/2,innerHeight/2,['#ff6b6b','#ff9f43','#ffd93d'],12,40); updateTravelIcon(); }
 function tvUpdateHarvest(){ const b=$('tvHarvestBtn'); if(!b)return; b.style.display=tvSlotReady()?'':'none'; }
 function tvDestOf(bag){ bag=bag||tvFresh().bag; const has=function(k){return bag.indexOf(k)>=0;}; if(has('charm')&&has('food3'))return TV_DESTS[3]; if(has('lamp'))return TV_DESTS[1]; if(has('bell'))return TV_DESTS[2]; return TV_DESTS[0]; }
