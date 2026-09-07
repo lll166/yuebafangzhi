@@ -217,6 +217,8 @@
   .btab.lock{opacity:.55;cursor:not-allowed;}
   .pip-pause *{animation-play-state:paused!important;}
   .pomo-mini{position:absolute;top:7px;right:36px;display:flex;align-items:center;cursor:pointer;z-index:2;}
+  .pomo-mini .itext{font-size:11px;font-weight:700;color:var(--dim);margin-right:4px;white-space:nowrap;}
+  .pomo-mini:hover .itext{color:var(--purple2);}
   .pomo-mini .tk{position:relative;width:27px;height:15px;border-radius:15px;background:rgba(0,0,0,.18);transition:background .2s;flex:0 0 auto;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);}
   .pomo-mini .tk::after{content:'';position:absolute;top:2px;left:2px;width:11px;height:11px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 2px rgba(0,0,0,.3);}
   .pomo-mini input{display:none;}
@@ -2604,7 +2606,7 @@ function openPomo(){
   pomoModalOpen=true;
   openModal('🍅 番茄钟',
     `<div class="pomo-wrap">
-      <label class="pomo-mini" title="后台挂机：切出页面继续计时（效果同置顶，无需小窗）"><input type="checkbox" id="pomoBgIdle" ${S.pomo.bgIdle?'checked':''} onchange="pomoBgIdleChange()"><span class="tk"></span></label>
+      <label class="pomo-mini" title="后台挂机：切出页面继续计时（效果同置顶，无需小窗）"><span class="itext">后台挂机</span><input type="checkbox" id="pomoBgIdle" ${S.pomo.bgIdle?'checked':''} onchange="pomoBgIdleChange()"><span class="tk"></span></label>
       <button class="pomo-pipbtn" id="pomoPipBtn" onclick="pomopipToggle()" title="置顶小窗">📌</button>
       <div class="pomo-hero">
         <svg class="pomo-ring" viewBox="0 0 200 200">
@@ -2657,7 +2659,7 @@ function openPomo(){
         <button class="btn" onclick="pomoStop()">⏹ 停止</button>
       </div>
 
-      <div class="pomo-note">🍅 专注期间<b>月巴生长 x2 且成熟自动收集</b>；切出界面计时自动暂停。其余时段月巴需<b>手动收集</b>。<b>完成的番茄才记满时长</b>，中途停止只记已专注时间。完成后<b>自动进入休息</b>，休息结束可开始<b>下一个番茄</b>。</div>
+      <div class="pomo-note">🍅 专注期间<b>月巴生长 x2 且成熟自动收集</b>；切出界面计时自动暂停；开启右上角「后台挂机」开关可切出页面继续计时。其余时段月巴需<b>手动收集</b>。<b>完成的番茄才记满时长</b>，中途停止只记已专注时间。完成后<b>自动进入休息</b>，休息结束可开始<b>下一个番茄</b>。</div>
       <div class="pomo-tools">
         <button class="btn" onclick="openPomoCheckin()">✅ 打卡</button>
       </div>
