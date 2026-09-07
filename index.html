@@ -215,6 +215,13 @@
   .btab{flex:1;padding:7px 0;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.6);color:var(--dim);font-weight:800;font-size:12px;cursor:pointer;}
   .btab.on{background:var(--purple2);color:#fff;border-color:var(--purple2);}
   .btab.lock{opacity:.55;cursor:not-allowed;}
+  .pip-pause *{animation-play-state:paused!important;}
+  .pomo-toggle{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--dim);cursor:pointer;margin:0 0 8px;}
+  .pomo-toggle .tk{position:relative;width:38px;height:20px;border-radius:20px;background:rgba(0,0,0,.15);transition:background .2s;flex:0 0 auto;}
+  .pomo-toggle .tk::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.3);}
+  .pomo-toggle input{display:none;}
+  .pomo-toggle input:checked+.tk{background:var(--purple2);}
+  .pomo-toggle input:checked+.tk::after{left:20px;}
   .bcard{background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:14px;padding:8px;text-align:center;}
   .bcard .pic{height:52px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
   .bcard .pic svg{width:42px!important;height:42px!important;}
@@ -992,7 +999,7 @@ function defaultState(){
     tasks:[],
     gameStart:now(), gameEpoch:now(),
     pomo:{name:'专注', total:25*60000, remain:25*60000, running:false, end:0, start:0, pausedByBlur:false,
-      history:[], presets:['工作','学习'], mode:'focus', breakMin:5, focusTotal:25*60000, roundItems:[], taskId:null,
+      history:[], presets:['工作','学习'], mode:'focus', breakMin:5, focusTotal:25*60000, roundItems:[], taskId:null, bgIdle:false,
       goalMin:120, reportSeen:{week:'',month:''}},
     zones:ZONES.map((z,i)=>({id:i, bought:i===0, woods: i===0?[{cells:[null,null,null]}]:[]})),
   };
@@ -1138,7 +1145,7 @@ function toast(msg){
 }
 
 /* ---------------- 粒子特效（canvas 覆盖层） ---------------- */
-const fx=[]; const cv=$('fx'), ctx=cv.getContext('2d');
+const fx=[]; const cv=$('fx'), ctx=cv.getContext('2d'); let fxRaf=null; function startFx(){ if(!fxRaf && fx.length) fxRaf=requestAnimationFrame(fxLoop); }
 function resizeFx(){ cv.width=innerWidth*devicePixelRatio; cv.height=innerHeight*devicePixelRatio; cv.style.width=innerWidth+'px'; cv.style.height=innerHeight+'px'; ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0); }
 addEventListener('resize',resizeFx); resizeFx();
 addEventListener('resize',fitTrendVals);
@@ -1147,15 +1154,18 @@ function burst(x,y,colors,n,speed){
     const a=rand(0,Math.PI*2), sp=rand(1,speed);
     fx.push({k:'p',x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-rand(0,1),g:0.06,life:rand(40,70),c:colors[i%colors.length],s:rand(2,5),r:rand(0,Math.PI),vr:rand(-.2,.2)});
   }
+  startFx();
 }
 function coinFly(x,y,target){
   fx.push({k:'c',x,y,tx:target.x,ty:target.y,t0:now(),dur:700,life:40});
+  startFx();
 }
 function floatText(x,y,text,color,big){
   fx.push({k:'t',x,y,text,color,c0:1,big:big||false,vy:-0.9,life:70});
+  startFx();
 }
 function fxLoop(){
-  requestAnimationFrame(fxLoop);
+  if(fx.length===0){ fxRaf=null; return; }
   ctx.clearRect(0,0,innerWidth,innerHeight);
   for(let i=fx.length-1;i>=0;i--){
     const p=fx[i]; p.life--;
@@ -1181,8 +1191,9 @@ function fxLoop(){
       ctx.fillStyle=p.color; ctx.fillText(p.text,p.x,p.y);
     }
   }
+  if(fx.length) fxRaf=requestAnimationFrame(fxLoop);
 }
-fxLoop();
+startFx();
 function coinTarget(){ const r=$('coinbox').getBoundingClientRect(); return {x:r.left+r.width/2, y:r.top+r.height/2}; }
 
 /* ---------------- 月巴 SVG 渲染 ---------------- */
@@ -2166,6 +2177,17 @@ function pomoTick(){
   if(S.pomo.running && now()>=S.pomo.end) pomoComplete();
   updatePomoUI();
 }
+function pomoBgIdleChange(){
+  S.pomo.bgIdle=!!document.getElementById('pomoBgIdle').checked;
+  save(); updatePomoUI();
+  toast(S.pomo.bgIdle?'🌙 已开启后台挂机：切出页面番茄钟继续计时':'🌞 已关闭后台挂机');
+}
+function syncAnimState(){
+  // 置顶小窗使用期间：关闭主窗所有动画以节约资源
+  const pause=pipping();
+  if(document.body) document.body.classList.toggle('pip-pause',pause);
+  if(pause){ fx.length=0; fxRaf=null; }
+}
 function pomoToggle(){
   const name=inpVal('pomoName','专注');
   if(S.pomo.running){ sfx.click(); pomoPause(false); }
@@ -2307,6 +2329,7 @@ function updatePomoUI(){
   if(pomoModalOpen && $('pomoTime')) $('pomoTime').textContent=fmtDur(pomoRemaining());
   pushPiP();
   updatePipoButton();
+  syncAnimState();
 }
 /* 常用项目（打卡内容）预设 */
 function presetsRowHTML(delFn,useFn){
@@ -2623,6 +2646,9 @@ function openPomo(){
         <button class="seg" data-min="15" onclick="pomoBreakPreset(15)">15分</button>
         <span class="pomo-lbl">当前 <b id="pomoBreakLbl">${S.pomo.breakMin||5}分</b></span>
       </div>
+
+      <div class="pomo-sec">后台挂机</div>
+      <label class="pomo-toggle"><input type="checkbox" id="pomoBgIdle" ${S.pomo.bgIdle?'checked':''} onchange="pomoBgIdleChange()"><span class="tk"></span><span class="tl">切出页面时继续计时（效果同置顶小窗，无需小窗）</span></label>
 
       <div class="pomo-controls">
         <button class="pomo-big" id="pomoStartBtn" onclick="pomoToggle()">▶</button>
@@ -3377,7 +3403,7 @@ function init(){
   window.addEventListener('beforeunload',save);
   document.addEventListener('visibilitychange',()=>{
     // 置顶小窗存在期间，切到别处不自动暂停（小窗即计时焦点）；否则原规则：失焦暂停、回来自动继续
-    if(document.hidden){ if(S.pomo.running && !pipping()) pomoPause(true); save(); }
+    if(document.hidden){ if(S.pomo.running && !pipping() && !S.pomo.bgIdle) pomoPause(true); syncAnimState(); save(); }
     else if(S.pomo.pausedByBlur){ pomoResume(); }
   });
   $('btnBook').onclick=()=>{ sfx.click(); openBook(); };
