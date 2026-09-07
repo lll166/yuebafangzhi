@@ -3570,8 +3570,6 @@ function tvYardHTML(t){
   h+='</div>';
   if(shown.length)h+='<div class="tv-note">'+t.yardTxt+'</div>';
   else h+='<div class="tv-note">🧺 庭院安安静静，先去图鉴里收集一些月巴吧</div>';
-  if(t.frog.status==='away')h+='<div class="tv-note">✈️ 月巴去「'+tvDestOf(t.bag).n+'」旅行啦，留话：'+t.frog.mood+'</div>';
-  if(t.frog.status==='pack')h+='<div class="tv-note">🧳 月巴正在收拾行囊…</div>';
   return h;
 }
 function tvYardEvent(names){
@@ -3588,7 +3586,9 @@ function tvHomeDescs(id){
 function tvHomeHTML(t){
   let h='<div class="tvhome"><img class="tvg-photo" src="'+TV_BG_HOME+'" alt="">';
   if(t.frog.status==='away'){
-    h+='<div class="tvh-empty">✈️ 外出旅行中</div>';
+    h+='<div class="tv-note">✈️ 月巴去「'+tvDestOf(t.bag).n+'」旅行啦，留话：'+(t.frog.mood||'')+'</div>';
+  }else if(t.frog.status==='pack'){
+    h+='<div class="tv-note">🧳 月巴正在收拾行囊…</div>';
   }else{
     const tp=t.homeId?typeById(t.homeId):null;
     if(tp){
