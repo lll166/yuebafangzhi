@@ -211,6 +211,10 @@
 
   /* 图鉴 */
   .book{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;}
+  .booktabs{display:flex;gap:6px;margin-bottom:10px;}
+  .btab{flex:1;padding:7px 0;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.6);color:var(--dim);font-weight:800;font-size:12px;cursor:pointer;}
+  .btab.on{background:var(--purple2);color:#fff;border-color:var(--purple2);}
+  .btab.lock{opacity:.55;cursor:not-allowed;}
   .bcard{background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:14px;padding:8px;text-align:center;}
   .bcard .pic{height:52px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
   .bcard .pic svg{width:42px!important;height:42px!important;}
@@ -779,9 +783,9 @@ const TYPES=[
   {id:'mb_jin',   name:'金月巴',   r:4, v:200, t:1200, cond:{t:'item',i:'goldfert'},  color:'#e6c44c', shape:'star'},
   {id:'mb_xing',   name:'巴中月巴',   img:'https://origin.picgo.net/2026/09/03/127d7a0746c5de2434.th.png', r:4, v:150, t:900,  cond:{t:'item',i:'starlight'}, color:'#c9a8ea', shape:'star'},
 
-  {id:'mb_da',       name:'大月巴',   r:4, v:80,  t:600,  cond:{t:'harvest',n:50},  color:'#e8a89a', shape:'wide'},
-  {id:'mb_ju',       name:'巨月巴',   r:4, v:150, t:900,  cond:{t:'harvest',n:200}, color:'#d98a86', shape:'big'},
-  {id:'mb_chao',     name:'超巨月巴', r:4, v:300, t:1500, cond:{t:'harvest',n:500}, color:'#e0a34e', shape:'big'},
+  {id:'mb_da',       name:'大月巴',   r:4, v:80,  t:600,  cond:{t:'harvest',n:50},  color:'#e8a89a', shape:'wide', size:1.5},
+  {id:'mb_ju',       name:'巨月巴',   r:4, v:150, t:900,  cond:{t:'harvest',n:200}, color:'#d98a86', shape:'big', size:2},
+  {id:'mb_chao',     name:'超巨月巴', r:4, v:300, t:1500, cond:{t:'harvest',n:500}, color:'#e0a34e', shape:'big', size:3},
   {id:'mb_lian',     name:'幸运月巴', r:4, v:60,  t:480,  cond:null, weight:0.05, color:'#e8a8c4', shape:'round'},
   {id:'mb_kuanglian',name:'极运月巴', r:4, v:130, t:840,  cond:null, weight:0.03, color:'#d9799f', shape:'spike'},
   {id:'mb_shenlian', name:'神运月巴', r:5, v:400, t:2400, cond:null, weight:0.015, color:'#b54b7e', shape:'rainbow'},
@@ -803,6 +807,43 @@ const TYPES=[
   {id:'mb_shan', name:'闪电月巴', r:5, v:150,t:900, cond:{t:'weather',w:'storm',night:1}, color:'#e0d24e', shape:'spike'},
   {id:'mb_pingguo',name:'吃茄月巴',img:'https://origin.picgo.net/2026/09/03/1618abd45272691005.th.png',r:3,v:45,t:420, cond:{t:'season',s:'autumn',day:1},    color:'#c96a73', shape:'round'},
   {id:'mb_chaos',name:'混沌月巴', r:5, v:1000,t:5400, cond:null, weight:0.003, color:'#5a5470', shape:'chaos'},
+];
+/* 第二图鉴：收集齐第一图鉴全部月巴后开启（掉落池合并）。字段格式与 TYPES 一致，
+   主题与第一图鉴不重复（避免晨/午/晴/云/雨/雪/季节/闪电/彩虹等撞车）；
+   后续扩充时直接追加即可；全部第二图鉴月巴生长速度为基础 1/3（时长 x3，见 growDur）。 */
+const TYPES2=[
+  {id:'m2_dou',    name:'豆月巴',  r:1, v:8,  t:80,  cond:null, color:'#aed581', shape:'round'},
+  {id:'m2_men',    name:'萌月巴',  r:1, v:9,  t:90,  cond:null, color:'#f8bbd0', shape:'squish'},
+  {id:'m2_zhu',    name:'猪月巴',  r:1, v:10, t:100, cond:null, color:'#ffe0b2', shape:'wide'},
+  {id:'m2_dundun', name:'墩墩月巴', r:1, v:12, t:110, cond:null, color:'#c9c9f0', shape:'round'},
+  {id:'m2_mao',    name:'猫月巴',  r:1, v:13, t:120, cond:null, color:'#b0bec5', shape:'heart'},
+  {id:'m2_gou',    name:'狗月巴',  r:1, v:14, t:130, cond:null, color:'#d7ccc8', shape:'bean'},
+  {id:'m2_tian',   name:'甜月巴',  r:2, v:16, t:160, cond:null, color:'#f8bbd0', shape:'round'},
+  {id:'m2_xian',    name:'盐月巴',  r:2, v:17, t:170, cond:null, color:'#90a4ae', shape:'cube'},
+  {id:'m2_bai',    name:'白月巴',  r:2, v:18, t:180, cond:null, color:'#eceff1', shape:'round'},
+  {id:'m2_hei',    name:'黑月巴',  r:2, v:19, t:190, cond:null, color:'#5d6670', shape:'round'},
+  {id:'m2_hong',   name:'红月巴',  r:2, v:20, t:200, cond:null, color:'#ef9a9a', shape:'wide'},
+  {id:'m2_lv',     name:'绿月巴',  r:2, v:21, t:210, cond:null, color:'#a5d6a7', shape:'tall'},
+  {id:'m2_lan',    name:'蓝月巴',  r:2, v:22, t:220, cond:null, color:'#90caf9', shape:'drop'},
+  {id:'m2_hudie',  name:'蝴蝶月巴',  r:3, v:30, t:360, cond:{t:'day'},               color:'#f48fb1', shape:'round'},
+  {id:'m2_yinghuo',name:'萤火月巴',  r:3, v:32, t:360, cond:{t:'night'},             color:'#c5e1a5', shape:'star'},
+  {id:'m2_pubu',   name:'瀑布月巴',  r:3, v:34, t:380, cond:{t:'weather',w:'storm'}, color:'#64b5f6', shape:'drop'},
+  {id:'m2_she',     name:'蛇月巴',    r:3, v:36, t:380, cond:{t:'time',a:9,b:12},     color:'#ff8a65', shape:'spike'},
+  {id:'m2_wuya',    name:'乌鸦月巴',  r:3, v:38, t:400, cond:{t:'time',a:14,b:17},    color:'#ffd54f', shape:'spike'},
+  {id:'m2_xiongmao',name:'熊猫月巴',    r:3, v:36, t:400, cond:{t:'time',a:2,b:5},      color:'#a1887f', shape:'big'},
+  {id:'m2_wo',     name:'蜗牛月巴',  r:3, v:34, t:360, cond:{t:'time',a:20,b:23},    color:'#b0bec5', shape:'squish'},
+  {id:'m2_xiangjiao',name:'香蕉月巴',r:3, v:36, t:360, cond:{t:'weather',w:'sunny'}, color:'#ffe082', shape:'bean'},
+  {id:'m2_hulu',   name:'葫芦月巴',  r:3, v:40, t:420, cond:{t:'season',s:'autumn'}, color:'#dce775', shape:'round'},
+  {id:'m2_bingqilin',name:'冰淇淋月巴',r:3,v:42,t:420, cond:{t:'season',s:'winter'}, color:'#e1bee7', shape:'round'},
+  {id:'m2_shamo',  name:'沙漠月巴',  r:4, v:60, t:600, cond:{t:'zone',z:7},  color:'#ffcc80', shape:'round'},
+  {id:'m2_wenquan',name:'温泉月巴',  r:4, v:62, t:600, cond:{t:'zone',z:3},  color:'#ffab91', shape:'drop'},
+  {id:'m2_huoshan',name:'火山月巴',  r:4, v:66, t:640, cond:{t:'zone',z:4},  color:'#d15852', shape:'spike'},
+  {id:'m2_shanhu', name:'珊瑚月巴',  r:4, v:64, t:620, cond:{t:'zone',z:2},  color:'#f06292', shape:'spike'},
+  {id:'m2_baoshi', name:'宝石月巴',  r:4, v:80, t:720, cond:{t:'harvest',n:1500}, color:'#4dd0e1', shape:'cube'},
+  {id:'m2_long',   name:'龙月巴',    r:4, v:120,t:900, cond:{t:'harvest',n:3000}, color:'#d15852', shape:'big'},
+  {id:'m2_fenghuang',name:'凤凰月巴',r:5, v:200, t:1500, cond:{t:'count',id:'mb_chaos',n:1}, color:'#ff7043', shape:'rainbow'},
+  {id:'m2_jiguang',name:'极光月巴',  r:5, v:180, t:1200, cond:{t:'weather',w:'snow',night:1}, color:'#7e57c2', shape:'rainbow'},
+  {id:'m2_xiangrui',name:'祥瑞月巴',  r:6, v:2000, t:3600, cond:null, weight:0.01, color:'#e6c44c', shape:'big'},
 ];
 const RAR_NAME={1:'普通',2:'常见',3:'稀有',4:'史诗',5:'传说',6:'活动'};
 const R_H={1:[2,5],2:[4,8],3:[6,12],4:[10,20],5:[16,30],6:[22,40]};   // 身高 cm 范围
@@ -849,7 +890,7 @@ const FAT_INTRO={
   mb_kafei:'喝了咖啡就像装了火箭，日夜加班不喊累。',
   mb_wanou:'软乎乎的，是番茄最喜欢的手感。',
   mb_jin:'浑身金灿灿，是月巴界的富豪。',
-  mb_xing:'喜欢发亮的星星，靠星光补充体力。',
+  mb_xing:'巴中之巴，这可是帝王之征啊！',
   mb_da:'块头不小，胃口更大，一顿能吃三份番茄。',
   mb_ju:'一步一个脚印，大地都为之颤抖。',
   mb_chao:'体型堪比小山，据说只存在于传说里。',
@@ -860,7 +901,7 @@ const FAT_INTRO={
   mb_guai:'行为古怪，没人猜得到它下一秒想干嘛。',
   mb_shizhe:'无论走多远都会回到最初的栽培木。',
   mb_zhoumo:'只在周末出现，其他时间都在享受生活。',
-  mb_zhengdian:'只在整点冒头，守时得像个闹钟。',
+  mb_zhengdian:'只在整点冒头，去码头整点番茄。',
   mb_xinnian:'每年元旦才会现身，带来新年的祝福。',
   mb_qingren:'情人节限定，据说能让空气变甜。',
   mb_wuyi:'劳动节专属，热爱劳动充满干劲。',
@@ -872,6 +913,38 @@ const FAT_INTRO={
   mb_shan:'暴风雨夜的闪电里诞生，快如闪电。',
   mb_pingguo:'最爱秋天，一口一个番茄。',
   mb_chaos:'连科学家都无法解释的存在，别细想。',
+  m2_dou:'圆滚滚像颗小豆子，蹦跶起来节奏感十足。',
+  m2_men:'出生自带萌化光环，看它一眼心情就好。',
+  m2_zhu:'胃口堪比小猪，吃饱就原地躺平。',
+  m2_dundun:'浑身上下都是肉感，抱起来特别解压。',
+  m2_mao:'爱蹭人爱睡觉，喉咙里总有咕噜声。',
+  m2_gou:'忠诚的跟屁虫，摇起尾巴像个小风扇。',
+  m2_tian:'尝起来甜甜的，据说舔一口会留下蜜味。',
+  m2_xian:'不太理人，凑近能闻到海风的气息。',
+  m2_bai:'雪白雪白的，在黑暗里会微微发光。',
+  m2_hei:'黑到几乎看不见，夜里只能看到两只眼睛。',
+  m2_hong:'红得像团小火苗，脾气也是说炸就炸。',
+  m2_lv:'绿油油的，光合作用就是它的充电方式。',
+  m2_lan:'蓝汪汪的，雨天会兴奋得转圈圈。',
+  m2_hudie:'扇着翅膀的漂亮小精灵，所到之处都会开花。',
+  m2_yinghuo:'激动的时候会发光，会在狭窄的地方亮起。',
+  m2_pubu:'脾气跟瀑布一样奔放，站近点会被水花溅到。',
+  m2_she:'没有脚却走得飞快，总喜欢在栽培木间神出鬼没。',
+  m2_wuya:'白色的乌鸦，会发出想要番茄的声音。',
+  m2_xiongmao:'憨态可掬的黑白团子，用可爱赢得番茄的青睐。',
+  m2_wo:'背着房子慢慢走，房子里住着谁呢？',
+  m2_xiangjiao:'弯弯的、黄黄的，凑近能闻到果香。',
+  m2_hulu:'装着很多小葫芦籽，很想和番茄分享。',
+  m2_bingqilin:'冰冰凉凉超好吃，可惜一晒太阳就化。',
+  m2_shamo:'耐旱达人，一颗番茄能撑一星期。',
+  m2_wenquan:'泡着温泉好舒服，浑身冒着白汽。',
+  m2_huoshan:'心情好的时候喷点小烟花助兴。',
+  m2_shanhu:'住在海底的粉色居民，随波摇摆。',
+  m2_baoshi:'浑身闪闪发光，是最闪耀的月巴。',
+  m2_long:'能腾云驾雾的祥瑞，呼风唤雨样样行。',
+  m2_fenghuang:'浴火重生的神巴，巴身流光溢彩。',
+  m2_jiguang:'极寒雪夜里才会亮起的神秘月巴。',
+  m2_xiangrui:'这可是祥瑞。',
 };
 
 /* ---------------- 界面皮肤（图鉴解锁） ---------------- */
@@ -911,7 +984,7 @@ const OFFLINE_CAP=12*3600*1000;
 let S;
 function defaultState(){
   return {
-    coins:0, accelLv:0, boughtItems:[], collection:{}, totalHarvest:0,
+    coins:0, accelLv:0, boughtItems:[], collection:{}, collection2:{}, dex2Celebrated:false, totalHarvest:0,
     weather:'sunny', lastRainAt:-1e12, weatherHoldEnd:0,
     nextWeatherAt:now()+rand(2,4)*60000, muted:false, lastSave:now(),
     seenHelp:false, starter:true,
@@ -1002,7 +1075,7 @@ function condText(c){
     case 'zone': return `需要「${ZONES[c.z-1].name}」`;
     case 'item': return `需要道具「${ITEMS.find(i=>i.id===c.i).name}」`;
     case 'harvest': return `累计收获 ${c.n} 次`;
-    case 'count': { const t=TYPES.find(x=>x.id===c.id); return `收获「${t.name}」${c.n} 次`; }
+    case 'count': { const t=typeById(c.id); return `收获「${t.name}」${c.n} 次`; }
   }
   return '';
 }
@@ -1175,8 +1248,17 @@ function lockedSVG(){
 function hScale(h){ return clamp(0.7+(h-2)/38,0.7,1.7); }
 
 /* ---------------- 图鉴数据（含极值） ---------------- */
-function colGet(id){ if(!S.collection[id]) S.collection[id]={count:0}; return S.collection[id]; }
-function colCount(id){ return (S.collection[id]&&S.collection[id].count)||0; }
+/* 第二图鉴：收集齐第一图鉴全部月巴后开启，其月巴并入掉落池；id 前缀 m2_ 由 TYPES2 提供 */
+function dex2Unlocked(){ return Object.keys(S.collection).length>=TYPES.length; }
+function isDex2(id){ return TYPES2.some(t=>t.id===id); }
+function typeById(id){ return TYPES.find(x=>x.id===id)||TYPES2.find(x=>x.id===id); }
+function colGet(id){
+  const c=isDex2(id)?S.collection2:S.collection;
+  if(!c[id]) c[id]={count:0};
+  return c[id];
+}
+function colCount(id){ const c=isDex2(id)?S.collection2:S.collection; return (c[id]&&c[id].count)||0; }
+function colRec(id){ return isDex2(id)?S.collection2[id]:S.collection[id]; }
 function rollNum(lo,hi){ // 取值向中段集中：越接近上下极值概率越低（极值低频化，非时间冷却）
   return (lo+Math.random()*(hi-lo) + lo+Math.random()*(hi-lo))/2;
 }
@@ -1199,7 +1281,11 @@ function rollStats(r){
 
 /* ---------------- 核心逻辑：生长 / 收获 ---------------- */
 const SCENE_FAT_ZOOM=1.5; // 栽种场景中成熟月巴的显示倍率（图鉴不受影响），可手动调整
-function availableTypes(){ return TYPES.filter(t=>condOk(t.cond)); }
+function availableTypes(){
+  // 第二图鉴解锁后，其月巴并入掉落池；未解锁前保持原掉落
+  const pool=dex2Unlocked()?TYPES.concat(TYPES2):TYPES;
+  return pool.filter(t=>condOk(t.cond));
+}
 function weightOf(t){ return t.weight!=null?t.weight:({1:100,2:45,3:14,4:4,5:1.2,6:0.9}[t.r]||1); }
 function weightedPick(list){
   let sum=0; for(const t of list) sum+=weightOf(t);
@@ -1208,10 +1294,11 @@ function weightedPick(list){
   return list[list.length-1];
 }
 const BASE_SPEED=0.3; // 全部月巴基础生长速度（倍）：0.5 倍时间，即生长时长翻倍
+function growDur(t){ return t.t*(1000/BASE_SPEED)*(isDex2(t.id)?3:1); } // 第二图鉴生长速度为基础 1/3（时长 x3）
 function spawnIn(zone,wood,cell){
   const t=weightedPick(availableTypes());
   const st=rollStats(t.r);
-  cell.t=t.id; cell.start=now(); cell.dur=t.t*(1000/BASE_SPEED); cell.h=st.h; cell.w=st.w; cell.delay=0;
+  cell.t=t.id; cell.start=now(); cell.dur=growDur(t); cell.h=st.h; cell.w=st.w; cell.delay=0;
 }
 function cellRemaining(cell){ return (cell.dur/speedMult())-(now()-cell.start); }
 function cellReady(cell){ return cell.t && cellRemaining(cell)<=0; }
@@ -1228,8 +1315,9 @@ function addCoins(n){
   $('coinTxt').textContent=fmt(S.coins);
 }
 function doHarvest(z,w,i,cell,el,quiet){
-  const type=TYPES.find(x=>x.id===cell.t);
-  const isNew=!S.collection[type.id];
+  const type=typeById(cell.t);
+  const wasComplete=dex2Unlocked();
+  const isNew=!colCount(type.id);
   if(!cell.h||!cell.w){ const st=rollStats(type.r); cell.h=st.h; cell.w=st.w; }
   const beats=recordExtremes(type.id,cell.h,cell.w);
   const val=Math.round(type.v*(isNew?3:1));
@@ -1237,6 +1325,11 @@ function doHarvest(z,w,i,cell,el,quiet){
   S.totalHarvest++;
   const c=colGet(type.id); c.count++;
   c.last={h:cell.h,w:cell.w,t:now()};
+  // 第一图鉴收集齐全：恭喜 + 开启第二图鉴（只弹一次）
+  if(!wasComplete && Object.keys(S.collection).length>=TYPES.length && !S.dex2Celebrated){
+    S.dex2Celebrated=true; save();
+    setTimeout(openDex2Celebrate,500);
+  }
   // 皮肤解锁提示（恰好达到阈值时）
   for(const s of SKINS){
     if(s.need && colCount(s.need)===s.needN) toast(`🎨 图鉴皮肤「${s.name}」已可领取！`);
@@ -1542,7 +1635,9 @@ function bkClickGuard(e){ // 拖动后的 click 不触发卡片详情（捕获�
 /* ---------------- 头部 / 状态 ---------------- */
 function updateHeader(){
   $('coinTxt').textContent=fmt(S.coins);
-  const got=Object.keys(S.collection).length, total=TYPES.length;
+  // 第二图鉴解锁后，收集进度合并两图鉴
+  const got=Object.keys(S.collection).length+(dex2Unlocked()?Object.keys(S.collection2||{}).length:0);
+  const total=TYPES.length+(dex2Unlocked()?TYPES2.length:0);
   $('collTxt').textContent=`${got}/${total} (${Math.round(got/total*100)}%)`;
   $('collBar').style.width=(got/total*100)+'%';
   const mut=$('btnMute'); mut.textContent=S.muted?'🔇':'🔊';
@@ -1713,13 +1808,12 @@ function openModal(title,html){
   $('overlay').classList.add('show');
 }
 function closeModal(){ $('overlay').classList.remove('show'); closeFatDetail(); pomoModalOpen=false; }
-function openBook(){
-  pomoModalOpen=false;
-  const got=Object.keys(S.collection).length;
+let dexPage=1; // 图鉴页码：1=第一图鉴 2=第二图鉴
+function bookRowsHTML(list){
   let rows='';
-  for(const t of TYPES){
+  for(const t of list){
     const c=colCount(t.id);
-    const rec=S.collection[t.id];
+    const rec=colRec(t.id);
     const rcl={1:'rr1',2:'rr2',3:'rr3',4:'rr4',5:'rr5',6:'rr6'}[t.r];
     let stats='';
     let allGold=false;
@@ -1747,7 +1841,19 @@ function openBook(){
       <div class="cd">${t.weight!=null&&t.weight<1?'✨ 概率极低 · 永久可遇':('条件：'+condText(t.cond))}</div>
     </div>`;
   }
-  const skinHTML=`<div class="skinbar">
+  return rows;
+}
+function openBook(){
+  pomoModalOpen=false;
+  const unlocked=dex2Unlocked();
+  if(dexPage===2 && !unlocked) dexPage=1;
+  const list=dexPage===2?TYPES2:TYPES;
+  const got=Object.keys(dexPage===2?S.collection2:S.collection).length, total=list.length;
+  const tabs=`<div class="booktabs">
+    <button class="btab ${dexPage===1?'on':''}" onclick="switchDexPage(1)">📕 第一图鉴</button>
+    <button class="btab ${dexPage===2?'on':''} ${unlocked?'':'lock'}" onclick="${unlocked?'switchDexPage(2)':''}" title="${unlocked?'':'收集齐第一图鉴全部月巴后开启'}">📕 第二图鉴 ${unlocked?'':'🔒'}</button>
+  </div>`;
+  const skinHTML=dexPage===1?`<div class="skinbar">
     <div class="skin-sec">🎨 界面皮肤 <small>（收获对应月巴解锁，点击领取/切换）</small></div>
     <div class="skins">${SKINS.map(s=>{
       const met=skinMet(s.id);
@@ -1761,14 +1867,24 @@ function openBook(){
         <div class="sc">${st}</div>
       </div>`;
     }).join('')}</div>
-  </div>`;
-  openModal(`📗 图鉴 · ${got}/${TYPES.length} (${Math.round(got/TYPES.length*100)}%)`,
-    `${skinHTML}<div class="book">${rows}</div>`);
+  </div>`:'';
+  openModal(`📗 图鉴 · 第${dexPage}页 ${got}/${total} (${Math.round(got/total*100)}%)`,
+    `${tabs}${skinHTML}<div class="book">${bookRowsHTML(list)}</div>`);
+}
+function switchDexPage(p){ dexPage=p; openBook(); }
+function openDex2Celebrate(){
+  openModal('🎉 恭喜收集齐全！', `
+    <div style="text-align:center;padding:6px 0 2px">
+      <div style="font-size:52px;line-height:1.1">🎊</div>
+      <div class="pomo-note" style="text-align:center;margin-top:4px">你已收集齐第一图鉴全部 <b>${TYPES.length}</b> 种月巴！<br>📕 第二图鉴已开启 —— 全新 <b>${TYPES2.length}</b> 种月巴加入掉落，生长更慢（基础 1/3 速度），挑战你的耐心！</div>
+      <button class="btn" style="width:100%;margin-top:10px" onclick="openBook()">📕 查看第二图鉴</button>
+      <button class="btn" style="width:100%;margin-top:6px" onclick="closeModal()">关闭</button>
+    </div>`);
 }
 function openFatDetail(id){ // 图鉴点开某月巴：悬浮层放大图 + 记录 + 简介（图鉴不关闭）
-  const t=TYPES.find(x=>x.id===id);
+  const t=typeById(id);
   if(!t)return;
-  const rec=S.collection[t.id];
+  const rec=colRec(id);
   if(!rec)return;
   const rcl={1:'rr1',2:'rr2',3:'rr3',4:'rr4',5:'rr5',6:'rr6'}[t.r];
   const [hLo,hHi]=R_H[t.r], [wLo,wHi]=R_W[t.r];
@@ -3234,6 +3350,8 @@ function init(){
     openHelp();
   }
   if(hasSave) offlineSettle();
+  // 老玩家已收集齐第一图鉴：进入后补一次第二图鉴开启恭喜（只弹一次）
+  if(dex2Unlocked() && !S.dex2Celebrated){ S.dex2Celebrated=true; setTimeout(openDex2Celebrate,900); }
   applySkin(S.skins.active);
   renderOverview(); updateHeader(); updateStatus(); updatePomoUI(); updateSceneBar(); updateWeatherHold();
   setInterval(tick,250);
