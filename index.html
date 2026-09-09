@@ -281,6 +281,11 @@
   .ltr-env.big .ltr-flap{border-left:95px solid transparent;border-right:95px solid transparent;border-bottom:56px solid var(--fl);}
   .ltr-env .ltr-seal{position:absolute;top:22px;left:50%;transform:translate(-50%,-50%);width:20px;height:20px;background:var(--ec);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;z-index:5;box-shadow:0 1px 3px rgba(0,0,0,.2);}
   .ltr-env.big .ltr-seal{top:46px;width:32px;height:32px;font-size:16px;}
+  .ltr-env.mini .ltr-sig{position:absolute;right:3px;bottom:2px;font-size:7px;font-weight:700;line-height:1;color:var(--ec);max-width:50px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;z-index:6;}
+  .ltr-cell{display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .ltr-who{display:flex;justify-content:center;gap:3px;flex-wrap:wrap;margin:2px 0;}
+  .ltr-who-sq{width:16px;height:16px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .12s;}
+  .ltr-who-sq:hover{transform:scale(1.25);}
   .ltr-env .ltr-letter{position:absolute;left:8px;right:8px;top:6px;bottom:6px;background:#fffdf4;border-radius:6px;z-index:2;padding:10px 12px;box-shadow:0 2px 8px rgba(90,70,40,.12);transform:translateY(120%);transition:transform .6s .2s ease;overflow:hidden;}
   .ltr-env.big .ltr-letter{left:12px;right:12px;top:10px;bottom:8px;}
   .ltr-env.open .ltr-flap{transform:rotateX(180deg);}
@@ -3460,29 +3465,69 @@ let lastReadySfx=0, lastRevealSfx=0;
 const TV_FOODS={food1:{n:'饭团便当',p:50,dur:20*60000,rn:.4},food2:{n:'时蔬便当',p:150,dur:32*60000,rn:.6},food3:{n:'豪华便当',p:400,dur:46*60000,rn:.85}};
 const TV_ITEMS={lamp:{n:'油灯',p:300},charm:{n:'幸运护身符',p:500,durab:3},bell:{n:'铃铛',p:200}};
 const TV_DESTS=[
- {id:'forest',n:'森林',need:'',specials:['野果'],cards:['A1','A2','A3','A4','A5']},
- {id:'sea',n:'大海',need:'lamp',specials:['海贝','海盐'],cards:['B1','B2','B3','B4','B5']},
- {id:'town',n:'小镇',need:'bell',specials:['果子面包'],cards:['C1','C2','C3','C4']},
- {id:'snow',n:'雪山',need:'charm',needF:'food3',specials:['雪绒花'],cards:['D1','D2','D3']}
+ {id:'forest',n:'森林',need:'',specials:['野果'],cards:['A1','A2','A3','A4','A5','A6','A7','A8','A9','A10','A11','A12','A13','A14','A15']},
+ {id:'sea',n:'大海',need:'lamp',specials:['海贝','海盐'],cards:['B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','B12','B13','B14','B15']},
+ {id:'town',n:'小镇',need:'bell',specials:['果子面包'],cards:['C1','C2','C3','C4','C5','C6','C7','C8','C9','C10','C11','C12','C13','C14']},
+ {id:'snow',n:'雪山',need:'charm',needF:'food3',specials:['雪绒花'],cards:['D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13']}
 ];
 const TV_LETTERS={
- A1:{d:'deco-forest',e:'🍎',txt:'我沿着溪流走了好久，摘到了最甜的野果。空气里全是青草的味道，{name}想你啦！'},
- A2:{d:'deco-forest',e:'🐰',txt:'在森林深处看到一窝小兔子，它们围着我打转，差点把我当成胡萝卜。'},
- A3:{d:'deco-forest',e:'🐝',txt:'傍晚的森林起了雾，我迷路时遇到了好心的萤火虫，它们提着灯给我指路。'},
- A4:{d:'deco-forest',e:'🌰',txt:'我在一棵老树下睡了一觉，醒来发现口袋里多了一颗亮晶晶的松果。'},
- A5:{d:'deco-forest',e:'🎁',txt:'遇到一位松鼠老爷爷，他教会我用松果换故事。我把他的一句话祝福也带回来了。'},
- B1:{d:'deco-sea',e:'🌊',txt:'海浪好大好大，我的帽子被吹走了，又顺着浪花漂了回来，真是奇遇。'},
- B2:{d:'deco-sea',e:'🐚',txt:'我捡到了漂亮的贝壳，听，里面装着大海的声音，我把它存进了记忆里。'},
- B3:{d:'deco-sea',e:'🦀',txt:'和寄居蟹赛跑，我输了，它得意地朝我挥了挥钳子。'},
- B4:{d:'deco-sea',e:'🌅',txt:'傍晚的海面像撒了碎金子，我坐在礁石上看了好久，都不想走了。'},
- B5:{d:'deco-sea',e:'🐳',txt:'一条小鲸鱼喷水给我洗澡，我变成了咸咸的落汤巴，但真的好开心。'},
- C1:{d:'deco-town',e:'🥖',txt:'小镇的市集好热闹，我帮面包房送了一上午的货，换到了热腾腾的面包。'},
- C2:{d:'deco-town',e:'🕊',txt:'我坐在广场的喷泉边看鸽子，它们排着队等我投喂，一点也不怕生。'},
- C3:{d:'deco-town',e:'🕰',txt:'镇上的钟楼敲响时，所有月巴都停下脚步，那一刻的宁静真奇妙。'},
- C4:{d:'deco-town',e:'✉',txt:'我淘到一张旧邮票，据说能寄到任何地方，我把它连同这封信一起送给你。'},
- D1:{d:'deco-snow',e:'⛄',txt:'雪山好冷呀，我裹着围巾一路打喷嚏，但雪景美得像童话一样。'},
- D2:{d:'deco-snow',e:'❄',txt:'我堆了一个小雪人，放了个番茄在上面。'},
- D3:{d:'deco-snow',e:'🌌',txt:'山顶的极光铺满天空，那一刻我忘了寒冷，只想把这片光也带给你。'}
+ A1:{d:'deco-forest',e:'🍎',txt:'我和番茄沿着溪流走了好久，摘到了最甜的野果，番茄把最红的一颗留给了我。空气里全是青草的味道，{name}根本舍不得吃。'},
+ A2:{d:'deco-forest',e:'🐰',txt:'在森林深处，番茄和我看到一窝小兔子，它们围着我们打转，差点把番茄当成胡萝卜。'},
+ A3:{d:'deco-forest',e:'🐝',txt:'傍晚的森林起了雾，我和番茄迷了路，多亏好心的萤火虫提着灯给我们指路。'},
+ A4:{d:'deco-forest',e:'🌰',txt:'我和番茄在老树下睡了一觉，醒来发现口袋里多了一颗亮晶晶的松果，番茄说是树爷爷送的礼物。'},
+ A5:{d:'deco-forest',e:'🎁',txt:'松鼠老爷爷教我们用松果换故事，番茄换到了它最爱听的那个，乐了一整天。'},
+ A6:{d:'deco-forest',e:'🍅',txt:'我在树洞边遇到一颗圆滚滚的番茄，它说自己是风带来的，我把它抱进怀里，决定带它一起走。'},
+ A7:{d:'deco-forest',e:'🧺',txt:'我和番茄捡了一下午的蘑菇，它帮我把小篮子装得满满当当，累得脸都红透了。'},
+ A8:{d:'deco-forest',e:'🌙',txt:'晚上我们挤在一个树洞里睡觉，番茄替我数星星，数着数着就先睡着了。'},
+ A9:{d:'deco-forest',e:'🍄',txt:'雨突然下起来，我把番茄护在怀里，它小声说，还是第一次被人这样小心地护着。'},
+ A10:{d:'deco-forest',e:'🐿️',txt:'松鼠大爷分给我们一颗栗子，我和番茄一人一半，甜得一起眯起了眼。'},
+ A11:{d:'deco-forest',e:'🪷',txt:'番茄第一次见到蜻蜓，兴奋地追着跑，我坐在石头上笑它太莽撞。'},
+ A12:{d:'deco-forest',e:'🌞',txt:'午后的阳光很暖，我和番茄靠着树干打盹，树叶沙沙地给咱俩扇风。'},
+ A13:{d:'deco-forest',e:'💧',txt:'我教番茄用叶子接露水喝，它说这是它喝过最清甜的水。'},
+ A14:{d:'deco-forest',e:'🦋',txt:'一只蝴蝶停在番茄头顶，我们大气都不敢出，它说这是它交到的第一个发夹朋友。'},
+ A15:{d:'deco-forest',e:'🎋',txt:'要离开森林前，番茄说要把森林的味道存进心里，等回家细细讲给我听。'},
+ B1:{d:'deco-sea',e:'🌊',txt:'海浪好大好大，我和番茄的帽子都被吹走了，又顺着浪花漂了回来，真是奇遇。'},
+ B2:{d:'deco-sea',e:'🐚',txt:'我和番茄捡到了漂亮的贝壳，番茄把耳朵贴上去，说里面装着大海在唱歌。'},
+ B3:{d:'deco-sea',e:'🦀',txt:'番茄和寄居蟹赛跑输了，它气鼓鼓地不肯走，我哄了半天才好。'},
+ B4:{d:'deco-sea',e:'🌅',txt:'傍晚的海面像撒了碎金子，我和番茄坐在礁石上看了好久，谁都不想走。'},
+ B5:{d:'deco-sea',e:'🐳',txt:'一条小鲸鱼喷水给咱俩洗澡，番茄被淋成落汤茄，却笑得最响。'},
+ B6:{d:'deco-sea',e:'🍅',txt:'退潮后，我和番茄在沙滩上捡贝壳，它把最亮的那颗塞进我口袋，说是送我的礼物。'},
+ B7:{d:'deco-sea',e:'🐬',txt:'海豚跳出水面，番茄激动得直拍手，差点把浪花当成掌声收下。'},
+ B8:{d:'deco-sea',e:'🌊',txt:'浪太大，番茄滚进了水里，我扑过去捞起它，它噗噗吐水，还说海水是咸的。'},
+ B9:{d:'deco-sea',e:'⛵',txt:'我们叠了一只小纸船放进海里，番茄说等它漂回来，我们的愿望就实现了。'},
+ B10:{d:'deco-sea',e:'🦪',txt:'一只牡蛎送了我们一颗珍珠，番茄小心翼翼包好，说要带回家给朋友们看。'},
+ B11:{d:'deco-sea',e:'🌴',txt:'在椰子树下，我和番茄分着喝椰汁，它说这是大海送的两根吸管。'},
+ B12:{d:'deco-sea',e:'🌇',txt:'黄昏的海边，番茄被晚霞染成橘红色，我说它像一颗会发光的小太阳。'},
+ B13:{d:'deco-sea',e:'🐚',txt:'番茄把耳朵贴在贝壳上听海，听着听着，靠在我肩上睡着了。'},
+ B14:{d:'deco-sea',e:'🪸',txt:'我们追着一只寄居蟹跑，番茄差点把蟹壳当帽子戴，被我一把拦下。'},
+ B15:{d:'deco-sea',e:'🌌',txt:'海边的星星特别多，番茄指着最亮的一颗，说要给它取名叫我们。'},
+ C1:{d:'deco-town',e:'🥖',txt:'小镇的市集好热闹，番茄帮我给面包房送了一上午的货，换到热腾腾的面包，它掰成两半分我。'},
+ C2:{d:'deco-town',e:'🕊️',txt:'我和番茄坐在广场喷泉边喂鸽子，它们排着队等投喂，番茄把面包屑撒得满地都是。'},
+ C3:{d:'deco-town',e:'🕰️',txt:'镇上的钟楼敲响时，所有月巴都停下脚步，番茄拉着我一起静静听完了整段钟声。'},
+ C4:{d:'deco-town',e:'✉️',txt:'我们淘到一张旧邮票，据说能寄到任何地方，番茄说要和这封信一起寄回家。'},
+ C5:{d:'deco-town',e:'🍅',txt:'集市上，番茄替我看摊子，叫卖声软软的，客人们都被它逗笑了。'},
+ C6:{d:'deco-town',e:'🍞',txt:'面包房的婆婆多送了我们一个热面包，番茄掰成两半，把大的那半塞给我。'},
+ C7:{d:'deco-town',e:'🎈',txt:'我们帮小朋友追回了气球，他把手里的棉花糖分给我们一人一口，番茄说这是它吃过最甜的糖。'},
+ C8:{d:'deco-town',e:'🕯️',txt:'广场的灯亮起来时，番茄仰着头说，这里的人笑得好亮堂。'},
+ C9:{d:'deco-town',e:'📮',txt:'我们合写了一张明信片投进邮筒，番茄说想让家里也看看小镇的黄昏。'},
+ C10:{d:'deco-town',e:'🎠',txt:'我陪番茄坐旋转木马，它挑了匹小马，说一坐上去就想唱歌。'},
+ C11:{d:'deco-town',e:'🧵',txt:'布店老板用边角料给番茄缝了顶小帽子，它逢人就说这是小镇送它的礼物。'},
+ C12:{d:'deco-town',e:'☂️',txt:'下小雨时，我们挤在一把伞下走完一条街，番茄说这是它走过最暖的一段路。'},
+ C13:{d:'deco-town',e:'🍮',txt:'番茄第一次尝布丁，眯着眼说甜到了脚尖，我也跟着笑了好久。'},
+ C14:{d:'deco-town',e:'🏮',txt:'灯笼节上，番茄举着小灯笼走在前头，回头等我跟上，像个小向导。'},
+ D1:{d:'deco-snow',e:'⛄',txt:'雪山好冷呀，我和番茄裹着同一条围巾一路打喷嚏，但雪景美得像童话。'},
+ D2:{d:'deco-snow',e:'❄️',txt:'我堆了一个小雪人，番茄把自己的红果子安在雪人鼻子上，说这样它就不孤单了。'},
+ D3:{d:'deco-snow',e:'🌌',txt:'山顶的极光铺满天空，番茄靠着我忘了喊冷，说想把这片光也带给你。'},
+ D4:{d:'deco-snow',e:'🍅',txt:'雪地里，番茄冻得直打颤，我把它揣进怀里，它说像抱着一个小火炉。'},
+ D5:{d:'deco-snow',e:'🧣',txt:'我们互相围着围巾，番茄系得歪歪扭扭，却骄傲地说这是最牢的结。'},
+ D6:{d:'deco-snow',e:'⛷️',txt:'我带着番茄从雪坡上滑下来，它尖叫着笑，说雪在为我们欢呼。'},
+ D7:{d:'deco-snow',e:'🫖',txt:'山间小屋的老奶奶请我们喝了杯热可可，番茄捧着杯子暖了好久的手。'},
+ D8:{d:'deco-snow',e:'🌠',txt:'流星划过时，番茄许愿说，想和我在每个季节都旅行一次。'},
+ D9:{d:'deco-snow',e:'🦌',txt:'小鹿舔了舔番茄的脑袋，它愣了半天，说这是第一次被这么温柔地蹭到。'},
+ D10:{d:'deco-snow',e:'🧤',txt:'我和番茄堆了雪人，它把自己的红围巾解下来，围在雪人脖子上。'},
+ D11:{d:'deco-snow',e:'🌨️',txt:'暴风雪里我们躲进山洞，番茄把捡到的松果分我一半，说是咱俩的干粮。'},
+ D12:{d:'deco-snow',e:'🕯️',txt:'夜里洞里好黑，番茄贴着我讲它见过的所有温暖的事，讲着讲着天就亮了。'},
+ D13:{d:'deco-snow',e:'🏔️',txt:'山顶的风好大，我和番茄肩并肩站着看云海，它说这一趟来得太值了。'}
 };
 const TV_FRIENDS=[
  {id:'snail',n:'蜗牛师父',like:['野果','果子面包'],rare:'A5',t:'……你回来了，这野果够新鲜。'},
@@ -3496,6 +3541,7 @@ function tvFresh(){
   t.wh=t.wh||{food1:0,food2:0,food3:0,lamp:0,charm:0,bell:0};
   t.bag=t.bag||[];t.cards=t.cards||[];t.specials=t.specials||[];t.destCount=t.destCount||{};
   t.inbox=t.inbox||[];
+  t.cardWho=t.cardWho||{}; t.cardFirst=t.cardFirst||{};
   t.friends=t.friends||[];t.yard=t.yard||[];
   if(!t.frog)t.frog={status:'home',depart:null,ret:null,mood:''};
   if(t.tomato==null)t.tomato=300;
@@ -3700,11 +3746,14 @@ function tvUpdateHarvest(){ const b=$('tvHarvestBtn'); if(!b)return; b.style.dis
 function tvDestOf(bag){ bag=bag||tvFresh().bag; const has=function(k){return bag.indexOf(k)>=0;}; if(has('charm')&&has('food3'))return TV_DESTS[3]; if(has('lamp'))return TV_DESTS[1]; if(has('bell'))return TV_DESTS[2]; return TV_DESTS[0]; }
 function travelSettleIf(){ const t=tvFresh(); if(t.frog.status==='away' && t.frog.ret && now()>=t.frog.ret) tvSettle(); }
 function travelTick(){ if(!S.travel||!S.travel.frog)return; const t=S.travel; travelSettleIf(); if(t.frog.status==='away'&&now()>=(t.cardT||0)){ t.cardT=now()+rand(10,20)*60000; tvSendCardIf(); } const vis=$('travel'); if(vis&&vis.style.display==='flex'){ if(tvEventRoll())tvRenderScene(); tvFriendPop(); tvUpdateHarvest(); tvUpdateBar(); } updateTravelIcon(); }
-function tvSendCardIf(){ const t=tvFresh(); if(t.frog.status!=='away')return; if((t.frog.cardsSent||0)>=(t.frog.cardQuota||1))return; const d=tvDestOf(t.bag); const got=d.cards.filter(function(c){return t.cards.indexOf(c)<0;}); if(got.length){ const c=got[Math.floor(Math.random()*got.length)]; t.cards.push(c); t.inbox.push(c); t.frog.cardsSent=(t.frog.cardsSent||0)+1; tvUpdateBar(); } save(); }
+function tvNoteCard(c, fatId){ if(!TV_LETTERS[c]||!fatId)return; const t=tvFresh(); if(!t.cardWho)t.cardWho={}; if(!t.cardFirst)t.cardFirst={}; if(t.cardFirst[c]==null)t.cardFirst[c]=fatId; if(!t.cardWho[c])t.cardWho[c]=[]; if(t.cardWho[c].indexOf(fatId)<0)t.cardWho[c].push(fatId); }
+function tvSendCardIf(){ const t=tvFresh(); if(t.frog.status!=='away')return; if((t.frog.cardsSent||0)>=(t.frog.cardQuota||1))return; const d=tvDestOf(t.bag); const got=d.cards.filter(function(c){return t.cards.indexOf(c)<0;}); if(got.length){ const c=got[Math.floor(Math.random()*got.length)]; t.cards.push(c); t.inbox.push(c); tvNoteCard(c,t.frog.fatId); t.frog.cardsSent=(t.frog.cardsSent||0)+1; tvUpdateBar(); } save(); }
 function tvUpdateBar(){ const t=tvFresh(); const e=$('tvTomato'); if(e)e.textContent=t.tomato; const s=$('tvState'); if(s)s.textContent=t.frog.status==='away'?'旅途中':(t.frog.status==='pack'?'准备行囊':'在家'); const d=$('tvMailDot'); if(d)d.style.display=(t.inbox.length>0)?'block':'none'; }
 function tvOpenBook(){ openModal('🏷 旅行图鉴', tvBookHTML()); }
-function tvLetterEnv(c){ const L=TV_LETTERS[c]; if(!L)return ''; return '<div class="ltr-env mini '+L.d+'" onclick="tvOpenLetter(\''+c+'\')"><div class="ltr-front"><div class="ltr-flap"></div><div class="ltr-seal">'+L.e+'</div></div></div>'; }
-function tvBookHTML(){ const t=tvFresh(); let h='<p style="color:#48614a;font-size:13px;margin:2px 0">来信 '+t.cards.length+'/17 · 特产 '+t.specials.length+' 种</p><div class="sh-grid">'; for(const d of TV_DESTS){ h+='<div style="grid-column:1/-1;color:#6b5b3e;font-size:13px;margin-top:6px;font-weight:700">🗺 '+d.n+'系列</div>'; for(const c of d.cards){ h+=(t.cards.indexOf(c)>=0)?tvLetterEnv(c):'<div class="pc off" style="display:flex;align-items:center;justify-content:center">❔ ???</div>'; } } h+='</div><p style="color:#48614a;font-size:13px;margin:8px 0 2px">🍎 已收获特产</p><div class="sh-grid">'; const all=['野果','海贝','海盐','果子面包','雪绒花']; for(const s of all){ const got=t.specials.indexOf(s)>=0; h+='<div class="sh-card '+(got?'rose':'')+'"><div style="font-size:26px">'+(got?'🌿':'❔')+'</div><div class="sh-n">'+(got?s:'???')+'</div></div>'; } h+='</div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'; return h; }
+function tvLetterEnv(c){ const L=TV_LETTERS[c]; if(!L)return ''; const t=tvFresh(); const fw=(t.cardFirst&&t.cardFirst[c])||null; let sig=''; if(fw){ const tp=typeById(fw); if(tp)sig='<div class="ltr-sig">'+tp.name+'</div>'; } return '<div class="ltr-env mini '+L.d+'" onclick="tvOpenLetter(\''+c+'\')"><div class="ltr-front"><div class="ltr-flap"></div><div class="ltr-seal">'+L.e+'</div>'+sig+'</div></div>'; }
+function tvWhoRow(c){ const t=tvFresh(); const who=(t.cardWho&&t.cardWho[c])||[]; if(!who.length)return ''; let h='<div class="ltr-who">'; for(const id of who){ const tp=typeById(id); if(!tp)continue; h+='<span class="ltr-who-sq" style="background:'+tp.color+'" title="'+tp.name+'" onclick="tvShowWho(\''+id+'\')">'+tp.name.charAt(0)+'</span>'; } return h+'</div>'; }
+function tvShowWho(id){ const tp=typeById(id); if(!tp)return; openModal('🐤 收到此信的月巴','<div style="text-align:center"><div style="font-size:60px;line-height:1.1;margin:6px 0">'+fatSVG(tp)+'</div><div style="font-weight:800;font-size:16px;color:var(--text)">'+tp.name+'</div><div class="rar-tag rr'+(tp.r||1)+'" style="display:inline-block;margin-top:6px">'+RAR_NAME[tp.r]+'</div></div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'); }
+function tvBookHTML(){ const t=tvFresh(); const total=TV_DESTS.reduce(function(n,d){return n+d.cards.length;},0); let h='<p style="color:#48614a;font-size:13px;margin:2px 0">来信 '+t.cards.length+'/'+total+' · 特产 '+t.specials.length+' 种</p><div class="sh-grid">'; for(const d of TV_DESTS){ h+='<div style="grid-column:1/-1;color:#6b5b3e;font-size:13px;margin-top:6px;font-weight:700">🗺 '+d.n+'系列</div>'; for(const c of d.cards){ h+=(t.cards.indexOf(c)>=0)?('<div class="ltr-cell">'+tvLetterEnv(c)+tvWhoRow(c)+'</div>'):'<div class="pc off" style="display:flex;align-items:center;justify-content:center">❔ ???</div>'; } } h+='</div><p style="color:#48614a;font-size:13px;margin:8px 0 2px">🍎 已收获特产</p><div class="sh-grid">'; const all=['野果','海贝','海盐','果子面包','雪绒花']; for(const s of all){ const got=t.specials.indexOf(s)>=0; h+='<div class="sh-card '+(got?'rose':'')+'"><div style="font-size:26px">'+(got?'🌿':'❔')+'</div><div class="sh-n">'+(got?s:'???')+'</div></div>'; } h+='</div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'; return h; }
 function tvOpenLetter(c){
   const L=TV_LETTERS[c]; if(!L)return;
   const t=tvFresh(); const i=t.inbox.indexOf(c); if(i>=0)t.inbox.splice(i,1); save(); tvUpdateBar();
@@ -3717,13 +3766,13 @@ function tvOpenLetter(c){
 function tvOpenMail(){ openModal('📮 信箱 · 来信', tvMailHTML()); }
 function tvMailHTML(){ const t=tvFresh(); let h='<p style="color:#48614a;font-size:13px">此次旅行月巴寄回、尚未拆开的信件，点击可以拆开：</p><div class="sh-grid">'; if(!t.inbox.length)h+='<p style="color:#999;text-align:center;grid-column:1/-1">信箱空空，还没有未拆的信件</p>'; for(const c of t.inbox)h+=tvLetterEnv(c); h+='</div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'; return h; }
 function tvFriendPop(){ const t=tvFresh(); if(!t.nextVisit)t.nextVisit=now()+rand(3,8)*60000; if(now()<t.nextVisit)return; const f=TV_FRIENDS[Math.floor(Math.random()*TV_FRIENDS.length)]; t.nextVisit=now()+rand(7,15)*60000; save(); const fr=t.friends.find(function(x){return x.id===f.id;}); const fc=fr?fr.count:0; const emo=f.id==='cat'?'🐱':f.id==='bear'?'🐻':f.id==='owl'?'🦉':'🐌'; let h='<p style="text-align:center;font-size:40px">'+emo+'</p><p style="text-align:center"><b>'+f.n+'</b>'+(fc?'（第 '+(fc+1)+' 次来访）':'（第一次来访）')+'</p><p style="text-align:center;color:#48614a">'+f.t+'</p><p style="text-align:center;font-size:12px;color:#48614a">喂它喜欢的特产可回礼 🍅</p><div class="sh-grid">'; for(const s of f.like){ const has=t.specials.indexOf(s)>=0; h+='<div class="sh-card"><div class="sh-n">'+(has?('🌿 '+s):'❔ ???')+'</div><button class="btn" '+(has?'':'disabled')+' onclick="tvFeed(\''+f.id+'\',\''+s+'\')">招待</button></div>'; } h+='</div><p style="text-align:center;margin-top:6px"><button class="btn" onclick="closeModal()">让它等下次</button></p>'; openModal('👋 朋友来访', h); }
-function tvFeed(fid,s){ const t=tvFresh(); const f=TV_FRIENDS.find(function(x){return x.id===fid;}); if(!f||t.specials.indexOf(s)<0)return; let fr=t.friends.find(function(x){return x.id===fid;}); if(!fr){ fr={id:fid,count:0}; t.friends.push(fr); } fr.count++; const gain=15+Math.floor(Math.random()*20); let h='<p style="text-align:center;color:#3e5c3f">'+f.n+' 很开心，回礼 🍅 +'+gain+'</p>'; if(Math.random()<0.35&&f.rare&&t.cards.indexOf(f.rare)<0){ t.cards.push(f.rare); t.inbox.push(f.rare); h+='<p style="text-align:center">💌 还收到一封来信！<b>'+f.rare+'</b></p>'; } h+='<p style="text-align:center"><button class="btn" onclick="closeModal()">收下</button></p>'; openModal('🎁 回礼', h); tvTomato(gain); save(); }
+function tvFeed(fid,s){ const t=tvFresh(); const f=TV_FRIENDS.find(function(x){return x.id===fid;}); if(!f||t.specials.indexOf(s)<0)return; let fr=t.friends.find(function(x){return x.id===fid;}); if(!fr){ fr={id:fid,count:0}; t.friends.push(fr); } fr.count++; const gain=15+Math.floor(Math.random()*20); let h='<p style="text-align:center;color:#3e5c3f">'+f.n+' 很开心，回礼 🍅 +'+gain+'</p>'; if(Math.random()<0.35&&f.rare&&t.cards.indexOf(f.rare)<0){ t.cards.push(f.rare); t.inbox.push(f.rare); tvNoteCard(f.rare,t.frog.fatId); h+='<p style="text-align:center">💌 还收到一封来信！<b>'+f.rare+'</b></p>'; } h+='<p style="text-align:center"><button class="btn" onclick="closeModal()">收下</button></p>'; openModal('🎁 回礼', h); tvTomato(gain); save(); }
 function tvLabel(f){ return f.id==='cat'?'🐱':f.id==='bear'?'🐻':f.id==='owl'?'🦉':'🐌'; }
 function tvDestOf(bag){ bag=bag||tvFresh().bag; const ks=bag.map(function(x){return x&&x.k||x;}); const has=function(k){return ks.indexOf(k)>=0;}; if(has('charm')&&has('food3'))return TV_DESTS[3]; if(has('lamp'))return TV_DESTS[1]; if(has('bell'))return TV_DESTS[2]; return TV_DESTS[0]; }
 function tvGo(mood){ const t=tvFresh(); if(t.frog.status==='away'){ toast('✈️ 已有月巴在旅行中，等它回来再出发吧'); return; } if(!t.frog.fatId){ toast('🐤 先在图鉴里选择一位月巴出发'); return; } const kinds=tvDestKinds(t.bag); const food=t.bag.find(function(x){return x.k==='food1'||x.k==='food2'||x.k==='food3';}); if(!food){ toast('🍙 至少带上 1 个便当才能出发！'); return; } t.frog.status='away'; t.frog.depart=now(); t.inbox=[]; const base=TV_FOODS[food.k].dur; t.frog.ret=now()+Math.round(base*(0.75+Math.random()*0.7)); t.frog.mood=mood||'我想去看看'; t.bag=t.bag.filter(function(x){return !(x.k==='food1'||x.k==='food2'||x.k==='food3'||x.k==='lamp'||x.k==='bell');}); t.cardT=now()+rand(8,14)*60000; t.frog.cardsSent=0; t.frog.cardQuota=1+(Math.random()<0.5?1:0); t.eventT=0; save(); closeModal(); toast('✈️ 出发去旅行啦！'); tvRenderScene(); tvUpdateBar(); }
 function tvDepart(){ const e=$('tvMood'); tvGo(e?e.value.trim():''); }
 function tvDestKinds(bag){ return bag.map(function(x){return x.k;}); }
-function tvSettle(){ const t=tvFresh(); const kinds=tvDestKinds(t.bag); const d=tvDestOf(t.bag); let gain=1+(kinds.indexOf('charm')>=0?1:0); const got=[]; for(let i=0;i<gain;i++){ const s=d.specials[Math.floor(Math.random()*d.specials.length)]; if(t.specials.indexOf(s)<0){ t.specials.push(s); got.push(s); } } const dc=d.cards.filter(function(c){return t.cards.indexOf(c)<0;}); let newCard=null; if(dc.length && (t.frog.cardsSent||0)<(t.frog.cardQuota||1)){ newCard=dc[Math.floor(Math.random()*dc.length)]; t.cards.push(newCard); t.inbox.push(newCard); t.frog.cardsSent=(t.frog.cardsSent||0)+1; } t.destCount[d.id]=(t.destCount[d.id]||0)+1; if(kinds.indexOf('charm')>=0 && (t.wh.charm||0)>0) t.wh.charm--; t.frog={status:'home',depart:null,ret:null,mood:t.frog.mood||'',fatId:t.frog.fatId||null}; t.bag=[]; t.eventT=0; save(); let h='<p style="text-align:center;color:#48614a">月巴从<b>「'+d.n+'」</b>回来了！（第 '+t.destCount[d.id]+' 次旅行）</p>'; h+='<p style="text-align:center">🎁 带回特产：'+(got.length?got.join('、'):'这次带回了温暖的问候')+'</p>'; if(newCard)h+='<p style="text-align:center">💌 收到一封来自「'+d.n+'」的信！</p>'; h+='<p style="text-align:center"><button class="btn cta" onclick="closeModal()">收下</button></p>'; openModal('🎉 旅行归来',h); tvRenderScene(); tvUpdateBar(); }
+function tvSettle(){ const t=tvFresh(); const kinds=tvDestKinds(t.bag); const d=tvDestOf(t.bag); let gain=1+(kinds.indexOf('charm')>=0?1:0); const got=[]; for(let i=0;i<gain;i++){ const s=d.specials[Math.floor(Math.random()*d.specials.length)]; if(t.specials.indexOf(s)<0){ t.specials.push(s); got.push(s); } } const dc=d.cards.filter(function(c){return t.cards.indexOf(c)<0;}); let newCard=null; if(dc.length && (t.frog.cardsSent||0)<(t.frog.cardQuota||1)){ newCard=dc[Math.floor(Math.random()*dc.length)]; t.cards.push(newCard); t.inbox.push(newCard); tvNoteCard(newCard,t.frog.fatId); t.frog.cardsSent=(t.frog.cardsSent||0)+1; } t.destCount[d.id]=(t.destCount[d.id]||0)+1; if(kinds.indexOf('charm')>=0 && (t.wh.charm||0)>0) t.wh.charm--; t.frog={status:'home',depart:null,ret:null,mood:t.frog.mood||'',fatId:t.frog.fatId||null}; t.bag=[]; t.eventT=0; save(); let h='<p style="text-align:center;color:#48614a">月巴从<b>「'+d.n+'」</b>回来了！（第 '+t.destCount[d.id]+' 次旅行）</p>'; h+='<p style="text-align:center">🎁 带回特产：'+(got.length?got.join('、'):'这次带回了温暖的问候')+'</p>'; if(newCard)h+='<p style="text-align:center">💌 收到一封来自「'+d.n+'」的信！</p>'; h+='<p style="text-align:center"><button class="btn cta" onclick="closeModal()">收下</button></p>'; openModal('🎉 旅行归来',h); tvRenderScene(); tvUpdateBar(); }
 function tvShop(){ openModal('🛍 商店 · 用 🍅 购买', tvShopHTML()); }
 function tvShopHTML(){ const t=tvFresh(); let h='<p style="color:#48614a;font-size:13px">🍅 番茄余额：<b class="tv-tom">'+t.tomato+'</b></p><div class="sh-grid">'; const list=[['food1','🍙','饭团便当',50,'基础旅行时长'],['food2','🍱','时蔬便当',150,'中等时长·特产概率+'],['food3','🥡','豪华便当',400,'长时间·稀有明信片+'],['lamp','🏮','油灯',300,'解锁大海'],['charm','🍀','幸运护身符',500,'特产+1（耐久3）'],['bell','🔔','铃铛',200,'解锁小镇']]; for(const r of list){ h+='<div class="sh-card"><div class="sh-ic">'+r[1]+'</div><div class="sh-n">'+r[2]+'</div><div class="sh-d">'+r[4]+'</div><div class="sh-price">🍅 '+r[3]+'</div><button class="btn" onclick="tvBuy(\''+r[0]+'\')">购买</button></div>'; } h+='</div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'; return h; }
 function tvBuy(k){ const t=tvFresh(); const it=TV_FOODS[k]||TV_ITEMS[k]; if(!it)return; if(t.tomato<it.p){ toast('🍅 番茄不够'); return; } t.tomato-=it.p; t.wh[k]=(t.wh[k]||0)+1; save(); tvTomato(0); openModal('🛍 商店 · 用 🍅 购买', tvShopHTML()); }
