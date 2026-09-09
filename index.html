@@ -2298,12 +2298,15 @@ function syncAnimState(){
   if(pause){ fx.length=0; fxRaf=null; }
 }
 function pomoToggle(){
-  const name=inpVal('pomoName','专注');
+  // 默认沿用上一次的项目与时长（弹窗未打开/输入框缺失时也不回退到 专注/25分）
+  const lastDur=S.pomo.focusTotal||S.pomo.total||25*60000;
+  const lastMin=Math.round(lastDur/60000);
+  const name=inpVal('pomoName', S.pomo.name||'专注');
   if(S.pomo.running){ sfx.click(); pomoPause(false); }
   else if(S.pomo.remain>0){ S.pomo.name=name; sfx.click(); pomoResume(); }
   else {
-    // 专注时长来自滑杆（默认25分钟）
-    const min=(parseInt(inpVal('pomoCustom','25'),10)||25);
+    // 专注时长来自滑杆（默认沿用上一次时长）
+    const min=(parseInt(inpVal('pomoCustom', String(lastMin)),10)||lastMin);
     const dur=min*60000;
     S.pomo.focusTotal=dur;
     pomoStart(name, dur);
@@ -2555,9 +2558,9 @@ function updateTaskBadge(){
   b.textContent=n>99?'99+':String(n);
   b.style.display=n>0?'':'none';
 }
-/* 待办拆分：need>1 且填了单位时，把任务拆成 need 个子项逐项勾选；旧进度 done 映射为前几项已完成 */
+/* 待办拆分：数量 need>1 即自动拆成 need 个子项逐项勾选（单位仅作展示，可不填）；旧进度 done 映射为前几项已完成 */
 function taskSubs(t){
-  if(!t || !t.unit || !(t.need>1)) return null;
+  if(!t || !(t.need>1)) return null;
   const n=t.need, d=t.done||0;
   if(!Array.isArray(t.subs)) t.subs=[];
   for(let i=t.subs.length;i<n;i++) t.subs.push(i<d);
@@ -2594,7 +2597,7 @@ function taskRowHTML(t, stay){
   return `<div class="task-wrap">${row}<div class="task-subs">${subs.map(function(s,i){
     return `<div class="task-sub ${s?'on':''}" onclick="taskSubToggle('${t.id}',${i}${stay?',1':''})">
       <button class="task-chk small ${s?'on':''}">${s?'✓':''}</button>
-      <span>${esc(t.title)} · 第${i+1}${esc(unit)}</span>
+      <span>${esc(t.title)} · 第${i+1}${esc(unit||'项')}</span>
     </div>`;
   }).join('')}</div></div>`;
 }
@@ -2624,15 +2627,15 @@ function openTasks(){
           </select>
         </div>
         <div class="tf-row">
-          <input class="tf-num" id="tkNeed" type="number" min="0" max="99" placeholder="🍅预估" title="预估所需番茄数">
-          <input class="tf-unit" id="tkUnit" placeholder="单位(页/次/天)" title="数量填 >1 且填单位可自动拆分逐项勾选">
+          <input class="tf-num" id="tkNeed" type="number" min="0" max="99" placeholder="🍅预估" title="预估番茄数；填 >1 自动拆分成小项逐项勾选">
+          <input class="tf-unit" id="tkUnit" placeholder="单位(可空：页/次/天)" title="仅作展示，可不填；填 >1 自动按数量拆分">
           <input class="tf-tag" id="tkTag" placeholder="#标签">
         </div>
       </div>
       <div class="task-sec">📅 待办日历</div>
       <div class="taskcal-wrap" id="taskCalBox">${taskCalHTML()}</div>
       <div id="taskList"></div>
-      <div class="pomo-note">🍅 番茄钟弹窗里可<b>关联任务</b>；完成或停止（≥5分钟）会自动累加实际番茄数，达到预估即自动勾选完成。<br>✂️ 数量填 <b>&gt;1</b> 并输入<b>单位</b>（页/次/天…）即可自动拆分成小项逐项勾选。</div>
+      <div class="pomo-note">🍅 番茄钟弹窗里可<b>关联任务</b>；完成或停止（≥5分钟）会自动累加实际番茄数，达到预估即自动勾选完成。<br>✂️ 数量填 <b>&gt;1</b> 即可自动拆分成小项逐项勾选，<b>单位</b>（页/次/天…）可不填。</div>
     </div>`);
   renderTaskList();
 }
@@ -2689,8 +2692,8 @@ function taskEdit(id){
           </select>
         </div>
         <div class="tf-row">
-          <input class="tf-num" id="etNeed" type="number" min="0" max="99" value="${t.need||0}">
-          <input class="tf-unit" id="etUnit" value="${esc(t.unit||'')}" placeholder="单位(页/次/天)" title="数量填 >1 且填单位可自动拆分逐项勾选">
+          <input class="tf-num" id="etNeed" type="number" min="0" max="99" value="${t.need||0}" title="预估番茄数；填 >1 自动拆分成小项逐项勾选">
+          <input class="tf-unit" id="etUnit" value="${esc(t.unit||'')}" placeholder="单位(可空：页/次/天)" title="仅作展示，可不填；填 >1 自动按数量拆分">
           <input class="tf-tag" id="etTag" value="${esc(t.tag||'')}" placeholder="#标签">
         </div>
       </div>
@@ -2705,7 +2708,7 @@ function taskSaveEdit(id){
   t.title=title; t.cat=inpVal('etCat','💼 工作'); t.pri=inpVal('etPri','med');
   t.need=Math.max(0,parseInt(inpVal('etNeed',''),10)||0);
   t.unit=inpVal('etUnit','').trim();
-  if(t.unit && t.need>1) taskSubs(t); else if(t.subs) delete t.subs;
+  if(t.need>1) taskSubs(t); else if(t.subs) delete t.subs;
   t.tag=inpVal('etTag','');
   t.due=tkSelDay||t.due;
   sfx.unlock(); save(); updateTaskBadge(); openTasks();
@@ -2730,7 +2733,7 @@ function taskSubToggle(id,i,stay){
     else{ sfx.unlock(); toast(`✅ 已勾选 ${t.done}/${t.need}${unit}：「${t.title}」`); }
   }else{
     if(t.doneAt) t.doneAt=0;
-    sfx.click(); toast(`↩️ 已取消第${i+1}${unit}：「${t.title}」`);
+    sfx.click(); toast(`↩️ 已取消第${i+1}${unit||'项'}：「${t.title}」`);
   }
   save(); updateTaskBadge();
   if(stay && $('stCalBox')) renderStatCal();
