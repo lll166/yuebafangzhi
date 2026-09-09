@@ -238,6 +238,9 @@
   #travel .tv-nav{display:flex;gap:6px;justify-content:center;padding:8px;background:rgba(255,255,255,.7);}
   #travel .tv-btn{border:1px solid #8fae8a;background:#fff;color:#48614a;border-radius:10px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;}
   #travel .tv-btn:hover{background:#eef7ec;border-color:#68906b;}
+  #travel #tvHarvestBtn{background:linear-gradient(180deg,#fff3c4,#ffdc82);border-color:#e3b31e;color:#8a6d00;box-shadow:0 0 8px rgba(255,200,0,.55);animation:tvGold 1.6s ease-in-out infinite;}
+  #travel #tvHarvestBtn:hover{background:linear-gradient(180deg,#ffe9a3,#ffc95e);border-color:#d4a800;box-shadow:0 0 14px rgba(255,200,0,.85);}
+  @keyframes tvGold{0%,100%{box-shadow:0 0 5px rgba(255,200,0,.45);}50%{box-shadow:0 0 18px rgba(255,190,0,.95),0 0 32px rgba(255,214,90,.4);}}
   #travel .tv-mail{position:absolute;right:12px;bottom:64px;font-size:24px;background:#fff;border:2px solid #c78b4a;border-radius:50%;width:46px;height:46px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;}
   #travel .tv-mail span{position:absolute;top:-2px;right:-2px;width:13px;height:13px;border-radius:50%;background:#e53935;border:2px solid #fff;}
   .tvyard{position:absolute;inset:0;overflow:hidden;}
@@ -3494,7 +3497,7 @@ function tvTomato(d){ const t=tvFresh(); t.tomato=Math.max(0,(t.tomato||0)+d); c
 function updateTravelIcon(){ const el=$('btnTravel'); if(!el)return; const ready=!!S.travel&&tvSlotReady(); if(el.classList)el.classList.toggle('hasbadge',ready); el.innerHTML=(dex2Unlocked()?'<b>🧳</b><small>旅行</small>':'<b>❓</b><small>旅行</small>')+(ready?'<span class="dock-badge">🎰</span>':''); }
 function travelEntry(){ if(!dex2Unlocked()){ toast('🔒 收集齐全第一图鉴所有月巴后可解锁旅行！'); return; } openTravel(); }
 let tvView='yard';
-function openTravel(){ if(!dex2Unlocked())return; tvFresh(); travelSettleIf(); updateTravelIcon(); tvRenderAll(); $('travel').style.display='flex'; if(tvSlotReady()&&!slotShown)tvSlotOpen(); tvUpdateHarvest(); }
+function openTravel(){ if(!dex2Unlocked())return; tvFresh(); travelSettleIf(); updateTravelIcon(); tvRenderAll(); $('travel').style.display='flex'; tvUpdateHarvest(); }
 function closeTravel(){ $('travel').style.display='none'; }
 function tvRenderAll(){ tvRenderScene(); tvUpdateBar(); }
 function tvUpdateBar(){ const t=tvFresh(); const e=$('tvTomato'); if(e)e.textContent=t.tomato; const s=$('tvState'); if(s)s.textContent=t.frog.status==='away'?'旅途中':(t.frog.status==='pack'?'准备行囊':'在家'); }
@@ -3665,9 +3668,8 @@ function tvRenderScene(){ const sc=$('tvScene'); if(!sc)return; const t=tvFresh(
 const TV_SLOTS=['🍅','🌶️','🍑','🍒','🍓','🥫','🌻','⭐'];
 const TV_BG_YARD='https://picsum.photos/id/1018/640/400';
 const TV_BG_HOME='https://picsum.photos/id/1067/640/400';
-let slotShown=false;
 function tvSlotReady(){ const t=tvFresh(); return now()>=(t.harvestT); }
-function tvSlotOpen(){ if(!tvSlotReady()){ toast('🧺 月巴们还在攒番茄，稍后再来'); return; } slotShown=true; openModal('🎰 好运收获', tvSlotHTML()); }
+function tvSlotOpen(){ if(!tvSlotReady()){ toast('🧺 月巴们还在攒番茄，稍后再来'); return; } openModal('🎰 好运收获', tvSlotHTML()); }
 function tvSlotHTML(){ let h='<p style="text-align:center;color:#48614a;font-size:13px">月巴们为你攒好了惊喜，拉杆收获 🍅！</p><div class="tvg-slot"><div class="tvg-reels">'; for(let i=0;i<3;i++)h+='<div class="tvg-reel" id="tvReel'+i+'">🍅</div>'; h+='</div></div><p id="tvSlotResult" style="text-align:center;min-height:20px;color:#e08a3c;font-weight:700"></p><div style="text-align:center;margin-top:6px"><button class="btn cta" id="tvSpinBtn" onclick="tvSpin()">🕹 拉杆！</button></div><p style="text-align:center;margin-top:4px"><button class="btn" onclick="closeModal()">收下离开</button></p>'; return h; }
 function tvSpin(){ if(!tvSlotReady())return; const btn=$('tvSpinBtn'); if(btn)btn.disabled=true; const r=$('tvSlotResult'); if(r)r.textContent=''; const cols=[0,1,2].map(function(){return TV_SLOTS[(Math.random()*TV_SLOTS.length)|0];}); const els=[0,1,2].map(function(i){return $('tvReel'+i);}); const pool=TV_SLOTS;
   // 构建转轮条：一次性写DOM，之后仅靠 transform 滑动，避免逐帧改文字导致的掉帧卡顿
@@ -3675,11 +3677,11 @@ function tvSpin(){ if(!tvSlotReady())return; const btn=$('tvSpinBtn'); if(btn)bt
   const ICON=62, MAX=pool.length*2*ICON, stops=[900,1500,2100], dur=2200, t0=performance.now();
   const step=function(t){ const p=Math.min(1,(t-t0)/dur); for(let i=0;i<3;i++){ const e=els[i]; if(!e)continue; const sp=e.firstChild; if(!sp||!sp.style)continue; const pt=Math.min(1,p*dur/stops[i]); sp.style.transform='translateY('+(-pt*MAX).toFixed(1)+'px)'; if(pt>=1&&!e.classList.contains('land'))e.classList.add('land'); } if(p<1)requestAnimationFrame(step); else { tvSlotResult(cols); if(btn)btn.disabled=false; } };
   requestAnimationFrame(step); }
-function tvSlotResult(cols){ const t=tvFresh(); const s0=cols[0],s1=cols[1],s2=cols[2]; let gain; if(s0===s1&&s1===s2)gain=8+(Math.random()*3|0); else if(s0===s1||s1===s2||s0===s2)gain=4+(Math.random()*4|0); else gain=1+(Math.random()*3|0); t.tomato+=gain; t.harvestT=now()+rand(10,30)*60000; slotShown=false; save(); const r=$('tvSlotResult'); if(r)r.innerHTML=(s0===s1&&s1===s2)?('🎉🎉 JACKPOT！收获 '+gain+' 🍅'):('🎉 收获 '+gain+' 个 🍅'); burst(innerWidth/2,innerHeight/2,['#ff6b6b','#ff9f43','#ffd93d'],12,40); updateTravelIcon(); }
+function tvSlotResult(cols){ const t=tvFresh(); const s0=cols[0],s1=cols[1],s2=cols[2]; let gain; if(s0===s1&&s1===s2)gain=8+(Math.random()*3|0); else if(s0===s1||s1===s2||s0===s2)gain=4+(Math.random()*4|0); else gain=1+(Math.random()*3|0); t.tomato+=gain; t.harvestT=now()+rand(10,30)*60000; save(); const r=$('tvSlotResult'); if(r)r.innerHTML=(s0===s1&&s1===s2)?('🎉🎉 JACKPOT！收获 '+gain+' 🍅'):('🎉 收获 '+gain+' 个 🍅'); updateTravelIcon(); }
 function tvUpdateHarvest(){ const b=$('tvHarvestBtn'); if(!b)return; b.style.display=tvSlotReady()?'':'none'; }
 function tvDestOf(bag){ bag=bag||tvFresh().bag; const has=function(k){return bag.indexOf(k)>=0;}; if(has('charm')&&has('food3'))return TV_DESTS[3]; if(has('lamp'))return TV_DESTS[1]; if(has('bell'))return TV_DESTS[2]; return TV_DESTS[0]; }
 function travelSettleIf(){ const t=tvFresh(); if(t.frog.status==='away' && t.frog.ret && now()>=t.frog.ret) tvSettle(); }
-function travelTick(){ if(!S.travel||!S.travel.frog)return; const t=S.travel; travelSettleIf(); if(t.frog.status==='away'&&now()>=(t.cardT||0)){ t.cardT=now()+rand(10,20)*60000; tvSendCardIf(); } const vis=$('travel'); if(vis&&vis.style.display==='flex'){ if(tvEventRoll())tvRenderScene(); tvFriendPop(); if(tvSlotReady()&&!slotShown)tvSlotOpen(); tvUpdateHarvest(); tvUpdateBar(); } updateTravelIcon(); }
+function travelTick(){ if(!S.travel||!S.travel.frog)return; const t=S.travel; travelSettleIf(); if(t.frog.status==='away'&&now()>=(t.cardT||0)){ t.cardT=now()+rand(10,20)*60000; tvSendCardIf(); } const vis=$('travel'); if(vis&&vis.style.display==='flex'){ if(tvEventRoll())tvRenderScene(); tvFriendPop(); tvUpdateHarvest(); tvUpdateBar(); } updateTravelIcon(); }
 function tvSendCardIf(){ const t=tvFresh(); if(t.frog.status!=='away')return; if((t.frog.cardsSent||0)>=(t.frog.cardQuota||1))return; const d=tvDestOf(t.bag); const got=d.cards.filter(function(c){return t.cards.indexOf(c)<0;}); if(got.length){ const c=got[Math.floor(Math.random()*got.length)]; t.cards.push(c); t.inbox.push(c); t.frog.cardsSent=(t.frog.cardsSent||0)+1; tvUpdateBar(); } save(); }
 function tvUpdateBar(){ const t=tvFresh(); const e=$('tvTomato'); if(e)e.textContent=t.tomato; const s=$('tvState'); if(s)s.textContent=t.frog.status==='away'?'旅途中':(t.frog.status==='pack'?'准备行囊':'在家'); const d=$('tvMailDot'); if(d)d.style.display=(t.inbox.length>0)?'block':'none'; }
 function tvOpenBook(){ openModal('🏷 旅行图鉴', tvBookHTML()); }
