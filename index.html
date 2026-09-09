@@ -515,10 +515,11 @@
   .task-form select{border:1px solid var(--line);border-radius:10px;padding:8px 8px;font-size:12px;font-weight:700;
     color:var(--purple2);background:#fff;outline:none;cursor:pointer;}
   .task-form select:focus{border-color:var(--purple);}
-  .task-form .tf-num,.task-form .tf-tag{border:1px solid var(--line);border-radius:10px;padding:8px 8px;
+  .task-form .tf-num,.task-form .tf-tag,.task-form .tf-unit{border:1px solid var(--line);border-radius:10px;padding:8px 8px;
     font-size:12px;font-weight:700;color:var(--purple2);background:#fff;outline:none;width:64px;}
   .task-form .tf-tag{width:92px;}
-  .task-form .tf-num:focus,.task-form .tf-tag:focus{border-color:var(--purple);}
+  .task-form .tf-unit{width:88px;}
+  .task-form .tf-num:focus,.task-form .tf-tag:focus,.task-form .tf-unit:focus{border-color:var(--purple);}
   .task-form .tf-add{flex-shrink:0;}
   .task-sec{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:800;color:var(--dim);
     letter-spacing:1px;margin:13px 0 4px;}
@@ -543,6 +544,13 @@
   .task-pomos{font-size:11px;font-weight:800;color:#e57373;background:rgba(229,115,115,.1);
     border-radius:999px;padding:2px 8px;}
   .task-pomos.full{color:#43a047;background:rgba(102,187,106,.12);}
+  .task-wrap{display:flex;flex-direction:column;margin-bottom:8px;}
+  .task-subs{display:flex;flex-direction:column;gap:6px;margin:0 10px 0 34px;}
+  .task-sub{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:10px;background:rgba(240,240,245,.6);
+    font-size:12px;font-weight:700;color:var(--text);cursor:pointer;user-select:none;word-break:break-word;}
+  .task-sub.on{background:rgba(102,187,106,.16);color:#2e7d32;}
+  .task-sub.on span{text-decoration:line-through;}
+  .task-chk.small{width:18px;height:18px;border-radius:6px;font-size:12px;line-height:14px;}
   .task-ops{flex:0 0 auto;display:flex;gap:4px;}
   .task-ops button{border:none;background:rgba(149,117,205,.12);color:var(--purple2);border-radius:8px;
     padding:5px 8px;font-size:12px;cursor:pointer;line-height:1;}
@@ -943,7 +951,7 @@ const TYPES2=[
   {id:'m2_shanhu', name:'珊瑚月巴',  r:4, v:64, t:620, cond:{t:'zone',z:2},  color:'#f06292', shape:'spike'},
   {id:'m2_baoshi', name:'宝石月巴',  r:4, v:80, t:720, cond:{t:'harvest',n:1500}, color:'#4dd0e1', shape:'cube'},
   {id:'m2_long',   name:'龙月巴',    r:4, v:120,t:900, cond:{t:'harvest',n:3000}, color:'#d15852', shape:'big'},
-  {id:'m2_fenghuang',name:'凤凰月巴',r:5, v:200, t:1500, cond:{t:'count',id:'mb_chaos',n:1}, color:'#ff7043', shape:'rainbow'},
+  {id:'m2_fenghuang',name:'凤凰月巴',r:5, v:200, t:1500, cond:{t:'count',id:'mb_chaos',n:10}, color:'#ff7043', shape:'rainbow'},
   {id:'m2_jiguang',name:'极光月巴',  r:5, v:180, t:1200, cond:{t:'weather',w:'snow',night:1}, color:'#7e57c2', shape:'rainbow'},
   {id:'m2_xiangrui',name:'祥瑞月巴',  r:6, v:2000, t:3600, cond:null, weight:0.01, color:'#e6c44c', shape:'big'},
 ];
@@ -2524,7 +2532,13 @@ function taskOnPomo(){
     t=(S.tasks||[]).find(x=>!x.doneAt && (x.title||'').trim().toLowerCase()===nm);
   }
   if(!t)return;
-  t.done=(t.done||0)+1;
+  const subs=taskSubs(t);
+  if(subs){
+    const i=subs.indexOf(false);
+    if(i>=0){ subs[i]=true; t.done=subs.filter(Boolean).length; }
+  }else{
+    t.done=(t.done||0)+1;
+  }
   if(t.need>0 && t.done>=t.need && !t.doneAt){
     t.doneAt=now(); sfx.unlock();
     toast(`✅ 任务完成：「${t.title}」`);
@@ -2538,12 +2552,26 @@ function updateTaskBadge(){
   b.textContent=n>99?'99+':String(n);
   b.style.display=n>0?'':'none';
 }
+/* 待办拆分：need>1 且填了单位时，把任务拆成 need 个子项逐项勾选；旧进度 done 映射为前几项已完成 */
+function taskSubs(t){
+  if(!t || !t.unit || !(t.need>1)) return null;
+  const n=t.need, d=t.done||0;
+  if(!Array.isArray(t.subs)) t.subs=[];
+  for(let i=t.subs.length;i<n;i++) t.subs.push(i<d);
+  if(t.subs.length>n) t.subs.length=n;
+  t.done=t.subs.filter(Boolean).length;
+  return t.subs;
+}
 function taskRowHTML(t, stay){
   const cat=(t.cat||'🎯 个人').split(' ')[1]||t.cat||'其他';
   const priTxt={high:'🔴 高',med:'🟡 中',low:'🟢 低'}[t.pri]||'🟡 中';
   const priCls={high:'pri-hi',med:'pri-mid',low:'pri-lo'}[t.pri]||'pri-mid';
-  const need=t.need||0, done=t.done||0;
-  return `<div class="task-row ${t.doneAt?'done':''}">
+  const need=t.need||0, done=t.done||0, unit=t.unit||'';
+  const subs=taskSubs(t);
+  const chip=subs
+    ? `<span class="task-pomos ${need>0&&done>=need?'full':''}">✅ ${done}/${need}${esc(unit)}</span>`
+    : `<span class="task-pomos ${need>0&&done>=need?'full':''}">🍅 ${done}/${need||'∞'}</span>`;
+  const row=`<div class="task-row ${t.doneAt?'done':''}">
     <button class="task-chk ${t.doneAt?'on':''}" onclick="taskToggle('${t.id}'${stay?',1':''})">${t.doneAt?'✓':''}</button>
     <div class="task-main">
       <div class="task-title">${esc(t.title)}</div>
@@ -2551,7 +2579,7 @@ function taskRowHTML(t, stay){
         <span class="task-chip cat">${esc(cat)}</span>
         <span class="task-chip ${priCls}">${priTxt}</span>
         ${t.tag?`<span class="task-chip tag">#${esc(t.tag)}</span>`:''}
-        <span class="task-pomos ${need>0&&done>=need?'full':''}">🍅 ${done}/${need||'∞'}</span>
+        ${chip}
       </div>
     </div>
     <div class="task-ops">
@@ -2559,6 +2587,13 @@ function taskRowHTML(t, stay){
       <button class="del" onclick="taskDel('${t.id}')" title="删除">🗑</button>
     </div>
   </div>`;
+  if(!subs) return row;
+  return `<div class="task-wrap">${row}<div class="task-subs">${subs.map(function(s,i){
+    return `<div class="task-sub ${s?'on':''}" onclick="taskSubToggle('${t.id}',${i}${stay?',1':''})">
+      <button class="task-chk small ${s?'on':''}">${s?'✓':''}</button>
+      <span>${esc(t.title)} · 第${i+1}${esc(unit)}</span>
+    </div>`;
+  }).join('')}</div></div>`;
 }
 function taskGroupHTML(title,list){
   const html=list.map(taskRowHTML).join('')||'<div class="task-none">暂无任务</div>';
@@ -2587,13 +2622,14 @@ function openTasks(){
         </div>
         <div class="tf-row">
           <input class="tf-num" id="tkNeed" type="number" min="0" max="99" placeholder="🍅预估" title="预估所需番茄数">
+          <input class="tf-unit" id="tkUnit" placeholder="单位(页/次/天)" title="数量填 >1 且填单位可自动拆分逐项勾选">
           <input class="tf-tag" id="tkTag" placeholder="#标签">
         </div>
       </div>
       <div class="task-sec">📅 待办日历</div>
       <div class="taskcal-wrap" id="taskCalBox">${taskCalHTML()}</div>
       <div id="taskList"></div>
-      <div class="pomo-note">🍅 番茄钟弹窗里可<b>关联任务</b>；完成或停止（≥5分钟）会自动累加实际番茄数，达到预估即自动勾选完成。</div>
+      <div class="pomo-note">🍅 番茄钟弹窗里可<b>关联任务</b>；完成或停止（≥5分钟）会自动累加实际番茄数，达到预估即自动勾选完成。<br>✂️ 数量填 <b>&gt;1</b> 并输入<b>单位</b>（页/次/天…）即可自动拆分成小项逐项勾选。</div>
     </div>`);
   renderTaskList();
 }
@@ -2613,10 +2649,12 @@ function taskAdd(){
   const cat=inpVal('tkCat','💼 工作');
   const pri=inpVal('tkPri','med');
   const need=Math.max(0,parseInt(inpVal('tkNeed',''),10)||0);
+  const unit=inpVal('tkUnit','').trim();
   const tag=inpVal('tkTag','');
   const due=tkSelDay||dayKey(now());
   (S.tasks||(S.tasks=[])).push({id:'t'+now()+Math.floor(Math.random()*1e3), title, cat, tag, pri,
-    need, done:0, doneAt:0, due, created:now()});
+    need, done:0, doneAt:0, due, created:now(), unit});
+  taskSubs(S.tasks[S.tasks.length-1]);
   sfx.unlock(); save(); updateTaskBadge();
   const inp=$('tkTitle'); if(inp) inp.value='';
   const box=$('taskCalBox'); if(box) box.innerHTML=taskCalHTML();
@@ -2649,6 +2687,7 @@ function taskEdit(id){
         </div>
         <div class="tf-row">
           <input class="tf-num" id="etNeed" type="number" min="0" max="99" value="${t.need||0}">
+          <input class="tf-unit" id="etUnit" value="${esc(t.unit||'')}" placeholder="单位(页/次/天)" title="数量填 >1 且填单位可自动拆分逐项勾选">
           <input class="tf-tag" id="etTag" value="${esc(t.tag||'')}" placeholder="#标签">
         </div>
       </div>
@@ -2662,6 +2701,8 @@ function taskSaveEdit(id){
   if(!title){ sfx.error(); toast('请输入任务标题'); return; }
   t.title=title; t.cat=inpVal('etCat','💼 工作'); t.pri=inpVal('etPri','med');
   t.need=Math.max(0,parseInt(inpVal('etNeed',''),10)||0);
+  t.unit=inpVal('etUnit','').trim();
+  if(t.unit && t.need>1) taskSubs(t); else if(t.subs) delete t.subs;
   t.tag=inpVal('etTag','');
   t.due=tkSelDay||t.due;
   sfx.unlock(); save(); updateTaskBadge(); openTasks();
@@ -2671,6 +2712,23 @@ function taskToggle(id, stay){
   const t=taskById(id); if(!t)return;
   if(t.doneAt){ t.doneAt=0; sfx.click(); toast(`↩️ 已恢复：「${t.title}」`); }
   else{ t.doneAt=now(); sfx.unlock(); toast(`✅ 任务完成：「${t.title}」`); }
+  save(); updateTaskBadge();
+  if(stay && $('stCalBox')) renderStatCal();
+  else openTasks();
+}
+function taskSubToggle(id,i,stay){
+  const t=taskById(id); if(!t)return;
+  const subs=taskSubs(t); if(!subs || i<0 || i>=subs.length) return;
+  subs[i]=!subs[i];
+  t.done=subs.filter(Boolean).length;
+  const all=subs.every(Boolean), unit=t.unit||'';
+  if(subs[i]){
+    if(all && !t.doneAt){ t.doneAt=now(); sfx.unlock(); toast(`✅ 任务完成：「${t.title}」`); }
+    else{ sfx.unlock(); toast(`✅ 已勾选 ${t.done}/${t.need}${unit}：「${t.title}」`); }
+  }else{
+    if(t.doneAt) t.doneAt=0;
+    sfx.click(); toast(`↩️ 已取消第${i+1}${unit}：「${t.title}」`);
+  }
   save(); updateTaskBadge();
   if(stay && $('stCalBox')) renderStatCal();
   else openTasks();
