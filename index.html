@@ -2530,7 +2530,7 @@ function taskCalPick(key){
   renderTaskList();
   sfx.click();
 }
-/* 番茄钟完成/停止(≥5分)时：给关联任务累计实际番茄数，达到预估自动完成 */
+/* 番茄钟完成/停止(≥5分)时：给关联任务累计实际番茄数，达到预估自动完成（拆分任务的子项由玩家手动勾选，番茄钟不自动勾选） */
 function taskOnPomo(){
   let t=taskById(S.pomo.taskId);
   if(!(t && !t.doneAt)){
@@ -2539,10 +2539,8 @@ function taskOnPomo(){
   }
   if(!t)return;
   const subs=taskSubs(t);
-  if(subs){
-    const i=subs.indexOf(false);
-    if(i>=0){ subs[i]=true; t.done=subs.filter(Boolean).length; }
-  }else{
+  if(!subs){
+    // 未拆分任务：番茄钟累计进度；拆分任务的子项需手动勾选，番茄钟结束不自动累计
     t.done=(t.done||0)+1;
   }
   if(t.need>0 && t.done>=t.need && !t.doneAt){
