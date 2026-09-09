@@ -26,8 +26,8 @@
   /* 磨砂玻璃通用 */
   .frost{
     background:rgba(255,255,255,.55);
-    backdrop-filter:blur(16px) saturate(160%);
-    -webkit-backdrop-filter:blur(16px) saturate(160%);
+    backdrop-filter:blur(8px) saturate(160%);
+    -webkit-backdrop-filter:blur(8px) saturate(160%);
     border:1px solid rgba(255,255,255,.65);
     box-shadow:0 10px 32px rgba(100,80,160,.14);
   }
@@ -210,7 +210,7 @@
   #fdOverlay .fd-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-weight:800;color:var(--purple2);font-size:15px;}
 
   /* 图鉴 */
-  .book{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;}
+  .book{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;content-visibility:auto;contain-intrinsic-size:176px;}
   .booktabs{display:flex;gap:6px;margin-bottom:10px;}
   .btab{flex:1;padding:7px 0;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.6);color:var(--dim);font-weight:800;font-size:12px;cursor:pointer;}
   .btab.on{background:var(--purple2);color:#fff;border-color:var(--purple2);}
@@ -234,7 +234,7 @@
   #travel .tv-cur{font-size:15px;}
   #travel .tv-tom{color:#d0342c;}
   #travel .tv-st{margin-left:auto;font-size:12px;color:#6b8f52;}
-  #travel .tv-scene{flex:1;position:relative;overflow:hidden;}
+  #travel .tv-scene{flex:1;position:relative;overflow:hidden;transition:background 1.2s ease;}
   #travel .tv-nav{display:flex;gap:6px;justify-content:center;padding:8px;background:rgba(255,255,255,.7);}
   #travel .tv-btn{border:1px solid #8fae8a;background:#fff;color:#48614a;border-radius:10px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;}
   #travel .tv-btn:hover{background:#eef7ec;border-color:#68906b;}
@@ -265,8 +265,7 @@
   .tvg-strip>div{height:62px;display:flex;align-items:center;justify-content:center;font-size:34px;}
   .tvg-reel.land{animation:tvsb .4s cubic-bezier(.2,1.6,.4,1);}
   @keyframes tvsb{0%{transform:scale(1.25)}100%{transform:scale(1)}}
-  .tvg-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(16px) brightness(.9) saturate(.85);transform:scale(1.07);}
-  .tvhome{position:absolute;inset:0;background:linear-gradient(180deg,#faefd2,#ecd5a0);overflow:hidden;}
+  .tvhome{position:absolute;inset:0;overflow:hidden;}
   .tvh-empty{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);font-size:18px;color:#7a6a4a;white-space:nowrap;}
   .tv-yf{position:absolute;width:64px;height:64px;animation:tvbob 2.4s ease-in-out infinite;}
   @keyframes tvbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
@@ -1328,7 +1327,7 @@ function shapeBody(sh,c,dk,lt){
 }
 function fatSVG(type){
   if(type.img){ // 外链 PNG（玩家不可见，仅代码内配置），未配置则走默认 SVG
-    return `<img class="fat ybimg" src="${type.img}" alt="">`;
+    return `<img class="fat ybimg" src="${type.img}" alt="" decoding="async">`;
   }
   const h=hashStr(type.id), c=type.color, dk=shade(c,-26);
   const body=shapeBody(type.shape||'round',c,dk,shade(c,26));
@@ -1481,15 +1480,23 @@ function unlockBanner(type,cell){
 
 /* ---------------- DOM 渲染：总览场地卡片 ---------------- */
 const cellEls={}; // key `${z}-${w}-${i}` -> 场景中月巴元素
+// 场地卡片背景懒加载：先渲染渐变占位，卡片进入视口附近才加载真实照片；锁定场地永不加载照片
+const ZBG_PH=[
+  ['#a9cf9e','#e3f0da'],['#9fb8d6','#dde8f5'],['#c7e3a8','#eef7dd'],['#b8cfe8','#e6eefb'],
+  ['#8fbf8f','#dcefdc'],['#b6d3ee','#e8f1fb'],['#e0a98e','#f7e0d2'],['#c3b8ec','#efeafb']
+];
+function swapZbg(el){ const u=el&&el.getAttribute?el.getAttribute('data-src'):null; if(u){ el.style.backgroundImage="url('"+u+"')"; el.removeAttribute('data-src'); } }
+const zbgObs=typeof IntersectionObserver!=='undefined'?new IntersectionObserver(function(es){ for(const e of es){ if(e.isIntersecting){ swapZbg(e.target); zbgObs.unobserve(e.target); } } },{rootMargin:'400px'}):null;
+function observeZbg(root){ if(!root)return; const els=root.querySelectorAll('.zbg[data-src]'); for(let i=0;i<els.length;i++){ if(zbgObs)zbgObs.observe(els[i]); else swapZbg(els[i]); } }
 function renderOverview(){
   const board=$('board'); let html='';
   for(let z=0;z<S.zones.length;z++){
     const zone=S.zones[z], zd=ZONES[z];
     let woodCnt=0, slotCnt=0;
     for(const w of zone.woods){ woodCnt++; slotCnt+=w.cells.length; }
-    const bgUrl=zd.bg;
+    const bgUrl=zd.bg, ph=ZBG_PH[z%ZBG_PH.length];
     html+=`<div class="zcard ${zone.bought?'':'locked'}" onclick="onZoneCard(${z})">
-      <div class="zbg" style="background-image:url('${bgUrl}')"></div>
+      <div class="zbg"${zone.bought?(' data-src="'+bgUrl+'"'):''} style="background-image:linear-gradient(140deg,${ph[0]},${ph[1]})"></div>
       <div class="zover"></div>
       ${zone.bought?'':'<div class="lock">🔒</div>'}
       <div class="zinfo frost">
@@ -1502,6 +1509,8 @@ function renderOverview(){
     </div>`;
   }
   board.innerHTML=html;
+  observeZbg(board);
+  return html;
 }
 function onZoneCard(z){
   const zone=S.zones[z];
@@ -3492,6 +3501,7 @@ function tvFresh(){
   if(t.tomato==null)t.tomato=300;
   if(t.harvestT==null)t.harvestT=now()+rand(10,30)*60000;
   if(t.eventT==null)t.eventT=now()+rand(10,30)*60000;
+  if(t.bgIdx==null)t.bgIdx=(Math.random()*TV_BGS.length)|0;
   return t;
 }
 function tvTomato(d){ const t=tvFresh(); t.tomato=Math.max(0,(t.tomato||0)+d); const e=$('tvTomato'); if(e)e.textContent=t.tomato; save(); }
@@ -3619,11 +3629,13 @@ function tvEventRoll(){
   const o=po.length?po[(Math.random()*po.length)|0]:null;
   t.homeId=o?o.id:null;
   t.homeTxt=o?tvHomeDescs(o.id)[(Math.random()*3)|0]:'';
+  // 背景配色与事件同频切换：每次事件重掷时换一个不同的渐变
+  t.bgIdx=((t.bgIdx==null?0:t.bgIdx)+1+(Math.random()*(TV_BGS.length-1)|0))%TV_BGS.length;
   save();
   return true;
 }
 function tvYardHTML(t){
-  let h='<div class="tvyard"><img class="tvg-photo" src="'+TV_BG_YARD+'" alt="">';
+  let h='<div class="tvyard">';
   const exclude=t.frog.status==='away'?t.frog.fatId:null;
   const shown=(t.yardEv||[]).filter(function(o){return o.id!==exclude;});
   shown.forEach(function(o){
@@ -3646,7 +3658,7 @@ function tvHomeDescs(id){
   return out;
 }
 function tvHomeHTML(t){
-  let h='<div class="tvhome"><img class="tvg-photo" src="'+TV_BG_HOME+'" alt="">';
+  let h='<div class="tvhome">';
   if(t.frog.status==='away'){
     h+='<div class="tv-note">✈️ 月巴去「'+tvDestOf(t.bag).n+'」旅行啦，留话：'+(t.frog.mood||'')+'</div>';
   }else if(t.frog.status==='pack'){
@@ -3665,10 +3677,15 @@ function tvHomeHTML(t){
 }
 function tvOwnedFats(){ const out=[]; const add=function(coll){ for(const id in coll){ const c=coll[id]; if(c&&c.count>0){ const tp=typeById(id); if(tp)out.push({id:id,t:tp}); } } }; add(S.collection); if(dex2Unlocked())add(S.collection2||{}); out.sort(function(a,b){ return (a.t.r||0)-(b.t.r||0) || (a.t.name<b.t.name?-1:a.t.name>b.t.name?1:0); }); return out; }
 function tvPickFat(id){ const t=tvFresh(); t.frog.fatId=id||null; save(); tvBag(); }
-function tvRenderScene(){ const sc=$('tvScene'); if(!sc)return; const t=tvFresh(); tvEventRoll(); sc.innerHTML=tvView==='yard'?tvYardHTML(t):tvHomeHTML(t); }
+function tvRenderScene(){ const sc=$('tvScene'); if(!sc)return; const t=tvFresh(); tvEventRoll(); sc.style.background=tvBgOf(t); sc.innerHTML=tvView==='yard'?tvYardHTML(t):tvHomeHTML(t); }
 const TV_SLOTS=['🍅','🌶️','🍑','🍒','🍓','🥫','🌻','⭐'];
-const TV_BG_YARD='https://picsum.photos/id/1018/640/400';
-const TV_BG_HOME='https://picsum.photos/id/1067/640/400';
+// 旅行背景：本地随机渐变配色（不使用外链图片），随事件同频切换
+const TV_BGS=[
+  ['#b8dcf0','#eef7fd'],['#f7d9a8','#fdf3e3'],['#d6c3f2','#f5eefa'],
+  ['#f5c9cd','#fdeef0'],['#bfe3cf','#edf9f1'],['#f8cf9c','#fdf1e1'],
+  ['#c6d6f2','#eef3fc'],['#e3c9a9','#f9f0e4']
+];
+function tvBgOf(t){ const p=TV_BGS[((t&&t.bgIdx)||0)%TV_BGS.length]; return 'linear-gradient(180deg,'+p[0]+','+p[1]+')'; }
 function tvSlotReady(){ const t=tvFresh(); return now()>=(t.harvestT); }
 function tvSlotOpen(){ if(!tvSlotReady()){ toast('🧺 月巴们还在攒番茄，稍后再来'); return; } openModal('🎰 好运收获', tvSlotHTML()); }
 function tvSlotHTML(){ let h='<p style="text-align:center;color:#48614a;font-size:13px">月巴们为你攒好了惊喜，拉杆收获 🍅！</p><div class="tvg-slot"><div class="tvg-reels">'; for(let i=0;i<3;i++)h+='<div class="tvg-reel" id="tvReel'+i+'">🍅</div>'; h+='</div></div><p id="tvSlotResult" style="text-align:center;min-height:20px;color:#e08a3c;font-weight:700"></p><div style="text-align:center;margin-top:6px"><button class="btn cta" id="tvSpinBtn" onclick="tvSpin()">🕹 拉杆！</button></div><p style="text-align:center;margin-top:4px"><button class="btn" onclick="closeModal()">收下离开</button></p>'; return h; }
