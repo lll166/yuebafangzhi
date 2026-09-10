@@ -2614,10 +2614,6 @@ function taskRowHTML(t, stay){
     </div>`;
   }).join('')}</div></div>`;
 }
-function taskGroupHTML(title,list){
-  const html=list.map(taskRowHTML).join('')||'<div class="task-none">暂无任务</div>';
-  return `<div class="task-sec">${title}</div>${html}`;
-}
 function openTasks(){
   pomoModalOpen=false;
   if(!tkSelDay) tkSelDay=dayKey(now());
@@ -2655,12 +2651,18 @@ function openTasks(){
 function renderTaskList(){
   const el=$('taskList'); if(!el)return;
   const ts=S.tasks||[];
-  const today=dayKey(now()), tmw=dayKeyOf(1);
-  const sel=tkSelDay||today;
-  const secTitle = sel===today?'📋 今日待办清单':(sel===tmw?'🌅 明日计划':`📅 ${taskDayLabel(sel).replace('📅 ','')} 待办`);
-  const list=ts.filter(t=>t.due===sel);
-  const other=ts.filter(t=>t.due!==sel);
-  el.innerHTML=taskGroupHTML(secTitle,list)+(other.length?taskGroupHTML('🗓️ 其他日期',other):'');
+  const yd=dayKeyOf(-1), today=dayKey(now()), tmw=dayKeyOf(1), sel=tkSelDay||today;
+  const groups=[['🌙 昨天',yd],['📋 今日待办清单',today],['🌅 明天',tmw]];
+  let html=groups.map(function(d){
+    const lt=ts.filter(function(t){return t.due===d[1];});
+    return `<div class="task-sec">${d[0]}</div>${lt.map(taskRowHTML).join('')||'<div class="task-none">暂无任务</div>'}`;
+  }).join('');
+  // 日历上点击了昨天/今天/明天之外的日期：额外显示该日待办
+  if(sel!==yd && sel!==today && sel!==tmw){
+    const lt=ts.filter(function(t){return t.due===sel;});
+    html+=`<div class="task-sec">📅 ${taskDayLabel(sel).replace('📅 ','')} 待办</div>${lt.map(taskRowHTML).join('')||'<div class="task-none">暂无任务</div>'}`;
+  }
+  el.innerHTML=html;
 }
 function taskAdd(){
   const title=inpVal('tkTitle','').trim();
