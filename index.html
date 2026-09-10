@@ -1304,6 +1304,7 @@ function fxLoop(){
   }
   if(fx.length) fxRaf=requestAnimationFrame(fxLoop);
 }
+function clearFx(){ fx.length=0; fxRaf=null; if(ctx)ctx.clearRect(0,0,innerWidth,innerHeight); }
 startFx();
 function coinTarget(){ const r=$('coinbox').getBoundingClientRect(); return {x:r.left+r.width/2, y:r.top+r.height/2}; }
 
@@ -1541,7 +1542,7 @@ function openScene(z){
   updateSceneBar();
   sfx.click();
 }
-function closeScene(){ $('scene').classList.remove('show'); currentZone=-1; for(const k in cellEls) delete cellEls[k]; }
+function closeScene(){ $('scene').classList.remove('show'); currentZone=-1; for(const k in cellEls) delete cellEls[k]; clearFx(); }
 function woodSpot(z,wi){
   const spots=ZONES[z].spots;
   const base=spots[wi%spots.length];
@@ -3471,7 +3472,7 @@ const TV_DESTS=[
  {id:'snow',n:'雪山',need:'charm',needF:'food3',specials:['雪绒花'],cards:['D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13']}
 ];
 const TV_LETTERS={
- A1:{d:'deco-forest',e:'🍎',txt:'我和番茄沿着溪流走了好久，摘到了最甜的野果，番茄把最红的一颗留给了我。空气里全是青草的味道，{name}根本舍不得吃。'},
+ A1:{d:'deco-forest',e:'🍎',txt:'我和番茄沿着溪流走了好久，摘到了最甜的野果，番茄把最红的一颗留给了我。空气里全是青草的味道，{name}想你啦！'},
  A2:{d:'deco-forest',e:'🐰',txt:'在森林深处，番茄和我看到一窝小兔子，它们围着我们打转，差点把番茄当成胡萝卜。'},
  A3:{d:'deco-forest',e:'🐝',txt:'傍晚的森林起了雾，我和番茄迷了路，多亏好心的萤火虫提着灯给我们指路。'},
  A4:{d:'deco-forest',e:'🌰',txt:'我和番茄在老树下睡了一觉，醒来发现口袋里多了一颗亮晶晶的松果，番茄说是树爷爷送的礼物。'},
