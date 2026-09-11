@@ -234,16 +234,17 @@
   #travel .tv-cur{font-size:15px;}
   #travel .tv-tom{color:#d0342c;}
   #travel .tv-st{margin-left:auto;font-size:12px;color:#6b8f52;}
-  #travel .tv-scene{flex:1;position:relative;overflow:hidden;transition:background 1.2s ease;}
+  #travel .tv-scene{flex:1;position:relative;overflow:hidden;}
   #travel .tv-nav{display:flex;gap:6px;justify-content:center;padding:8px;background:rgba(255,255,255,.7);}
   #travel .tv-btn{border:1px solid #8fae8a;background:#fff;color:#48614a;border-radius:10px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;}
   #travel .tv-btn:hover{background:#eef7ec;border-color:#68906b;}
-  #travel #tvHarvestBtn{background:linear-gradient(180deg,#fff3c4,#ffdc82);border-color:#e3b31e;color:#8a6d00;box-shadow:0 0 8px rgba(255,200,0,.55);animation:tvGold 1.6s ease-in-out infinite;}
+  #travel #tvHarvestBtn{position:relative;background:linear-gradient(180deg,#fff3c4,#ffdc82);border-color:#e3b31e;color:#8a6d00;box-shadow:0 0 8px rgba(255,200,0,.55);}
   #travel #tvHarvestBtn:hover{background:linear-gradient(180deg,#ffe9a3,#ffc95e);border-color:#d4a800;box-shadow:0 0 14px rgba(255,200,0,.85);}
-  @keyframes tvGold{0%,100%{box-shadow:0 0 5px rgba(255,200,0,.45);}50%{box-shadow:0 0 18px rgba(255,190,0,.95),0 0 32px rgba(255,214,90,.4);}}
+  #travel #tvHarvestBtn::after{content:"";position:absolute;inset:0;border-radius:10px;box-shadow:0 0 18px rgba(255,190,0,.85),0 0 32px rgba(255,214,90,.4);opacity:.5;animation:tvGoldFade 1.6s ease-in-out infinite;pointer-events:none;}
+  @keyframes tvGoldFade{0%,100%{opacity:.3;}50%{opacity:.9;}}
   #travel .tv-mail{position:absolute;right:12px;bottom:64px;font-size:24px;background:#fff;border:2px solid #c78b4a;border-radius:50%;width:46px;height:46px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;}
   #travel .tv-mail span{position:absolute;top:-2px;right:-2px;width:13px;height:13px;border-radius:50%;background:#e53935;border:2px solid #fff;}
-  .tvyard{position:absolute;inset:0;overflow:hidden;}
+  .tvyard{position:absolute;inset:0;overflow:hidden;contain:content;}
   .tvg-bg{position:absolute;inset:0;width:100%;height:100%;}
   .tvg-toms{position:absolute;inset:0;}
   .tvg-tom{position:absolute;font-size:26px;cursor:pointer;filter:drop-shadow(0 1px 1px rgba(0,0,0,.2));animation:tomp .3s ease;text-shadow:0 1px 0 #fff;}
@@ -261,11 +262,11 @@
   .tvg-slot{background:linear-gradient(180deg,#fff3d6,#ffe0a3);border:2px solid #e6c04a;border-radius:14px;padding:10px;margin:2px auto;max-width:260px;box-shadow:inset 0 0 0 3px #fff,0 4px 14px rgba(214,150,60,.25);}
   .tvg-reels{display:flex;gap:8px;justify-content:center;}
   .tvg-reel{width:62px;height:62px;background:#fff;border:2px solid #c79640;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:700;color:#e08a3c;box-shadow:0 3px 0 #c79640;overflow:hidden;position:relative;}
-  .tvg-strip{position:absolute;left:0;top:0;width:100%;will-change:transform;}
+  .tvg-strip{position:absolute;left:0;top:0;width:100%;}
   .tvg-strip>div{height:62px;display:flex;align-items:center;justify-content:center;font-size:34px;}
   .tvg-reel.land{animation:tvsb .4s cubic-bezier(.2,1.6,.4,1);}
   @keyframes tvsb{0%{transform:scale(1.25)}100%{transform:scale(1)}}
-  .tvhome{position:absolute;inset:0;overflow:hidden;}
+  .tvhome{position:absolute;inset:0;overflow:hidden;contain:content;}
   .tvh-empty{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);font-size:18px;color:#7a6a4a;white-space:nowrap;}
   .tv-yf{position:absolute;width:64px;height:64px;animation:tvbob 2.4s ease-in-out infinite;}
   @keyframes tvbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
@@ -707,7 +708,7 @@
   <div class="scenefoot frost">🌱 月巴需经过 幼年 → 成长 → 成熟 才能收获，成熟后才会露出真面目</div>
 </div>
 
-<div id="travel" class="frost">
+<div id="travel">
   <div class="tv-top">
     <span class="tv-cur">🍅 <b id="tvTomato" class="tv-tom">0</b></span>
     <span id="tvState" class="tv-st">在家</span>
@@ -926,7 +927,7 @@ const TYPES=[
   {id:'mb_pingguo',name:'吃茄月巴',img:'https://origin.picgo.net/2026/09/03/1618abd45272691005.th.png',r:3,v:45,t:420, cond:{t:'season',s:'autumn',day:1},    color:'#c96a73', shape:'round'},
   {id:'mb_chaos',name:'混沌月巴', r:5, v:1000,t:5400, cond:null, weight:0.003, color:'#5a5470', shape:'chaos'},
 ];
-/* 第二图鉴：收集齐第一图鉴全部月巴后开启（掉落池合并）。字段格式与 TYPES 一致，
+/* 第二图鉴：第一图鉴集齐 59 个月巴后开启（掉落池合并）。字段格式与 TYPES 一致，
    主题与第一图鉴不重复（避免晨/午/晴/云/雨/雪/季节/闪电/彩虹等撞车）；
    后续扩充时直接追加即可；全部第二图鉴月巴生长速度为基础 1/3（时长 x3，见 growDur）。 */
 const TYPES2=[
@@ -1372,8 +1373,9 @@ function lockedSVG(){
 function hScale(h){ return clamp(0.7+(h-2)/38,0.7,1.7); }
 
 /* ---------------- 图鉴数据（含极值） ---------------- */
-/* 第二图鉴：收集齐第一图鉴全部月巴后开启，其月巴并入掉落池；id 前缀 m2_ 由 TYPES2 提供 */
-function dex2Unlocked(){ return Object.keys(S.collection).length>=TYPES.length; }
+/* 第二图鉴：第一图鉴集齐 DEX1_MIN(59) 个后开启，其月巴并入掉落池；id 前缀 m2_ 由 TYPES2 提供 */
+const DEX1_MIN=59;
+function dex2Unlocked(){ return Object.keys(S.collection).length>=DEX1_MIN; }
 function isDex2(id){ return TYPES2.some(t=>t.id===id); }
 function typeById(id){ return TYPES.find(x=>x.id===id)||TYPES2.find(x=>x.id===id); }
 function colGet(id){
@@ -1987,7 +1989,7 @@ function openBook(){
   const got=Object.keys(dexPage===2?S.collection2:S.collection).length, total=list.length;
   const tabs=`<div class="booktabs">
     <button class="btab ${dexPage===1?'on':''}" onclick="switchDexPage(1)">📕 第一图鉴</button>
-    <button class="btab ${dexPage===2?'on':''} ${unlocked?'':'lock'}" onclick="${unlocked?'switchDexPage(2)':''}" title="${unlocked?'':'收集齐第一图鉴全部月巴后开启'}">📕 第二图鉴 ${unlocked?'':'🔒'}</button>
+    <button class="btab ${dexPage===2?'on':''} ${unlocked?'':'lock'}" onclick="${unlocked?'switchDexPage(2)':''}" title="${unlocked?'':'第一图鉴集齐 '+DEX1_MIN+' 个月巴后开启'}">📕 第二图鉴 ${unlocked?'':'🔒'}</button>
   </div>`;
   const skinHTML=dexPage===1?`<div class="skinbar">
     <div class="skin-sec">🎨 界面皮肤 <small>（收获对应月巴解锁，点击领取/切换）</small></div>
@@ -2012,7 +2014,7 @@ function openDex2Celebrate(){
   openModal('🎉 恭喜收集齐全！', `
     <div style="text-align:center;padding:6px 0 2px">
       <div style="font-size:52px;line-height:1.1">🎊</div>
-      <div class="pomo-note" style="text-align:center;margin-top:4px">你已收集齐第一图鉴全部 <b>${TYPES.length}</b> 种月巴！<br>📕 第二图鉴已开启 —— 全新 <b>${TYPES2.length}</b> 种月巴加入掉落，生长更慢（基础 1/3 速度），挑战你的耐心！</div>
+      <div class="pomo-note" style="text-align:center;margin-top:4px">你已收集齐第一图鉴 <b>${DEX1_MIN}</b> 个月巴！<br>📕 第二图鉴已开启 —— 全新 <b>${TYPES2.length}</b> 种月巴加入掉落，生长更慢（基础 1/3 速度），挑战你的耐心！</div>
       <button class="btn" style="width:100%;margin-top:10px" onclick="openBook()">📕 查看第二图鉴</button>
       <button class="btn" style="width:100%;margin-top:6px" onclick="closeModal()">关闭</button>
     </div>`);
@@ -3582,7 +3584,7 @@ function tvFresh(){
 }
 function tvTomato(d){ const t=tvFresh(); t.tomato=Math.max(0,(t.tomato||0)+d); const e=$('tvTomato'); if(e)e.textContent=t.tomato; save(); }
 function updateTravelIcon(){ const el=$('btnTravel'); if(!el)return; const ready=!!S.travel&&tvSlotReady(); if(el.classList)el.classList.toggle('hasbadge',ready); el.innerHTML=(dex2Unlocked()?'<b>🧳</b><small>旅行</small>':'<b>❓</b><small>旅行</small>')+(ready?'<span class="dock-badge">🎰</span>':''); }
-function travelEntry(){ if(!dex2Unlocked()){ toast('🔒 收集齐全第一图鉴所有月巴后可解锁旅行！'); return; } openTravel(); }
+function travelEntry(){ if(!dex2Unlocked()){ toast('🔒 第一图鉴集齐59个月巴后可解锁旅行！'); return; } openTravel(); }
 let tvView='yard';
 function openTravel(){ if(!dex2Unlocked())return; tvFresh(); travelSettleIf(); updateTravelIcon(); tvRenderAll(); $('travel').style.display='flex'; tvUpdateHarvest(); }
 function closeTravel(){ $('travel').style.display='none'; }
@@ -3773,9 +3775,9 @@ function tvSlotOpen(){ if(!tvSlotReady()){ toast('🧺 月巴们还在攒番茄�
 function tvSlotHTML(){ let h='<p style="text-align:center;color:#48614a;font-size:13px">月巴们为你攒好了惊喜，拉杆收获 🍅！</p><div class="tvg-slot"><div class="tvg-reels">'; for(let i=0;i<3;i++)h+='<div class="tvg-reel" id="tvReel'+i+'">🍅</div>'; h+='</div></div><p id="tvSlotResult" style="text-align:center;min-height:20px;color:#e08a3c;font-weight:700"></p><div style="text-align:center;margin-top:6px"><button class="btn cta" id="tvSpinBtn" onclick="tvSpin()">🕹 拉杆！</button></div><p style="text-align:center;margin-top:4px"><button class="btn" onclick="closeModal()">收下离开</button></p>'; return h; }
 function tvSpin(){ if(!tvSlotReady())return; const btn=$('tvSpinBtn'); if(btn)btn.disabled=true; const r=$('tvSlotResult'); if(r)r.textContent=''; const cols=[0,1,2].map(function(){return TV_SLOTS[(Math.random()*TV_SLOTS.length)|0];}); const els=[0,1,2].map(function(i){return $('tvReel'+i);}); const pool=TV_SLOTS;
   // 构建转轮条：一次性写DOM，之后仅靠 transform 滑动，避免逐帧改文字导致的掉帧卡顿
-  for(let i=0;i<3;i++){ const e=els[i]; if(!e)continue; e.classList.remove('land'); e.innerHTML='<div class="tvg-strip">'+pool.concat(pool,[cols[i]]).map(function(s){return '<div>'+s+'</div>';}).join('')+'</div>'; }
+  for(let i=0;i<3;i++){ const e=els[i]; if(!e)continue; e.classList.remove('land'); e.innerHTML='<div class="tvg-strip">'+pool.concat(pool,[cols[i]]).map(function(s){return '<div>'+s+'</div>';}).join('')+'</div>'; const sp0=e.firstChild; if(sp0&&sp0.style)sp0.style.willChange='transform'; }
   const ICON=62, MAX=pool.length*2*ICON, stops=[900,1500,2100], dur=2200, t0=performance.now();
-  const step=function(t){ const p=Math.min(1,(t-t0)/dur); for(let i=0;i<3;i++){ const e=els[i]; if(!e)continue; const sp=e.firstChild; if(!sp||!sp.style)continue; const pt=Math.min(1,p*dur/stops[i]); sp.style.transform='translateY('+(-pt*MAX).toFixed(1)+'px)'; if(pt>=1&&!e.classList.contains('land'))e.classList.add('land'); } if(p<1)requestAnimationFrame(step); else { tvSlotResult(cols); if(btn)btn.disabled=false; } };
+  const step=function(t){ const p=Math.min(1,(t-t0)/dur); for(let i=0;i<3;i++){ const e=els[i]; if(!e)continue; const sp=e.firstChild; if(!sp||!sp.style)continue; const pt=Math.min(1,p*dur/stops[i]); sp.style.transform='translateY('+(-pt*MAX).toFixed(1)+'px)'; if(pt>=1&&!e.classList.contains('land'))e.classList.add('land'); } if(p<1)requestAnimationFrame(step); else { /* 落定后清空长条 DOM，仅保留结果图标并移除 will-change，降低常驻内存/合成层 */ for(let i=0;i<3;i++){ const e=els[i]; if(!e)continue; e.innerHTML='<div class="tvg-strip"><div>'+cols[i]+'</div></div>'; } tvSlotResult(cols); if(btn)btn.disabled=false; } };
   requestAnimationFrame(step); }
 function tvSlotResult(cols){ const t=tvFresh(); const s0=cols[0],s1=cols[1],s2=cols[2]; let gain; if(s0===s1&&s1===s2)gain=8+(Math.random()*3|0); else if(s0===s1||s1===s2||s0===s2)gain=4+(Math.random()*4|0); else gain=1+(Math.random()*3|0); t.tomato+=gain; t.harvestT=now()+rand(10,30)*60000; save(); const r=$('tvSlotResult'); if(r)r.innerHTML=(s0===s1&&s1===s2)?('🎉🎉 JACKPOT！收获 '+gain+' 🍅'):('🎉 收获 '+gain+' 个 🍅'); updateTravelIcon(); }
 function tvUpdateHarvest(){ const b=$('tvHarvestBtn'); if(!b)return; b.style.display=tvSlotReady()?'':'none'; }
