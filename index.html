@@ -284,7 +284,8 @@
   .ltr-env.big .ltr-seal{top:46px;width:32px;height:32px;font-size:16px;}
   .ltr-env.mini .ltr-sig{position:absolute;right:3px;bottom:2px;font-size:7px;font-weight:700;line-height:1;color:var(--ec);max-width:50px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;z-index:6;}
   .ltr-cell{display:flex;flex-direction:column;align-items:center;gap:2px;}
-  .ltr-mood{font-size:10px;color:#8a7355;margin:2px auto 0;max-width:86px;line-height:1.25;text-align:center;}
+  .ltr-opennote{font-size:11px;color:#8a7355;margin:6px 0 0;line-height:1.4;text-align:left;}
+  .ltr-opentime{font-size:10px;color:#b3a385;display:block;margin-top:2px;}
   .ltr-who{display:flex;justify-content:center;gap:3px;flex-wrap:wrap;margin:2px 0;}
   .ltr-who.right{justify-content:flex-end;margin-top:8px;}
   .ltr-who-sq{width:16px;height:16px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .12s;}
@@ -765,6 +766,7 @@ const rand=(a,b)=>a+Math.random()*(b-a);
 const randi=(a,b)=>Math.floor(rand(a,b+1));
 const now=()=>Date.now();
 const pad=n=>String(n).padStart(2,'0');
+function fmtDT(t){ const d=new Date(t); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes()); }
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 function fmt(n){
   if(n>=1e9)return (n/1e9).toFixed(2).replace(/\.?0+$/,'')+'亿';
@@ -3793,14 +3795,17 @@ function tvOpenBook(){ openModal('🏷 旅行图鉴', tvBookHTML()); }
 function tvLetterEnv(c){ const L=TV_LETTERS[c]; if(!L)return ''; const t=tvFresh(); const fw=(t.cardFirst&&t.cardFirst[c])||null; let sig=''; if(fw){ const tp=typeById(fw); if(tp)sig='<div class="ltr-sig">'+tp.name+'</div>'; } return '<div class="ltr-env mini '+L.d+'" onclick="tvOpenLetter(\''+c+'\')"><div class="ltr-front"><div class="ltr-flap"></div><div class="ltr-seal">'+L.e+'</div>'+sig+'</div></div>'; }
 function tvWhoRow(c,right){ const t=tvFresh(); const who=(t.cardWho&&t.cardWho[c])||[]; if(!who.length)return ''; let h='<div class="ltr-who'+(right?' right':'')+'">'; for(const id of who){ const tp=typeById(id); if(!tp)continue; h+='<span class="ltr-who-sq" style="background:'+tp.color+'" title="'+tp.name+'" onclick="tvShowWho(\''+id+'\')">'+tp.name.charAt(0)+'</span>'; } return h+'</div>'; }
 function tvShowWho(id){ const tp=typeById(id); if(!tp)return; openModal('🐤 收到此信的月巴','<div style="text-align:center"><div style="font-size:60px;line-height:1.1;margin:6px 0">'+fatSVG(tp)+'</div><div style="font-weight:800;font-size:16px;color:var(--text)">'+tp.name+'</div><div class="rar-tag rr'+(tp.r||1)+'" style="display:inline-block;margin-top:6px">'+RAR_NAME[tp.r]+'</div></div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'); }
-function tvMoodHTML(c){ const t=tvFresh(); const m=(t.cardMood&&t.cardMood[c]); if(!m)return ''; return '<div class="ltr-mood">💬 '+m+'</div>'; }
-function tvBookHTML(){ const t=tvFresh(); const total=TV_DESTS.reduce(function(n,d){return n+d.cards.length;},0); let h='<p style="color:#48614a;font-size:13px;margin:2px 0">来信 '+t.cards.length+'/'+total+' · 特产 '+t.specials.length+' 种</p><div class="sh-grid">'; for(const d of TV_DESTS){ h+='<div style="grid-column:1/-1;color:#6b5b3e;font-size:13px;margin-top:6px;font-weight:700">🗺 '+d.n+'系列</div>'; for(const c of d.cards){ h+=(t.cards.indexOf(c)>=0)?('<div class="ltr-cell">'+tvLetterEnv(c)+tvMoodHTML(c)+'</div>'):'<div class="pc off" style="display:flex;align-items:center;justify-content:center">❔ ???</div>'; } } h+='</div><p style="color:#48614a;font-size:13px;margin:8px 0 2px">🍎 已收获特产</p><div class="sh-grid">'; const all=[]; for(const d of TV_DESTS)for(const s of d.specials)if(all.indexOf(s)<0)all.push(s); for(const s of all){ const got=t.specials.indexOf(s)>=0; h+='<div class="sh-card '+(got?'rose':'')+'"><div style="font-size:26px">'+(got?'🌿':'❔')+'</div><div class="sh-n">'+(got?s:'???')+'</div></div>'; } h+='</div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'; return h; }
+function tvOpenNoteHTML(c){ const t=tvFresh(); const m=(t.cardMood&&t.cardMood[c]); if(!m)return ''; let h='<div class="ltr-opennote">💬 '+m+'</div>'; const ts=t.cardMoodT&&t.cardMoodT[c]; if(ts)h='<div class="ltr-opennote">💬 '+m+'<span class="ltr-opentime">· '+fmtDT(ts)+' 拆开</span></div>'; return h; }
+function tvBookHTML(){ const t=tvFresh(); const total=TV_DESTS.reduce(function(n,d){return n+d.cards.length;},0); let h='<p style="color:#48614a;font-size:13px;margin:2px 0">来信 '+t.cards.length+'/'+total+' · 特产 '+t.specials.length+' 种</p><div class="sh-grid">'; for(const d of TV_DESTS){ h+='<div style="grid-column:1/-1;color:#6b5b3e;font-size:13px;margin-top:6px;font-weight:700">🗺 '+d.n+'系列</div>'; for(const c of d.cards){ h+=(t.cards.indexOf(c)>=0)?('<div class="ltr-cell">'+tvLetterEnv(c)+'</div>'):'<div class="pc off" style="display:flex;align-items:center;justify-content:center">❔ ???</div>'; } } h+='</div><p style="color:#48614a;font-size:13px;margin:8px 0 2px">🍎 已收获特产</p><div class="sh-grid">'; const all=[]; for(const d of TV_DESTS)for(const s of d.specials)if(all.indexOf(s)<0)all.push(s); for(const s of all){ const got=t.specials.indexOf(s)>=0; h+='<div class="sh-card '+(got?'rose':'')+'"><div style="font-size:26px">'+(got?'🌿':'❔')+'</div><div class="sh-n">'+(got?s:'???')+'</div></div>'; } h+='</div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'; return h; }
 function tvOpenLetter(c){
   const L=TV_LETTERS[c]; if(!L)return;
   const t=tvFresh(); const i=t.inbox.indexOf(c); if(i>=0)t.inbox.splice(i,1); save(); tvUpdateBar();
+  // 打开时记录拆信时间（首次打开时间；已拆过则保留最早时间）
+  if(!t.cardMoodT)t.cardMoodT={};
+  if(!t.cardMoodT[c]){ t.cardMoodT[c]=now(); save(); }
   const fid=(t.cardFirst&&t.cardFirst[c])||t.frog.fatId||null; const tp=fid?typeById(fid):null; const nm=tp?tp.name:'月巴';
   const txt=L.txt.split('{name}').join(nm);
-  let h='<div class="ltr-scene"><div class="ltr-env big '+L.d+'" id="ltrEnv"><div class="ltr-letter"><p class="ltr-txt">'+txt+'</p><p class="ltr-sig">—— '+nm+'</p></div><div class="ltr-front"><div class="ltr-flap"></div><div class="ltr-seal">'+L.e+'</div></div></div></div><div class="ltr-full"><p class="ltr-txt">'+txt+'</p><p class="ltr-sig">—— '+nm+'</p>'+tvWhoRow(c,1)+'</div><p style="text-align:center;margin-top:10px"><button class="btn" onclick="closeModal()">收好</button></p>';
+  let h='<div class="ltr-scene"><div class="ltr-env big '+L.d+'" id="ltrEnv"><div class="ltr-letter"><p class="ltr-txt">'+txt+'</p><p class="ltr-sig">—— '+nm+'</p>'+tvOpenNoteHTML(c)+'</div><div class="ltr-front"><div class="ltr-flap"></div><div class="ltr-seal">'+L.e+'</div></div></div></div><div class="ltr-full"><p class="ltr-txt">'+txt+'</p><p class="ltr-sig">—— '+nm+'</p>'+tvWhoRow(c,1)+'</div><p style="text-align:center;margin-top:10px"><button class="btn" onclick="closeModal()">收好</button></p>';
   openModal('💌 来信', h);
   setTimeout(function(){ const e=$('ltrEnv'); if(e&&e.classList)e.classList.add('open'); }, 80);
 }
