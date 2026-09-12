@@ -284,6 +284,7 @@
   .ltr-env.big .ltr-seal{top:46px;width:32px;height:32px;font-size:16px;}
   .ltr-env.mini .ltr-sig{position:absolute;right:3px;bottom:2px;font-size:7px;font-weight:700;line-height:1;color:var(--ec);max-width:50px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;z-index:6;}
   .ltr-cell{display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .ltr-mood{font-size:10px;color:#8a7355;margin:2px auto 0;max-width:86px;line-height:1.25;text-align:center;}
   .ltr-who{display:flex;justify-content:center;gap:3px;flex-wrap:wrap;margin:2px 0;}
   .ltr-who.right{justify-content:flex-end;margin-top:8px;}
   .ltr-who-sq{width:16px;height:16px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .12s;}
@@ -963,6 +964,7 @@ const TYPES2=[
   {id:'m2_fenghuang',name:'凤凰月巴',r:5, v:200, t:1500, cond:{t:'count',id:'mb_chaos',n:10}, color:'#ff7043', shape:'rainbow'},
   {id:'m2_jiguang',name:'极光月巴',  r:5, v:180, t:1200, cond:{t:'weather',w:'snow',night:1}, color:'#7e57c2', shape:'rainbow'},
   {id:'m2_xiangrui',name:'祥瑞月巴',  r:6, v:2000, t:3600, cond:null, weight:0.01, color:'#e6c44c', shape:'big'},
+  {id:'m2_huntun',name:'馄饨月巴',  r:5, v:260, t:1500, cond:null, weight:0.01, color:'#f6c557', shape:'round'},
 ];
 const RAR_NAME={1:'普通',2:'常见',3:'稀有',4:'史诗',5:'传说',6:'活动'};
 const R_H={1:[2,5],2:[4,8],3:[6,12],4:[10,20],5:[16,30],6:[22,40]};   // 身高 cm 范围
@@ -1064,6 +1066,7 @@ const FAT_INTRO={
   m2_fenghuang:'浴火重生的神巴，巴身流光溢彩。',
   m2_jiguang:'极寒雪夜里才会亮起的神秘月巴。',
   m2_xiangrui:'这可是祥瑞。',
+  m2_huntun:'不是混沌是馄饨，香香的番茄一定喜欢。',
 };
 
 /* ---------------- 界面皮肤（图鉴解锁） ---------------- */
@@ -3572,7 +3575,7 @@ function tvFresh(){
   t.wh=t.wh||{food1:0,food2:0,food3:0,lamp:0,charm:0,bell:0};
   t.bag=t.bag||[];t.cards=t.cards||[];t.specials=t.specials||[];t.destCount=t.destCount||{};
   t.inbox=t.inbox||[];
-  t.cardWho=t.cardWho||{}; t.cardFirst=t.cardFirst||{};
+  t.cardWho=t.cardWho||{}; t.cardFirst=t.cardFirst||{}; t.cardMood=t.cardMood||{};
   t.friends=t.friends||[];t.yard=t.yard||[];
   if(!t.frog)t.frog={status:'home',depart:null,ret:null,mood:''};
   if(t.tomato==null)t.tomato=300;
@@ -3783,14 +3786,15 @@ function tvUpdateHarvest(){ const b=$('tvHarvestBtn'); if(!b)return; b.style.dis
 function tvDestOf(bag){ bag=bag||tvFresh().bag; const has=function(k){return bag.indexOf(k)>=0;}; if(has('charm')&&has('food3'))return TV_DESTS[3]; if(has('lamp'))return TV_DESTS[1]; if(has('bell'))return TV_DESTS[2]; return TV_DESTS[0]; }
 function travelSettleIf(){ const t=tvFresh(); if(t.frog.status==='away' && t.frog.ret && now()>=t.frog.ret) tvSettle(); }
 function travelTick(){ if(!S.travel||!S.travel.frog)return; const t=S.travel; travelSettleIf(); if(t.frog.status==='away'&&now()>=(t.cardT||0)){ t.cardT=now()+rand(10,20)*60000; tvSendCardIf(); } const vis=$('travel'); if(vis&&vis.style.display==='flex'){ if(tvEventRoll())tvRenderScene(); tvFriendPop(); tvUpdateHarvest(); tvUpdateBar(); } updateTravelIcon(); }
-function tvNoteCard(c, fatId){ if(!TV_LETTERS[c]||!fatId)return; const t=tvFresh(); if(!t.cardWho)t.cardWho={}; if(!t.cardFirst)t.cardFirst={}; if(t.cardFirst[c]==null)t.cardFirst[c]=fatId; if(!t.cardWho[c])t.cardWho[c]=[]; if(t.cardWho[c].indexOf(fatId)<0)t.cardWho[c].push(fatId); }
+function tvNoteCard(c, fatId){ if(!TV_LETTERS[c]||!fatId)return; const t=tvFresh(); if(!t.cardWho)t.cardWho={}; if(!t.cardFirst)t.cardFirst={}; if(!t.cardMood)t.cardMood={}; if(t.cardFirst[c]==null){ t.cardFirst[c]=fatId; if(t.frog&&t.frog.mood)t.cardMood[c]=t.frog.mood; } if(!t.cardWho[c])t.cardWho[c]=[]; if(t.cardWho[c].indexOf(fatId)<0)t.cardWho[c].push(fatId); }
 function tvSendCardIf(){ const t=tvFresh(); if(t.frog.status!=='away')return; if((t.frog.cardsSent||0)>=(t.frog.cardQuota||1))return; const d=tvDestOf(t.bag); const got=d.cards.filter(function(c){return t.cards.indexOf(c)<0;}); if(got.length){ const c=got[Math.floor(Math.random()*got.length)]; t.cards.push(c); t.inbox.push(c); tvNoteCard(c,t.frog.fatId); t.frog.cardsSent=(t.frog.cardsSent||0)+1; tvUpdateBar(); } save(); }
 function tvUpdateBar(){ const t=tvFresh(); const e=$('tvTomato'); if(e)e.textContent=t.tomato; const s=$('tvState'); if(s)s.textContent=t.frog.status==='away'?'旅途中':(t.frog.status==='pack'?'准备行囊':'在家'); const d=$('tvMailDot'); if(d)d.style.display=(t.inbox.length>0)?'block':'none'; }
 function tvOpenBook(){ openModal('🏷 旅行图鉴', tvBookHTML()); }
 function tvLetterEnv(c){ const L=TV_LETTERS[c]; if(!L)return ''; const t=tvFresh(); const fw=(t.cardFirst&&t.cardFirst[c])||null; let sig=''; if(fw){ const tp=typeById(fw); if(tp)sig='<div class="ltr-sig">'+tp.name+'</div>'; } return '<div class="ltr-env mini '+L.d+'" onclick="tvOpenLetter(\''+c+'\')"><div class="ltr-front"><div class="ltr-flap"></div><div class="ltr-seal">'+L.e+'</div>'+sig+'</div></div>'; }
 function tvWhoRow(c,right){ const t=tvFresh(); const who=(t.cardWho&&t.cardWho[c])||[]; if(!who.length)return ''; let h='<div class="ltr-who'+(right?' right':'')+'">'; for(const id of who){ const tp=typeById(id); if(!tp)continue; h+='<span class="ltr-who-sq" style="background:'+tp.color+'" title="'+tp.name+'" onclick="tvShowWho(\''+id+'\')">'+tp.name.charAt(0)+'</span>'; } return h+'</div>'; }
 function tvShowWho(id){ const tp=typeById(id); if(!tp)return; openModal('🐤 收到此信的月巴','<div style="text-align:center"><div style="font-size:60px;line-height:1.1;margin:6px 0">'+fatSVG(tp)+'</div><div style="font-weight:800;font-size:16px;color:var(--text)">'+tp.name+'</div><div class="rar-tag rr'+(tp.r||1)+'" style="display:inline-block;margin-top:6px">'+RAR_NAME[tp.r]+'</div></div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'); }
-function tvBookHTML(){ const t=tvFresh(); const total=TV_DESTS.reduce(function(n,d){return n+d.cards.length;},0); let h='<p style="color:#48614a;font-size:13px;margin:2px 0">来信 '+t.cards.length+'/'+total+' · 特产 '+t.specials.length+' 种</p><div class="sh-grid">'; for(const d of TV_DESTS){ h+='<div style="grid-column:1/-1;color:#6b5b3e;font-size:13px;margin-top:6px;font-weight:700">🗺 '+d.n+'系列</div>'; for(const c of d.cards){ h+=(t.cards.indexOf(c)>=0)?('<div class="ltr-cell">'+tvLetterEnv(c)+'</div>'):'<div class="pc off" style="display:flex;align-items:center;justify-content:center">❔ ???</div>'; } } h+='</div><p style="color:#48614a;font-size:13px;margin:8px 0 2px">🍎 已收获特产</p><div class="sh-grid">'; const all=[]; for(const d of TV_DESTS)for(const s of d.specials)if(all.indexOf(s)<0)all.push(s); for(const s of all){ const got=t.specials.indexOf(s)>=0; h+='<div class="sh-card '+(got?'rose':'')+'"><div style="font-size:26px">'+(got?'🌿':'❔')+'</div><div class="sh-n">'+(got?s:'???')+'</div></div>'; } h+='</div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'; return h; }
+function tvMoodHTML(c){ const t=tvFresh(); const m=(t.cardMood&&t.cardMood[c]); if(!m)return ''; return '<div class="ltr-mood">💬 '+m+'</div>'; }
+function tvBookHTML(){ const t=tvFresh(); const total=TV_DESTS.reduce(function(n,d){return n+d.cards.length;},0); let h='<p style="color:#48614a;font-size:13px;margin:2px 0">来信 '+t.cards.length+'/'+total+' · 特产 '+t.specials.length+' 种</p><div class="sh-grid">'; for(const d of TV_DESTS){ h+='<div style="grid-column:1/-1;color:#6b5b3e;font-size:13px;margin-top:6px;font-weight:700">🗺 '+d.n+'系列</div>'; for(const c of d.cards){ h+=(t.cards.indexOf(c)>=0)?('<div class="ltr-cell">'+tvLetterEnv(c)+tvMoodHTML(c)+'</div>'):'<div class="pc off" style="display:flex;align-items:center;justify-content:center">❔ ???</div>'; } } h+='</div><p style="color:#48614a;font-size:13px;margin:8px 0 2px">🍎 已收获特产</p><div class="sh-grid">'; const all=[]; for(const d of TV_DESTS)for(const s of d.specials)if(all.indexOf(s)<0)all.push(s); for(const s of all){ const got=t.specials.indexOf(s)>=0; h+='<div class="sh-card '+(got?'rose':'')+'"><div style="font-size:26px">'+(got?'🌿':'❔')+'</div><div class="sh-n">'+(got?s:'???')+'</div></div>'; } h+='</div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'; return h; }
 function tvOpenLetter(c){
   const L=TV_LETTERS[c]; if(!L)return;
   const t=tvFresh(); const i=t.inbox.indexOf(c); if(i>=0)t.inbox.splice(i,1); save(); tvUpdateBar();
