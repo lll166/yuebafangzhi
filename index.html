@@ -3798,7 +3798,7 @@ function tvBookHTML(){ const t=tvFresh(); const total=TV_DESTS.reduce(function(n
 function tvOpenLetter(c){
   const L=TV_LETTERS[c]; if(!L)return;
   const t=tvFresh(); const i=t.inbox.indexOf(c); if(i>=0)t.inbox.splice(i,1); save(); tvUpdateBar();
-  const tp=t.frog.fatId?typeById(t.frog.fatId):null; const nm=tp?tp.name:'月巴';
+  const fid=(t.cardFirst&&t.cardFirst[c])||t.frog.fatId||null; const tp=fid?typeById(fid):null; const nm=tp?tp.name:'月巴';
   const txt=L.txt.split('{name}').join(nm);
   let h='<div class="ltr-scene"><div class="ltr-env big '+L.d+'" id="ltrEnv"><div class="ltr-letter"><p class="ltr-txt">'+txt+'</p><p class="ltr-sig">—— '+nm+'</p></div><div class="ltr-front"><div class="ltr-flap"></div><div class="ltr-seal">'+L.e+'</div></div></div></div><div class="ltr-full"><p class="ltr-txt">'+txt+'</p><p class="ltr-sig">—— '+nm+'</p>'+tvWhoRow(c,1)+'</div><p style="text-align:center;margin-top:10px"><button class="btn" onclick="closeModal()">收好</button></p>';
   openModal('💌 来信', h);
