@@ -1458,10 +1458,9 @@ function doHarvest(z,w,i,cell,el,quiet){
     S.dex2Celebrated=true; save();
     setTimeout(openDex2Celebrate,500);
   }
-  // 皮肤解锁提示（恰好达到阈值时）
-  for(const s of SKINS){
-    if(s.need && colCount(s.need)===s.needN) toast(`🎨 图鉴皮肤「${s.name}」已可领取！`);
-  }
+  // 皮肤解锁提示：仅在本月巴恰好首次达到对应皮肤阈值、且该皮肤尚未领取时提示一次
+  const sk=SKINS.find(x=>x.need===type.id && colCount(type.id)===x.needN && !S.skins.unlocked.includes(x.id));
+  if(sk) toast(`🎨 图鉴皮肤「${sk.name}」已可领取！`);
   // 特效（非可见槽位自动收集时跳过；静默自动收集时不出声）
   if(el){
     const r=el.getBoundingClientRect();
