@@ -1462,7 +1462,7 @@ function doHarvest(z,w,i,cell,el,quiet){
   const c=colGet(type.id); c.count++;
   c.last={h:cell.h,w:cell.w,t:now()};
   // 第一图鉴收集齐全：恭喜 + 开启第二图鉴（只弹一次）
-  if(!wasComplete && Object.keys(S.collection).length>=TYPES.length && !S.dex2Celebrated){
+  if(!wasComplete && Object.keys(S.collection).length>=DEX1_MIN && !S.dex2Celebrated){
     S.dex2Celebrated=true; save();
     setTimeout(openDex2Celebrate,500);
   }
