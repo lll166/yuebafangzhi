@@ -331,6 +331,10 @@
   .bcard.locked .nm{color:var(--dim);}
   .bcard.epic{box-shadow:0 0 0 1px #b39ddb;}
   .bcard.legend{box-shadow:0 0 12px rgba(149,117,205,.5),0 0 0 1px #9575cd;}
+  .bcard.bairi{position:relative;border:none;background:linear-gradient(180deg,rgba(255,244,208,.85),rgba(255,224,130,.7));box-shadow:0 0 18px rgba(255,213,79,.55),0 0 0 2px #ffd54f;animation:bairiGlow 1.8s ease-in-out infinite;}
+  .bcard.bairi::before{content:'';position:absolute;inset:-3px;border-radius:17px;padding:3px;background:linear-gradient(120deg,#ffd54f,#fff,#ffd54f,#fff);background-size:300% 300%;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:bairiFlow 3s linear infinite;}
+  @keyframes bairiGlow{0%,100%{box-shadow:0 0 14px rgba(255,213,79,.4),0 0 0 2px #ffd54f;}50%{box-shadow:0 0 26px rgba(255,213,79,.8),0 0 0 2px #fff3c4;}}
+  @keyframes bairiFlow{0%{background-position:0% 50%;}100%{background-position:300% 50%;;}}
   .bcard:not(.locked){cursor:pointer;}
   .bcard:not(.locked):hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(90,70,150,.18);}
   .bcard{transition:transform .15s,box-shadow .15s;}
@@ -974,6 +978,7 @@ const TYPES2=[
   {id:'m2_diwang',name:'帝王之巴',  r:5, v:280, t:1600, cond:null, weight:0.01, color:'#e6c44c', shape:'big'},
   {id:'m2_buman', name:'不满月巴',  r:4, v:70, t:700, cond:null, color:'#9e9e9e', shape:'round'},
   {id:'m2_tanwu', name:'贪污月巴',  r:5, v:240, t:1400, cond:null, weight:0.01, color:'#6d4c41', shape:'round'},
+  {id:'m2_bairi', name:'百日月巴',  r:6, v:3000, t:3600, cond:null, weight:0.003, color:'#ffd54f', shape:'big'},
 ];
 const RAR_NAME={1:'普通',2:'常见',3:'稀有',4:'史诗',5:'传说',6:'活动'};
 const R_H={1:[2,5],2:[4,8],3:[6,12],4:[10,20],5:[16,30],6:[22,40]};   // 身高 cm 范围
@@ -1080,6 +1085,7 @@ const FAT_INTRO={
   m2_diwang:'众爱卿平身，今日上贡的番茄可以呈上来了。',
   m2_buman:'不管怎样都会不满，你们全都有错！',
   m2_tanwu:'最喜欢吃番茄，会偷走番茄机里的番茄，番茄机原本是不会出现1个番茄的哦……',
+  m2_bairi:'月巴们的百日战纪。',
 };
 
 /* ---------------- 界面皮肤（图鉴解锁） ---------------- */
@@ -1989,7 +1995,7 @@ function bookRowsHTML(list){
         ⚖️ 最轻 ${ss(rec.lightest, gL,'g')} · ${rec.lightest?fmtTS(rec.lightest.t):''}
       </div>`;
     }
-    rows+=`<div class="bcard ${c?'':'locked'} ${t.r>=4?'epic':''} ${t.r===5?'legend':''}${allGold?' allgold':''}" ${c?`onclick="openFatDetail('${t.id}')"`:''}>
+    rows+=`<div class="bcard ${c?'':'locked'} ${t.r>=4?'epic':''} ${t.r===5?'legend':''}${t.id==='m2_bairi'?' bairi':''}${allGold?' allgold':''}" ${c?`onclick="openFatDetail('${t.id}')"`:''}>
       <div class="pic">${c?`<span style="display:inline-block;transform:scale(${t.size||1})">${fatSVG(t)}</span>`:lockedSVG()}</div>
       <div class="nm">${c?t.name:'???'}</div>
       <div class="cnt">${c?('收获 x'+c):'未发现'} <span class="rar-tag ${rcl}">${RAR_NAME[t.r]}</span></div>
