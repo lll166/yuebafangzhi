@@ -537,6 +537,13 @@
   .task-form .tf-tag{width:92px;}
   .task-form .tf-unit{width:88px;}
   .task-form .tf-num:focus,.task-form .tf-tag:focus,.task-form .tf-unit:focus{border-color:var(--purple);}
+  .task-form .tf-date{border:1px solid var(--line);border-radius:10px;padding:7px 8px;width:124px;
+    font-size:12px;font-weight:700;color:var(--purple2);background:#fff;outline:none;}
+  .task-form .tf-date:focus{border-color:var(--purple);}
+  .task-form .tf-range-sep{color:var(--dim);font-size:12px;align-self:center;}
+  .task-form .tf-range-hint{font-size:11px;color:var(--dim);align-self:center;}
+  .task-form .tf-habit{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text);cursor:pointer;align-self:center;}
+  .task-form .tf-habit input{accent-color:var(--purple);width:auto;}
   .task-form .tf-add{flex-shrink:0;}
   .task-sec{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:800;color:var(--dim);
     letter-spacing:1px;margin:13px 0 4px;}
@@ -2554,6 +2561,67 @@ function taskDayLabel(key){
   const d=new Date(key+'T00:00:00');
   return `📅 ${d.getMonth()+1}月${d.getDate()}日`;
 }
+function mdKey(key){ if(!key)return ''; const d=new Date(key+'T00:00:00'); return (d.getMonth()+1)+'月'+d.getDate()+'日'; }
+function nextDayKey(key){ const d=new Date(key+'T00:00:00'); d.setDate(d.getDate()+1); return dayKey(d.getTime()); }
+/* 任务是否覆盖某天：设定了起止日期(from~to)按范围判断，否则按单日 due 判断 */
+function taskCovers(t,key){ if(t&&t.from&&t.to)return key>=t.from&&key<=t.to; return !!(t&&t.due)&&t.due===key; }
+/* 未完成且已超过截止日：持续显示在待办日历下方，直到勾选完成 */
+function taskOverdue(t){ if(!t||t.doneAt)return false; const today=dayKey(now()); if(t.from&&t.to)return today>t.to; return !!t.due&&today>t.due; }
+/* 表单里起止日期变化时：同步选中日与日期标签 */
+function syncTaskRange(){
+  let f=inpVal('tkFrom','').trim(), to=inpVal('tkTo','').trim();
+  if(f&&to&&f>to){ const tmp=f; f=to; to=tmp; const a=$('tkFrom'),b=$('tkTo'); if(a&&b){a.value=f;b.value=to;} }
+  if(f) tkSelDay=f;
+  const lbl=$('tkDayLbl');
+  if(lbl) lbl.textContent=(f&&to&&f!==to)?('📅 '+mdKey(f)+' ~ '+mdKey(to)):taskDayLabel(tkSelDay);
+  sfx.click();
+}
+/* 习惯任务：时间段内每天自动生成一个待办，按天勾选完成 */
+function taskUndoneOn(t,key){
+  if(t.habit&&t.from&&t.to) return (t.days&&t.days[key]&&t.days[key].done)?0:1;
+  return t.doneAt?0:1;
+}
+function taskUndoneCount(t){
+  if(t.habit&&t.from&&t.to){
+    const today=dayKey(now());
+    if(t.from>today) return 0;
+    const end=t.to<today?t.to:today;
+    let n=0, k=t.from, g=0;
+    while(k<=end&&g++<2000){
+      const d=t.days&&t.days[k];
+      if(!d||!d.done) n++;
+      k=nextDayKey(k);
+    }
+    return n;
+  }
+  return (!t.doneAt&&(taskCovers(t,dayKey(now()))||taskOverdue(t)))?1:0;
+}
+/* 超期明细：习惯把 -2 天及更早的未勾选日期逐日展开，昨天/今天在各自分组显示避免重复 */
+function taskOverdueRows(t){
+  if(t.habit&&t.from&&t.to){
+    const bound=dayKeyOf(-2);
+    const end=t.to<bound?t.to:bound;
+    if(t.from>end) return [];
+    const rows=[]; let k=t.from, g=0;
+    while(k<=end&&g++<2000){
+      const d=t.days&&t.days[k];
+      if(!d||!d.done) rows.push(taskRowHTML(t,false,k));
+      k=nextDayKey(k);
+    }
+    return rows;
+  }
+  return taskOverdue(t)?[taskRowHTML(t)]:[];
+}
+function taskHabitToggle(id,day,stay){
+  const t=taskById(id); if(!t)return;
+  if(!t.days) t.days={};
+  const cur=t.days[day];
+  if(cur&&cur.done){ delete t.days[day]; sfx.click(); toast(`↩️ 已恢复「${t.title}」(${mdKey(day)})`); }
+  else{ t.days[day]={done:1,doneAt:now()}; sfx.unlock(); toast(`✅ 完成「${t.title}」(${mdKey(day)})`); }
+  save(); updateTaskBadge();
+  if(stay&&$('stCalBox')) renderStatCal();
+  else openTasks();
+}
 function syncTaskCalFromSel(){
   const d=new Date((tkSelDay||dayKey(now()))+'T00:00:00');
   tkCalY=d.getFullYear(); tkCalM=d.getMonth();
@@ -2566,7 +2634,8 @@ function taskCalHTML(){
   const startWd=(first.getDay()+6)%7;
   const days=new Date(tkCalY,tkCalM+1,0).getDate();
   const todayKey=dayKey(now());
-  const taskDays=new Set((S.tasks||[]).map(t=>t.due));
+  const taskDays=new Set();
+  (S.tasks||[]).forEach(t=>{ if(t.from&&t.to){ let k=t.from, g=0; while(k<=t.to&&g++<1000){ taskDays.add(k); k=nextDayKey(k); } } else if(t.due) taskDays.add(t.due); });
   let grid='';
   for(let i=0;i<startWd;i++) grid+='<div class="cal-cell empty"></div>';
   for(let day=1;day<=days;day++){
@@ -2597,6 +2666,7 @@ function taskCalNav(d){
 }
 function taskCalPick(key){
   tkSelDay=key;
+  const f=$('tkFrom'), t=$('tkTo'); if(f&&t){ f.value=key; t.value=key; }
   const lbl=$('tkDayLbl'); if(lbl) lbl.textContent=taskDayLabel(key);
   const box=$('taskCalBox'); if(box) box.innerHTML=taskCalHTML();
   renderTaskList();
@@ -2623,8 +2693,7 @@ function taskOnPomo(){
 }
 function updateTaskBadge(){
   const b=$('taskBadge'); if(!b)return;
-  const today=dayKey(now());
-  const n=(S.tasks||[]).filter(t=>!t.doneAt && (t.due===today||t.due==='today')).length;
+  const n=(S.tasks||[]).reduce((a,t)=>a+taskUndoneCount(t),0);
   b.textContent=n>99?'99+':String(n);
   b.style.display=n>0?'':'none';
 }
@@ -2638,22 +2707,36 @@ function taskSubs(t){
   t.done=t.subs.filter(Boolean).length;
   return t.subs;
 }
-function taskRowHTML(t, stay){
+function taskRowHTML(t, stay, day){
+  const isHab=!!(t.habit&&day);
+  const hDone=isHab?(t.days&&t.days[day]&&t.days[day].done?1:0):0;
   const cat=(t.cat||'🎯 个人').split(' ')[1]||t.cat||'其他';
   const priTxt={high:'🔴 高',med:'🟡 中',low:'🟢 低'}[t.pri]||'🟡 中';
   const priCls={high:'pri-hi',med:'pri-mid',low:'pri-lo'}[t.pri]||'pri-mid';
-  const need=t.need||0, done=t.done||0, unit=t.unit||'';
-  const subs=taskSubs(t);
-  const chip=subs
-    ? `<span class="task-pomos ${need>0&&done>=need?'full':''}">✅ ${done}/${need}${esc(unit)}</span>`
-    : `<span class="task-pomos ${need>0&&done>=need?'full':''}">🍅 ${done}/${need||'∞'}</span>`;
-  const row=`<div class="task-row ${t.doneAt?'done':''}">
-    <button class="task-chk ${t.doneAt?'on':''}" onclick="taskToggle('${t.id}'${stay?',1':''})">${t.doneAt?'✓':''}</button>
+  const need=t.need||0, done=isHab?0:(t.done||0), unit=t.unit||'';
+  const subs=!isHab&&taskSubs(t);
+  const chip=isHab
+    ? ''
+    : subs
+      ? `<span class="task-pomos ${need>0&&done>=need?'full':''}">✅ ${done}/${need}${esc(unit)}</span>`
+      : `<span class="task-pomos ${need>0&&done>=need?'full':''}">🍅 ${done}/${need||'∞'}</span>`;
+  const today=dayKey(now());
+  const hOver=isHab&&!hDone&&day<today;
+  const rowCls=isHab?(hDone?'done':''):(t.doneAt?'done':'');
+  const chkCls=isHab?(hDone?'on':''):(t.doneAt?'on':'');
+  const chkMark=isHab?(hDone?'✓':''):(t.doneAt?'✓':'');
+  const chkAct=isHab?`taskHabitToggle('${t.id}','${day}'${stay?',1':''})`:`taskToggle('${t.id}'${stay?',1':''})`;
+  const row=`<div class="task-row ${rowCls}">
+    <button class="task-chk ${chkCls}" onclick="${chkAct}">${chkMark}</button>
     <div class="task-main">
       <div class="task-title">${esc(t.title)}</div>
       <div class="task-meta">
         <span class="task-chip cat">${esc(cat)}</span>
         <span class="task-chip ${priCls}">${priTxt}</span>
+        ${t.habit?'<span class="task-chip tag">🔄 习惯</span>':''}
+        ${(t.from&&t.from!==t.to)?`<span class="task-chip">${mdKey(t.from)}~${mdKey(t.to)}</span>`:''}
+        ${isHab?`<span class="task-chip">📅 ${mdKey(day)}</span>`:''}
+        ${((!isHab&&!t.doneAt&&taskOverdue(t))||hOver)?'<span class="task-chip tag">⏰ 超期</span>':''}
         ${t.tag?`<span class="task-chip tag">#${esc(t.tag)}</span>`:''}
         ${chip}
       </div>
@@ -2663,6 +2746,7 @@ function taskRowHTML(t, stay){
       <button class="del" onclick="taskDel('${t.id}')" title="删除">🗑</button>
     </div>
   </div>`;
+  if(isHab) return row;
   if(!subs) return row;
   return `<div class="task-wrap">${row}<div class="task-subs">${subs.map(function(s,i){
     return `<div class="task-sub ${s?'on':''}" onclick="taskSubToggle('${t.id}',${i}${stay?',1':''})">
@@ -2697,6 +2781,16 @@ function openTasks(){
           <input class="tf-unit" id="tkUnit" placeholder="单位(可空：页/次/天)" title="仅作展示，可不填；填 >1 自动按数量拆分">
           <input class="tf-tag" id="tkTag" placeholder="#标签">
         </div>
+        <div class="tf-row">
+          <span class="tf-range-hint">📅 起止</span>
+          <input type="date" class="tf-date" id="tkFrom" value="${tkSelDay}" title="开始日期；留空=仅当天" onchange="syncTaskRange()">
+          <span class="tf-range-sep">至</span>
+          <input type="date" class="tf-date" id="tkTo" value="${tkSelDay}" title="结束日期；两端相同=仅当天" onchange="syncTaskRange()">
+          <span class="tf-range-hint">起止不同即为时间段任务</span>
+        </div>
+        <div class="tf-row">
+          <label class="tf-habit"><input type="checkbox" id="tkHabit"> 🔄 习惯：时间段内每天自动生成待办</label>
+        </div>
       </div>
       <div class="task-sec">📅 待办日历</div>
       <div class="taskcal-wrap" id="taskCalBox">${taskCalHTML()}</div>
@@ -2711,13 +2805,25 @@ function renderTaskList(){
   const yd=dayKeyOf(-1), today=dayKey(now()), tmw=dayKeyOf(1), sel=tkSelDay||today;
   const groups=[['🌙 昨天',yd],['📋 今日待办清单',today],['🌅 明天',tmw]];
   let html=groups.map(function(d){
-    const lt=ts.filter(function(t){return t.due===d[1];});
-    return `<div class="task-sec">${d[0]}</div>${lt.map(taskRowHTML).join('')||'<div class="task-none">暂无任务</div>'}`;
+    const lt=ts.filter(function(t){return taskCovers(t,d[1]);});
+    return `<div class="task-sec">${d[0]}</div>${lt.map(function(t){return taskRowHTML(t,false,d[1]);}).join('')||'<div class="task-none">暂无任务</div>'}`;
   }).join('');
+  // 超期待办：未勾选完成的过期任务（习惯按历史日期逐日展开）持续显示，直到完成
+  let overHtml='';
+  ts.forEach(function(t){ overHtml+=taskOverdueRows(t).join(''); });
+  if(overHtml) html+=`<div class="task-sec">⏰ 超期待办（未完成）</div>${overHtml}`;
   // 日历上点击了昨天/今天/明天之外的日期：额外显示该日待办
   if(sel!==yd && sel!==today && sel!==tmw){
-    const lt=ts.filter(function(t){return t.due===sel;});
-    html+=`<div class="task-sec">📅 ${taskDayLabel(sel).replace('📅 ','')} 待办</div>${lt.map(taskRowHTML).join('')||'<div class="task-none">暂无任务</div>'}`;
+    const lt=ts.filter(function(t){
+      if(!taskCovers(t,sel)) return false;
+      if(t.habit){
+        const d=t.days&&t.days[sel];
+        if(sel<=dayKeyOf(-2)&&(!d||!d.done)) return false; // 已在超期逐日展开
+        return true;
+      }
+      return !taskOverdue(t);
+    });
+    html+=`<div class="task-sec">📅 ${taskDayLabel(sel).replace('📅 ','')} 待办</div>${lt.map(function(t){return taskRowHTML(t,false,sel);}).join('')||'<div class="task-none">暂无任务</div>'}`;
   }
   el.innerHTML=html;
 }
@@ -2729,9 +2835,17 @@ function taskAdd(){
   const need=Math.max(0,parseInt(inpVal('tkNeed',''),10)||0);
   const unit=inpVal('tkUnit','').trim();
   const tag=inpVal('tkTag','');
-  const due=tkSelDay||dayKey(now());
-  (S.tasks||(S.tasks=[])).push({id:'t'+now()+Math.floor(Math.random()*1e3), title, cat, tag, pri,
-    need, done:0, doneAt:0, due, created:now(), unit});
+  let f=inpVal('tkFrom','').trim(), to=inpVal('tkTo','').trim();
+  if(f&&to&&f>to){ const tmp=f; f=to; to=tmp; }
+  if(f) tkSelDay=f;
+  const habit=!!($('tkHabit')&&$('tkHabit').checked);
+  if(habit && !(f&&to&&f!==to)){ sfx.error(); toast('习惯需设置起止日期（起止不同）'); return; }
+  const task={id:'t'+now()+Math.floor(Math.random()*1e3), title, cat, tag, pri,
+    need, done:0, doneAt:0, created:now(), unit};
+  if(f&&to&&f!==to){ task.from=f; task.to=to; }
+  else task.due=f||to||tkSelDay||dayKey(now());
+  if(habit) task.habit=1;
+  (S.tasks||(S.tasks=[])).push(task);
   taskSubs(S.tasks[S.tasks.length-1]);
   sfx.unlock(); save(); updateTaskBadge();
   const inp=$('tkTitle'); if(inp) inp.value='';
@@ -2742,9 +2856,11 @@ function taskAdd(){
 function taskEdit(id){
   const t=taskById(id); if(!t)return;
   pomoModalOpen=false;
-  tkSelDay=t.due||dayKey(now());
+  tkSelDay=t.due||t.from||dayKey(now());
   syncTaskCalFromSel();
   const todayKey=dayKey(now());
+  const tFrom=t.from||t.due||tkSelDay, tTo=t.to||t.due||tkSelDay;
+  const tLbl=(t.from&&t.to&&t.from!==t.to)?('📅 '+mdKey(t.from)+' ~ '+mdKey(t.to)):taskDayLabel(tkSelDay);
   openModal('✏️ 编辑任务',
     `<div class="pomo-wrap">
       <div class="task-form">
@@ -2753,7 +2869,7 @@ function taskEdit(id){
           <button class="btn cta tf-add" onclick="taskSaveEdit('${id}')">💾 保存</button>
         </div>
         <div class="tf-row">
-          <span class="task-day" id="tkDayLbl">${taskDayLabel(tkSelDay)}</span>
+          <span class="task-day" id="tkDayLbl">${tLbl}</span>
           <button class="btn" onclick="taskCalPick('${todayKey}')">今天</button>
           <button class="btn" onclick="taskCalPick('${dayKeyOf(1)}')">明天</button>
           <select id="etCat">${TASK_CATS.map(c=>`<option ${t.cat===c?'selected':''}>${c}</option>`).join('')}</select>
@@ -2767,6 +2883,16 @@ function taskEdit(id){
           <input class="tf-num" id="etNeed" type="number" min="0" max="99" value="${t.need||0}" title="预估番茄数；填 >1 自动拆分成小项逐项勾选">
           <input class="tf-unit" id="etUnit" value="${esc(t.unit||'')}" placeholder="单位(可空：页/次/天)" title="仅作展示，可不填；填 >1 自动按数量拆分">
           <input class="tf-tag" id="etTag" value="${esc(t.tag||'')}" placeholder="#标签">
+        </div>
+        <div class="tf-row">
+          <span class="tf-range-hint">📅 起止</span>
+          <input type="date" class="tf-date" id="tkFrom" value="${tFrom}" title="开始日期；留空=仅当天" onchange="syncTaskRange()">
+          <span class="tf-range-sep">至</span>
+          <input type="date" class="tf-date" id="tkTo" value="${tTo}" title="结束日期；两端相同=仅当天" onchange="syncTaskRange()">
+          <span class="tf-range-hint">起止不同即为时间段任务</span>
+        </div>
+        <div class="tf-row">
+          <label class="tf-habit"><input type="checkbox" id="tkHabit" ${t.habit?'checked':''}> 🔄 习惯：时间段内每天自动生成待办</label>
         </div>
       </div>
       <div class="task-sec">📅 选择日期</div>
@@ -2782,7 +2908,15 @@ function taskSaveEdit(id){
   t.unit=inpVal('etUnit','').trim();
   if(t.need>1) taskSubs(t); else if(t.subs) delete t.subs;
   t.tag=inpVal('etTag','');
-  t.due=tkSelDay||t.due;
+  let f=inpVal('tkFrom','').trim(), to=inpVal('tkTo','').trim();
+  if(f&&to&&f>to){ const tmp=f; f=to; to=tmp; }
+  const habit=!!($('tkHabit')&&$('tkHabit').checked);
+  if(habit && !(f&&to&&f!==to)){ sfx.error(); toast('习惯需设置起止日期（起止不同）'); return; }
+  if(f&&to&&f!==to){ t.from=f; t.to=to; delete t.due; }
+  else{ const d=f||to||t.from||t.to||tkSelDay; t.due=d; delete t.from; delete t.to; }
+  if(habit){ t.habit=1; }
+  else if(t.habit){ delete t.habit; if(t.days) delete t.days; }
+  if(f) tkSelDay=f;
   sfx.unlock(); save(); updateTaskBadge(); openTasks();
   toast('✅ 任务已更新');
 }
@@ -3243,9 +3377,9 @@ function statCalGrid(){
         ${recs.length?`<span>${fmtDur(total)}</span><em>${recs.length}次</em>`:'<em>·</em>'}
       </div>`;
     }else{
-      const ts=(S.tasks||[]).filter(t=>t.due===key);
+      const ts=(S.tasks||[]).filter(t=>taskCovers(t,key));
       grid+=`<div class="cal-cell ${ts.length?'has':''} ${isToday?'today':''} ${isSel?'sel':''}" onclick="statCalDay(${day})">
-        <b>${day}</b>${ts.length?`<i class="cal-dot"></i><em>${ts.filter(t=>!t.doneAt).length}待办</em>`:'<em>·</em>'}
+        <b>${day}</b>${ts.length?`<i class="cal-dot"></i><em>${ts.reduce((a,t)=>a+taskUndoneOn(t,key),0)}待办</em>`:'<em>·</em>'}
       </div>`;
     }
   }
@@ -3286,16 +3420,18 @@ function statCalDetailHTML(){
     list.sort((a,b)=>b.r.t-a.r.t);
     const total=list.reduce((a,x)=>a+x.r.d,0);
     const done=(S.tasks||[]).filter(t=>t.doneAt && t.doneAt>=dayS && t.doneAt<dayS+86400000);
+    (S.tasks||[]).forEach(t=>{ if(!(t.habit&&t.days)) return; Object.keys(t.days).forEach(k=>{ const d=t.days[k]; if(d&&d.done&&d.doneAt&&d.doneAt>=dayS&&d.doneAt<dayS+86400000) done.push(Object.assign({},t,{__day:k})); }); });
     const tlRecs=list.map(x=>x.r).sort((a,b)=>(a.s||a.t-a.d)-(b.s||b.t-b.d));
     const tlHTML=tlRecs.length?`<div class="task-sec">🕒 每日时间线</div>${statTimelineHTML(tlRecs)}`:'';
     return `<div class="cal-dtitle">${key} · ${list.length}次打卡 · 共${fmtDur(total)}</div>
       ${tlHTML}
       ${list.map(x=>`<div class="pstat-row"><b>${esc(x.r.n)}</b><span>${x.r.c?esc(x.r.c):''}</span><em>${fmtDur(x.r.d)}</em></div>`).join('')||'<div class="empty">当天没有打卡</div>'}
-      ${done.length?`<div class="cal-dtitle">✅ 当天完成任务（${done.length}）</div>${done.map(t=>taskRowHTML(t,1)).join('')}`:''}`;
+      ${done.length?`<div class="cal-dtitle">✅ 当天完成任务（${done.length}）</div>${done.map(t=>taskRowHTML(t,1,t.__day)).join('')}`:''}`;
   }
-  const ts=(S.tasks||[]).filter(t=>t.due===key);
-  return `<div class="cal-dtitle">${key} · ${ts.length}个任务 · ${ts.filter(t=>!t.doneAt).length}未完成</div>
-    ${ts.map(t=>taskRowHTML(t,1)).join('')||'<div class="empty">当天没有待办</div>'}`;
+  const ts=(S.tasks||[]).filter(t=>taskCovers(t,key));
+  const undone=ts.reduce((a,t)=>a+taskUndoneOn(t,key),0);
+  return `<div class="cal-dtitle">${key} · ${ts.length}个任务 · ${undone}未完成</div>
+    ${ts.map(t=>taskRowHTML(t,1,key)).join('')||'<div class="empty">当天没有待办</div>'}`;
 }
 function renderStatCal(){
   const box=$('stCalBox'); if(!box)return;
