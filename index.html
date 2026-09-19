@@ -2616,8 +2616,35 @@ function taskHabitToggle(id,day,stay){
   const t=taskById(id); if(!t)return;
   if(!t.days) t.days={};
   const cur=t.days[day];
-  if(cur&&cur.done){ delete t.days[day]; sfx.click(); toast(`↩️ 已恢复「${t.title}」(${mdKey(day)})`); }
-  else{ t.days[day]={done:1,doneAt:now()}; sfx.unlock(); toast(`✅ 完成「${t.title}」(${mdKey(day)})`); }
+  if((t.need||0)>1){
+    // 按拆分数量：勾选/取消整天的全部子项
+    const d=cur||(t.days[day]={done:0,doneAt:0});
+    if(!Array.isArray(d.subs)){ d.subs=[]; for(let j=0;j<t.need;j++) d.subs.push(false); }
+    const all=d.subs.every(Boolean);
+    d.subs=d.subs.map(()=>!all);
+    if(!all){ d.done=1; d.doneAt=now(); sfx.unlock(); toast(`✅ 完成「${t.title}」(${mdKey(day)})`); }
+    else{ d.done=0; d.doneAt=0; sfx.click(); toast(`↩️ 已恢复「${t.title}」(${mdKey(day)})`); }
+  }else{
+    if(cur&&cur.done){ delete t.days[day]; sfx.click(); toast(`↩️ 已恢复「${t.title}」(${mdKey(day)})`); }
+    else{ t.days[day]={done:1,doneAt:now()}; sfx.unlock(); toast(`✅ 完成「${t.title}」(${mdKey(day)})`); }
+  }
+  save(); updateTaskBadge();
+  if(stay&&$('stCalBox')) renderStatCal();
+  else openTasks();
+}
+/* 习惯按数量拆分的子项：逐项勾选，全部完成则该天完成 */
+function taskHabitSubToggle(id,day,i,stay){
+  const t=taskById(id); if(!t)return;
+  const n=(t.need||0); if(n<2) return;
+  if(!t.days) t.days={};
+  const d=t.days[day]||(t.days[day]={done:0,doneAt:0});
+  if(!Array.isArray(d.subs)){ d.subs=[]; for(let j=0;j<n;j++) d.subs.push(false); }
+  if(i<0||i>=d.subs.length) return;
+  d.subs[i]=!d.subs[i];
+  const all=d.subs.every(Boolean);
+  const cnt=d.subs.filter(Boolean).length;
+  if(all){ if(!d.done){ d.done=1; d.doneAt=now(); } sfx.unlock(); toast(`✅ 完成「${t.title}」(${mdKey(day)})`); }
+  else{ if(d.done){ d.done=0; d.doneAt=0; } sfx.click(); toast(`✅ ${cnt}/${n}${esc(t.unit||'项')}：「${t.title}」(${mdKey(day)})`); }
   save(); updateTaskBadge();
   if(stay&&$('stCalBox')) renderStatCal();
   else openTasks();
@@ -2709,14 +2736,24 @@ function taskSubs(t){
 }
 function taskRowHTML(t, stay, day){
   const isHab=!!(t.habit&&day);
-  const hDone=isHab?(t.days&&t.days[day]&&t.days[day].done?1:0):0;
+  const hDay=isHab?(t.days&&t.days[day]):null;
+  const hNeed=(t.need||0);
+  let hSubs=null;
+  if(isHab&&hNeed>1){
+    hSubs=hDay&&hDay.subs?hDay.subs:[];
+    if(hDay&&!hDay.subs&&hDay.done) hSubs=Array.from({length:hNeed},()=>true);
+    while(hSubs.length<hNeed) hSubs.push(false);
+    if(hSubs.length>hNeed) hSubs.length=hNeed;
+  }
+  const hSubsDone=hSubs?hSubs.filter(Boolean).length:0;
+  const hDone=isHab?(hDay&&hDay.done?1:0):0;
   const cat=(t.cat||'🎯 个人').split(' ')[1]||t.cat||'其他';
   const priTxt={high:'🔴 高',med:'🟡 中',low:'🟢 低'}[t.pri]||'🟡 中';
   const priCls={high:'pri-hi',med:'pri-mid',low:'pri-lo'}[t.pri]||'pri-mid';
   const need=t.need||0, done=isHab?0:(t.done||0), unit=t.unit||'';
   const subs=!isHab&&taskSubs(t);
   const chip=isHab
-    ? ''
+    ? (hNeed>1?`<span class="task-pomos ${hDone?'full':''}">✅ ${hSubsDone}/${hNeed}${esc(unit)}</span>`:'')
     : subs
       ? `<span class="task-pomos ${need>0&&done>=need?'full':''}">✅ ${done}/${need}${esc(unit)}</span>`
       : `<span class="task-pomos ${need>0&&done>=need?'full':''}">🍅 ${done}/${need||'∞'}</span>`;
@@ -2746,7 +2783,15 @@ function taskRowHTML(t, stay, day){
       <button class="del" onclick="taskDel('${t.id}')" title="删除">🗑</button>
     </div>
   </div>`;
-  if(isHab) return row;
+  if(isHab){
+    if(!hSubs) return row;
+    return `<div class="task-wrap">${row}<div class="task-subs">${hSubs.map(function(s,i){
+      return `<div class="task-sub ${s?'on':''}" onclick="taskHabitSubToggle('${t.id}','${day}',${i}${stay?',1':''})">
+        <button class="task-chk small ${s?'on':''}">${s?'✓':''}</button>
+        <span>${esc(t.title)} · 第${i+1}${esc(unit||'项')} · ${mdKey(day)}</span>
+      </div>`;
+    }).join('')}</div></div>`;
+  }
   if(!subs) return row;
   return `<div class="task-wrap">${row}<div class="task-subs">${subs.map(function(s,i){
     return `<div class="task-sub ${s?'on':''}" onclick="taskSubToggle('${t.id}',${i}${stay?',1':''})">
