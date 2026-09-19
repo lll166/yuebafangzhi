@@ -936,6 +936,11 @@ const TYPES=[
   {id:'mb_shan', name:'闪电月巴', r:5, v:150,t:900, cond:{t:'weather',w:'storm',night:1}, color:'#e0d24e', shape:'spike'},
   {id:'mb_pingguo',name:'吃茄月巴',img:'https://origin.picgo.net/2026/09/03/1618abd45272691005.th.png',r:3,v:45,t:420, cond:{t:'season',s:'autumn',day:1},    color:'#c96a73', shape:'round'},
   {id:'mb_chaos',name:'混沌月巴', r:5, v:1000,t:5400, cond:null, weight:0.003, color:'#5a5470', shape:'chaos'},
+  {id:'mb_gungun',  name:'滚滚巴',    r:3, v:40, t:420,  cond:null, color:'#f0b27a', shape:'round', size:1.35},
+  {id:'mb_jiu',     name:'酒巴',      r:3, v:45, t:480,  cond:{t:'night'}, color:'#b08a6a', shape:'squish'},
+  {id:'mb_shilaimu',name:'史莱姆巴',  r:3, v:50, t:520,  cond:null, color:'#8fce7f', shape:'squish'},
+  {id:'mb_fengkuang',name:'疯狂月巴', r:4, v:120, t:800, cond:{t:'festival'}, color:'#e74c3c', shape:'spike'},
+  {id:'mb_liti',    name:'立体月巴',  r:4, v:250, t:1100, cond:null, weight:0.01, img:'https://origin.picgo.net/2026/09/19/litiyueba0f6fd2bd28b7cc83.th.png', color:'#8e9baf', shape:'tall', size:1.5},
 ];
 /* 第二图鉴：第一图鉴集齐 59 个月巴后开启（掉落池合并）。字段格式与 TYPES 一致，
    主题与第一图鉴不重复（避免晨/午/晴/云/雨/雪/季节/闪电/彩虹等撞车）；
@@ -1055,6 +1060,11 @@ const FAT_INTRO={
   mb_shan:'暴风雨夜的闪电里诞生，快如闪电。',
   mb_pingguo:'最爱秋天，一口一个番茄。',
   mb_chaos:'连科学家都无法解释的存在，别细想。',
+  mb_gungun:'就这样圆润地滚走了。',
+  mb_jiu:'在酒吧买醉的酒巴，微醺着喝番茄说话的模样，是真的喝醉了吗？',
+  mb_shilaimu:'会越来越大，可以变成各种形状。',
+  mb_fengkuang:'V巴50番茄，只在特定日子出现。',
+  mb_liti:'没什么含义就是更形象！更大！更强壮！',
   m2_dou:'圆滚滚像颗小豆子，蹦跶起来节奏感十足。',
   m2_men:'出生自带萌化光环，看它一眼心情就好。',
   m2_zhu:'胃口堪比小猪，吃饱就原地躺平。',
@@ -1215,9 +1225,12 @@ function condOk(c){
     case 'item': return S.boughtItems.includes(c.i);
     case 'harvest': return S.totalHarvest>=c.n;
     case 'count': return colCount(c.id)>=c.n;
+    case 'festival': return isFestival(d);
   }
   return false;
 }
+const FESTIVALS=[[1,1],[2,14],[5,1],[6,1],[10,1],[10,31],[12,24],[12,25]];
+function isFestival(d){ const m=d.getMonth()+1, day=d.getDate(); return FESTIVALS.some(function(f){return f[0]===m&&f[1]===day;}); }
 function condText(c){
   if(!c)return '随时可长';
   switch(c.t){
@@ -1231,6 +1244,7 @@ function condText(c){
     case 'item': return `需要道具「${ITEMS.find(i=>i.id===c.i).name}」`;
     case 'harvest': return `累计收获 ${c.n} 次`;
     case 'count': { const t=typeById(c.id); return `收获「${t.name}」${c.n} 次`; }
+    case 'festival': return '节日限定';
   }
   return '';
 }
@@ -1409,8 +1423,8 @@ function lockedSVG(){
 function hScale(h){ return clamp(0.7+(h-2)/38,0.7,1.7); }
 
 /* ---------------- 图鉴数据（含极值） ---------------- */
-/* 第二图鉴：第一图鉴集齐 DEX1_MIN(59) 个后开启，其月巴并入掉落池；id 前缀 m2_ 由 TYPES2 提供 */
-const DEX1_MIN=59;
+/* 第二图鉴：第一图鉴剩下 DEX1_MIN_REMAIN(3) 个月巴未集齐即开启，其月巴并入掉落池；id 前缀 m2_ 由 TYPES2 提供 */
+const DEX1_MIN_REMAIN=3, DEX1_MIN=TYPES.length-DEX1_MIN_REMAIN;
 function dex2Unlocked(){ return Object.keys(S.collection).length>=DEX1_MIN; }
 function isDex2(id){ return TYPES2.some(t=>t.id===id); }
 function typeById(id){ return TYPES.find(x=>x.id===id)||TYPES2.find(x=>x.id===id); }
