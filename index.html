@@ -1423,8 +1423,8 @@ function lockedSVG(){
 function hScale(h){ return clamp(0.7+(h-2)/38,0.7,1.7); }
 
 /* ---------------- 图鉴数据（含极值） ---------------- */
-/* 第二图鉴：第一图鉴剩下 DEX1_MIN_REMAIN(3) 个月巴未集齐即开启，其月巴并入掉落池；id 前缀 m2_ 由 TYPES2 提供 */
-const DEX1_MIN_REMAIN=3, DEX1_MIN=TYPES.length-DEX1_MIN_REMAIN;
+/* 第二图鉴：第一图鉴剩下 DEX1_MIN_REMAIN(5) 个月巴未集齐即开启，其月巴并入掉落池；id 前缀 m2_ 由 TYPES2 提供 */
+const DEX1_MIN_REMAIN=5, DEX1_MIN=TYPES.length-DEX1_MIN_REMAIN;
 function dex2Unlocked(){ return Object.keys(S.collection).length>=DEX1_MIN; }
 function isDex2(id){ return TYPES2.some(t=>t.id===id); }
 function typeById(id){ return TYPES.find(x=>x.id===id)||TYPES2.find(x=>x.id===id); }
