@@ -2061,7 +2061,7 @@ function openBook(){
   pomoModalOpen=false;
   const unlocked=dex2Unlocked();
   if(dexPage===2 && !unlocked) dexPage=1;
-  const list=dexPage===2?TYPES2:TYPES;
+  const list=(dexPage===2?TYPES2:TYPES).slice().sort((a,b)=>(a.r-b.r)||a.id.localeCompare(b.id));
   const got=Object.keys(dexPage===2?S.collection2:S.collection).length, total=list.length;
   const tabs=`<div class="booktabs">
     <button class="btab ${dexPage===1?'on':''}" onclick="switchDexPage(1)">📕 第一图鉴</button>
