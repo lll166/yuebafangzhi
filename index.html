@@ -946,11 +946,13 @@ const TYPES=[
   {id:'mb_pingguo',name:'吃茄月巴',img:'https://origin.picgo.net/2026/09/03/1618abd45272691005.th.png',r:3,v:45,t:420, cond:{t:'season',s:'autumn',day:1},    color:'#c96a73', shape:'round'},
   {id:'mb_chaos',name:'混沌月巴', r:5, v:1000,t:5400, cond:null, weight:0.003, color:'#5a5470', shape:'chaos'},
   {id:'mb_gungun',  name:'滚滚巴',    r:3, v:40, t:420,  cond:null, color:'#f0b27a', shape:'round', size:1.35},
-  {id:'mb_jiu',     name:'酒巴',      r:3, v:45, t:480,  cond:{t:'night'}, color:'#b08a6a', shape:'squish'},
+  {id:'mb_jiu',     name:'酒巴',      r:3, v:45, t:480,  cond:{t:'night'}, img:'https://origin.picgo.net/2026/09/20/jiuba7578b776f8c4c528.th.png', color:'#b08a6a', shape:'squish'},
   {id:'mb_shilaimu',name:'史莱姆巴',  r:3, v:50, t:520,  cond:null, color:'#8fce7f', shape:'squish'},
   {id:'mb_fengkuang',name:'疯狂月巴', r:4, v:120, t:800, cond:{t:'festival'}, color:'#e74c3c', shape:'spike'},
   {id:'mb_liti',    name:'立体月巴',  r:4, v:250, t:1100, cond:null, weight:0.01, img:'https://origin.picgo.net/2026/09/19/litiyueba0f6fd2bd28b7cc83.th.png', color:'#8e9baf', shape:'tall', size:1.5},
   {id:'mb_xiaoma',  name:'小马月巴',  r:3, v:48, t:460,  cond:null, img:'https://origin.picgo.net/2026/09/19/xiaoma59a91dd50534ac93.th.png', color:'#e6c9f0', shape:'tall'},
+  {id:'mb_tomato',  name:'番茄大战月巴', r:2, v:16, t:160, cond:null, img:'https://origin.picgo.net/2026/09/20/fanqiedazhan9861d01c9113a3f3.th.png', color:'#e05b4f', shape:'round'},
+  {id:'mb_powa',    name:'抛瓦月巴',   r:2, v:18, t:190, cond:null, color:'#e0a64e', shape:'round'},
 ];
 /* 第二图鉴：第一图鉴集齐 TYPES.length-5（当前 63，见 DEX1_MIN）个月巴后开启（掉落池合并）。字段格式与 TYPES 一致，
    主题与第一图鉴不重复（避免晨/午/晴/云/雨/雪/季节/闪电/彩虹等撞车）；
@@ -1083,6 +1085,8 @@ const FAT_INTRO={
   mb_fengkuang:'V巴50番茄，只在特定日子出现。',
   mb_liti:'没什么含义就是更形象！更大！更强壮！',
   mb_xiaoma:'也许苍月卫人是美丽的独角兽呢，当然不是为了尺寸，当然不是。',
+  mb_tomato:'番茄吃掉了你的月巴。',
+  mb_powa:'If you want it, then you\'ll have to take it.',
   m2_dou:'圆滚滚像颗小豆子，蹦跶起来节奏感十足。',
   m2_men:'出生自带萌化光环，看它一眼心情就好。',
   m2_zhu:'胃口堪比小猪，吃饱就原地躺平。',
