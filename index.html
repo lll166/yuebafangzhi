@@ -1703,8 +1703,8 @@ function clickCell(z,w,i){
     const k=now(); const key=z+'-'+w+'-'+i;
     if(!tapCd[key]||k-tapCd[key]>TAP_CD){
       tapCd[key]=k;
-      // 每次点击增加 10 秒生长进度（前移 start），进度满即成熟
-      cell.start+= TAP_SECS*1000;
+      // 每次点击增加 10 秒生长进度（start 前移=更早播种），进度满即成熟
+      cell.start-= TAP_SECS*1000;
       save();
       if(currentZone>=0) renderCell(z,w,i);
       if(cellReady(cell)){ doHarvest(z,w,i,cell,cellEls[`${z}-${w}-${i}`]); }
