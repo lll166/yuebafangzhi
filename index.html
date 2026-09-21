@@ -2158,7 +2158,18 @@ function openBook(){
   pomoModalOpen=false;
   const unlocked=dex2Unlocked();
   if(dexPage===2 && !unlocked) dexPage=1;
-  const list=(dexPage===2?TYPES2:TYPES).slice().sort((a,b)=>(a.r-b.r)||a.id.localeCompare(b.id));
+  // 稀有度 1-5 升序；同稀有度内按“名称相似组”聚类（同主题排一起），未命中的按名称/字数兜底
+  const dexCat=name=>{
+    const m={春:'A季',夏:'A季',秋:'A季',冬:'A季',晨:'B时',午:'B时',昏:'B时',夜:'B时',凌晨:'B时',午夜:'B时',晴:'C气',云:'C气',雨:'C气',暴雨:'C气',雪:'C气',彩虹:'C气'};
+    for(const k in m){ if(name.indexOf(k)>=0) return m[k]; }
+    return 'Z'+name;
+  };
+  const list=(dexPage===2?TYPES2:TYPES).slice().sort((a,b)=>(
+    (a.r-b.r)||
+    (dexCat(a.name).localeCompare(dexCat(b.name)))||
+    (a.name.length-b.name.length)||
+    a.name.localeCompare(b.name)
+  ));
   const got=Object.keys(dexPage===2?S.collection2:S.collection).length, total=list.length;
   const tabs=`<div class="booktabs">
     <button class="btab ${dexPage===1?'on':''}" onclick="switchDexPage(1)">📕 第一图鉴</button>
