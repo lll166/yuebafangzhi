@@ -959,7 +959,6 @@ const TYPES=[
   {id:'mb_laba',    name:'拉巴',    r:3, v:40, t:400, cond:null, img:'https://origin.picgo.net/2026/09/20/laba8ce98439c56d3f6d.th.png', color:'#dbb3e8', shape:'round'},
 ];
 /* 第二图鉴：第一图鉴集齐 TYPES.length-5（当前 63，见 DEX1_MIN）个月巴后开启（掉落池合并）。字段格式与 TYPES 一致，
-   主题与第一图鉴不重复（避免晨/午/晴/云/雨/雪/季节/闪电/彩虹等撞车）；
    后续扩充时直接追加即可；全部第二图鉴月巴生长速度为基础 1/3（时长 x3，见 growDur）。 */
 const TYPES2=[
   {id:'m2_dou',    name:'豆月巴',  r:1, v:8,  t:80,  cond:null, color:'#aed581', shape:'round'},
@@ -1179,7 +1178,7 @@ function defaultState(){
     coins:0, accelLv:0, boughtItems:[], collection:{}, collection2:{}, dex2Celebrated:false, totalHarvest:0,
     weather:'sunny', lastRainAt:-1e12, weatherHoldEnd:0,
     nextWeatherAt:now()+rand(2,4)*60000, muted:false, lastSave:now(),
-    seenHelp:false, starter:true,
+    seenHelp:false, starter:true, dexPending:null,
     skins:{unlocked:[], active:null},
     tasks:[],
     gameStart:now(), gameEpoch:now(),
@@ -2151,6 +2150,7 @@ function claimDexEvent(){
   toast(`🍅 ${esc(_dexEv.t.name)} 送给你 ${fmt(reward)} 金币！${tomato>0?'还附赠 '+tomato+' 个番茄🍅':''}`);
   if(sfx.dex) sfx.dex(); else sfx.coin();
   const b=$('dexBtn'); if(b) b.style.display='none';
+  S.dexPending=null; save();
   _dexEv=null; closeModal();
 }
 function dexBookOpenSlots(){ let n=0; for(const z of S.zones)for(const w of z.woods)n+=w.cells.filter(c=>c&&c.t).length; return n; }
@@ -4194,6 +4194,7 @@ function nextDexEventAt(){ return now()+rand(20,45)*60000; } // 下次天降事�
 let _dexEv=null; // 待领取的天降事件缓存：{t,line,reward}
 function checkDexEvent(){
   if(!S.dexNext) S.dexNext=nextDexEventAt();
+  if(!_dexEv && S.dexPending){ _dexEv=S.dexPending; } // 恢复未领取的事件（刷新/重开后按钮仍亮）
   if(_dexEv) return; // 已有待领取事件，保持按钮显示
   if(now()<S.dexNext) return;
   // 番茄钟运行中不打扰，延后 1 分钟再试
@@ -4202,7 +4203,9 @@ function checkDexEvent(){
   const t=TYPES[Math.floor(Math.random()*TYPES.length)];
   const line=(DEX_EVENTS[Math.floor(Math.random()*DEX_EVENTS.length)]||'').replace(/\{name\}/g,t.name);
   _dexEv={t,line,reward:dexEventReward(), tomato:dex2Unlocked()?randi(1,10):0};
+  S.dexPending=_dexEv;
   S.dexNext=nextDexEventAt();
+  save();
   const b=$('dexBtn'); if(b) b.style.display='';
   if(sfx.dex) sfx.dex(); else sfx.coin();
 }
