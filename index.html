@@ -3868,8 +3868,8 @@ function pomoReportCheck(){
 /* ---------------- 主循环 ---------------- */
 let lastReadySfx=0, lastRevealSfx=0;
 /* ================= 旅行月巴（小游戏） ================= */
-const TV_FOODS={food1:{n:'饭团便当',p:50,dur:20*60000,rn:.4},food2:{n:'时蔬便当',p:150,dur:32*60000,rn:.6},food3:{n:'豪华便当',p:400,dur:46*60000,rn:.85}};
-const TV_ITEMS={lamp:{n:'油灯',p:300},charm:{n:'幸运护身符',p:500,durab:3},bell:{n:'铃铛',p:200}};
+const TV_FOODS={food1:{n:'饭团便当',p:50,dur:20*60000,rn:.4,e:'🍙'},food2:{n:'时蔬便当',p:150,dur:32*60000,rn:.6,e:'🍱'},food3:{n:'豪华便当',p:400,dur:46*60000,rn:.85,e:'🥡'}};
+const TV_ITEMS={lamp:{n:'油灯',p:300,e:'🏮'},charm:{n:'幸运护身符',p:500,durab:3,e:'🍀'},bell:{n:'铃铛',p:200,e:'🔔'}};
 const TV_DESTS=[
  {id:'forest',n:'森林',need:'',specials:['野果','松果','蘑菇','露珠','蜂蜜','树莓','青苔团','橡子'],cards:['A1','A2','A3','A4','A5','A6','A7','A8','A9','A10','A11','A12','A13','A14','A15']},
  {id:'sea',n:'大海',need:'lamp',specials:['海贝','海盐','珊瑚枝','珍珠','海藻','浪花糖','蟹壳扣','漂流木'],cards:['B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','B12','B13','B14','B15']},
@@ -4232,8 +4232,8 @@ function tvBagHTML(){ const t=tvFresh(); const owned=tvOwnedFats(); const pick=t
   for(const o of owned){ const sel=pick===o.id?' sel':''; h+='<div class="tv-fatpick'+sel+'" onclick="tvPickFat(\''+o.id+'\')"><div class="pic">'+fatSVG(o.t)+'</div><div class="nm">'+o.t.name+'</div></div>'; }
   h+='</div>';
   }
-  h+='<p style="color:#48614a;font-size:13px">🧰 仓库与行囊</p><div class="sh-grid">'; let any=false; for(const k in t.wh){ const c=t.wh[k]; if(c<=0)continue; any=true; const it=TV_FOODS[k]||TV_ITEMS[k]; const isF=!!TV_FOODS[k]; const du=(k==='charm'&&it.durab)?(' · 耐久 '+Math.max(0,(t.charmDura==null?it.durab:t.charmDura))+'/'+it.durab):''; h+='<div class="sh-card"><div class="sh-ic">'+(isF?'🍙':'🧰')+'</div><div class="sh-n">'+it.n+'</div><div class="sh-d">仓库 ×'+c+du+'</div><button class="btn" onclick="tvPack(\''+k+'\')">装进行囊</button></div>'; } if(!any)h+='<p style="color:#999;text-align:center;grid-column:1/-1">仓库空空的，去 🛍 商店买点物资吧</p>';
-  h+='</div><p style="color:#48614a;font-size:13px">🎒 行囊（'+t.bag.length+'/4）</p><div class="sh-grid">'; if(!t.bag.length)h+='<p style="color:#999;text-align:center;grid-column:1/-1">还没有带任何东西</p>'; t.bag.forEach(function(x){ const it=TV_FOODS[x.k]||TV_ITEMS[x.k]; const isF=!!TV_FOODS[x.k]; const du=(x.k==='charm'&&it.durab)?(' · 耐久 '+Math.max(0,(t.charmDura==null?it.durab:t.charmDura))+'/'+it.durab):''; h+='<div class="sh-card"><div class="sh-ic">'+(isF?'🍙':'🧰')+'</div><div class="sh-n">'+it.n+'</div><div class="sh-d">'+du+'</div><button class="btn" onclick="tvUnpack(\''+x.k+'\')">取出</button></div>'; }); h+='</div>';
+  h+='<p style="color:#48614a;font-size:13px">🧰 仓库与行囊</p><div class="sh-grid">'; let any=false; for(const k in t.wh){ const c=t.wh[k]; if(c<=0)continue; any=true; const it=TV_FOODS[k]||TV_ITEMS[k]; const isF=!!TV_FOODS[k]; const du=(k==='charm'&&it.durab)?(' · 耐久 '+Math.max(0,(t.charmDura==null?it.durab:t.charmDura))+'/'+it.durab):''; h+='<div class="sh-card"><div class="sh-ic">'+(it.e||'🧰')+'</div><div class="sh-n">'+it.n+'</div><div class="sh-d">仓库 ×'+c+du+'</div><button class="btn" onclick="tvPack(\''+k+'\')">装进行囊</button></div>'; } if(!any)h+='<p style="color:#999;text-align:center;grid-column:1/-1">仓库空空的，去 🛍 商店买点物资吧</p>';
+  h+='</div><p style="color:#48614a;font-size:13px">🎒 行囊（'+t.bag.length+'/4）</p><div class="sh-grid">'; if(!t.bag.length)h+='<p style="color:#999;text-align:center;grid-column:1/-1">还没有带任何东西</p>'; t.bag.forEach(function(x){ const it=TV_FOODS[x.k]||TV_ITEMS[x.k]; const isF=!!TV_FOODS[x.k]; const du=(x.k==='charm'&&it.durab)?(' · 耐久 '+Math.max(0,(t.charmDura==null?it.durab:t.charmDura))+'/'+it.durab):''; h+='<div class="sh-card"><div class="sh-ic">'+(it.e||'🧰')+'</div><div class="sh-n">'+it.n+'</div><div class="sh-d">'+du+'</div><button class="btn" onclick="tvUnpack(\''+x.k+'\')">取出</button></div>'; }); h+='</div>';
   const tp=typeById(pick);
   if(t.frog.status!=='away'){ h+='<div style="text-align:center;margin:10px 0 2px;color:#3e5c3f;font-size:13px;font-weight:700">🚀 即将出发的月巴'+(tp?('：'+tp.name):'（未选择）')+'</div>';
   if(tp)h+='<div style="text-align:center;margin-bottom:4px"><span class="tv-traveler">'+fatSVG(tp)+'</span></div>';
