@@ -2140,7 +2140,6 @@ function openDexEvent(){
       <p style="font-size:15px;color:var(--text);margin:4px 0 12px">${esc(line)}</p>
       <div style="font-size:14px;color:#e02424;font-weight:800;margin-bottom:2px">🍅 ${esc(t.name)} 送给你 ${fmt(reward)} 金币！</div>
       ${extra}
-      <div style="font-size:11px;color:var(--dim);margin-bottom:12px">（按当前 ${dexBookOpenSlots()} 个槽位 · 5分钟产出 × 50%~100%）</div>
       <button class="btn gold" onclick="claimDexEvent()">收下 · +${fmt(reward)} 🪙${tomato>0?' +'+tomato+' 🍅':''}</button>
     </div>`);
 }
