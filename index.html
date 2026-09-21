@@ -957,6 +957,9 @@ const TYPES=[
   {id:'mb_tomato',  name:'番茄大战月巴', r:2, v:16, t:160, cond:null, img:'https://origin.picgo.net/2026/09/20/fanqiedazhan9861d01c9113a3f3.th.png', color:'#e05b4f', shape:'round'},
   {id:'mb_powa',    name:'抛瓦月巴',   r:2, v:18, t:190, cond:null, color:'#e0a64e', shape:'round'},
   {id:'mb_laba',    name:'拉巴',    r:3, v:40, t:400, cond:null, img:'https://origin.picgo.net/2026/09/20/laba8ce98439c56d3f6d.th.png', color:'#dbb3e8', shape:'round'},
+  {id:'mb_tangyuan',name:'汤圆月巴', r:2, v:20, t:200, cond:null, img:'https://origin.picgo.net/2026/09/21/e0a73ec5f90f4b1d90fd1ce444e15c18df5827ccea2e46c6.th.png', color:'#f5e6ee', shape:'round'},
+  {id:'mb_bashan',  name:'巴山',    r:4, v:250, t:1200, cond:null, img:'https://origin.picgo.net/2026/09/21/shanbf57ea8c56a98c78.th.png', color:'#5c8a64', shape:'big', size:3.5},
+  {id:'mb_xiba',    name:'西巴',    r:2, v:15, t:150, cond:null, color:'#a5c8e8', shape:'wide'},
 ];
 /* 第二图鉴：第一图鉴集齐 TYPES.length-5（当前 63，见 DEX1_MIN）个月巴后开启（掉落池合并）。字段格式与 TYPES 一致，
    后续扩充时直接追加即可；全部第二图鉴月巴生长速度为基础 1/3（时长 x3，见 growDur）。 */
@@ -1014,6 +1017,7 @@ const R_W={1:[3,8],2:[6,15],3:[10,25],4:[20,50],5:[40,90],6:[60,150]}; // 体重
 /* 每种月巴的「图(画)作者」by ID，图鉴详情弹窗图片下方展示；未填则不显示画作者 */
 const YB_PIC_AUTHOR={
   mb_jiu:'三重彩',
+  mb_tangyuan:'三重彩',
 };
 /* 每种月巴的「简介(文字)作者」by ID，图鉴详情弹窗简介末尾展示；未填则不显示文字作者 */
 const YB_TXT_AUTHOR={};
@@ -1091,6 +1095,9 @@ const FAT_INTRO={
   mb_tomato:'番茄吃掉了你的月巴。',
   mb_powa:'If you want it, then you\'ll have to take it.',
   mb_laba:'以女性形态出现的月巴（？），身边总是有一只被灌满奶油的女性番茄。',
+  mb_tangyuan:'也许……这就是传说的白切黑。馅儿有点烫，这是月巴的报复。',
+  mb_bashan:'雄伟到和山一样高大的月巴，山上偶尔会长出一些红色的小番茄。或许真的可以看做是一座山……？',
+  mb_xiba:'不爱吃泡菜，素质不详，最喜欢草草草。',
   m2_dou:'圆滚滚像颗小豆子，蹦跶起来节奏感十足。',
   m2_men:'出生自带萌化光环，看它一眼心情就好。',
   m2_zhu:'胃口堪比小猪，吃饱就原地躺平。',
