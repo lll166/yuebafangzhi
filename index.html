@@ -995,6 +995,7 @@ const TYPES=[
   {id:'mb_tangyuan',name:'汤圆月巴', r:2, v:20, t:200, cond:null, img:'https://origin.picgo.net/2026/09/21/e0a73ec5f90f4b1d90fd1ce444e15c18df5827ccea2e46c6.th.png', color:'#f5e6ee', shape:'round'},
   {id:'mb_bashan',  name:'巴山',    r:4, v:250, t:1200, cond:null, img:'https://origin.picgo.net/2026/09/21/shanbf57ea8c56a98c78.th.png', color:'#5c8a64', shape:'big', size:3.5},
   {id:'mb_xiba',    name:'西巴',    r:2, v:15, t:150, cond:null, color:'#a5c8e8', shape:'wide'},
+  {id:'m2_bairi', name:'百日月巴',  r:6, v:3000, t:3600, cond:{t:'dexfirst', n:99}, weight:0.003, color:'#ffd54f', shape:'big'},
 ];
 /* 第二图鉴：第一图鉴集齐 TYPES.length-5（见 DEX1_MIN）个月巴后开启（掉落池合并）。字段格式与 TYPES 一致，
    后续扩充时直接追加即可；第二图鉴月巴与第一图鉴生长速度一致（见 growDur）。 */
@@ -1022,28 +1023,27 @@ const TYPES2=[
   {id:'m2_xiangjiao',name:'香蕉月巴',r:3, v:36, t:360, cond:{t:'weather',w:'sunny'}, color:'#ffe082', shape:'bean'},
   {id:'m2_hulu',   name:'葫芦月巴',  r:3, v:40, t:420, cond:{t:'season',s:'autumn'}, color:'#dce775', shape:'round'},
   {id:'m2_bingqilin',name:'冰淇淋月巴',r:3,v:42,t:420, cond:{t:'season',s:'winter'}, color:'#e1bee7', shape:'round'},
-  {id:'m2_shamo',  name:'沙漠月巴',  r:4, v:60, t:600, cond:{t:'zone',z:7},  color:'#ffcc80', shape:'round'},
-  {id:'m2_wenquan',name:'温泉月巴',  r:4, v:62, t:600, cond:{t:'zone',z:3},  color:'#ffab91', shape:'drop'},
-  {id:'m2_huoshan',name:'火山月巴',  r:4, v:66, t:640, cond:{t:'zone',z:4},  color:'#d15852', shape:'spike'},
-  {id:'m2_shanhu', name:'珊瑚月巴',  r:4, v:64, t:620, cond:{t:'zone',z:2},  color:'#f06292', shape:'spike'},
-  {id:'m2_baoshi', name:'宝石月巴',  r:4, v:80, t:720, cond:{t:'harvest',n:1500}, color:'#4dd0e1', shape:'cube'},
-  {id:'m2_long',   name:'龙月巴',    r:4, v:120,t:900, cond:{t:'harvest',n:3000}, color:'#d15852', shape:'big'},
-  {id:'m2_fenghuang',name:'凤凰月巴',r:5, v:200, t:1500, cond:{t:'count',id:'mb_chaos',n:10}, color:'#ff7043', shape:'rainbow'},
-  {id:'m2_jiguang',name:'极光月巴',  r:5, v:180, t:1200, cond:{t:'weather',w:'snow',night:1}, color:'#7e57c2', shape:'rainbow'},
-  {id:'m2_xiangrui',name:'祥瑞月巴',  r:6, v:2000, t:3600, cond:null, weight:0.01, color:'#e6c44c', shape:'big'},
-  {id:'m2_huntun',name:'馄饨月巴',  r:5, v:260, t:1500, cond:null, weight:0.01, color:'#f6c557', shape:'round'},
-  {id:'m2_baba',  name:'巴巴月巴',  r:4, v:70, t:700, cond:null, color:'#f48fb1', shape:'round'},
-  {id:'m2_diwang',name:'帝王之巴',  r:5, v:280, t:1600, cond:null, weight:0.01, color:'#e6c44c', shape:'big'},
-  {id:'m2_buman', name:'不满月巴',  r:4, v:70, t:700, cond:null, color:'#9e9e9e', shape:'round'},
-  {id:'m2_tanwu', name:'贪污月巴',  r:5, v:240, t:1400, cond:null, weight:0.01, color:'#6d4c41', shape:'round'},
-  {id:'m2_bairi', name:'百日月巴',  r:6, v:3000, t:3600, cond:null, weight:0.003, color:'#ffd54f', shape:'big'},
-  {id:'m2_zhangyu',name:'章鱼月巴',  r:4, v:80, t:720, cond:null, color:'#7e57c2', shape:'spike'},
-  {id:'m2_xianyi',name:'嫌疑月巴',  r:4, v:85, t:760, cond:null, color:'#546e7a', shape:'ghost'},
+  {id:'m2_shamo',    name:'沙漠月巴',  r:4, v:60, t:600, cond:{t:'travel', d:'forest', n:5},  color:'#ffcc80', shape:'round'},
+  {id:'m2_wenquan',name:'温泉月巴',  r:4, v:62, t:600, cond:{t:'travel', s:'暖石'},  color:'#ffab91', shape:'drop'},
+  {id:'m2_huoshan',name:'火山月巴',  r:4, v:66, t:640, cond:{t:'travel', d:'sea', n:3},  color:'#d15852', shape:'spike'},
+  {id:'m2_shanhu', name:'珊瑚月巴',  r:4, v:64, t:620, cond:{t:'travel', s:'珊瑚枝'},  color:'#f06292', shape:'spike'},
+  {id:'m2_baoshi', name:'宝石月巴',  r:4, v:80, t:720, cond:{t:'travel', s:'珍珠'}, color:'#4dd0e1', shape:'cube'},
+  {id:'m2_long',   name:'龙月巴',    r:4, v:120,t:900, cond:{t:'travel', d:'snow', n:5}, color:'#d15852', shape:'big'},
+  {id:'m2_fenghuang',name:'凤凰月巴',r:5, v:200, t:1500, cond:{t:'travel', d:'snow', n:8}, color:'#ff7043', shape:'rainbow'},
+  {id:'m2_jiguang',name:'极光月巴',  r:5, v:180, t:1200, cond:{t:'travel', c:'D3'}, color:'#7e57c2', shape:'rainbow'},
+  {id:'m2_xiangrui',name:'祥瑞月巴',  r:6, v:2000, t:3600, cond:{t:'travel', s:'极光尘'}, weight:0.01, color:'#e6c44c', shape:'big'},
+  {id:'m2_huntun',name:'馄饨月巴',  r:5, v:260, t:1500, cond:{t:'travel', s:'热可可'}, weight:0.01, color:'#f6c557', shape:'round'},
+  {id:'m2_baba',  name:'巴巴月巴',  r:4, v:70, t:700, cond:{t:'travel', c:'C4'}, color:'#f48fb1', shape:'round'},
+  {id:'m2_diwang',name:'帝王之巴',  r:5, v:280, t:1600, cond:{t:'travel', d:'sea', n:8}, weight:0.01, color:'#e6c44c', shape:'big'},
+  {id:'m2_buman', name:'不满月巴',  r:4, v:70, t:700, cond:{t:'travel', d:'town', n:4}, color:'#9e9e9e', shape:'round'},
+  {id:'m2_tanwu', name:'贪污月巴',  r:5, v:240, t:1400, cond:{t:'travel', d:'town', n:8}, weight:0.01, color:'#6d4c41', shape:'round'},
+  {id:'m2_zhangyu',name:'章鱼月巴',  r:4, v:80, t:720, cond:{t:'travel', s:'海藻'}, color:'#7e57c2', shape:'spike'},
+  {id:'m2_xianyi',name:'嫌疑月巴',  r:4, v:85, t:760, cond:{t:'travel', c:'A7'}, color:'#546e7a', shape:'ghost'},
   {id:'m2_fanqie',name:'番茄月巴',  r:3, v:45, t:450, cond:null, color:'#e57373', shape:'round'},
-  {id:'m2_jinshu',name:'金属月巴',  r:4, v:90, t:800, cond:null, color:'#b0bec5', shape:'cube'},
-  {id:'m2_shanliang',name:'闪亮月巴',  r:5, v:180, t:1200, cond:null, weight:0.01, color:'#ffe082', shape:'star'},
+  {id:'m2_jinshu',name:'金属月巴',  r:4, v:90, t:800, cond:{t:'travel', s:'漂流木'}, color:'#b0bec5', shape:'cube'},
+  {id:'m2_shanliang',name:'闪亮月巴',  r:5, v:180, t:1200, cond:{t:'travel', c:'B10'}, weight:0.01, color:'#ffe082', shape:'star'},
   {id:'m2_zanmei',name:'赞美月巴',  r:3, v:50, t:500, cond:null, color:'#fff176', shape:'round'},
-  {id:'m2_zuojia',name:'作家月巴',  r:4, v:95, t:850, cond:null, color:'#90a4ae', shape:'wide'},
+  {id:'m2_zuojia',name:'作家月巴',  r:4, v:95, t:850, cond:{t:'travel', c:'C9'}, color:'#90a4ae', shape:'wide'},
 ];
 const RAR_NAME={1:'普通',2:'常见',3:'稀有',4:'史诗',5:'传说',6:'活动'};
 const R_H={1:[2,5],2:[4,8],3:[6,12],4:[10,20],5:[16,30],6:[22,40]};   // 身高 cm 范围
@@ -1295,6 +1295,8 @@ function condOk(c){
     case 'harvest': return S.totalHarvest>=c.n;
     case 'count': return colCount(c.id)>=c.n;
     case 'festival': return isFestival(d);
+    case 'travel': { const tv=tvFresh(); if(c.d)return (tv.destCount[c.d]||0)>= (c.n||1); if(c.s)return tv.specials.indexOf(c.s)>=0; if(c.c)return tv.cards.indexOf(c.c)>=0; return false; }
+    case 'dexfirst': return Object.keys(S.collection).length>= (c.n||1);
   }
   return false;
 }
@@ -1314,6 +1316,8 @@ function condText(c){
     case 'harvest': return `累计收获 ${c.n} 次`;
     case 'count': { const t=typeById(c.id); return `收获「${t.name}」${c.n} 次`; }
     case 'festival': return '节日限定';
+    case 'travel': { if(c.d){ const dv=TV_DESTS.find(x=>x.id===c.d); return `旅行到达「${dv?dv.n:c.d}」${c.n||1} 次`; } if(c.s)return `旅行收获特产「${c.s}」`; if(c.c){ const dp=TV_DESTS.find(x=>x.cards.indexOf(c.c)>=0); return `收到「${dp?dp.n:''}」来信（${c.c}）`; } return '旅行相关'; }
+    case 'dexfirst': return `解锁第一图鉴 ${c.n||1} 个月巴`;
   }
   return '';
 }
@@ -1499,8 +1503,8 @@ function lockedSVG(){
 function hScale(h){ return clamp(0.7+(h-2)/38,0.7,1.7); }
 
 /* ---------------- 图鉴数据（含极值） ---------------- */
-/* 第二图鉴：第一图鉴剩下 DEX1_MIN_REMAIN(5) 个月巴未集齐即开启，其月巴并入掉落池；id 前缀 m2_ 由 TYPES2 提供 */
-const DEX1_MIN_REMAIN=5, DEX1_MIN=TYPES.length-DEX1_MIN_REMAIN;
+/* 第二图鉴：第一图鉴剩下 DEX1_MIN_REMAIN(6) 个月巴未集齐即开启，其月巴并入掉落池；id 前缀 m2_ 由 TYPES2 提供 */
+const DEX1_MIN_REMAIN=6, DEX1_MIN=TYPES.length-DEX1_MIN_REMAIN;
 function dex2Unlocked(){ return Object.keys(S.collection).length>=DEX1_MIN; }
 function isDex2(id){ return TYPES2.some(t=>t.id===id); }
 function typeById(id){ return TYPES.find(x=>x.id===id)||TYPES2.find(x=>x.id===id); }
