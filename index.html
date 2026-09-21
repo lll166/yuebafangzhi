@@ -1519,6 +1519,7 @@ function cellStage(cell){
   if(!cell||!cell.t)return 'empty';
   if(cellReady(cell))return 'mature';
   const p=clamp((now()-cell.start)/(cell.dur/speedMult()),0,1);
+  if(p>=0.8) return 'near'; // 接近成熟：显示完整月巴但不可收获
   return p<0.34?'baby':'grow';
 }
 
@@ -1682,6 +1683,15 @@ function renderCell(z,w,i){
       el.innerHTML=`<span class="spr" style="transform:scale(${s})">${fatSVG(type)}</span>
         <span class="val">+${fmt(type.v)}</span>`;
       el.title=`${type.name} · ${cell.h}cm · ${cell.w}g`;
+    }else if(stage==='near'){
+      // 接近成熟：显示完整月巴 + 进度条（略小、不可收获）
+      const type=typeById(cell.t);
+      const s=hScale(cell.h)*(type.size||1)*SCENE_FAT_ZOOM*0.85;
+      const p=clamp((now()-cell.start)/(cell.dur/speedMult()),0,1);
+      el.className='wcell near';
+      el.innerHTML=`<span class="spr" style="transform:scale(${s});opacity:.92">${fatSVG(type)}</span>
+        <span class="pg"><i style="width:${p*100}%"></i></span>`;
+      el.title=`${type.name} · 即将成熟…`;
     }else{
       const s=stage==='baby'?0.62:0.88;
       const p=clamp((now()-cell.start)/(cell.dur/speedMult()),0,1);
