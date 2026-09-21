@@ -896,7 +896,8 @@ const WOOD_IMG='https://origin.picgo.net/2026/09/03/58512f7c468327988fd65ba259f2
 
 /* ---------------- 数据：道具/装饰 ---------------- */
 const FAST_COST=200, WEATHER_COST=500, ACCEL_BASE=2000, ACCEL_MULT=2.2, ACCEL_MAX=15;
-function fastCost(){ let sum=0; for(const z in S.zones){ const zs=S.zones[z]; for(const w of zs.woods||[]){ for(const cell of w.cells||[]){ if(cell&&cell.t){ const tp=typeById(cell.t); if(tp) sum+=tp.v; } } } } return Math.round(Math.max(200,sum*0.4)); }
+function fastCost(){ const base=200, slots=totalSlots(), coin=Math.max(0,Math.log10(1+S.coins)); return Math.round(base*(1+0.1*Math.max(0,slots-1))*(1+coin/6)); }
+function totalSlots(){ let n=0; for(const z in S.zones){ const zs=S.zones[z]; for(const w of zs.woods||[]) n+=w.cells.length; } return n; }
 const ITEMS=[
   {id:'coffee',    name:'咖啡机',   icon:'☕', cost:4000,  desc:'解锁「咖啡月巴」的出现条件'},
   {id:'doll',      name:'玩偶架',   icon:'🧸', cost:15000, desc:'解锁「玩偶月巴」的出现条件'},
@@ -1218,7 +1219,7 @@ const OFFLINE_CAP=12*3600*1000;
 let S;
 function defaultState(){
   return {
-    coins:0, accelLv:0, boughtItems:[], collection:{}, collection2:{}, dex2Celebrated:false, totalHarvest:0,
+    coins:0, accelLv:0, boughtItems:[], collection:{}, collection2:{}, dex2Celebrated:false, totalHarvest:0, lastFast:0,
     weather:'sunny', lastRainAt:-1e12, weatherHoldEnd:0,
     nextWeatherAt:now()+rand(2,4)*60000, muted:false, lastSave:now(),
     seenHelp:false, starter:true, dexPending:null,
@@ -1946,7 +1947,11 @@ function updateSceneBar(){
   const we=$('sceneWeather');
   if(we) we.textContent= weatherActive()?'🌦️ 自选天气':'🌦️ 天气瓶 '+fmt(WEATHER_COST)+'🪙';
   const sf=$('sceneFast');
-  if(sf) sf.textContent=`🍅 快长肥 ${fmt(fastCost())}🪙`;
+  if(sf){
+    const CD=10*60*1000, since=now()-S.lastFast;
+    sf.textContent = (S.lastFast>0 && since<CD) ? `⏳ 快长肥 ${Math.ceil((CD-since)/1000)}s`
+      : `🍅 快长肥 ${fmt(fastCost())}🪙`;
+  }
 }
 function periodOf(h){
   if(h<5)return '凌晨';
@@ -2032,9 +2037,12 @@ function buySlotFromMenu(z,w){
   openSlotMenu();
 }
 function useFast(){
+  const CD=10*60*1000, since=now()-S.lastFast;
+  if(S.lastFast>0 && since<CD){ sfx.error(); toast('⏳ 快长肥冷却中，'+Math.ceil((CD-since)/1000)+'s 后再用'); return; }
   const cost=fastCost();
   if(S.coins<cost){ sfx.error(); toast('金币不足'); return; }
   S.coins-=cost;
+  S.lastFast=now();
   let n=0;
   for(const zone of S.zones) for(const wood of zone.woods) for(const cell of wood.cells){
     if(cell&&cell.t&&!cellReady(cell)){
@@ -2046,6 +2054,15 @@ function useFast(){
   sfx.buy(); save(); updateHeader();
   if(currentZone>=0) renderSceneWoods();
   toast(n?`快长肥生效：${n} 个生长中的月巴加速了！`:'没有生长中的月巴');
+}
+// 快长肥冷却倒计时（刷新页面不重置，靠 S.lastFast 持久化）；非冷却时恢复价格显示
+function fastCoolTick(){
+  const sf=currentZone>=0?$('sceneFast'):null;
+  if(!sf) return;
+  const CD=10*60*1000, since=now()-S.lastFast;
+  sf.textContent = (S.lastFast>0 && since<CD)
+    ? `⏳ 快长肥 ${Math.ceil((CD-since)/1000)}s`
+    : `🍅 快长肥 ${fmt(fastCost())}🪙`;
 }
 const W_NAMES={sunny:['☀️','晴'],cloudy:['☁️','多云'],rain:['🌧️','雨'],storm:['⛈️','暴雨'],snow:['❄️','雪']};
 const WEATHER_HOLD=2*3600*1000; // 天气瓶选定的天气持续 2 现实小时
@@ -4410,6 +4427,7 @@ function checkDexEvent(){
   if(sfx.dex) sfx.dex(); else sfx.coin();
 }
 function tick(){
+  fastCoolTick();
   checkDexEvent();
   travelTick();
   pomoReportCheck();
