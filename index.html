@@ -961,8 +961,8 @@ const TYPES=[
   {id:'mb_bashan',  name:'巴山',    r:4, v:250, t:1200, cond:null, img:'https://origin.picgo.net/2026/09/21/shanbf57ea8c56a98c78.th.png', color:'#5c8a64', shape:'big', size:3.5},
   {id:'mb_xiba',    name:'西巴',    r:2, v:15, t:150, cond:null, color:'#a5c8e8', shape:'wide'},
 ];
-/* 第二图鉴：第一图鉴集齐 TYPES.length-5（当前 63，见 DEX1_MIN）个月巴后开启（掉落池合并）。字段格式与 TYPES 一致，
-   后续扩充时直接追加即可；全部第二图鉴月巴生长速度为基础 1/3（时长 x3，见 growDur）。 */
+/* 第二图鉴：第一图鉴集齐 TYPES.length-5（见 DEX1_MIN）个月巴后开启（掉落池合并）。字段格式与 TYPES 一致，
+   后续扩充时直接追加即可；第二图鉴月巴与第一图鉴生长速度一致（见 growDur）。 */
 const TYPES2=[
   {id:'m2_dou',    name:'豆月巴',  r:1, v:8,  t:80,  cond:null, color:'#aed581', shape:'round'},
   {id:'m2_men',    name:'萌月巴',  r:1, v:9,  t:90,  cond:null, color:'#f8bbd0', shape:'squish'},
@@ -1507,7 +1507,7 @@ function weightedPick(list){
   return list[list.length-1];
 }
 const BASE_SPEED=0.3; // 全部月巴基础生长速度（倍）：0.5 倍时间，即生长时长翻倍
-function growDur(t){ return t.t*(1000/BASE_SPEED)*(isDex2(t.id)?3:1); } // 第二图鉴生长速度为基础 1/3（时长 x3）
+function growDur(t){ return t.t*(1000/BASE_SPEED); } // 生长时长 = 秒数换算，第二图鉴与第一图鉴同速
 function spawnIn(zone,wood,cell){
   const t=weightedPick(availableTypes());
   const st=rollStats(t.r);
@@ -2205,7 +2205,7 @@ function openDex2Celebrate(){
   openModal('🎉 恭喜收集齐全！', `
     <div style="text-align:center;padding:6px 0 2px">
       <div style="font-size:52px;line-height:1.1">🎊</div>
-      <div class="pomo-note" style="text-align:center;margin-top:4px">你已收集齐第一图鉴 <b>${DEX1_MIN}</b> 个月巴！<br>📕 第二图鉴已开启 —— 全新 <b>${TYPES2.length}</b> 种月巴加入掉落，生长更慢（基础 1/3 速度），挑战你的耐心！</div>
+      <div class="pomo-note" style="text-align:center;margin-top:4px">你已收集齐第一图鉴 <b>${DEX1_MIN}</b> 个月巴！<br>📕 第二图鉴已开启 —— 全新 <b>${TYPES2.length}</b> 种月巴加入掉落，等你来集齐！</div>
       <button class="btn" style="width:100%;margin-top:10px" onclick="openBook()">📕 查看第二图鉴</button>
       <button class="btn" style="width:100%;margin-top:6px" onclick="closeModal()">关闭</button>
     </div>`);
