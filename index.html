@@ -2245,12 +2245,13 @@ function openBook(){
     for(const k in m){ if(name.indexOf(k)>=0) return m[k]; }
     return 'Z'+name;
   };
-  const list=(dexPage===2?TYPES2:TYPES).slice().sort((a,b)=>(
-    (a.r-b.r)||
+  const list=(dexPage===2?TYPES2:TYPES).slice().sort((a,b)=>{
+    if(a.id==='bairi'||b.id==='bairi') return a.id==='bairi'?1:0;
+    return (a.r-b.r)||
     (dexCat(a.name).localeCompare(dexCat(b.name)))||
     (a.name.length-b.name.length)||
-    a.name.localeCompare(b.name)
-  ));
+    a.name.localeCompare(b.name);
+  });
   const got=Object.keys(dexPage===2?S.collection2:S.collection).length, total=list.length;
   const tabs=`<div class="booktabs">
     <button class="btab ${dexPage===1?'on':''}" onclick="switchDexPage(1)">📕 第一图鉴</button>
