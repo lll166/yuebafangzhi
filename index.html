@@ -4006,12 +4006,13 @@ const DRESS_PARTS=[
   {id:'d_c7',cat:'deco',n:'雨伞',e:'☂️'},{id:'d_c8',cat:'deco',n:'糖果',e:'🍭'},
 ];
 const DR_CAT={head:'头部',body:'身体',deco:'装饰'};
+let DR_DEBUG=false; // #debugall 开启时允许跳过「开发中」提示直接进入换装
 function dressAllCollected(){ return TYPES.every(t=>colCount(t.id)>0)&&TYPES2.every(t=>colCount(t.id)>0); }
 function dressFresh(){ if(!S.dress)S.dress={owned:[],equip:{head:null,body:null,deco:null},photo:null,fatId:null}; return S.dress; }
 function dressPart(id){ return DRESS_PARTS.find(p=>p.id===id)||null; }
 function dressOwnedFats(){ const out=[]; for(const id in S.collection){ if(S.collection[id]&&S.collection[id].count>0){ const t=typeById(id); if(t)out.push({id,t}); } } for(const id in S.collection2){ if(S.collection2[id]&&S.collection2[id].count>0){ const t=typeById(id); if(t)out.push({id,t}); } } return out; }
 function dressEmoLine(eq){ return [eq.head,eq.body,eq.deco].filter(Boolean).map(id=>{ const p=dressPart(id); return p?p.e:''; }).join(' '); }
-function dressEntry(){ toast('🚧 功能开发中，暂不开放'); return; }
+function dressEntry(){ if(DR_DEBUG){ dressOpen(); return; } toast('🚧 功能开发中，暂不开放'); return; }
 function dressOpen(){ const d=dressFresh(); const owned=dressOwnedFats(); if(!owned.length){ openModal('👗 月巴换装','<p style="text-align:center;color:#999">还没有收集到月巴</p><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'); return; } const pick=d.fatId||owned[0].id;
   let h='<p style="color:#48614a;font-size:13px">💰 月巴币：<b class="tv-tom">'+(S.tbCoin||0)+'</b>　<button class="btn" onclick="dressBuyCoin()">💴 '+DR_COIN_COST+' 金币 → 1 月巴币</button></p>';
   h+='<p style="color:#3e5c3f;font-size:13px;font-weight:700;margin:6px 0 2px">🐤 选择换装的月巴</p><select onchange="dressPick(this.value)">'+owned.map(o=>'<option value="'+o.id+'"'+(o.id===pick?' selected':'')+'>'+o.t.name+'</option>').join('')+'</select>';
@@ -4400,7 +4401,7 @@ function init(){
   applySkin(S.skins.active);
   renderOverview(); updateHeader(); updateStatus(); updatePomoUI(); updateSceneBar(); updateWeatherHold();
   updateTravelIcon();
-  if(typeof location!=='undefined' && location.hash && location.hash.indexOf('#debugall')>=0) setTimeout(debugUnlockAll,300);
+  if(typeof location!=='undefined' && location.hash && location.hash.indexOf('#debugall')>=0){ DR_DEBUG=true; setTimeout(debugUnlockAll,300); }
   setInterval(tick,250);
   // 未成熟月巴：按住跟随手指、松开弹回（事件委托到场地层）
   const folWrap=$('sceneWoods');
