@@ -2109,7 +2109,7 @@ function bookRowsHTML(list){
       </div>`;
     }
     rows+=`<div class="bcard ${c?'':'locked'} ${t.r>=4?'epic':''} ${t.r===5?'legend':''}${t.id==='m2_bairi'?' bairi':''}${allGold?' allgold':''}" ${c?`onclick="openFatDetail('${t.id}')"`:''}>
-      <div class="pic">${c?`<span style="display:inline-block;transform:scale(${t.img?1:(t.size||1)})">${fatSVG(t)}</span>`:lockedSVG()}</div>
+      <div class="pic">${c?`<span style="display:inline-block;transform:scale(${t.size||1})">${fatSVG(t)}</span>`:lockedSVG()}</div>
       <div class="nm">${c?t.name:'???'}</div>
       <div class="cnt">${c?('收获 x'+c):'未发现'} <span class="rar-tag ${rcl}">${RAR_NAME[t.r]}</span></div>
       ${stats}
