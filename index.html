@@ -1693,10 +1693,26 @@ function renderCell(z,w,i){
     el.innerHTML=''; el.title='';
   }
 }
+const TAP_STEP=10000;     // 点击一次，生长剩余时间减少 10 秒（毫秒）
+const TAP_CD=300;          // 点击加速节流（ms）
+let tapCd={};              // 各槽位点击冷却 key:`z-w-i`
 function clickCell(z,w,i){
   const cell=S.zones[z].woods[w].cells[i];
-  if(cell&&cell.t&&cellReady(cell)){ doHarvest(z,w,i,cell,cellEls[`${z}-${w}-${i}`]); }
-  else sfx.click();
+  if(cell&&cell.t){
+    if(cellReady(cell)){ doHarvest(z,w,i,cell,cellEls[`${z}-${w}-${i}`]); return; }
+    const k=now(); const key=z+'-'+w+'-'+i;
+    if(!tapCd[key]||k-tapCd[key]>TAP_CD){
+      tapCd[key]=k;
+      // 每次点击减少 10 秒剩余生长时间（start 前移，不受加速器影响）
+      cell.start+= TAP_STEP;
+      save();
+      if(currentZone>=0) renderCell(z,w,i);
+      if(cellReady(cell)){ doHarvest(z,w,i,cell,cellEls[`${z}-${w}-${i}`]); }
+      else sfx.buy();
+    }
+    return;
+  }
+  sfx.click();
 }
 
 /* 未成熟月巴交互：按住时 1:1 贴合手指（EMA 去抖），松开弹性回位（rAF 弹簧） */
@@ -2035,7 +2051,7 @@ const DEX_EVENTS=[
   '💘 {name}用番茄沾了沾清水，当作镜子照了照自己：「才不是番茄好看，是我好看，好吧，番茄也好看。」',
   '🎀 {name}把番茄别在自己头上当发饰，得意地晃了晃：「好看吧？这可是会脸红的小太阳。」',
   '🌊 {name}淋了一身雨，却把干的那只番茄护在怀里，低声说：「你也不许着凉呀。」',
-  '⛅ {name}对坐的番茄叹了口气：「万一我先熟了……记得替我把太阳晒回来哦。」',
+  '⛅ {name}对番茄叹了口气：「万一我先熟了……记得替我把太阳晒回来哦。」',
   '🍂 {name}把一只熟得发亮的番茄推到角落，自己缩了缩：「最红的那颗，留到最后再吃吧。」',
   '🎶 {name}弹了弹番茄，听出闷闷的回声，笑着说：「熟透了的心，敲起来是这个声音呀。」',
   '🌙 {name}在月光下跟番茄碰了碰「额头」，轻声道：「今天也要好好的呀。」',
