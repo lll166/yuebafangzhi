@@ -1693,7 +1693,7 @@ function renderCell(z,w,i){
     el.innerHTML=''; el.title='';
   }
 }
-const TAP_STEP=10000;     // 点击一次，生长剩余时间减少 10 秒（毫秒）
+const TAP_SECS=10;        // 点击一次，增加 10 秒生长进度
 const TAP_CD=300;          // 点击加速节流（ms）
 let tapCd={};              // 各槽位点击冷却 key:`z-w-i`
 function clickCell(z,w,i){
@@ -1703,8 +1703,8 @@ function clickCell(z,w,i){
     const k=now(); const key=z+'-'+w+'-'+i;
     if(!tapCd[key]||k-tapCd[key]>TAP_CD){
       tapCd[key]=k;
-      // 每次点击减少 10 秒剩余生长时间（start 前移，不受加速器影响）
-      cell.start+= TAP_STEP;
+      // 每次点击增加 10 秒生长进度（前移 start），进度满即成熟
+      cell.start+= TAP_SECS*1000;
       save();
       if(currentZone>=0) renderCell(z,w,i);
       if(cellReady(cell)){ doHarvest(z,w,i,cell,cellEls[`${z}-${w}-${i}`]); }
