@@ -4350,7 +4350,8 @@ function checkDexEvent(){
   if(_dexEv) return; // 已有待领取事件，保持按钮显示
   if(now()<S.dexNext) return;
   // 生成事件并亮起红色按钮 + 可爱音效
-  const t=TYPES[Math.floor(Math.random()*TYPES.length)];
+  const pool=dex2Unlocked()?TYPES.concat(TYPES2):TYPES; // 开启第二图鉴后事件月巴也纳入
+  const t=pool[Math.floor(Math.random()*pool.length)];
   const line=(DEX_EVENTS[Math.floor(Math.random()*DEX_EVENTS.length)]||'').replace(/\{name\}/g,t.name);
   _dexEv={t,line,reward:dexEventReward(), tomato:dex2Unlocked()?randi(1,10):0};
   S.dexPending=_dexEv;
