@@ -2187,7 +2187,7 @@ function bookRowsHTML(list){
       <div class="nm">${c?t.name:'???'}</div>
       <div class="cnt">${c?('收获 x'+c):'未发现'} <span class="rar-tag ${rcl}">${RAR_NAME[t.r]}</span></div>
       ${stats}
-      <div class="cd">${t.weight!=null&&t.weight<1?'✨ 概率极低 · 永久可遇':('条件：'+condText(t.cond))}</div>
+      <div class="cd">${t.id==='bairi'||(t.weight==null||t.weight>=1)?('条件：'+condText(t.cond)):('✨ 概率极低 · 永久可遇')}</div>
     </div>`;
   }
   return rows;
@@ -2295,7 +2295,7 @@ function openFatDetail(id){ // 图鉴点开某月巴：悬浮层放大图 + 记�
   const gW=rec.heaviest&&rec.heaviest.v>=wHi-0.001, gL=rec.lightest&&rec.lightest.v<=wLo+0.001;
   const ss=(e,k,unit)=>e?(k?`<span class="gold">${e.v+unit}</span>`:e.v+unit):'--';
   const ts=e=>e?`<span class="t">${fmtTS(e.t)}</span>`:'';
-  const cd=t.weight!=null&&t.weight<1?'✨ 概率极低 · 永久可遇':('条件：'+condText(t.cond));
+  const cd=t.id==='bairi'||(t.weight==null||t.weight>=1)?('条件：'+condText(t.cond)):('✨ 概率极低 · 永久可遇');
   const ov=$('fdOverlay');
   ov.innerHTML=`<div class="fd-back" onclick="closeFatDetail()"></div>
     <div class="fd-card">
