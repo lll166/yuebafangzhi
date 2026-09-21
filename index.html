@@ -4237,7 +4237,7 @@ function tvBagHTML(){ const t=tvFresh(); const owned=tvOwnedFats(); const pick=t
   const tp=typeById(pick);
   if(t.frog.status!=='away'){ h+='<div style="text-align:center;margin:10px 0 2px;color:#3e5c3f;font-size:13px;font-weight:700">🚀 即将出发的月巴'+(tp?('：'+tp.name):'（未选择）')+'</div>';
   if(tp)h+='<div style="text-align:center;margin-bottom:4px"><span class="tv-traveler">'+fatSVG(tp)+'</span></div>';
-  h+='<div style="text-align:center"><input id="tvMood" placeholder="出发留言…（输口令 TOMATO数量 领🍅，如 TOMATO1000）" style="padding:7px;border:1px solid #ccc;border-radius:8px;width:74%"></div><div style="text-align:center;margin-top:8px"><button class="btn cta" onclick="tvDepart()">✈️ 出发（需 1 个便当）</button></div>'; }
+  h+='<div style="text-align:center"><input id="tvMood" placeholder="出发留言…" style="padding:7px;border:1px solid #ccc;border-radius:8px;width:74%"></div><div style="text-align:center;margin-top:8px"><button class="btn cta" onclick="tvDepart()">✈️ 出发（需 1 个便当）</button></div>'; }
   return h; }
 function tvPack(k){ const t=tvFresh(); if(t.bag.length>=4){ toast('行囊已满（最多4件）'); return; } if(t.wh[k]<=0)return; const need=(k==='food1'||k==='food2'||k==='food3'); if(need && t.bag.some(function(x){return x.k==='food1'||x.k==='food2'||x.k==='food3';})){ toast('已装便当，最多带 1 份'); return; } t.wh[k]--; t.bag.push({k:k}); save(); tvBag(); }
 function tvUnpack(k){ const t=tvFresh(); const i=t.bag.findIndex(function(x){return x.k===k;}); if(i<0)return; t.bag.splice(i,1); t.wh[k]=(t.wh[k]||0)+1; save(); tvBag(); }
