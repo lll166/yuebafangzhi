@@ -459,6 +459,8 @@
   .pomo-controls{display:flex;gap:10px;justify-content:center;margin:14px 0 8px;flex-wrap:wrap;align-items:center;}
   .pomo-controls .btn{min-width:110px;font-size:15px;padding:10px 16px;}
   .pip-open{font-size:11px;font-weight:800;color:var(--purple2);border:1px solid var(--purple2);background:transparent;border-radius:8px;padding:2px 7px;cursor:pointer;white-space:nowrap;}
+  .dex-event{font-size:11px;font-weight:800;color:#fff;border:none;background:linear-gradient(135deg,#ff5a5a,#e02424);border-radius:8px;padding:3px 10px;cursor:pointer;white-space:nowrap;box-shadow:0 1px 3px rgba(224,36,36,.5);animation:dexPulse 1.4s ease-in-out infinite;}
+  @keyframes dexPulse{0%,100%{transform:scale(1);box-shadow:0 1px 3px rgba(224,36,36,.5);}50%{transform:scale(1.06);box-shadow:0 0 0 4px rgba(224,36,36,.25);}}
   .pip-open:hover{background:rgba(149,117,205,.15);}
   .pomo-big{width:88px;height:88px;border-radius:50%;border:none;cursor:pointer;font-size:32px;color:#fff;
     background:linear-gradient(180deg,#f06292,#9575cd);box-shadow:0 10px 24px rgba(149,117,205,.4),inset 0 -4px 8px rgba(0,0,0,.12);
@@ -692,6 +694,7 @@
     <span class="st frost" id="stWeather">☀️ 晴</span>
     <span class="st frost" id="stPomo" style="display:none"></span>
     <button class="pip-open frost" id="pipOpenBtn" style="display:none" onclick="pomopipToggle()">📌 置顶小窗</button>
+    <button class="dex-event frost" id="dexBtn" style="display:none" onclick="openDexEvent()">💫 天降事件！</button>
     <span class="st frost" id="stHint">点击场地查看月巴生长…</span>
   </div>
 
@@ -1322,6 +1325,8 @@ const sfx={
   grab(){ tone(520,0.08,'sine',0.16,0); tone(790,0.1,'sine',0.13,0.035); },
   drag(){ tone(960,0.045,'sine',0.05,0); tone(1180,0.05,'sine',0.04,0.03); },
   spring(){ tone(600,0.07,'sine',0.14,0); tone(900,0.08,'sine',0.12,0.05); tone(1240,0.12,'sine',0.09,0.1); },
+  // 天降事件：可爱的叮咚上扬音
+  dex(){ [784,988,1318].forEach((f,i)=>tone(f,0.14,'sine',0.12,i*0.08)); [523,659,784].forEach((f,i)=>tone(f,0.12,'sine',0.06,0.3+i*0.06)); },
 };
 
 /* ---------------- 轻提示 ---------------- */
@@ -2023,6 +2028,40 @@ let _lastModalTitle='';
 function closeModal(){ $('overlay').classList.remove('show'); closeFatDetail(); pomoModalOpen=false; if(_afterClose){ const f=_afterClose; _afterClose=null; f(); } }
 let _afterClose=null;
 let dexPage=1; // 图鉴页码：1=第一图鉴 2=第二图鉴
+/* 第一图鉴随机「事件」：随机月巴与番茄的互动文案（含 {name} 占位月巴名） */
+const DEX_EVENTS=[
+  '🍅 {name}把番茄举过头顶，转了个圈又放回掌心：「喏，这是属于我的番茄。」',
+  '📖 {name}盯着番茄看了很久，忽然小声说：「如果番茄会说话就好了……理理我好不好？」',
+  '💘 {name}用番茄沾了沾清水，当作镜子照了照自己：「才不是番茄好看，是我好看，好吧，番茄也好看。」',
+  '🎀 {name}把番茄别在自己头上当发饰，得意地晃了晃：「好看吧？这可是会脸红的小太阳。」',
+  '🌊 {name}淋了一身雨，却把干的那只番茄护在怀里，低声说：「你也不许着凉呀。」',
+  '⛅ {name}对坐的番茄叹了口气：「万一我先熟了……记得替我把太阳晒回来哦。」',
+  '🍂 {name}把一只熟得发亮的番茄推到角落，自己缩了缩：「最红的那颗，留到最后再吃吧。」',
+  '🎶 {name}弹了弹番茄，听出闷闷的回声，笑着说：「熟透了的心，敲起来是这个声音呀。」',
+  '🌙 {name}在月光下跟番茄碰了碰「额头」，轻声道：「今天也要好好的呀。」',
+  '🔥 {name}把番茄挡在风里，护住那点温度：「可别被风刮走啦。」',
+  '💭 {name}盯着滚远的番茄喃喃：「慢点跑嘛。」',
+  '🌙 {name}抱着睡着的番茄：「月巴和番茄，今晚也要一起睡呢。」',
+  '🌻 {name}把番茄放在阳光最足的地方：「晒晒太阳，一起等天黑呀。」',
+  '🌸 {name}用番茄轻轻贴了贴自己的脸：「一样的温度，一样的心跳呢。」',
+  '🌊 {name}捞起一颗漂回来的番茄，愣愣看着：「怎么总往同一个方向去呀。」',
+  '⛅ {name}把番茄举到头顶比大小：「刚才是我高，现在换成你咯。」',
+  '🥢 {name}把番茄拨到盘子中央：「你就是今天的主菜。」',
+  '🌖 {name}夜半醒来发现番茄还醒着：「怎么还不睡？我又不会从床底出现，这次是走的门。」',
+  '🍂 {name}把一片落叶放在番茄上：「替番茄盖被子，我可贴心啦。」',
+  '🔥 {name}烤了烤手心，又怕烫到番茄：「再等等，暖一点才碰你。」',
+  '💬 {name}对番茄说了很多话，番茄没应：「不说也没关系，我都懂的。」',
+  '🌈 {name}用番茄接住窗外漏进的阳光：「把这束颜色献给你，我亲爱的番茄。」',
+  '🥛 {name}把杯子轻轻推到番茄面前：「今晚的月色很美，对吧。所以来碰杯吧~」',
+  '🌠 {name}指着夜空：「那颗星星离我们很远很远，早已经死去，可它还在闪烁呢。」',
+  '🍓 {name}把番茄藏进袖口：「藏起来的最甜，才舍不得交出去。」',
+  '🪵 {name}和番茄坐在屋檐下躲雨：「不喜欢下雨，但和你躲雨就很快乐。」',
+  '🎐 {name}摇头晃脑逗番茄：「所以，是愿意陪我玩的意思吧？」',
+  '🕯️ {name}吹熄蜡烛前看了番茄一眼：「许愿的时候，要留一个愿望给番茄。」',
+  '💧 {name}清晨用露水给番茄洗脸：「醒醒啦，新的一天我们要一起过。」',
+  '🌲 {name}把番茄往自己这边拢了拢：「这样安全一点。」',
+  '🌸 {name}看见番茄脸红：「你脸红什么？该脸红的不是我吗！」',
+];
 function bookRowsHTML(list){
   let rows='';
   for(const t of list){
@@ -2057,6 +2096,45 @@ function bookRowsHTML(list){
   }
   return rows;
 }
+/* 图鉴事件：按所有已打开槽计算 5 分钟金币产出（50%~100%）。未打开/空槽不计 */
+function dexGoldPerMin(){
+  let ps=0;
+  for(const z of S.zones){
+    for(const w of z.woods){
+      for(const cell of w.cells){
+        if(!cell||!cell.t) continue;
+        const tp=typeById(cell.t);
+        if(!tp) continue;
+        const cycle=(cell.dur/speedMult())/1000; // 该槽一个生长周(秒)
+        if(cycle>0) ps+= (tp.v)/cycle;
+      }
+    }
+  }
+  return ps*60; // 每分钟金币
+}
+function dexEventReward(){ return Math.round(dexGoldPerMin()*5*(0.5+Math.random()*0.5)); }
+function openDexEvent(){
+  if(!_dexEv) return;
+  const {t,line,reward}=_dexEv;
+  openModal('🍅 天降事件', `
+    <div style="text-align:center">
+      <div style="font-size:52px;line-height:1.1">💫</div>
+      <div style="margin:8px 0;width:96px;height:96px;margin-left:auto;margin-right:auto">${fatSVG(t)}</div>
+      <p style="font-size:15px;color:var(--text);margin:4px 0 12px">${esc(line)}</p>
+      <div style="font-size:14px;color:#e02424;font-weight:800;margin-bottom:6px">🍅 ${esc(t.name)} 送给你 ${fmt(reward)} 个番茄！</div>
+      <div style="font-size:11px;color:var(--dim);margin-bottom:12px">（按当前 ${dexBookOpenSlots()} 个槽位 · 5分钟产出 × 50%~100%）</div>
+      <button class="btn gold" onclick="claimDexEvent()">🍅 收下番茄 · +${fmt(reward)} 🪙</button>
+    </div>`);
+}
+function claimDexEvent(){
+  if(!_dexEv) return;
+  const n=_dexEv.reward;
+  addCoins(n); toast(`🍅 ${esc(_dexEv.t.name)} 送给你 ${fmt(n)} 个番茄！🪙`);
+  if(sfx.dex) sfx.dex(); else sfx.coin();
+  const b=$('dexBtn'); if(b) b.style.display='none';
+  _dexEv=null; closeModal();
+}
+function dexBookOpenSlots(){ let n=0; for(const z of S.zones)for(const w of z.woods)n+=w.cells.filter(c=>c&&c.t).length; return n; }
 function openBook(){
   pomoModalOpen=false;
   const unlocked=dex2Unlocked();
@@ -4093,7 +4171,24 @@ function tvBagHTML(){ const t=tvFresh(); const owned=tvOwnedFats(); const pick=t
 function tvPack(k){ const t=tvFresh(); if(t.bag.length>=4){ toast('行囊已满（最多4件）'); return; } if(t.wh[k]<=0)return; const need=(k==='food1'||k==='food2'||k==='food3'); if(need && t.bag.some(function(x){return x.k==='food1'||x.k==='food2'||x.k==='food3';})){ toast('已装便当，最多带 1 份'); return; } t.wh[k]--; t.bag.push({k:k}); save(); tvBag(); }
 function tvUnpack(k){ const t=tvFresh(); const i=t.bag.findIndex(function(x){return x.k===k;}); if(i<0)return; t.bag.splice(i,1); t.wh[k]=(t.wh[k]||0)+1; save(); tvBag(); }
 
+function nextDexEventAt(){ return now()+rand(20,45)*60000; } // 下次天降事件：20~45 分钟后随机出现
+let _dexEv=null; // 待领取的天降事件缓存：{t,line,reward}
+function checkDexEvent(){
+  if(!S.dexNext) S.dexNext=nextDexEventAt();
+  if(_dexEv) return; // 已有待领取事件，保持按钮显示
+  if(now()<S.dexNext) return;
+  // 番茄钟运行中不打扰，延后 1 分钟再试
+  if(S.pomo&&S.pomo.running){ S.dexNext=now()+60000; return; }
+  // 生成事件并亮起红色按钮 + 可爱音效
+  const t=TYPES[Math.floor(Math.random()*TYPES.length)];
+  const line=(DEX_EVENTS[Math.floor(Math.random()*DEX_EVENTS.length)]||'').replace(/\{name\}/g,t.name);
+  _dexEv={t,line,reward:dexEventReward()};
+  S.dexNext=nextDexEventAt();
+  const b=$('dexBtn'); if(b) b.style.display='';
+  if(sfx.dex) sfx.dex(); else sfx.coin();
+}
 function tick(){
+  checkDexEvent();
   travelTick();
   pomoReportCheck();
   weatherTick();
