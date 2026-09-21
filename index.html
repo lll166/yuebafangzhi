@@ -2227,7 +2227,7 @@ function openFatDetail(id){ // 图鉴点开某月巴：悬浮层放大图 + 记�
     <div class="fd-card">
       <div class="fd-head"><span>📖 ${t.name}</span><button class="iconbtn" onclick="closeFatDetail()">✕</button></div>
       <div class="fd">
-        <div class="fd-pic ${t.r>=4?'epic':''} ${t.r===5?'legend':''}"><span style="display:inline-block;transform:scale(${t.size||1})">${fatSVG(t)}</span></div>
+        <div class="fd-pic ${t.r>=4?'epic':''} ${t.r===5?'legend':''}"><span style="display:inline-block;transform:scale(${t.id==='mb_bashan'?1:(t.size||1)})">${fatSVG(t)}</span></div>
         ${YB_PIC_AUTHOR[t.id]?`<div class="fd-author">🎨 by ${esc(YB_PIC_AUTHOR[t.id])}</div>`:''}
         <div class="fd-meta">
           <span class="rar-tag ${rcl}">${RAR_NAME[t.r]}</span>
