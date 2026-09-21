@@ -865,7 +865,7 @@ const ITEMS=[
   {id:'coffee',    name:'咖啡机',   icon:'☕', cost:4000,  desc:'解锁「咖啡月巴」的出现条件'},
   {id:'doll',      name:'玩偶架',   icon:'🧸', cost:15000, desc:'解锁「玩偶月巴」的出现条件'},
   {id:'goldfert',  name:'金色肥料', icon:'🌟', cost:40000, desc:'解锁「金月巴」的出现条件'},
-  {id:'starlight', name:'星星灯',   icon:'✨', cost:80000, desc:'解锁「巴中月巴」的出现条件'},
+  {id:'starlight', name:'巴巴灯',   icon:'✨', cost:80000, desc:'解锁「巴中月巴」的出现条件'},
 ];
 
 /* ---------------- 数据：月巴种类 ---------------- */
@@ -2115,21 +2115,25 @@ function dexGoldPerMin(){
 function dexEventReward(){ return Math.round(dexGoldPerMin()*5*(0.5+Math.random()*0.5)); }
 function openDexEvent(){
   if(!_dexEv) return;
-  const {t,line,reward}=_dexEv;
+  const {t,line,reward,tomato}=_dexEv;
+  const extra=tomato>0?`<div style="font-size:12px;color:#e08a3c;font-weight:800;margin:-4px 0 6px">+ 附赠 ${tomato} 个 🍅 番茄（第二图鉴已开启）</div>`:'';
   openModal('🍅 天降事件', `
     <div style="text-align:center">
       <div style="font-size:52px;line-height:1.1">💫</div>
       <div style="margin:8px 0;width:96px;height:96px;margin-left:auto;margin-right:auto">${fatSVG(t)}</div>
       <p style="font-size:15px;color:var(--text);margin:4px 0 12px">${esc(line)}</p>
-      <div style="font-size:14px;color:#e02424;font-weight:800;margin-bottom:6px">🍅 ${esc(t.name)} 送给你 ${fmt(reward)} 个番茄！</div>
+      <div style="font-size:14px;color:#e02424;font-weight:800;margin-bottom:2px">🍅 ${esc(t.name)} 送给你 ${fmt(reward)} 金币！</div>
+      ${extra}
       <div style="font-size:11px;color:var(--dim);margin-bottom:12px">（按当前 ${dexBookOpenSlots()} 个槽位 · 5分钟产出 × 50%~100%）</div>
-      <button class="btn gold" onclick="claimDexEvent()">🍅 收下番茄 · +${fmt(reward)} 🪙</button>
+      <button class="btn gold" onclick="claimDexEvent()">收下 · +${fmt(reward)} 🪙${tomato>0?' +'+tomato+' 🍅':''}</button>
     </div>`);
 }
 function claimDexEvent(){
   if(!_dexEv) return;
-  const n=_dexEv.reward;
-  addCoins(n); toast(`🍅 ${esc(_dexEv.t.name)} 送给你 ${fmt(n)} 个番茄！🪙`);
+  const {reward,tomato}=_dexEv;
+  addCoins(reward);
+  if(tomato>0) tvTomato(tomato);
+  toast(`🍅 ${esc(_dexEv.t.name)} 送给你 ${fmt(reward)} 金币！${tomato>0?'还附赠 '+tomato+' 个番茄🍅':''}`);
   if(sfx.dex) sfx.dex(); else sfx.coin();
   const b=$('dexBtn'); if(b) b.style.display='none';
   _dexEv=null; closeModal();
@@ -4182,7 +4186,7 @@ function checkDexEvent(){
   // 生成事件并亮起红色按钮 + 可爱音效
   const t=TYPES[Math.floor(Math.random()*TYPES.length)];
   const line=(DEX_EVENTS[Math.floor(Math.random()*DEX_EVENTS.length)]||'').replace(/\{name\}/g,t.name);
-  _dexEv={t,line,reward:dexEventReward()};
+  _dexEv={t,line,reward:dexEventReward(), tomato:dex2Unlocked()?randi(1,10):0};
   S.dexNext=nextDexEventAt();
   const b=$('dexBtn'); if(b) b.style.display='';
   if(sfx.dex) sfx.dex(); else sfx.coin();
