@@ -995,7 +995,7 @@ const TYPES=[
   {id:'mb_tangyuan',name:'汤圆月巴', r:2, v:20, t:200, cond:null, img:'https://origin.picgo.net/2026/09/21/e0a73ec5f90f4b1d90fd1ce444e15c18df5827ccea2e46c6.th.png', color:'#f5e6ee', shape:'round'},
   {id:'mb_bashan',  name:'巴山',    r:4, v:250, t:1200, cond:null, img:'https://origin.picgo.net/2026/09/21/shanbf57ea8c56a98c78.th.png', color:'#5c8a64', shape:'big', size:3.5},
   {id:'mb_xiba',    name:'西巴',    r:2, v:15, t:150, cond:null, color:'#a5c8e8', shape:'wide'},
-  {id:'m2_bairi', name:'百日月巴',  r:6, v:3000, t:3600, cond:{t:'dexfirst', n:99}, weight:0.003, color:'#ffd54f', shape:'big'},
+  {id:'bairi', name:'百日月巴',  r:6, v:3000, t:3600, cond:{t:'dexfirst', n:99}, weight:0.003, color:'#ffd54f', shape:'big'},
 ];
 /* 第二图鉴：第一图鉴集齐 TYPES.length-5（见 DEX1_MIN）个月巴后开启（掉落池合并）。字段格式与 TYPES 一致，
    后续扩充时直接追加即可；第二图鉴月巴与第一图鉴生长速度一致（见 growDur）。 */
@@ -1170,7 +1170,7 @@ const FAT_INTRO={
   m2_diwang:'众爱卿平身，今日上贡的番茄可以呈上来了。',
   m2_buman:'不管怎样都会不满，你们全都有错！',
   m2_tanwu:'最喜欢吃番茄，会偷走番茄机里的番茄，番茄机原本是不会出现1个番茄的哦……',
-  m2_bairi:'月巴们的百日战纪。',
+  bairi:'月巴们的百日战纪。',
   m2_zhangyu:'有更多的触手，就可以获得更多的番茄。',
   m2_xianyi:'也许，这里本该有更多的番茄……',
   m2_fanqie:'拟态成番茄的模样，混入番茄堆中。',
@@ -2182,7 +2182,7 @@ function bookRowsHTML(list){
         ⚖️ 最轻 ${ss(rec.lightest, gL,'g')} · ${rec.lightest?fmtTS(rec.lightest.t):''}
       </div>`;
     }
-    rows+=`<div class="bcard ${c?'':'locked'} ${t.r>=4?'epic':''} ${t.r===5?'legend':''}${t.id==='m2_bairi'?' bairi':''}${allGold?' allgold':''}" ${c?`onclick="openFatDetail('${t.id}')"`:''}>
+    const rowM=false; rows+=`<div class="bcard ${c?'':'locked'} ${t.r>=4?'epic':''} ${t.r===5?'legend':''}${t.id==='bairi'?' bairi':''}${allGold?' allgold':''}" ${c?`onclick="openFatDetail('${t.id}')"`:''}>
       <div class="pic">${c?`<span style="display:inline-block;transform:scale(${t.size||1})">${fatSVG(t)}</span>`:lockedSVG()}</div>
       <div class="nm">${c?t.name:'???'}</div>
       <div class="cnt">${c?('收获 x'+c):'未发现'} <span class="rar-tag ${rcl}">${RAR_NAME[t.r]}</span></div>
@@ -4490,6 +4490,8 @@ function offlineSettle(){
 /* ---------------- 初始化 ---------------- */
 function init(){
   const hasSave=load();
+  // id 迁移：百日月巴 m2_bairi → bairi；已收集到百日月巴的旧存档，删除该月巴以便重新收集
+  if(S.collection){ delete S.collection['m2_bairi']; delete S.collection['bairi']; }
   if(!S.seenHelp){
     S.coins+=100; S.seenHelp=true;
     openHelp();
