@@ -1304,17 +1304,22 @@ function weatherTick(){
 }
 
 /* ---------------- 音频（WebAudio 合成） ---------------- */
-let AC=null;
-function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return AC; }
+let AC=null, ACmaster=null, _tones=0;
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+  if(AC && !ACmaster){ try{ ACmaster=AC.createGain(); ACmaster.gain.value=0.7; /* 总输出限幅，防多音叠加爆音量 */ ACmaster.connect(AC.destination); }catch(e){ ACmaster=null; } }
+  return AC; }
 function tone(freq,dur,type,vol,when,slide){
-  if(S.muted)return; const c=ac(); if(!c)return;
+  if(S.muted)return; if(_tones>=8)return; /* 并发上限，防止瞬时过多音效叠加变爆音 */
+  const c=ac(); if(!c)return; const out=ACmaster||(AC?AC.destination:null); if(!out)return;
   const o=c.createOscillator(), g=c.createGain();
   const t0=c.currentTime+(when||0);
   o.type=type||'sine'; o.frequency.setValueAtTime(freq,t0);
   if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,freq+slide),t0+dur);
-  g.gain.setValueAtTime(vol||0.12,t0);
+  const v=clamp((vol==null?0.12:vol),0.03,0.2); /* 单音音量钳制在 0.03~0.2，杜绝异常超高音量 */
+  g.gain.setValueAtTime(v,t0);
   g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
-  o.connect(g); g.connect(c.destination);
+  _tones++; o.onended=function(){ _tones--; o.disconnect(); g.disconnect(); };
+  o.connect(g); g.connect(out);
   o.start(t0); o.stop(t0+dur+0.02);
 }
 const sfx={
