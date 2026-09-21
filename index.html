@@ -1540,7 +1540,7 @@ function availableTypes(){
   const pool=dex2Unlocked()?TYPES.concat(TYPES2):TYPES;
   return pool.filter(t=>condOk(t.cond));
 }
-function weightOf(t){ return t.weight!=null?t.weight:({1:100,2:45,3:14,4:4,5:1.2,6:0.9}[t.r]||1); }
+function weightOf(t){ let w=t.weight!=null?t.weight:({1:100,2:45,3:14,4:4,5:1.2,6:0.9}[t.r]||1); if(isDex2(t.id)) w/=10; return w; }
 function weightedPick(list){
   let sum=0; for(const t of list) sum+=weightOf(t);
   let r=Math.random()*sum;
