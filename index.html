@@ -244,6 +244,24 @@
   @keyframes tvGoldFade{0%,100%{opacity:.3;}50%{opacity:.9;}}
   #travel .tv-mail{position:absolute;right:12px;bottom:64px;font-size:24px;background:#fff;border:2px solid #c78b4a;border-radius:50%;width:46px;height:46px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;}
   #travel .tv-mail span{position:absolute;top:-2px;right:-2px;width:13px;height:13px;border-radius:50%;background:#e53935;border:2px solid #fff;}
+  #dress{position:fixed;inset:0;display:none;flex-direction:column;z-index:60;background:linear-gradient(180deg,#f3ecff,#cbb8ee);}
+  #dress .tv-top{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,255,255,.65);font-weight:700;color:#4a3b63;}
+  #dress .tv-tom{color:#e08a3c;}
+  #dress .tv-scene{flex:1;position:relative;overflow:hidden;}
+  #dress .tv-nav{display:flex;gap:6px;justify-content:center;padding:8px;background:rgba(255,255,255,.7);}
+  #dress .tv-btn{border:1px solid #a99cd0;background:#fff;color:#4a3b63;border-radius:10px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;}
+  #dress .tv-btn:hover{background:#efe9fc;border-color:#877bbd;}
+  .dr-scene{position:absolute;inset:0;overflow:hidden;display:flex;flex-direction:column;align-items:center;padding:14px;box-sizing:border-box;gap:10px;background:linear-gradient(180deg,#f3ecff,#d6c7f2);}
+  .dr-fithead{display:flex;align-items:center;gap:14px;width:100%;max-width:420px;background:#fff;border:1px solid #d8ccf0;border-radius:14px;padding:10px;box-sizing:border-box;}
+  .dr-canvas{width:120px;height:120px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:72px;line-height:1;flex-shrink:0;border:1px solid #ddd;}
+  .dr-pick{font-size:13px;color:#4a3b63;margin-top:4px;}
+  .dr-pick select{max-width:130px;padding:4px;border:1px solid #c9bde6;border-radius:6px;}
+  .dr-slot{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #ddd;border-radius:10px;padding:8px 10px;margin:4px 0;max-width:420px;width:100%;box-sizing:border-box;font-size:13px;color:#4a3b63;}
+  .dr-slot b{font-size:20px;}
+  .dr-shopgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;width:100%;max-width:460px;}
+  .dr-card{background:#fff;border:1px solid #ddd;border-radius:10px;padding:8px;text-align:center;font-size:12px;color:#4a3b63;}
+  .dr-card b{font-size:26px;display:block;}
+  .dr-card .pri{color:#e08a3c;font-weight:700;margin:4px 0;}
   .tvyard{position:absolute;inset:0;overflow:hidden;contain:content;}
   .tvg-bg{position:absolute;inset:0;width:100%;height:100%;}
   .tvg-toms{position:absolute;inset:0;}
@@ -747,6 +765,22 @@
   <button class="tv-mail" id="tvMail" onclick="tvOpenMail()" title="信箱">📮<span id="tvMailDot" style="display:none"></span></button>
 </div>
 
+<div id="dress">
+  <div class="tv-top">
+    <span class="tv-cur">💰 <b id="drCoin" class="tv-tom">0</b></span>
+    <span class="tv-cur">🍅 <b id="drTom" class="tv-tom">0</b></span>
+    <span id="drState" class="tv-st">搭配</span>
+    <button class="iconbtn" onclick="closeDress()" style="margin-left:auto">✕</button>
+  </div>
+  <div class="tv-scene" id="drScene"></div>
+  <div class="tv-nav">
+    <button class="tv-btn" onclick="drTab('fit')">🎀 搭配</button>
+    <button class="tv-btn" onclick="drTab('gacha')">🎰 扭蛋机</button>
+    <button class="tv-btn" onclick="drTab('shop')">🛍 商店</button>
+    <button class="tv-btn" onclick="drTab('snap')">📸 拍照</button>
+  </div>
+</div>
+
 <div id="banner">
   <div class="bt">✦ 图鉴新增 ✦</div>
   <div class="pic" id="bannerPic"></div>
@@ -1188,8 +1222,7 @@ function defaultState(){
     nextWeatherAt:now()+rand(2,4)*60000, muted:false, lastSave:now(),
     seenHelp:false, starter:true, dexPending:null,
     skins:{unlocked:[], active:null},
-    tbCoin:0,
-    dress:{owned:[],equip:{head:null,body:null,deco:null},photo:null,fatId:null},
+    dress:{coin:0,tom:0,owned:[],equip:{head:null,body:null,deco:null},photo:null,fatId:null},
     tasks:[],
     gameStart:now(), gameEpoch:now(),
     pomo:{name:'专注', total:25*60000, remain:25*60000, running:false, end:0, start:0, pausedByBlur:false,
@@ -3989,51 +4022,70 @@ function tvFresh(){
 function tvTomato(d){ const t=tvFresh(); t.tomato=Math.max(0,(t.tomato||0)+d); const e=$('tvTomato'); if(e)e.textContent=t.tomato; save(); }
 function updateTravelIcon(){ const el=$('btnTravel'); if(!el)return; const ready=!!S.travel&&tvSlotReady(); if(el.classList)el.classList.toggle('hasbadge',ready); el.innerHTML=(dex2Unlocked()?'<b>🧳</b><small>旅行</small>':'<b>❓</b><small>旅行</small>')+(ready?'<span class="dock-badge">🎰</span>':''); updateDressIcon(); }
 function travelEntry(){ if(!dex2Unlocked()){ toast('🔒 第一图鉴集齐'+DEX1_MIN+'个月巴后可解锁旅行！'); return; } openTravel(); }
-/* ================= 换装（月巴换装小游戏） ================= */
-const DR_COIN_COST=500, DR_GACHA_COST=2, DR_DUP_COIN=10;
+/* ================= 换装（月巴换装小游戏·全屏页） ================= */
+const DR_COIN_COIN=1000000, DR_COIN_TOM=1000, DR_GACHA_COST=1;
+const DR_DUP_TOM={1:10,2:30,3:60,4:120,5:250};
 const DRESS_PARTS=[
-  {id:'d_h1',cat:'head',n:'礼帽',e:'🎩'},{id:'d_h2',cat:'head',n:'皇冠',e:'👑'},
-  {id:'d_h3',cat:'head',n:'小花',e:'🌼'},{id:'d_h4',cat:'head',n:'墨镜',e:'🕶️'},
-  {id:'d_h5',cat:'head',n:'蝴蝶结',e:'🎀'},{id:'d_h6',cat:'head',n:'棒球帽',e:'🧢'},
-  {id:'d_h7',cat:'head',n:'圣诞帽',e:'🎄'},{id:'d_h8',cat:'head',n:'睡帽',e:'🌙'},
-  {id:'d_b1',cat:'body',n:'围巾',e:'🧣'},{id:'d_b2',cat:'body',n:'T恤',e:'👕'},
-  {id:'d_b3',cat:'body',n:'背带裤',e:'👖'},{id:'d_b4',cat:'body',n:'白大褂',e:'🥼'},
-  {id:'d_b5',cat:'body',n:'大衣',e:'🧥'},{id:'d_b6',cat:'body',n:'裙子',e:'👗'},
-  {id:'d_b7',cat:'body',n:'旗袍',e:'🥻'},{id:'d_b8',cat:'body',n:'斗篷',e:'🧙'},
-  {id:'d_c1',cat:'deco',n:'气球',e:'🎈'},{id:'d_c2',cat:'deco',n:'小提琴',e:'🎻'},
-  {id:'d_c3',cat:'deco',n:'风筝',e:'🪁'},{id:'d_c4',cat:'deco',n:'玩偶',e:'🧸'},
-  {id:'d_c5',cat:'deco',n:'四叶草',e:'🍀'},{id:'d_c6',cat:'deco',n:'星星',e:'⭐'},
-  {id:'d_c7',cat:'deco',n:'雨伞',e:'☂️'},{id:'d_c8',cat:'deco',n:'糖果',e:'🍭'},
+  {id:'d_h1',cat:'head',n:'礼帽',e:'🎩',r:1},{id:'d_h2',cat:'head',n:'皇冠',e:'👑',r:5},
+  {id:'d_h3',cat:'head',n:'小花',e:'🌼',r:1},{id:'d_h4',cat:'head',n:'墨镜',e:'🕶️',r:2},
+  {id:'d_h5',cat:'head',n:'蝴蝶结',e:'🎀',r:1},{id:'d_h6',cat:'head',n:'棒球帽',e:'🧢',r:2},
+  {id:'d_h7',cat:'head',n:'圣诞帽',e:'🎄',r:3},{id:'d_h8',cat:'head',n:'睡帽',e:'🌙',r:2},
+  {id:'d_b1',cat:'body',n:'围巾',e:'🧣',r:1},{id:'d_b2',cat:'body',n:'T恤',e:'👕',r:1},
+  {id:'d_b3',cat:'body',n:'背带裤',e:'👖',r:2},{id:'d_b4',cat:'body',n:'白大褂',e:'🥼',r:3},
+  {id:'d_b5',cat:'body',n:'大衣',e:'🧥',r:3},{id:'d_b6',cat:'body',n:'裙子',e:'👗',r:2},
+  {id:'d_b7',cat:'body',n:'旗袍',e:'🥻',r:4},{id:'d_b8',cat:'body',n:'斗篷',e:'🧙',r:4},
+  {id:'d_c1',cat:'deco',n:'气球',e:'🎈',r:1},{id:'d_c2',cat:'deco',n:'小提琴',e:'🎻',r:3},
+  {id:'d_c3',cat:'deco',n:'风筝',e:'🪁',r:2},{id:'d_c4',cat:'deco',n:'玩偶',e:'🧸',r:2},
+  {id:'d_c5',cat:'deco',n:'四叶草',e:'🍀',r:3},{id:'d_c6',cat:'deco',n:'星星',e:'⭐',r:1},
+  {id:'d_c7',cat:'deco',n:'雨伞',e:'☂️',r:2},{id:'d_c8',cat:'deco',n:'糖果',e:'🍭',r:1},
+];
+const DR_SHOP=[
+  {id:'d_h2',pri:300},{id:'d_h7',pri:150},{id:'d_b4',pri:150},{id:'d_b5',pri:150},
+  {id:'d_b7',pri:400},{id:'d_b8',pri:400},{id:'d_c2',pri:180},{id:'d_c5',pri:180},
 ];
 const DR_CAT={head:'头部',body:'身体',deco:'装饰'};
 let DR_DEBUG=false; // #debugall 开启时允许跳过「开发中」提示直接进入换装
 function dressAllCollected(){ return TYPES.every(t=>colCount(t.id)>0)&&TYPES2.every(t=>colCount(t.id)>0); }
-function dressFresh(){ if(!S.dress)S.dress={owned:[],equip:{head:null,body:null,deco:null},photo:null,fatId:null}; return S.dress; }
+function dressFresh(){ if(!S.dress)S.dress={coin:0,tom:0,owned:[],equip:{head:null,body:null,deco:null},photo:null,fatId:null}; return S.dress; }
 function dressPart(id){ return DRESS_PARTS.find(p=>p.id===id)||null; }
 function dressOwnedFats(){ const out=[]; for(const id in S.collection){ if(S.collection[id]&&S.collection[id].count>0){ const t=typeById(id); if(t)out.push({id,t}); } } for(const id in S.collection2){ if(S.collection2[id]&&S.collection2[id].count>0){ const t=typeById(id); if(t)out.push({id,t}); } } return out; }
 function dressEmoLine(eq){ return [eq.head,eq.body,eq.deco].filter(Boolean).map(id=>{ const p=dressPart(id); return p?p.e:''; }).join(' '); }
-function dressEntry(){ if(DR_DEBUG){ dressOpen(); return; } toast('🚧 功能开发中，暂不开放'); return; }
-function dressOpen(){ const d=dressFresh(); const owned=dressOwnedFats(); if(!owned.length){ openModal('👗 月巴换装','<p style="text-align:center;color:#999">还没有收集到月巴</p><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'); return; } const pick=d.fatId||owned[0].id;
-  let h='<p style="color:#48614a;font-size:13px">💰 月巴币：<b class="tv-tom">'+(S.tbCoin||0)+'</b>　<button class="btn" onclick="dressBuyCoin()">💴 '+DR_COIN_COST+' 金币 → 1 月巴币</button></p>';
-  h+='<p style="color:#3e5c3f;font-size:13px;font-weight:700;margin:6px 0 2px">🐤 选择换装的月巴</p><select onchange="dressPick(this.value)">'+owned.map(o=>'<option value="'+o.id+'"'+(o.id===pick?' selected':'')+'>'+o.t.name+'</option>').join('')+'</select>';
-  const tp=typeById(pick);
-  h+='<div style="text-align:center;margin:8px 0"><span id="drPrev" class="tv-traveler" style="display:inline-block;font-size:52px;line-height:1.1">'+(tp?fatSVG(tp):'🐤')+'</span><div id="drEmo" style="font-size:26px;min-height:30px">'+dressEmoLine(d.equip)+'</div></div>';
-  h+='<div style="text-align:center"><button class="btn cta" onclick="dressGacha()">🎰 扭蛋机（'+DR_GACHA_COST+' 月巴币/次）</button></div>';
-  h+='<p style="color:#3e5c3f;font-size:13px;font-weight:700;margin:8px 0 2px">🎀 搭配</p>';
-  h+=dressSelectHTML('head',d.equip.head)+dressSelectHTML('body',d.equip.body)+dressSelectHTML('deco',d.equip.deco);
-  h+='<p style="text-align:center;margin-top:8px"><button class="btn cta" onclick="dressPhoto()">📸 拍照（设为换装按钮）</button> <button class="btn" onclick="dressResetPhoto()">还原</button></p>';
-  h+='<p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>';
-  openModal('👗 月巴换装', h);
-}
-function dressSelectHTML(cat,cur){ const d=dressFresh(); const owned=d.owned.map(dressPart).filter(p=>p&&p.cat===cat); return '<p style="margin:2px 0;font-size:13px;color:#48614a">'+DR_CAT[cat]+'：<select style="max-width:150px" onchange="dressToggle(\''+cat+'\',this.value)"><option value="">卸下</option>'+owned.map(p=>'<option value="'+p.id+'"'+(p.id===cur?' selected':'')+'>'+p.e+' '+p.n+'</option>').join('')+'</select></p>'; }
-function dressPick(fatId){ const d=dressFresh(); d.fatId=fatId; const tp=typeById(fatId); const pv=$('drPrev'), em=$('drEmo'); if(pv)pv.innerHTML=tp?fatSVG(tp):'🐤'; if(em)em.innerHTML=dressEmoLine(d.equip); }
-function dressToggle(cat,val){ const d=dressFresh(); d.equip[cat]=val||null; dressOpen(); }
-function dressBuyCoin(){ if(S.coins<DR_COIN_COST){ sfx.error(); toast('金币不足'); return; } S.coins-=DR_COIN_COST; S.tbCoin=(S.tbCoin||0)+1; sfx.unlock(); save(); updateHeader(); dressOpen(); }
-function dressGacha(){ const d=dressFresh(); if((S.tbCoin||0)<DR_GACHA_COST){ sfx.error(); toast('💰 月巴币不够，先用金币购买'); return; } S.tbCoin-=DR_GACHA_COST; const p=DRESS_PARTS[(Math.random()*DRESS_PARTS.length)|0]; if(d.owned.indexOf(p.id)<0){ d.owned.push(p.id); toast('🎁 抽到：'+p.e+' '+p.n+'（'+DR_CAT[p.cat]+'）！'); } else { S.coins+=DR_DUP_COIN; toast('♻️ 重复 '+p.e+' '+p.n+'，兑换 '+DR_DUP_COIN+' 金币'); } sfx.unlock(); save(); updateHeader(); dressOpen(); }
-function dressEmoDraw(ctx,eq){ ctx.font='30px serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; const P=[eq.head,eq.body,eq.deco].filter(Boolean).map(id=>dressPart(id)).filter(Boolean); for(const p of P){ if(p.cat==='head'){ ctx.fillText(p.e,80,26); } else if(p.cat==='body'){ ctx.fillText(p.e,80,92); } else { ctx.fillText(p.e,138,128); } } }
-function dressPhoto(){ const d=dressFresh(); const tp=d.fatId?typeById(d.fatId):null; if(!tp){ toast('先选一只月巴'); return; } const cv=document.createElement('canvas'); cv.width=160; cv.height=160; const ctx=cv.getContext('2d'); ctx.clearRect(0,0,160,160); const done=function(){ d.photo=cv.toDataURL('image/png'); save(); updateDressIcon(); dressOpen(); toast('📸 拍好啦！已设为换装按钮'); }; const svg=fatSVG(tp); const img=new Image(); img.onload=function(){ ctx.drawImage(img,15,15,130,130); dressEmoDraw(ctx,d.equip); done(); }; img.onerror=function(){ ctx.font='64px serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('🐤',80,85); dressEmoDraw(ctx,d.equip); done(); }; img.src='data:image/svg+xml,'+encodeURIComponent(svg); }
-function dressResetPhoto(){ const d=dressFresh(); d.photo=null; save(); updateDressIcon(); dressOpen(); toast('已还原为默认图标'); }
-function updateDressIcon(){ const el=$('btnDress'); if(!el)return; const ok=dressAllCollected(); const d=S.dress; let b; if(!ok){ b='<b>❓</b><small>换装</small>'; } else if(d&&d.photo){ b='<b style="display:inline-block;width:26px;height:26px;border-radius:50%;background-size:cover;border:2px solid #fff;background-image:url(\''+d.photo+'\')"></b><small>换装</small>'; } else { b='<b>📸</b><small>换装</small>'; } el.innerHTML=b; }
+function dressEntry(){ if(!DR_DEBUG&&!dressAllCollected()){ toast('🚧 功能开发中，暂不开放'); return; } dressOpen(); }
+let drView='fit';
+function dressOpen(){ dressFresh(); if(!dressOwnedFats().length){ toast('还没有收集到月巴'); return; } drRender(); $('dress').style.display='flex'; drUpdateBar(); }
+function closeDress(){ $('dress').style.display='none'; }
+function drTab(v){ drView=v; drRender(); drUpdateBar(); }
+function drSelectId(){ const d=dressFresh(); if(d.fatId)return d.fatId; const o=dressOwnedFats(); return o.length?o[0].id:null; }
+function drRender(){ const sc=$('drScene'); const d=dressFresh(); let h='<div class="dr-scene">'; if(drView==='fit'){ h+=drFitHTML(d); } else if(drView==='gacha'){ h+=drGachaHTML(d); } else if(drView==='shop'){ h+=drShopHTML(d); } else { h+=drSnapHTML(d); } h+='</div>'; sc.innerHTML=h; }
+function drUpdateBar(){ const d=dressFresh(); const e1=$('drCoin'); if(e1)e1.textContent=(d.coin||0); const e2=$('drTom'); if(e2)e2.textContent=(d.tom||0); const st=$('drState'); if(st)st.textContent=DR_CAT[drView]||({fit:'搭配',gacha:'扭蛋机',shop:'商店',snap:'拍照'}[drView]); }
+function drFitHTML(d){ const owned=dressOwnedFats(); const pick=drSelectId(); const tp=typeById(pick);
+  let h='<div class="dr-fithead"><div class="dr-canvas" id="drPrev">'+(tp?fatDeco(tp,d.equip):'🐤')+'</div><div style="flex:1"><div class="dr-pick">🐤 选择月巴：<select onchange="drPick(this.value)">'+owned.map(o=>'<option value="'+o.id+'"'+(o.id===pick?' selected':'')+'>'+o.t.name+'</option>').join('')+'</select></div><div style="font-size:24px;margin-top:6px" id="drEmo">'+dressEmoLine(d.equip)+'</div></div></div>';
+  h+='<p style="color:#4a3b63;font-size:12px;font-weight:700;width:100%;max-width:420px;margin:2px 0">🎀 自由搭配</p>';
+  for(const cat of ['head','body','deco']){ h+='<div class="dr-slot"><b>'+DR_CAT[cat]+'</b><select style="flex:1;padding:4px;border:1px solid #c9bde6;border-radius:6px" onchange="drToggle(\''+cat+'\',this.value)"><option value="">卸下</option>'+d.owned.map(dressPart).filter(p=>p&&p.cat===cat).map(p=>'<option value="'+p.id+'"'+(p.id===d.equip[cat]?' selected':'')+'>'+p.e+' '+p.n+'</option>').join('')+'</select></div>'; }
+  return h; }
+function drPick(fatId){ dressFresh().fatId=fatId; drRender(); }
+function drToggle(cat,val){ const d=dressFresh(); d.equip[cat]=val||null; save(); drRender(); }
+function drGachaHTML(d){ let h='<p style="color:#4a3b63;font-size:13px;font-weight:700;margin:4px 0">🎰 扭蛋机（'+DR_GACHA_COST+' 月巴币/次）</p>';
+  h+='<div class="dr-slot"><b>💰 月巴币</b><span style="flex:1">'+d.coin+'</span><button class="btn" onclick="drBuyCoin()">💴 1m金币→1</button><button class="btn" onclick="drBuyByTom()">🍅 1000番茄→1</button></div>';
+  h+='<p style="color:#4a3b63;font-size:12px;margin:6px 0">头部 / 身体 / 装饰 混池，抽取获得装扮；抽到重复按稀有度自动兑换 🍅 番茄币。</p>';
+  h+='<div style="text-align:center;margin:10px 0"><button class="btn cta" onclick="drGacha()" style="font-size:15px;padding:12px 26px">🎰 抽取一次</button></div>';
+  h+='<p style="color:#4a3b63;font-size:12px;font-weight:700;width:100%;max-width:460px;margin:4px 0">已拥有 '+d.owned.length+'/'+DRESS_PARTS.length+' 件：</p><div class="dr-shopgrid">'+DRESS_PARTS.map(p=>'<div class="dr-card">'+(d.owned.indexOf(p.id)>=0?'<b>'+p.e+'</b><div>'+p.n+'</div><div style="color:#8a9;font-size:11px">已入手</div>':'<b>❓</b><div>???'+'</div><div style="color:#bbb;font-size:11px">未获取</div>')+'</div>').join('')+'</div>';
+  return h; }
+function drBuyCoin(){ if(S.coins<DR_COIN_COIN){ sfx.error(); toast('金币不足 1m'); return; } S.coins-=DR_COIN_COIN; dressFresh().coin=(dressFresh().coin||0)+1; sfx.unlock(); save(); updateHeader(); drRender(); drUpdateBar(); }
+function drBuyByTom(){ const t=tvFresh(); if((t.tomato||0)<DR_COIN_TOM){ sfx.error(); toast('旅行番茄不足 1000'); return; } t.tomato-=DR_COIN_TOM; dressFresh().coin=(dressFresh().coin||0)+1; sfx.unlock(); save(); tvUpdateBar(); tvTomato(0); drRender(); drUpdateBar(); }
+function drGacha(){ const d=dressFresh(); if((d.coin||0)<DR_GACHA_COST){ sfx.error(); toast('💰 月巴币不够，先用金币/番茄兑换'); return; } d.coin-=DR_GACHA_COST; const p=DRESS_PARTS[(Math.random()*DRESS_PARTS.length)|0]; if(d.owned.indexOf(p.id)<0){ d.owned.push(p.id); toast('🎁 抽到：'+p.e+' '+p.n+'（'+DR_CAT[p.cat]+'·稀有'+(p.r||1)+'）！'); } else { const gain=DR_DUP_TOM[p.r||1]||10; d.tom=(d.tom||0)+gain; toast('♻️ 重复 '+p.e+' '+p.n+' → 番茄币 +'+gain); } sfx.unlock(); save(); drRender(); drUpdateBar(); }
+function drShopHTML(d){ let h='<p style="color:#4a3b63;font-size:13px;font-weight:700;margin:4px 0">🛍 装扮商店 · 用 🍅 番茄币购买</p>';
+  h+='<div class="dr-shopgrid">'+DR_SHOP.map(s=>{ const p=dressPart(s.id); const own=d.owned.indexOf(s.id)>=0; return '<div class="dr-card"><b>'+p.e+'</b><div>'+p.n+'</div><div class="pri">🍅 '+s.pri+'</div><button class="btn" '+(own||d.tom<s.pri?'disabled':'')+' onclick="drShopBuy(\''+s.id+'\','+s.pri+')">'+((d.tom<s.pri)?'番茄币不足':(own?'已购买':'购买'))+'</button></div>'; }).join('')+'</div>';
+  return h; }
+function drShopBuy(id,pri){ const d=dressFresh(); if(d.owned.indexOf(id)>=0)return; if((d.tom||0)<pri){ sfx.error(); toast('🍅 番茄币不足'); return; } d.tom-=pri; d.owned.push(id); sfx.unlock(); save(); drRender(); drUpdateBar(); }
+function drSnapHTML(d){ const tp=typeById(drSelectId()); return '<p style="color:#4a3b63;font-size:13px;font-weight:700;margin:4px 0">📸 拍照（保存为换装按钮图标）</p><div class="dr-fithead"><div style="width:200px;height:200px">'+(tp?fatDeco(tp,d.equip):'🐤')+'</div></div><p style="color:#4a3b63;font-size:12px;text-align:center">当前搭配：'+dressEmoLine(d.equip)+'</p><div style="text-align:center;margin-top:6px"><button class="btn cta" onclick="drPhoto()">📸 拍照保存</button> <button class="btn" onclick="drResetPhoto()">还原默认</button></div>'; }
+/* 换装预览：月巴几何 + 装扮 emoji 合成（photo 亦用同一几何，避免外链图污染画布） */
+function fatDeco(t,eq){ const body=drGeoSVG(t); return '<span style="position:relative;display:inline-block;width:100%;height:100%;overflow:hidden">'+body+drEmoAbs(eq,'head')+drEmoAbs(eq,'body')+drEmoAbs(eq,'deco')+'</span>'; }
+function drEmoAbs(eq,cat){ const p=eq[cat]?dressPart(eq[cat]):null; if(!p)return ''; const pos={head:{l:'65%',t:'2%',f:'30px'},body:{l:'20%',t:'38%',f:'30px'},deco:{l:'72%',t:'58%',f:'26px'}}[cat]; return '<span style="position:absolute;left:'+pos.l+';top:'+pos.t+';font-size:'+pos.f+';line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.2))">'+p.e+'</span>'; }
+function drGeoSVG(t){ const c=t.color||'#b08a6a', dk=shade(c,-26); const body=shapeBody(t.shape||'round',c,dk,shade(c,26)); const h=hashStr(t.id||'x'); const eye=(h%4), mouth=((h>>2)%4); const ex1=t.shape==='tall'?11:t.shape==='wide'?12:10; const ex2=30-ex1; let eyes,mm; if(eye===0)eyes=`<circle cx="${ex1}" cy="18" r="2.4" fill="#3b3654"/><circle cx="${ex2}" cy="18" r="2.4" fill="#3b3654"/>`; else if(eye===1)eyes=`<ellipse cx="${ex1}" cy="18" rx="2.5" ry="3" fill="#3b3654"/><ellipse cx="${ex2}" cy="18" rx="2.5" ry="3" fill="#3b3654"/>`; else if(eye===2)eyes=`<path d="M${ex1} 15.5 l2.4 2.5 l-2.4 2.5 l-2.4 -2.5 z" fill="#3b3654"/><path d="M${ex2} 15.5 l2.4 2.5 l-2.4 2.5 l-2.4 -2.5 z" fill="#3b3654"/>`; else eyes=`<path d="M${ex1-2} 18 h4 M${ex2-2} 18 h4" stroke="#3b3654" stroke-width="1.8" stroke-linecap="round"/>`; if(mouth===0)mm=`<path d="M14 23.5 Q17 27 20 23.5 Q23 27 26 23.5" stroke="#3b3654" stroke-width="1.8" fill="none" stroke-linecap="round"/>`; else if(mouth===1)mm=`<circle cx="20" cy="24.5" r="2.4" fill="#3b3654"/>`; else if(mouth===2)mm=`<path d="M15 25.5 Q20 29 25 25.5 L25 26.5 Q20 30 15 26.5 Z" fill="#3b3654"/>`; else mm=`<path d="M15 26 Q20 24.5 25 26" stroke="#3b3654" stroke-width="1.8" fill="none" stroke-linecap="round"/>`; return `<svg viewBox="0 0 40 40" style="width:100%;height:100%">${body}${eyes}${mm}</svg>`; }
+function drPhoto(){ const d=dressFresh(); const tp=typeById(drSelectId()); if(!tp){ toast('先选一只月巴'); return; } const cv=document.createElement('canvas'); cv.width=200; cv.height=200; const ctx=cv.getContext('2d'); ctx.clearRect(0,0,200,200); const done=function(){ try{ d.photo=cv.toDataURL('image/png'); }catch(e){ d.photo=null; toast('📸 生成失败'); return; } save(); updateDressIcon(); drRender(); toast('📸 拍好啦！已设为换装按钮'); }; const svg=drGeoSVG(tp); const img=new Image(); img.onload=function(){ ctx.drawImage(img,20,15,160,160); ctx.font='28px serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; const eq=d.equip; if(eq.head){const p=dressPart(eq.head);if(p)ctx.fillText(p.e,130,18);} if(eq.body){const p=dressPart(eq.body);if(p)ctx.fillText(p.e,48,80);} if(eq.deco){const p=dressPart(eq.deco);if(p)ctx.fillText(p.e,150,112);} done(); }; img.onerror=function(){ done(); }; img.src='data:image/svg+xml,'+encodeURIComponent(svg); }
+function drResetPhoto(){ const d=dressFresh(); d.photo=null; save(); updateDressIcon(); drRender(); toast('已还原为默认图标'); }
+function updateDressIcon(){ const el=$('btnDress'); if(!el)return; const ok=dressAllCollected(); const d=S.dress; let b; if(!ok&&!DR_DEBUG){ b='<b>❓</b><small>换装</small>'; } else if(d&&d.photo){ b='<b style="display:inline-block;width:26px;height:26px;border-radius:50%;background-size:cover;border:2px solid #fff;background-image:url(\''+d.photo+'\')"></b><small>换装</small>'; } else { b='<b>📸</b><small>换装</small>'; } el.innerHTML=b; }
 let tvView='yard';
 function openTravel(){ if(!dex2Unlocked())return; tvFresh(); travelSettleIf(); updateTravelIcon(); tvRenderAll(); $('travel').style.display='flex'; tvUpdateHarvest(); }
 function closeTravel(){ $('travel').style.display='none'; }
@@ -4401,7 +4453,15 @@ function init(){
   applySkin(S.skins.active);
   renderOverview(); updateHeader(); updateStatus(); updatePomoUI(); updateSceneBar(); updateWeatherHold();
   updateTravelIcon();
-  if(typeof location!=='undefined' && location.hash && location.hash.indexOf('#debugall')>=0){ DR_DEBUG=true; setTimeout(debugUnlockAll,300); }
+  if(typeof location!=='undefined' && location.hash && location.hash.indexOf('#debugall')>=0){
+    DR_DEBUG=true; setTimeout(debugUnlockAll,300);
+    // 调试模式：金币与旅行番茄数量始终为无限
+    setInterval(function(){
+      S.coins=999999999;
+      if(S.travel){ S.travel.tomato=999999999; }
+      tvUpdateBar();
+    },500);
+  }
   setInterval(tick,250);
   // 未成熟月巴：按住跟随手指、松开弹回（事件委托到场地层）
   const folWrap=$('sceneWoods');
