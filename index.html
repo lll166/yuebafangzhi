@@ -710,6 +710,7 @@
   <button class="dockbtn" id="btnStats"><b>📊</b><small>统计</small></button>
   <button class="dockbtn" id="btnShop"><b>🛒</b><small>商店</small></button>
   <button class="dockbtn" id="btnTravel" onclick="travelEntry()"><b>🧳</b><small>旅行</small></button>
+  <button class="dockbtn" id="btnDress" onclick="dressEntry()"><b>❓</b><small>换装</small></button>
 </div>
 
 <!-- 场地场景视图 -->
@@ -1187,6 +1188,8 @@ function defaultState(){
     nextWeatherAt:now()+rand(2,4)*60000, muted:false, lastSave:now(),
     seenHelp:false, starter:true, dexPending:null,
     skins:{unlocked:[], active:null},
+    tbCoin:0,
+    dress:{owned:[],equip:{head:null,body:null,deco:null},photo:null,fatId:null},
     tasks:[],
     gameStart:now(), gameEpoch:now(),
     pomo:{name:'专注', total:25*60000, remain:25*60000, running:false, end:0, start:0, pausedByBlur:false,
@@ -3984,8 +3987,52 @@ function tvFresh(){
   return t;
 }
 function tvTomato(d){ const t=tvFresh(); t.tomato=Math.max(0,(t.tomato||0)+d); const e=$('tvTomato'); if(e)e.textContent=t.tomato; save(); }
-function updateTravelIcon(){ const el=$('btnTravel'); if(!el)return; const ready=!!S.travel&&tvSlotReady(); if(el.classList)el.classList.toggle('hasbadge',ready); el.innerHTML=(dex2Unlocked()?'<b>🧳</b><small>旅行</small>':'<b>❓</b><small>旅行</small>')+(ready?'<span class="dock-badge">🎰</span>':''); }
+function updateTravelIcon(){ const el=$('btnTravel'); if(!el)return; const ready=!!S.travel&&tvSlotReady(); if(el.classList)el.classList.toggle('hasbadge',ready); el.innerHTML=(dex2Unlocked()?'<b>🧳</b><small>旅行</small>':'<b>❓</b><small>旅行</small>')+(ready?'<span class="dock-badge">🎰</span>':''); updateDressIcon(); }
 function travelEntry(){ if(!dex2Unlocked()){ toast('🔒 第一图鉴集齐'+DEX1_MIN+'个月巴后可解锁旅行！'); return; } openTravel(); }
+/* ================= 换装（月巴换装小游戏） ================= */
+const DR_COIN_COST=500, DR_GACHA_COST=2, DR_DUP_COIN=10;
+const DRESS_PARTS=[
+  {id:'d_h1',cat:'head',n:'礼帽',e:'🎩'},{id:'d_h2',cat:'head',n:'皇冠',e:'👑'},
+  {id:'d_h3',cat:'head',n:'小花',e:'🌼'},{id:'d_h4',cat:'head',n:'墨镜',e:'🕶️'},
+  {id:'d_h5',cat:'head',n:'蝴蝶结',e:'🎀'},{id:'d_h6',cat:'head',n:'棒球帽',e:'🧢'},
+  {id:'d_h7',cat:'head',n:'圣诞帽',e:'🎄'},{id:'d_h8',cat:'head',n:'睡帽',e:'🌙'},
+  {id:'d_b1',cat:'body',n:'围巾',e:'🧣'},{id:'d_b2',cat:'body',n:'T恤',e:'👕'},
+  {id:'d_b3',cat:'body',n:'背带裤',e:'👖'},{id:'d_b4',cat:'body',n:'白大褂',e:'🥼'},
+  {id:'d_b5',cat:'body',n:'大衣',e:'🧥'},{id:'d_b6',cat:'body',n:'裙子',e:'👗'},
+  {id:'d_b7',cat:'body',n:'旗袍',e:'🥻'},{id:'d_b8',cat:'body',n:'斗篷',e:'🧙'},
+  {id:'d_c1',cat:'deco',n:'气球',e:'🎈'},{id:'d_c2',cat:'deco',n:'小提琴',e:'🎻'},
+  {id:'d_c3',cat:'deco',n:'风筝',e:'🪁'},{id:'d_c4',cat:'deco',n:'玩偶',e:'🧸'},
+  {id:'d_c5',cat:'deco',n:'四叶草',e:'🍀'},{id:'d_c6',cat:'deco',n:'星星',e:'⭐'},
+  {id:'d_c7',cat:'deco',n:'雨伞',e:'☂️'},{id:'d_c8',cat:'deco',n:'糖果',e:'🍭'},
+];
+const DR_CAT={head:'头部',body:'身体',deco:'装饰'};
+function dressAllCollected(){ return TYPES.every(t=>colCount(t.id)>0)&&TYPES2.every(t=>colCount(t.id)>0); }
+function dressFresh(){ if(!S.dress)S.dress={owned:[],equip:{head:null,body:null,deco:null},photo:null,fatId:null}; return S.dress; }
+function dressPart(id){ return DRESS_PARTS.find(p=>p.id===id)||null; }
+function dressOwnedFats(){ const out=[]; for(const id in S.collection){ if(S.collection[id]&&S.collection[id].count>0){ const t=typeById(id); if(t)out.push({id,t}); } } for(const id in S.collection2){ if(S.collection2[id]&&S.collection2[id].count>0){ const t=typeById(id); if(t)out.push({id,t}); } } return out; }
+function dressEmoLine(eq){ return [eq.head,eq.body,eq.deco].filter(Boolean).map(id=>{ const p=dressPart(id); return p?p.e:''; }).join(' '); }
+function dressEntry(){ toast('🚧 功能开发中，暂不开放'); return; }
+function dressOpen(){ const d=dressFresh(); const owned=dressOwnedFats(); if(!owned.length){ openModal('👗 月巴换装','<p style="text-align:center;color:#999">还没有收集到月巴</p><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'); return; } const pick=d.fatId||owned[0].id;
+  let h='<p style="color:#48614a;font-size:13px">💰 月巴币：<b class="tv-tom">'+(S.tbCoin||0)+'</b>　<button class="btn" onclick="dressBuyCoin()">💴 '+DR_COIN_COST+' 金币 → 1 月巴币</button></p>';
+  h+='<p style="color:#3e5c3f;font-size:13px;font-weight:700;margin:6px 0 2px">🐤 选择换装的月巴</p><select onchange="dressPick(this.value)">'+owned.map(o=>'<option value="'+o.id+'"'+(o.id===pick?' selected':'')+'>'+o.t.name+'</option>').join('')+'</select>';
+  const tp=typeById(pick);
+  h+='<div style="text-align:center;margin:8px 0"><span id="drPrev" class="tv-traveler" style="display:inline-block;font-size:52px;line-height:1.1">'+(tp?fatSVG(tp):'🐤')+'</span><div id="drEmo" style="font-size:26px;min-height:30px">'+dressEmoLine(d.equip)+'</div></div>';
+  h+='<div style="text-align:center"><button class="btn cta" onclick="dressGacha()">🎰 扭蛋机（'+DR_GACHA_COST+' 月巴币/次）</button></div>';
+  h+='<p style="color:#3e5c3f;font-size:13px;font-weight:700;margin:8px 0 2px">🎀 搭配</p>';
+  h+=dressSelectHTML('head',d.equip.head)+dressSelectHTML('body',d.equip.body)+dressSelectHTML('deco',d.equip.deco);
+  h+='<p style="text-align:center;margin-top:8px"><button class="btn cta" onclick="dressPhoto()">📸 拍照（设为换装按钮）</button> <button class="btn" onclick="dressResetPhoto()">还原</button></p>';
+  h+='<p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>';
+  openModal('👗 月巴换装', h);
+}
+function dressSelectHTML(cat,cur){ const d=dressFresh(); const owned=d.owned.map(dressPart).filter(p=>p&&p.cat===cat); return '<p style="margin:2px 0;font-size:13px;color:#48614a">'+DR_CAT[cat]+'：<select style="max-width:150px" onchange="dressToggle(\''+cat+'\',this.value)"><option value="">卸下</option>'+owned.map(p=>'<option value="'+p.id+'"'+(p.id===cur?' selected':'')+'>'+p.e+' '+p.n+'</option>').join('')+'</select></p>'; }
+function dressPick(fatId){ const d=dressFresh(); d.fatId=fatId; const tp=typeById(fatId); const pv=$('drPrev'), em=$('drEmo'); if(pv)pv.innerHTML=tp?fatSVG(tp):'🐤'; if(em)em.innerHTML=dressEmoLine(d.equip); }
+function dressToggle(cat,val){ const d=dressFresh(); d.equip[cat]=val||null; dressOpen(); }
+function dressBuyCoin(){ if(S.coins<DR_COIN_COST){ sfx.error(); toast('金币不足'); return; } S.coins-=DR_COIN_COST; S.tbCoin=(S.tbCoin||0)+1; sfx.unlock(); save(); updateHeader(); dressOpen(); }
+function dressGacha(){ const d=dressFresh(); if((S.tbCoin||0)<DR_GACHA_COST){ sfx.error(); toast('💰 月巴币不够，先用金币购买'); return; } S.tbCoin-=DR_GACHA_COST; const p=DRESS_PARTS[(Math.random()*DRESS_PARTS.length)|0]; if(d.owned.indexOf(p.id)<0){ d.owned.push(p.id); toast('🎁 抽到：'+p.e+' '+p.n+'（'+DR_CAT[p.cat]+'）！'); } else { S.coins+=DR_DUP_COIN; toast('♻️ 重复 '+p.e+' '+p.n+'，兑换 '+DR_DUP_COIN+' 金币'); } sfx.unlock(); save(); updateHeader(); dressOpen(); }
+function dressEmoDraw(ctx,eq){ ctx.font='30px serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; const P=[eq.head,eq.body,eq.deco].filter(Boolean).map(id=>dressPart(id)).filter(Boolean); for(const p of P){ if(p.cat==='head'){ ctx.fillText(p.e,80,26); } else if(p.cat==='body'){ ctx.fillText(p.e,80,92); } else { ctx.fillText(p.e,138,128); } } }
+function dressPhoto(){ const d=dressFresh(); const tp=d.fatId?typeById(d.fatId):null; if(!tp){ toast('先选一只月巴'); return; } const cv=document.createElement('canvas'); cv.width=160; cv.height=160; const ctx=cv.getContext('2d'); ctx.clearRect(0,0,160,160); const done=function(){ d.photo=cv.toDataURL('image/png'); save(); updateDressIcon(); dressOpen(); toast('📸 拍好啦！已设为换装按钮'); }; const svg=fatSVG(tp); const img=new Image(); img.onload=function(){ ctx.drawImage(img,15,15,130,130); dressEmoDraw(ctx,d.equip); done(); }; img.onerror=function(){ ctx.font='64px serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('🐤',80,85); dressEmoDraw(ctx,d.equip); done(); }; img.src='data:image/svg+xml,'+encodeURIComponent(svg); }
+function dressResetPhoto(){ const d=dressFresh(); d.photo=null; save(); updateDressIcon(); dressOpen(); toast('已还原为默认图标'); }
+function updateDressIcon(){ const el=$('btnDress'); if(!el)return; const ok=dressAllCollected(); const d=S.dress; let b; if(!ok){ b='<b>❓</b><small>换装</small>'; } else if(d&&d.photo){ b='<b style="display:inline-block;width:26px;height:26px;border-radius:50%;background-size:cover;border:2px solid #fff;background-image:url(\''+d.photo+'\')"></b><small>换装</small>'; } else { b='<b>📸</b><small>换装</small>'; } el.innerHTML=b; }
 let tvView='yard';
 function openTravel(){ if(!dex2Unlocked())return; tvFresh(); travelSettleIf(); updateTravelIcon(); tvRenderAll(); $('travel').style.display='flex'; tvUpdateHarvest(); }
 function closeTravel(){ $('travel').style.display='none'; }
