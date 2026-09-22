@@ -2466,8 +2466,8 @@ function openHelp(){
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
         <button class="btn" onclick="exportSave()">📋 复制存档</button>
         <button class="btn" onclick="exportSaveFile()">💾 导出文件</button>
-        <button class="btn" onclick="document.getElementById('importFile').click()">📂 导入文件</button>
         <button class="btn" onclick="toggleImport()">📥 粘贴导入</button>
+        <button class="btn" onclick="document.getElementById('importFile').click()">📂 导入文件</button>
         <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importSaveFile()">
       </div>
       <div id="importWrap" style="display:none;margin-top:8px">
