@@ -414,10 +414,11 @@
   #flygame .fg-top .fg-best b{color:var(--purple);}
   .fg-stage{position:relative;flex:1;overflow:hidden;width:100%;max-width:560px;margin:0 auto;cursor:pointer;}
   .fg-stage.playing{touch-action:none;}
-  .fg-cloud{position:absolute;font-size:30px;opacity:.5;pointer-events:none;}
+  .fg-deco{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;}
+  .fg-deco i{position:absolute;font-style:normal;opacity:.6;line-height:1;}
   .fg-ground{position:absolute;left:0;right:0;bottom:0;height:14px;z-index:2;
     background:linear-gradient(180deg,#dcecc4,#b3d191);box-shadow:0 -2px 6px rgba(120,150,90,.25);}
-  #fgPipes{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+  #fgPipes{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1;}
   .fg-pipe{position:absolute;top:0;bottom:14px;will-change:transform;}
   .fg-pipe i{position:absolute;left:0;right:0;display:block;
     background:linear-gradient(90deg,#c3b1ea,#9575cd 45%,#7e57c2);
@@ -464,6 +465,11 @@
   .fg-lbrow .nm{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--dim);}
   .fg-lbrow .sc{color:var(--gold);font-weight:900;}
   .fg-lbempty{font-size:12px;color:var(--dim);text-align:center;padding:6px 0;}
+  .fg-lbtabs{display:flex;gap:6px;margin-bottom:7px;}
+  .fg-lbtabs button{flex:1;border:none;cursor:pointer;font-family:inherit;font-size:11px;font-weight:900;
+    padding:6px 4px;border-radius:9px;background:rgba(149,117,205,.12);color:var(--dim);}
+  .fg-lbtabs button.on{background:var(--purple);color:#fff;box-shadow:0 2px 6px rgba(149,117,205,.35);}
+  .fg-lbrow .sc.tm{color:#5c9a35;}
   .fg-overbtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
   .fg-overbtns .btn{flex:1 1 calc(50% - 4px);text-align:center;padding:9px 6px;}
   .fg-tip{text-align:center;font-size:11px;color:var(--dim);padding:6px;font-weight:600;}
@@ -848,12 +854,10 @@
     <button class="iconbtn" onclick="flyExit()" style="margin-left:auto">✕</button>
   </div>
   <div class="fg-stage" id="fgStage">
-    <div class="fg-cloud" style="left:8%;top:12%">☁️</div>
-    <div class="fg-cloud" style="left:62%;top:24%">☁️</div>
-    <div class="fg-cloud" style="left:34%;top:6%">☁️</div>
+    <div class="fg-deco" id="fgDeco"></div>
     <div id="fgPipes"></div>
     <div class="fg-fat" id="fgFat"></div>
-    <div class="fg-ground"></div>
+    <div class="fg-ground" id="fgGround"></div>
     <div class="fg-layer" id="fgPick">
       <div class="fg-box">
         <div class="fg-pickhead">🐰 选择要飞的月巴</div>
@@ -879,7 +883,11 @@
         <div class="fg-overscore" id="fgOverScore"></div>
         <div class="fg-result" id="fgResult"></div>
         <div class="fg-quote" id="fgQuote"></div>
-        <div class="fg-lbhead">🏆 排行榜</div>
+        <div class="fg-lbhead" id="fgLbHead">🏆 排行榜</div>
+        <div class="fg-lbtabs" id="fgLbTabs">
+          <button data-m="free" onclick="fgLbTabSet('free')">🕊 自由模式</button>
+          <button data-m="lv" onclick="fgLbTabSet('lv')">🎯 关卡</button>
+        </div>
         <div id="fgLbList"></div>
         <div class="fg-overbtns">
           <button class="btn gold" onclick="flyStart()">再来一次</button>
@@ -1348,7 +1356,7 @@ let S;
 function defaultState(){
   return {
     coins:0, accelLv:0, boughtItems:[], collection:{}, collection2:{}, dex2Celebrated:false, totalHarvest:0, lastFast:0, lowPower:false,
-    flyTop:[], flyPick:null, flySel:1, flyClear:0, flyLvBest:{},
+    flyTop:[], flyPick:null, flySel:1, flyClear:0, flyLvBest:{}, flyLvTime:{},
     weather:'sunny', lastRainAt:-1e12, weatherHoldEnd:0,
     nextWeatherAt:now()+rand(2,4)*60000, muted:false, lastSave:now(),
     seenHelp:false, starter:true, dexPending:null,
@@ -4231,8 +4239,19 @@ function tvFresh(){
   if(!S.travel)S.travel={tomato:300,wh:{food1:0,food2:0,food3:0,lamp:0,charm:0,bell:0},bag:[],frog:{status:'home',depart:null,ret:null,mood:''},cards:[],specials:[],destCount:{},friends:[],harvestT:now()+rand(10,30)*60000} ;
   const t=S.travel;
   t.wh=t.wh||{food1:0,food2:0,food3:0,lamp:0,charm:0,bell:0};
-  if(t.charmDura==null)t.charmDura=(t.wh.charm||0)>0?TV_ITEMS.charm.durab:0;
-  t.bag=t.bag||[];t.cards=t.cards||[];t.specials=t.specials||[];t.destCount=t.destCount||{};
+  t.bag=t.bag||[];
+  /* 护身符耐久改为「逐件」记录：charmDuras 存仓库中每件护身符的剩余耐久（队首＝下次使用） */
+  if(!t.charmDuras){
+    const cur=(t.charmDura==null?TV_ITEMS.charm.durab:t.charmDura);
+    const bc=t.bag.find(function(x){return x&&x.k==='charm';});
+    if(bc) bc.du=cur;
+    t.charmDuras=[];
+    const cn=t.wh.charm||0;
+    for(let i=0;i<cn;i++){ const d=(!bc&&i===0)?cur:TV_ITEMS.charm.durab; if(d>0)t.charmDuras.push(d); }
+    t.wh.charm=t.charmDuras.length;   // 耐久已归零的护身符视为用完，不再计入仓库
+    delete t.charmDura;
+  }
+  t.cards=t.cards||[];t.specials=t.specials||[];t.destCount=t.destCount||{};
   t.inbox=t.inbox||[];
   t.cardWho=t.cardWho||{}; t.cardFirst=t.cardFirst||{}; t.cardMood=t.cardMood||{}; t.cardMoods=t.cardMoods||{};
   t.friends=t.friends||[];t.yard=t.yard||[];
@@ -4243,6 +4262,10 @@ function tvFresh(){
   if(t.bgIdx==null)t.bgIdx=(Math.random()*TV_BGS.length)|0;
   return t;
 }
+/* 护身符单件耐久：优先取该件的 du，旧数据缺省为满耐久 */
+function tvCharmDura(x){ return Math.max(0,(x&&x.du!=null)?(x.du|0):TV_ITEMS.charm.durab); }
+/* 仓库中多件护身符的耐久文本，如「3/3、2/3」 */
+function tvCharmDuraText(list){ const d=TV_ITEMS.charm.durab; if(!list||!list.length)return '—'; const a=list.slice(0,6).map(function(v){return v+'/'+d;}); if(list.length>6)a.push('…'); return a.join('、'); }
 function tvTomato(d){ const t=tvFresh(); t.tomato=Math.max(0,(t.tomato||0)+d); const e=$('tvTomato'); if(e)e.textContent=t.tomato; save(); }
 function updateTravelIcon(){ const el=$('btnTravel'); if(!el)return; const ready=!!S.travel&&tvSlotReady(); if(el.classList)el.classList.toggle('hasbadge',ready); el.innerHTML=(dex2Unlocked()?'<b>🧳</b><small>旅行</small>':'<b>❓</b><small>旅行</small>')+(ready?'<span class="dock-badge">🎰</span>':''); }
 function travelEntry(){ if(!dex2Unlocked()){ toast('🔒 第一图鉴集齐'+DEX1_MIN+'个月巴后可解锁旅行！'); return; } openTravel(); }
@@ -4520,11 +4543,11 @@ function tvDestOf(bag){ const t=tvFresh(); if(t.frog&&t.frog.status==='away'&&t.
 function tvGo(mood){ const t=tvFresh(); const up=(mood||'').trim().toUpperCase(); const m=up.match(/^TOMATO(\d{1,7})$/); if(m){ const amt=Math.min(parseInt(m[1],10),9999999); tvTomato(amt); toast('✨ 收到 '+((''+amt).replace(/\B(?=(\d{3})+(?!\d))/g,','))+' 🍅！'); mood=''; } else if(up==='YUEFEI500'){ if(!t.codeUsed){ t.codeUsed=true; tvTomato(500); toast('✨ 口令生效，获得 500 🍅！'); } else { toast('此口令已使用过啦'); } mood=''; } if(t.frog.status==='away'){ toast('✈️ 已有月巴在旅行中，等它回来再出发吧'); return; } if(!t.frog.fatId){ toast('🐤 先在图鉴里选择一位月巴出发'); return; } const kinds=tvDestKinds(t.bag); const food=t.bag.find(function(x){return x.k==='food1'||x.k==='food2'||x.k==='food3';}); if(!food){ toast('🍙 至少带上 1 个便当才能出发！'); return; } t.frog.status='away'; t.frog.depart=now(); const base=TV_FOODS[food.k].dur; t.frog.dest=tvDestOf(t.bag).id; t.frog.mood=mood||'我想去看看'; t.frog.ret=now()+(DR_DEBUG?2*60*1000:Math.round(base*(0.75+Math.random()*0.7))); t.bag=t.bag.filter(function(x){return !(x.k==='food1'||x.k==='food2'||x.k==='food3'||x.k==='lamp'||x.k==='bell');}); t.cardT=now()+rand(8,14)*60000; t.frog.cardsSent=0; t.frog.cardQuota=Math.random()<0.1?1:0; t.eventT=0; save(); closeModal(); toast('✈️ 出发去旅行啦！'); tvRenderScene(); tvUpdateBar(); }
 function tvDepart(){ const e=$('tvMood'); tvGo(e?e.value.trim():''); }
 function tvDestKinds(bag){ return bag.map(function(x){return x.k;}); }
-function tvSettle(){ const t=tvFresh(); const kinds=tvDestKinds(t.bag); const d=tvDestOf(t.bag); let gain=1+(kinds.indexOf('charm')>=0?1:0); const got=[],dups=[]; for(let i=0;i<gain;i++){ const s=d.specials[Math.floor(Math.random()*d.specials.length)]; if(t.specials.indexOf(s)<0){ t.specials.push(s); got.push(s); } else { dups.push(s); } } let newCard=null; { newCard=d.cards[Math.floor(Math.random()*d.cards.length)]; if(t.cards.indexOf(newCard)<0)t.cards.push(newCard); if(t.inbox.indexOf(newCard)<0)t.inbox.push(newCard); tvNoteCard(newCard,t.frog.fatId); tvNoteMood(newCard); t.frog.cardsSent=(t.frog.cardsSent||0)+1; } t.destCount[d.id]=(t.destCount[d.id]||0)+1; if(kinds.indexOf('charm')>=0){ const ci=t.bag.findIndex(function(x){return x.k==='charm';}); const cur=(t.charmDura==null?TV_ITEMS.charm.durab:t.charmDura)-1; t.charmDura=Math.max(0,cur); if(ci>=0){ t.bag.splice(ci,1); if(cur>0){ t.wh.charm=(t.wh.charm||0)+1; } } } t.frog={status:'home',depart:null,ret:null,mood:t.frog.mood||'',fatId:t.frog.fatId||null}; if(t.frog.fatId){ t.lastHomeFatId=t.frog.fatId; t.homeId=t.frog.fatId; t.homeTxt=tvHomeDescs(t.frog.fatId)[(Math.random()*3)|0]; t.homeReward={n:5+(Math.random()*16|0)}; t.homeRewardReady=true; } t.bag=[]; t.eventT=0; save(); if(dups.length)tvTomato(10*dups.length); let toastMsg=''; if(got.length)toastMsg+='🌿 从「'+d.n+'」带回新特产：'+got.join('、')+'！'; if(dups.length)toastMsg+=' ♻️ 重复 '+dups.join('、')+' 兑换 '+10*dups.length+' 🍅！'; if(toastMsg)toast(toastMsg); let h='<p style="text-align:center;color:#48614a">月巴从<b>「'+d.n+'」</b>回来了！（第 '+t.destCount[d.id]+' 次旅行）</p>'; const all=got.concat(dups); h+='<p style="text-align:center;font-weight:800;color:#e08a3c">🎁 带回特产：'+(all.length?('从「'+d.n+'」带回 '+all.join('、')+(dups.length?(' · 已兑换 '+10*dups.length+' 🍅'):'')):'这次带回了温暖的问候')+'</p>'; if(newCard)h+='<p style="text-align:center;color:#7e57c2;font-weight:700">💌 收到一封来自「'+d.n+'」的信！</p>'; h+='<p style="text-align:center"><button class="btn cta" onclick="closeModal()">收下</button></p>'; openModal('🎉 旅行归来',h); tvRenderScene(); tvUpdateBar(); }
+function tvSettle(){ const t=tvFresh(); const kinds=tvDestKinds(t.bag); const d=tvDestOf(t.bag); const cc=t.bag.filter(function(x){return x&&x.k==='charm';}).length; let gain=1+cc; const got=[],dups=[]; for(let i=0;i<gain;i++){ const s=d.specials[Math.floor(Math.random()*d.specials.length)]; if(t.specials.indexOf(s)<0){ t.specials.push(s); got.push(s); } else { dups.push(s); } } let newCard=null; { newCard=d.cards[Math.floor(Math.random()*d.cards.length)]; if(t.cards.indexOf(newCard)<0)t.cards.push(newCard); if(t.inbox.indexOf(newCard)<0)t.inbox.push(newCard); tvNoteCard(newCard,t.frog.fatId); tvNoteMood(newCard); t.frog.cardsSent=(t.frog.cardsSent||0)+1; } t.destCount[d.id]=(t.destCount[d.id]||0)+1; if(cc>0){ t.bag.forEach(function(x){ if(x&&x.k==='charm'){ const cur=Math.max(0,tvCharmDura(x)-1); if(cur>0){ t.wh.charm=(t.wh.charm||0)+1; t.charmDuras.push(cur); } } }); } t.frog={status:'home',depart:null,ret:null,mood:t.frog.mood||'',fatId:t.frog.fatId||null}; if(t.frog.fatId){ t.lastHomeFatId=t.frog.fatId; t.homeId=t.frog.fatId; t.homeTxt=tvHomeDescs(t.frog.fatId)[(Math.random()*3)|0]; t.homeReward={n:5+(Math.random()*16|0)}; t.homeRewardReady=true; } t.bag=[]; t.eventT=0; save(); if(dups.length)tvTomato(10*dups.length); let toastMsg=''; if(got.length)toastMsg+='🌿 从「'+d.n+'」带回新特产：'+got.join('、')+'！'; if(dups.length)toastMsg+=' ♻️ 重复 '+dups.join('、')+' 兑换 '+10*dups.length+' 🍅！'; if(toastMsg)toast(toastMsg); let h='<p style="text-align:center;color:#48614a">月巴从<b>「'+d.n+'」</b>回来了！（第 '+t.destCount[d.id]+' 次旅行）</p>'; const all=got.concat(dups); h+='<p style="text-align:center;font-weight:800;color:#e08a3c">🎁 带回特产：'+(all.length?('从「'+d.n+'」带回 '+all.join('、')+(dups.length?(' · 已兑换 '+10*dups.length+' 🍅'):'')):'这次带回了温暖的问候')+'</p>'; if(newCard)h+='<p style="text-align:center;color:#7e57c2;font-weight:700">💌 收到一封来自「'+d.n+'」的信！</p>'; h+='<p style="text-align:center"><button class="btn cta" onclick="closeModal()">收下</button></p>'; openModal('🎉 旅行归来',h); tvRenderScene(); tvUpdateBar(); }
 function tvClaimHomeReward(){ const t=tvFresh(); if(!t.homeRewardReady||!(t.homeReward&&t.homeReward.n>0))return; const n=t.homeReward.n; const nm=t.homeId&&typeById(t.homeId)?typeById(t.homeId).name:'月巴'; t.homeRewardReady=false; t.homeReward=null; t.tomato=(t.tomato||0)+n; save(); tvUpdateBar(); updateTravelIcon(); openModal('🎉 旅行归来','<p style="text-align:center;font-size:40px">🐤</p><p style="text-align:center"><b>'+nm+'</b> 回家啦！它把旅途中攒下的 <b style="color:#e08a3c">'+n+'</b> 个 🍅 送给了你</p><p style="text-align:center"><button class="btn cta" onclick="closeModal()">收下</button></p>'); }
 function tvShop(){ openModal('🛍 商店 · 用 🍅 购买', tvShopHTML()); }
-function tvShopHTML(){ const t=tvFresh(); let h='<p style="color:#48614a;font-size:13px">🍅 番茄余额：<b class="tv-tom">'+t.tomato+'</b></p><div class="sh-grid">'; const list=[['food1','🍙','饭团便当',50,'基础旅行时长'],['food2','🍱','时蔬便当',150,'中等时长·小概率去大海/小镇'],['food3','🥡','豪华便当',400,'较长时长·小概率去雪山/大海/小镇'],['lamp','🏮','油灯',300,'一次性·需配便当，必定前往大海'],['charm','🍀','幸运护身符',500,'特产+1（耐久3，可用3次）'],['bell','🔔','铃铛',200,'一次性·需配便当，必定前往小镇']]; for(const r of list){ h+='<div class="sh-card"><div class="sh-ic">'+r[1]+'</div><div class="sh-n">'+r[2]+'</div><div class="sh-d">'+r[4]+'</div><div class="sh-price">🍅 '+r[3]+'</div><button class="btn" onclick="tvBuy(\''+r[0]+'\')">购买</button></div>'; } h+='</div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'; return h; }
-function tvBuy(k){ const t=tvFresh(); const it=TV_FOODS[k]||TV_ITEMS[k]; if(!it)return; if(t.tomato<it.p){ toast('🍅 番茄不够'); return; } t.tomato-=it.p; t.wh[k]=(t.wh[k]||0)+1; if(k==='charm' && t.charmDura<=0) t.charmDura=TV_ITEMS.charm.durab; save(); tvTomato(0); openModal('🛍 商店 · 用 🍅 购买', tvShopHTML()); }
+function tvShopHTML(){ const t=tvFresh(); let h='<p style="color:#48614a;font-size:13px">🍅 番茄余额：<b class="tv-tom">'+t.tomato+'</b></p><div class="sh-grid">'; const list=[['food1','🍙','饭团便当',50,'基础旅行时长'],['food2','🍱','时蔬便当',150,'中等时长·小概率去大海/小镇'],['food3','🥡','豪华便当',400,'较长时长·小概率去雪山/大海/小镇'],['lamp','🏮','油灯',300,'一次性·需配便当，必定前往大海'],['charm','🍀','幸运护身符',500,'特产+1/件（可叠加，耐久3）'],['bell','🔔','铃铛',200,'一次性·需配便当，必定前往小镇']]; for(const r of list){ h+='<div class="sh-card"><div class="sh-ic">'+r[1]+'</div><div class="sh-n">'+r[2]+'</div><div class="sh-d">'+r[4]+'</div><div class="sh-price">🍅 '+r[3]+'</div><button class="btn" onclick="tvBuy(\''+r[0]+'\')">购买</button></div>'; } h+='</div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'; return h; }
+function tvBuy(k){ const t=tvFresh(); const it=TV_FOODS[k]||TV_ITEMS[k]; if(!it)return; if(t.tomato<it.p){ toast('🍅 番茄不够'); return; } t.tomato-=it.p; t.wh[k]=(t.wh[k]||0)+1; if(k==='charm') t.charmDuras.push(TV_ITEMS.charm.durab); save(); tvTomato(0); openModal('🛍 商店 · 用 🍅 购买', tvShopHTML()); }
 function tvBag(){ openModal('💼 仓库与行囊', tvBagHTML()); }
 function tvBagHTML(){ const t=tvFresh(); const owned=tvOwnedFats(); const pick=t.frog.fatId||''; let h='<p style="color:#48614a;font-size:13px">🍅 番茄：<b class="tv-tom">'+t.tomato+'</b></p>';
   if(t.frog.status==='away'){
@@ -4535,15 +4558,15 @@ function tvBagHTML(){ const t=tvFresh(); const owned=tvOwnedFats(); const pick=t
   for(const o of owned){ const sel=pick===o.id?' sel':''; h+='<div class="tv-fatpick'+sel+'" onclick="tvPickFat(\''+o.id+'\')"><div class="pic">'+fatSVG(o.t)+'</div><div class="nm">'+o.t.name+'</div></div>'; }
   h+='</div>';
   }
-  h+='<p style="color:#48614a;font-size:13px">🧰 仓库与行囊</p><div class="sh-grid">'; let any=false; for(const k in t.wh){ const c=t.wh[k]; if(c<=0)continue; any=true; const it=TV_FOODS[k]||TV_ITEMS[k]; const isF=!!TV_FOODS[k]; const du=(k==='charm'&&it.durab)?(' · 耐久 '+Math.max(0,(t.charmDura==null?it.durab:t.charmDura))+'/'+it.durab):''; h+='<div class="sh-card"><div class="sh-ic">'+(it.e||'🧰')+'</div><div class="sh-n">'+it.n+'</div><div class="sh-d">仓库 ×'+c+du+'</div><button class="btn" onclick="tvPack(\''+k+'\')">装进行囊</button></div>'; } if(!any)h+='<p style="color:#999;text-align:center;grid-column:1/-1">仓库空空的，去 🛍 商店买点物资吧</p>';
-  h+='</div><p style="color:#48614a;font-size:13px">🎒 行囊（'+t.bag.length+'/4）</p><div class="sh-grid">'; if(!t.bag.length)h+='<p style="color:#999;text-align:center;grid-column:1/-1">还没有带任何东西</p>'; t.bag.forEach(function(x){ const it=TV_FOODS[x.k]||TV_ITEMS[x.k]; const isF=!!TV_FOODS[x.k]; const du=(x.k==='charm'&&it.durab)?(' · 耐久 '+Math.max(0,(t.charmDura==null?it.durab:t.charmDura))+'/'+it.durab):''; h+='<div class="sh-card"><div class="sh-ic">'+(it.e||'🧰')+'</div><div class="sh-n">'+it.n+'</div><div class="sh-d">'+du+'</div><button class="btn" onclick="tvUnpack(\''+x.k+'\')">取出</button></div>'; }); h+='</div>';
+  h+='<p style="color:#48614a;font-size:13px">🧰 仓库与行囊</p><div class="sh-grid">'; let any=false; for(const k in t.wh){ const c=t.wh[k]; if(c<=0)continue; any=true; const it=TV_FOODS[k]||TV_ITEMS[k]; const isF=!!TV_FOODS[k]; const du=(k==='charm'&&it.durab)?(' · 耐久 '+tvCharmDuraText(t.charmDuras)):''; h+='<div class="sh-card"><div class="sh-ic">'+(it.e||'🧰')+'</div><div class="sh-n">'+it.n+'</div><div class="sh-d">仓库 ×'+c+du+'</div><button class="btn" onclick="tvPack(\''+k+'\')">装进行囊</button></div>'; } if(!any)h+='<p style="color:#999;text-align:center;grid-column:1/-1">仓库空空的，去 🛍 商店买点物资吧</p>';
+  h+='</div><p style="color:#48614a;font-size:13px">🎒 行囊（'+t.bag.length+'/4）</p><div class="sh-grid">'; if(!t.bag.length)h+='<p style="color:#999;text-align:center;grid-column:1/-1">还没有带任何东西</p>'; t.bag.forEach(function(x){ const it=TV_FOODS[x.k]||TV_ITEMS[x.k]; const isF=!!TV_FOODS[x.k]; const du=(x.k==='charm'&&it.durab)?(' · 耐久 '+tvCharmDura(x)+'/'+it.durab):''; h+='<div class="sh-card"><div class="sh-ic">'+(it.e||'🧰')+'</div><div class="sh-n">'+it.n+'</div><div class="sh-d">'+du+'</div><button class="btn" onclick="tvUnpack(\''+x.k+'\')">取出</button></div>'; }); h+='</div>';
   const tp=typeById(pick);
   if(t.frog.status!=='away'){ h+='<div style="text-align:center;margin:10px 0 2px;color:#3e5c3f;font-size:13px;font-weight:700">🚀 即将出发的月巴'+(tp?('：'+tp.name):'（未选择）')+'</div>';
   if(tp)h+='<div style="text-align:center;margin-bottom:4px"><span class="tv-traveler">'+fatSVG(tp)+'</span></div>';
   h+='<div style="text-align:center"><input id="tvMood" placeholder="出发留言…" style="padding:7px;border:1px solid #ccc;border-radius:8px;width:74%"></div><div style="text-align:center;margin-top:8px"><button class="btn cta" onclick="tvDepart()">✈️ 出发（需 1 个便当）</button></div>'; }
   return h; }
-function tvPack(k){ const t=tvFresh(); if(t.bag.length>=4){ toast('行囊已满（最多4件）'); return; } if(t.wh[k]<=0)return; const need=(k==='food1'||k==='food2'||k==='food3'); if(need && t.bag.some(function(x){return x.k==='food1'||x.k==='food2'||x.k==='food3';})){ toast('已装便当，最多带 1 份'); return; } t.wh[k]--; t.bag.push({k:k}); save(); tvBag(); }
-function tvUnpack(k){ const t=tvFresh(); const i=t.bag.findIndex(function(x){return x.k===k;}); if(i<0)return; t.bag.splice(i,1); t.wh[k]=(t.wh[k]||0)+1; save(); tvBag(); }
+function tvPack(k){ const t=tvFresh(); if(t.bag.length>=4){ toast('行囊已满（最多4件）'); return; } if(t.wh[k]<=0)return; const need=(k==='food1'||k==='food2'||k==='food3'); if(need && t.bag.some(function(x){return x.k==='food1'||x.k==='food2'||x.k==='food3';})){ toast('已装便当，最多带 1 份'); return; } t.wh[k]--; if(k==='charm'){ const du=(t.charmDuras&&t.charmDuras.length)?t.charmDuras.shift():TV_ITEMS.charm.durab; t.bag.push({k:k,du:du}); } else t.bag.push({k:k}); save(); tvBag(); }
+function tvUnpack(k){ const t=tvFresh(); const i=t.bag.findIndex(function(x){return x.k===k;}); if(i<0)return; const x=t.bag[i]; t.bag.splice(i,1); t.wh[k]=(t.wh[k]||0)+1; if(k==='charm') t.charmDuras.push(tvCharmDura(x)); save(); tvBag(); }
 
 function nextDexEventAt(){ return now()+rand(20,45)*60000; } // 下次天降事件：20~45 分钟后随机出现
 let _dexEv=null; // 待领取的天降事件缓存：{t,line,reward}
@@ -4688,21 +4711,103 @@ const FG_WIN_QUOTES=[
 ];
 /* 10 个关卡：goal=需穿过的柱子数，gap/dist/spd 为难度倍率 */
 const FG_LEVELS=[
-  {n:1, name:'初见',     goal:4,  gap:0.365, dist:0.70, spd:0.82},
-  {n:2, name:'微风',     goal:6,  gap:0.350, dist:0.68, spd:0.88},
-  {n:3, name:'云上',     goal:8,  gap:0.335, dist:0.66, spd:0.94},
-  {n:4, name:'穿林',     goal:10, gap:0.320, dist:0.64, spd:1.00},
-  {n:5, name:'逆风',     goal:12, gap:0.305, dist:0.62, spd:1.06},
-  {n:6, name:'星夜',     goal:15, gap:0.292, dist:0.60, spd:1.12},
-  {n:7, name:'险峰',     goal:18, gap:0.280, dist:0.58, spd:1.18},
-  {n:8, name:'雷雨',     goal:22, gap:0.268, dist:0.56, spd:1.24},
-  {n:9, name:'极夜',     goal:26, gap:0.256, dist:0.54, spd:1.30},
-  {n:10,name:'月巴之王', goal:30, gap:0.245, dist:0.52, spd:1.36},
+  {n:1, name:'初见',     goal:8,  gap:0.365, dist:0.70, spd:0.82},
+  {n:2, name:'微风',     goal:15, gap:0.350, dist:0.68, spd:0.88},
+  {n:3, name:'云上',     goal:21, gap:0.335, dist:0.66, spd:0.94},
+  {n:4, name:'穿林',     goal:27, gap:0.320, dist:0.64, spd:1.00},
+  {n:5, name:'逆风',     goal:33, gap:0.305, dist:0.62, spd:1.06},
+  {n:6, name:'星夜',     goal:40, gap:0.292, dist:0.60, spd:1.12},
+  {n:7, name:'险峰',     goal:47, gap:0.280, dist:0.58, spd:1.18},
+  {n:8, name:'雷雨',     goal:70, gap:0.268, dist:0.56, spd:1.24},
+  {n:9, name:'极夜',     goal:85, gap:0.256, dist:0.54, spd:1.30},
+  {n:10,name:'月巴之王', goal:100,gap:0.245, dist:0.52, spd:1.36},
 ];
+/* 渐进加速：每穿过一根柱子速度提升一点，越飞越快（关卡与自由模式都生效） */
+const FG_ACC_LV={step:0.009, max:1.90};     // 关卡：每根 +0.9%，100 根刚好到顶
+const FG_ACC_FREE={step:0.022, max:2.60};   // 自由：每根 +2.2%，无终点可持续加速
+/* 各关场景：bg=背景渐变三段色，ground=地面两段色，deco=装饰图案 [left%,top%,图案,字号] */
+const FG_SCENES={
+  0: {bg:['#e8f0ff','#efe6ff 58%','#f8efff'], ground:['#dcecc4','#b3d191'],
+      deco:[[8,12,'☁️',30],[62,24,'☁️',26],[34,6,'☁️',34]]},
+  1: {bg:['#dff0ff','#eaf4ff 58%','#f6fbff'], ground:['#dcecc4','#b3d191'],   // 初见 · 晴空浮云
+      deco:[[8,12,'☁️',30],[62,22,'☁️',24],[36,5,'☁️',34],[82,38,'☁️',20]]},
+  2: {bg:['#e2f7ef','#eefaf3 55%','#f7fdf9'], ground:['#cfe8bd','#9ecf82'],   // 微风 · 青叶轻拂
+      deco:[[10,14,'🍃',26],[70,10,'🍃',22],[40,26,'🌿',24],[86,34,'🍃',20]]},
+  3: {bg:['#dfe9ff','#eae2ff 55%','#f6f0ff'], ground:['#e6e0f5','#c9bde8'],   // 云上 · 高空云海
+      deco:[[6,6,'☁️',34],[58,14,'☁️',30],[30,2,'☁️',40],[78,30,'☁️',26]]},
+  4: {bg:['#dff0d8','#e9f5e0 55%','#f2f9ec'], ground:['#b6d59a','#7fae5e'],   // 穿林 · 林间穿行
+      deco:[[6,10,'🌲',30],[78,8,'🌲',26],[22,26,'🌲',24],[62,30,'🍃',20]]},
+  5: {bg:['#dde6ee','#e7ecf2 55%','#f1f4f7'], ground:['#c6d2c0','#96a992'],   // 逆风 · 灰白疾风
+      deco:[[12,14,'💨',28],[64,10,'💨',24],[38,28,'🌬️',26],[84,38,'💨',20]]},
+  6: {bg:['#2b2f52','#3b3a6b 55%','#54497f'], ground:['#2a2a4a','#1b1b33'],   // 星夜 · 深蓝星河
+      deco:[[8,10,'⭐',20],[34,22,'🌟',24],[62,8,'⭐',16],[80,30,'⭐',18],[20,42,'✨',18]]},
+  7: {bg:['#e8e2d8','#efe9df 55%','#f7f3ec'], ground:['#c9bda9','#9c8e78'],   // 险峰 · 山峦叠嶂
+      deco:[[6,30,'⛰️',36],[70,26,'🏔️',34],[40,44,'⛰️',28]]},
+  8: {bg:['#5a6472','#6d7684 55%','#8a929e'], ground:['#4a515c','#333940'],   // 雷雨 · 乌云骤雨
+      deco:[[14,8,'⛈️',30],[68,14,'🌧️',26],[36,4,'☁️',34],[84,32,'⛈️',24]]},
+  9: {bg:['#1a1730','#241f45 55%','#332a5c'], ground:['#241f45','#15112b'],   // 极夜 · 极寒长夜
+      deco:[[10,12,'❄️',22],[66,8,'❄️',18],[36,26,'🌌',28],[82,34,'❄️',20],[22,46,'❄️',16]]},
+  10:{bg:['#3b2a5e','#5b3f86 50%','#8b6bb1'], ground:['#c9a227','#8f6f14'],   // 月巴之王 · 紫金王座
+      deco:[[8,10,'👑',26],[70,12,'🌙',30],[34,30,'⭐',20],[84,36,'✨',22],[20,44,'👑',20]]},
+};
+/* 按关卡切换场景：背景渐变 / 装饰图案 / 地面颜色（0=自由模式用默认场景） */
+function fgScene(lv){
+  const sc=FG_SCENES[lv|0]||FG_SCENES[0];
+  const g=$('flygame'); if(g) g.style.background='linear-gradient(180deg,'+sc.bg.join(',')+')';
+  const d=$('fgDeco');
+  if(d) d.innerHTML=(sc.deco||[]).map(a=>'<i style="left:'+a[0]+'%;top:'+a[1]+'%;font-size:'+(a[3]||28)+'px">'+a[2]+'</i>').join('');
+  const gr=$('fgGround');
+  if(gr) gr.style.background='linear-gradient(180deg,'+sc.ground[0]+','+sc.ground[1]+')';
+}
+/* ---- 飞行碰撞盒：按每个月巴的实际可见边缘校准 ----
+   [ox,oy,rx,ry]：可见中心相对方框中心的偏移，rx/ry 为半宽/半高（单位＝方框边长）
+   SVG 形状由 viewBox 0 0 40 40 的几何算得；图片由 PNG 透明留白实测算得 */
+const FG_HIT_SVG={
+  round:[0,0.025,0.343,0.343],   tall:[0,0.050,0.255,0.368],
+  wide:[0,0.050,0.393,0.280],    squish:[0,0.100,0.355,0.243],
+  cube:[0,0.038,0.318,0.330],    big:[0,0.050,0.418,0.343],
+  bean:[0,0.050,0.368,0.255],    heart:[0,0.010,0.318,0.308],
+  drop:[0,0.013,0.243,0.355],    star:[0,-0.008,0.333,0.310],
+  spike:[0,-0.025,0.268,0.418],  crown:[0,0.013,0.293,0.405],
+  moon:[0.050,0,0.340,0.375],    ghost:[0,-0.116,0.318,0.384],
+  rainbow:[0,0.125,0.218,0.068], chaos:[0,0.025,0.330,0.330]
+};
+const FG_HIT_IMG={
+  mb_xiaoyue:[0,-0.013,0.281,0.431],   mb_wan:[0,-0.013,0.281,0.431],
+  mb_xian:[-0.003,-0.028,0.281,0.447], mb_chi:[0.016,-0.006,0.453,0.300],
+  mb_xin:[0,-0.022,0.319,0.434],       mb_lan:[0.034,0.094,0.466,0.406],
+  mb_jian:[0,-0.022,0.294,0.441],      mb_xing:[-0.003,-0.009,0.328,0.409],
+  mb_fanben:[0.113,-0.028,0.388,0.472],mb_shizhe:[0,-0.016,0.275,0.409],
+  mb_pingguo:[0,-0.009,0.350,0.359],   mb_jiu:[-0.006,0.031,0.344,0.438],
+  mb_liti:[-0.050,0.025,0.338,0.400],  mb_xiaoma:[-0.019,0.031,0.200,0.469],
+  mb_tomato:[0.006,-0.006,0.375,0.494],mb_laba:[-0.022,0.006,0.309,0.431],
+  mb_tangyuan:[-0.009,0.019,0.441,0.425],mb_bashan:[-0.016,0.194,0.403,0.306],
+  xitong:[0.016,-0.009,0.400,0.422]
+};
+const FG_HIT_FORGIVE=0.92;   // 再放宽一点，贴到边缘像素不至于立刻判负
+const FG_HIT_MIN=0.16;       // 细长形状（如彩虹）的最小半宽/半高，避免判定盒过小
+function fgHitBox(type){
+  let h=null;
+  if(type&&type.img) h=FG_HIT_IMG[type.id]||[0,0,0.32,0.32];  // 未实测的图片：保守的圆
+  else h=FG_HIT_SVG[(type&&type.shape)||'round']||[0,0,0.32,0.32];
+  return {ox:h[0], oy:h[1],
+          rx:Math.max(FG_HIT_MIN,h[2]*FG_HIT_FORGIVE),
+          ry:Math.max(FG_HIT_MIN,h[3]*FG_HIT_FORGIVE)};
+}
+/* 椭圆判定盒与轴对齐矩形（柱子的一节）是否相交 */
+function fgHitRect(hx,hy,rx,ry,x0,x1,y0,y1){
+  const dx=(hx-clamp(hx,x0,x1))/rx, dy=(hy-clamp(hy,y0,y1))/ry;
+  return dx*dx+dy*dy<=1;
+}
 let fg=null;
 function fgAllTypes(){ return TYPES.concat(TYPES2); }
-function fgBest(){ return (S.flyTop&&S.flyTop.length)?S.flyTop[0].s:0; }
+function fgFreeTop(){ return (S.flyTop||[]).filter(r=>(r.lv|0)===0); }
+function fgBest(){ const l=fgFreeTop(); return l.length?l[0].s:0; }
 function fgBestRefresh(){ const e=$('fgBest'); if(e) e.textContent=fgBest(); }
+function fgFmtT(s){ return (s>0?s:0).toFixed(2)+'秒'; }
+/* 排行榜分类：'free' 自由模式（按分数） / 'lv' 关卡（按最短用时） */
+let fgLbTab='free', fgLastRes=null;
+function fgLbTabSet(m){ fgLbTab=(m==='lv')?'lv':'free'; fgRenderLb(fgLastRes); }
 function fgPickId(){ return (S.flyPick&&typeById(S.flyPick))?S.flyPick:(TYPES[0]&&TYPES[0].id); }
 /* ---- 关卡 / 自由模式 ---- */
 function fgLvDef(n){ return (n>=1&&n<=FG_LEVELS.length)?FG_LEVELS[n-1]:null; }
@@ -4763,15 +4868,16 @@ function fgLvOpen(){
 function fgRenderLv(){
   const grid=$('fgLvGrid'); if(!grid)return;
   const cur=fgSel();
-  const best=S.flyLvBest||{};
+  const best=S.flyLvBest||{}, times=S.flyLvTime||{};
   let html=FG_LEVELS.map(L=>{
     const on=fgLvUnlocked(L.n);
-    const b=best[L.n]|0;
+    const b=best[L.n]|0, rec=times[L.n];
     const pass=fgClearN()>=L.n;
+    const btxt=!on?'':(pass?(rec?('✅ 最快 '+fgFmtT(rec.t)):'✅ 已通关'):(b?('最佳 '+b):('目标 '+L.goal)));
     return '<div class="fg-lv'+(on?'':' lock')+(cur===L.n?' sel':'')+'" data-n="'+L.n+'">'
       +'<div class="t">'+(on?('第 '+L.n+' 关'):'🔒')+'</div>'
       +'<div class="s">'+escHTML(on?L.name:'未解锁')+'</div>'
-      +'<div class="b">'+(on?(pass?'✅ ':'')+(b?('最佳 '+b):('目标 '+L.goal)):'')+'</div></div>';
+      +'<div class="b">'+btxt+'</div></div>';
   }).join('');
   html+='<div class="fg-lv'+(cur===0?' sel':'')+'" data-n="0">'
     +'<div class="t">🕊 自由</div><div class="s">无限模式</div>'
@@ -4799,9 +4905,11 @@ function fgLvInfo(){
     }else{
       const L=fgLvDef(cur)||FG_LEVELS[0];
       const b=(S.flyLvBest&&S.flyLvBest[cur])|0;
+      const tr=S.flyLvTime&&S.flyLvTime[cur];
       const left=Math.max(0,FG_LEVELS.length-fgClearN());
       info.innerHTML='第 '+cur+' 关「<b>'+escHTML(L.name)+'</b>」 · 目标穿过 <b>'+L.goal+'</b> 根柱子<br>'
-        +'本关最佳 <b>'+b+'</b>'+(fgClearN()>=cur?' · 已通关':'')+(left>0?(' · 还剩 '+left+' 关'):' · 全部通关！');
+        +'本关最佳 <b>'+b+'</b>'+(tr?(' · 最快 <b>'+fgFmtT(tr.t)+'</b>'):'')
+        +(fgClearN()>=cur?' · 已通关（可反复刷最短用时）':'')+(left>0?(' · 还剩 '+left+' 关'):' · 全部通关！');
     }
   }
   fgModeRefresh();
@@ -4864,15 +4972,20 @@ function fgSetup(type){
   fg.G=fg.H*0.00072;                       // 重力（每帧，按 60fps 折算）
   fg.FLAP=-fg.H*0.0150;                    // 点击上冲速度
   fg.VMAX=fg.H*0.0115;                     // 下落终速上限
-  fg.SPEED=clamp(fg.H*0.0032,1.4,2.9)*(L?L.spd:1.05); // 柱子左移速度
+  fg.baseSpeed=clamp(fg.H*0.0032,1.4,2.9)*(L?L.spd:1.05); // 柱子左移基础速度
+  const A=L?FG_ACC_LV:FG_ACC_FREE;
+  fg.accStep=A.step; fg.spdMax=A.max;          // 渐进加速：每根柱子的增幅与倍率上限
   fg.pw=clamp(fg.W*0.15,46,78);            // 柱子宽度
   fg.dist=clamp(fg.W*(L?L.dist:0.64),170,330); // 柱子间距
   fg.gap=clamp(fg.H*(L?L.gap:0.335),132,270);  // 缺口高度
-  fg.score=0; fg.y=fg.floor*0.42; fg.vy=0; fg.last=0;
+  fg.score=0; fg.y=fg.floor*0.42; fg.vy=0; fg.last=0; fg.t=0;
+  fgSpeedUp();                             // 重置为初始速度（倍率 1）
+  fgScene(fg.lv|0);                        // 按关卡切换背景色与装饰图案
   const sc=$('fgScore'); if(sc) sc.textContent='0';
   fgModeRefresh();
   const fatEl=$('fgFat');
   if(fatEl){ fatEl.style.width=fg.fatSize+'px'; fatEl.style.height=fg.fatSize+'px'; fatEl.innerHTML=fatSVG(type); }
+  fg.hit=fgHitBox(type);
   fgClearPipes();
   const n=Math.ceil(fg.W/fg.dist)+2;
   for(let i=0;i<n;i++) fgAddPipe(fg.W+80+i*fg.dist);
@@ -4909,7 +5022,7 @@ function fgDraw(){
 }
 function fgBegin(){
   if(!fg)return;
-  fg.run=true; fg.alive=true; fg.last=0;
+  fg.run=true; fg.alive=true; fg.last=0; fg.t=0;
   const st=$('fgStage'); if(st) st.classList.add('playing');
   if(fg.raf) cancelAnimationFrame(fg.raf);
   fg.raf=requestAnimationFrame(fgLoop);
@@ -4923,27 +5036,39 @@ function fgLoop(ts){
   fgDraw();
   fg.raf=requestAnimationFrame(fgLoop);
 }
+function fgSpeedUp(){
+  if(!fg)return;
+  fg.spdMul=Math.min(fg.spdMax||1, 1+(fg.score||0)*(fg.accStep||0));
+  fg.SPEED=(fg.baseSpeed||1)*fg.spdMul;
+}
 function fgStep(f){
+  fg.t=(fg.t||0)+f/60;               // 累计用时（秒），f 为折算后的 60fps 帧数
   fg.vy+=fg.G*f;
   if(fg.vy>fg.VMAX) fg.vy=fg.VMAX;   // 限制下落终速，避免越掉越快
   fg.y+=fg.vy*f;
-  const r=fg.fatSize*0.34;
-  if(fg.y-r<0){ fg.y=r; fg.vy=Math.max(fg.vy,0); }
-  if(fg.y+r>fg.floor){ fg.y=fg.floor-r; fgDraw(); fgDie(); return; }
-  const L=fg.fatX-r, R=fg.fatX+r;
+  // 判定盒＝贴合该月巴可见边缘的椭圆（图片按实测透明留白，SVG 按形状几何）
+  const hb=fg.hit||{ox:0,oy:0,rx:0.30,ry:0.30};
+  const rx=hb.rx*fg.fatSize, ry=hb.ry*fg.fatSize;
+  const hx=fg.fatX+hb.ox*fg.fatSize;
+  let hy=fg.y+hb.oy*fg.fatSize;
+  if(hy-ry<0){ fg.y+=ry-hy; hy=ry; fg.vy=0; fgDraw(); fgDie(); return; }   // 顶到天花板：同样算失败
+  if(hy+ry>fg.floor){ fg.y-=hy+ry-fg.floor; fgDraw(); fgDie(); return; }
+  const L=hx-rx, R=hx+rx;
   for(const p of fg.pipes){
     p.x-=fg.SPEED*f;
     p.el.style.transform='translate3d('+(p.x|0)+'px,0,0)';
     if(!p.passed && p.x+fg.pw<L){
       p.passed=true; fg.score++;
       const sc=$('fgScore'); if(sc) sc.textContent=fg.score;
+      fgSpeedUp();                    // 每穿过一根柱子，柱子推进速度提升一点
       fgModeRefresh();
       sfx.coin();
       if(fg.goal>0 && fg.score>=fg.goal){ fgPass(); return; }
     }
     if(p.x+fg.pw>L && p.x<R){
       const top=p.gapTop, bot=p.gapTop+fg.gap;
-      if(fg.y-r*0.9<top || fg.y+r*0.9>bot){ fgDie(); return; }
+      if(fgHitRect(hx,hy,rx,ry,p.x,p.x+fg.pw,0,top) ||
+         fgHitRect(hx,hy,rx,ry,p.x,p.x+fg.pw,bot,fg.floor)){ fgDie(); return; }
     }
   }
   // 移出屏幕的柱子回收到最右侧，循环利用
@@ -4958,8 +5083,9 @@ function fgStep(f){
 }
 function fgPushTop(sc,lv){
   if(sc<=0) return;
+  if((lv|0)>0) return;   // 关卡模式不进分数榜，改记最短用时（见 fgPass）
   if(!S.flyTop) S.flyTop=[];
-  S.flyTop.push({s:sc, id:(fg&&fg.sel)||fgPickId(), t:now(), lv:lv|0});
+  S.flyTop.push({s:sc, id:(fg&&fg.sel)||fgPickId(), t:now(), lv:0});
   S.flyTop.sort((a,b)=>b.s-a.s);
   S.flyTop=S.flyTop.slice(0,FG_TOP_N);
 }
@@ -4980,12 +5106,18 @@ function fgPass(){
   sfx.spring();
   const lv=fg.lv|0, sc=fg.score;
   fgMarkBest(lv,sc);
+  // 记录本关最短通关用时（可反复刷）
+  const tm=Math.max(0.01,fg.t||0);
+  if(!S.flyLvTime) S.flyLvTime={};
+  const old=S.flyLvTime[lv];
+  const newRec=!old || tm<old.t;
+  if(newRec) S.flyLvTime[lv]={t:tm, id:(fg&&fg.sel)||fgPickId()};
   let newUnlock=false;
   if(lv>fgClearN()){ S.flyClear=lv; newUnlock=lv<FG_LEVELS.length; }
   fgPushTop(sc,lv);
   save();
   fgBestRefresh();
-  fgShowOver({pass:true, lv:lv, sc:sc, newUnlock:newUnlock});
+  fgShowOver({pass:true, lv:lv, sc:sc, tm:tm, newRec:newRec, best:(S.flyLvTime[lv]||{}).t, newUnlock:newUnlock});
 }
 function fgDie(){
   if(!fg||!fg.alive)return;
@@ -4999,7 +5131,8 @@ function fgDie(){
   fgShowOver({pass:false, lv:lv, sc:sc, newUnlock:false});
 }
 function fgShowOver(res){
-  const id=(fg&&fg.sel)||fgPickId();
+  fgLastRes=res;
+  fgLbTab=(res.lv|0)>0?'lv':'free';   // 默认展示刚玩的那个分类
   const ttl=$('fgOverTitle');
   if(ttl) ttl.textContent=res.pass?'🎉 通关啦':'💥 撞到啦';
   const oe=$('fgOverScore');
@@ -5011,6 +5144,8 @@ function fgShowOver(res){
       if(res.pass){
         rs.className='fg-result pass';
         rs.innerHTML='第 '+res.lv+' 关「'+escHTML(L.name)+'」通关！'
+          +'<br>用时 <b>'+fgFmtT(res.tm)+'</b>'
+          +(res.newRec?('　🏅 新纪录！'):('　最快 <b>'+fgFmtT(res.best)+'</b>'))
           +(res.newUnlock?('　🔓 解锁第 '+(res.lv+1)+' 关'):'　🏆 全部关卡已通关');
       }else{
         rs.className='fg-result fail';
@@ -5023,21 +5158,47 @@ function fgShowOver(res){
   }
   const qt=$('fgQuote');
   if(qt) qt.textContent=res.pass?pick(FG_WIN_QUOTES):pick(FG_QUOTES);
-  fgRenderLb(id,res.sc);
+  fgRenderLb(res);
   fgLayer('fgOver');
 }
-function fgRenderLb(curId,curScore){
+function fgRenderLb(res){
   const box=$('fgLbList'); if(!box)return;
-  const list=(S.flyTop||[]).slice(0,FG_TOP_N);
-  if(!list.length){ box.innerHTML='<div class="fg-lbempty">还没有记录，快去飞一次吧～</div>'; return; }
+  const tabs=$('fgLbTabs');
+  if(tabs) tabs.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.getAttribute('data-m')===fgLbTab));
+  const head=$('fgLbHead');
+  if(head) head.textContent=fgLbTab==='lv'?'🎯 关卡 · 最短用时榜':'🏆 自由模式 · 分数榜';
+  if(fgLbTab==='lv') fgRenderLbLv(box,res);
+  else fgRenderLbFree(box,res);
+}
+function fgLbPic(id){
+  const t=typeById(id);
+  return t?fatSVG(t):'';
+}
+function fgRenderLbFree(box,res){
+  const list=fgFreeTop().slice(0,FG_TOP_N);
+  if(!list.length){ box.innerHTML='<div class="fg-lbempty">还没有自由模式的记录，快去飞一次吧～</div>'; return; }
+  const curId=(fg&&fg.sel)||fgPickId();
+  const curScore=(res&&(res.lv|0)===0)?(res.sc|0):0;
   let marked=false;
   box.innerHTML=list.map((r,i)=>{
     const t=typeById(r.id)||{id:'',name:'月巴',color:'#b39ddb',shape:'round'};
     let me=false;
     if(!marked && curScore>0 && r.s===curScore && r.id===curId){ me=true; marked=true; }
-    const lv=r.lv|0;
-    const tag=(lv>0)?('<span class="fg-lbtag">第'+lv+'关</span>'):'<span class="fg-lbtag free">自由</span>';
-    return '<div class="fg-lbrow'+(me?' me':'')+'"><span class="rk">'+(i+1)+'</span><span class="pic">'+fatSVG(t)+'</span>'+tag+'<span class="nm">'+escHTML(t.name)+'</span><span class="sc">'+r.s+'</span></div>';
+    return '<div class="fg-lbrow'+(me?' me':'')+'"><span class="rk">'+(i+1)+'</span><span class="pic">'+fatSVG(t)+'</span>'
+      +'<span class="nm">'+escHTML(t.name)+'</span><span class="sc">'+r.s+'</span></div>';
+  }).join('');
+}
+function fgRenderLbLv(box,res){
+  const times=S.flyLvTime||{};
+  const curLv=res?(res.lv|0):-1;
+  box.innerHTML=FG_LEVELS.map(L=>{
+    const on=fgLvUnlocked(L.n), rec=times[L.n], me=(L.n===curLv);
+    const pass=fgClearN()>=L.n;
+    if(!on) return '<div class="fg-lbrow"><span class="rk">'+L.n+'</span><span class="pic"></span>'
+      +'<span class="nm">🔒 未解锁</span><span class="sc">—</span></div>';
+    const val=rec?fgFmtT(rec.t):(pass?'已通关 · 无计时':'未通关');
+    return '<div class="fg-lbrow'+(me?' me':'')+'"><span class="rk">'+L.n+'</span><span class="pic">'+fgLbPic(rec?rec.id:null)+'</span>'
+      +'<span class="nm">'+escHTML(L.name)+'</span><span class="sc'+(rec?' tm':'')+'">'+val+'</span></div>';
   }).join('');
 }
 function fgStop(){
