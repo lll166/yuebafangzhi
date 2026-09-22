@@ -24,6 +24,8 @@
     color:var(--text); overflow-x:hidden; padding-bottom:92px;
   }
   /* 磨砂玻璃通用 */
+  body.low-power *{animation:none!important;transition:none!important;}
+  body.low-power .frost{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
   .frost{
     background:rgba(255,255,255,.55);
     backdrop-filter:blur(8px) saturate(160%);
@@ -725,6 +727,7 @@
   <button class="dockbtn" id="btnBook"><b>📗</b><small>图鉴</small></button>
   <button class="dockbtn pomo" id="btnPomo"><b>🍅</b><small>番茄钟</small></button>
   <button class="dockbtn hasbadge" id="btnTask"><b>✅</b><small>待办</small><span class="dock-badge" id="taskBadge" style="display:none"></span></button>
+  <button class="dockbtn" id="btnLow" onclick="toggleLowPower()"><b>⚡</b><small>省电</small></button>
   <button class="dockbtn" id="btnStats"><b>📊</b><small>统计</small></button>
   <button class="dockbtn" id="btnShop"><b>🛒</b><small>商店</small></button>
   <button class="dockbtn" id="btnTravel" onclick="travelEntry()"><b>🧳</b><small>旅行</small></button>
@@ -1219,7 +1222,7 @@ const OFFLINE_CAP=12*3600*1000;
 let S;
 function defaultState(){
   return {
-    coins:0, accelLv:0, boughtItems:[], collection:{}, collection2:{}, dex2Celebrated:false, totalHarvest:0, lastFast:0,
+    coins:0, accelLv:0, boughtItems:[], collection:{}, collection2:{}, dex2Celebrated:false, totalHarvest:0, lastFast:0, lowPower:false,
     weather:'sunny', lastRainAt:-1e12, weatherHoldEnd:0,
     nextWeatherAt:now()+rand(2,4)*60000, muted:false, lastSave:now(),
     seenHelp:false, starter:true, dexPending:null,
@@ -1395,6 +1398,7 @@ function resizeFx(){ cv.width=innerWidth*devicePixelRatio; cv.height=innerHeight
 addEventListener('resize',resizeFx); resizeFx();
 addEventListener('resize',fitTrendVals);
 function burst(x,y,colors,n,speed){
+  if(S&&S.lowPower) return; // 低功耗模式：关闭爆裂粒子
   for(let i=0;i<n;i++){
     const a=rand(0,Math.PI*2), sp=rand(1,speed);
     fx.push({k:'p',x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-rand(0,1),g:0.06,life:rand(40,70),c:colors[i%colors.length],s:rand(2,5),r:rand(0,Math.PI),vr:rand(-.2,.2)});
@@ -1402,6 +1406,7 @@ function burst(x,y,colors,n,speed){
   startFx();
 }
 function coinFly(x,y,target){
+  if(S&&S.lowPower) return; // 低功耗模式：关闭金币飞升
   fx.push({k:'c',x,y,tx:target.x,ty:target.y,t0:now(),dur:700,life:40});
   startFx();
 }
@@ -1438,6 +1443,8 @@ function fxLoop(){
   }
   if(fx.length) fxRaf=requestAnimationFrame(fxLoop);
 }
+function toggleLowPower(){ S.lowPower=!S.lowPower; document.body.classList.toggle('low-power',S.lowPower); if(S.lowPower){ clearFx(); startFx(); } updateLowBtn(); save(); toast(S.lowPower?'⚡ 已开启低功耗模式（省电）':'✨ 已关闭低功耗模式'); }
+function updateLowBtn(){ const b=$('btnLow'); if(!b)return; b.innerHTML='<b>'+(S.lowPower?'🌙':'⚡')+'</b><small>'+(S.lowPower?'省电中':'省电')+'</small>'; }
 function clearFx(){ fx.length=0; fxRaf=null; if(ctx)ctx.clearRect(0,0,innerWidth,innerHeight); }
 startFx();
 function coinTarget(){ const r=$('coinbox').getBoundingClientRect(); return {x:r.left+r.width/2, y:r.top+r.height/2}; }
@@ -4549,6 +4556,8 @@ function offlineSettle(){
 /* ---------------- 初始化 ---------------- */
 function init(){
   const hasSave=load();
+  document.body.classList.toggle('low-power', !!S.lowPower); // 启动时套用低功耗模式
+  updateLowBtn();
   // id 迁移：百日月巴 m2_bairi → bairi；已收集到百日月巴的旧存档，删除该月巴以便重新收集
   if(S.collection){ delete S.collection['m2_bairi']; delete S.collection['bairi']; }
   if(!S.seenHelp){
