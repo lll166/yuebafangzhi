@@ -26,6 +26,8 @@
   /* 磨砂玻璃通用 */
   body.low-power *{animation:none!important;transition:none!important;}
   body.low-power .frost{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+  /* 必要反馈（弹窗/banner/toast 靠入场动画带出），低功耗下豁免，避免关省电时补播显示 */
+  body.low-power #overlay, body.low-power #overlay *, body.low-power #toast, body.low-power #banner{animation:initial!important;}
   .frost{
     background:rgba(255,255,255,.55);
     backdrop-filter:blur(8px) saturate(160%);
@@ -2463,7 +2465,10 @@ function openHelp(){
       <div style="font-size:11px;color:var(--dim);margin:4px 0 2px">📦 备份内容：图鉴 ${Object.keys(S.collection).length} 种 · 场地 ${S.zones.filter(z=>z.bought).length}/${ZONES.length} · 🍅 打卡 ${S.pomo.history.length} 条 · 任务 ${(S.tasks||[]).length} 条 · 番茄钟设置</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
         <button class="btn" onclick="exportSave()">📋 复制存档</button>
-        <button class="btn" onclick="toggleImport()">📥 导入存档</button>
+        <button class="btn" onclick="exportSaveFile()">💾 导出文件</button>
+        <button class="btn" onclick="document.getElementById('importFile').click()">📂 导入文件</button>
+        <button class="btn" onclick="toggleImport()">📥 粘贴导入</button>
+        <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importSaveFile()">
       </div>
       <div id="importWrap" style="display:none;margin-top:8px">
         <textarea id="importBox" rows="4" style="width:100%;box-sizing:border-box;font-size:11px;font-family:monospace;border-radius:8px;border:1px solid var(--line);background:rgba(255,255,255,.7);color:var(--text);padding:8px;outline:none" placeholder="粘贴存档 JSON 到此处…"></textarea>
@@ -2493,6 +2498,30 @@ function exportSave(){
   };
   if(typeof navigator!=='undefined' && navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(json).then(ok).catch(fallback); }
   else fallback();
+}
+function exportSaveFile(){
+  save(); const json=JSON.stringify(S,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='yueba-save-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); },1000);
+  toast('✅ 存档已导出为文件');
+}
+function importSaveFile(){
+  const f=$('importFile'); if(!f||!f.files||!f.files[0]) return;
+  const rd=new FileReader();
+  rd.onload=function(){
+    try{
+      const s=JSON.parse(rd.result);
+      if(!s || typeof s.coins!=='number' || !Array.isArray(s.zones)) throw 0;
+      localStorage.setItem(SAVE_KEY,JSON.stringify(s));
+      toast('✅ 导入成功，即将刷新');
+      setTimeout(function(){ location.reload(); },600);
+    }catch(e){ toast('❌ 文件不是有效的存档内容'); }
+  };
+  rd.readAsText(f.files[0]); f.value='';
 }
 function toggleImport(){
   const w=$('importWrap'); if(!w)return;
