@@ -464,10 +464,32 @@
   .fg-lbrow .nm{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--dim);}
   .fg-lbrow .sc{color:var(--gold);font-weight:900;}
   .fg-lbempty{font-size:12px;color:var(--dim);text-align:center;padding:6px 0;}
-  .fg-overbtns{display:flex;gap:8px;margin-top:12px;}
-  .fg-overbtns .btn{flex:1;text-align:center;padding:9px 6px;}
+  .fg-overbtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+  .fg-overbtns .btn{flex:1 1 calc(50% - 4px);text-align:center;padding:9px 6px;}
   .fg-tip{text-align:center;font-size:11px;color:var(--dim);padding:6px;font-weight:600;}
   body.fg-lock{overflow:hidden;}
+  #flygame .fg-mode{background:rgba(149,117,205,.16);color:var(--purple2);border-radius:999px;
+    padding:3px 10px;font-size:12px;font-weight:800;white-space:nowrap;
+    min-width:0;overflow:hidden;text-overflow:ellipsis;}
+  #flygame .fg-score,#flygame .fg-best{flex:0 0 auto;white-space:nowrap;}
+  .fg-lvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:7px;
+    max-height:44vh;overflow-y:auto;padding:2px;}
+  .fg-lv{border:1px solid var(--line);border-radius:11px;background:rgba(255,255,255,.72);
+    padding:7px 6px;text-align:center;cursor:pointer;transition:.15s;}
+  .fg-lv .t{font-size:12px;font-weight:900;color:var(--purple2);}
+  .fg-lv .s{font-size:10px;color:var(--dim);font-weight:700;margin-top:2px;}
+  .fg-lv .b{font-size:10px;color:var(--gold);font-weight:800;margin-top:1px;min-height:13px;}
+  .fg-lv.sel{border-color:var(--purple);background:rgba(149,117,205,.18);box-shadow:0 0 0 2px rgba(149,117,205,.35);}
+  .fg-lv.lock{opacity:.55;cursor:not-allowed;background:rgba(240,238,246,.72);}
+  .fg-lv.lock .t{color:var(--dim);}
+  .fg-lvinfo{font-size:11px;color:var(--dim);font-weight:700;text-align:center;margin-top:9px;line-height:1.65;}
+  .fg-lvinfo b{color:var(--purple2);}
+  .fg-lbtag{font-size:9px;font-weight:900;color:#fff;background:var(--purple);border-radius:999px;
+    padding:1px 6px;flex:0 0 auto;}
+  .fg-lbtag.free{background:#8fbf6a;}
+  .fg-result{text-align:center;font-size:12px;font-weight:800;margin:0 0 7px;}
+  .fg-result.pass{color:#5c9a35;}
+  .fg-result.fail{color:var(--dim);}
 
   /* ---------- 番茄钟 ---------- */
   .pomo-wrap{text-align:center;position:relative;}
@@ -820,6 +842,7 @@
 <!-- 月巴飞行小游戏 -->
 <div id="flygame">
   <div class="fg-top">
+    <span class="fg-mode" id="fgMode">第 1 关 · 0/4</span>
     <span class="fg-score">得分 <b id="fgScore">0</b></span>
     <span class="fg-best">最高 <b id="fgBest">0</b></span>
     <button class="iconbtn" onclick="flyExit()" style="margin-left:auto">✕</button>
@@ -835,19 +858,32 @@
       <div class="fg-box">
         <div class="fg-pickhead">🐰 选择要飞的月巴</div>
         <div class="fg-pickgrid" id="fgPickGrid"></div>
-        <button class="btn gold fg-pickgo" onclick="flyStart()">起飞</button>
+        <button class="btn gold fg-pickgo" onclick="fgLvOpen()">下一步 · 选关卡</button>
+      </div>
+    </div>
+    <div class="fg-layer" id="fgLv">
+      <div class="fg-box">
+        <div class="fg-pickhead">🪽 选择关卡 / 自由模式</div>
+        <div class="fg-lvgrid" id="fgLvGrid"></div>
+        <div class="fg-lvinfo" id="fgLvInfo"></div>
+        <div class="fg-overbtns">
+          <button class="btn" onclick="fgPickOpen()">← 换月巴</button>
+          <button class="btn gold" onclick="flyStart()">起飞</button>
+        </div>
       </div>
     </div>
     <div class="fg-layer" id="fgCount"><span id="fgCountNum">3</span></div>
     <div class="fg-layer" id="fgOver">
       <div class="fg-box">
-        <div class="fg-overtitle">💥 撞到啦</div>
+        <div class="fg-overtitle" id="fgOverTitle">💥 撞到啦</div>
         <div class="fg-overscore" id="fgOverScore"></div>
+        <div class="fg-result" id="fgResult"></div>
         <div class="fg-quote" id="fgQuote"></div>
         <div class="fg-lbhead">🏆 排行榜</div>
         <div id="fgLbList"></div>
         <div class="fg-overbtns">
           <button class="btn gold" onclick="flyStart()">再来一次</button>
+          <button class="btn" onclick="fgLvOpen()">换关卡</button>
           <button class="btn" onclick="fgPickOpen()">换月巴</button>
           <button class="btn" onclick="flyExit()">退出</button>
         </div>
@@ -1312,7 +1348,7 @@ let S;
 function defaultState(){
   return {
     coins:0, accelLv:0, boughtItems:[], collection:{}, collection2:{}, dex2Celebrated:false, totalHarvest:0, lastFast:0, lowPower:false,
-    flyTop:[], flyPick:null,
+    flyTop:[], flyPick:null, flySel:1, flyClear:0, flyLvBest:{},
     weather:'sunny', lastRainAt:-1e12, weatherHoldEnd:0,
     nextWeatherAt:now()+rand(2,4)*60000, muted:false, lastSave:now(),
     seenHelp:false, starter:true, dexPending:null,
@@ -4618,7 +4654,7 @@ const FG_QUOTES=[
   '🍅 别闷着啦，飞不起来也没关系，你在地上也好看。',
   '🍅 说好了一起飞的，你怎么自己先掉下去了。',
   '🍅 我把你捡回来了，下次记得抓紧我的手。',
-  '🍅 摔一次而已，番茄摔烂了还能长，你也能。',
+  '🍅 摔一次而已，没关系的。',
   '🍅 你看天上的云，像不像我上次说的那朵？',
   '🍅 歇会儿吧，我陪你在这儿晒晒太阳。',
   '🍅 疼的话就抓着我，我不怕被捏扁。',
@@ -4633,7 +4669,7 @@ const FG_QUOTES=[
   '🍅 你飞的时候，我一直都在看着你。',
   '🍅 这颗番茄给你，吃完就又有力气了。',
   '🍅 别皱着眉了，笑一个给我看看。',
-  '🍅 我就知道你会撞上那根柱子，笨蛋。',
+  '🍅 我就知道你会撞上那根柱子，你才是笨蛋吧。',
   '🍅 摔成这样还嘴硬，我扶你起来。',
   '🍅 刚才那一飞，真好看。',
   '🍅 无论你飞多远，我都会在原地等你。',
@@ -4641,12 +4677,46 @@ const FG_QUOTES=[
   '🍅 再来一次吧，这次我陪你一起数。',
 ];
 const FG_TOP_N=10;
+/* 通关后的番茄台词 */
+const FG_WIN_QUOTES=[
+  '🍅 哇，你飞过去啦！好厉害的月巴。',
+  '🍅 这一关我记住了，下次讲给月亮听。',
+  '🍅 你看，我说过你能行的吧。',
+  '🍅 再飞远一点，我在这儿等你回来吃番茄。',
+  '🍅 你翅膀上有风，我看见了。',
+  '🍅 干得漂亮，奖励你一颗最甜的。',
+];
+/* 10 个关卡：goal=需穿过的柱子数，gap/dist/spd 为难度倍率 */
+const FG_LEVELS=[
+  {n:1, name:'初见',     goal:4,  gap:0.365, dist:0.70, spd:0.82},
+  {n:2, name:'微风',     goal:6,  gap:0.350, dist:0.68, spd:0.88},
+  {n:3, name:'云上',     goal:8,  gap:0.335, dist:0.66, spd:0.94},
+  {n:4, name:'穿林',     goal:10, gap:0.320, dist:0.64, spd:1.00},
+  {n:5, name:'逆风',     goal:12, gap:0.305, dist:0.62, spd:1.06},
+  {n:6, name:'星夜',     goal:15, gap:0.292, dist:0.60, spd:1.12},
+  {n:7, name:'险峰',     goal:18, gap:0.280, dist:0.58, spd:1.18},
+  {n:8, name:'雷雨',     goal:22, gap:0.268, dist:0.56, spd:1.24},
+  {n:9, name:'极夜',     goal:26, gap:0.256, dist:0.54, spd:1.30},
+  {n:10,name:'月巴之王', goal:30, gap:0.245, dist:0.52, spd:1.36},
+];
 let fg=null;
 function fgAllTypes(){ return TYPES.concat(TYPES2); }
 function fgBest(){ return (S.flyTop&&S.flyTop.length)?S.flyTop[0].s:0; }
 function fgBestRefresh(){ const e=$('fgBest'); if(e) e.textContent=fgBest(); }
 function fgPickId(){ return (S.flyPick&&typeById(S.flyPick))?S.flyPick:(TYPES[0]&&TYPES[0].id); }
-// 入口解锁：图鉴里所有的月巴（第一页 + 第二页）都收集到才开放
+/* ---- 关卡 / 自由模式 ---- */
+function fgLvDef(n){ return (n>=1&&n<=FG_LEVELS.length)?FG_LEVELS[n-1]:null; }
+function fgClearN(){ const v=parseInt(S.flyClear,10)||0; return clamp(v,0,FG_LEVELS.length); }
+function fgLvUnlocked(n){ return n>=1 && n<=FG_LEVELS.length && n<=fgClearN()+1; }
+// 当前选择：0 = 自由模式，1~10 = 关卡
+function fgSel(){ const v=parseInt(S.flySel,10); return (v>=0&&v<=FG_LEVELS.length)?v:1; }
+function fgModeLabel(){
+  const lv=(fg&&fg.lv!==undefined)?(fg.lv|0):fgSel();
+  if(lv<=0) return '自由模式 · '+((fg&&fg.score)|0)+' 分';
+  const goal=(fg&&fg.goal)?fg.goal:(fgLvDef(lv)?fgLvDef(lv).goal:0);
+  return '第 '+lv+' 关 · '+((fg&&fg.score)|0)+'/'+goal;
+}
+function fgModeRefresh(){ const el=$('fgMode'); if(el) el.textContent=fgModeLabel(); }
 function flyUnlocked(){
   if(Object.keys(S.collection||{}).length<TYPES.length) return false;
   return Object.keys(S.collection2||{}).length>=TYPES2.length;
@@ -4662,9 +4732,11 @@ function flyEntry(){
   if(!flyUnlocked()){ toast('🔒 集齐图鉴里所有的月巴后，才能解锁飞行小游戏！'); return; }
   if(!fg) fg={raf:null,cdT:null,run:false,alive:false,pipes:[],score:0,y:0,vy:0,last:0,cdN:3,sel:null};
   fg.sel=fgPickId();
+  fg.lv=fgSel(); fg.score=0; fg.goal=0;
   $('flygame').classList.add('show');
   document.body.classList.add('fg-lock');
   fgBestRefresh();
+  fgModeRefresh();
   fgPickOpen();
 }
 function flyExit(){
@@ -4675,12 +4747,64 @@ function flyExit(){
   fgClearPipes();
 }
 function fgLayer(id){
-  ['fgPick','fgCount','fgOver'].forEach(k=>{ const e=$(k); if(e) e.classList.toggle('show',k===id); });
+  ['fgPick','fgLv','fgCount','fgOver'].forEach(k=>{ const e=$(k); if(e) e.classList.toggle('show',k===id); });
 }
 function fgPickOpen(){
   fgStop();
   fgLayer('fgPick');
   fgRenderPick();
+}
+/* ---- 关卡选择 ---- */
+function fgLvOpen(){
+  fgStop();
+  fgLayer('fgLv');
+  fgRenderLv();
+}
+function fgRenderLv(){
+  const grid=$('fgLvGrid'); if(!grid)return;
+  const cur=fgSel();
+  const best=S.flyLvBest||{};
+  let html=FG_LEVELS.map(L=>{
+    const on=fgLvUnlocked(L.n);
+    const b=best[L.n]|0;
+    const pass=fgClearN()>=L.n;
+    return '<div class="fg-lv'+(on?'':' lock')+(cur===L.n?' sel':'')+'" data-n="'+L.n+'">'
+      +'<div class="t">'+(on?('第 '+L.n+' 关'):'🔒')+'</div>'
+      +'<div class="s">'+escHTML(on?L.name:'未解锁')+'</div>'
+      +'<div class="b">'+(on?(pass?'✅ ':'')+(b?('最佳 '+b):('目标 '+L.goal)):'')+'</div></div>';
+  }).join('');
+  html+='<div class="fg-lv'+(cur===0?' sel':'')+'" data-n="0">'
+    +'<div class="t">🕊 自由</div><div class="s">无限模式</div>'
+    +'<div class="b">'+((best[0]|0)?('最佳 '+best[0]):'尽情飞')+'</div></div>';
+  grid.innerHTML=html;
+  if(!grid._bound){
+    grid._bound=1;
+    grid.addEventListener('click',e=>{
+      const c=e.target.closest?e.target.closest('.fg-lv'):null;
+      if(!c)return;
+      const n=parseInt(c.getAttribute('data-n'),10);
+      if(!(n===0||fgLvUnlocked(n))){ toast('🔒 通过前一关才能解锁哦'); return; }
+      S.flySel=n; save(); sfx.click();
+      fgRenderLv();
+    });
+  }
+  fgLvInfo();
+}
+function fgLvInfo(){
+  const info=$('fgLvInfo'); const cur=fgSel();
+  if(info){
+    if(cur<=0){
+      const b=(S.flyLvBest&&S.flyLvBest[0])|0;
+      info.innerHTML='自由模式 · 没有终点，一直飞下去<br>本模式最佳：<b>'+b+'</b> 分';
+    }else{
+      const L=fgLvDef(cur)||FG_LEVELS[0];
+      const b=(S.flyLvBest&&S.flyLvBest[cur])|0;
+      const left=Math.max(0,FG_LEVELS.length-fgClearN());
+      info.innerHTML='第 '+cur+' 关「<b>'+escHTML(L.name)+'</b>」 · 目标穿过 <b>'+L.goal+'</b> 根柱子<br>'
+        +'本关最佳 <b>'+b+'</b>'+(fgClearN()>=cur?' · 已通关':'')+(left>0?(' · 还剩 '+left+' 关'):' · 全部通关！');
+    }
+  }
+  fgModeRefresh();
 }
 function fgRenderPick(){
   const grid=$('fgPickGrid'); if(!grid)return;
@@ -4707,6 +4831,7 @@ function flyStart(){
   if(!fg)return;
   if(fg.sel){ S.flyPick=fg.sel; save(); }
   const type=typeById(fg.sel)||TYPES[0];
+  fg.lv=fgSel();
   fgLayer(null);
   fgSetup(type);
   fgLayer('fgCount');
@@ -4733,14 +4858,19 @@ function fgSetup(type){
   fg.ground=14; fg.floor=fg.H-fg.ground;
   fg.fatSize=clamp(fg.H*0.088,32,64);
   fg.fatX=fg.W*0.28;
-  fg.G=fg.H*0.00115;                 // 重力（每帧，按 60fps 折算）
-  fg.FLAP=-fg.H*0.019;               // 点击上冲速度
-  fg.SPEED=clamp(fg.H*0.0046,2.0,3.6); // 柱子左移速度
-  fg.pw=clamp(fg.W*0.15,46,78);      // 柱子宽度
-  fg.dist=clamp(fg.W*0.62,190,320);  // 柱子间距
-  fg.gap=clamp(fg.H*0.30,150,250);   // 缺口高度
+  const L=fgLvDef(fg.lv|0);
+  fg.goal=L?L.goal:0;                      // 0 = 自由模式（无止境）
+  // 基础手感：重力/上冲整体放缓，并限制下落终速，让月巴起落更柔和
+  fg.G=fg.H*0.00072;                       // 重力（每帧，按 60fps 折算）
+  fg.FLAP=-fg.H*0.0150;                    // 点击上冲速度
+  fg.VMAX=fg.H*0.0115;                     // 下落终速上限
+  fg.SPEED=clamp(fg.H*0.0032,1.4,2.9)*(L?L.spd:1.05); // 柱子左移速度
+  fg.pw=clamp(fg.W*0.15,46,78);            // 柱子宽度
+  fg.dist=clamp(fg.W*(L?L.dist:0.64),170,330); // 柱子间距
+  fg.gap=clamp(fg.H*(L?L.gap:0.335),132,270);  // 缺口高度
   fg.score=0; fg.y=fg.floor*0.42; fg.vy=0; fg.last=0;
   const sc=$('fgScore'); if(sc) sc.textContent='0';
+  fgModeRefresh();
   const fatEl=$('fgFat');
   if(fatEl){ fatEl.style.width=fg.fatSize+'px'; fatEl.style.height=fg.fatSize+'px'; fatEl.innerHTML=fatSVG(type); }
   fgClearPipes();
@@ -4795,6 +4925,7 @@ function fgLoop(ts){
 }
 function fgStep(f){
   fg.vy+=fg.G*f;
+  if(fg.vy>fg.VMAX) fg.vy=fg.VMAX;   // 限制下落终速，避免越掉越快
   fg.y+=fg.vy*f;
   const r=fg.fatSize*0.34;
   if(fg.y-r<0){ fg.y=r; fg.vy=Math.max(fg.vy,0); }
@@ -4806,7 +4937,9 @@ function fgStep(f){
     if(!p.passed && p.x+fg.pw<L){
       p.passed=true; fg.score++;
       const sc=$('fgScore'); if(sc) sc.textContent=fg.score;
+      fgModeRefresh();
       sfx.coin();
+      if(fg.goal>0 && fg.score>=fg.goal){ fgPass(); return; }
     }
     if(p.x+fg.pw>L && p.x<R){
       const top=p.gapTop, bot=p.gapTop+fg.gap;
@@ -4823,24 +4956,74 @@ function fgStep(f){
     }
   }
 }
-function fgDie(){
-  if(!fg||!fg.alive)return;
+function fgPushTop(sc,lv){
+  if(sc<=0) return;
+  if(!S.flyTop) S.flyTop=[];
+  S.flyTop.push({s:sc, id:(fg&&fg.sel)||fgPickId(), t:now(), lv:lv|0});
+  S.flyTop.sort((a,b)=>b.s-a.s);
+  S.flyTop=S.flyTop.slice(0,FG_TOP_N);
+}
+function fgMarkBest(lv,sc){
+  if(!S.flyLvBest) S.flyLvBest={};
+  if(!S.flyLvBest[lv] || sc>S.flyLvBest[lv]) S.flyLvBest[lv]=sc;
+}
+function fgEndRound(){
+  if(!fg)return;
   fg.alive=false; fg.run=false;
   if(fg.raf){ cancelAnimationFrame(fg.raf); fg.raf=null; }
   const st=$('fgStage'); if(st) st.classList.remove('playing');
-  sfx.hit();
-  const sc=fg.score, id=fg.sel||fgPickId();
-  if(sc>0){
-    if(!S.flyTop) S.flyTop=[];
-    S.flyTop.push({s:sc,id:id,t:now()});
-    S.flyTop.sort((a,b)=>b.s-a.s);
-    S.flyTop=S.flyTop.slice(0,FG_TOP_N);
-    save();
-  }
+}
+// 达成关卡目标：通关
+function fgPass(){
+  if(!fg||!fg.alive)return;
+  fgEndRound();
+  sfx.spring();
+  const lv=fg.lv|0, sc=fg.score;
+  fgMarkBest(lv,sc);
+  let newUnlock=false;
+  if(lv>fgClearN()){ S.flyClear=lv; newUnlock=lv<FG_LEVELS.length; }
+  fgPushTop(sc,lv);
+  save();
   fgBestRefresh();
-  const oe=$('fgOverScore'); if(oe) oe.innerHTML='本次得分 <b>'+sc+'</b>　最高 <b>'+fgBest()+'</b>';
-  const qt=$('fgQuote'); if(qt) qt.textContent=pick(FG_QUOTES);
-  fgRenderLb(id,sc);
+  fgShowOver({pass:true, lv:lv, sc:sc, newUnlock:newUnlock});
+}
+function fgDie(){
+  if(!fg||!fg.alive)return;
+  fgEndRound();
+  sfx.hit();
+  const sc=fg.score, lv=fg.lv|0;
+  fgMarkBest(lv,sc);
+  fgPushTop(sc,lv);
+  if(sc>0) save();
+  fgBestRefresh();
+  fgShowOver({pass:false, lv:lv, sc:sc, newUnlock:false});
+}
+function fgShowOver(res){
+  const id=(fg&&fg.sel)||fgPickId();
+  const ttl=$('fgOverTitle');
+  if(ttl) ttl.textContent=res.pass?'🎉 通关啦':'💥 撞到啦';
+  const oe=$('fgOverScore');
+  if(oe) oe.innerHTML='本次得分 <b>'+res.sc+'</b>　最高 <b>'+fgBest()+'</b>';
+  const rs=$('fgResult');
+  if(rs){
+    if(res.lv>0){
+      const L=fgLvDef(res.lv)||FG_LEVELS[0];
+      if(res.pass){
+        rs.className='fg-result pass';
+        rs.innerHTML='第 '+res.lv+' 关「'+escHTML(L.name)+'」通关！'
+          +(res.newUnlock?('　🔓 解锁第 '+(res.lv+1)+' 关'):'　🏆 全部关卡已通关');
+      }else{
+        rs.className='fg-result fail';
+        rs.innerHTML='穿过 <b>'+res.sc+'/'+L.goal+'</b> 根柱子，还差 <b>'+(L.goal-res.sc)+'</b> 根就通关了';
+      }
+    }else{
+      rs.className='fg-result';
+      rs.innerHTML='';
+    }
+  }
+  const qt=$('fgQuote');
+  if(qt) qt.textContent=res.pass?pick(FG_WIN_QUOTES):pick(FG_QUOTES);
+  fgRenderLb(id,res.sc);
   fgLayer('fgOver');
 }
 function fgRenderLb(curId,curScore){
@@ -4852,7 +5035,9 @@ function fgRenderLb(curId,curScore){
     const t=typeById(r.id)||{id:'',name:'月巴',color:'#b39ddb',shape:'round'};
     let me=false;
     if(!marked && curScore>0 && r.s===curScore && r.id===curId){ me=true; marked=true; }
-    return '<div class="fg-lbrow'+(me?' me':'')+'"><span class="rk">'+(i+1)+'</span><span class="pic">'+fatSVG(t)+'</span><span class="nm">'+escHTML(t.name)+'</span><span class="sc">'+r.s+'</span></div>';
+    const lv=r.lv|0;
+    const tag=(lv>0)?('<span class="fg-lbtag">第'+lv+'关</span>'):'<span class="fg-lbtag free">自由</span>';
+    return '<div class="fg-lbrow'+(me?' me':'')+'"><span class="rk">'+(i+1)+'</span><span class="pic">'+fatSVG(t)+'</span>'+tag+'<span class="nm">'+escHTML(t.name)+'</span><span class="sc">'+r.s+'</span></div>';
   }).join('');
 }
 function fgStop(){
