@@ -248,24 +248,6 @@
   @keyframes tvGoldFade{0%,100%{opacity:.3;}50%{opacity:.9;}}
   #travel .tv-mail{position:absolute;right:12px;bottom:64px;font-size:24px;background:#fff;border:2px solid #c78b4a;border-radius:50%;width:46px;height:46px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;}
   #travel .tv-mail span{position:absolute;top:-2px;right:-2px;width:13px;height:13px;border-radius:50%;background:#e53935;border:2px solid #fff;}
-  #dress{position:fixed;inset:0;display:none;flex-direction:column;z-index:60;background:linear-gradient(180deg,#f3ecff,#cbb8ee);}
-  #dress .tv-top{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,255,255,.65);font-weight:700;color:#4a3b63;}
-  #dress .tv-tom{color:#e08a3c;}
-  #dress .tv-scene{flex:1;position:relative;overflow:hidden;}
-  #dress .tv-nav{display:flex;gap:6px;justify-content:center;padding:8px;background:rgba(255,255,255,.7);}
-  #dress .tv-btn{border:1px solid #a99cd0;background:#fff;color:#4a3b63;border-radius:10px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;}
-  #dress .tv-btn:hover{background:#efe9fc;border-color:#877bbd;}
-  .dr-scene{position:absolute;inset:0;overflow:hidden;display:flex;flex-direction:column;align-items:center;padding:14px;box-sizing:border-box;gap:10px;background:linear-gradient(180deg,#f3ecff,#d6c7f2);}
-  .dr-fithead{display:flex;align-items:center;gap:14px;width:100%;max-width:420px;background:#fff;border:1px solid #d8ccf0;border-radius:14px;padding:10px;box-sizing:border-box;}
-  .dr-canvas{width:120px;height:120px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:72px;line-height:1;flex-shrink:0;border:1px solid #ddd;}
-  .dr-pick{font-size:13px;color:#4a3b63;margin-top:4px;}
-  .dr-pick select{max-width:130px;padding:4px;border:1px solid #c9bde6;border-radius:6px;}
-  .dr-slot{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #ddd;border-radius:10px;padding:8px 10px;margin:4px 0;max-width:420px;width:100%;box-sizing:border-box;font-size:13px;color:#4a3b63;}
-  .dr-slot b{font-size:20px;}
-  .dr-shopgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;width:100%;max-width:460px;}
-  .dr-card{background:#fff;border:1px solid #ddd;border-radius:10px;padding:8px;text-align:center;font-size:12px;color:#4a3b63;}
-  .dr-card b{font-size:26px;display:block;}
-  .dr-card .pri{color:#e08a3c;font-weight:700;margin:4px 0;}
   .tvyard{position:absolute;inset:0;overflow:hidden;contain:content;}
   .tvg-bg{position:absolute;inset:0;width:100%;height:100%;}
   .tvg-toms{position:absolute;inset:0;}
@@ -421,6 +403,71 @@
     background:rgba(65,60,91,.92);color:#fff;padding:8px 16px;border-radius:99px;font-size:13px;font-weight:700;
     opacity:0;pointer-events:none;transition:opacity .3s;box-shadow:0 8px 24px rgba(0,0,0,.25);}
   #toast.show{opacity:1;}
+
+  /* ========== 月巴飞行（Flappy 小游戏） ========== */
+  #flygame{position:fixed;inset:0;z-index:58;display:none;flex-direction:column;
+    background:linear-gradient(180deg,#e8f0ff,#efe6ff 58%,#f8efff);}
+  #flygame.show{display:flex;}
+  #flygame .fg-top{display:flex;align-items:center;gap:12px;padding:10px 14px;
+    background:rgba(255,255,255,.72);font-weight:800;font-size:14px;color:var(--purple2);z-index:6;}
+  #flygame .fg-top b{color:var(--gold);font-size:16px;}
+  #flygame .fg-top .fg-best b{color:var(--purple);}
+  .fg-stage{position:relative;flex:1;overflow:hidden;width:100%;max-width:560px;margin:0 auto;cursor:pointer;}
+  .fg-stage.playing{touch-action:none;}
+  .fg-cloud{position:absolute;font-size:30px;opacity:.5;pointer-events:none;}
+  .fg-ground{position:absolute;left:0;right:0;bottom:0;height:14px;z-index:2;
+    background:linear-gradient(180deg,#dcecc4,#b3d191);box-shadow:0 -2px 6px rgba(120,150,90,.25);}
+  #fgPipes{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+  .fg-pipe{position:absolute;top:0;bottom:14px;will-change:transform;}
+  .fg-pipe i{position:absolute;left:0;right:0;display:block;
+    background:linear-gradient(90deg,#c3b1ea,#9575cd 45%,#7e57c2);
+    border:2px solid #6f4fb4;}
+  .fg-pipe .pt{top:0;border-radius:0 0 8px 8px;border-top:none;}
+  .fg-pipe .pb{bottom:0;border-radius:8px 8px 0 0;border-bottom:none;}
+  .fg-fat{position:absolute;left:0;top:0;z-index:3;will-change:transform;pointer-events:none;
+    filter:drop-shadow(0 2px 3px rgba(80,60,140,.28));}
+  .fg-layer{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:14px;z-index:5;}
+  .fg-layer.show{display:flex;}
+  #fgCount{background:rgba(90,70,150,.18);}
+  #fgCount span{font-size:86px;font-weight:900;color:#fff;text-shadow:0 6px 18px rgba(90,70,150,.6);
+    animation:fgCountPop .55s ease;}
+  @keyframes fgCountPop{0%{transform:scale(.3);opacity:0;}60%{transform:scale(1.15);opacity:1;}100%{transform:scale(1);opacity:1;}}
+  #fgOver{background:rgba(70,55,120,.36);}
+  .fg-box{width:min(370px,94%);max-height:92%;overflow-y:auto;border-radius:18px;padding:14px;
+    background:rgba(255,255,255,.92);border:1px solid var(--line);box-shadow:0 14px 40px rgba(90,70,150,.3);}
+  .fg-pickhead{font-weight:800;color:var(--purple2);font-size:14px;text-align:center;margin-bottom:8px;}
+  .fg-pickgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(66px,1fr));gap:6px;
+    max-height:52vh;overflow-y:auto;padding:2px;}
+  .fg-pick{border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.7);
+    padding:4px 2px 3px;text-align:center;cursor:pointer;transition:.15s;overflow:hidden;}
+  .fg-pick .pic{height:34px;display:flex;align-items:center;justify-content:center;}
+  .fg-pick .pic svg{width:30px!important;height:30px!important;}
+  .fg-pick .pic .ybimg{width:30px;height:30px;object-fit:contain;}
+  .fg-pick .nm{font-size:10px;font-weight:700;color:var(--dim);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .fg-pick.sel{border-color:var(--purple);background:rgba(149,117,205,.16);box-shadow:0 0 0 2px rgba(149,117,205,.35);}
+  .fg-pick.sel .nm{color:var(--purple2);}
+  .fg-pickgo{width:100%;margin-top:10px;}
+  .fg-overtitle{font-weight:900;color:var(--purple2);font-size:17px;text-align:center;}
+  .fg-overscore{text-align:center;font-size:13px;color:var(--dim);font-weight:700;margin:5px 0 9px;}
+  .fg-overscore b{color:var(--gold);font-size:20px;}
+  .fg-quote{font-size:13px;line-height:1.7;color:#6b5a2e;
+    background:linear-gradient(180deg,rgba(255,239,181,.6),rgba(255,224,130,.4));
+    border-radius:10px;padding:9px 11px;text-align:left;}
+  .fg-lbhead{font-weight:800;color:var(--purple2);font-size:13px;margin:12px 0 6px;text-align:center;}
+  .fg-lbrow{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--text);
+    padding:4px 8px;border-radius:9px;background:rgba(149,117,205,.08);margin-bottom:4px;}
+  .fg-lbrow.me{background:rgba(255,224,130,.5);}
+  .fg-lbrow .rk{width:18px;text-align:center;color:var(--dim);font-weight:900;}
+  .fg-lbrow .pic{width:22px;height:22px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;}
+  .fg-lbrow .pic svg{width:20px!important;height:20px!important;}
+  .fg-lbrow .pic .ybimg{width:20px;height:20px;object-fit:contain;}
+  .fg-lbrow .nm{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--dim);}
+  .fg-lbrow .sc{color:var(--gold);font-weight:900;}
+  .fg-lbempty{font-size:12px;color:var(--dim);text-align:center;padding:6px 0;}
+  .fg-overbtns{display:flex;gap:8px;margin-top:12px;}
+  .fg-overbtns .btn{flex:1;text-align:center;padding:9px 6px;}
+  .fg-tip{text-align:center;font-size:11px;color:var(--dim);padding:6px;font-weight:600;}
+  body.fg-lock{overflow:hidden;}
 
   /* ---------- 番茄钟 ---------- */
   .pomo-wrap{text-align:center;position:relative;}
@@ -733,7 +780,7 @@
   <button class="dockbtn" id="btnStats"><b>📊</b><small>统计</small></button>
   <button class="dockbtn" id="btnShop"><b>🛒</b><small>商店</small></button>
   <button class="dockbtn" id="btnTravel" onclick="travelEntry()"><b>🧳</b><small>旅行</small></button>
-  <button class="dockbtn" id="btnDress" onclick="dressEntry()"><b>❓</b><small>换装</small></button>
+  <button class="dockbtn" id="btnDress"><b>❓</b></button>
 </div>
 
 <!-- 场地场景视图 -->
@@ -770,20 +817,44 @@
   <button class="tv-mail" id="tvMail" onclick="tvOpenMail()" title="信箱">📮<span id="tvMailDot" style="display:none"></span></button>
 </div>
 
-<div id="dress">
-  <div class="tv-top">
-    <span class="tv-cur">💰 <b id="drCoin" class="tv-tom">0</b></span>
-    <span class="tv-cur">🍅 <b id="drTom" class="tv-tom">0</b></span>
-    <span id="drState" class="tv-st">搭配</span>
-    <button class="iconbtn" onclick="closeDress()" style="margin-left:auto">✕</button>
+<!-- 月巴飞行小游戏 -->
+<div id="flygame">
+  <div class="fg-top">
+    <span class="fg-score">得分 <b id="fgScore">0</b></span>
+    <span class="fg-best">最高 <b id="fgBest">0</b></span>
+    <button class="iconbtn" onclick="flyExit()" style="margin-left:auto">✕</button>
   </div>
-  <div class="tv-scene" id="drScene"></div>
-  <div class="tv-nav">
-    <button class="tv-btn" onclick="drTab('fit')">🎀 搭配</button>
-    <button class="tv-btn" onclick="drTab('gacha')">🎰 扭蛋机</button>
-    <button class="tv-btn" onclick="drTab('shop')">🛍 商店</button>
-    <button class="tv-btn" onclick="drTab('snap')">📸 拍照</button>
+  <div class="fg-stage" id="fgStage">
+    <div class="fg-cloud" style="left:8%;top:12%">☁️</div>
+    <div class="fg-cloud" style="left:62%;top:24%">☁️</div>
+    <div class="fg-cloud" style="left:34%;top:6%">☁️</div>
+    <div id="fgPipes"></div>
+    <div class="fg-fat" id="fgFat"></div>
+    <div class="fg-ground"></div>
+    <div class="fg-layer" id="fgPick">
+      <div class="fg-box">
+        <div class="fg-pickhead">🐰 选择要飞的月巴</div>
+        <div class="fg-pickgrid" id="fgPickGrid"></div>
+        <button class="btn gold fg-pickgo" onclick="flyStart()">起飞</button>
+      </div>
+    </div>
+    <div class="fg-layer" id="fgCount"><span id="fgCountNum">3</span></div>
+    <div class="fg-layer" id="fgOver">
+      <div class="fg-box">
+        <div class="fg-overtitle">💥 撞到啦</div>
+        <div class="fg-overscore" id="fgOverScore"></div>
+        <div class="fg-quote" id="fgQuote"></div>
+        <div class="fg-lbhead">🏆 排行榜</div>
+        <div id="fgLbList"></div>
+        <div class="fg-overbtns">
+          <button class="btn gold" onclick="flyStart()">再来一次</button>
+          <button class="btn" onclick="fgPickOpen()">换月巴</button>
+          <button class="btn" onclick="flyExit()">退出</button>
+        </div>
+      </div>
+    </div>
   </div>
+  <div class="fg-tip">点击屏幕 / 空格键 让月巴往上飞 · 穿过柱子得分</div>
 </div>
 
 <div id="banner">
@@ -1241,11 +1312,11 @@ let S;
 function defaultState(){
   return {
     coins:0, accelLv:0, boughtItems:[], collection:{}, collection2:{}, dex2Celebrated:false, totalHarvest:0, lastFast:0, lowPower:false,
+    flyTop:[], flyPick:null,
     weather:'sunny', lastRainAt:-1e12, weatherHoldEnd:0,
     nextWeatherAt:now()+rand(2,4)*60000, muted:false, lastSave:now(),
     seenHelp:false, starter:true, dexPending:null,
     skins:{unlocked:[], active:null},
-    dress:{coin:0,tom:0,owned:[],equip:{head:null,body:null,deco:null},photo:null,fatId:null},
     tasks:[],
     gameStart:now(), gameEpoch:now(),
     pomo:{name:'专注', total:25*60000, remain:25*60000, running:false, end:0, start:0, pausedByBlur:false,
@@ -1401,6 +1472,9 @@ const sfx={
   spring(){ tone(600,0.07,'sine',0.14,0); tone(900,0.08,'sine',0.12,0.05); tone(1240,0.12,'sine',0.09,0.1); },
   // 天降事件：可爱的叮咚上扬音
   dex(){ [784,988,1318].forEach((f,i)=>tone(f,0.14,'sine',0.12,i*0.08)); [523,659,784].forEach((f,i)=>tone(f,0.12,'sine',0.06,0.3+i*0.06)); },
+  // 月巴飞行小游戏
+  flap(){ tone(680,0.06,'square',0.05); tone(1020,0.06,'square',0.04,0.02); },
+  hit(){ tone(200,0.14,'sawtooth',0.12); tone(90,0.26,'sine',0.12,0.06); },
 };
 
 /* ---------------- 轻提示 ---------------- */
@@ -1543,7 +1617,7 @@ function colGet(id){
 function colCount(id){ const c=isDex2(id)?S.collection2:S.collection; return (c[id]&&c[id].count)||0; }
 function colRec(id){ return isDex2(id)?S.collection2[id]:S.collection[id]; }
 /* ===== 调试预留（不向玩家展示）：在控制台调用 debugUnlockAll()，或在 URL 后加 #debugall 自动执行 ===== */
-function debugUnlockAll(){ for(const t of TYPES){ const c=colGet(t.id); if(!c.count)c.count=1; if(!c.last)c.last={h:50,w:50,t:now()}; } for(const t of TYPES2){ const c=colGet(t.id); if(!c.count)c.count=1; if(!c.last)c.last={h:50,w:50,t:now()}; } if(!S.dex2Celebrated)S.dex2Celebrated=true; save(); updateTravelIcon(); return '🧪 已解锁全部图鉴：第一页 '+Object.keys(S.collection).length+'/'+TYPES.length+'，第二页 '+Object.keys(S.collection2).length+'/'+TYPES2.length; }
+function debugUnlockAll(){ for(const t of TYPES){ const c=colGet(t.id); if(!c.count)c.count=1; if(!c.last)c.last={h:50,w:50,t:now()}; } for(const t of TYPES2){ const c=colGet(t.id); if(!c.count)c.count=1; if(!c.last)c.last={h:50,w:50,t:now()}; } if(!S.dex2Celebrated)S.dex2Celebrated=true; save(); updateTravelIcon(); updateFlyIcon(); return '🧪 已解锁全部图鉴：第一页 '+Object.keys(S.collection).length+'/'+TYPES.length+'，第二页 '+Object.keys(S.collection2).length+'/'+TYPES2.length; }
 function rollNum(lo,hi){ // 取值向中段集中：越接近上下极值概率越低（极值低频化，非时间冷却）
   return (lo+Math.random()*(hi-lo) + lo+Math.random()*(hi-lo))/2;
 }
@@ -4134,72 +4208,9 @@ function tvFresh(){
   return t;
 }
 function tvTomato(d){ const t=tvFresh(); t.tomato=Math.max(0,(t.tomato||0)+d); const e=$('tvTomato'); if(e)e.textContent=t.tomato; save(); }
-function updateTravelIcon(){ const el=$('btnTravel'); if(!el)return; const ready=!!S.travel&&tvSlotReady(); if(el.classList)el.classList.toggle('hasbadge',ready); el.innerHTML=(dex2Unlocked()?'<b>🧳</b><small>旅行</small>':'<b>❓</b><small>旅行</small>')+(ready?'<span class="dock-badge">🎰</span>':''); updateDressIcon(); }
+function updateTravelIcon(){ const el=$('btnTravel'); if(!el)return; const ready=!!S.travel&&tvSlotReady(); if(el.classList)el.classList.toggle('hasbadge',ready); el.innerHTML=(dex2Unlocked()?'<b>🧳</b><small>旅行</small>':'<b>❓</b><small>旅行</small>')+(ready?'<span class="dock-badge">🎰</span>':''); }
 function travelEntry(){ if(!dex2Unlocked()){ toast('🔒 第一图鉴集齐'+DEX1_MIN+'个月巴后可解锁旅行！'); return; } openTravel(); }
-/* ================= 换装（月巴换装小游戏·全屏页） ================= */
-const DR_COIN_COIN=1000000, DR_COIN_TOM=1000, DR_GACHA_COST=1;
-const DR_DUP_TOM={1:10,2:30,3:60,4:120,5:250};
-const DRESS_PARTS=[
-  {id:'d_h1',cat:'head',n:'礼帽',e:'🎩',r:1},{id:'d_h2',cat:'head',n:'皇冠',e:'👑',r:5},
-  {id:'d_h3',cat:'head',n:'小花',e:'🌼',r:1},{id:'d_h4',cat:'head',n:'墨镜',e:'🕶️',r:2},
-  {id:'d_h5',cat:'head',n:'蝴蝶结',e:'🎀',r:1},{id:'d_h6',cat:'head',n:'棒球帽',e:'🧢',r:2},
-  {id:'d_h7',cat:'head',n:'圣诞帽',e:'🎄',r:3},{id:'d_h8',cat:'head',n:'睡帽',e:'🌙',r:2},
-  {id:'d_b1',cat:'body',n:'围巾',e:'🧣',r:1},{id:'d_b2',cat:'body',n:'T恤',e:'👕',r:1},
-  {id:'d_b3',cat:'body',n:'背带裤',e:'👖',r:2},{id:'d_b4',cat:'body',n:'白大褂',e:'🥼',r:3},
-  {id:'d_b5',cat:'body',n:'大衣',e:'🧥',r:3},{id:'d_b6',cat:'body',n:'裙子',e:'👗',r:2},
-  {id:'d_b7',cat:'body',n:'旗袍',e:'🥻',r:4},{id:'d_b8',cat:'body',n:'斗篷',e:'🧙',r:4},
-  {id:'d_c1',cat:'deco',n:'气球',e:'🎈',r:1},{id:'d_c2',cat:'deco',n:'小提琴',e:'🎻',r:3},
-  {id:'d_c3',cat:'deco',n:'风筝',e:'🪁',r:2},{id:'d_c4',cat:'deco',n:'玩偶',e:'🧸',r:2},
-  {id:'d_c5',cat:'deco',n:'四叶草',e:'🍀',r:3},{id:'d_c6',cat:'deco',n:'星星',e:'⭐',r:1},
-  {id:'d_c7',cat:'deco',n:'雨伞',e:'☂️',r:2},{id:'d_c8',cat:'deco',n:'糖果',e:'🍭',r:1},
-];
-const DR_SHOP=[
-  {id:'d_h2',pri:300},{id:'d_h7',pri:150},{id:'d_b4',pri:150},{id:'d_b5',pri:150},
-  {id:'d_b7',pri:400},{id:'d_b8',pri:400},{id:'d_c2',pri:180},{id:'d_c5',pri:180},
-];
-const DR_CAT={head:'头部',body:'身体',deco:'装饰'};
-let DR_DEBUG=false; // #debugall 开启时允许跳过「开发中」提示直接进入换装
-function dressAllCollected(){ return TYPES.every(t=>colCount(t.id)>0)&&TYPES2.every(t=>colCount(t.id)>0); }
-function dressFresh(){ if(!S.dress)S.dress={coin:0,tom:0,owned:[],equip:{head:null,body:null,deco:null},photo:null,fatId:null}; return S.dress; }
-function dressPart(id){ return DRESS_PARTS.find(p=>p.id===id)||null; }
-function dressOwnedFats(){ const out=[]; for(const id in S.collection){ if(S.collection[id]&&S.collection[id].count>0){ const t=typeById(id); if(t)out.push({id,t}); } } for(const id in S.collection2){ if(S.collection2[id]&&S.collection2[id].count>0){ const t=typeById(id); if(t)out.push({id,t}); } } return out; }
-function dressEmoLine(eq){ return [eq.head,eq.body,eq.deco].filter(Boolean).map(id=>{ const p=dressPart(id); return p?p.e:''; }).join(' '); }
-function dressEntry(){ if(!DR_DEBUG&&!dressAllCollected()){ toast('🚧 功能开发中，暂不开放'); return; } dressOpen(); }
-let drView='fit';
-function dressOpen(){ dressFresh(); if(!dressOwnedFats().length){ toast('还没有收集到月巴'); return; } drRender(); $('dress').style.display='flex'; drUpdateBar(); }
-function closeDress(){ $('dress').style.display='none'; }
-function drTab(v){ drView=v; drRender(); drUpdateBar(); }
-function drSelectId(){ const d=dressFresh(); if(d.fatId)return d.fatId; const o=dressOwnedFats(); return o.length?o[0].id:null; }
-function drRender(){ const sc=$('drScene'); const d=dressFresh(); let h='<div class="dr-scene">'; if(drView==='fit'){ h+=drFitHTML(d); } else if(drView==='gacha'){ h+=drGachaHTML(d); } else if(drView==='shop'){ h+=drShopHTML(d); } else { h+=drSnapHTML(d); } h+='</div>'; sc.innerHTML=h; }
-function drUpdateBar(){ const d=dressFresh(); const e1=$('drCoin'); if(e1)e1.textContent=(d.coin||0); const e2=$('drTom'); if(e2)e2.textContent=(d.tom||0); const st=$('drState'); if(st)st.textContent=DR_CAT[drView]||({fit:'搭配',gacha:'扭蛋机',shop:'商店',snap:'拍照'}[drView]); }
-function drFitHTML(d){ const owned=dressOwnedFats(); const pick=drSelectId(); const tp=typeById(pick);
-  let h='<div class="dr-fithead"><div class="dr-canvas" id="drPrev">'+(tp?fatDeco(tp,d.equip):'🐤')+'</div><div style="flex:1"><div class="dr-pick">🐤 选择月巴：<select onchange="drPick(this.value)">'+owned.map(o=>'<option value="'+o.id+'"'+(o.id===pick?' selected':'')+'>'+o.t.name+'</option>').join('')+'</select></div><div style="font-size:24px;margin-top:6px" id="drEmo">'+dressEmoLine(d.equip)+'</div></div></div>';
-  h+='<p style="color:#4a3b63;font-size:12px;font-weight:700;width:100%;max-width:420px;margin:2px 0">🎀 自由搭配</p>';
-  for(const cat of ['head','body','deco']){ h+='<div class="dr-slot"><b>'+DR_CAT[cat]+'</b><select style="flex:1;padding:4px;border:1px solid #c9bde6;border-radius:6px" onchange="drToggle(\''+cat+'\',this.value)"><option value="">卸下</option>'+d.owned.map(dressPart).filter(p=>p&&p.cat===cat).map(p=>'<option value="'+p.id+'"'+(p.id===d.equip[cat]?' selected':'')+'>'+p.e+' '+p.n+'</option>').join('')+'</select></div>'; }
-  return h; }
-function drPick(fatId){ dressFresh().fatId=fatId; drRender(); }
-function drToggle(cat,val){ const d=dressFresh(); d.equip[cat]=val||null; save(); drRender(); }
-function drGachaHTML(d){ let h='<p style="color:#4a3b63;font-size:13px;font-weight:700;margin:4px 0">🎰 扭蛋机（'+DR_GACHA_COST+' 月巴币/次）</p>';
-  h+='<div class="dr-slot"><b>💰 月巴币</b><span style="flex:1">'+d.coin+'</span><button class="btn" onclick="drBuyCoin()">💴 1m金币→1</button><button class="btn" onclick="drBuyByTom()">🍅 1000番茄→1</button></div>';
-  h+='<p style="color:#4a3b63;font-size:12px;margin:6px 0">头部 / 身体 / 装饰 混池，抽取获得装扮；抽到重复按稀有度自动兑换 🍅 番茄币。</p>';
-  h+='<div style="text-align:center;margin:10px 0"><button class="btn cta" onclick="drGacha()" style="font-size:15px;padding:12px 26px">🎰 抽取一次</button></div>';
-  h+='<p style="color:#4a3b63;font-size:12px;font-weight:700;width:100%;max-width:460px;margin:4px 0">已拥有 '+d.owned.length+'/'+DRESS_PARTS.length+' 件：</p><div class="dr-shopgrid">'+DRESS_PARTS.map(p=>'<div class="dr-card">'+(d.owned.indexOf(p.id)>=0?'<b>'+p.e+'</b><div>'+p.n+'</div><div style="color:#8a9;font-size:11px">已入手</div>':'<b>❓</b><div>???'+'</div><div style="color:#bbb;font-size:11px">未获取</div>')+'</div>').join('')+'</div>';
-  return h; }
-function drBuyCoin(){ if(S.coins<DR_COIN_COIN){ sfx.error(); toast('金币不足 1m'); return; } S.coins-=DR_COIN_COIN; dressFresh().coin=(dressFresh().coin||0)+1; sfx.unlock(); save(); updateHeader(); drRender(); drUpdateBar(); }
-function drBuyByTom(){ const t=tvFresh(); if((t.tomato||0)<DR_COIN_TOM){ sfx.error(); toast('旅行番茄不足 1000'); return; } t.tomato-=DR_COIN_TOM; dressFresh().coin=(dressFresh().coin||0)+1; sfx.unlock(); save(); tvUpdateBar(); tvTomato(0); drRender(); drUpdateBar(); }
-function drGacha(){ const d=dressFresh(); if((d.coin||0)<DR_GACHA_COST){ sfx.error(); toast('💰 月巴币不够，先用金币/番茄兑换'); return; } d.coin-=DR_GACHA_COST; const p=DRESS_PARTS[(Math.random()*DRESS_PARTS.length)|0]; if(d.owned.indexOf(p.id)<0){ d.owned.push(p.id); toast('🎁 抽到：'+p.e+' '+p.n+'（'+DR_CAT[p.cat]+'·稀有'+(p.r||1)+'）！'); } else { const gain=DR_DUP_TOM[p.r||1]||10; d.tom=(d.tom||0)+gain; toast('♻️ 重复 '+p.e+' '+p.n+' → 番茄币 +'+gain); } sfx.unlock(); save(); drRender(); drUpdateBar(); }
-function drShopHTML(d){ let h='<p style="color:#4a3b63;font-size:13px;font-weight:700;margin:4px 0">🛍 装扮商店 · 用 🍅 番茄币购买</p>';
-  h+='<div class="dr-shopgrid">'+DR_SHOP.map(s=>{ const p=dressPart(s.id); const own=d.owned.indexOf(s.id)>=0; return '<div class="dr-card"><b>'+p.e+'</b><div>'+p.n+'</div><div class="pri">🍅 '+s.pri+'</div><button class="btn" '+(own||d.tom<s.pri?'disabled':'')+' onclick="drShopBuy(\''+s.id+'\','+s.pri+')">'+((d.tom<s.pri)?'番茄币不足':(own?'已购买':'购买'))+'</button></div>'; }).join('')+'</div>';
-  return h; }
-function drShopBuy(id,pri){ const d=dressFresh(); if(d.owned.indexOf(id)>=0)return; if((d.tom||0)<pri){ sfx.error(); toast('🍅 番茄币不足'); return; } d.tom-=pri; d.owned.push(id); sfx.unlock(); save(); drRender(); drUpdateBar(); }
-function drSnapHTML(d){ const tp=typeById(drSelectId()); return '<p style="color:#4a3b63;font-size:13px;font-weight:700;margin:4px 0">📸 拍照（保存为换装按钮图标）</p><div class="dr-fithead"><div style="width:200px;height:200px">'+(tp?fatDeco(tp,d.equip):'🐤')+'</div></div><p style="color:#4a3b63;font-size:12px;text-align:center">当前搭配：'+dressEmoLine(d.equip)+'</p><div style="text-align:center;margin-top:6px"><button class="btn cta" onclick="drPhoto()">📸 拍照保存</button> <button class="btn" onclick="drResetPhoto()">还原默认</button></div>'; }
-/* 换装预览：月巴几何 + 装扮 emoji 合成（photo 亦用同一几何，避免外链图污染画布） */
-function fatDeco(t,eq){ const body=drGeoSVG(t); return '<span style="position:relative;display:inline-block;width:100%;height:100%;overflow:hidden">'+body+drEmoAbs(eq,'head')+drEmoAbs(eq,'body')+drEmoAbs(eq,'deco')+'</span>'; }
-function drEmoAbs(eq,cat){ const p=eq[cat]?dressPart(eq[cat]):null; if(!p)return ''; const pos={head:{l:'65%',t:'2%',f:'30px'},body:{l:'20%',t:'38%',f:'30px'},deco:{l:'72%',t:'58%',f:'26px'}}[cat]; return '<span style="position:absolute;left:'+pos.l+';top:'+pos.t+';font-size:'+pos.f+';line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.2))">'+p.e+'</span>'; }
-function drGeoSVG(t){ const c=t.color||'#b08a6a', dk=shade(c,-26); const body=shapeBody(t.shape||'round',c,dk,shade(c,26)); const h=hashStr(t.id||'x'); const eye=(h%4), mouth=((h>>2)%4); const ex1=t.shape==='tall'?11:t.shape==='wide'?12:10; const ex2=30-ex1; let eyes,mm; if(eye===0)eyes=`<circle cx="${ex1}" cy="18" r="2.4" fill="#3b3654"/><circle cx="${ex2}" cy="18" r="2.4" fill="#3b3654"/>`; else if(eye===1)eyes=`<ellipse cx="${ex1}" cy="18" rx="2.5" ry="3" fill="#3b3654"/><ellipse cx="${ex2}" cy="18" rx="2.5" ry="3" fill="#3b3654"/>`; else if(eye===2)eyes=`<path d="M${ex1} 15.5 l2.4 2.5 l-2.4 2.5 l-2.4 -2.5 z" fill="#3b3654"/><path d="M${ex2} 15.5 l2.4 2.5 l-2.4 2.5 l-2.4 -2.5 z" fill="#3b3654"/>`; else eyes=`<path d="M${ex1-2} 18 h4 M${ex2-2} 18 h4" stroke="#3b3654" stroke-width="1.8" stroke-linecap="round"/>`; if(mouth===0)mm=`<path d="M14 23.5 Q17 27 20 23.5 Q23 27 26 23.5" stroke="#3b3654" stroke-width="1.8" fill="none" stroke-linecap="round"/>`; else if(mouth===1)mm=`<circle cx="20" cy="24.5" r="2.4" fill="#3b3654"/>`; else if(mouth===2)mm=`<path d="M15 25.5 Q20 29 25 25.5 L25 26.5 Q20 30 15 26.5 Z" fill="#3b3654"/>`; else mm=`<path d="M15 26 Q20 24.5 25 26" stroke="#3b3654" stroke-width="1.8" fill="none" stroke-linecap="round"/>`; return `<svg viewBox="0 0 40 40" style="width:100%;height:100%">${body}${eyes}${mm}</svg>`; }
-function drPhoto(){ const d=dressFresh(); const tp=typeById(drSelectId()); if(!tp){ toast('先选一只月巴'); return; } const cv=document.createElement('canvas'); cv.width=200; cv.height=200; const ctx=cv.getContext('2d'); ctx.clearRect(0,0,200,200); const done=function(){ try{ d.photo=cv.toDataURL('image/png'); }catch(e){ d.photo=null; toast('📸 生成失败'); return; } save(); updateDressIcon(); drRender(); toast('📸 拍好啦！已设为换装按钮'); }; const svg=drGeoSVG(tp); const img=new Image(); img.onload=function(){ ctx.drawImage(img,20,15,160,160); ctx.font='28px serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; const eq=d.equip; if(eq.head){const p=dressPart(eq.head);if(p)ctx.fillText(p.e,130,18);} if(eq.body){const p=dressPart(eq.body);if(p)ctx.fillText(p.e,48,80);} if(eq.deco){const p=dressPart(eq.deco);if(p)ctx.fillText(p.e,150,112);} done(); }; img.onerror=function(){ done(); }; img.src='data:image/svg+xml,'+encodeURIComponent(svg); }
-function drResetPhoto(){ const d=dressFresh(); d.photo=null; save(); updateDressIcon(); drRender(); toast('已还原为默认图标'); }
-function updateDressIcon(){ const el=$('btnDress'); if(!el)return; const ok=dressAllCollected(); const d=S.dress; let b; if(!ok&&!DR_DEBUG){ b='<b>❓</b><small>换装</small>'; } else if(d&&d.photo){ b='<b style="display:inline-block;width:26px;height:26px;border-radius:50%;background-size:cover;border:2px solid #fff;background-image:url(\''+d.photo+'\')"></b><small>换装</small>'; } else { b='<b>📸</b><small>换装</small>'; } el.innerHTML=b; }
+let DR_DEBUG=false; // #debugall 调试开关（旅行加速、无限资源等调试功能使用）
 let tvView='yard';
 function openTravel(){ if(!dex2Unlocked())return; tvFresh(); travelSettleIf(); updateTravelIcon(); tvRenderAll(); $('travel').style.display='flex'; tvUpdateHarvest(); }
 function closeTravel(){ $('travel').style.display='none'; }
@@ -4566,6 +4577,7 @@ function tick(){
   }
   updateStatus();
   updateWeatherHold();
+  updateFlyIcon();
   if(now()-S.lastSave>5000) save();
 }
 
@@ -4598,6 +4610,265 @@ function offlineSettle(){
   }
 }
 
+/* ---------------- 月巴飞行小游戏（Flappy 玩法） ---------------- */
+/* 番茄对月巴说的死亡台词 */
+const FG_QUOTES=[
+  '🍅 你看，我说过飞太高会摔的吧？来，到我这儿来。',
+  '🍅 摔疼了没有？我把最红的那颗留给你压惊。',
+  '🍅 别闷着啦，飞不起来也没关系，你在地上也好看。',
+  '🍅 说好了一起飞的，你怎么自己先掉下去了。',
+  '🍅 我把你捡回来了，下次记得抓紧我的手。',
+  '🍅 摔一次而已，番茄摔烂了还能长，你也能。',
+  '🍅 你看天上的云，像不像我上次说的那朵？',
+  '🍅 歇会儿吧，我陪你在这儿晒晒太阳。',
+  '🍅 疼的话就抓着我，我不怕被捏扁。',
+  '🍅 你怎么又撞上去了……我都替你疼。',
+  '🍅 飞得最高的那一次，我记着的。',
+  '🍅 下次别逞强了，我就在下面接着你。',
+  '🍅 我把手帕带来了，擦擦脸吧，灰扑扑的。',
+  '🍅 你摔下来那一刻，我的心跳都停了。',
+  '🍅 起来啦，地上凉，会着凉的。',
+  '🍅 你是不是忘了，我也会心疼的。',
+  '🍅 没关系，我们还有好多次可以重来。',
+  '🍅 你飞的时候，我一直都在看着你。',
+  '🍅 这颗番茄给你，吃完就又有力气了。',
+  '🍅 别皱着眉了，笑一个给我看看。',
+  '🍅 我就知道你会撞上那根柱子，笨蛋。',
+  '🍅 摔成这样还嘴硬，我扶你起来。',
+  '🍅 刚才那一飞，真好看。',
+  '🍅 无论你飞多远，我都会在原地等你。',
+  '🍅 疼吗？我给你吹吹。',
+  '🍅 再来一次吧，这次我陪你一起数。',
+];
+const FG_TOP_N=10;
+let fg=null;
+function fgAllTypes(){ return TYPES.concat(TYPES2); }
+function fgBest(){ return (S.flyTop&&S.flyTop.length)?S.flyTop[0].s:0; }
+function fgBestRefresh(){ const e=$('fgBest'); if(e) e.textContent=fgBest(); }
+function fgPickId(){ return (S.flyPick&&typeById(S.flyPick))?S.flyPick:(TYPES[0]&&TYPES[0].id); }
+// 入口解锁：图鉴里所有的月巴（第一页 + 第二页）都收集到才开放
+function flyUnlocked(){
+  if(Object.keys(S.collection||{}).length<TYPES.length) return false;
+  return Object.keys(S.collection2||{}).length>=TYPES2.length;
+}
+function updateFlyIcon(){
+  const el=$('btnDress'); if(!el)return;
+  const on=flyUnlocked();
+  if(el._flyOn===on)return;
+  el._flyOn=on;
+  el.innerHTML=on?'<b>🪽</b><small>飞行</small>':'<b>❓</b>';
+}
+function flyEntry(){
+  if(!flyUnlocked()){ toast('🔒 集齐图鉴里所有的月巴后，才能解锁飞行小游戏！'); return; }
+  if(!fg) fg={raf:null,cdT:null,run:false,alive:false,pipes:[],score:0,y:0,vy:0,last:0,cdN:3,sel:null};
+  fg.sel=fgPickId();
+  $('flygame').classList.add('show');
+  document.body.classList.add('fg-lock');
+  fgBestRefresh();
+  fgPickOpen();
+}
+function flyExit(){
+  fgStop();
+  const g=$('flygame'); if(g) g.classList.remove('show');
+  document.body.classList.remove('fg-lock');
+  fgLayer(null);
+  fgClearPipes();
+}
+function fgLayer(id){
+  ['fgPick','fgCount','fgOver'].forEach(k=>{ const e=$(k); if(e) e.classList.toggle('show',k===id); });
+}
+function fgPickOpen(){
+  fgStop();
+  fgLayer('fgPick');
+  fgRenderPick();
+}
+function fgRenderPick(){
+  const grid=$('fgPickGrid'); if(!grid)return;
+  if(!grid._built){
+    grid.innerHTML=fgAllTypes().map(t=>`<div class="fg-pick" data-id="${t.id}"><div class="pic">${fatSVG(t)}</div><div class="nm">${escHTML(t.name)}</div></div>`).join('');
+    grid._built=1;
+    grid.addEventListener('click',e=>{
+      const c=e.target.closest?e.target.closest('.fg-pick'):null;
+      if(!c)return;
+      fg.sel=c.getAttribute('data-id');
+      sfx.click(); fgMarkPick();
+    });
+  }
+  fgMarkPick();
+}
+function fgMarkPick(){
+  const grid=$('fgPickGrid'); if(!grid)return;
+  const kids=grid.children;
+  for(let i=0;i<kids.length;i++) kids[i].classList.toggle('sel',kids[i].getAttribute('data-id')===fg.sel);
+  const cur=grid.querySelector('.fg-pick.sel');
+  if(cur&&cur.scrollIntoView) cur.scrollIntoView({block:'nearest'});
+}
+function flyStart(){
+  if(!fg)return;
+  if(fg.sel){ S.flyPick=fg.sel; save(); }
+  const type=typeById(fg.sel)||TYPES[0];
+  fgLayer(null);
+  fgSetup(type);
+  fgLayer('fgCount');
+  fg.cdN=3;
+  const num=$('fgCountNum'); if(num) num.textContent='3';
+  sfx.tap();
+  if(fg.cdT) clearInterval(fg.cdT);
+  fg.cdT=setInterval(()=>{
+    fg.cdN--;
+    if(fg.cdN>0){
+      const n=$('fgCountNum'); if(n) n.textContent=fg.cdN;
+      sfx.click();
+    }else{
+      clearInterval(fg.cdT); fg.cdT=null;
+      const n=$('fgCountNum'); if(n) n.textContent='GO!';
+      sfx.spring();
+      setTimeout(()=>{ if(!fg)return; fgLayer(null); fgBegin(); },420);
+    }
+  },650);
+}
+function fgSetup(type){
+  const st=$('fgStage'); if(!st)return;
+  fg.W=st.clientWidth||360; fg.H=st.clientHeight||560;
+  fg.ground=14; fg.floor=fg.H-fg.ground;
+  fg.fatSize=clamp(fg.H*0.088,32,64);
+  fg.fatX=fg.W*0.28;
+  fg.G=fg.H*0.00115;                 // 重力（每帧，按 60fps 折算）
+  fg.FLAP=-fg.H*0.019;               // 点击上冲速度
+  fg.SPEED=clamp(fg.H*0.0046,2.0,3.6); // 柱子左移速度
+  fg.pw=clamp(fg.W*0.15,46,78);      // 柱子宽度
+  fg.dist=clamp(fg.W*0.62,190,320);  // 柱子间距
+  fg.gap=clamp(fg.H*0.30,150,250);   // 缺口高度
+  fg.score=0; fg.y=fg.floor*0.42; fg.vy=0; fg.last=0;
+  const sc=$('fgScore'); if(sc) sc.textContent='0';
+  const fatEl=$('fgFat');
+  if(fatEl){ fatEl.style.width=fg.fatSize+'px'; fatEl.style.height=fg.fatSize+'px'; fatEl.innerHTML=fatSVG(type); }
+  fgClearPipes();
+  const n=Math.ceil(fg.W/fg.dist)+2;
+  for(let i=0;i<n;i++) fgAddPipe(fg.W+80+i*fg.dist);
+  fgDraw();
+}
+function fgClearPipes(){
+  if(!fg)return;
+  fg.pipes.forEach(p=>{ if(p.el&&p.el.parentNode) p.el.parentNode.removeChild(p.el); });
+  fg.pipes=[];
+}
+function fgAddPipe(x){
+  const wrap=$('fgPipes'); if(!wrap)return null;
+  const el=document.createElement('div');
+  el.className='fg-pipe';
+  el.innerHTML='<i class="pt"></i><i class="pb"></i>';
+  wrap.appendChild(el);
+  const p={el,x,gapTop:0,passed:false};
+  fg.pipes.push(p);
+  fgPlacePipe(p);
+  return p;
+}
+function fgPlacePipe(p){
+  const lo=44, hi=Math.max(lo+10,fg.floor-fg.gap-44);
+  p.gapTop=rand(lo,hi);
+  p.passed=false;
+  p.el.style.width=fg.pw+'px';
+  p.el.querySelector('.pt').style.height=p.gapTop+'px';
+  p.el.querySelector('.pb').style.height=Math.max(10,fg.floor-p.gapTop-fg.gap)+'px';
+  p.el.style.transform='translate3d('+(p.x|0)+'px,0,0)';
+}
+function fgDraw(){
+  const fatEl=$('fgFat'); if(!fatEl||!fg)return;
+  fatEl.style.transform='translate3d('+(fg.fatX-fg.fatSize/2)+'px,'+(fg.y-fg.fatSize/2)+'px,0) rotate('+clamp(fg.vy*2.4,-26,72).toFixed(1)+'deg)';
+}
+function fgBegin(){
+  if(!fg)return;
+  fg.run=true; fg.alive=true; fg.last=0;
+  const st=$('fgStage'); if(st) st.classList.add('playing');
+  if(fg.raf) cancelAnimationFrame(fg.raf);
+  fg.raf=requestAnimationFrame(fgLoop);
+}
+function fgLoop(ts){
+  if(!fg||!fg.run)return;
+  const dt=fg.last?Math.min(0.05,(ts-fg.last)/1000):0.0167;
+  fg.last=ts;
+  fgStep(dt*60);   // 折算为 60fps 帧数，保证不同刷新率手感一致
+  if(!fg.run)return;
+  fgDraw();
+  fg.raf=requestAnimationFrame(fgLoop);
+}
+function fgStep(f){
+  fg.vy+=fg.G*f;
+  fg.y+=fg.vy*f;
+  const r=fg.fatSize*0.34;
+  if(fg.y-r<0){ fg.y=r; fg.vy=Math.max(fg.vy,0); }
+  if(fg.y+r>fg.floor){ fg.y=fg.floor-r; fgDraw(); fgDie(); return; }
+  const L=fg.fatX-r, R=fg.fatX+r;
+  for(const p of fg.pipes){
+    p.x-=fg.SPEED*f;
+    p.el.style.transform='translate3d('+(p.x|0)+'px,0,0)';
+    if(!p.passed && p.x+fg.pw<L){
+      p.passed=true; fg.score++;
+      const sc=$('fgScore'); if(sc) sc.textContent=fg.score;
+      sfx.coin();
+    }
+    if(p.x+fg.pw>L && p.x<R){
+      const top=p.gapTop, bot=p.gapTop+fg.gap;
+      if(fg.y-r*0.9<top || fg.y+r*0.9>bot){ fgDie(); return; }
+    }
+  }
+  // 移出屏幕的柱子回收到最右侧，循环利用
+  for(const p of fg.pipes){
+    if(p.x+fg.pw<-20){
+      let right=fg.W;
+      for(const q of fg.pipes) if(q!==p && q.x>right) right=q.x;
+      p.x=right+fg.dist;
+      fgPlacePipe(p);
+    }
+  }
+}
+function fgDie(){
+  if(!fg||!fg.alive)return;
+  fg.alive=false; fg.run=false;
+  if(fg.raf){ cancelAnimationFrame(fg.raf); fg.raf=null; }
+  const st=$('fgStage'); if(st) st.classList.remove('playing');
+  sfx.hit();
+  const sc=fg.score, id=fg.sel||fgPickId();
+  if(sc>0){
+    if(!S.flyTop) S.flyTop=[];
+    S.flyTop.push({s:sc,id:id,t:now()});
+    S.flyTop.sort((a,b)=>b.s-a.s);
+    S.flyTop=S.flyTop.slice(0,FG_TOP_N);
+    save();
+  }
+  fgBestRefresh();
+  const oe=$('fgOverScore'); if(oe) oe.innerHTML='本次得分 <b>'+sc+'</b>　最高 <b>'+fgBest()+'</b>';
+  const qt=$('fgQuote'); if(qt) qt.textContent=pick(FG_QUOTES);
+  fgRenderLb(id,sc);
+  fgLayer('fgOver');
+}
+function fgRenderLb(curId,curScore){
+  const box=$('fgLbList'); if(!box)return;
+  const list=(S.flyTop||[]).slice(0,FG_TOP_N);
+  if(!list.length){ box.innerHTML='<div class="fg-lbempty">还没有记录，快去飞一次吧～</div>'; return; }
+  let marked=false;
+  box.innerHTML=list.map((r,i)=>{
+    const t=typeById(r.id)||{id:'',name:'月巴',color:'#b39ddb',shape:'round'};
+    let me=false;
+    if(!marked && curScore>0 && r.s===curScore && r.id===curId){ me=true; marked=true; }
+    return '<div class="fg-lbrow'+(me?' me':'')+'"><span class="rk">'+(i+1)+'</span><span class="pic">'+fatSVG(t)+'</span><span class="nm">'+escHTML(t.name)+'</span><span class="sc">'+r.s+'</span></div>';
+  }).join('');
+}
+function fgStop(){
+  if(!fg)return;
+  fg.run=false; fg.alive=false;
+  if(fg.raf){ cancelAnimationFrame(fg.raf); fg.raf=null; }
+  if(fg.cdT){ clearInterval(fg.cdT); fg.cdT=null; }
+  const st=$('fgStage'); if(st) st.classList.remove('playing');
+}
+function fgFlap(){
+  if(!fg||!fg.run||!fg.alive)return;
+  fg.vy=fg.FLAP;
+  sfx.flap();
+  fgDraw();
+}
+
 /* ---------------- 初始化 ---------------- */
 function init(){
   const hasSave=load();
@@ -4614,7 +4885,7 @@ function init(){
   if(dex2Unlocked() && !S.dex2Celebrated){ S.dex2Celebrated=true; setTimeout(openDex2Celebrate,900); }
   applySkin(S.skins.active);
   renderOverview(); updateHeader(); updateStatus(); updatePomoUI(); updateSceneBar(); updateWeatherHold();
-  updateTravelIcon();
+  updateTravelIcon(); updateFlyIcon();
   if(typeof location!=='undefined' && location.hash && location.hash.indexOf('#debugall')>=0){
     DR_DEBUG=true; setTimeout(debugUnlockAll,300);
     // 调试模式：金币与旅行番茄数量始终为无限
@@ -4656,6 +4927,22 @@ function init(){
   $('btnTask').onclick=()=>{ sfx.click(); openTasks(); };
   $('btnStats').onclick=()=>{ sfx.click(); openStats(); };
   $('btnHelp').onclick=()=>{ sfx.click(); openHelp(); };
+  $('btnDress').onclick=()=>{ sfx.click(); flyEntry(); };
+  // 月巴飞行：鼠标/触屏点击舞台，或按空格键让月巴往上飞
+  const fgStage=$('fgStage');
+  if(fgStage){
+    fgStage.addEventListener('pointerdown',e=>{
+      if(fg&&fg.run&&fg.alive){ e.preventDefault(); fgFlap(); }
+    });
+  }
+  window.addEventListener('keydown',e=>{
+    if(e.code!=='Space'&&e.key!==' ')return;
+    const g=$('flygame'); if(!g||!g.classList.contains('show'))return;
+    const tag=(e.target&&e.target.tagName)||'';
+    if(tag==='INPUT'||tag==='TEXTAREA')return;
+    e.preventDefault();
+    fgFlap();
+  });
   $('btnMute').onclick=()=>{ S.muted=!S.muted; updateHeader(); sfx.click(); save(); };
   $('overlay').onclick=(e)=>{ if(e.target===$('overlay'))closeModal(); };
   $('sceneBack').onclick=closeScene;
