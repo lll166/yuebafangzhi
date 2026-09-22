@@ -4450,7 +4450,7 @@ function nextDexEventAt(){ return now()+rand(20,45)*60000; } // 下次天降事�
 let _dexEv=null; // 待领取的天降事件缓存：{t,line,reward}
 function checkDexEvent(){
   if(!S.dexNext) S.dexNext=nextDexEventAt();
-  if(!_dexEv && S.dexPending){ _dexEv=S.dexPending; } // 恢复未领取的事件（刷新/重开后按钮仍亮）
+  if(!_dexEv && S.dexPending){ _dexEv=S.dexPending; const b=$('dexBtn'); if(b) b.style.display=''; } // 恢复未领取的事件（刷新/重开后按钮仍亮）
   if(_dexEv) return; // 已有待领取事件，保持按钮显示
   if(now()<S.dexNext) return;
   // 生成事件并亮起红色按钮 + 可爱音效
