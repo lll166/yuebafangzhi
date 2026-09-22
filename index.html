@@ -706,6 +706,7 @@
     </div>
     <button class="iconbtn" id="btnHelp" title="帮助">❓</button>
     <button class="iconbtn" id="btnMute" title="声音">🔊</button>
+    <button class="iconbtn" id="btnLow" title="低功耗模式" onclick="toggleLowPower()">⚡</button>
   </div>
 
   <div id="statusbar">
@@ -727,7 +728,6 @@
   <button class="dockbtn" id="btnBook"><b>📗</b><small>图鉴</small></button>
   <button class="dockbtn pomo" id="btnPomo"><b>🍅</b><small>番茄钟</small></button>
   <button class="dockbtn hasbadge" id="btnTask"><b>✅</b><small>待办</small><span class="dock-badge" id="taskBadge" style="display:none"></span></button>
-  <button class="dockbtn" id="btnLow" onclick="toggleLowPower()"><b>⚡</b><small>省电</small></button>
   <button class="dockbtn" id="btnStats"><b>📊</b><small>统计</small></button>
   <button class="dockbtn" id="btnShop"><b>🛒</b><small>商店</small></button>
   <button class="dockbtn" id="btnTravel" onclick="travelEntry()"><b>🧳</b><small>旅行</small></button>
@@ -1460,7 +1460,7 @@ function fxLoop(){
   if(fx.length) fxRaf=requestAnimationFrame(fxLoop);
 }
 function toggleLowPower(){ S.lowPower=!S.lowPower; document.body.classList.toggle('low-power',S.lowPower); if(S.lowPower){ clearFx(); startFx(); } updateLowBtn(); save(); toast(S.lowPower?'⚡ 已开启低功耗模式（省电）':'✨ 已关闭低功耗模式'); }
-function updateLowBtn(){ const b=$('btnLow'); if(!b)return; b.innerHTML='<b>'+(S.lowPower?'🌙':'⚡')+'</b><small>'+(S.lowPower?'省电中':'省电')+'</small>'; }
+function updateLowBtn(){ const b=$('btnLow'); if(!b)return; b.innerHTML=S.lowPower?'🌙':'⚡'; b.title=S.lowPower?'低功耗模式(开启中)':'低功耗模式'; }
 function clearFx(){ fx.length=0; fxRaf=null; if(ctx)ctx.clearRect(0,0,innerWidth,innerHeight); }
 startFx();
 function coinTarget(){ const r=$('coinbox').getBoundingClientRect(); return {x:r.left+r.width/2, y:r.top+r.height/2}; }
