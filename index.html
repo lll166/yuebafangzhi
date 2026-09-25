@@ -79,6 +79,8 @@
   }
   .iconbtn:hover{transform:translateY(-1px);border-color:var(--purple);}
   .iconbtn:active{transform:scale(.92);}
+  .iconbtn.codebtn{background:linear-gradient(180deg,#fff6d8,#ffe49b);border-color:#e6c04a;animation:codeglow 1.6s ease-in-out infinite;}
+  @keyframes codeglow{0%,100%{box-shadow:0 0 0 0 rgba(242,201,76,.65);}50%{box-shadow:0 0 0 5px rgba(242,201,76,0);}}
 
   /* ---------- 状态条 ---------- */
   #statusbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0 4px;font-size:13px;}
@@ -784,6 +786,7 @@
     <button class="iconbtn" id="btnHelp" title="帮助">❓</button>
     <button class="iconbtn" id="btnMute" title="声音">🔊</button>
     <button class="iconbtn" id="btnLow" title="低功耗模式" onclick="toggleLowPower()">⚡</button>
+    <button class="iconbtn codebtn" id="btnCode" title="中秋口令" style="display:none" onclick="openCode4099()">🎑</button>
   </div>
 
   <div id="statusbar">
@@ -1359,7 +1362,7 @@ function defaultState(){
     flyTop:[], flyPick:null, flySel:1, flyClear:0, flyLvBest:{}, flyLvTime:{},
     weather:'sunny', lastRainAt:-1e12, weatherHoldEnd:0,
     nextWeatherAt:now()+rand(2,4)*60000, muted:false, lastSave:now(),
-    seenHelp:false, starter:true, dexPending:null,
+    seenHelp:false, starter:true, dexPending:null, code4099:false,
     skins:{unlocked:[], active:null},
     tasks:[],
     gameStart:now(), gameEpoch:now(),
@@ -4506,7 +4509,7 @@ function tvSpin(){ if(!tvSlotReady())return; const btn=$('tvSpinBtn'); if(btn)bt
   const ICON=62, MAX=pool.length*2*ICON, stops=[900,1500,2100], dur=2200, t0=performance.now();
   const step=function(t){ const p=Math.min(1,(t-t0)/dur); for(let i=0;i<3;i++){ const e=els[i]; if(!e)continue; const sp=e.firstChild; if(!sp||!sp.style)continue; const pt=Math.min(1,p*dur/stops[i]); sp.style.transform='translateY('+(-pt*MAX).toFixed(1)+'px)'; if(pt>=1&&!e.classList.contains('land'))e.classList.add('land'); } if(p<1)requestAnimationFrame(step); else { /* 落定后清空长条 DOM，仅保留结果图标并移除 will-change，降低常驻内存/合成层 */ for(let i=0;i<3;i++){ const e=els[i]; if(!e)continue; e.innerHTML='<div class="tvg-strip"><div>'+cols[i]+'</div></div>'; } tvSlotResult(cols); if(btn)btn.disabled=false; } };
   requestAnimationFrame(step); }
-function tvSlotResult(cols){ const t=tvFresh(); const s0=cols[0],s1=cols[1],s2=cols[2]; let gain; if(s0===s1&&s1===s2)gain=8+(Math.random()*3|0); else if(s0===s1||s1===s2||s0===s2)gain=4+(Math.random()*4|0); else gain=1+(Math.random()*3|0); t.tomato+=gain; t.harvestT=now()+rand(10,30)*60000; save(); const r=$('tvSlotResult'); if(r)r.innerHTML=(s0===s1&&s1===s2)?('🎉🎉 JACKPOT！收获 '+gain+' 🍅'):('🎉 收获 '+gain+' 个 🍅'); updateTravelIcon(); }
+function tvSlotResult(cols){ const t=tvFresh(); const s0=cols[0],s1=cols[1],s2=cols[2]; let gain; if(s0===s1&&s1===s2)gain=8+(Math.random()*3|0); else if(s0===s1||s1===s2||s0===s2)gain=4+(Math.random()*4|0); else gain=1+(Math.random()*3|0); t.tomato+=gain; t.harvestT=now()+rand(10,30)*60000; const streak=(gain===1&&t.lastSlotOne); t.lastSlotOne=(gain===1); save(); const r=$('tvSlotResult'); if(r)r.innerHTML=(s0===s1&&s1===s2)?('🎉🎉 JACKPOT！收获 '+gain+' 🍅'):(streak?'😳 好像番茄被月巴偷偷拿走了……（+1 🍅）':('🎉 收获 '+gain+' 个 🍅')); updateTravelIcon(); }
 function tvUpdateHarvest(){ const b=$('tvHarvestBtn'); if(!b)return; b.style.display=tvSlotReady()?'':'none'; }
 function travelSettleIf(){ const t=tvFresh(); if(t.frog.status==='away' && t.frog.ret && now()>=t.frog.ret) tvSettle(); }
 function travelTick(){ if(!S.travel||!S.travel.frog)return; const t=S.travel; travelSettleIf(); if(t.frog.status==='away'&&now()>=(t.cardT||0)){ t.cardT=now()+rand(10,20)*60000; tvSendCardIf(); } const vis=$('travel'); if(vis&&vis.style.display==='flex'){ if(tvEventRoll())tvRenderScene(); tvFriendPop(); tvUpdateHarvest(); tvUpdateBar(); } updateTravelIcon(); }
@@ -5215,6 +5218,58 @@ function fgFlap(){
   fgDraw();
 }
 
+/* ---------------- 中秋口令（4099） ---------------- */
+/* 按现有槽数估算约 24 小时（现实时间）的金币产出 */
+function code4099Gold(){
+  const slots=totalSlots();
+  let sum=0,cnt=0;
+  for(const z of S.zones)for(const w of z.woods)for(const c of w.cells){
+    if(!c||!c.t)continue; const tp=typeById(c.t); if(!tp)continue;
+    const cyc=(c.dur/speedMult())/1000;      // 该槽一个生长周期（秒）
+    if(cyc>0){ sum+=tp.v/cyc; cnt++; }
+  }
+  let per=cnt?sum/cnt:0;                     // 每个槽的平均产出（金币/秒）
+  if(!(per>0)){                              // 槽里还没有月巴：按可用月巴的平均产出估算
+    let s2=0,c2=0;
+    for(const tp of availableTypes()){
+      const cyc=tp.t*(1000/BASE_SPEED)/1000/speedMult();
+      if(cyc>0){ s2+=tp.v/cyc; c2++; }
+    }
+    per=c2?s2/c2:0.05;
+  }
+  return Math.round(per*slots*86400);
+}
+/* 未领取时显示顶栏口令入口，领取后隐藏 */
+function updateCodeIcon(){ const b=$('btnCode'); if(b) b.style.display=S.code4099?'none':'inline-flex'; }
+function openCode4099(){
+  pomoModalOpen=false;
+  openModal('🎑 中秋口令', '<div style="text-align:center">'
+    +'<div style="font-size:46px;line-height:1.1">🌕</div>'
+    +'<p style="font-size:13px;color:var(--dim);margin:6px 0 10px">输入口令，领取中秋礼物（仅可领取一次）</p>'
+    +'<input id="code4099In" inputmode="numeric" maxlength="4" onkeydown="if(event.keyCode===13)claimCode4099()" placeholder="请输入口令" style="padding:8px;border:1px solid #ccc;border-radius:8px;width:62%;text-align:center;font-size:16px;letter-spacing:4px">'
+    +'<div style="margin-top:12px"><button class="btn cta" onclick="claimCode4099()">领取</button></div>'
+    +'</div>');
+}
+function claimCode4099(){
+  const el=$('code4099In');
+  const v=(el&&el.value?el.value:'').trim();
+  if(v!=='4099'){ sfx.error(); toast('口令不对哦～'); return; }
+  if(S.code4099){ toast('这个口令已经领过啦'); return; }
+  const gold=code4099Gold();
+  const tomato=dex2Unlocked()?500:0;
+  S.code4099=true; addCoins(gold); if(tomato)tvTomato(tomato);
+  save(); updateCodeIcon();
+  if(sfx.dex)sfx.dex(); else sfx.coin();
+  openModal('🎑 中秋快乐', '<div style="text-align:center">'
+    +'<div style="font-size:46px;line-height:1.1">🥮</div>'
+    +'<p style="font-size:13px;color:#48614a;margin:6px 0 4px">按你现有的 <b>'+totalSlots()+'</b> 个槽位，收到了约 24 小时的金币产出</p>'
+    +'<p style="font-size:22px;font-weight:800;color:#e08a3c;margin:4px 0">+'+fmt(gold)+' 🪙'+(tomato?(' ＋ '+tomato+' 🍅'):'')+'</p>'
+    +'<p style="font-size:15px;font-weight:800;color:#e02424;margin:10px 0 4px">🌕 月巴和番茄祝大家中秋节快乐！🥮</p>'
+    +'<p style="font-size:12px;color:var(--dim)">'+(tomato?'（第二图鉴已开启，附赠 500 🍅）':'（开启第二图鉴后还能额外获得 500 🍅）')+'</p>'
+    +'<div style="margin-top:12px"><button class="btn cta" onclick="closeModal()">收下</button></div>'
+    +'</div>');
+}
+
 /* ---------------- 初始化 ---------------- */
 function init(){
   const hasSave=load();
@@ -5231,7 +5286,7 @@ function init(){
   if(dex2Unlocked() && !S.dex2Celebrated){ S.dex2Celebrated=true; setTimeout(openDex2Celebrate,900); }
   applySkin(S.skins.active);
   renderOverview(); updateHeader(); updateStatus(); updatePomoUI(); updateSceneBar(); updateWeatherHold();
-  updateTravelIcon(); updateFlyIcon();
+  updateTravelIcon(); updateFlyIcon(); updateCodeIcon();
   if(typeof location!=='undefined' && location.hash && location.hash.indexOf('#debugall')>=0){
     DR_DEBUG=true; setTimeout(debugUnlockAll,300);
     // 调试模式：金币与旅行番茄数量始终为无限
