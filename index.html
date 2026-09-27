@@ -1128,6 +1128,8 @@ const TYPES=[
   {id:'yinxiang',  name:'音响月巴',   r:1, v:8, t:90,   cond:null, color:'#6b7280', shape:'tall'},
   {id:'jieba',     name:'戒巴',       r:3, v:55, t:520,  cond:null, color:'#4e9f8d', shape:'squish'},
   {id:'bazong',    name:'巴总',       r:3, v:1800, t:4200, cond:null, color:'#c68a3a', shape:'big'},
+  {id:'mojing',    name:'墨镜笑巴',   r:2, v:22, t:220,  cond:null, img:'https://origin.picgo.net/2026/09/27/4d64284ab6f23425f9dda44f0fc540bef12552ef47074e5e.th.png', color:'#8a97a8', shape:'round'},
+  {id:'bukeming',  name:'不可名状巴', r:4, v:200,t:1100, cond:null, img:'https://origin.picgo.net/2026/09/27/20c78b17ef4b3fa235abaad68362f4b3e9cd9e87eb7bc133.th.png', color:'#5d4a7a', shape:'big', size:3.5},
   {id:'bairi', name:'百日月巴',  r:6, v:3000, t:3600, cond:{t:'dexfirst', n:99}, weight:0.003, color:'#ffd54f', shape:'big'},
 ];
 /* 第二图鉴：第一图鉴集齐 TYPES.length-5（见 DEX1_MIN）个月巴后开启（掉落池合并）。字段格式与 TYPES 一致，
@@ -1274,6 +1276,8 @@ const FAT_INTRO={
   yinxiang:'总是播放着重金属摇滚乐的巴，在它的身边总是会响起一阵激昂的音乐声⚡⚡⚡。',
   jieba:'吃了太多的番茄，需要控制吃番茄的频率。',
   bazong:'天凉了，该让番茄破产被巴总包养了。',
+  mojing:'总是一副很开心的样子，会从背后偷袭番茄。',
+  bukeming:'拥有巨大不可名状身形的巴，当它被人从沉睡中唤醒时，会发生什么呢？',
   m2_dou:'圆滚滚像颗小豆子，蹦跶起来节奏感十足。',
   m2_men:'出生自带萌化光环，看它一眼心情就好。',
   m2_zhu:'胃口堪比小猪，吃饱就原地躺平。',
@@ -2342,7 +2346,7 @@ const DEX_EVENTS=[
   '✒️ {name}在番茄上轻轻画了个小花：「为什么番茄总是怎么笨呢。」',
   '🫀 {name}抱住睡着的番茄也闭上眼：「你没有说不，就当你答应啦。」',
   '🧂 {name}把熟透的番茄放回原处，故作轻松：「接下来不需要我的话，我可以离开……你的意思是要我留下吗？谢谢你。」',
-  '🌫️ {name}看着番茄的背影：「你回选择我吗？」',
+  '🌫️ {name}看着番茄的背影：「你会选择我吗？」',
   '🥀 {name}把最后一只番茄护在怀里笑得发苦：「我只是想保护你而已……」',
   '🕯️ {name}坐在番茄身边：「能陪我度过最后的冬日吗？」',
   '♻️ {name}手忙脚乱地想把蔫了的番茄救回来：「再给我一次机会好不好？这次我一定好好养你。」',
@@ -2412,10 +2416,13 @@ function dexGoldPerMin(){
   return ps*60; // 每分钟金币
 }
 function dexEventReward(){ return Math.round(dexGoldPerMin()*5*(0.5+Math.random()*0.5)); }
+/* 会私藏番茄的月巴：嫌疑月巴 / 贪污月巴，天降事件的附赠番茄减半 */
+function dexSkim(t){ return !!t && (t.id==='m2_tanwu'||t.id==='m2_xianyi'); }
 function openDexEvent(){
   if(!_dexEv) return;
   const {t,line,reward,tomato}=_dexEv;
   const extra=tomato>0?`<div style="font-size:12px;color:#e08a3c;font-weight:800;margin:-4px 0 6px">+ 附赠 ${tomato} 个 🍅 番茄（第二图鉴已开启）</div>`:'';
+  const skim=dexSkim(t)?`<div style="font-size:11px;color:#9aa0a6;margin:-2px 0 8px">啊哦，月巴好像藏了一些番茄，不愿意给你</div>`:'';
   openModal('🍅 天降事件', `
     <div style="text-align:center">
       <div style="font-size:52px;line-height:1.1">💫</div>
@@ -2423,6 +2430,7 @@ function openDexEvent(){
       <p style="font-size:15px;color:var(--text);margin:4px 0 12px">${esc(line)}</p>
       <div style="font-size:14px;color:#e02424;font-weight:800;margin-bottom:2px">🍅 ${esc(t.name)} 送给你 ${fmt(reward)} 金币！</div>
       ${extra}
+      ${skim}
       <button class="btn gold" onclick="claimDexEvent()">收下 · +${fmt(reward)} 🪙${tomato>0?' +'+tomato+' 🍅':''}</button>
     </div>`);
 }
@@ -4582,7 +4590,9 @@ function checkDexEvent(){
   const pool=dex2Unlocked()?TYPES.concat(TYPES2):TYPES; // 开启第二图鉴后事件月巴也纳入
   const t=pool[Math.floor(Math.random()*pool.length)];
   const line=(DEX_EVENTS[Math.floor(Math.random()*DEX_EVENTS.length)]||'').replace(/\{name\}/g,t.name);
-  _dexEv={t,line,reward:dexEventReward(), tomato:dex2Unlocked()?randi(1,10):0};
+  let tomato=dex2Unlocked()?randi(1,10):0;
+  if(dexSkim(t)) tomato=Math.max(1,Math.round(tomato/2)); // 嫌疑/贪污月巴私藏一半番茄
+  _dexEv={t,line,reward:dexEventReward(), tomato:tomato};
   S.dexPending=_dexEv;
   S.dexNext=nextDexEventAt();
   save();
