@@ -4339,7 +4339,7 @@ function tvCharmDura(x){ return Math.max(0,(x&&x.du!=null)?(x.du|0):TV_ITEMS.cha
 /* 仓库中多件护身符的耐久文本，如「3/3、2/3」 */
 function tvCharmDuraText(list){ const d=TV_ITEMS.charm.durab; if(!list||!list.length)return '—'; const a=list.slice(0,6).map(function(v){return v+'/'+d;}); if(list.length>6)a.push('…'); return a.join('、'); }
 function tvTomato(d){ const t=tvFresh(); t.tomato=Math.max(0,(t.tomato||0)+d); const e=$('tvTomato'); if(e)e.textContent=t.tomato; save(); }
-function updateTravelIcon(){ const el=$('btnTravel'); if(!el)return; const ready=!!S.travel&&tvSlotReady(); const door=!!S.travel&&!!S.travel.pendingVisit; if(el.classList)el.classList.toggle('hasbadge',ready||door); el.innerHTML=(dex2Unlocked()?'<b>🧳</b><small>旅行</small>':'<b>❓</b><small>旅行</small>')+(door?'<span class="dock-badge">🚪</span>':(ready?'<span class="dock-badge">🎰</span>':'')); }
+function updateTravelIcon(){ const el=$('btnTravel'); if(!el)return; const ready=!!S.travel&&tvSlotReady(); const door=!!S.travel&&!!S.travel.pendingVisit; const on=dex2Unlocked(); const key=(on?1:0)+'|'+(ready?1:0)+'|'+(door?1:0); if(el._tvIcon===key)return; el._tvIcon=key; if(el.classList)el.classList.toggle('hasbadge',ready||door); el.innerHTML=(on?'<b>🧳</b><small>旅行</small>':'<b>❓</b><small>旅行</small>')+(door?'<span class="dock-badge">🚪</span>':(ready?'<span class="dock-badge">🎰</span>':'')); }
 function travelEntry(){ if(!dex2Unlocked()){ toast('🔒 第一图鉴集齐'+DEX1_MIN+'个月巴后可解锁旅行！'); return; } openTravel(); }
 let DR_DEBUG=false; // #debugall 调试开关（旅行加速、无限资源等调试功能使用）
 let tvView='yard';
