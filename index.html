@@ -2670,15 +2670,32 @@ function exportSaveFile(){
   setTimeout(function(){ URL.revokeObjectURL(url); },1000);
   toast('✅ 存档已导出为文件');
 }
+// 旧版存档迁移 + 默认值合并（与 load() 一致），供粘贴导入 / 文件导入共用
+// 兼容旧存档：只要求是对象且含至少一个已知字段，缺失字段由 defaultState() 补齐
+function looksLikeSave(d){
+  if(!d||typeof d!=='object'||Array.isArray(d)) return false;
+  return Array.isArray(d.zones)||typeof d.coins==='number'||!!d.collection||!!d.pomo||Array.isArray(d.tasks);
+}
+function mergeImportedSave(d){
+  if(d.collection) for(const k in d.collection){
+    if(typeof d.collection[k]==='number') d.collection[k]={count:d.collection[k]};
+  }
+  if(d.zones) for(const z of d.zones) for(const w of (z.woods||[])) for(const c of w.cells){
+    if(c&&c.t&&c.dur&&c.dur<10000) c.dur=c.dur*(1000/BASE_SPEED);
+  }
+  const merged=Object.assign(defaultState(),d);
+  merged.pomo=Object.assign(defaultState().pomo,d.pomo||{});
+  return merged;
+}
 function importSaveFile(){
   const f=$('importFile'); if(!f||!f.files||!f.files[0]) return;
   const rd=new FileReader();
   rd.onload=function(){
     try{
-      const s=JSON.parse(rd.result);
-      if(!s || typeof s.coins!=='number' || !Array.isArray(s.zones)) throw 0;
-      localStorage.setItem(SAVE_KEY,JSON.stringify(s));
-      toast('✅ 导入成功，即将刷新');
+      const d=JSON.parse(rd.result);
+      if(!looksLikeSave(d)) throw 0;
+      S=mergeImportedSave(d); save();
+      toast(`✅ 导入成功（🍅 打卡 ${(d.pomo&&d.pomo.history||[]).length} 条 · 任务 ${(d.tasks||[]).length} 条），正在刷新…`);
       setTimeout(function(){ location.reload(); },600);
     }catch(e){ toast('❌ 文件不是有效的存档内容'); }
   };
@@ -2695,17 +2712,8 @@ function importSave(){
   if(!raw){ toast('⚠️ 请先粘贴存档内容'); return; }
   try{
     const d=JSON.parse(raw);
-    if(!d||typeof d!=='object'||!Array.isArray(d.zones)) throw 0;
-    // 与 load() 相同的旧版迁移
-    if(d.collection) for(const k in d.collection){
-      if(typeof d.collection[k]==='number') d.collection[k]={count:d.collection[k]};
-    }
-    if(d.zones) for(const z of d.zones) for(const w of (z.woods||[])) for(const c of w.cells){
-      if(c&&c.t&&c.dur&&c.dur<10000) c.dur=c.dur*(1000/BASE_SPEED);
-    }
-    const merged=Object.assign(defaultState(),d);
-    merged.pomo=Object.assign(defaultState().pomo,d.pomo||{});
-    S=merged; save();
+    if(!looksLikeSave(d)) throw 0;
+    S=mergeImportedSave(d); save();
     toast(`✅ 导入成功（🍅 打卡 ${(d.pomo&&d.pomo.history||[]).length} 条 · 任务 ${(d.tasks||[]).length} 条），正在刷新…`);
     setTimeout(()=>location.reload(),600);
   }catch(e){ toast('❌ 存档格式无效，导入失败'); }
@@ -4608,7 +4616,8 @@ function tvOpenLetter(c){
 }
 function tvOpenMail(){ openModal('📮 信箱 · 来信', tvMailHTML()); }
 function tvMailHTML(){ const t=tvFresh(); let h='<p style="color:#48614a;font-size:13px">此次旅行月巴寄回、尚未拆开的信件，点击可以拆开：</p><div class="sh-grid">'; if(!t.inbox.length)h+='<p style="color:#999;text-align:center;grid-column:1/-1">信箱空空，还没有未拆的信件</p>'; for(const c of t.inbox)h+=tvLetterEnv(c); h+='</div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'; return h; }
-function tvFriendModal(f,t){ const fr=t.friends.find(function(x){return x.id===f.id;}); const fc=fr?fr.count:0; const emo=f.e; let h='<p style="text-align:center;font-size:40px">'+emo+'</p><p style="text-align:center"><b>'+f.n+'</b>'+(fc?'（第 '+(fc+1)+' 次来访）':'（第一次来访）')+'</p><p style="text-align:center;color:#48614a">'+f.t+'</p><p style="text-align:center;font-size:12px;color:#48614a">喂它喜欢的特产可回礼 🍅</p><div class="sh-grid">'; for(const s of f.like){ const has=t.specials.indexOf(s)>=0; h+='<div class="sh-card"><div class="sh-n">'+(has?('🌿 '+s):'❔ ???')+'</div><button class="btn" '+(has?'':'disabled')+' onclick="tvFeed(\''+f.id+'\',\''+s+'\')">招待</button></div>'; } h+='</div><p style="text-align:center;margin-top:6px"><button class="btn" onclick="closeModal()">让它再等等</button></p>'; return h; }
+function tvFriendModal(f,t){ const fr=t.friends.find(function(x){return x.id===f.id;}); const fc=fr?fr.count:0; const emo=f.e; let h='<p style="text-align:center;font-size:40px">'+emo+'</p><p style="text-align:center"><b>'+f.n+'</b>'+(fc?'（第 '+(fc+1)+' 次来访）':'（第一次来访）')+'</p><p style="text-align:center;color:#48614a">'+f.t+'</p><p style="text-align:center;font-size:12px;color:#48614a">喂它喜欢的特产可回礼 🍅</p><div class="sh-grid">'; for(const s of f.like){ const has=t.specials.indexOf(s)>=0; h+='<div class="sh-card"><div class="sh-n">'+(has?('🌿 '+s):'❔ ???')+'</div><button class="btn" '+(has?'':'disabled')+' onclick="tvFeed(\''+f.id+'\',\''+s+'\')">招待</button></div>'; } h+='</div><p style="text-align:center;margin-top:6px"><button class="btn" onclick="closeModal()">让它再等等</button> <button class="btn" onclick="tvTurnAway()">请回吧</button></p>'; return h; }
+function tvTurnAway(){ const t=tvFresh(); if(!t.pendingVisit){ closeModal(); return; } t.pendingVisit=null; if(!t.nextVisit||t.nextVisit<now())t.nextVisit=now()+rand(7,15)*60000; save(); tvUpdateDoor(); updateTravelIcon(); tvRenderScene(); closeModal(); toast('🚪 你客气地请访客回去了，它说改天再来。'); }
 /* 有人上门只在「门口」按钮亮起，不直接弹窗；点开门后才招待 */
 function tvFriendPop(){ const t=tvFresh(); if(t.pendingVisit)return; if(!t.nextVisit)t.nextVisit=now()+rand(3,8)*60000; if(now()<t.nextVisit)return; const f=TV_FRIENDS[Math.floor(Math.random()*TV_FRIENDS.length)]; t.pendingVisit=f.id; t.nextVisit=now()+rand(7,15)*60000; save(); }
 function tvDoorOpen(){ const t=tvFresh(); if(!t.pendingVisit){ toast('🚪 门口没有人，安静得很'); return; } const f=TV_FRIENDS.find(function(x){return x.id===t.pendingVisit;}); if(!f){ t.pendingVisit=null; save(); return; } openModal('👋 门口有人敲门', tvFriendModal(f,t)); }
