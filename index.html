@@ -4380,8 +4380,8 @@ function tvFresh(){
 }
 /* 护身符单件耐久：优先取该件的 du，旧数据缺省为满耐久 */
 function tvCharmDura(x){ return Math.max(0,(x&&x.du!=null)?(x.du|0):TV_ITEMS.charm.durab); }
-/* 仓库中多件护身符的耐久文本，如「3/3、2/3」 */
-function tvCharmDuraText(list){ const d=TV_ITEMS.charm.durab; if(!list||!list.length)return '—'; const a=list.slice(0,6).map(function(v){return v+'/'+d;}); if(list.length>6)a.push('…'); return a.join('、'); }
+/* 仓库中护身符的耐久文本：每趟只能带 1 个，实际只会用到最前面那件，故只显示第一件 */
+function tvCharmDuraText(list){ const d=TV_ITEMS.charm.durab; if(!list||!list.length)return '—'; return (list[0]|0)+'/'+d; }
 function tvTomato(d){ const t=tvFresh(); t.tomato=Math.max(0,(t.tomato||0)+d); const e=$('tvTomato'); if(e)e.textContent=t.tomato; save(); }
 function updateTravelIcon(){ const el=$('btnTravel'); if(!el)return; const ready=!!S.travel&&tvSlotReady(); const door=!!S.travel&&!!S.travel.pendingVisit; const on=dex2Unlocked(); const key=(on?1:0)+'|'+(ready?1:0)+'|'+(door?1:0); if(el._tvIcon===key)return; el._tvIcon=key; if(el.classList)el.classList.toggle('hasbadge',ready||door); el.innerHTML=(on?'<b>🧳</b><small>旅行</small>':'<b>❓</b><small>旅行</small>')+(door?'<span class="dock-badge">🚪</span>':(ready?'<span class="dock-badge">🎰</span>':'')); }
 function travelEntry(){ if(!dex2Unlocked()){ toast('🔒 第一图鉴集齐'+DEX1_MIN+'个月巴后可解锁旅行！'); return; } openTravel(); }
@@ -4687,7 +4687,7 @@ function tvBagHTML(){ const t=tvFresh(); const owned=tvOwnedFats(); const pick=t
   if(tp)h+='<div style="text-align:center;margin-bottom:4px"><span class="tv-traveler">'+fatSVG(tp)+'</span></div>';
   h+='<div style="text-align:center"><input id="tvMood" placeholder="出发留言…" style="padding:7px;border:1px solid #ccc;border-radius:8px;width:74%"></div><div style="text-align:center;margin-top:8px"><button class="btn cta" onclick="tvDepart()">✈️ 出发（需 1 个便当）</button></div>'; }
   return h; }
-function tvPack(k){ const t=tvFresh(); if(t.bag.length>=4){ toast('行囊已满（最多4件）'); return; } if(t.wh[k]<=0)return; const need=(k==='food1'||k==='food2'||k==='food3'); if(need && t.bag.some(function(x){return x.k==='food1'||x.k==='food2'||x.k==='food3';})){ toast('已装便当，最多带 1 份'); return; } t.wh[k]--; if(k==='charm'){ const du=(t.charmDuras&&t.charmDuras.length)?t.charmDuras.shift():TV_ITEMS.charm.durab; t.bag.push({k:k,du:du}); } else t.bag.push({k:k}); save(); tvBag(); }
+function tvPack(k){ const t=tvFresh(); if(t.bag.length>=4){ toast('行囊已满（最多4件）'); return; } if(t.wh[k]<=0)return; const need=(k==='food1'||k==='food2'||k==='food3'); if(need && t.bag.some(function(x){return x.k==='food1'||x.k==='food2'||x.k==='food3';})){ toast('已装便当，最多带 1 份'); return; } if(k==='charm' && t.bag.some(function(x){return x.k==='charm';})){ toast('已装护身符，最多带 1 个'); return; } t.wh[k]--; if(k==='charm'){ const du=(t.charmDuras&&t.charmDuras.length)?t.charmDuras.shift():TV_ITEMS.charm.durab; t.bag.push({k:k,du:du}); } else t.bag.push({k:k}); save(); tvBag(); }
 function tvUnpack(k){ const t=tvFresh(); const i=t.bag.findIndex(function(x){return x.k===k;}); if(i<0)return; const x=t.bag[i]; t.bag.splice(i,1); t.wh[k]=(t.wh[k]||0)+1; if(k==='charm') t.charmDuras.push(tvCharmDura(x)); save(); tvBag(); }
 
 function nextDexEventAt(){ return now()+rand(20,45)*60000; } // 下次天降事件：20~45 分钟后随机出现
