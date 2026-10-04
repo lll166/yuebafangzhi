@@ -228,6 +228,11 @@
   .btab{flex:1;padding:7px 0;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.6);color:var(--dim);font-weight:800;font-size:12px;cursor:pointer;}
   .btab.on{background:var(--purple2);color:#fff;border-color:var(--purple2);}
   .btab.lock{opacity:.55;cursor:not-allowed;}
+  .rg-head{display:flex;align-items:center;gap:6px;padding:9px 12px;margin:6px 0;border-radius:12px;font-weight:800;font-size:13px;color:#4a3d26;cursor:pointer;background:var(--eb,#f1ede2);border:1px solid rgba(0,0,0,.06);transition:transform .12s;}
+  .rg-head:active{transform:scale(.985);}
+  .rg-head.open{box-shadow:inset 0 0 0 2px var(--ec,#c9b98f);}
+  .rg-arrow{width:14px;display:inline-block;color:#8a7a5c;font-size:12px;}
+  .rg-sub{margin-left:auto;font-weight:600;font-size:12px;color:#8a7a5c;}
   .pip-pause *{animation-play-state:paused!important;}
   /* 置顶小窗期间只暂停循环动画以节约资源；弹窗/反馈等一次性入场动画需保持运行，否则弹窗停在 opacity:0 无法打开 */
   .pip-pause #modal,.pip-pause .fd-card,.pip-pause .cf-item,.pip-pause #weatherHold,.pip-pause #banner.show,
@@ -2355,6 +2360,8 @@ let _lastModalTitle='';
 function closeModal(){ $('overlay').classList.remove('show'); closeFatDetail(); pomoModalOpen=false; if(_afterClose){ const f=_afterClose; _afterClose=null; f(); } }
 let _afterClose=null;
 let dexPage=1; // 图鉴页码：1=第一图鉴 2=第二图鉴
+let tvBookPage='letter'; // 旅行图鉴页：letter=信件页 special=特产页
+let tvBookRegion=null; // 旅行图鉴-信件页当前展开的区域（null=未展开）
 /* 第一图鉴随机「事件」：随机月巴与番茄的互动文案（含 {name} 占位月巴名） */
 const DEX_EVENTS=[
   '🍅 {name}把番茄举过头顶，转了个圈又放回掌心：「喏，这是属于我的番茄。」',
@@ -4719,7 +4726,56 @@ function tvLetterEnv(c){ const L=TV_LETTERS[c]; if(!L)return ''; const t=tvFresh
 function tvWhoRow(c,right){ const t=tvFresh(); const who=(t.cardWho&&t.cardWho[c])||[]; if(!who.length)return ''; let h='<div class="ltr-who'+(right?' right':'')+'">'; for(const id of who){ const tp=typeById(id); if(!tp)continue; h+='<span class="ltr-who-sq" style="background:'+tp.color+'" title="'+tp.name+'" onclick="tvShowWho(\''+id+'\')">'+tp.name.charAt(0)+'</span>'; } return h+'</div>'; }
 function tvShowWho(id){ const tp=typeById(id); if(!tp)return; openModal('🐤 收到此信的月巴','<div style="text-align:center"><div style="font-size:60px;line-height:1.1;margin:6px 0">'+fatSVG(tp)+'</div><div style="font-weight:800;font-size:16px;color:var(--text)">'+tp.name+'</div><div class="rar-tag rr'+(tp.r||1)+'" style="display:inline-block;margin-top:6px">'+RAR_NAME[tp.r]+'</div></div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'); }
 function tvOpenNoteHTML(c){ const moods=tvMoodList(c); if(!moods.length)return ''; let h=''; moods.forEach(function(it){ const to=tvMoodTo(it); h+='<div class="ltr-opennote">'+(to?('to：<b>'+escHTML(to)+'</b> · '):'')+'💬 '+escHTML(it.m||'（无留言）')+'<span class="ltr-opentime">· 出发 '+fmtDT(it.t)+'</span></div>'; }); return h; }
-function tvBookHTML(){ const t=tvFresh(); const total=TV_DESTS.reduce(function(n,d){return n+d.cards.length;},0); let h='<p style="color:#48614a;font-size:13px;margin:2px 0">来信 '+t.cards.length+'/'+total+' · 特产 '+t.specials.length+' 种</p><div class="sh-grid">'; for(const d of TV_DESTS){ h+='<div style="grid-column:1/-1;color:#6b5b3e;font-size:13px;margin-top:6px;font-weight:700">🗺 '+d.n+'系列</div>'; for(const c of d.cards){ h+=(t.cards.indexOf(c)>=0)?('<div class="ltr-cell">'+tvLetterEnv(c)+'</div>'):'<div class="pc off" style="display:flex;align-items:center;justify-content:center">❔ ???</div>'; } } h+='</div><p style="color:#48614a;font-size:13px;margin:8px 0 2px">🍎 已收获特产（按产地）</p>'; for(const d of TV_DESTS){ h+='<div class="sh-grid" style="margin-bottom:8px"><div style="grid-column:1/-1;color:#6b5b3e;font-size:13px;margin-top:4px;font-weight:700">🗺 '+d.n+'产地 · '+d.specials.length+' 种</div>'; for(const s of d.specials){ const got=t.specials.indexOf(s)>=0; h+='<div class="sh-card '+(got?'rose':'')+'"><div style="font-size:26px">'+(got?'🌿':'❔')+'</div><div class="sh-n">'+(got?s:'???')+'</div></div>'; } h+='</div>'; } h+='<p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'; return h; }
+/* 旅行图鉴分区：把地图按区域归类（森林+世外桃源 / 雪地四图等） */
+const TV_REGIONS=[
+ {id:'forest', n:'森林',        d:'deco-forest', dests:['forest','fairy']},
+ {id:'town',   n:'小镇',        d:'deco-town',   dests:['town']},
+ {id:'sea',    n:'大海',        d:'deco-sea',    dests:['sea']},
+ {id:'snow',   n:'雪地',        d:'deco-snow',   dests:['snow','ruins','ice','empire']}
+];
+function tvDestById(id){ return TV_DESTS.find(function(x){return x.id===id;}); }
+function tvSwitchBookPage(p){ tvBookPage=p; openModal('🏷 旅行图鉴', tvBookHTML()); }
+function tvToggleRegion(id){ tvBookRegion=(tvBookRegion===id)?null:id; openModal('🏷 旅行图鉴', tvBookHTML()); }
+function tvBookHTML(){
+  const t=tvFresh();
+  const total=TV_DESTS.reduce(function(n,d){return n+d.cards.length;},0);
+  const tab='<div class="booktabs">'+
+    '<button class="btab '+(tvBookPage==='letter'?'on':'')+'" onclick="tvSwitchBookPage(\'letter\')">✉️ 信件</button>'+
+    '<button class="btab '+(tvBookPage==='special'?'on':'')+'" onclick="tvSwitchBookPage(\'special\')">🌿 特产</button>'+
+  '</div>';
+  let h=tab;
+  if(tvBookPage==='letter'){
+    h+='<p style="color:#48614a;font-size:13px;margin:2px 0 8px">来信 '+t.cards.length+'/'+total+' · 点开区域查看该地区各图的信件</p>';
+    for(const rg of TV_REGIONS){
+      const up=(tvBookRegion===rg.id); const dc=rg.dests.length;
+      let got=0,all=0; for(const id of rg.dests){ const d=tvDestById(id); if(!d)continue; all+=d.cards.length; for(const c of d.cards) if(t.cards.indexOf(c)>=0)got++; }
+      h+='<div class="rg-head '+(up?'open':'')+' '+rg.d+'" onclick="tvToggleRegion(\''+rg.id+'\')"><span class="rg-arrow">'+(up?'▾':'▸')+'</span>🗺 '+rg.n+' <span class="rg-sub">'+dc+' 张图 · 来信 '+got+'/'+all+'</span></div>';
+      if(!up)continue;
+      h+='<div class="sh-grid" style="margin:2px 0 10px">';
+      for(const id of rg.dests){ const d=tvDestById(id); if(!d)continue;
+        h+='<div style="grid-column:1/-1;color:#6b5b3e;font-size:13px;margin-top:6px;font-weight:700">'+d.n+' · '+d.cards.length+' 封</div>';
+        for(const c of d.cards){ h+=(t.cards.indexOf(c)>=0)?('<div class="ltr-cell">'+tvLetterEnv(c)+'</div>'):'<div class="pc off" style="display:flex;align-items:center;justify-content:center">❔ ???</div>'; }
+      }
+      h+='</div>';
+    }
+  } else {
+    let gotTot=0,allTot=0; for(const d of TV_DESTS){ for(const s of d.specials){ allTot++; if(t.specials.indexOf(s)>=0)gotTot++; } }
+    h+='<p style="color:#48614a;font-size:13px;margin:2px 0 8px">🍎 已收获特产 '+gotTot+'/'+allTot+' 种（按产地）</p>';
+    for(const rg of TV_REGIONS){
+      const up=(tvBookRegion===rg.id);
+      let got=0,all=0; for(const id of rg.dests){ const d=tvDestById(id); if(!d)continue; all+=d.specials.length; for(const s of d.specials) if(t.specials.indexOf(s)>=0)got++; }
+      h+='<div class="rg-head '+(up?'open':'')+' '+rg.d+'" onclick="tvToggleRegion(\''+rg.id+'\')"><span class="rg-arrow">'+(up?'▾':'▸')+'</span>🗺 '+rg.n+' <span class="rg-sub">'+rg.dests.length+' 张图 · 特产 '+got+'/'+all+'</span></div>';
+      if(!up)continue;
+      for(const id of rg.dests){ const d=tvDestById(id); if(!d)continue;
+        h+='<div class="sh-grid" style="margin:2px 0 8px"><div style="grid-column:1/-1;color:#6b5b3e;font-size:13px;margin-top:4px;font-weight:700">🗺 '+d.n+'产地 · '+d.specials.length+' 种</div>';
+        for(const s of d.specials){ const got2=t.specials.indexOf(s)>=0; h+='<div class="sh-card '+(got2?'rose':'')+'"><div style="font-size:26px">'+(got2?'🌿':'❔')+'</div><div class="sh-n">'+(got2?s:'???')+'</div></div>'; }
+        h+='</div>';
+      }
+    }
+  }
+  h+='<p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>';
+  return h;
+}
 function tvOpenLetter(c){
   const L=TV_LETTERS[c]; if(!L)return;
   const t=tvFresh(); const i=t.inbox.indexOf(c); if(i>=0)t.inbox.splice(i,1); save(); tvUpdateBar();
