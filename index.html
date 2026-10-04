@@ -4245,7 +4245,7 @@ function pomoReportCheck(){
 let lastReadySfx=0, lastRevealSfx=0;
 /* ================= 旅行月巴（小游戏） ================= */
 const TV_FOODS={food1:{n:'饭团便当',p:50,dur:20*60000,rn:.4,e:'🍙'},food2:{n:'时蔬便当',p:150,dur:32*60000,rn:.6,e:'🍱'},food3:{n:'豪华便当',p:400,dur:46*60000,rn:.85,e:'🥡'}};
-const TV_ITEMS={lamp:{n:'油灯',p:300,e:'🏮'},charm:{n:'幸运护身符',p:500,durab:3,e:'🍀'},bell:{n:'铃铛',p:200,e:'🔔'},compass:{n:'指南针',p:200,e:'🧭'}};
+const TV_ITEMS={lamp:{n:'油灯',p:300,e:'🏮'},charm:{n:'幸运护身符',p:500,durab:3,e:'🍀'},bell:{n:'铃铛',p:200,e:'🔔'},compass:{n:'指南针',p:200,e:'🧭'},pass:{n:'小号护身符',p:200,perm:true,e:'🎫'}};
 const TV_DESTS=[
  {id:'forest',n:'森林',need:'',specials:['野果','松果','蘑菇','露珠','蜂蜜','树莓','青苔团','橡子'],cards:['A1','A2','A3','A4','A5','A6','A7','A8','A9','A10','A11','A12','A13','A14','A15']},
  {id:'sea',n:'大海',need:'lamp',specials:['海贝','海盐','珊瑚枝','珍珠','海藻','浪花糖','蟹壳扣','漂流木'],cards:['B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','B12','B13','B14','B15']},
@@ -4400,6 +4400,9 @@ function tvFresh(){
   const t=S.travel;
   t.wh=t.wh||{food1:0,food2:0,food3:0,lamp:0,charm:0,bell:0,compass:0};
   if(t.wh.compass==null)t.wh.compass=0;  // 老存档补齐指南针字段
+  if(t.permPass==null)t.permPass=false;  // 小号护身符：一次性买断、永久有效
+  if(t.permPick==null)t.permPick=null;   // 小号护身符本周期（自然周）指定前往的地图 id
+  if(t.permWeek==null)t.permWeek='';     // 上次使用小号护身符所在的自然周（周一0点为一周起点）
   t.bag=t.bag||[];
   /* 护身符耐久改为「逐件」记录：charmDuras 存仓库中每件护身符的剩余耐久（队首＝下次使用） */
   if(!t.charmDuras){
@@ -4707,6 +4710,39 @@ function tvUpdateDoor(){ const b=$('tvDoorBtn'); if(b)b.style.display=tvFresh().
 function tvFeed(fid,s){ const t=tvFresh(); const f=TV_FRIENDS.find(function(x){return x.id===fid;}); if(!f||t.specials.indexOf(s)<0)return; t.pendingVisit=null; tvUpdateDoor(); let fr=t.friends.find(function(x){return x.id===fid;}); if(!fr){ fr={id:fid,count:0}; t.friends.push(fr); } fr.count++; const gain=15+Math.floor(Math.random()*20); let h='<p style="text-align:center;color:#3e5c3f">'+f.n+' 很开心，回礼 🍅 +'+gain+'</p>'; if(Math.random()<0.35&&f.rare&&t.cards.indexOf(f.rare)<0){ t.cards.push(f.rare); t.inbox.push(f.rare); tvNoteCard(f.rare,t.frog.fatId); const tm=t.frog&&t.frog.fatId&&typeById(t.frog.fatId)?typeById(t.frog.fatId).name:'月巴'; h+='<p style="text-align:center">💌 邻居 '+f.e+' '+f.n+' 在外路过时遇到了 <b>'+tm+'</b>，'+tm+' 托它转交一封来自「'+tvDestOfCard(f.rare)+'」的信！</p>'; } h+='<p style="text-align:center"><button class="btn" onclick="closeModal()">收下</button></p>'; openModal('🎁 回礼', h); tvTomato(gain); save(); }
 function tvLabel(f){ return f?f.e||'🐤':'🐤'; }
 function tvCharmDest(){ const ds=TV_DESTS.filter(function(x){return x.need==='charm'&&!x.hidden;}); return ds[(Math.random()*ds.length)|0]||ds[ds.length-1]||TV_DESTS[TV_DESTS.length-1]; }
+/* —— 小号护身符（永久道具） —— */
+/* 返回当前自然周标识：以周一 00:00 为一周起点 */
+function tvWeekKey(){
+  const d=new Date(); const day=(d.getDay()+6)%7; // 周一=0
+  const mon=new Date(d.getFullYear(),d.getMonth(),d.getDate()-day); // 本周周一 0 点
+  return mon.getFullYear()+'-'+pad(mon.getMonth()+1)+'-'+pad(mon.getDate());
+}
+/* 本周小号护身符是否还能「指定目的地」：每周一次，用后本周剩余时间转为随机（概率加成仍生效） */
+function tvPermWeekUsed(){ const t=tvFresh(); return t.permWeek===tvWeekKey()&&!!t.permPick; }
+/* 小号护身符目的地：本周若已指定，则必定前往该图（仍需行囊满足该图所需的道具）；否则返回 null 交给随机 */
+function tvPermDest(){
+  const t=tvFresh(); if(!t.permPass)return null; if(t.permWeek!==tvWeekKey())return null;
+  if(!t.permPick)return null;
+  const d=TV_DESTS.find(function(x){return x.id===t.permPick;}); if(!d)return null;
+  if(d.hidden&&!tvEmpireUnlocked())return null;
+  const ks=t.bag.map(function(x){return x&&x.k||x;}); const has=function(k){return ks.indexOf(k)>=0;};
+  if(d.need&&!has(d.need))return null;
+  return d;
+}
+/* 小号护身符的随机加成：带在身上（仍在行囊/已用指定）时，所有目的地抽取都对「需道具的昂贵地图」加权 */
+function tvPermBoost(){
+  const t=tvFresh(); if(!t.permPass)return false;
+  return tvWeekKey()===t.permWeek||t.bag.some(function(x){return x&&x.k==='pass';});
+}
+/* 加权抽取护身符路线目的地：小号护身符生效时，给更昂贵的地图更高权重 */
+function tvCharmWeighted(){
+  const ds=TV_DESTS.filter(function(x){return x.need==='charm'&&!x.hidden;}); if(!ds.length)return TV_DESTS[TV_DESTS.length-1];
+  if(!tvPermBoost())return ds[(Math.random()*ds.length)|0];
+  const w=ds.map(function(d){ return (d.id==='ice'||d.id==='empire')?3:1; }); // 冰湖/王庭权重更高
+  let tot=0; w.forEach(function(x){tot+=x;}); let r=Math.random()*tot;
+  for(let i=0;i<ds.length;i++){ r-=w[i]; if(r<0)return ds[i]; }
+  return ds[ds.length-1];
+}
 /* 王庭解锁条件：雪地前三图（雪山/遗迹/冰湖）每张都要集齐至少 3/4 的信件 */
 function tvPrereqDest(){ return TV_DESTS.find(function(x){return x.id==='ice';}); }
 function tvPrereqLetters(){ const d=tvPrereqDest(); return d?d.cards.slice():[]; }
@@ -4732,16 +4768,26 @@ function tvChooseDest(id){
   t.pickDest=id; save(); tvBag();
 }
 function tvClearDest(){ const t=tvFresh(); if(t.pickDest){ t.pickDest=null; save(); } tvBag(); }
+/* 小号护身符：本周指定目的地（任意一张地图一次，需行囊备好该图所需道具） */
+function tvChoosePermDest(id){
+  const t=tvFresh(); const d=TV_DESTS.find(function(x){return x.id===id;}); if(!d)return;
+  if(!t.permPass){ toast('🎫 先购买小号护身符'); return; }
+  if(tvPermWeekUsed()){ toast('🎫 小号护身符本周已指定过目的地'); return; }
+  if(d.hidden&&!tvEmpireUnlocked()){ toast('🔒 失落王庭尚未解锁'); return; }
+  if(d.need&&!t.bag.some(function(x){return x.k===d.need;})){ const m={charm:'幸运护身符',lamp:'油灯',bell:'铃铛'}; toast('🎫 去「'+d.n+'」要先在行囊里备好 '+m[d.need]); return; }
+  t.permPick=id; t.permWeek=tvWeekKey(); save(); tvBag();
+}
+function tvClearPermDest(){ const t=tvFresh(); if(t.permWeek===tvWeekKey()&&t.permPick){ t.permPick=null; t.permWeek=''; save(); } tvBag(); }
 function tvLockedTip(){ const un=tvUnlockProgress(); toast('🔒 失落王庭尚未解锁：雪山/遗迹/冰湖 需各集齐 '+un.need+' 封信件'); }
-function tvDestOf(bag){ const t=tvFresh(); if(t.frog&&t.frog.status==='away'&&t.frog.dest){ const fd=TV_DESTS.find(function(x){return x.id===t.frog.dest;}); if(fd)return fd; } bag=bag||t.bag; const ks=bag.map(function(x){return x&&x.k||x;}); const has=function(k){return ks.indexOf(k)>=0;}; const pd=t.pickDest?TV_DESTS.find(function(x){return x.id===t.pickDest;}):null; if(pd&&((pd.need&&has(pd.need))||(!pd.need&&has('food1')||has('food2')||has('food3')))){ if(!pd.hidden||tvEmpireUnlocked())return pd; } if(has('charm')&&has('food3'))return tvCharmDest(); if(has('lamp'))return TV_DESTS[1]; if(has('bell'))return TV_DESTS[2]; const foodK=ks.find(function(k){return k==='food1'||k==='food2'||k==='food3';}); if(foodK){ if(foodK==='food3'){ const r3=Math.random(); if(r3<0.08)return tvCharmDest(); if(r3<0.30)return TV_DESTS[2]; if(r3<0.60)return TV_DESTS[1]; } if(foodK==='food2'){ const r2=Math.random(); if(r2<0.30)return TV_DESTS[1]; if(r2<0.33)return TV_DESTS[2]; if(r2<0.36)return tvCharmDest(); } if(foodK==='food1'&&Math.random()<0.06)return Math.random()<0.5?TV_DESTS[1]:TV_DESTS[2]; } return TV_DESTS[0]; }
-function tvGo(mood){ const t=tvFresh(); const up=(mood||'').trim().toUpperCase(); const m=up.match(/^TOMATO(\d{1,7})$/); if(m){ const amt=Math.min(parseInt(m[1],10),9999999); tvTomato(amt); toast('✨ 收到 '+((''+amt).replace(/\B(?=(\d{3})+(?!\d))/g,','))+' 🍅！'); mood=''; } else if(up==='YUEFEI500'){ if(!t.codeUsed){ t.codeUsed=true; tvTomato(500); toast('✨ 口令生效，获得 500 🍅！'); } else { toast('此口令已使用过啦'); } mood=''; } if(t.frog.status==='away'){ toast('✈️ 已有月巴在旅行中，等它回来再出发吧'); return; } if(!t.frog.fatId){ toast('🐤 先在图鉴里选择一位月巴出发'); return; } const kinds=tvDestKinds(t.bag); const food=t.bag.find(function(x){return x.k==='food1'||x.k==='food2'||x.k==='food3';}); if(!food){ toast('🍙 至少带上 1 个便当才能出发！'); return; } t.frog.status='away'; t.frog.depart=now(); const base=TV_FOODS[food.k].dur; t.frog.dest=tvDestOf(t.bag).id; t.frog.mood=mood||'我想去看看'; t.frog.ret=now()+(DR_DEBUG?2*60*1000:Math.round(base*(0.75+Math.random()*0.7))); t.bag=t.bag.filter(function(x){return !(x.k==='food1'||x.k==='food2'||x.k==='food3'||x.k==='lamp'||x.k==='bell'||x.k==='compass');}); t.pickDest=null; t.cardT=Math.max(now()+60000,Math.min(now()+rand(8,14)*60000,t.frog.ret-60000)); t.frog.cardsSent=0; t.frog.cardQuota=1; t.eventT=0; save(); closeModal(); toast('✈️ 出发去旅行啦！'); tvRenderScene(); tvUpdateBar(); }
+function tvDestOf(bag){ const t=tvFresh(); if(t.frog&&t.frog.status==='away'&&t.frog.dest){ const fd=TV_DESTS.find(function(x){return x.id===t.frog.dest;}); if(fd)return fd; } bag=bag||t.bag; const ks=bag.map(function(x){return x&&x.k||x;}); const has=function(k){return ks.indexOf(k)>=0;}; const pd=t.pickDest?TV_DESTS.find(function(x){return x.id===t.pickDest;}):null; if(pd&&((pd.need&&has(pd.need))||(!pd.need&&has('food1')||has('food2')||has('food3')))){ if(!pd.hidden||tvEmpireUnlocked())return pd; } const perm=tvPermDest(); if(perm)return perm; if(has('charm')&&has('food3'))return tvCharmWeighted(); if(has('lamp'))return TV_DESTS[1]; if(has('bell'))return TV_DESTS[2]; const foodK=ks.find(function(k){return k==='food1'||k==='food2'||k==='food3';}); if(foodK){ const pb=tvPermBoost(); const boost=pb?2.5:1; if(foodK==='food3'){ const r3=Math.random(); if(r3<0.08*boost)return tvCharmWeighted(); if(r3<0.30)return TV_DESTS[2]; if(r3<0.60)return TV_DESTS[1]; } if(foodK==='food2'){ const r2=Math.random(); if(r2<0.30)return TV_DESTS[1]; if(r2<0.30+0.03*boost)return TV_DESTS[2]; if(r2<0.30+0.06*boost)return (pb?tvCharmWeighted():TV_DESTS[4]); } if(foodK==='food1'&&Math.random()<0.06*boost)return Math.random()<0.5?TV_DESTS[1]:TV_DESTS[2]; } return TV_DESTS[0]; }
+function tvGo(mood){ const t=tvFresh(); const up=(mood||'').trim().toUpperCase(); const m=up.match(/^TOMATO(\d{1,7})$/); if(m){ const amt=Math.min(parseInt(m[1],10),9999999); tvTomato(amt); toast('✨ 收到 '+((''+amt).replace(/\B(?=(\d{3})+(?!\d))/g,','))+' 🍅！'); mood=''; } else if(up==='YUEFEI500'){ if(!t.codeUsed){ t.codeUsed=true; tvTomato(500); toast('✨ 口令生效，获得 500 🍅！'); } else { toast('此口令已使用过啦'); } mood=''; } if(t.frog.status==='away'){ toast('✈️ 已有月巴在旅行中，等它回来再出发吧'); return; } if(!t.frog.fatId){ toast('🐤 先在图鉴里选择一位月巴出发'); return; } const kinds=tvDestKinds(t.bag); const food=t.bag.find(function(x){return x.k==='food1'||x.k==='food2'||x.k==='food3';}); if(!food){ toast('🍙 至少带上 1 个便当才能出发！'); return; } t.frog.status='away'; t.frog.depart=now(); const base=TV_FOODS[food.k].dur; t.frog.dest=tvDestOf(t.bag).id; if(t.permPass&&t.permWeek===tvWeekKey()&&t.permPick&&t.frog.dest===t.permPick)t.permUsedWeek=tvWeekKey(); t.frog.mood=mood||'我想去看看'; t.frog.ret=now()+(DR_DEBUG?2*60*1000:Math.round(base*(0.75+Math.random()*0.7))); t.bag=t.bag.filter(function(x){return !(x.k==='food1'||x.k==='food2'||x.k==='food3'||x.k==='lamp'||x.k==='bell'||x.k==='compass');}); t.pickDest=null; t.cardT=Math.max(now()+60000,Math.min(now()+rand(8,14)*60000,t.frog.ret-60000)); t.frog.cardsSent=0; t.frog.cardQuota=1; t.eventT=0; save(); closeModal(); toast('✈️ 出发去旅行啦！'); tvRenderScene(); tvUpdateBar(); }
 function tvDepart(){ const e=$('tvMood'); tvGo(e?e.value.trim():''); }
 function tvDestKinds(bag){ return bag.map(function(x){return x.k;}); }
-function tvSettle(){ const t=tvFresh(); const kinds=tvDestKinds(t.bag); const d=tvDestOf(t.bag); const cc=t.bag.filter(function(x){return x&&x.k==='charm';}).length; let gain=1+cc; const got=[],dups=[]; const spool=d.specials.slice(); /* 从池中抽走已选中的，保证同一趟带回的特产两两不重复（与已拥有的重复仍照常兑换番茄） */ for(let i=0;i<gain&&spool.length;i++){ const s=spool.splice((Math.random()*spool.length)|0,1)[0]; if(t.specials.indexOf(s)<0){ t.specials.push(s); got.push(s); } else { dups.push(s); } } t.destCount[d.id]=(t.destCount[d.id]||0)+1; if(cc>0){ t.bag.forEach(function(x){ if(x&&x.k==='charm'){ const cur=Math.max(0,tvCharmDura(x)-1); if(cur>0){ t.wh.charm=(t.wh.charm||0)+1; t.charmDuras.push(cur); } } }); } t.frog={status:'home',depart:null,ret:null,mood:t.frog.mood||'',fatId:t.frog.fatId||null}; if(t.frog.fatId){ t.lastHomeFatId=t.frog.fatId; t.homeId=t.frog.fatId; t.homeTxt=tvHomeDescs(t.frog.fatId)[(Math.random()*3)|0]; t.homeReward={n:5+(Math.random()*16|0)}; t.homeRewardReady=true; } t.bag=[]; t.eventT=0; save(); if(dups.length)tvTomato(10*dups.length); let toastMsg=''; if(got.length)toastMsg+='🌿 从「'+d.n+'」带回新特产：'+got.join('、')+'！'; if(dups.length)toastMsg+=' ♻️ 重复 '+dups.join('、')+' 兑换 '+10*dups.length+' 🍅！'; if(toastMsg)toast(toastMsg); let h='<p style="text-align:center;color:#48614a">月巴从<b>「'+d.n+'」</b>回来了！（第 '+t.destCount[d.id]+' 次旅行）</p>'; const all=got.concat(dups); h+='<p style="text-align:center;font-weight:800;color:#e08a3c">🎁 带回特产：'+(all.length?('从「'+d.n+'」带回 '+all.join('、')+(dups.length?(' · 已兑换 '+10*dups.length+' 🍅'):'')):'这次带回了温暖的问候')+'</p>'; h+='<p style="text-align:center"><button class="btn cta" onclick="closeModal()">收下</button></p>'; openModal('🎉 旅行归来',h); tvRenderScene(); tvUpdateBar(); }
+function tvSettle(){ const t=tvFresh(); const kinds=tvDestKinds(t.bag); const d=tvDestOf(t.bag); const cc=t.bag.filter(function(x){return x&&x.k==='charm';}).length; let gain=1+cc; const got=[],dups=[]; const spool=d.specials.slice(); /* 从池中抽走已选中的，保证同一趟带回的特产两两不重复（与已拥有的重复仍照常兑换番茄） */ for(let i=0;i<gain&&spool.length;i++){ const s=spool.splice((Math.random()*spool.length)|0,1)[0]; if(t.specials.indexOf(s)<0){ t.specials.push(s); got.push(s); } else { dups.push(s); } } t.destCount[d.id]=(t.destCount[d.id]||0)+1; if(t.permUsedWeek===tvWeekKey()){ t.permPick=null; t.permUsedWeek=null; } /* 小号护身符本周的指定已兑现，转为随机 */ if(cc>0){ t.bag.forEach(function(x){ if(x&&x.k==='charm'){ const cur=Math.max(0,tvCharmDura(x)-1); if(cur>0){ t.wh.charm=(t.wh.charm||0)+1; t.charmDuras.push(cur); } } }); } t.frog={status:'home',depart:null,ret:null,mood:t.frog.mood||'',fatId:t.frog.fatId||null}; if(t.frog.fatId){ t.lastHomeFatId=t.frog.fatId; t.homeId=t.frog.fatId; t.homeTxt=tvHomeDescs(t.frog.fatId)[(Math.random()*3)|0]; t.homeReward={n:5+(Math.random()*16|0)}; t.homeRewardReady=true; } t.bag=[]; t.eventT=0; save(); if(dups.length)tvTomato(10*dups.length); let toastMsg=''; if(got.length)toastMsg+='🌿 从「'+d.n+'」带回新特产：'+got.join('、')+'！'; if(dups.length)toastMsg+=' ♻️ 重复 '+dups.join('、')+' 兑换 '+10*dups.length+' 🍅！'; if(toastMsg)toast(toastMsg); let h='<p style="text-align:center;color:#48614a">月巴从<b>「'+d.n+'」</b>回来了！（第 '+t.destCount[d.id]+' 次旅行）</p>'; const all=got.concat(dups); h+='<p style="text-align:center;font-weight:800;color:#e08a3c">🎁 带回特产：'+(all.length?('从「'+d.n+'」带回 '+all.join('、')+(dups.length?(' · 已兑换 '+10*dups.length+' 🍅'):'')):'这次带回了温暖的问候')+'</p>'; h+='<p style="text-align:center"><button class="btn cta" onclick="closeModal()">收下</button></p>'; openModal('🎉 旅行归来',h); tvRenderScene(); tvUpdateBar(); }
 function tvClaimHomeReward(){ const t=tvFresh(); if(!t.homeRewardReady||!(t.homeReward&&t.homeReward.n>0))return; const n=t.homeReward.n; const nm=t.homeId&&typeById(t.homeId)?typeById(t.homeId).name:'月巴'; t.homeRewardReady=false; t.homeReward=null; t.tomato=(t.tomato||0)+n; save(); tvUpdateBar(); updateTravelIcon(); openModal('🎉 旅行归来','<p style="text-align:center;font-size:40px">🐤</p><p style="text-align:center"><b>'+nm+'</b> 回家啦！它把旅途中攒下的 <b style="color:#e08a3c">'+n+'</b> 个 🍅 送给了你</p><p style="text-align:center"><button class="btn cta" onclick="closeModal()">收下</button></p>'); }
 function tvShop(){ openModal('🛍 商店 · 用 🍅 购买', tvShopHTML()); }
-function tvShopHTML(){ const t=tvFresh(); let h='<p style="color:#48614a;font-size:13px">🍅 番茄余额：<b class="tv-tom">'+t.tomato+'</b></p><div class="sh-grid">'; const list=[['food1','🍙','饭团便当',50,'基础旅行时长'],['food2','🍱','时蔬便当',150,'中等时长·小概率去大海/小镇'],['food3','🥡','豪华便当',400,'较长时长·小概率去雪山/遗迹/冰湖/大海/小镇'],['lamp','🏮','油灯',300,'一次性·需配便当，必定前往大海'],['charm','🍀','幸运护身符',500,'特产+1/件（耐久3）·配豪华便当去雪山/遗迹/冰湖/失落王庭'],['bell','🔔','铃铛',200,'一次性·需配便当，必定前往小镇'],['compass','🧭','指南针',200,'一次性·仅配豪华便当+护身符去雪地时可用，指定去雪山/遗迹/冰湖/失落王庭']]; const charmNote=TV_DESTS.filter(function(x){return x.need==='charm';}).map(function(x){return '<div class="sh-dest"><b>'+x.n+'</b>：'+(x.desc||'')+'</div>'; }).join(''); for(const r of list){ h+='<div class="sh-card"><div class="sh-ic">'+r[1]+'</div><div class="sh-n">'+r[2]+'</div><div class="sh-d">'+r[4]+'</div>'+(r[0]==='charm'?charmNote:'')+'<div class="sh-price">🍅 '+r[3]+'</div><button class="btn" onclick="tvBuy(\''+r[0]+'\')">购买</button></div>'; } h+='</div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'; return h; }
-function tvBuy(k){ const t=tvFresh(); const it=TV_FOODS[k]||TV_ITEMS[k]; if(!it)return; if(t.tomato<it.p){ toast('🍅 番茄不够'); return; } t.tomato-=it.p; t.wh[k]=(t.wh[k]||0)+1; if(k==='charm') t.charmDuras.push(TV_ITEMS.charm.durab); save(); tvTomato(0); openModal('🛍 商店 · 用 🍅 购买', tvShopHTML()); }
+function tvShopHTML(){ const t=tvFresh(); let h='<p style="color:#48614a;font-size:13px">🍅 番茄余额：<b class="tv-tom">'+t.tomato+'</b></p><div class="sh-grid">'; const list=[['food1','🍙','饭团便当',50,'基础旅行时长'],['food2','🍱','时蔬便当',150,'中等时长·小概率去大海/小镇'],['food3','🥡','豪华便当',400,'较长时长·小概率去雪山/遗迹/冰湖/大海/小镇'],['lamp','🏮','油灯',300,'一次性·需配便当，必定前往大海'],['bell','🔔','铃铛',200,'一次性·需配便当，必定前往小镇'],['charm','🍀','幸运护身符',500,'特产+1/件（耐久3）·配豪华便当去雪山/遗迹/冰湖/失落王庭'],['compass','🧭','指南针',200,'一次性·仅配豪华便当+护身符去雪地时可用，指定去雪山/遗迹/冰湖/失落王庭'],['pass','🎫','小号护身符',200,'永久只买一次·每周（周一0点刷新）可指定前往任意地图一次·平时随身带着可小概率提高前往昂贵地图的概率']]; const charmNote=TV_DESTS.filter(function(x){return x.need==='charm';}).map(function(x){return '<div class="sh-dest"><b>'+x.n+'</b>：'+(x.desc||'')+'</div>'; }).join(''); for(const r of list){ const isPass=(r[0]==='pass'); const owned=isPass&&t.permPass; h+='<div class="sh-card"><div class="sh-ic">'+r[1]+'</div><div class="sh-n">'+r[2]+'</div><div class="sh-d">'+r[4]+'</div>'+(r[0]==='charm'?charmNote:'')+(isPass&&owned?'<div class="sh-dest">✅ 已拥有（永久有效）</div>':'')+'<div class="sh-price">🍅 '+r[3]+'</div>'+(owned?'<button class="btn" disabled>已拥有</button>':'<button class="btn" onclick="tvBuy(\''+r[0]+'\')">购买</button>')+'</div>'; } h+='</div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'; return h; }
+function tvBuy(k){ const t=tvFresh(); const it=TV_FOODS[k]||TV_ITEMS[k]; if(!it)return; if(k==='pass'&&t.permPass){ toast('🎫 小号护身符只需购买一次'); return; } if(t.tomato<it.p){ toast('🍅 番茄不够'); return; } t.tomato-=it.p; if(k==='pass'){ t.permPass=true; t.permPick=null; t.permWeek=''; tvTomato(0); save(); openModal('🎫 小号护身符','<p style="text-align:center">已拥有 <b>小号护身符</b>，永久有效！</p><p style="text-align:center;font-size:12px;color:#7a6a4a">每周（周一 0 点刷新）可在行囊里指定前往任意一张地图一次；平时随身带着，也会小概率提高前往昂贵地图的概率。</p><p style="text-align:center"><button class="btn cta" onclick="tvShop()">继续购物</button></p>'); return; } t.wh[k]=(t.wh[k]||0)+1; if(k==='charm') t.charmDuras.push(TV_ITEMS.charm.durab); save(); tvTomato(0); openModal('🛍 商店 · 用 🍅 购买', tvShopHTML()); }
 function tvBag(){ openModal('💼 仓库与行囊', tvBagHTML()); }
 function tvBagHTML(){ const t=tvFresh(); const owned=tvOwnedFats(); const pick=t.frog.fatId||''; let h='<p style="color:#48614a;font-size:13px">🍅 番茄：<b class="tv-tom">'+t.tomato+'</b></p>';
   if(t.frog.status==='away'){
@@ -4753,7 +4799,7 @@ function tvBagHTML(){ const t=tvFresh(); const owned=tvOwnedFats(); const pick=t
   h+='</div>';
   }
   h+='<p style="color:#48614a;font-size:13px">🧰 仓库与行囊</p><div class="sh-grid">'; let any=false; for(const k in t.wh){ const c=t.wh[k]; if(c<=0)continue; any=true; const it=TV_FOODS[k]||TV_ITEMS[k]; const isF=!!TV_FOODS[k]; const du=(k==='charm'&&it.durab)?(' · 耐久 '+tvCharmDuraText(t.charmDuras)):''; h+='<div class="sh-card"><div class="sh-ic">'+(it.e||'🧰')+'</div><div class="sh-n">'+it.n+'</div><div class="sh-d">仓库 ×'+c+du+'</div><button class="btn" onclick="tvPack(\''+k+'\')">装进行囊</button></div>'; } if(!any)h+='<p style="color:#999;text-align:center;grid-column:1/-1">仓库空空的，去 🛍 商店买点物资吧</p>';
-  h+='</div><p style="color:#48614a;font-size:13px">🎒 行囊（'+t.bag.length+'/4）</p><div class="sh-grid">'; if(!t.bag.length)h+='<p style="color:#999;text-align:center;grid-column:1/-1">还没有带任何东西</p>'; t.bag.forEach(function(x){ const it=TV_FOODS[x.k]||TV_ITEMS[x.k]; const isF=!!TV_FOODS[x.k]; const du=(x.k==='charm'&&it.durab)?(' · 耐久 '+tvCharmDura(x)+'/'+it.durab):''; h+='<div class="sh-card"><div class="sh-ic">'+(it.e||'🧰')+'</div><div class="sh-n">'+it.n+'</div><div class="sh-d">'+du+'</div><button class="btn" onclick="tvUnpack(\''+x.k+'\')">取出</button></div>'; }); h+='</div>';
+  h+='</div><p style="color:#48614a;font-size:13px">🎒 行囊（'+t.bag.length+'/4）</p><div class="sh-grid">'; if(!t.bag.length)h+='<p style="color:#999;text-align:center;grid-column:1/-1">还没有带任何东西</p>'; t.bag.forEach(function(x){ const it=TV_FOODS[x.k]||TV_ITEMS[x.k]; const isF=!!TV_FOODS[x.k]; const du=(x.k==='charm'&&it.durab)?(' · 耐久 '+tvCharmDura(x)+'/'+it.durab):''; const lock=(x.k==='charm'&&t.frog.status==='away'); h+='<div class="sh-card"><div class="sh-ic">'+(it.e||'🧰')+'</div><div class="sh-n">'+it.n+'</div><div class="sh-d">'+du+(lock?'<br><span style="color:#c0392b">旅途中不可取出</span>':'')+'</div>'+(lock?'<button class="btn" disabled>取出</button>':'<button class="btn" onclick="tvUnpack(\''+x.k+'\')">取出</button>')+'</div>'; }); h+='</div>';
   const tp=typeById(pick);
   if(t.frog.status!=='away'){
   /* 🧭 指南针：仅当行囊里有指南针、且配置为「去雪地」（豪华便当+护身符）时，才可指定雪地目的地 */
@@ -4779,12 +4825,32 @@ function tvBagHTML(){ const t=tvFresh(); const owned=tvOwnedFats(); const pick=t
       h+='<p style="color:#7a6a4a;font-size:12px;margin-top:4px">🔓 解锁「失落王庭」：雪山/遗迹/冰湖 每图信件 ≥ '+un.need+' 封（3/4）<br>'+needrows+'</p>';
     }
   }
+  /* 🎫 小号护身符：永久道具，每周（周一0点）可指定前往任意一张地图一次 */
+  if(t.permPass){
+    const used=tvPermWeekUsed();
+    h+='<p style="color:#3e5c3f;font-size:13px;font-weight:700;margin:8px 0 2px">🎫 小号护身符（永久）</p>';
+    if(used){
+      h+='<p style="color:#7a6a4a;font-size:12px;margin:0 0 2px">本周已指定过目的地，下周（周一 0 点刷新）可再次指定。本周剩余时间它会帮你提高前往昂贵地图的概率。</p>';
+    }else{
+      const un2=tvUnlockProgress(); const cur2=t.permPick||'';
+      h+='<p style="color:#7a6a4a;font-size:12px;margin:0 0 2px">本周可指定前往任意一张地图一次<span style="color:#999">（需行囊中备好该图所需道具；未指定则随机）</span></p><div class="sh-grid">';
+      for(const d of TV_DESTS){
+        const locked=d.hidden&&!un2.ok;
+        const needIc=d.need?(d.need==='charm'?'🍀':(d.need==='lamp'?'🏮':'🔔')):'';
+        const selVal=(cur2===d.id)?' sel':'';
+        const dis=locked?(' disabled onclick="tvLockedTip()"'):(' onclick="tvChoosePermDest(\''+d.id+'\')"');
+        h+='<div class="tv-fatpick'+selVal+'" style="'+(locked?'opacity:.55;':'')+'"'+dis+'><div style="font-size:24px">'+(locked?'🔒':'🎫')+'</div><div class="nm">'+d.n+'</div><div style="font-size:11px;color:#999">'+(needIc||'自由')+'</div></div>';
+      }
+      h+='</div>';
+      if(cur2){ const cd=TV_DESTS.find(function(x){return x.id===cur2;})||{}; h+='<p style="color:#e08a3c;font-size:12px;text-align:center">已指定：'+(cd.n||'')+'</p><p style="text-align:center;margin:2px 0 0"><button class="btn" onclick="tvClearPermDest()">✖ 取消指定（改回随机）</button></p>'; }
+    }
+  }
   h+='<div style="text-align:center;margin:10px 0 2px;color:#3e5c3f;font-size:13px;font-weight:700">🚀 即将出发的月巴'+(tp?('：'+tp.name):'（未选择）')+'</div>';
   if(tp)h+='<div style="text-align:center;margin-bottom:4px"><span class="tv-traveler">'+fatSVG(tp)+'</span></div>';
   h+='<div style="text-align:center"><input id="tvMood" placeholder="出发留言…" style="padding:7px;border:1px solid #ccc;border-radius:8px;width:74%"></div><div style="text-align:center;margin-top:8px"><button class="btn cta" onclick="tvDepart()">✈️ 出发（需 1 个便当）</button></div>'; }
   return h; }
 function tvPack(k){ const t=tvFresh(); if(t.bag.length>=4){ toast('行囊已满（最多4件）'); return; } if(t.wh[k]<=0)return; const need=(k==='food1'||k==='food2'||k==='food3'); if(need && t.bag.some(function(x){return x.k==='food1'||x.k==='food2'||x.k==='food3';})){ toast('已装便当，最多带 1 份'); return; } if(k==='charm' && t.bag.some(function(x){return x.k==='charm';})){ toast('已装护身符，最多带 1 个'); return; } t.wh[k]--; if(k==='charm'){ const du=(t.charmDuras&&t.charmDuras.length)?t.charmDuras.shift():TV_ITEMS.charm.durab; t.bag.push({k:k,du:du}); } else t.bag.push({k:k}); save(); tvBag(); }
-function tvUnpack(k){ const t=tvFresh(); const i=t.bag.findIndex(function(x){return x.k===k;}); if(i<0)return; const x=t.bag[i]; t.bag.splice(i,1); t.wh[k]=(t.wh[k]||0)+1; if(k==='charm') t.charmDuras.push(tvCharmDura(x)); save(); tvBag(); }
+function tvUnpack(k){ const t=tvFresh(); if(k==='charm' && t.frog.status==='away'){ toast('旅途中的护身符不能取出'); return; } const i=t.bag.findIndex(function(x){return x.k===k;}); if(i<0)return; const x=t.bag[i]; t.bag.splice(i,1); t.wh[k]=(t.wh[k]||0)+1; if(k==='charm') t.charmDuras.push(tvCharmDura(x)); save(); tvBag(); }
 
 function nextDexEventAt(){ return now()+rand(20,45)*60000; } // 下次天降事件：20~45 分钟后随机出现
 let _dexEv=null; // 待领取的天降事件缓存：{t,line,reward}
