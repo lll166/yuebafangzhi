@@ -297,6 +297,7 @@
   .deco-ruins{--ec:#b08d57;--eb:#f5efe0;--fl:#dcc9a0;}
   .deco-ice{--ec:#4fb0c6;--eb:#e4f6fa;--fl:#9edce8;}
   .deco-empire{--ec:#9a7fb8;--eb:#f2eef7;--fl:#c8b4dd;}
+  .deco-fairy{--ec:#5cb98f;--eb:#e6f6ee;--fl:#a9e3c6;}
   .ltr-env{position:relative;width:82px;height:54px;margin:4px auto;cursor:pointer;transition:transform .15s;}
   .ltr-env:active{transform:scale(.95);}
   .ltr-env.big{width:190px;height:126px;margin:12px auto;cursor:default;}
@@ -1222,6 +1223,10 @@ const TYPES2=[
   {id:'m2_bingzang', name:'冰葬月巴',  r:4, v:80,  t:780,  cond:{t:'travel', s:'冰封玫瑰'}, color:'#a7d8e8', shape:'drop'},
   {id:'m2_yizhao',   name:'羊皮卷月巴',  r:5, v:200, t:1250, cond:{t:'travel', c:'G16'}, weight:0.01, color:'#e8dcb0', shape:'star'},
   {id:'m2_digong',   name:'地宫月巴',  r:4, v:90,  t:840,  cond:{t:'travel', c:'G12'}, color:'#5d5a6e', shape:'big'},
+  /* —— 世外桃源（森林尽头秘境）主题月巴 —— */
+  {id:'m2_taoyuan',  name:'桃源月巴',  r:4, v:70,  t:720,  cond:{t:'travel', d:'fairy', n:3}, color:'#8fd6b4', shape:'round'},
+  {id:'m2_jingling', name:'精灵月巴',  r:4, v:78,  t:760,  cond:{t:'travel', s:'精灵羽'}, color:'#bfe8d4', shape:'star'},
+  {id:'m2_linyao',   name:'林妖月巴',  r:5, v:240, t:1400, cond:{t:'travel', d:'fairy', n:5}, weight:0.01, color:'#7fc9a6', shape:'rainbow'},
 ];
 const RAR_NAME={1:'普通',2:'常见',3:'稀有',4:'史诗',5:'传说',6:'活动'};
 const R_H={1:[2,5],2:[4,8],3:[6,12],4:[10,20],5:[16,30],6:[22,40]};   // 身高 cm 范围
@@ -1385,6 +1390,9 @@ const FAT_INTRO={
   m2_bingzang:'雪原的老人们说，番茄陛下的葬处就在它脚下，可它从不肯让人挖开那层冰。',
   m2_yizhao:'捧着半卷没写完的诏书，末尾没有落款。',
   m2_digong:'常年住在地宫最深处，如果有人擅自闯入，就会遭到攻击。',
+  m2_taoyuan:'藤门后的守护者，只有心里干净的人才能看见它。它说它在等候一位即将到访的客人。',
+  m2_jingling:'精灵与月巴之间的信使，背上那对薄翅是它自己长出来的。它认得每一个来过桃源的人。',
+  m2_linyao:'桃源最深处的存在，传说它知道所有访客的过去和未来。',
 };
 
 /* ---------------- 界面皮肤（图鉴解锁） ---------------- */
@@ -4248,6 +4256,7 @@ const TV_FOODS={food1:{n:'饭团便当',p:50,dur:20*60000,rn:.4,e:'🍙'},food2:
 const TV_ITEMS={lamp:{n:'油灯',p:300,e:'🏮'},charm:{n:'幸运护身符',p:500,durab:3,e:'🍀'},bell:{n:'铃铛',p:200,e:'🔔'},compass:{n:'指南针',p:200,e:'🧭'},pass:{n:'小号护身符',p:200,perm:true,e:'🎫'}};
 const TV_DESTS=[
  {id:'forest',n:'森林',need:'',dupTomato:[5,8],specials:['野果','松果','蘑菇','露珠','蜂蜜','树莓','青苔团','橡子'],cards:['A1','A2','A3','A4','A5','A6','A7','A8','A9','A10','A11','A12','A13','A14','A15']},
+ {id:'fairy',n:'世外桃源',desc:'穿过森林尽头那道会呼吸的藤门，是一处似乎被时间遗忘的秘境——据说这里住着精灵。',need:'',dupTomato:[8,12],specials:['精灵羽','月光露','萤石','花信笺','藤编环','风铃草','星屑糖','独角兽毛'],cards:['H1','H2','H3','H4','H5','H6','H7','H8','H9','H10','H11','H12','H13']},
  {id:'sea',n:'大海',need:'lamp',dupTomato:[15,22],specials:['海贝','海盐','珊瑚枝','珍珠','海藻','浪花糖','蟹壳扣','漂流木'],cards:['B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','B12','B13','B14','B15']},
  {id:'town',n:'小镇',need:'bell',dupTomato:[12,18],specials:['果子面包','糖果','钟声曲','布丁','风筝','纽扣','明信片'],cards:['C1','C2','C3','C4','C5','C6','C7','C8','C9','C10','C11','C12','C13','C14']},
  {id:'snow',n:'雪山',desc:'终年积雪的高岭，能捡到雪绒花与极光尘。',need:'charm',needF:'food3',dupTomato:[40,60],specials:['雪绒花','冰晶','热可可','松枝','雪松果','极光尘','暖石'],cards:['D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13']},
@@ -4271,6 +4280,19 @@ const TV_LETTERS={
  A13:{d:'deco-forest',e:'💧',txt:'我教番茄用叶子接露水喝，它说这是它喝过最清甜的水。'},
  A14:{d:'deco-forest',e:'🦋',txt:'一只蝴蝶停在番茄头顶，我们大气都不敢出，它说这是它交到的第一个发夹朋友。'},
  A15:{d:'deco-forest',e:'🎋',txt:'要离开森林前，番茄说要把森林的味道存进心里，等回家细细讲给我听。'},
+ H1:{d:'deco-fairy',e:'🌸',txt:'藤门后是一整片会发光的桃花林，番茄拉着我的手说，我们是不是走进了谁做的梦里。'},
+ H2:{d:'deco-fairy',e:'🧚',txt:'我看见了精灵。它们好小好小，坐在蘑菇上晃着脚，却都歪着头看番茄，说从没见过这么大一颗番茄。'},
+ H3:{d:'deco-fairy',e:'🕯️',txt:'萤石灯一盏盏亮起来的时候，整片桃源都醒了。番茄说，这是它见过最好看的夜。'},
+ H4:{d:'deco-fairy',e:'🌿',txt:'精灵用藤蔓给我们编了两个戒指，一个戴在番茄头上，一个给我。番茄那么小，戴上像个小国王。'},
+ H5:{d:'deco-fairy',e:'🌙',txt:'这里的月亮比外面的大一圈，番茄说是不是因为它离我们更近。我把它举到面前说，是啊，现在你也变大了。'},
+ H6:{d:'deco-fairy',e:'🍅',txt:'精灵们围着番茄看了很久，然后认真地商量了半天，最后决定把番茄封为「会走路的花」。'},
+ H7:{d:'deco-fairy',e:'🦋',txt:'桃源的蝴蝶不怕人，一只落在了番茄头顶，和它说了很久的话。番茄回头说，它在夸月巴。'},
+ H8:{d:'deco-fairy',e:'🔮',txt:'精灵长老说，能走进这里的人，心里都存着一样干净的东西。我看着番茄，觉得它说的是番茄。'},
+ H9:{d:'deco-fairy',e:'🌊',txt:'桃源深处有一眼会唱歌的泉，番茄把耳朵贴上去听了半天，说它唱的是我们这一路的旅行，还说它的梦想是成为一名吟游诗人。'},
+ H10:{d:'deco-fairy',e:'🦄',txt:'我在林子里看见一头独角兽，它低头蹭了蹭番茄。我说是因为番茄很纯洁。番茄说，你们是不是把我当成笨蛋了。'},
+ H11:{d:'deco-fairy',e:'💫',txt:'精灵给了我们一小袋星屑糖，说吃了会做甜甜的梦。番茄没舍得吃，于是我把自己的塞到了它嘴里。'},
+ H12:{d:'deco-fairy',e:'🪶',txt:'离开前，精灵把一根精灵羽别在我们身上，祝我们一路平安。番茄说，那我们下次还来。'},
+ H13:{d:'deco-fairy',e:'🚪',txt:'藤门在身后轻轻合上了，回头再看，只剩一片普通的树林。番茄说，真像做了一场美梦。'},
  B1:{d:'deco-sea',e:'🌊',txt:'海浪好大好大，我和番茄的帽子都被吹走了，又顺着浪花漂了回来，真是奇遇。'},
  B2:{d:'deco-sea',e:'🐚',txt:'我和番茄捡到了漂亮的贝壳，番茄把耳朵贴上去，说里面装着大海在唱歌。'},
  B3:{d:'deco-sea',e:'🦀',txt:'番茄和寄居蟹赛跑输了，它气鼓鼓地不肯走，我哄了半天才好。'},
@@ -4393,7 +4415,13 @@ const TV_FRIENDS=[
  {id:'lynx',e:'🐆',n:'猞猁',like:['旧朝佩剑','鎏金烛台'],rare:'G8',t:'猞猁蹲在空殿的梁上说：它见过月巴对着空王座汇报政务，一句不落。'},
  {id:'husky',e:'🐕',n:'雪橇犬',like:['青铜号角','王冠碎片'],rare:'G11',t:'雪橇犬说：王庭那口钟它拖去修过三次，每次月巴都拦下来说别修，钟一响就真的像殿里没人了。'},
  {id:'mammoth',e:'🦣',n:'长毛象',like:['石纹象棋','帝国印玺'],rare:'G13',t:'长毛象用鼻子卷着棋子说：当年下的最后一盘棋，对面那把椅子一直空着，每次月巴去的时候，都会低声说「陛下，该您了」。'},
- {id:'ermine',e:'🐾',n:'雪貂',like:['帝国印玺','御用茶盏'],rare:'G16',t:'雪貂从地宫门缝里钻出来说：门楣上那行字它认得，前半句是君王的名，后半句是个没写完的约定。'}
+ {id:'ermine',e:'🐾',n:'雪貂',like:['帝国印玺','御用茶盏'],rare:'G16',t:'雪貂从地宫门缝里钻出来说：门楣上那行字它认得，前半句是君王的名，后半句是个没写完的约定。'},
+ {id:'fairy',e:'🧚',n:'小精灵',like:['精灵羽','月光露','星屑糖','花信笺','野果','露珠'],rare:'H2',t:'小精灵们围着番茄转了三圈说：这么大一颗番茄，是从云上面掉下来的吗？'},
+ {id:'unicorn',e:'🦄',n:'独角兽',like:['独角兽毛','月光露','萤石','露珠'],rare:'H10',t:'独角兽低下头让番茄摸它的角，说这是它第一次让谁碰到，因为番茄身上有森林的味道。'},
+ {id:'glowfly',e:'✨',n:'流萤',like:['萤石','星屑糖','露珠','青苔团'],rare:'H3',t:'流萤们提着小灯笼排成队，说要把番茄和月巴送回藤门口，免得它们在桃源里走丢。'},
+ {id:'mantis',e:'🦗',n:'桃源螳螂',like:['藤编环','风铃草','蘑菇','野果'],rare:'H4',t:'螳螂举着藤环说：这是它照着月巴的尺寸编的，没想到番茄戴上也刚刚好。'},
+ {id:'sprite',e:'🍄',n:'蘑菇精灵',like:['风铃草','萤石','蘑菇','松果'],rare:'H11',t:'蘑菇精灵说：桃源的星屑糖只有招待最干净的客人时才拿出来，月巴和番茄都分到了。'},
+ {id:'swanF',e:'🪶',n:'羽灵',like:['精灵羽','花信笺','雪绒花','露珠'],rare:'H12',t:'羽灵把一根精灵羽别在番茄衣襟上，说：这样不管走多远，桃源的风都认得你们。'}
 ];
 function tvFresh(){
   if(!S.travel)S.travel={tomato:300,wh:{food1:0,food2:0,food3:0,lamp:0,charm:0,bell:0},bag:[],frog:{status:'home',depart:null,ret:null,mood:''},cards:[],specials:[],destCount:{},friends:[],harvestT:now()+rand(10,30)*60000} ;
@@ -4779,7 +4807,7 @@ function tvChoosePermDest(id){
 }
 function tvClearPermDest(){ const t=tvFresh(); if(t.permPick){ t.permPick=null; save(); } tvBag(); }
 function tvLockedTip(){ const un=tvUnlockProgress(); toast('🔒 失落王庭尚未解锁：雪山/遗迹/冰湖 需各集齐 '+un.need+' 封信件'); }
-function tvDestOf(bag){ const t=tvFresh(); if(t.frog&&t.frog.status==='away'&&t.frog.dest){ const fd=TV_DESTS.find(function(x){return x.id===t.frog.dest;}); if(fd)return fd; } bag=bag||t.bag; const ks=bag.map(function(x){return x&&x.k||x;}); const has=function(k){return ks.indexOf(k)>=0;}; const pd=t.pickDest?TV_DESTS.find(function(x){return x.id===t.pickDest;}):null; if(pd&&((pd.need&&has(pd.need))||(!pd.need&&has('food1')||has('food2')||has('food3')))){ if(!pd.hidden||tvEmpireUnlocked())return pd; } const perm=tvPermDest(); if(perm)return perm; if(has('charm')&&has('food3'))return tvCharmWeighted(); if(has('lamp'))return TV_DESTS[1]; if(has('bell'))return TV_DESTS[2]; const foodK=ks.find(function(k){return k==='food1'||k==='food2'||k==='food3';}); if(foodK){ const pb=tvPermBoost(); const boost=pb?2.5:1; if(foodK==='food3'){ const r3=Math.random(); if(pb){ if(r3<0.50)return tvCharmWeighted(); if(r3<0.70)return TV_DESTS[2]; if(r3<0.90)return TV_DESTS[1]; } else { if(r3<0.08)return tvCharmWeighted(); if(r3<0.30)return TV_DESTS[2]; if(r3<0.60)return TV_DESTS[1]; } } if(foodK==='food2'){ const r2=Math.random(); if(r2<0.30)return TV_DESTS[1]; if(r2<0.30+0.03*boost)return TV_DESTS[2]; if(r2<0.30+0.06*boost)return (pb?tvCharmWeighted():TV_DESTS[4]); } if(foodK==='food1'&&Math.random()<(pb?0.30:0.06))return Math.random()<0.5?TV_DESTS[1]:TV_DESTS[2]; } return TV_DESTS[0]; }
+function tvDestOf(bag){ const t=tvFresh(); if(t.frog&&t.frog.status==='away'&&t.frog.dest){ const fd=TV_DESTS.find(function(x){return x.id===t.frog.dest;}); if(fd)return fd; } bag=bag||t.bag; const ks=bag.map(function(x){return x&&x.k||x;}); const has=function(k){return ks.indexOf(k)>=0;}; const pd=t.pickDest?TV_DESTS.find(function(x){return x.id===t.pickDest;}):null; if(pd&&((pd.need&&has(pd.need))||(!pd.need&&has('food1')||has('food2')||has('food3')))){ if(!pd.hidden||tvEmpireUnlocked())return pd; } const perm=tvPermDest(); if(perm)return perm; if(has('charm')&&has('food3'))return tvCharmWeighted(); if(has('lamp'))return TV_DESTS[1]; if(has('bell'))return TV_DESTS[2]; const foodK=ks.find(function(k){return k==='food1'||k==='food2'||k==='food3';}); if(foodK){ const pb=tvPermBoost(); const boost=pb?2.5:1; if(foodK==='food3'){ const r3=Math.random(); if(pb){ if(r3<0.50)return tvCharmWeighted(); if(r3<0.70)return TV_DESTS[2]; if(r3<0.90)return TV_DESTS[1]; } else { if(r3<0.08)return tvCharmWeighted(); if(r3<0.30)return TV_DESTS[2]; if(r3<0.60)return TV_DESTS[1]; } } if(foodK==='food2'){ const r2=Math.random(); if(r2<0.30)return TV_DESTS[1]; if(r2<0.30+0.03*boost)return TV_DESTS[2]; if(r2<0.30+0.06*boost)return (pb?tvCharmWeighted():TV_DESTS[4]); } if(foodK==='food1'&&Math.random()<(pb?0.30:0.06))return Math.random()<0.5?TV_DESTS[1]:TV_DESTS[2]; } const fr=(Math.random()<0.18)?TV_DESTS[1]:TV_DESTS[0]; return fr; }
 function tvGo(mood){ const t=tvFresh(); const up=(mood||'').trim().toUpperCase(); const m=up.match(/^TOMATO(\d{1,7})$/); if(m){ const amt=Math.min(parseInt(m[1],10),9999999); tvTomato(amt); toast('✨ 收到 '+((''+amt).replace(/\B(?=(\d{3})+(?!\d))/g,','))+' 🍅！'); mood=''; } else if(up==='YUEFEI500'){ if(!t.codeUsed){ t.codeUsed=true; tvTomato(500); toast('✨ 口令生效，获得 500 🍅！'); } else { toast('此口令已使用过啦'); } mood=''; } if(t.frog.status==='away'){ toast('✈️ 已有月巴在旅行中，等它回来再出发吧'); return; } if(!t.frog.fatId){ toast('🐤 先在图鉴里选择一位月巴出发'); return; } const kinds=tvDestKinds(t.bag); const food=t.bag.find(function(x){return x.k==='food1'||x.k==='food2'||x.k==='food3';}); if(!food){ toast('🍙 至少带上 1 个便当才能出发！'); return; } const pdd=tvPermDest(); if(pdd&&!t.permConfirmOk){ if(!confirm('🎫 本次将使用小号护身符，指定前往「'+pdd.n+'」并消耗本周机会。\n（仅需饭团即可，确定出发吗？）'))return; t.permConfirmOk=true; save(); } t.permConfirmOk=false; t.frog.status='away'; t.frog.depart=now(); const base=TV_FOODS[food.k].dur; t.frog.dest=tvDestOf(t.bag).id; if(t.permPass&&t.permPick&&t.frog.dest===t.permPick){ t.permUsedWeek=tvWeekKey(); t.permPick=null; } t.frog.mood=mood||'我想去看看'; t.frog.ret=now()+(DR_DEBUG?2*60*1000:Math.round(base*(0.75+Math.random()*0.7))); t.bag=t.bag.filter(function(x){return !(x.k==='food1'||x.k==='food2'||x.k==='food3'||x.k==='lamp'||x.k==='bell'||x.k==='compass');}); t.pickDest=null; t.cardT=Math.max(now()+60000,Math.min(now()+rand(8,14)*60000,t.frog.ret-60000)); t.frog.cardsSent=0; t.frog.cardQuota=1; t.eventT=0; save(); closeModal(); toast('✈️ 出发去旅行啦！'); tvRenderScene(); tvUpdateBar(); }
 function tvDepart(){ const e=$('tvMood'); tvGo(e?e.value.trim():''); }
 function tvDestKinds(bag){ return bag.map(function(x){return x.k;}); }
