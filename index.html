@@ -4448,8 +4448,13 @@ const TV_FRIENDS=[
  {id:'unicorn',e:'🦄',n:'独角兽',like:['独角兽毛','月光露','萤石','露珠'],rare:'H10',t:'独角兽低下头让番茄摸它的角，说这是它第一次让谁碰到，因为番茄身上有森林的味道。'},
  {id:'glowfly',e:'✨',n:'流萤',like:['萤石','星屑糖','露珠','青苔团'],rare:'H3',t:'流萤们提着小灯笼排成队，说要把番茄和月巴送回藤门口，免得它们在桃源里走丢。'},
  {id:'mantis',e:'🦗',n:'桃源螳螂',like:['藤编环','风铃草','蘑菇','野果'],rare:'H4',t:'螳螂举着藤环说：这是它照着月巴的尺寸编的，没想到番茄戴上也刚刚好。'},
- {id:'sprite',e:'🍄',n:'蘑菇精灵',like:['风铃草','萤石','蘑菇','松果'],rare:'H11',t:'蘑菇精灵说：桃源的星屑糖只有招待最干净的客人时才拿出来，月巴和番茄都分到了。'},
- {id:'swanF',e:'🪶',n:'羽灵',like:['精灵羽','花信笺','雪绒花','露珠'],rare:'H12',t:'羽灵把一根精灵羽别在番茄衣襟上，说：这样不管走多远，桃源的风都认得你们。'}
+ {id:'sprite',e:'🍄',n:'蘑菇精灵',like:['风铃草','萤石','蘑菇','松果'],rare:'H11',t:'蘑菇精灵说：桃源的桃花酿只有招待尊贵的客人时才拿出来，月巴和番茄都分到了，而且番茄还喝醉了。'},
+ {id:'swanF',e:'🪶',n:'羽灵',like:['精灵羽','花信笺','雪绒花','露珠'],rare:'H12',t:'羽灵把一根精灵羽别在番茄衣襟上，说：如果离开这里，你们也能跟随指引找回这里。'},
+ {id:'moonHare',e:'🌙',n:'月兔',like:['月光露','星屑糖','露珠','野果'],rare:'H5',t:'月兔蹲在那轮大月亮下捣着石臼：它见过月巴把番茄举高，也不知道它们在看什么。'},
+ {id:'petalFae',e:'🌸',n:'花灵',like:['花信笺','风铃草','藤编环','树莓'],rare:'H6',t:'花灵从桃花里探出头说：精灵们封番茄做「会走路的花」，它一点都不意外，毕竟番茄走到哪儿，哪儿的花就开得更起劲。'},
+ {id:'blueMorpho',e:'🦋',n:'碧凤蝶',like:['精灵羽','萤石','花信笺','蜂蜜'],rare:'H7',t:'碧凤蝶停在番茄头顶说了很久的话，番茄也说了很多，提到最多的名字是月巴。'},
+ {id:'springNymph',e:'🌊',n:'泉灵',like:['月光露','萤石','风铃草','蘑菇'],rare:'H9',t:'泉灵离开了故乡，谁走到泉水边，都能听见月巴和番茄的故事。'},
+ {id:'elderFae',e:'🔮',n:'精灵长老',like:['萤石','星屑糖','月光露','松果'],rare:'H8',t:'精灵长老摸着自己长长的胡须说：能走进桃源的人，都会获得幸福。'}
 ];
 function tvFresh(){
   if(!S.travel)S.travel={tomato:300,wh:{food1:0,food2:0,food3:0,lamp:0,charm:0,bell:0},bag:[],frog:{status:'home',depart:null,ret:null,mood:''},cards:[],specials:[],destCount:{},friends:[],harvestT:now()+rand(10,30)*60000} ;
@@ -4817,7 +4822,7 @@ function tvTurnAway(){ const t=tvFresh(); if(!t.pendingVisit){ closeModal(); ret
 function tvFriendPop(){ const t=tvFresh(); if(t.pendingVisit)return; if(!t.nextVisit)t.nextVisit=now()+rand(3,8)*60000; if(now()<t.nextVisit)return; const f=TV_FRIENDS[Math.floor(Math.random()*TV_FRIENDS.length)]; t.pendingVisit=f.id; t.nextVisit=now()+rand(7,15)*60000; save(); }
 function tvDoorOpen(){ const t=tvFresh(); if(!t.pendingVisit){ toast('🚪 门口没有人，安静得很'); return; } const f=TV_FRIENDS.find(function(x){return x.id===t.pendingVisit;}); if(!f){ t.pendingVisit=null; save(); return; } openModal('👋 门口有人敲门', tvFriendModal(f,t)); }
 function tvUpdateDoor(){ const b=$('tvDoorBtn'); if(b)b.style.display=tvFresh().pendingVisit?'flex':'none'; }
-function tvFeed(fid,s){ const t=tvFresh(); const f=TV_FRIENDS.find(function(x){return x.id===fid;}); if(!f||t.specials.indexOf(s)<0)return; t.pendingVisit=null; tvUpdateDoor(); let fr=t.friends.find(function(x){return x.id===fid;}); if(!fr){ fr={id:fid,count:0}; t.friends.push(fr); } fr.count++; const gain=15+Math.floor(Math.random()*20); let h='<p style="text-align:center;color:#3e5c3f">'+f.n+' 很开心，回礼 🍅 +'+gain+'</p>'; if(Math.random()<0.35&&f.rare&&t.cards.indexOf(f.rare)<0){ t.cards.push(f.rare); t.inbox.push(f.rare); tvNoteCard(f.rare,t.frog.fatId); const tm=t.frog&&t.frog.fatId&&typeById(t.frog.fatId)?typeById(t.frog.fatId).name:'月巴'; h+='<p style="text-align:center">💌 邻居 '+f.e+' '+f.n+' 在外路过时遇到了 <b>'+tm+'</b>，'+tm+' 托它转交一封来自「'+tvDestOfCard(f.rare)+'」的信！</p>'; } h+='<p style="text-align:center"><button class="btn" onclick="closeModal()">收下</button></p>'; openModal('🎁 回礼', h); tvTomato(gain); save(); }
+function tvFeed(fid,s){ const t=tvFresh(); const f=TV_FRIENDS.find(function(x){return x.id===fid;}); if(!f||t.specials.indexOf(s)<0)return; t.pendingVisit=null; tvUpdateDoor(); let fr=t.friends.find(function(x){return x.id===fid;}); if(!fr){ fr={id:fid,count:0}; t.friends.push(fr); } fr.count++; const gain=15+Math.floor(Math.random()*20); let h='<p style="text-align:center;color:#3e5c3f">'+f.n+' 很开心，回礼 🍅 +'+gain+'</p>'; if(Math.random()<0.2&&f.rare&&t.cards.indexOf(f.rare)<0){ t.cards.push(f.rare); t.inbox.push(f.rare); tvNoteCard(f.rare,t.frog.fatId); const tm=t.frog&&t.frog.fatId&&typeById(t.frog.fatId)?typeById(t.frog.fatId).name:'月巴'; h+='<p style="text-align:center">💌 邻居 '+f.e+' '+f.n+' 在外路过时遇到了 <b>'+tm+'</b>，'+tm+' 托它转交一封来自「'+tvDestOfCard(f.rare)+'」的信！</p>'; } h+='<p style="text-align:center"><button class="btn" onclick="closeModal()">收下</button></p>'; openModal('🎁 回礼', h); tvTomato(gain); save(); }
 function tvLabel(f){ return f?f.e||'🐤':'🐤'; }
 function tvCharmDest(){ const ds=TV_DESTS.filter(function(x){return x.need==='charm'&&!x.hidden;}); return ds[(Math.random()*ds.length)|0]||ds[ds.length-1]||TV_DESTS[TV_DESTS.length-1]; }
 /* —— 小号护身符（永久道具） —— */
