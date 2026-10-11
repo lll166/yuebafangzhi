@@ -1167,6 +1167,13 @@ const TYPES=[
   {id:'canglong',  name:'苍龙月巴',   r:4, v:220,t:1150, cond:null, img:'https://origin.picgo.net/2026/09/29/cfdcb713bec9bd6b5307fd8a9edfc1fb421e9a1529506bb0.th.png', color:'#8e9aa8', shape:'big', size:2.5},
   {id:'bairixuan', name:'白日宣巴',   r:1, v:9,  t:100,  cond:null, color:'#f2c14e', shape:'round'},
   {id:'niaoba',    name:'鸟巴',       r:2, v:20, t:200,  cond:null, img:'https://origin.picgo.net/2026/09/29/5333d8fdca76c3b083802650fd853975e1e6162696fd5812.th.png', color:'#7fa8c8', shape:'round'},
+  {id:'mb_fanzhuan',name:'反转月巴',  r:3, v:45, t:460, cond:null, img:'https://origin.picgo.net/2026/10/11/c81c459acde3c23c8697414890a13e0ca4b5043931a9a27e.th.png', color:'#8f8fce', shape:'squish'},
+  {id:'mb_zhongyi', name:'中意月巴',  r:3, v:45, t:460, cond:null, img:'https://origin.picgo.net/2026/10/11/b8ab7bdd789538f043b260d47e4181c4c7feca6cf8eb591c.th.png', color:'#e88aa8', shape:'round'},
+  {id:'mb_lba',     name:'喇巴',      r:3, v:40, t:400, cond:null, img:'https://origin.picgo.net/2026/10/11/7f08d97c6eb3a1eac43b80c797216c3893370759f78d1666.th.png', color:'#dbb3e8', shape:'round'},
+  {id:'mb_jingcha', name:'警察巴',    r:3, v:45, t:460, cond:null, color:'#4a6fa5', shape:'round'},
+  {id:'mb_faguan',  name:'法官巴',    r:3, v:45, t:460, cond:null, color:'#4a4a5a', shape:'cube'},
+  {id:'mb_lvshi',   name:'律师巴',    r:3, v:45, t:460, cond:null, color:'#5a7a8a', shape:'tall'},
+  {id:'mb_jinju',   name:'进局子巴',  r:3, v:40, t:400, cond:null, color:'#8a8a8a', shape:'squish'},
   {id:'bairi', name:'百日月巴',  r:6, v:3000, t:3600, cond:{t:'dexfirst', n:99}, weight:0.003, color:'#ffd54f', shape:'big'},
 ];
 /* 第二图鉴：第一图鉴集齐 TYPES.length-5（见 DEX1_MIN）个月巴后开启（掉落池合并）。字段格式与 TYPES 一致，
@@ -1343,6 +1350,13 @@ const FAT_INTRO={
   canglong:'罕见的双生巴，一起住在海里。但关系并不好，时常一个入海的时候一个出海。',
   bairixuan:'它向日。',
   niaoba:'道理我都懂，为什么苍鸟的OO这么大。',
+  mb_fanzhuan:'噢，我们是不是哪里变得不一样了？',
+  mb_zhongyi:'你以为我真的很中意你吗？中意你这种丑东西？',
+  mb_lba:'我想开了。',
+  mb_jingcha:'逮捕违法犯罪的巴，为您的番茄保驾护航。',
+  mb_faguan:'有罪！',
+  mb_lvshi:'一斤鸭梨！！',
+  mb_jinju:'我是无辜的！吃茄有什么错！！！',
   m2_dou:'圆滚滚像颗小豆子，蹦跶起来节奏感十足。',
   m2_men:'出生自带萌化光环，看它一眼心情就好。',
   m2_zhu:'胃口堪比小猪，吃饱就原地躺平。',
@@ -1498,6 +1512,19 @@ function load(){
   return false;
 }
 function speedMult(){ return (1+S.accelLv*0.1) * (S.pomo && S.pomo.running && S.pomo.mode==='focus' ? 2 : 1); }
+/* 生长倍率变化时折算各槽位的 start：已获得的进度按旧倍率结清，新倍率只作用于之后的时间。
+   否则开/关番茄钟会把新倍率回溯套到已过去的时间，剩余时间忽减忽增，已成熟的月巴会退回未成熟 */
+let _lastSpd=null;
+function syncGrowthSpeed(){
+  const v=speedMult();
+  if(_lastSpd===null){ _lastSpd=v; return; }   // 首次（含读档）：存档里的进度已按当前倍率计算，无需折算
+  if(v===_lastSpd) return;
+  const t=now();
+  for(const z of S.zones) for(const w of z.woods) for(const c of w.cells){
+    if(c&&c.t&&c.start) c.start=t-(t-c.start)*_lastSpd/v;
+  }
+  _lastSpd=v;
+}
 // 番茄钟专注时段（非休息）自动收集成熟月巴；其余时段必须手动
 function autoCollectActive(){ return !!(S.pomo && S.pomo.running && S.pomo.mode==='focus'); }
 function woodCost(z,w){ const zone=ZONES[z]; return Math.round(zone.woodBase*Math.pow(zone.woodMult,w)); }
@@ -1758,6 +1785,14 @@ const DEX1_MIN_REMAIN=6, DEX1_MIN=TYPES.length-DEX1_MIN_REMAIN;
 function dex2Unlocked(){ return Object.keys(S.collection).length>=DEX1_MIN; }
 function isDex2(id){ return TYPES2.some(t=>t.id===id); }
 function typeById(id){ return TYPES.find(x=>x.id===id)||TYPES2.find(x=>x.id===id); }
+/* 取槽位里的月巴类型；遇到已失效的 id（旧存档中被改名/移除的月巴）就地清空该槽位等待重播，
+   避免 typeById 返回 undefined 后在上层抛错（tick 里抛错会中断整轮更新） */
+function cellTypeOf(cell){
+  if(!cell||!cell.t) return null;
+  const t=typeById(cell.t);
+  if(!t){ cell.t=null; cell.delay=now()+rand(900,2600); }
+  return t;
+}
 function colGet(id){
   const c=isDex2(id)?S.collection2:S.collection;
   if(!c[id]) c[id]={count:0};
@@ -1767,8 +1802,14 @@ function colCount(id){ const c=isDex2(id)?S.collection2:S.collection; return (c[
 function colRec(id){ return isDex2(id)?S.collection2[id]:S.collection[id]; }
 /* ===== 调试预留（不向玩家展示）：在控制台调用 debugUnlockAll()，或在 URL 后加 #debugall 自动执行 ===== */
 function debugUnlockAll(){ for(const t of TYPES){ const c=colGet(t.id); if(!c.count)c.count=1; if(!c.last)c.last={h:50,w:50,t:now()}; } for(const t of TYPES2){ const c=colGet(t.id); if(!c.count)c.count=1; if(!c.last)c.last={h:50,w:50,t:now()}; } if(!S.dex2Celebrated)S.dex2Celebrated=true; save(); updateTravelIcon(); updateFlyIcon(); return '🧪 已解锁全部图鉴：第一页 '+Object.keys(S.collection).length+'/'+TYPES.length+'，第二页 '+Object.keys(S.collection2).length+'/'+TYPES2.length; }
-function rollNum(lo,hi){ // 取值向中段集中：越接近上下极值概率越低（极值低频化，非时间冷却）
-  return (lo+Math.random()*(hi-lo) + lo+Math.random()*(hi-lo))/2;
+/* 取值向中段集中：越接近上下极值概率越低（极值低频化，非时间冷却）。
+   但纯「两次取平均」会让上下极值几乎不可达（图鉴的「最高/最矮/最重/最轻」金框要求正好达到区间边界），
+   故留 ROLL_TAIL 比例的样本直接取均匀值：整体仍向中段集中（中段密度约为两端的 5 倍），
+   极值约比纯均匀难 3 倍，可稳定达成 */
+const ROLL_TAIL=0.33;
+function rollNum(lo,hi){
+  if(Math.random()<ROLL_TAIL) return rand(lo,hi);
+  return (rand(lo,hi)+rand(lo,hi))/2;
 }
 function rollStats(r){
   const [ha,hb]=R_H[r], [wa,wb]=R_W[r];
@@ -1781,10 +1822,6 @@ function recordExtremes(id,h,w){
   if(!c.heaviest || w>c.heaviest.v){ c.heaviest={v:w,t:now()}; beats.push('最重'); }
   if(!c.lightest || w<c.lightest.v){ c.lightest={v:w,t:now()}; beats.push('最轻'); }
   return beats;
-}
-function rollStats(r){
-  const [ha,hb]=R_H[r], [wa,wb]=R_W[r];
-  return {h:+rand(ha,hb).toFixed(1), w:+rand(wa,wb).toFixed(1)};
 }
 
 /* ---------------- 核心逻辑：生长 / 收获 ---------------- */
@@ -1824,7 +1861,8 @@ function addCoins(n){
   $('coinTxt').textContent=fmt(S.coins);
 }
 function doHarvest(z,w,i,cell,el,quiet){
-  const type=typeById(cell.t);
+  const type=cellTypeOf(cell);
+  if(!type){ renderCell(z,w,i); return null; }   // 失效的月巴 id：槽位已清空待重播，不参与收获
   const wasComplete=dex2Unlocked();
   const isNew=!colCount(type.id);
   if(!cell.h||!cell.w){ const st=rollStats(type.r); cell.h=st.h; cell.w=st.w; }
@@ -1969,10 +2007,10 @@ function renderCell(z,w,i){
   const cell=S.zones[z].woods[w].cells[i];
   const el=cellEls[`${z}-${w}-${i}`];
   if(!el)return;
-  if(cell && cell.t){
+  const type=cellTypeOf(cell);   // 失效的月巴 id 会在此清空槽位，走下面的空槽分支
+  if(type){
     const stage=cellStage(cell);
     if(stage==='mature'){
-      const type=typeById(cell.t);
       const s=hScale(cell.h)*(type.size||1)*SCENE_FAT_ZOOM;
       el.className='wcell mature';
       el.innerHTML=`<span class="spr" style="transform:scale(${s})">${fatSVG(type)}</span>
@@ -1980,7 +2018,6 @@ function renderCell(z,w,i){
       el.title=`${type.name} · ${cell.h}cm · ${cell.w}g`;
     }else if(stage==='near'){
       // 接近成熟：显示完整月巴 + 进度条（略小、不可收获）
-      const type=typeById(cell.t);
       const s=hScale(cell.h)*(type.size||1)*SCENE_FAT_ZOOM*0.85;
       const p=clamp((now()-cell.start)/(cell.dur/speedMult()),0,1);
       el.className='wcell near';
@@ -2349,7 +2386,7 @@ function buyAccel(){
   const c=accelCost();
   if(S.accelLv>=ACCEL_MAX){ sfx.error(); toast('已满级'); return; }
   if(S.coins<c){ sfx.error(); toast('金币不足'); return; }
-  S.coins-=c; S.accelLv++; sfx.buy(); save();
+  S.coins-=c; S.accelLv++; syncGrowthSpeed(); sfx.buy(); save();
   updateHeader(); openShop(); toast(`常驻加速器升至 Lv.${S.accelLv}（速度+${S.accelLv*10}%）`);
 }
 function buyItem(id){
@@ -2366,6 +2403,7 @@ function openModal(title,html){
   $('modalTitle').textContent=title;
   $('modal-body').innerHTML=html;
   $('overlay').classList.add('show');
+  _afterClose=null;          // 换弹窗即作废上一次的「关闭后返回」目标，避免回到不相干的弹窗
   _lastModalTitle=title;
 }
 let _lastModalTitle='';
@@ -2814,6 +2852,7 @@ function pomoStart(name,dur){
   S.pomo.start=now(); S.pomo.end=now()+dur;
   S.pomo.running=true; S.pomo.pausedByBlur=false;
   S.pomo.roundItems=[];
+  syncGrowthSpeed(); // 倍率 1→2：先按旧倍率结清已获得的生长进度
   sfx.click(); save();
   toast(`🍅 番茄开始：「${S.pomo.name}」专注中，月巴生长 x2`);
   renderPomoModal(); updatePomoUI();
@@ -2823,12 +2862,14 @@ function pomoPause(byBlur){
   S.pomo.remain=Math.max(0,S.pomo.end-now());
   S.pomo.running=false;
   if(byBlur) S.pomo.pausedByBlur=true;
+  syncGrowthSpeed(); // 倍率 2→1：先按旧倍率结清已获得的生长进度
   save(); renderPomoModal(); updatePomoUI();
 }
 function pomoResume(){
   if(S.pomo.running||S.pomo.remain<=0)return;
   S.pomo.end=now()+S.pomo.remain;
   S.pomo.running=true; S.pomo.pausedByBlur=false;
+  syncGrowthSpeed(); // 倍率 1→2：先按旧倍率结清已获得的生长进度
   save(); renderPomoModal(); updatePomoUI();
 }
 function pomoStop(){
@@ -2857,6 +2898,7 @@ function pomoStop(){
   }
   S.pomo.running=false; S.pomo.remain=0; S.pomo.mode='focus';
   S.pomo.total=S.pomo.focusTotal||S.pomo.total||25*60000; S.pomo.pausedByBlur=false;
+  syncGrowthSpeed(); // 倍率 2→1：先按旧倍率结清已获得的生长进度
   save(); renderPomoModal(); updatePomoUI();
   if(stoppedRound) pomoRoundSummary();
 }
@@ -2866,6 +2908,7 @@ function pomoEnterBreak(){
   S.pomo.total=b; S.pomo.remain=b;
   S.pomo.start=now(); S.pomo.end=now()+b;
   S.pomo.running=true; S.pomo.pausedByBlur=false;
+  syncGrowthSpeed(); // 专注→休息，倍率 2→1：先按旧倍率结清已获得的生长进度
   save(); renderPomoModal(); updatePomoUI();
 }
 function pomoComplete(){
@@ -2984,18 +3027,28 @@ function renderPomoModal(){
   }
   if(nb){ nb.style.display= inBreak?'':'none'; nb.textContent='⏭ 跳过休息 · 下一个番茄'; }
 }
-function pomoPreset(min){
-  S.pomo.focusTotal=min*60000; S.pomo.total=min*60000; S.pomo.remain=min*60000;
+/* 会话进行中（专注/休息/暂停）只改「下次开始」的默认时长，不改写正在计时的 total/remain，
+   否则 pomoComplete / pomoStop 记录下来的时长会与实际专注时间不符 */
+/* 是否已有正在计时的番茄（含暂停）。注意「就绪但已预设时长」的 remain===total 不算进行中，
+   否则空闲时拖滑杆会被误判成会话进行中而改不动本次时长 */
+function pomoBusy(){ return !!(S.pomo.running || (S.pomo.remain>0 && S.pomo.remain<S.pomo.total)); }
+function setFocusMin(min){
+  const busy=pomoBusy();   // 必须先取值：下面写 remain 会改变 pomoBusy() 的结果
+  S.pomo.focusTotal=min*60000;
+  if(!busy){ S.pomo.total=min*60000; S.pomo.remain=min*60000; }
   const sl=$('pomoCustom'); if(sl) sl.value=min;
-  const lbl=$('pomoCustomLbl'); if(lbl) lbl.textContent=min+'分';
-  sfx.click(); syncPomoSegs(); renderPomoModal(); updatePomoUI();
-  toast(`⏱️ 专注时长设为 ${min} 分钟`);
+  const lbl=$('pomoCustomLbl'); if(lbl) lbl.textContent=min+'分'+(busy?'（下次）':'');
+  syncPomoSegs(); renderPomoModal(); updatePomoUI();
+  return busy;
+}
+function pomoPreset(min){
+  const busy=setFocusMin(min);
+  sfx.click();
+  toast(`⏱️ 专注时长设为 ${min} 分钟${busy?'（本次专注不受影响，下次开始生效）':''}`);
 }
 function pomoCustomChange(){
   const v=parseInt(inpVal('pomoCustom','25'),10)||25;
-  S.pomo.focusTotal=v*60000; S.pomo.total=v*60000; S.pomo.remain=v*60000;
-  const lbl=$('pomoCustomLbl'); if(lbl) lbl.textContent=v+'分';
-  syncPomoSegs(); renderPomoModal(); updatePomoUI();
+  setFocusMin(v);
 }
 function syncPomoSegs(){
   const f=$('pomoFocusSegs'), b=$('pomoBreakSegs');
@@ -3648,7 +3701,7 @@ function openPomo(){
   syncPomoSegs();
   const sl=$('pomoCustom'); const curMin=Math.round((S.pomo.focusTotal||25*60000)/60000);
   if(sl) sl.value=curMin;
-  const ckLbl=$('pomoCustomLbl'); if(ckLbl) ckLbl.textContent=curMin+'分';
+  const ckLbl=$('pomoCustomLbl'); if(ckLbl) ckLbl.textContent=curMin+'分'+(pomoBusy()?'（下次）':'');
 }
 function dayKey(ts){ const d=new Date(ts); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
 function startOfDay(ts){ const d=new Date(ts); d.setHours(0,0,0,0); return d.getTime(); }
@@ -4732,7 +4785,7 @@ function tvHomeDescs(id){
 function tvHomeHTML(t){
   let h='<div class="tvhome">';
   if(t.frog.status==='away'){
-    h+='<div class="tv-note">✈️ 月巴去「'+tvDestOf(t.bag).n+'」旅行啦，留话：'+(t.frog.mood||'')+'</div>';
+    h+='<div class="tv-note">✈️ 月巴去「'+tvDestOf(t.bag).n+'」旅行啦，留话：'+escHTML(t.frog.mood||'')+'</div>';
   }else if(t.frog.status==='pack'){
     h+='<div class="tv-note">🧳 月巴正在收拾行囊…</div>';
   }else{
@@ -4839,9 +4892,10 @@ function tvOpenLetter(c){
   const fid=(t.cardFirst&&t.cardFirst[c])||t.frog.fatId||null; const tp=fid?typeById(fid):null; const nm=tp?tp.name:'月巴';
   const txt=L.txt.split('{name}').join(nm);
   let h='<div class="ltr-scene"><div class="ltr-env big '+L.d+'" id="ltrEnv"><div class="ltr-letter"><p class="ltr-txt">'+txt+'</p><p class="ltr-sig">—— '+nm+'</p>'+tvOpenNoteHTML(c)+'</div><div class="ltr-front"><div class="ltr-flap"></div><div class="ltr-seal">'+L.e+'</div></div></div></div><div class="ltr-full"><p class="ltr-txt">'+txt+'</p><p class="ltr-sig">—— '+nm+'</p>'+tvOpenNoteHTML(c)+tvWhoRow(c,1)+'</div><p style="text-align:center;margin-top:10px"><button class="btn" onclick="closeModal()">收好</button></p>';
+  const from=_lastModalTitle;   // openModal 会覆盖 _lastModalTitle，先记下来源弹窗
   openModal('💌 来信', h);
-  if(_lastModalTitle==='📮 信箱 · 来信'){ _afterClose=function(){ openModal('📮 信箱 · 来信', tvMailHTML()); }; }
-  else if(_lastModalTitle==='🏷 旅行图鉴'){ _afterClose=function(){ openModal('🏷 旅行图鉴', tvBookHTML()); }; }
+  if(from==='📮 信箱 · 来信'){ _afterClose=function(){ openModal('📮 信箱 · 来信', tvMailHTML()); }; }
+  else if(from==='🏷 旅行图鉴'){ _afterClose=function(){ openModal('🏷 旅行图鉴', tvBookHTML()); }; }
   setTimeout(function(){ const e=$('ltrEnv'); if(e&&e.classList)e.classList.add('open'); }, 80);
 }
 function tvOpenMail(){ openModal('📮 信箱 · 来信', tvMailHTML()); }
@@ -5020,6 +5074,7 @@ function checkDexEvent(){
   if(sfx.dex) sfx.dex(); else sfx.coin();
 }
 function tick(){
+  syncGrowthSpeed(); // 兜底：倍率若被改动（番茄钟/加速器），先把已获得的生长进度按旧倍率结清
   fastCoolTick();
   checkDexEvent();
   travelTick();
@@ -5380,6 +5435,7 @@ function flyStart(){
   const num=$('fgCountNum'); if(num) num.textContent='3';
   sfx.tap();
   if(fg.cdT) clearInterval(fg.cdT);
+  if(fg.goT) clearTimeout(fg.goT);   // 重开倒计时时丢弃上一次待触发的 GO
   fg.cdT=setInterval(()=>{
     fg.cdN--;
     if(fg.cdN>0){
@@ -5389,7 +5445,7 @@ function flyStart(){
       clearInterval(fg.cdT); fg.cdT=null;
       const n=$('fgCountNum'); if(n) n.textContent='GO!';
       sfx.spring();
-      setTimeout(()=>{ if(!fg)return; fgLayer(null); fgBegin(); },420);
+      fg.goT=setTimeout(()=>{ fg.goT=null; if(!fg)return; fgLayer(null); fgBegin(); },420);
     }
   },650);
 }
@@ -5639,6 +5695,7 @@ function fgStop(){
   fg.run=false; fg.alive=false;
   if(fg.raf){ cancelAnimationFrame(fg.raf); fg.raf=null; }
   if(fg.cdT){ clearInterval(fg.cdT); fg.cdT=null; }
+  if(fg.goT){ clearTimeout(fg.goT); fg.goT=null; }   // 倒计时结束前的「GO」待触发也要一起取消，否则退出后会被重新拉起
   const st=$('fgStage'); if(st) st.classList.remove('playing');
 }
 function fgFlap(){
@@ -5735,6 +5792,7 @@ function claimCode1001(){
 /* ---------------- 初始化 ---------------- */
 function init(){
   const hasSave=load();
+  syncGrowthSpeed(); // 记录读档时的生长倍率基准（只登记不折算：存档里的进度已按当前倍率计算）
   document.body.classList.toggle('low-power', !!S.lowPower); // 启动时套用低功耗模式
   updateLowBtn();
   // id 迁移：百日月巴 m2_bairi → bairi；已收集到百日月巴的旧存档，删除该月巴以便重新收集
@@ -5749,7 +5807,9 @@ function init(){
   applySkin(S.skins.active);
   renderOverview(); updateHeader(); updateStatus(); updatePomoUI(); updateSceneBar(); updateWeatherHold();
   updateTravelIcon(); updateFlyIcon(); updateCodeIcon(); updateCodeIcon2();
-  if(typeof location!=='undefined' && location.hash && location.hash.indexOf('#debugall')>=0){
+  // 调试后门仅在本机（file:// 或 localhost）生效：避免线上玩家用 #debugall 直接解锁全图鉴、把无限金币写进存档
+  const DEBUG_LOCAL=(function(){ try{ return location.protocol==='file:'||/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname||''); }catch(e){ return false; } })();
+  if(DEBUG_LOCAL && typeof location!=='undefined' && location.hash && location.hash.indexOf('#debugall')>=0){
     DR_DEBUG=true; setTimeout(debugUnlockAll,300);
     // 调试模式：金币与旅行番茄数量始终为无限
     setInterval(function(){
