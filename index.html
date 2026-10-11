@@ -1174,6 +1174,11 @@ const TYPES=[
   {id:'mb_faguan',  name:'法官巴',    r:3, v:45, t:460, cond:null, color:'#4a4a5a', shape:'cube'},
   {id:'mb_lvshi',   name:'律师巴',    r:3, v:45, t:460, cond:null, color:'#5a7a8a', shape:'tall'},
   {id:'mb_jinju',   name:'进局子巴',  r:3, v:40, t:400, cond:null, color:'#8a8a8a', shape:'squish'},
+  {id:'mb_zuanshi', name:'钻石月巴',  r:4, v:260, t:1250, cond:null, color:'#9be7ff', shape:'cube'},
+  {id:'mb_huang',   name:'黄月巴',    r:2, v:24, t:220, cond:null, color:'#ffd94a', shape:'round'},
+  {id:'mb_qiezhi',  name:'茄汁月巴',  r:2, v:22, t:200, cond:null, color:'#e5533d', shape:'squish'},
+  {id:'mb_gaoya',   name:'高雅巴',    r:3, v:50, t:500, cond:null, color:'#6b5b95', shape:'tall'},
+  {id:'mb_long',    name:'long～long～巴～', r:3, v:48, t:480, cond:null, color:'#f0a868', shape:'wide'},
   {id:'bairi', name:'百日月巴',  r:6, v:3000, t:3600, cond:{t:'dexfirst', n:99}, weight:0.003, color:'#ffd54f', shape:'big'},
 ];
 /* 第二图鉴：第一图鉴集齐 TYPES.length-5（见 DEX1_MIN）个月巴后开启（掉落池合并）。字段格式与 TYPES 一致，
@@ -1357,6 +1362,11 @@ const FAT_INTRO={
   mb_faguan:'有罪！',
   mb_lvshi:'一斤鸭梨！！',
   mb_jinju:'我是无辜的！吃茄有什么错！！！',
+  mb_zuanshi:'一颗恒久远，钻石永流传。等等这块怎么这么大？！',
+  mb_huang:'全身上下都是黄黄的呢，啊当然是指颜色。',
+  mb_qiezhi:'身上总是带着番茄汁。',
+  mb_gaoya:'食用番茄的时候很有仪式感。',
+  mb_long:'long～long～',
   m2_dou:'圆滚滚像颗小豆子，蹦跶起来节奏感十足。',
   m2_men:'出生自带萌化光环，看它一眼心情就好。',
   m2_zhu:'胃口堪比小猪，吃饱就原地躺平。',
@@ -5807,9 +5817,8 @@ function init(){
   applySkin(S.skins.active);
   renderOverview(); updateHeader(); updateStatus(); updatePomoUI(); updateSceneBar(); updateWeatherHold();
   updateTravelIcon(); updateFlyIcon(); updateCodeIcon(); updateCodeIcon2();
-  // 调试后门仅在本机（file:// 或 localhost）生效：避免线上玩家用 #debugall 直接解锁全图鉴、把无限金币写进存档
-  const DEBUG_LOCAL=(function(){ try{ return location.protocol==='file:'||/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname||''); }catch(e){ return false; } })();
-  if(DEBUG_LOCAL && typeof location!=='undefined' && location.hash && location.hash.indexOf('#debugall')>=0){
+  // 调试后门：任意网址加 #debugall 均可解锁全图鉴（与旧版行为一致）
+  if(typeof location!=='undefined' && location.hash && location.hash.indexOf('#debugall')>=0){
     DR_DEBUG=true; setTimeout(debugUnlockAll,300);
     // 调试模式：金币与旅行番茄数量始终为无限
     setInterval(function(){
