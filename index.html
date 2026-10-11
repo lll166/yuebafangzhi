@@ -4937,7 +4937,7 @@ function tvHomeHTML(t){
   return h;
 }
 function tvOwnedFats(){ const out=[]; const add=function(coll){ for(const id in coll){ const c=coll[id]; if(c&&c.count>0){ const tp=typeById(id); if(tp)out.push({id:id,t:tp}); } } }; add(S.collection); if(dex2Unlocked())add(S.collection2||{}); out.sort(function(a,b){ return (a.t.r||0)-(b.t.r||0) || (a.t.name<b.t.name?-1:a.t.name>b.t.name?1:0); }); return out; }
-function tvPickFat(id){ const t=tvFresh(); t.frog.fatId=id||null; save(); tvBag(); }
+function tvPickFat(id){ const t=tvFresh(); t.frog.fatId=(id&&id===t.frog.fatId)?null:(id||null); save(); tvBag(); }
 function tvRenderScene(){ const sc=$('tvScene'); if(!sc)return; const t=tvFresh(); tvEventRoll(); sc.style.background=tvBgOf(t); sc.innerHTML=tvView==='yard'?tvYardHTML(t):tvHomeHTML(t); }
 const TV_SLOTS=['🍅','🌶️','🍑','🍒','🍓','🥫','🌻','⭐'];
 // 旅行背景：本地随机渐变配色（不使用外链图片），随事件同频切换
