@@ -431,8 +431,10 @@
   #banner .bd{font-size:12px;color:var(--dim);margin-top:4px;}
   #banner .bn{font-size:13px;font-weight:800;color:var(--gold);margin-top:6px;}
   #toast{position:fixed;left:50%;bottom:106px;transform:translateX(-50%);z-index:90;
-    background:rgba(65,60,91,.92);color:#fff;padding:8px 16px;border-radius:99px;font-size:13px;font-weight:700;
+    background:rgba(65,60,91,.92);color:#fff;padding:8px 16px;border-radius:18px;font-size:13px;font-weight:700;max-width:80vw;text-align:center;
     opacity:0;pointer-events:none;transition:opacity .3s;box-shadow:0 8px 24px rgba(0,0,0,.25);}
+  #toast .tsub{display:block;margin-top:2px;font-size:11px;font-weight:600;opacity:.8;}
+  #toast.pill{border-radius:99px;max-width:80vw;}
   #toast.show{opacity:1;}
 
   /* ========== 月巴飞行（Flappy 小游戏） ========== */
@@ -1179,7 +1181,7 @@ const TYPES=[
   {id:'mb_qiezhi',  name:'茄汁月巴',  r:2, v:22, t:200, cond:null, color:'#e5533d', shape:'squish'},
   {id:'mb_gaoya',   name:'高雅巴',    r:3, v:50, t:500, cond:null, color:'#6b5b95', shape:'tall'},
   {id:'mb_long',    name:'long～long～巴～', r:3, v:48, t:480, cond:null, color:'#f0a868', shape:'wide'},
-  {id:'bairi', name:'百日月巴',  r:6, v:3000, t:3600, cond:{t:'dexfirst', n:99}, weight:0.003, color:'#ffd54f', shape:'big'},
+  {id:'bairi', name:'百日月巴',  r:6, v:3000, t:3600, cond:{t:'dexfirst', n:99}, weight:0.04, color:'#ffd54f', shape:'big'},
 ];
 /* 第二图鉴：第一图鉴集齐 TYPES.length-5（见 DEX1_MIN）个月巴后开启（掉落池合并）。字段格式与 TYPES 一致，
    后续扩充时直接追加即可；第二图鉴月巴与第一图鉴生长速度一致（见 growDur）。 */
@@ -1665,8 +1667,11 @@ const sfx={
 
 /* ---------------- 轻提示 ---------------- */
 let _toastT=null;
-function toast(msg){
-  const t=$('toast'); t.textContent=msg; t.classList.add('show');
+function toast(msg, sub){
+  const t=$('toast');
+  if(sub){ t.classList.remove('pill'); t.innerHTML='<b>'+msg+'</b><span class="tsub">'+sub+'</span>'; }
+  else { t.classList.add('pill'); t.textContent=msg; }
+  t.classList.add('show');
   clearTimeout(_toastT); _toastT=setTimeout(()=>t.classList.remove('show'),2200);
 }
 
@@ -2726,7 +2731,7 @@ function openHelp(){
         ⚠️ <b>免责声明：这个游戏还在开发中，所有存档都存放在浏览器缓存里</b>，清理缓存、换设备或浏览器异常都可能让存档丢失。请大家一定定期用下方「💾 导出文件」备份，以免辛苦养的月巴不见了。
       </div>
       <div class="sec">🎯 目标</div>
-      收集图鉴里的所有月巴！每发现新种类，首收 <b>3 倍金币</b>。图鉴会记录每种月巴的<b>最高/最矮/最重/最轻</b>极值与首次出现时间。<b>部分极稀有月巴</b>任何条件都满足、但概率极低（图鉴标注「✨ 概率极低」）。集齐第一图鉴（${DEX1_MIN} 种起，仅剩超稀有补齐）即可解锁<b>第二图鉴与旅行系统</b>；两个图鉴全部集齐后解锁<b>🪽 飞行小游戏</b>。
+      收集图鉴里的所有月巴！每发现新种类，首收 <b>3 倍金币</b>。图鉴会记录每种月巴的<b>最高/最矮/最重/最轻</b>极值与首次出现时间。<b>部分极稀有月巴</b>任何条件都满足、但概率极低（图鉴标注「✨ 概率极低」）。集齐第一图鉴（${DEX1_MIN} 种起，仅剩超稀有补齐）即可解锁<b>第二图鉴与旅行系统</b>；收集到<b>百日月巴</b>后解锁<b>🪽 飞行小游戏</b>。
       <div class="sec">🌱 生长阶段</div>
       月巴在木头上经历<b>幼年期 → 成长期 → 成熟期</b>三个阶段。幼年与成长长得都一样，<b>只有成熟后</b>才能看到真面目并收获。每只月巴都随机拥有<b>身高与体重</b>，稀有度越高越难出现。成熟后需<b>手动点击收取</b>（番茄钟专注期间会自动收集）。
       <div class="sec">🏡 场地与木头</div>
@@ -2742,7 +2747,7 @@ function openHelp(){
       <div class="sec">🧳 旅行</div>
       <b>集齐第一图鉴后解锁</b>。月巴会出门旅行，用🍅番茄在<b>旅行商店</b>买便当与道具（如幸运护身符），指定去处后就出发；归来带回<b>信件、照片、纪念品</b>与第二图鉴的新月巴，还会随机有<b>🚪 门口访客</b>。旁支玩法：<b>🎰 好运收获</b>拉杆老虎机（消耗🍅换奖励，有冷却）、<b>📮 信箱</b>回看信件。
       <div class="sec">🪽 飞行小游戏</div>
-      <b>集齐全部图鉴后解锁</b>（底部「❓」按钮会变成「🪽」）。选一只月巴，点屏幕或按空格让它往上飞、穿过柱子得分。分<b>关卡模式</b>与<b>自由模式</b>两种，柱子越过后速度会逐渐加快，成绩记入 🏆 排行榜。
+      <b>收集到百日月巴后解锁</b>（底部「❓」按钮会变成「🪽」）。选一只月巴，点屏幕或按空格让它往上飞、穿过柱子得分。分<b>关卡模式</b>与<b>自由模式</b>两种，柱子越过后速度会逐渐加快，成绩记入 🏆 排行榜。
       <div class="sec">✅ 任务 / 待办</div>
       记录待办事项，支持<b>分类、优先级（🔴高/🟡中/🟢低）、#标签、起止日期</b>。用 <b>🍅 预估</b>（把大任务按番茄数自动拆成子项）规划时间，跨天则显示为时间段任务；开启<b>🔄 习惯</b>会在时间段内每天自动生成一条待办。完成的番茄会关联到对应任务，方便复盘。
       <div class="sec">📗 图鉴与皮肤</div>
@@ -5321,8 +5326,8 @@ function fgModeLabel(){
 }
 function fgModeRefresh(){ const el=$('fgMode'); if(el) el.textContent=fgModeLabel(); }
 function flyUnlocked(){
-  if(Object.keys(S.collection||{}).length<TYPES.length) return false;
-  return Object.keys(S.collection2||{}).length>=TYPES2.length;
+  // 收集到百日月巴后解锁飞行小游戏
+  return !!(S.collection && S.collection['bairi']);
 }
 function updateFlyIcon(){
   const el=$('btnDress'); if(!el)return;
@@ -5332,7 +5337,7 @@ function updateFlyIcon(){
   el.innerHTML=on?'<b>🪽</b><small>飞行</small>':'<b>❓</b>';
 }
 function flyEntry(){
-  if(!flyUnlocked()){ toast('🔒 集齐图鉴里所有的月巴后，才能解锁飞行小游戏！'); return; }
+  if(!flyUnlocked()){ toast('🍅 它还不会飞。等到「月巴们的百日战纪」集齐，才能带你去天上。', '请收集到百日月巴再来哦~'); return; }
   if(!fg) fg={raf:null,cdT:null,run:false,alive:false,pipes:[],score:0,y:0,vy:0,last:0,cdN:3,sel:null};
   fg.sel=fgPickId();
   fg.lv=fgSel(); fg.score=0; fg.goal=0;
@@ -5805,8 +5810,8 @@ function init(){
   syncGrowthSpeed(); // 记录读档时的生长倍率基准（只登记不折算：存档里的进度已按当前倍率计算）
   document.body.classList.toggle('low-power', !!S.lowPower); // 启动时套用低功耗模式
   updateLowBtn();
-  // id 迁移：百日月巴 m2_bairi → bairi；已收集到百日月巴的旧存档，删除该月巴以便重新收集
-  if(S.collection){ delete S.collection['m2_bairi']; delete S.collection['bairi']; }
+  // id 迁移：百日月巴 m2_bairi → bairi（bairi 记录保留，作为飞行小游戏的解锁依据）
+  if(S.collection){ delete S.collection['m2_bairi']; }
   if(!S.seenHelp){
     S.coins+=100; S.seenHelp=true;
     openHelp();
