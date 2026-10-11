@@ -304,6 +304,22 @@
   .tv-pity-track{height:14px;border-radius:7px;display:flex;align-items:center;justify-content:space-around;padding:0 5px;border:1px solid rgba(120,90,60,.35);box-sizing:border-box;transition:background .3s;}
   .tv-pity-dot{width:8px;height:8px;border-radius:50%;background:rgba(120,90,60,.22);}
   .tv-pity-dot.on{background:#fff;box-shadow:0 0 2px rgba(120,90,60,.5);}
+  /* 金币对赌：档位选择 / 骰子 / 按钮 */
+  .gb-tiers{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0;}
+  .gb-tier{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 6px;border:2px solid #e6c04a;border-radius:12px;background:linear-gradient(180deg,#fff6df,#ffe9b8);cursor:pointer;font-family:inherit;transition:transform .12s,box-shadow .12s;}
+  .gb-tier:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(214,150,60,.3);}
+  .gb-tier.off{opacity:.42;filter:grayscale(.6);cursor:not-allowed;}
+  .gb-tier.off:hover{transform:none;box-shadow:none;}
+  .gb-tier-pct{font-size:12px;font-weight:800;color:#a0522d;}
+  .gb-tier-gold{font-size:13px;font-weight:800;color:#8a6a2e;white-space:nowrap;}
+  .gb-tier-tom{font-size:12px;font-weight:700;color:#d8542a;white-space:nowrap;}
+  .gb-die{text-align:center;font-size:52px;line-height:1.1;margin:6px 0;color:#c79640;}
+  .gb-die.roll{animation:gbshake 1.4s cubic-bezier(.25,.9,.3,1) 1;will-change:transform;backface-visibility:hidden;}
+  @keyframes gbshake{0%{transform:rotate(0deg) scale(1)}10%{transform:rotate(-24deg) scale(1.05)}22%{transform:rotate(20deg) scale(1.1)}34%{transform:rotate(-18deg) scale(1.06)}46%{transform:rotate(15deg) scale(1.1)}58%{transform:rotate(-12deg) scale(1.05)}70%{transform:rotate(8deg) scale(1.04)}82%{transform:rotate(-5deg) scale(1.02)}92%{transform:rotate(3deg) scale(1.01)}100%{transform:rotate(0deg) scale(1)}}
+  .gb-die.land{animation:gbland .5s ease-out 1;}
+  @keyframes gbland{0%{transform:scale(1)}45%{transform:scale(1.28)}100%{transform:scale(1)}}
+  .gb-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+  .gb-btns .btn{flex:1 1 auto;min-width:120px;}
   .tv-yf{position:absolute;width:64px;height:64px;animation:tvbob 2.4s ease-in-out infinite;}
   @keyframes tvbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
   .deco-forest{--ec:#6fa84e;--eb:#eaf3df;--fl:#b5d98c;}
@@ -911,6 +927,7 @@
     <button class="tv-btn" onclick="tvShop()">🛍 商店</button>
     <button class="tv-btn" onclick="tvBag()">💼 行囊</button>
     <button class="tv-btn" onclick="tvOpenBook()">🏷 图鉴</button>
+    <button class="tv-btn" id="tvGambleBtn" onclick="gambleEntry()">🎲 对赌</button>
     <button class="tv-btn" id="tvHarvestBtn" onclick="tvSlotOpen()" style="display:none">🎰 惊喜</button>
     <!-- 信箱/门口浮标放在导航栏内，随导航栏折行自动上移，避免与第二行按钮重叠 -->
     <button class="tv-mail" id="tvMail" onclick="tvOpenMail()" title="信箱">📮<span id="tvMailDot" style="display:none"></span></button>
@@ -1536,6 +1553,8 @@ function defaultState(){
     ach:{got:{}, seen:0},
     tasks:[],
     gameStart:now(), gameEpoch:now(),
+    clock:{base:0, perf:0, wallMax:0, lastReal:0},
+    gamble:{lastDay:'', playing:false, phase:'pick', round:0, tier:0, stake:0, hand:0, mode:'coin'},
     pomo:{name:'专注', total:25*60000, remain:25*60000, running:false, end:0, start:0, pausedByBlur:false,
       history:[], presets:['工作','学习'], mode:'focus', breakMin:5, focusTotal:25*60000, roundItems:[], taskId:null, bgIdle:false,
       goalMin:120, reportSeen:{week:'',month:''}},
@@ -4932,7 +4951,153 @@ function tvSpin(){ const btn=$('tvSpinBtn'); if(!tvSlotReady()){ /* 冷却中：
   const step=function(t){ const p=Math.min(1,(t-t0)/dur); for(let i=0;i<3;i++){ const e=els[i]; if(!e)continue; const sp=e.firstChild; if(!sp||!sp.style)continue; const pt=Math.min(1,p*dur/stops[i]); sp.style.transform='translateY('+(-pt*MAX).toFixed(1)+'px)'; if(pt>=1&&!e.classList.contains('land'))e.classList.add('land'); } if(p<1)requestAnimationFrame(step); else { /* 落定后清空长条 DOM，仅保留结果图标并移除 will-change，降低常驻内存/合成层 */ for(let i=0;i<3;i++){ const e=els[i]; if(!e)continue; e.innerHTML='<div class="tvg-strip"><div>'+cols[i]+'</div></div>'; } tvSlotResult(cols); if(btn){ btn.disabled=true; btn.textContent='🕹 已收获 · 月巴们去攒番茄啦'; } } };
   requestAnimationFrame(step); }
 function tvSlotResult(cols){ const t=tvFresh(); const s0=cols[0],s1=cols[1],s2=cols[2]; let gain; if(s0===s1&&s1===s2)gain=30+(Math.random()*21|0); else if(s0===s1||s1===s2||s0===s2)gain=15+(Math.random()*11|0); else gain=3+(Math.random()*4|0); t.tomato+=gain; t.harvestT=now()+rand(10,30)*60000; const streak=(gain===1&&t.lastSlotOne); t.lastSlotOne=(gain===1); save(); const r=$('tvSlotResult'); if(r)r.innerHTML=(s0===s1&&s1===s2)?('🎉🎉 JACKPOT！收获 '+gain+' 🍅'):(streak?'😳 好像番茄被月巴偷偷拿走了……（+1 🍅）':('🎉 收获 '+gain+' 个 🍅')); updateTravelIcon(); }
-function tvUpdateHarvest(){ const b=$('tvHarvestBtn'); if(b)b.style.display=tvSlotReady()?'':'none'; const h=$('tvHomeTab'); if(h){ const t=tvFresh(); h.classList.toggle('lit',!!(t.homeRewardReady&&t.homeReward&&t.homeReward.n>0)); } }
+function tvUpdateHarvest(){ const b=$('tvHarvestBtn'); if(b)b.style.display=tvSlotReady()?'':'none'; const h=$('tvHomeTab'); if(h){ const t=tvFresh(); h.classList.toggle('lit',!!(t.homeRewardReady&&t.homeReward&&t.homeReward.n>0)); } const gb=$('tvGambleBtn'); if(gb)gb.textContent=gambleFresh().playing?'🎲 对赌中':'🎲 对赌'; }
+/* ---------------- 受保护单调时钟（防调系统时间作弊） ----------------
+   原理：页内时间用 performance.now() 的「流逝」推进 S.clock.base，玩家在页内改系统时间不会让 base 跳变；
+   读档时用 Date.now()-S.lastSave 补齐离线流逝（只补正值，回拨不前进）；若检测到回拨（real 明显小于历史最大）
+   则把 base 抬到历史最大并冻结，玩家必须用真实时间追上才能继续。纯前端无法完全杜绝「关页后向前调时间」，
+   但页内改时间被完全免疫、回拨会被惩罚。 */
+function clockNow(){ const c=S.clock; return (c&&c.base)?c.base:now(); }
+function clockInit(){
+  if(!S.clock||typeof S.clock!=='object')S.clock={base:0,perf:0,wallMax:0,lastReal:0};
+  const c=S.clock, real=now();
+  const hasPerf=(typeof performance!=='undefined'&&performance&&performance.now);
+  const p=hasPerf?performance.now():0;
+  if(!c.base){ c.base=real; c.wallMax=real; c.perf=p; c.lastReal=real; return; }
+  const off=real-(S.lastSave||real);
+  c.base+=Math.max(0,off);                                            // 离线流逝（回拨不前进）
+  if(real<(c.wallMax||0)-60000)c.base=Math.max(c.base,c.wallMax||0);  // 回拨：冻结到历史最大
+  c.perf=p; c.lastReal=real;
+  c.wallMax=Math.max(c.wallMax||0,real);
+}
+function clockTick(){
+  const c=S.clock; if(!c||!c.base)return;
+  const real=now();
+  let dp;
+  if(typeof performance!=='undefined'&&performance&&performance.now){ const p=performance.now(); dp=p-(c.perf||p); c.perf=p; }
+  else { dp=real-(c.lastReal||real); c.lastReal=real; }
+  if(dp>0)c.base+=dp;
+  if(real>(c.wallMax||0))c.wallMax=real;
+}
+
+/* ---------------- 金币对赌（赌大小） ----------------
+   每天一次：用「当前 12 小时收入」的 10%~100% 金币下注，赢了换番茄；赢了可继续用手上番茄连赌，倍率递增，输了清零。
+   数值全部集中在下方常量，方便后续调整。中途关窗不结束：对局状态存在 S.gamble，重开按 phase 恢复。 */
+const GAMBLE_WIN_P=0.48;                                          // 单轮胜率
+const GAMBLE_TIERS=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0];     // 12h 收入的下注档位
+const GAMBLE_BASE_TOMATO=200;                                     // 100% 档首轮赢了给多少番茄（其余档位按比例）
+const GAMBLE_MULT=[2,2.5,3,4];                                    // 第 2~5 轮赢了时，对「手上番茄」的倍率
+const GAMBLE_MAXROUND=5;                                          // 最多连赌轮数（第 5 轮赢了自动结算）
+const GAMBLE_ROLL_MS=1450;                                        // 骰子翻滚动画时长（略长于 CSS gbshake 的 1.4s，确保动画完整播完）
+const GAMBLE_HOLD_MS=1000;                                        // 点数出来后停留多久，再弹出结算/继续的窗口
+function gambleFresh(){
+  if(!S.gamble||typeof S.gamble!=='object')S.gamble={};
+  const g=S.gamble;
+  if(g.lastDay==null)g.lastDay='';
+  if(g.playing==null)g.playing=false;
+  if(g.phase==null)g.phase='pick';
+  if(g.round==null)g.round=0;
+  if(g.tier==null)g.tier=0;
+  if(g.stake==null)g.stake=0;
+  if(g.hand==null)g.hand=0;
+  if(g.mode==null)g.mode='coin';
+  return g;
+}
+function gamble12hIncome(){ return Math.max(1,Math.round(codeRewardGold()/2)); }          // 当前 12 小时金币收入
+function gambleTierGold(pct){ return Math.max(1,Math.round(gamble12hIncome()*pct)); }      // 档位对应的金币
+function gambleTierTomato(pct){ return Math.max(1,Math.round(GAMBLE_BASE_TOMATO*pct)); }   // 该档首轮赢了给多少番茄
+function gambleMult(round){ return GAMBLE_MULT[round-2]||1; }                              // 第 round 轮赢了时的倍率
+function gambleUsedToday(){ return gambleFresh().lastDay===dayKey(clockNow()); }
+function gambleEntry(){ if(!dex2Unlocked()){ toast('🔒 第一图鉴集齐'+DEX1_MIN+'个月巴后可解锁旅行！'); return; } openGamble(); }
+function openGamble(){
+  const g=gambleFresh();
+  if(g.playing){ gambleRender(); return; }   // 对局未结束：按 phase 恢复，继续赌
+  if(gambleUsedToday()){ openModal('🎲 金币对赌', '<p style="text-align:center;font-size:14px;color:#6b5b3e;margin:18px 0 14px">今天已经赌过啦，明天再来吧～</p><p style="text-align:center"><button class="btn" onclick="closeModal()">知道了</button></p>'); return; }
+  openModal('🎲 金币对赌', gamblePickHTML());
+}
+function gambleRender(){
+  const g=gambleFresh();
+  if(g.phase==='bet'){ openModal('🎲 第 '+g.round+' 轮', gambleBetHTML()); return; }
+  if(g.phase==='choose'){ openModal('🎉 赢了！', gambleChooseHTML(g.hand)); return; }
+  openModal('🎲 金币对赌', gamblePickHTML());
+}
+function gamblePickHTML(){
+  let h='<p style="text-align:center;color:#48614a;font-size:13px;margin:2px 0 10px">用金币换番茄，和月巴赌一把大小。<br>赢了拿番茄，输了金币归月巴（每天一次）。</p><div class="gb-tiers">';
+  GAMBLE_TIERS.forEach(function(pct,i){
+    const gold=gambleTierGold(pct), tom=gambleTierTomato(pct), can=S.coins>=gold;
+    h+='<button class="gb-tier'+(can?'':' off')+'" onclick="gamblePick('+i+')">'
+      +'<span class="gb-tier-pct">'+Math.round(pct*100)+'%</span>'
+      +'<span class="gb-tier-gold">🪙 '+fmt(gold)+'</span>'
+      +'<span class="gb-tier-tom">🍅 '+tom+'</span></button>';
+  });
+  h+='</div><p style="text-align:center;color:#a08a63;font-size:11px;margin:10px 0 0">当前金币 🪙 '+fmt(S.coins)+'</p>';
+  h+='<p style="text-align:center;margin-top:8px"><button class="btn" onclick="closeModal()">收下离开</button></p>';
+  return h;
+}
+function gamblePick(i){
+  const g=gambleFresh(), pct=GAMBLE_TIERS[i], gold=gambleTierGold(pct);
+  if(S.coins<gold){ toast('🪙 金币不够这个档位'); return; }
+  S.coins-=gold; const cb=$('coinTxt'); if(cb)cb.textContent=fmt(S.coins);
+  g.lastDay=dayKey(clockNow()); g.playing=true; g.phase='bet'; g.round=1; g.tier=i; g.stake=gold; g.hand=0; g.mode='coin';
+  save(); openModal('🎲 第 1 轮', gambleBetHTML());
+}
+function gambleBetHTML(){
+  const g=gambleFresh();
+  const amt=g.round<=1?('🪙 '+fmt(g.stake)):('🍅 '+fmt(g.stake));
+  let h='<p style="text-align:center;color:#48614a;font-size:13px;margin:2px 0 4px">第 '+g.round+' / '+GAMBLE_MAXROUND+' 轮 · 赌注 '+amt+'</p>';
+  h+='<p style="text-align:center;color:#a08a63;font-size:11px;margin:0 0 8px">押大（4·5·6）还是押小（1·2·3）？赢了番茄到手，还能继续加注。</p>';
+  h+='<div class="gb-die" id="gbDie">🎲</div>';
+  h+='<p id="gbBetMsg" style="text-align:center;min-height:18px;color:#e08a3c;font-weight:700;margin:4px 0 8px"></p>';
+  h+='<div class="gb-btns"><button class="btn cta" onclick="gambleRoll(\'small\')">押小 1·2·3</button><button class="btn cta" onclick="gambleRoll(\'big\')">押大 4·5·6</button></div>';
+  h+='<p style="text-align:center;margin-top:10px"><button class="btn" onclick="closeModal()">先离开（可再进来继续）</button></p>';
+  return h;
+}
+function gambleRoll(pick){
+  const g=gambleFresh();
+  if(!g.playing||g.phase!=='bet')return;
+  g.phase='rolling';   // 仅内存标记，防连点；不 save，中途关窗仍按存档里的 'bet' 恢复
+  const die=$('gbDie'); if(die)die.classList.add('roll');
+  const win=Math.random()<GAMBLE_WIN_P;
+  const hi=win?(pick==='big'):(pick!=='big');                 // 赢了点数落在玩家押的区间，输了落在另一边
+  const num=hi?(4+((Math.random()*3)|0)):(1+((Math.random()*3)|0));
+  const face=['⚀','⚁','⚂','⚃','⚄','⚅'][num-1];
+  setTimeout(function(){
+    if(die){ die.classList.remove('roll'); die.textContent=face; die.classList.add('land'); }
+    if(!win){                                                  // 输：赌注归月巴，对局结束
+      g.hand=0; g.stake=0; g.playing=false; g.phase='pick'; save();
+      setTimeout(function(){ openModal('🎲 输了', gambleLoseHTML()); },GAMBLE_HOLD_MS);
+      return;
+    }
+    const r=g.round;
+    const gain=r<=1?gambleTierTomato(GAMBLE_TIERS[g.tier]):Math.round(g.stake*gambleMult(r));
+    if(r>=GAMBLE_MAXROUND){                                    // 封顶：自动结算入袋
+      g.hand=0; g.stake=0; g.playing=false; g.phase='pick'; tvTomato(gain); save();
+      setTimeout(function(){ openModal('🎉 封顶大丰收', gambleFinalHTML(gain)); },GAMBLE_HOLD_MS);
+      return;
+    }
+    g.hand=gain; g.stake=gain; g.round=r+1; g.phase='choose'; g.mode='tomato'; save();
+    setTimeout(function(){ openModal('🎉 赢了！', gambleChooseHTML(gain)); },GAMBLE_HOLD_MS);
+  },GAMBLE_ROLL_MS);
+}
+function gambleChooseHTML(gain){
+  const g=gambleFresh(), mult=gambleMult(g.round), next=Math.round(gain*mult);
+  let h='<p style="text-align:center;font-size:15px;color:#e08a3c;font-weight:800;margin:6px 0">🍅 手上现在有 '+fmt(gain)+' 个番茄</p>';
+  h+='<p style="text-align:center;color:#a08a63;font-size:12px;margin:0 0 12px">第 '+g.round+' 轮：赢了变 '+fmt(next)+'，输了全没了。收手吗？</p>';
+  h+='<div class="gb-btns"><button class="btn" onclick="gambleCashOut()">🛑 收下 '+fmt(gain)+' 🍅</button><button class="btn cta" onclick="gambleContinue()">🔥 继续赌 ×'+mult+'</button></div>';
+  return h;
+}
+function gambleContinue(){ const g=gambleFresh(); if(!g.playing)return; g.phase='bet'; save(); openModal('🎲 第 '+g.round+' 轮', gambleBetHTML()); }
+function gambleCashOut(){ const g=gambleFresh(), gain=g.hand||0; g.hand=0; g.stake=0; g.playing=false; g.phase='pick'; tvTomato(gain); save(); openModal('🍅 收下番茄', gambleFinalHTML(gain)); }
+function gambleLoseHTML(){
+  return '<p style="text-align:center;font-size:40px;margin:6px 0">😿</p>'
+    +'<p style="text-align:center;color:#6b5b3e;font-size:14px;margin:0 0 14px">点数不对，月巴把赌注收走了……</p>'
+    +'<p style="text-align:center"><button class="btn cta" onclick="closeModal()">拍拍月巴</button></p>';
+}
+function gambleFinalHTML(gain){
+  return '<p style="text-align:center;font-size:40px;margin:6px 0">🎉</p>'
+    +'<p style="text-align:center;color:#e08a3c;font-size:17px;font-weight:800;margin:0 0 14px">收获 '+fmt(gain)+' 个 🍅！</p>'
+    +'<p style="text-align:center"><button class="btn cta" onclick="closeModal()">收下离开</button></p>';
+}
 function travelSettleIf(){ const t=tvFresh(); if(t.frog.status==='away' && t.frog.ret && now()>=t.frog.ret){ /* 离线/页面关闭导致途中那封信没寄出：回家结算前先补上，保证每趟必得 1 封 */ if((t.frog.cardsSent||0)<(t.frog.cardQuota||1)) tvSendCardIf(); tvSettle(); } }
 function travelTick(){ if(!S.travel||!S.travel.frog)return; const t=S.travel; travelSettleIf(); if(t.frog.status==='away'&&now()>=(t.cardT||0)){ t.cardT=now()+rand(10,20)*60000; tvSendCardIf(); } tvFriendPop(); const vis=$('travel'); if(vis&&vis.style.display==='flex'){ if(tvEventRoll())tvRenderScene(); tvUpdateHarvest(); tvUpdateDoor(); tvUpdateBar(); } updateTravelIcon(); }
 function tvNoteCard(c, fatId){ if(!TV_LETTERS[c]||!fatId)return; const t=tvFresh(); if(!t.cardWho)t.cardWho={}; if(!t.cardFirst)t.cardFirst={}; if(!t.cardMood)t.cardMood={}; if(t.cardFirst[c]==null)t.cardFirst[c]=fatId; if(!t.cardWho[c])t.cardWho[c]=[]; if(t.cardWho[c].indexOf(fatId)<0)t.cardWho[c].push(fatId); }
@@ -5247,6 +5412,7 @@ function checkDexEvent(){
   if(sfx.dex) sfx.dex(); else sfx.coin();
 }
 function tick(){
+  clockTick();
   syncGrowthSpeed(); // 兜底：倍率若被改动（番茄钟/加速器），先把已获得的生长进度按旧倍率结清
   fastCoolTick();
   checkDexEvent();
@@ -6088,6 +6254,7 @@ function openAch(){
 /* ---------------- 初始化 ---------------- */
 function init(){
   const hasSave=load();
+  clockInit();
   syncGrowthSpeed(); // 记录读档时的生长倍率基准（只登记不折算：存档里的进度已按当前倍率计算）
   // 累计赚取金币（成就用）：老存档没有这个字段，用当前余额补一个起点；之后只由 addCoins 累加
   if(S.totalCoins==null) S.totalCoins=Math.max(0,S.coins||0);
