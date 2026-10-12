@@ -5260,7 +5260,17 @@ const TV_PITY_LINES=[
   '🍅 番茄把重复的信整齐收好：「每一封都值得珍惜，哪怕是同一封。」',
   '🍅 番茄蹭蹭月巴的鼻尖：「我觉得，下一封肯定是新的信！」',
   '🍅 番茄哼起轻快的小调：「今天的失望，是明天惊喜的伏笔。」',
-  '🍅 番茄握住月巴的手：「我们还有好多好多旅程要走呢。」'
+  '🍅 番茄握住月巴的手：「我们还有好多好多旅程要走呢。」',
+  '🍅 番茄仰头看着 {name}：「辛苦啦，走了那么远的路，先坐下歇歇吧。」',
+  '🍅 番茄牵起 {name} 的手：「没关系，我等你，多久都没关系。」',
+  '🍅 番茄轻轻拍着 {name} 的背：「重要的是你平安回来了。」',
+  '🍅 番茄对 {name} 眨眨眼：「先来想想下一趟旅行，想去什么地方吧。」',
+  '🍅 番茄把热汤端给 {name}：「先暖暖身子，有汤，也有番茄。」',
+  '🍅 番茄抱住 {name}：「你带回来的每一封信，我都有好好收着。」',
+  '🍅 番茄靠在 {name} 肩头：「就把信的事先放一边，好不好？」',
+  '🍅 番茄摸摸 {name} 的头：「你已经走了这么远，真的很厉害啦。」',
+  '🍅 番茄朝 {name} 笑了笑：「新信说不定正在路上，明天就到了。」',
+  '🍅 番茄朝着 {name} 笑：「就当出去旅游了嘛。」'
 ];
 function tvPity(){ const t=tvFresh(); return Math.max(0,Math.min(TV_PITY_MAX,t.cardPity||0)); }
 function tvPityColor(n){ const p=Math.max(0,Math.min(1,n/TV_PITY_MAX)); const g=Math.round(255-216*p); return 'rgb(255,'+g+','+g+')'; }
@@ -5458,7 +5468,7 @@ function tvEnterHome(){ const t=tvFresh(); let changed=false;
   /* 重复累计条只在「打开室内」时结算，旅行途中不更新，避免信件未拆就提前亮起剧透 */
   if(t.pityPending!=null){ t.cardPity=Math.max(0,Math.min(TV_PITY_MAX,t.pityPending)); t.pityPending=null; changed=true; }
   const pages=[];
-  if(t.pityComfort){ t.pityComfort=false; changed=true; const line=TV_PITY_LINES[(Math.random()*TV_PITY_LINES.length)|0]; pages.push('<p style="text-align:center;font-size:40px;margin:6px 0">💌</p><p style="text-align:center;color:#48614a">又是一封重复的信……</p><p style="text-align:center;font-weight:700;color:#e08a3c;line-height:1.7">'+escHTML(line)+'</p>'); }
+  if(t.pityComfort){ t.pityComfort=false; changed=true; const line=TV_PITY_LINES[(Math.random()*TV_PITY_LINES.length)|0]; const _nm=(t.homeId&&typeById(t.homeId))?typeById(t.homeId).name:((t.frog&&t.frog.fatId&&typeById(t.frog.fatId))?typeById(t.frog.fatId).name:'月巴'); const _lt=line.split('{name}').join(_nm); pages.push('<p style="text-align:center;font-size:40px;margin:6px 0">💌</p><p style="text-align:center;color:#48614a">又是一封重复的信……</p><p style="text-align:center;font-weight:700;color:#e08a3c;line-height:1.7">'+escHTML(_lt)+'</p>'); }
   let hasReward=false;
   if(t.homeRewardReady&&t.homeReward&&t.homeReward.n>0){ const n=t.homeReward.n; const nm=t.homeId&&typeById(t.homeId)?typeById(t.homeId).name:'月巴'; t.homeRewardReady=false; t.homeReward=null; t.tomato=(t.tomato||0)+n; changed=true; hasReward=true; pages.push('<p style="text-align:center;font-size:40px;margin:6px 0">🐤</p><p style="text-align:center"><b>'+escHTML(nm)+'</b> 回家啦！它把旅途中攒下的 <b style="color:#e08a3c">'+n+'</b> 个 🍅 送给了你</p>'); }
   if(changed)save();
