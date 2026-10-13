@@ -325,6 +325,31 @@
   body.gb-rolling #modal-head .iconbtn{display:none!important;}   /* 开骰期间锁死弹窗：隐藏关闭 ✕ */
   .tv-yf{position:absolute;width:64px;height:64px;animation:tvbob 2.4s ease-in-out infinite;}
   @keyframes tvbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+  /* 偷番茄的月巴：庭院里同步显示为黑色剪影 */
+  .tv-yf.steal-silhouette .tv-traveler{filter:brightness(0) drop-shadow(0 0 9px rgba(255,120,90,.7));}
+  .tv-yf.steal-silhouette{animation:tvbob 1.4s ease-in-out infinite;}
+  /* 月巴偷番茄：偷窃弹窗（黑色遮罩剪影）*/
+  .tv-steal{text-align:center;padding:2px;}
+  .tv-steal-stage{position:relative;height:136px;margin:2px auto 10px;display:flex;align-items:center;justify-content:center;border-radius:16px;overflow:hidden;
+    background:radial-gradient(circle at 50% 40%,#2c2440 0%,#141020 74%);box-shadow:inset 0 0 28px rgba(0,0,0,.65);}
+  .tv-steal-fat{width:98px;height:98px;filter:brightness(0) drop-shadow(0 0 9px rgba(255,120,90,.55));animation:tvStealBob 1.6s ease-in-out infinite;}
+  .tv-steal-fat svg,.tv-steal-fat .ybimg{width:100%;height:100%;display:block;}
+  .tv-steal-tom{position:absolute;right:calc(50% - 82px);top:56%;font-size:22px;animation:tvStealTom 1.1s ease-in-out infinite;}
+  .tv-steal-msg{margin:2px 0 3px;font-size:14px;font-weight:800;color:#8a3226;}
+  .tv-steal-sub{margin:0 0 11px;font-size:13px;color:#6b5b3e;}
+  .tv-steal-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+  .tv-steal-btns .btn{flex:1 1 auto;min-width:120px;}
+  @keyframes tvStealBob{0%,100%{transform:translateY(0) rotate(-3deg);}50%{transform:translateY(-6px) rotate(3deg);}}
+  @keyframes tvStealTom{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-4px) scale(1.14);}}
+  /* 捉拿小游戏 */
+  .tv-sg{display:flex;flex-direction:column;gap:9px;}
+  .tv-sg-hud{display:flex;justify-content:space-between;gap:6px;font-size:13px;font-weight:700;color:#5a4a6a;}
+  .tv-sg-hud b{color:#c78b4a;}
+  .tv-sg-canvas{display:block;width:100%;border-radius:14px;background:linear-gradient(180deg,#fbf8ff,#efe9fb);
+    touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;cursor:pointer;}
+  .tv-sg-tip{text-align:center;font-size:12px;color:#7a6a8a;}
+  .tv-sg-res{text-align:center;font-size:14px;font-weight:800;color:#8a3226;line-height:1.7;}
+  .tv-sg-res .big{display:block;font-size:34px;margin-bottom:4px;}
   .deco-forest{--ec:#6fa84e;--eb:#eaf3df;--fl:#b5d98c;}
   .deco-sea{--ec:#4f96d6;--eb:#e0effb;--fl:#93c6ef;}
   .deco-town{--ec:#c9964a;--eb:#f8ecd6;--fl:#e8c68c;}
@@ -1036,9 +1061,19 @@ const $=id=>document.getElementById(id);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const rand=(a,b)=>a+Math.random()*(b-a);
 const randi=(a,b)=>Math.floor(rand(a,b+1));
-const now=()=>Date.now();
+/* 时区与校时：游戏内所有日期/昼夜/日历一律以「北京时间(固定 UTC+8)」为准，
+   与设备时区、玩家修改的电脑时间解耦（联网校时见 netCalibrate）。 */
+const BJ_OFF=8*3600*1000;                 // 北京时间固定 UTC+8 偏移
+let NET_OFF=0;                            // 联网校时偏移：校正后时刻 = Date.now()+NET_OFF
+const now=()=>Date.now()+NET_OFF;
+/* 从绝对时间戳取出北京时间字段（与设备时区无关）：y年/mo月(0起)/d日/h时/mi分/s秒/wd周(0=周日) */
+function bjParts(ts){ const d=new Date(ts+BJ_OFF); return {y:d.getUTCFullYear(),mo:d.getUTCMonth(),d:d.getUTCDate(),h:d.getUTCHours(),mi:d.getUTCMinutes(),s:d.getUTCSeconds(),wd:d.getUTCDay()}; }
+/* 由北京时间字段构造绝对时间戳（mo 从 0 起，越界会自动进位/借位） */
+function bjTs(y,mo,da,h,mi,s){ return Date.UTC(y,mo,da,h||0,mi||0,s||0)-BJ_OFF; }
+/* 返回一个 Date：其本地 getX() 读出的即北京时间的年月日时分（仅用于读取/展示，勿取其 getTime） */
+function bjDate(ts){ return new Date(ts+BJ_OFF+(new Date(ts)).getTimezoneOffset()*60000); }
 const pad=n=>String(n).padStart(2,'0');
-function fmtDT(t){ const d=new Date(t); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes()); }
+function fmtDT(t){ const d=bjDate(t); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes()); }
 const escHTML=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 function fmt(n){
@@ -1054,7 +1089,7 @@ function shade(hex,amt){
   const r=clamp((n>>16)+amt,0,255), g=clamp(((n>>8)&255)+amt,0,255), b=clamp((n&255)+amt,0,255);
   return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
 }
-function fmtTS(ts){ const d=new Date(ts); return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+function fmtTS(ts){ const d=bjDate(ts); return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 function inpVal(id,def){ const el=$(id); const v=el&&el.value?String(el.value).trim():''; return v||def; }
 function fmtDur(ms){
@@ -1678,7 +1713,7 @@ const MAX_SLOTS=8;
 /* 虚拟游戏时钟：约 2 现实小时 = 1 游戏年（季节/昼夜/时间条件都走虚拟时钟）
    天气变化维持原速（现实 8~18 分钟），番茄钟仍按现实时间 */
 const VIRT_MS_PER_REAL_MS=4383; // 365.25天*24h*3600s*1000 / (2h*3600s*1000)
-function gameNow(){ return new Date((S.gameEpoch||now()) + (now()-S.gameStart)*VIRT_MS_PER_REAL_MS); }
+function gameNow(){ return bjDate((S.gameEpoch||now()) + (now()-S.gameStart)*VIRT_MS_PER_REAL_MS); }
 function seasonOf(d){
   const m=d.getMonth()+1;
   if(m>=3&&m<=5)return 'spring';
@@ -2554,7 +2589,7 @@ function openModal(title,html){
   _lastModalTitle=title;
 }
 let _lastModalTitle='';
-function closeModal(){ document.body.classList.remove('gb-rolling'); $('overlay').classList.remove('show'); closeFatDetail(); pomoModalOpen=false; if(_afterClose){ const f=_afterClose; _afterClose=null; f(); } }
+function closeModal(){ document.body.classList.remove('gb-rolling'); $('overlay').classList.remove('show'); closeFatDetail(); pomoModalOpen=false; if(_tvStealWho){ _tvStealWho=null; tvStealSyncYard(); } if(_afterClose){ const f=_afterClose; _afterClose=null; f(); } }
 let _afterClose=null;
 let dexPage=1; // 图鉴页码：1=第一图鉴 2=第二图鉴
 let tvBookPage='letter'; // 旅行图鉴页：letter=信件页 special=特产页
@@ -2934,7 +2969,7 @@ function exportSaveFile(){
   const blob=new Blob([json],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url; a.download='yueba-save-'+new Date().toISOString().slice(0,10)+'.json';
+  a.href=url; const _bp=bjParts(now()); a.download='yueba-save-'+_bp.y+'-'+pad(_bp.mo+1)+'-'+pad(_bp.d)+'.json';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(function(){ URL.revokeObjectURL(url); },1000);
   toast('✅ 存档已导出为文件');
@@ -3320,7 +3355,7 @@ function pomoAddPreset(){
 /* ---------------- 任务管理 ---------------- */
 const TASK_CATS=['💼 工作','📚 学习','🏠 生活','🎯 个人'];
 let tkCalY=0, tkCalM=0, tkSelDay=''; // 待办日历：当前年月 + 选中日期(dayKey)
-function dayKeyOf(off){ const d=new Date(now()+off*86400000); return dayKey(d.getTime()); }
+function dayKeyOf(off){ return dayKey(now()+off*86400000); }
 function taskById(id){ return (S.tasks||[]).find(t=>t.id===id); }
 function taskDayLabel(key){
   const today=dayKey(now());
@@ -3330,7 +3365,7 @@ function taskDayLabel(key){
   return `📅 ${d.getMonth()+1}月${d.getDate()}日`;
 }
 function mdKey(key){ if(!key)return ''; const d=new Date(key+'T00:00:00'); return (d.getMonth()+1)+'月'+d.getDate()+'日'; }
-function nextDayKey(key){ const d=new Date(key+'T00:00:00'); d.setDate(d.getDate()+1); return dayKey(d.getTime()); }
+function nextDayKey(key){ const d=new Date(key+'T00:00:00'); d.setDate(d.getDate()+1); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
 /* 任务是否覆盖某天：设定了起止日期(from~to)按范围判断，否则按单日 due 判断 */
 function taskCovers(t,key){ if(t&&t.from&&t.to)return key>=t.from&&key<=t.to; return !!(t&&t.due)&&t.due===key; }
 /* 未完成且已超过截止日：持续显示在待办日历下方，直到勾选完成 */
@@ -3850,10 +3885,10 @@ function openPomo(){
   if(sl) sl.value=curMin;
   const ckLbl=$('pomoCustomLbl'); if(ckLbl) ckLbl.textContent=curMin+'分'+(pomoBusy()?'（下次）':'');
 }
-function dayKey(ts){ const d=new Date(ts); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
-function startOfDay(ts){ const d=new Date(ts); d.setHours(0,0,0,0); return d.getTime(); }
-function startOfWeek(ts){ const d=new Date(ts); d.setHours(0,0,0,0); const wd=d.getDay()||7; d.setDate(d.getDate()-wd+1); return d.getTime(); }
-function startOfMonth(ts){ const d=new Date(ts); d.setHours(0,0,0,0); d.setDate(1); return d.getTime(); }
+function dayKey(ts){ const p=bjParts(ts); return `${p.y}-${pad(p.mo+1)}-${pad(p.d)}`; }
+function startOfDay(ts){ const p=bjParts(ts); return bjTs(p.y,p.mo,p.d,0,0,0); }
+function startOfWeek(ts){ const p=bjParts(ts); const wd=p.wd||7; return bjTs(p.y,p.mo,p.d-wd+1,0,0,0); }
+function startOfMonth(ts){ const p=bjParts(ts); return bjTs(p.y,p.mo,1,0,0,0); }
 function openPomoStats(period){
   const hist=S.pomo.history.slice().sort((a,b)=>b.t-a.t);
   const nowTs=now();
@@ -3876,7 +3911,7 @@ function openPomoStats(period){
       if(!list.length)continue;
       const dsum=list.reduce((a,r)=>a+r.d,0);
       total+=dsum; cnt+=list.length;
-      const dt=new Date(ds);
+      const dt=bjDate(ds);
       dayRows.push(`<div class="pstat-row"><b>周${wd[dt.getDay()]} · ${dt.getMonth()+1}/${dt.getDate()}</b><span>${list.length}次</span><em>${fmtDur(dsum)}</em></div>`);
     }
     rows=dayRows.length?dayRows.join(''):`<div class="empty">本周还没有番茄记录</div>`;
@@ -3953,10 +3988,10 @@ function pomoTodaySummary(){
 /* 连续打卡天数：今天没打卡则从昨天起算，避免未到当天就断签 */
 function pomoStreak(){
   const days=new Set(S.pomo.history.map(r=>dayKey(r.t)));
-  const d=new Date(now());
-  if(!days.has(dayKey(d.getTime()))) d.setDate(d.getDate()-1);
+  let t=now();
+  if(!days.has(dayKey(t))) t-=86400000;
   let n=0;
-  while(days.has(dayKey(d.getTime()))){ n++; d.setDate(d.getDate()-1); }
+  while(days.has(dayKey(t))){ n++; t-=86400000; }
   return n;
 }
 function pomoEditRecord(idx){
@@ -3995,7 +4030,7 @@ function pomoDelRecord(idx){
 }
 let calY=0, calM=0;
 function openPomoCalendar(){
-  const gd=new Date(now());
+  const gd=bjDate(now());
   calY=gd.getFullYear(); calM=gd.getMonth();
   renderPomoCalendar();
 }
@@ -4018,14 +4053,14 @@ function renderPomoCalendar(){
   const days=new Date(calY,calM+1,0).getDate();
   const map={};
   for(const r of S.pomo.history){
-    const dd=new Date(r.t);
+    const dd=bjDate(r.t);
     if(dd.getFullYear()===calY && dd.getMonth()===calM){
       (map[dd.getDate()]=map[dd.getDate()]||[]).push(r);
     }
   }
   let grid='';
   for(let i=0;i<startWd;i++) grid+='<div class="cal-cell empty"></div>';
-  const gd=new Date(now());
+  const gd=bjDate(now());
   for(let day=1;day<=days;day++){
     const recs=map[day]||[];
     const total=recs.reduce((a,r)=>a+r.d,0);
@@ -4058,7 +4093,7 @@ function calMove(delta){ calM+=delta; if(calM<0){calM=11;calY--;} if(calM>11){ca
 function calDetail(day){
   const el=$('calDetail'); if(!el)return;
   const list=[];
-  S.pomo.history.forEach((r,idx)=>{ const d=new Date(r.t); if(d.getFullYear()===calY&&d.getMonth()===calM&&d.getDate()===day) list.push({idx,r}); });
+  S.pomo.history.forEach((r,idx)=>{ const d=bjDate(r.t); if(d.getFullYear()===calY&&d.getMonth()===calM&&d.getDate()===day) list.push({idx,r}); });
   list.sort((a,b)=>b.r.t-a.r.t);
   const total=list.reduce((a,x)=>a+x.r.d,0);
   el.innerHTML=`<div class="cal-dtitle">${calY}/${calM+1}/${day} · ${list.length}次 · 共${fmtDur(total)}</div>
@@ -4070,25 +4105,26 @@ function calDetail(day){
 /* ---------------- 统计与日历 ---------------- */
 let stCalType='pomo', stCalY=0, stCalM=0, stCalDay=0; // 统计页日历：类型/年月/选中日
 let stMainTab='overview', stTrendMode='7d', stSlotMode='all', stSlotView='period'; // 主tab / 趋势维度 / 时段范围 / 时段视图
-function startOfYear(ts){ const d=new Date(ts); d.setHours(0,0,0,0); d.setMonth(0,1); return d.getTime(); }
+function startOfYear(ts){ const p=bjParts(ts); return bjTs(p.y,0,1,0,0,0); }
 function statRange(ms){ const list=S.pomo.history.filter(r=>r.t>=ms); return {cnt:list.length, dur:list.reduce((a,r)=>a+r.d,0)}; }
 function trendLastNDays(n){
   const rows=[]; const nowTs=now();
   for(let i=n-1;i>=0;i--){
     const ds=startOfDay(nowTs)-i*86400000;
     const list=S.pomo.history.filter(r=>r.t>=ds && r.t<ds+86400000);
-    const d=new Date(ds);
+    const d=bjDate(ds);
     rows.push({key:dayKey(ds), label:['日','一','二','三','四','五','六'][d.getDay()], dur:list.reduce((a,r)=>a+r.d,0)});
   }
   return rows;
 }
 function trendMonths(n){
-  const rows=[]; const nowTs=now(), nowD=new Date(nowTs);
+  const rows=[]; const nowTs=now(), nowP=bjParts(nowTs);
   for(let i=n-1;i>=0;i--){
-    const s=new Date(nowD.getFullYear(), nowD.getMonth()-i, 1).getTime();
-    const e=i===0?nowTs+1:new Date(nowD.getFullYear(), nowD.getMonth()-i+1, 1).getTime();
+    const s=bjTs(nowP.y, nowP.mo-i, 1, 0,0,0);
+    const e=i===0?nowTs+1:bjTs(nowP.y, nowP.mo-i+1, 1, 0,0,0);
     const list=S.pomo.history.filter(r=>r.t>=s && r.t<e);
-    rows.push({key:`${new Date(s).getFullYear()}-${new Date(s).getMonth()+1}`, label:`${new Date(s).getMonth()+1}月`, dur:list.reduce((a,r)=>a+r.d,0)});
+    const sp=bjParts(s);
+    rows.push({key:`${sp.y}-${sp.mo+1}`, label:`${sp.mo+1}月`, dur:list.reduce((a,r)=>a+r.d,0)});
   }
   return rows;
 }
@@ -4102,11 +4138,11 @@ function timeSlotDist(mode, view){
     const s=startOfMonth(now());
     list=list.filter(r=>r.t>=s);
   }else if(mode==='day' && stCalDay){
-    const s=new Date(stCalY,stCalM,stCalDay).getTime(), e=s+86400000;
+    const s=bjTs(stCalY,stCalM,stCalDay,0,0,0), e=s+86400000;
     list=list.filter(r=>r.t>=s && r.t<e);
   }
   for(const r of list){
-    const h=new Date(r.s).getHours();
+    const h=bjParts(r.s).h;
     if(view==='hour') slots[h].ms+=r.d;
     else slots[h>=5&&h<12?0:(h>=12&&h<18?1:2)].ms+=r.d;
   }
@@ -4182,7 +4218,7 @@ function statCalGrid(){
     const key=`${Y}-${pad(M+1)}-${pad(day)}`;
     const isToday=key===todayKey, isSel=day===stCalDay;
     if(stCalType==='pomo'){
-      const recs=S.pomo.history.filter(r=>{const d=new Date(r.t); return d.getFullYear()===Y&&d.getMonth()===M&&d.getDate()===day;});
+      const recs=S.pomo.history.filter(r=>{const d=bjDate(r.t); return d.getFullYear()===Y&&d.getMonth()===M&&d.getDate()===day;});
       const total=recs.reduce((a,r)=>a+r.d,0);
       grid+=`<div class="cal-cell ${total?'has':''} ${isToday?'today':''} ${isSel?'sel':''}" onclick="statCalDay(${day})">
         ${calFill(total)}
@@ -4204,15 +4240,17 @@ function tlColor(n){ let h=0; const s=String(n||''); for(let i=0;i<s.length;i++)
 function statTimelineHTML(recs, dayTs){
   const DAY=1440, TL=672; // 24 小时 * 28px
   const fmtHm=m=>`${pad(Math.floor(m/60)%24)}:${pad(Math.floor(m%60))}`;
-  const selTs=dayTs||(stCalDay?new Date(stCalY,stCalM,stCalDay).getTime():now());
+  const selTs=dayTs||(stCalDay?bjTs(stCalY,stCalM,stCalDay,0,0,0):now());
   const isToday=dayKey(selTs)===dayKey(now());
-  const nowMin=new Date(now()).getHours()*60+new Date(now()).getMinutes();
+  const nowP=bjParts(now());
+  const nowMin=nowP.h*60+nowP.mi;
   let hrs='', bars='';
   for(let h=0;h<24;h++) hrs+=`<div class="tl-h" style="top:${h*28}px">${pad(h)}:00</div>`;
   const names=[...new Set(recs.map(r=>r.n))];
   for(const r of recs){
     const st=r.s||r.t-r.d;
-    const sm=new Date(st).getHours()*60+new Date(st).getMinutes();
+    const sp=bjParts(st);
+    const sm=sp.h*60+sp.mi;
     const dm=r.d/60000;
     const top=sm/DAY*TL, hgt=Math.max(dm/DAY*TL,14);
     const c=tlColor(r.n);
@@ -4226,10 +4264,10 @@ function statTimelineHTML(recs, dayTs){
 function statCalDetailHTML(){
   const day=stCalDay;
   const key=`${stCalY}-${pad(stCalM+1)}-${pad(day)}`;
-  const dayS=new Date(stCalY,stCalM,day).getTime();
+  const dayS=bjTs(stCalY,stCalM,day,0,0,0);
   if(stCalType==='pomo'){
     const list=[];
-    S.pomo.history.forEach((r,idx)=>{ const d=new Date(r.t); if(d.getFullYear()===stCalY&&d.getMonth()===stCalM&&d.getDate()===day) list.push({idx,r}); });
+    S.pomo.history.forEach((r,idx)=>{ const d=bjDate(r.t); if(d.getFullYear()===stCalY&&d.getMonth()===stCalM&&d.getDate()===day) list.push({idx,r}); });
     list.sort((a,b)=>b.r.t-a.r.t);
     const total=list.reduce((a,x)=>a+x.r.d,0);
     const done=(S.tasks||[]).filter(t=>t.doneAt && t.doneAt>=dayS && t.doneAt<dayS+86400000);
@@ -4278,7 +4316,7 @@ function statCalTab(type){
 function openStats(){
   pomoModalOpen=false;
   const nowTs=now();
-  if(!stCalY){ stCalY=new Date(nowTs).getFullYear(); stCalM=new Date(nowTs).getMonth(); stCalDay=0; }
+  if(!stCalY){ const np=bjParts(nowTs); stCalY=np.y; stCalM=np.mo; stCalDay=0; }
   openModal('📊 统计与日历', `<div id="stBody"></div>`);
   renderStBody();
 }
@@ -4379,12 +4417,12 @@ const HM_COLORS=['#ebedf0','#ffc9c9','#ff8a8a','#ff4d4d','#c41e1e'];
 function heatmapHTML(){
   const nowTs=now();
   const todayS=startOfDay(nowTs);
-  const todayD=new Date(todayS);
+  const todayD=bjDate(todayS);
   const monthS=startOfMonth(nowTs); // 本月1号0点
-  const nextM=new Date(todayD.getFullYear(), todayD.getMonth()+1, 1).getTime(); // 下月1号0点
+  const nextM=bjTs(todayD.getFullYear(), todayD.getMonth()+1, 1, 0,0,0); // 下月1号0点
   const daysInMonth=Math.round((nextM-monthS)/86400000);
   const midDate=monthS+Math.floor((daysInMonth-1)/2)*86400000; // 月中（约15号）
-  const midD=new Date(midDate);
+  const midD=bjDate(midDate);
   const midDow=(midD.getDay()+6)%7;                 // 月中所在周的周一偏移
   const midWeekMon=midDate-midDow*86400000;
   const totalWeeks=52;                              // 一年宽度
@@ -4402,7 +4440,7 @@ function heatmapHTML(){
   let grid='', lbl='', lastM=-1;
   for(let w=0;w<totalWeeks;w++){
     const fc=cells[w*7];
-    if(fc){ const m=new Date(fc.t).getMonth()+1; if(m!==lastM){ lbl+=`<div class="hm-lbl">${m}月</div>`; lastM=m; } else lbl+='<div class="hm-lbl"></div>'; }
+    if(fc){ const m=bjDate(fc.t).getMonth()+1; if(m!==lastM){ lbl+=`<div class="hm-lbl">${m}月</div>`; lastM=m; } else lbl+='<div class="hm-lbl"></div>'; }
     else lbl+='<div class="hm-lbl"></div>';
     for(let r=0;r<7;r++){
       const c=cells[w*7+r];
@@ -4423,8 +4461,9 @@ function pomoReport(period){
   const nowTs=now();
   const isWeek=period==='week';
   const curS=isWeek?startOfWeek(nowTs):startOfMonth(nowTs);
-  const curE=isWeek?curS+7*86400000:new Date(new Date(nowTs).getFullYear(), new Date(nowTs).getMonth()+1, 1).getTime();
-  const prevS=isWeek?curS-7*86400000:new Date(new Date(curS).getFullYear(), new Date(curS).getMonth()-1, 1).getTime();
+  const nowP=bjParts(nowTs), curP=bjParts(curS);
+  const curE=isWeek?curS+7*86400000:bjTs(nowP.y, nowP.mo+1, 1, 0,0,0);
+  const prevS=isWeek?curS-7*86400000:bjTs(curP.y, curP.mo-1, 1, 0,0,0);
   const prevE=curS;
   const cur=S.pomo.history.filter(r=>r.t>=curS && r.t<curE);
   const prev=S.pomo.history.filter(r=>r.t>=prevS && r.t<prevE);
@@ -4457,7 +4496,7 @@ function pomoReport(period){
 /* 每周日晚 / 每月最后一天晚 20 点后：自动生成一次报告 */
 function pomoReportCheck(){
   if(!S.pomo.reportSeen) S.pomo.reportSeen={week:'',month:''};
-  const d=new Date(now()), h=d.getHours(), rw=S.pomo.reportSeen;
+  const d=bjDate(now()), h=d.getHours(), rw=S.pomo.reportSeen;
   if(d.getDay()===0 && h>=20){
     const wk=dayKey(startOfWeek(now()));
     if(rw.week!==wk){ rw.week=wk; save(); pomoReport('week'); return; }
@@ -4867,6 +4906,7 @@ function tvFresh(){
   else if(!isFinite(t.tomato))t.tomato=0;   // 异常存档（NaN/Infinity）清零，避免污染后续计算，也不白送 300
   if(t.harvestT==null)t.harvestT=now()+rand(10,30)*60000;
   if(t.eventT==null)t.eventT=now()+rand(10,30)*60000;
+  if(t.stealWant==null)t.stealWant=false;   // 本次庭院刷新是否刷出「偷番茄的月巴」（10% 概率）
   if(t.bgIdx==null)t.bgIdx=(Math.random()*TV_BGS.length)|0;
   return t;
 }
@@ -5029,6 +5069,7 @@ function tvEventRoll(){
   if(t.eventT==null)t.eventT=now()+rand(10,30)*60000;
   if(t.yardEv && t.eventT>now())return false;
   t.eventT=now()+rand(10,30)*60000;
+  t.stealWant=(Math.random()<0.10);   // 每次庭院刷新，10% 概率刷出「偷番茄的月巴」
   const exclude=t.frog.status==='away'?t.frog.fatId:null;
   const pool=tvOwnedFats().filter(function(o){return o.id!==exclude;});
   const tmp=pool.slice(), pick=[];
@@ -5056,12 +5097,18 @@ function tvYardHTML(t){
   const exclude=t.frog.status==='away'?t.frog.fatId:null;
   const shown=(t.yardEv||[]).filter(function(o){return o.id!==exclude;});
   shown.forEach(function(o){
-    h+='<div class="tv-yf" style="left:'+o.x+'%;top:'+o.y+'%"><span class="tv-traveler">'+fatSVG(typeById(o.id))+'</span></div>';
+    h+='<div class="tv-yf'+(o.id===_tvStealWho?' steal-silhouette':'')+'" style="left:'+o.x+'%;top:'+o.y+'%"><span class="tv-traveler">'+fatSVG(typeById(o.id))+'</span></div>';
   });
   h+='</div>';
   if(shown.length)h+='<div class="tv-note">'+t.yardTxt+'</div>';
   else h+='<div class="tv-note">🧺 庭院安安静静，先去图鉴里收集一些月巴吧</div>';
   return h;
+}
+/* 让庭院里的某只月巴同步为黑色剪影（_tvStealWho）或恢复原色：重绘庭院 DOM */
+function tvStealSyncYard(){
+  if(tvView!=='yard')return;
+  const sc=$('tvScene'); if(!sc)return;
+  sc.innerHTML=tvYardHTML(tvFresh());
 }
 function tvYardEvent(names){
   const tpl=TV_YARD_EVENTS[(Math.random()*TV_YARD_EVENTS.length)|0];
@@ -5069,6 +5116,226 @@ function tvYardEvent(names){
   // {n} 优先用第 3 只（若有），避免与互动中的 {a}/{b} 点名同一月巴而重复
   const n=names[2]||a;
   return tpl.split('{a}').join(a).split('{b}').join(b).split('{n}').join(n);
+}
+/* ---------------- 月巴偷番茄：概率触发 + 三回合捉拿小游戏 ----------------
+   触发：每次渲染庭院时按概率弹出「月巴偷番茄」窗口（带冷却与其它弹窗互斥）。
+   玩法：一条水平轨道 + 随机红色目标区，白色滑块匀速往返，玩家点击/触摸/空格停下，
+        以「滑块中心点」判定是否落在红色目标区内（闭区间）。共 3 回合，逐回合提速、缩短目标区。 */
+const TS_ROUNDS=3, TS_SLIDER_W=12, TS_SLIDER_H=52, TS_TRACK_H=16, TS_PAD=26, TS_H=220;
+const TS_SPEED0=340, TS_SPEED_STEP=35, TS_SPEED_MAX=980;
+const TS_RESULT_MS=750;                 // 结果停留时长
+const TS_WF0=0.20, TS_WF_MIN=0.07;      // 目标区宽度：起始轨道长 20% → 下限 7%
+let tsGame=null, _tvStealWho=null;
+function tvStealMaybe(){
+  if(tvView!=='yard')return;
+  const tr=$('travel'); if(!tr||tr.style.display==='none')return;   // 仅庭院可见时触发
+  const t=tvFresh();
+  if(!t.stealWant)return;                                          // 本次庭院刷新未刷出「偷番茄的月巴」
+  const ov=$('overlay'); if(ov&&ov.classList.contains('show'))return; // 已有其它弹窗时不打断，保留标记等下次
+  const exclude=t.frog.status==='away'?t.frog.fatId:null;
+  const shown=(t.yardEv||[]).filter(function(o){return o.id!==exclude;});
+  if(!shown.length)return;                                         // 庭院暂时没有月巴时保留标记
+  if((t.tomato||0)<=0)return;                                      // 没有番茄时保留标记
+  t.stealWant=false; save();
+  tvStealOpen(shown[(Math.random()*shown.length)|0].id);           // 随机挑一只庭院里的月巴来偷
+}
+function tvStealOpen(id){
+  const tp=typeById(id)||{name:'月巴'};
+  _tvStealWho=id;              // 标记这只月巴，让庭院里它也显示为黑色剪影
+  tvStealSyncYard();
+  openModal('🍅 有月巴鬼鬼祟祟',
+    '<div class="tv-steal">'
+    +'<div class="tv-steal-stage"><div class="tv-steal-fat">'+fatSVG(tp)+'</div><div class="tv-steal-tom">🍅</div></div>'
+    +'<p class="tv-steal-msg">'+escHTML(tp.name)+'正在偷你的番茄……</p>'
+    +'<p class="tv-steal-sub">是否要捉拿这个月巴？</p>'
+    +'<div class="tv-steal-btns">'
+    +'<button class="btn cta" onclick="tvStealAccept()">🚨 捉拿它</button>'
+    +'<button class="btn" onclick="tvStealDecline()">😴 放过它</button>'
+    +'</div></div>');
+}
+function tvStealDecline(){ _tvStealWho=null; tvStealSyncYard(); try{ sfx.click&&sfx.click(); }catch(e){} closeModal(); toast('你放过了它，番茄总算保住了。'); }
+function tvStealAccept(){
+  _tvStealWho=null; tvStealSyncYard();
+  try{ sfx.click&&sfx.click(); }catch(e){}
+  openModal('🎯 捉拿月巴！', tvStealGameHTML());
+  tsStart();
+}
+/* ---- 结算：三种结果文案 + 番茄奖励（成功次数越多奖励越多：10 / 20 / 30） ---- */
+function tvStealResolve(hits){
+  const reward = hits<=0 ? 0 : hits*10;
+  let title, big, msg;
+  if(hits<=0){
+    title='😱 番茄不保'; big='😱';
+    msg='月巴带着番茄溜走了……这次一颗番茄都没追回来。';
+  } else if(hits>=TS_ROUNDS){
+    title='🎉 大获全胜'; big='🎉';
+    msg='太好了，你没有损失任何番茄！这个月巴将会受到法律的审判。';
+  } else {
+    title='🥲 追回了一部分'; big='🥲';
+    msg='你追回了部分番茄。';
+  }
+  if(reward>0)tvTomato(reward); else save();
+  const tail = reward>0 ? ('🍅 奖励 +'+reward+' 个番茄！') : '🍅 这次没有奖励……';
+  openModal(title,
+    '<div class="tv-sg-res"><span class="big">'+big+'</span>'+escHTML(msg)+'<br>'
+    +(hits>0?('成功捉拿 '+hits+'/'+TS_ROUNDS+' 次<br>'):'')+tail+'</div>'
+    +'<p style="text-align:center;margin-top:14px"><button class="btn cta" onclick="closeModal()">收下</button></p>');
+}
+/* ---- 小游戏：三回合滑块停靶 ---- */
+function tvStealGameHTML(){
+  return '<div class="tv-sg">'
+    +'<div class="tv-sg-hud">'
+    +'<span>回合 <b id="tsRound">1</b>/'+TS_ROUNDS+'</span>'
+    +'<span>连击 <b id="tsCombo">0</b></span>'
+    +'<span>难度 <b id="tsSpeed">'+TS_SPEED0+'</b></span>'
+    +'</div>'
+    +'<canvas id="tsCanvas" class="tv-sg-canvas"></canvas>'
+    +'<div class="tv-sg-tip">点击 / 触摸 / 按空格 让滑块停下</div>'
+    +'</div>';
+}
+/* 目标区宽度：轨道长 × 回合系数，下限 7% 且必须大于滑块宽度的两倍 */
+function tsTargetW(g){
+  let w=g.trackLen*g.wFrac;
+  const floor=Math.max(g.trackLen*TS_WF_MIN, TS_SLIDER_W*2+1);
+  w=Math.max(w,floor);
+  return Math.min(w,g.trackLen);
+}
+function tsResize(g){
+  const cv=g.cv; if(!cv)return;
+  const parent=cv.parentNode;
+  let cssW=parent?parent.clientWidth:0;
+  if(!cssW)cssW=cv.clientWidth||320;
+  cssW=Math.max(220,Math.floor(cssW));
+  const cssH=TS_H, dpr=Math.min(2,window.devicePixelRatio||1);
+  cv.style.width=cssW+'px'; cv.style.height=cssH+'px';
+  cv.width=Math.round(cssW*dpr); cv.height=Math.round(cssH*dpr);
+  g.ctx.setTransform(dpr,0,0,dpr,0,0);
+  g.W=cssW; g.H=cssH;
+  g.trackL=TS_PAD; g.trackR=cssW-TS_PAD; g.trackLen=Math.max(1,g.trackR-g.trackL);
+  g.trackY=cssH/2;
+  g.targetW=tsTargetW(g);
+  if(g.tFrac!=null){
+    const maxX=Math.max(0,g.trackLen-g.targetW);
+    g.targetX=g.trackL+Math.min(g.tFrac*g.trackLen,maxX);
+  }
+  if(g.cFrac!=null)g.centerX=g.trackL+clamp(g.cFrac,0,1)*g.trackLen;
+}
+function tsSetupRound(g){
+  const r=g.round;
+  g.state='playing'; g.flash='';
+  g.speed=Math.min(TS_SPEED_MAX, TS_SPEED0+(r-1)*TS_SPEED_STEP);
+  g.wFrac=TS_WF0-(r-1)*(TS_WF0-TS_WF_MIN)/(TS_ROUNDS-1);
+  g.targetW=tsTargetW(g);
+  const maxX=Math.max(0,g.trackLen-g.targetW);
+  g.tFrac=maxX>0?Math.random()*(maxX/g.trackLen):0;
+  g.targetX=g.trackL+g.tFrac*g.trackLen;
+  g.centerX=g.trackL; g.cFrac=0; g.dir=1;
+  tsUpdateHUD(g);
+}
+function tsUpdateHUD(g){
+  const r=$('tsRound'), c=$('tsCombo'), s=$('tsSpeed');
+  if(r)r.textContent=g.round; if(c)c.textContent=g.combo; if(s)s.textContent=g.speed;
+}
+function tsStart(){
+  const cv=$('tsCanvas'); if(!cv)return;
+  const g={cv:cv,ctx:cv.getContext('2d'),raf:0,state:'playing',round:1,combo:0,hits:0,
+    centerX:0,cFrac:0,dir:1,speed:TS_SPEED0,targetX:0,targetW:0,tFrac:0,wFrac:TS_WF0,
+    trackL:TS_PAD,trackR:0,trackLen:0,trackY:TS_H/2,W:0,H:TS_H,lastT:performance.now(),resultT:0,flash:''};
+  tsGame=g;
+  tsResize(g);
+  tsSetupRound(g);
+  cv.addEventListener('pointerdown',tsOnInput);
+  window.addEventListener('keydown',tsOnKey);
+  window.addEventListener('resize',tsOnResize);
+  g.lastT=performance.now();
+  g.raf=requestAnimationFrame(tsLoop);
+}
+function tsDispose(){
+  const g=tsGame; if(!g)return;
+  if(g.raf)cancelAnimationFrame(g.raf);
+  g.raf=0;
+  if(g.cv)g.cv.removeEventListener('pointerdown',tsOnInput);
+  window.removeEventListener('keydown',tsOnKey);
+  window.removeEventListener('resize',tsOnResize);
+  tsGame=null;
+}
+function tsOnInput(e){ if(e&&e.cancelable)e.preventDefault(); tsHit(); }
+function tsOnKey(e){ if(e.code==='Space'||e.code==='Enter'||e.key===' '||e.key==='Enter'){ e.preventDefault(); tsHit(); } }
+function tsOnResize(){ if(tsGame)tsResize(tsGame); }
+function tsHit(){
+  const g=tsGame; if(!g||g.state!=='playing')return;   // result 状态忽略输入，防连点重复判定
+  g.state='result'; g.resultT=performance.now();
+  const c=g.centerX;
+  const hit=(c>=g.targetX && c<=g.targetX+g.targetW);  // 以滑块中心点判定，闭区间
+  if(hit){ g.combo++; g.hits++; g.flash='hit'; }
+  else { g.combo=0; g.flash='miss'; }
+  try{ if(hit){ sfx.hit&&sfx.hit(); }else{ sfx.error&&sfx.error(); } }catch(e){}
+  tsUpdateHUD(g);
+}
+function tsNextRound(){
+  const g=tsGame; if(!g)return;
+  if(g.round>=TS_ROUNDS){ tsFinish(); return; }
+  g.round++;
+  tsSetupRound(g);
+  g.lastT=performance.now();
+}
+function tsFinish(){ const g=tsGame; if(!g)return; const hits=g.hits||0; tsDispose(); tvStealResolve(hits); }
+function tsLoop(nowT){
+  const g=tsGame; if(!g)return;
+  if(!g.cv||!g.cv.isConnected){ tsDispose(); return; }   // 弹窗被关闭时自动收尾
+  let dt=(nowT-g.lastT)/1000; g.lastT=nowT;
+  if(!isFinite(dt)||dt<0)dt=0;
+  if(dt>0.05)dt=0.05;                                     // 防止切后台回来滑块瞬移
+  if(g.state==='playing'){
+    g.centerX+=g.dir*g.speed*dt;
+    if(g.centerX<=g.trackL){ g.centerX=g.trackL; g.dir=1; }
+    else if(g.centerX>=g.trackR){ g.centerX=g.trackR; g.dir=-1; }
+    g.cFrac=(g.centerX-g.trackL)/(g.trackLen||1);
+  }
+  tsDraw(g);
+  if(g.state==='result'&&nowT-g.resultT>=TS_RESULT_MS) tsNextRound();
+  if(tsGame===g)g.raf=requestAnimationFrame(tsLoop);
+}
+function tsRoundRect(ctx,x,y,w,h,r){
+  r=Math.min(r,w/2,h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+function tsDraw(g){
+  const ctx=g.ctx, W=g.W, H=g.H, ty=g.trackY, hh=TS_TRACK_H/2;
+  ctx.clearRect(0,0,W,H);
+  /* 轨道底 */
+  ctx.fillStyle='#e2dbf2';
+  tsRoundRect(ctx,g.trackL,ty-hh,g.trackLen,TS_TRACK_H,hh); ctx.fill();
+  ctx.strokeStyle='rgba(140,120,180,.35)'; ctx.lineWidth=1; ctx.stroke();
+  /* 红色目标区 */
+  ctx.save();
+  ctx.fillStyle='#e0463c'; ctx.shadowColor='rgba(224,70,60,.6)'; ctx.shadowBlur=10;
+  tsRoundRect(ctx,g.targetX,ty-hh,Math.max(2,g.targetW),TS_TRACK_H,hh); ctx.fill();
+  ctx.restore();
+  /* 滑块（12×52 圆角矩形，x 为滑块中心） */
+  const sx=g.centerX-TS_SLIDER_W/2, sy=ty-TS_SLIDER_H/2;
+  ctx.save();
+  if(g.flash==='hit'){ ctx.fillStyle='#3cc878'; ctx.shadowColor='rgba(60,200,120,.95)'; ctx.shadowBlur=20; }
+  else if(g.flash==='miss'){ ctx.fillStyle='#e0463c'; ctx.shadowColor='rgba(224,70,60,.85)'; ctx.shadowBlur=14; }
+  else { ctx.fillStyle='#ffffff'; ctx.shadowColor='rgba(60,40,90,.35)'; ctx.shadowBlur=8; ctx.shadowOffsetY=3; }
+  tsRoundRect(ctx,sx,sy,TS_SLIDER_W,TS_SLIDER_H,6); ctx.fill();
+  ctx.restore();
+  /* 中心线：提示以中心点判定 */
+  ctx.strokeStyle='rgba(90,74,106,.35)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(g.centerX,sy+7); ctx.lineTo(g.centerX,sy+TS_SLIDER_H-7); ctx.stroke();
+  /* 命中/落空反馈 */
+  if(g.flash){
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font='800 24px system-ui,-apple-system,"Microsoft YaHei",sans-serif';
+    ctx.fillStyle=g.flash==='hit'?'#2fa85e':'#d0392f';
+    ctx.fillText(g.flash==='hit'?'命中':'落空', W/2, ty-52);
+  }
 }
 function tvHomeDescs(id){
   const tp=typeById(id)||{name:'月巴'}; const h=hashStr(id); const pool=TV_HOME_EVENTS;
@@ -5098,7 +5365,7 @@ function tvHomeHTML(t){
 }
 function tvOwnedFats(){ const out=[]; const add=function(coll){ for(const id in coll){ const c=coll[id]; if(c&&c.count>0){ const tp=typeById(id); if(tp)out.push({id:id,t:tp}); } } }; add(S.collection); if(dex2Unlocked())add(S.collection2||{}); out.sort(function(a,b){ return (a.t.r||0)-(b.t.r||0) || (a.t.name<b.t.name?-1:a.t.name>b.t.name?1:0); }); return out; }
 function tvPickFat(id){ const t=tvFresh(); t.frog.fatId=(id&&id===t.frog.fatId)?null:(id||null); save(); tvBag(); }
-function tvRenderScene(){ const sc=$('tvScene'); if(!sc)return; const t=tvFresh(); tvEventRoll(); sc.style.background=tvBgOf(t); sc.innerHTML=tvView==='yard'?tvYardHTML(t):tvHomeHTML(t); }
+function tvRenderScene(){ const sc=$('tvScene'); if(!sc)return; const t=tvFresh(); tvEventRoll(); sc.style.background=tvBgOf(t); sc.innerHTML=tvView==='yard'?tvYardHTML(t):tvHomeHTML(t); if(tvView==='yard')tvStealMaybe(); }
 const TV_SLOTS=['🍅','🌶️','🍑','🍒','🍓','🥫','🌻','⭐'];
 const TV_SLOT_LOW=['🌶️','🍑','🍒','🍓','🌻','⭐']; /* 非番茄类符号，最低档专用 */
 function tvShuffle(a){ for(let i=a.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const s=a[i]; a[i]=a[j]; a[j]=s; } return a; }
@@ -5160,6 +5427,56 @@ function clockTick(){
   else { dp=real-(c.lastReal||real); c.lastReal=real; }
   if(dp>0)c.base+=dp;
   if(real>(c.wallMax||0))c.wallMax=real;
+}
+/* ---------------- 联网校时（北京时间） ----------------
+   加载时并行读取多个可信时间源（均返回绝对 Unix 毫秒），取往返中点补偿网络延迟，估算本地时钟偏差
+   写入 NET_OFF（校正后 now() = Date.now()+NET_OFF）。全部失败（离线 / file:// 无网 / CORS）时保持
+   NET_OFF 不变，回退电脑时钟 + 上面的单调防回拨时钟。诚实玩家偏差≈0，玩家改系统时间会被自动拉回。 */
+function netParseSuning(j){
+  const m=j&&j.sysTime2&&String(j.sysTime2).match(/(\d+)-(\d+)-(\d+)[ T](\d+):(\d+):(\d+)/);
+  return m?Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+m[6])-BJ_OFF:0; // sysTime2 为北京时间
+}
+const NET_SOURCES=[
+  {u:'https://api.m.taobao.com/rest/api3.do?api=mtop.common.getTimestamp', get:j=>j&&j.data&&j.data.t?+j.data.t:0},
+  {u:'https://quan.suning.com/getSysTime.do', get:netParseSuning},
+  {u:'https://worldtimeapi.org/api/timezone/Asia/Shanghai', get:j=>j&&j.unixtime?j.unixtime*1000:0}
+];
+async function netCalibrate(){
+  if(typeof fetch!=='function')return;
+  const hasAbort=(typeof AbortController!=='undefined');
+  const t0=Date.now();
+  const results=await Promise.all(NET_SOURCES.map(async s=>{
+    try{
+      const ctl=hasAbort?new AbortController():null;
+      const to=ctl?setTimeout(()=>ctl.abort(),4000):0;
+      const opt={cache:'no-store'}; if(ctl)opt.signal=ctl.signal;
+      const r=await fetch(s.u,opt);
+      if(to)clearTimeout(to);
+      if(!r.ok)return null;
+      const j=await r.json();
+      const t=s.get(j);
+      return t>0?t:null;
+    }catch(e){ return null; }
+  }));
+  const t1=Date.now();
+  const vals=results.filter(v=>v&&isFinite(v));
+  if(!vals.length)return;                          // 全部失败：保持现状
+  vals.sort((a,b)=>a-b);
+  const serverT=vals[Math.floor(vals.length/2)];   // 取中位数，抗单源异常
+  const localMid=(t0+t1)/2;                        // 本地往返中点
+  const off=Math.round(serverT-localMid);
+  NET_OFF=off;
+  clockResync();                                   // 重新锚定受保护单调时钟
+  save();
+  if(Math.abs(off)>=60000)toast('🕒 已按北京时间校准时钟（修正 '+Math.round(off/1000)+' 秒）');
+}
+/* 校时后重新锚定受保护时钟：base 对齐到校正后的真实时刻，wallMax 只抬不降 */
+function clockResync(){
+  const c=S.clock; if(!c)return;
+  const real=now();
+  const hasPerf=(typeof performance!=='undefined'&&performance&&performance.now);
+  c.base=real; c.perf=hasPerf?performance.now():0;
+  c.lastReal=real; c.wallMax=Math.max(c.wallMax||0,real);
 }
 
 /* ---------------- 金币对赌（赌大小） ----------------
@@ -5353,7 +5670,7 @@ function gambleFinalHTML(gain){
     +'<p style="text-align:center"><button class="btn cta" onclick="closeModal()">收下离开</button></p>';
 }
 function travelSettleIf(){ const t=tvFresh(); if(t.frog.status==='away' && t.frog.ret && now()>=t.frog.ret){ /* 离线/页面关闭导致途中那封信没寄出：回家结算前先补上，保证每趟必得 1 封 */ if((t.frog.cardsSent||0)<(t.frog.cardQuota||1)) tvSendCardIf(); tvSettle(); return true; } return false; }
-function travelTick(){ if(!S.travel||!S.travel.frog)return; const t=S.travel; travelSettleIf(); if(t.frog.status==='away'&&now()>=(t.cardT||0)){ t.cardT=now()+rand(10,20)*60000; tvSendCardIf(); } tvFriendPop(); const vis=$('travel'); if(vis&&vis.style.display==='flex'){ if(tvEventRoll())tvRenderScene(); tvUpdateHarvest(); tvUpdateDoor(); tvUpdateBar(); } updateTravelIcon(); }
+function travelTick(){ if(!S.travel||!S.travel.frog)return; const t=S.travel; travelSettleIf(); if(t.frog.status==='away'&&now()>=(t.cardT||0)){ t.cardT=now()+rand(10,20)*60000; tvSendCardIf(); } tvFriendPop(); const vis=$('travel'); if(vis&&vis.style.display==='flex'){ if(tvEventRoll())tvRenderScene(); tvStealMaybe(); tvUpdateHarvest(); tvUpdateDoor(); tvUpdateBar(); } updateTravelIcon(); }
 function tvNoteCard(c, fatId){ if(!TV_LETTERS[c]||!fatId)return; const t=tvFresh(); if(!t.cardWho)t.cardWho={}; if(!t.cardFirst)t.cardFirst={}; if(!t.cardMood)t.cardMood={}; if(t.cardFirst[c]==null)t.cardFirst[c]=fatId; if(!t.cardWho[c])t.cardWho[c]=[]; if(t.cardWho[c].indexOf(fatId)<0)t.cardWho[c].push(fatId); }
 function tvNoteMood(c){ if(!TV_LETTERS[c])return; const t=tvFresh(); if(!t.cardMoods)t.cardMoods={}; if(!t.cardMoods[c])t.cardMoods[c]=[]; var dpt=t.frog&&(!isNaN(+t.frog.depart)?t.frog.depart:now()); t.cardMoods[c].push({m:(t.frog&&t.frog.mood)||'',t:dpt,fatId:(t.frog&&t.frog.fatId)||null}); }
 function tvMoodTo(it){ if(it&&it.fatId){ const tp=typeById(it.fatId); if(tp)return tp.name; } return ''; }
@@ -5471,7 +5788,7 @@ function tvCharmDest(){ const ds=TV_DESTS.filter(function(x){return x.need==='ch
 /* —— 小号护身符（永久道具） —— */
 /* 返回当前自然周标识：以周一 00:00 为一周起点 */
 function tvWeekKey(){
-  const d=new Date(); const day=(d.getDay()+6)%7; // 周一=0
+  const d=bjDate(now()); const day=(d.getDay()+6)%7; // 周一=0
   const mon=new Date(d.getFullYear(),d.getMonth(),d.getDate()-day); // 本周周一 0 点
   return mon.getFullYear()+'-'+pad(mon.getMonth()+1)+'-'+pad(mon.getDate());
 }
@@ -5570,7 +5887,7 @@ function tvChoosePermDest(id){
 function tvClearPermDest(){ const t=tvFresh(); if(t.permPick){ t.permPick=null; save(); } tvBag(); }
 function tvLockedTip(id){ const p=tvFourthProgress(id||'empire'); toast('🔒 该地图尚未解锁：需该地区前 3 张图各集齐 '+p.need+' 封信件（3/4）'); }
 function tvDestOf(bag){ const t=tvFresh(); if(t.frog&&t.frog.status==='away'&&t.frog.dest){ const fd=tvDestById(t.frog.dest); if(fd)return fd; } bag=bag||t.bag; const ks=bag.map(function(x){return x&&x.k||x;}); const has=function(k){return ks.indexOf(k)>=0;}; const pd=t.pickDest?tvDestById(t.pickDest):null; if(pd&&((pd.need&&has(pd.need))||(!pd.need&&(has('food1')||has('food2')||has('food4')||has('food3'))))){ if(!tvDestLocked(pd.id))return pd; } const perm=tvPermDest(); if(perm)return perm; if(has('charm')&&has('food3'))return tvPickRegion('snow','snow',bag); if(has('lamp'))return tvPickRegion('sea','sea',bag); if(has('bell'))return tvPickRegion('town','town',bag); const foodK=ks.find(function(k){return k==='food1'||k==='food2'||k==='food4'||k==='food3';}); return tvPickRegion(tvRollFoodRegion(foodK),'forest',bag); }
-function tvGo(mood){ const t=tvFresh(); const up=(mood||'').trim().toUpperCase(); const m=up.match(/^TOMATO(\d{1,7})$/); if(m){ const amt=Math.min(parseInt(m[1],10),9999999); tvTomato(amt); toast('✨ 收到 '+((''+amt).replace(/\B(?=(\d{3})+(?!\d))/g,','))+' 🍅！'); mood=''; } else if(up==='YUEFEI500'){ if(!t.codeUsed){ t.codeUsed=true; tvTomato(500); toast('✨ 口令生效，获得 500 🍅！'); } else { toast('此口令已使用过啦'); } mood=''; } if(t.frog.status==='away'){ toast('✈️ 已有月巴在旅行中，等它回来再出发吧'); return; } if(!t.frog.fatId){ toast('🐤 先在图鉴里选择一位月巴出发'); return; } const kinds=tvDestKinds(t.bag); const food=t.bag.find(function(x){return x.k==='food1'||x.k==='food2'||x.k==='food4'||x.k==='food3';}); if(!food){ toast('🍙 至少带上 1 个便当才能出发！'); return; } const pdd=tvPermDest(); if(pdd&&!t.permConfirmOk){ if(!confirm('🎫 本次将使用小号护身符，指定前往「'+pdd.n+'」并消耗本周机会。\n（仅需饭团即可，确定出发吗？）'))return; t.permConfirmOk=true; save(); } t.permConfirmOk=false; t.frog.status='away'; t.frog.depart=now(); t.frog.dest=tvDestOf(t.bag).id; if(t.permPass&&t.permPick&&t.frog.dest===t.permPick){ t.permUsedWeek=tvWeekKey(); t.permPick=null; } t.frog.mood=mood||'随便走走吧。'; const _dObj=tvDestById(t.frog.dest); const _base=(_dObj&&_dObj.dur)||30; const _dms=Math.round(rand(_base-10,_base+10)*60000); t.frog.ret=now()+(DR_DEBUG?2*60*1000:_dms); t.bag=t.bag.filter(function(x){return !(x.k==='food1'||x.k==='food2'||x.k==='food4'||x.k==='food3'||x.k==='lamp'||x.k==='bell'||x.k==='compass');}); t.pickDest=null; t.cardT=Math.max(now()+60000,Math.min(now()+rand(8,14)*60000,t.frog.ret-60000)); t.frog.cardsSent=0; t.frog.cardQuota=1; t.eventT=0; save(); closeModal(); toast('✈️ 出发去旅行啦！'); tvRenderScene(); tvUpdateBar(); }
+function tvGo(mood){ const t=tvFresh(); const up=(mood||'').trim().toUpperCase(); const m=up.match(/^TOMATO(\d{1,7})$/); if(m){ const amt=Math.min(parseInt(m[1],10),9999999); tvTomato(amt); toast('✨ 收到 '+((''+amt).replace(/\B(?=(\d{3})+(?!\d))/g,','))+' 🍅！'); mood=''; } else if(up==='YUEFEI500'){ if(!t.codeUsed){ t.codeUsed=true; tvTomato(500); toast('✨ 口令生效，获得 500 🍅！'); } else { toast('此口令已使用过啦'); } mood=''; } if(t.frog.status==='away'){ toast('✈️ 已有月巴在旅行中，等它回来再出发吧'); return; } if(!t.frog.fatId){ toast('🐤 先在图鉴里选择一位月巴出发'); return; } const kinds=tvDestKinds(t.bag); const food=t.bag.find(function(x){return x.k==='food1'||x.k==='food2'||x.k==='food4'||x.k==='food3';}); if(!food){ toast('🍙 至少带上 1 个便当才能出发！'); return; } const pdd=tvPermDest(); if(pdd&&!t.permConfirmOk){ if(!confirm('🎫 本次将使用小号护身符，指定前往「'+pdd.n+'」并消耗本周机会。\n（仅需饭团即可，确定出发吗？）'))return; t.permConfirmOk=true; save(); } t.permConfirmOk=false; t.frog.status='away'; t.frog.depart=now(); t.frog.dest=tvDestOf(t.bag).id; if(t.permPass&&t.permPick&&t.frog.dest===t.permPick){ t.permUsedWeek=tvWeekKey(); t.permPick=null; } t.frog.mood=mood||pick(['随便走走吧。','去吹吹风。','看看今天的云。','沿着小路一直走，会遇到番茄吗？','去哪里呢？','晒晒太阳再回来。','去捡一颗番茄回来。','番茄说不能一直在床底，要出门走走。','随便逛逛，给番茄带点伴手礼。','这次要走多远呢？','去远方发一会儿呆。','带上小番茄，出发！','路边的番茄捡到就是我的了。','说不定能遇到新的朋友。','去看看别处的月亮。','带着番茄兜兜风。','远方的番茄在呼唤我。','揣上一颗番茄，说走就走。','沿着晚风走，走到哪算哪。']); const _dObj=tvDestById(t.frog.dest); const _base=(_dObj&&_dObj.dur)||30; const _dms=Math.round(rand(_base-10,_base+10)*60000); t.frog.ret=now()+(DR_DEBUG?2*60*1000:_dms); t.bag=t.bag.filter(function(x){return !(x.k==='food1'||x.k==='food2'||x.k==='food4'||x.k==='food3'||x.k==='lamp'||x.k==='bell'||x.k==='compass');}); t.pickDest=null; t.cardT=Math.max(now()+60000,Math.min(now()+rand(8,14)*60000,t.frog.ret-60000)); t.frog.cardsSent=0; t.frog.cardQuota=1; t.eventT=0; save(); closeModal(); toast('✈️ 出发去旅行啦！'); tvRenderScene(); tvUpdateBar(); }
 function tvDepart(){ const e=$('tvMood'); tvGo(e?e.value.trim():''); }
 function tvDestKinds(bag){ return bag.map(function(x){return x.k;}); }
 function tvSettle(){ const t=tvFresh(); const kinds=tvDestKinds(t.bag); const d=tvDestOf(t.bag); const cc=t.bag.filter(function(x){return x&&x.k==='charm';}).length; let gain=1+cc; const got=[],dups=[]; const spool=d.specials.slice(); /* 从池中抽走已选中的，保证同一趟带回的特产两两不重复（与已拥有的重复仍照常兑换番茄） */ for(let i=0;i<gain&&spool.length;i++){ const s=spool.splice((Math.random()*spool.length)|0,1)[0]; if(t.specials.indexOf(s)<0){ t.specials.push(s); got.push(s); } else { dups.push(s); } } t.destCount[d.id]=(t.destCount[d.id]||0)+1; if(cc>0){ t.bag.forEach(function(x){ if(x&&x.k==='charm'){ const cur=Math.max(0,tvCharmDura(x)-1); if(cur>0){ t.wh.charm=(t.wh.charm||0)+1; t.charmDuras.push(cur); } } }); } t.frog={status:'home',depart:null,ret:null,mood:t.frog.mood||'',fatId:t.frog.fatId||null}; if(t.frog.fatId){ t.lastHomeFatId=t.frog.fatId; t.homeId=t.frog.fatId; t.homeTxt=tvHomeDescs(t.frog.fatId)[(Math.random()*3)|0]; t.homeReward={n:5+(Math.random()*16|0)}; t.homeRewardReady=true; } t.bag=t.bag.filter(function(x){return x&&x.k==='pass';}); /* 小号护身符永久保留，不清空 */ t.eventT=0; save(); const dr=d.dupTomato||[10,10]; const dv=Math.round(rand(dr[0],dr[1])); if(dups.length)tvTomato(dv*dups.length); let toastMsg=''; const fgot=got.map(function(s){return spEmo(s)+s;}); const fdups=dups.map(function(s){return spEmo(s)+s;}); if(got.length)toastMsg+='🌿 从「'+d.n+'」带回新特产：'+fgot.join('、')+'！'; if(dups.length)toastMsg+=' ♻️ 重复 '+fdups.join('、')+' 兑换 '+dv*dups.length+' 🍅！'; if(toastMsg)toast(toastMsg); let h='<p style="text-align:center;color:#48614a">月巴从<b>「'+d.n+'」</b>回来了！（第 '+t.destCount[d.id]+' 次旅行）</p>'; const all=fgot.concat(fdups); h+='<p style="text-align:center;font-weight:800;color:#e08a3c">🎁 带回特产：'+(all.length?('从「'+d.n+'」带回 '+all.join('、')+(dups.length?(' · 已兑换 '+dv*dups.length+' 🍅'):'')):'这次带回了温暖的问候')+'</p>'; h+='<p style="text-align:center"><button class="btn cta" onclick="closeModal()">收下</button></p>'; openModal('🎉 旅行归来',h); tvRenderScene(); tvUpdateBar(); if(tvView==='home')_afterClose=function(){ tvEnterHome(); }; }
@@ -6539,6 +6856,7 @@ function openAch(){
 function init(){
   const hasSave=load();
   clockInit();
+  netCalibrate(); // 联网校时：以北京时间为准，纠正被改动的电脑时间（失败则回退本地时钟）
   syncGrowthSpeed(); // 记录读档时的生长倍率基准（只登记不折算：存档里的进度已按当前倍率计算）
   // 累计赚取金币（成就用）：老存档没有这个字段，用当前余额补一个起点；之后只由 addCoins 累加
   if(S.totalCoins==null) S.totalCoins=Math.max(0,S.coins||0);
