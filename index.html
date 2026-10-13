@@ -323,6 +323,7 @@
   .gb-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
   .gb-btns .btn{flex:1 1 auto;min-width:120px;}
   body.gb-rolling #modal-head .iconbtn{display:none!important;}   /* 开骰期间锁死弹窗：隐藏关闭 ✕ */
+  body.ts-playing #modal-head .iconbtn{display:none!important;}   /* 捉拿月巴小游戏期间锁死弹窗：隐藏关闭 ✕ */
   .tv-yf{position:absolute;width:64px;height:64px;animation:tvbob 2.4s ease-in-out infinite;}
   @keyframes tvbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
   /* 偷番茄的月巴：庭院里同步显示为黑色剪影 */
@@ -4495,6 +4496,7 @@ function pomoReport(period){
 }
 /* 每周日晚 / 每月最后一天晚 20 点后：自动生成一次报告 */
 function pomoReportCheck(){
+  if(tsGame)return;   // 捉拿月巴小游戏进行中，延后到下个 tick 再弹，避免顶掉弹窗中断游戏
   if(!S.pomo.reportSeen) S.pomo.reportSeen={week:'',month:''};
   const d=bjDate(now()), h=d.getHours(), rw=S.pomo.reportSeen;
   if(d.getDay()===0 && h>=20){
@@ -5190,7 +5192,7 @@ function tvStealGameHTML(){
     +'<span>难度 <b id="tsSpeed">'+TS_SPEED0+'</b></span>'
     +'</div>'
     +'<canvas id="tsCanvas" class="tv-sg-canvas"></canvas>'
-    +'<div class="tv-sg-tip">点击 / 触摸 / 按空格 让滑块停下</div>'
+    +'<div class="tv-sg-tip">点击 / 触摸 / 按空格 让滑块停下 · <a href="javascript:void(0)" onclick="tsFinish()" style="color:#b0563a;font-weight:700;text-decoration:none;">🏳 放弃捉拿</a></div>'
     +'</div>';
 }
 /* 目标区宽度：轨道长 × 回合系数，下限 7% 且必须大于滑块宽度的两倍 */
@@ -5242,6 +5244,7 @@ function tsStart(){
     centerX:0,cFrac:0,dir:1,speed:TS_SPEED0,targetX:0,targetW:0,tFrac:0,wFrac:TS_WF0,
     trackL:TS_PAD,trackR:0,trackLen:0,trackY:TS_H/2,W:0,H:TS_H,lastT:performance.now(),resultT:0,flash:''};
   tsGame=g;
+  document.body.classList.add('ts-playing');
   tsResize(g);
   tsSetupRound(g);
   cv.addEventListener('pointerdown',tsOnInput);
@@ -5251,6 +5254,7 @@ function tsStart(){
   g.raf=requestAnimationFrame(tsLoop);
 }
 function tsDispose(){
+  document.body.classList.remove('ts-playing');
   const g=tsGame; if(!g)return;
   if(g.raf)cancelAnimationFrame(g.raf);
   g.raf=0;
@@ -5669,7 +5673,7 @@ function gambleFinalHTML(gain){
     +'<p style="text-align:center;color:#e08a3c;font-size:17px;font-weight:800;margin:0 0 14px">收获 '+fmt(gain)+' 个 🍅！</p>'
     +'<p style="text-align:center"><button class="btn cta" onclick="closeModal()">收下离开</button></p>';
 }
-function travelSettleIf(){ const t=tvFresh(); if(t.frog.status==='away' && t.frog.ret && now()>=t.frog.ret){ /* 离线/页面关闭导致途中那封信没寄出：回家结算前先补上，保证每趟必得 1 封 */ if((t.frog.cardsSent||0)<(t.frog.cardQuota||1)) tvSendCardIf(); tvSettle(); return true; } return false; }
+function travelSettleIf(){ if(tsGame)return false; const t=tvFresh(); if(t.frog.status==='away' && t.frog.ret && now()>=t.frog.ret){ /* 离线/页面关闭导致途中那封信没寄出：回家结算前先补上，保证每趟必得 1 封 */ if((t.frog.cardsSent||0)<(t.frog.cardQuota||1)) tvSendCardIf(); tvSettle(); return true; } return false; }
 function travelTick(){ if(!S.travel||!S.travel.frog)return; const t=S.travel; travelSettleIf(); if(t.frog.status==='away'&&now()>=(t.cardT||0)){ t.cardT=now()+rand(10,20)*60000; tvSendCardIf(); } tvFriendPop(); const vis=$('travel'); if(vis&&vis.style.display==='flex'){ if(tvEventRoll())tvRenderScene(); tvStealMaybe(); tvUpdateHarvest(); tvUpdateDoor(); tvUpdateBar(); } updateTravelIcon(); }
 function tvNoteCard(c, fatId){ if(!TV_LETTERS[c]||!fatId)return; const t=tvFresh(); if(!t.cardWho)t.cardWho={}; if(!t.cardFirst)t.cardFirst={}; if(!t.cardMood)t.cardMood={}; if(t.cardFirst[c]==null)t.cardFirst[c]=fatId; if(!t.cardWho[c])t.cardWho[c]=[]; if(t.cardWho[c].indexOf(fatId)<0)t.cardWho[c].push(fatId); }
 function tvNoteMood(c){ if(!TV_LETTERS[c])return; const t=tvFresh(); if(!t.cardMoods)t.cardMoods={}; if(!t.cardMoods[c])t.cardMoods[c]=[]; var dpt=t.frog&&(!isNaN(+t.frog.depart)?t.frog.depart:now()); t.cardMoods[c].push({m:(t.frog&&t.frog.mood)||'',t:dpt,fatId:(t.frog&&t.frog.fatId)||null}); }
@@ -6934,7 +6938,7 @@ function init(){
     fgFlap();
   });
   $('btnMute').onclick=()=>{ S.muted=!S.muted; updateHeader(); sfx.click(); save(); };
-  $('overlay').onclick=(e)=>{ if(e.target!==$('overlay'))return; if(document.body.classList.contains('gb-rolling'))return; closeModal(); };   // 对赌开骰期间锁死遮罩，防止关窗重进
+  $('overlay').onclick=(e)=>{ if(e.target!==$('overlay'))return; if(document.body.classList.contains('gb-rolling')||document.body.classList.contains('ts-playing'))return; closeModal(); };   // 对赌开骰 / 捉拿小游戏期间锁死遮罩，防止关窗重进
   $('sceneBack').onclick=closeScene;
   $('sceneWoodBtn').onclick=()=>buyWood(currentZone);
   $('sceneFast').onclick=useFast;
