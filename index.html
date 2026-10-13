@@ -340,6 +340,7 @@
   .deco-dream{--ec:#5a4a8a;--eb:#e9e5f6;--fl:#a99ad6;}
   .deco-island{--ec:#2fb8a0;--eb:#e3f7f1;--fl:#8fdccb;}
   .deco-atlantis{--ec:#2f6fa8;--eb:#e0eef8;--fl:#8fbede;}
+  .deco-merfolk{--ec:#3fa9c9;--eb:#e2f4fa;--fl:#9fd8ea;}
   .ltr-env{position:relative;width:82px;height:54px;margin:4px auto;cursor:pointer;transition:transform .15s;}
   .ltr-env:active{transform:scale(.95);}
   .ltr-env.big{width:190px;height:126px;margin:12px auto;cursor:default;}
@@ -1345,6 +1346,12 @@ const TYPES2=[
   {id:'m2_merfolk',  name:'人鱼月巴',  r:4, v:84,  t:790,  cond:{t:'travel', s:'人鱼鳞'}, color:'#4fb0c9', shape:'drop'},
   {id:'m2_seal',     name:'秘术月巴',  r:4, v:82,  t:780,  cond:{t:'travel', s:'秘术卷轴'}, color:'#7a6fd0', shape:'star'},
   {id:'m2_seaking',  name:'海底王月巴', r:5, v:252, t:1470, cond:{t:'travel', d:'atlantis', n:5}, weight:0.01, color:'#2f6fa8', shape:'rainbow'},
+  /* —— 人鱼之海（大海第四图）主题月巴 —— */
+  {id:'m2_guihai',   name:'归海月巴',  r:4, v:75,  t:740,  cond:{t:'travel', d:'merfolk', n:3}, color:'#3fa9c9', shape:'drop'},
+  {id:'m2_geyin',    name:'吟歌月巴',  r:4, v:82,  t:780,  cond:{t:'travel', s:'人鱼竖琴'}, color:'#5cc4d8', shape:'star'},
+  {id:'m2_fazhen',   name:'法阵月巴',  r:4, v:80,  t:770,  cond:{t:'travel', s:'潮纹法石'}, color:'#6f8fd0', shape:'cube'},
+  {id:'m2_paomo',    name:'泡沫月巴',  r:4, v:84,  t:790,  cond:{t:'travel', s:'人鱼泡沫'}, color:'#4fb0a8', shape:'squish'},
+  {id:'m2_damofa',   name:'大魔法师月巴', r:5, v:258, t:1500, cond:{t:'travel', d:'merfolk', n:5}, weight:0.01, color:'#8f6fd8', shape:'rainbow'},
 ];
 const RAR_NAME={1:'普通',2:'常见',3:'稀有',4:'史诗',5:'传说',6:'活动'};
 const R_H={1:[2,5],2:[4,8],3:[6,12],4:[10,20],5:[16,30],6:[22,40]};   // 身高 cm 范围
@@ -1551,6 +1558,11 @@ const FAT_INTRO={
   m2_merfolk:'据说它是被秘术暂时化作人鱼的月巴，能在水里来去自如，只是持续不了太久。',
   m2_seal:'带着秘术卷轴的月巴，懂得让陆上的人在水中短暂变成人鱼。它说，这是离开沉城唯一的办法。',
   m2_seaking:'海底王城的旧主。不是海底捞王哦。',
+  m2_guihai:'从沉海遗城一路游回海面的月巴，见过围着它打转的人鱼。它说，海和陆地之间的距离，其实没有想象中那么远。',
+  m2_geyin:'会唱歌的月巴，嗓音清亮。它唱的是人鱼之间传唱最广的那支歌，会互送番茄平安抵达岸上。',
+  m2_fazhen:'身上纹着法阵的月巴，一圈圈光纹里藏着让人维持人鱼姿态的秘术。它说，这个法阵不是为了困住任何人。',
+  m2_paomo:'在海面上成串冒起的月巴。它说，死去的人鱼真的会变成泡沫。',
+  m2_damofa:'把秘术改成法阵的月巴，是那片海里所有传说的源头。它究竟是怀着怎样的心思做这些事的呢？',
 };
 
 /* ---------------- 界面皮肤（图鉴解锁） ---------------- */
@@ -4468,9 +4480,10 @@ const TV_DESTS=[
  {id:'cursed',n:'枯寂幻境',desc:'校对完那本书的瞬间，书页自己翻动，把两位吸进了一场幻境。这里曾是被诅咒的死地，寸草不生。',need:'',dur:70,dupTomato:[30,42],specials:['诅咒石','灰烬','幻梦露','枯骨花','断旗','新生芽','家园基石','守护勋章'],cards:['P1','P2','P3','P4','P5','P6','P7','P8','P9','P10','P11','P12','P13']},
  {id:'sea',n:'海边港湾',need:'lamp',dur:30,dupTomato:[15,22],specials:['海贝','海盐','珊瑚枝','珍珠','海藻','浪花糖','蟹壳扣','漂流木'],cards:['B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','B12','B13','B14','B15']},
  {id:'island',n:'海岛假日',desc:'月巴和番茄乘着小船出了海，一路上遇见海豚与鲸鱼，最后靠上一座亮着灯火的小岛—。岛上的夜晚，有篝火，也有说不完的传说。',need:'',dur:35,dupTomato:[22,30],specials:['椰壳灯','篝火炭','海豚哨','贝壳风铃','鲸歌螺','潮汐沙','岛花','岛民陶偶'],cards:['S1','S2','S3','S4','S5','S6','S7','S8','S9','S10','S11','S12','S13']},
- {id:'atlantis',n:'沉海遗城',desc:'航海途中，海面忽然诡异得没有一丝风，巨浪凭空而起掀翻了小船。月巴和番茄沉入海底，醒来时却发现自己竟能呼吸——面前是一座空无一人的海底城市。',need:'',dur:60,dupTomato:[25,35],specials:['秘术卷轴','人鱼鳞','沉船锚','海心灯','珊瑚碑','潮汐石','王城钥','深海珠'],cards:['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12','T13']},
+ {id:'atlantis',n:'沉海遗城',desc:'航海途中，海面忽然诡异得没有一丝风，巨浪凭空而起掀翻了小船。月巴和番茄沉入海底，醒来时却发现自己竟能呼吸，面前是一座空无一人的海底城市。',need:'',dur:60,dupTomato:[25,35],specials:['秘术卷轴','人鱼鳞','沉船锚','海心灯','珊瑚碑','潮汐石','王城钥','深海珠'],cards:['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12','T13']},
+ {id:'merfolk',n:'人鱼之海',desc:'破开水面的一刻，阳光重新照了下来。可还没等松口气，月巴和番茄就发现，海面下浮着一圈模糊的影子，正围着它们慢慢打转。那是一群早就悄悄等在这里的生灵。',need:'',dur:70,dupTomato:[30,42],specials:['人鱼竖琴','海面浮光','潮纹法石','海雾纱','星砂瓶','环礁微景','海蓝宝石','人鱼泡沫'],cards:['U1','U2','U3','U4','U5','U6','U7','U8','U9','U10','U11','U12','U13']},
  {id:'town',n:'小镇入口',need:'bell',dur:25,dupTomato:[12,18],specials:['果子面包','糖果','钟声曲','布丁','风筝','纽扣','明信片'],cards:['C1','C2','C3','C4','C5','C6','C7','C8','C9','C10','C11','C12','C13','C14']},
- {id:'moon',n:'月光夜市',desc:'小镇入夜后，广场后巷会亮起一串暖黄的灯笼。沿着灯火往里走，是一条只有夜里才开张的集市——据说这里卖的都是白天买不到的东西。',need:'',dur:45,dupTomato:[20,28],specials:['桂花糕','糖画','灯笼芯','夜市灯','幸运签','铜板','手作糖','夜来香'],cards:['M1','M2','M3','M4','M5','M6','M7','M8','M9','M10','M11','M12','M13']},
+ {id:'moon',n:'月光夜市',desc:'小镇入夜后，广场后巷会亮起一串暖黄的灯笼。沿着灯火往里走，是一条只有夜里才开张的集市。这里卖的都是白天买不到的东西。',need:'',dur:45,dupTomato:[20,28],specials:['桂花糕','糖画','灯笼芯','夜市灯','幸运签','铜板','手作糖','夜来香'],cards:['M1','M2','M3','M4','M5','M6','M7','M8','M9','M10','M11','M12','M13']},
  {id:'nightmare',n:'无月之夜',desc:'又是一个夜市之夜，月巴和番茄重回小镇。可就在灯火最盛的一刻，灯忽然全灭了。',need:'',dur:55,dupTomato:[25,35],specials:['熄灭的灯芯','噩梦残片','阴影碎片','地窖钥匙','暗道地图','阵眼碎片','无月之尘','清醒之种'],cards:['Q1','Q2','Q3','Q4','Q5','Q6','Q7','Q8','Q9','Q10','Q11','Q12','Q13']},
  {id:'dream',n:'番茄之梦',desc:'回到家中的月巴和番茄沉沉睡去，可番茄却怎么都醒不过来。月巴用额头靠着它，走进了那片深紫色的梦境。',need:'',dur:90,dupTomato:[40,60],specials:['梦境碎片','噩梦连线','斗篷残片','执念之影','额头余温','番茄之核','斩梦之刃','昨日残响'],cards:['R1','R2','R3','R4','R5','R6','R7','R8','R9','R10','R11','R12','R13']},
  {id:'snow',n:'雪山',desc:'终年积雪的高岭，能捡到雪绒花与极光尘。',need:'charm',needF:'food3',dur:50,dupTomato:[40,60],specials:['雪绒花','冰晶','热可可','松枝','雪松果','极光尘','暖石'],cards:['D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13']},
@@ -4509,7 +4522,9 @@ const SPECIAL_EMOJI={
   /* 海岛假日 */
   '椰壳灯':'🥥','篝火炭':'🔥','海豚哨':'🐬','贝壳风铃':'🎐','鲸歌螺':'🐚','潮汐沙':'⏳','岛花':'🏵️','岛民陶偶':'🗿',
   /* 沉海遗城 */
-  '秘术卷轴':'📜','人鱼鳞':'🐟','沉船锚':'⚓','海心灯':'🪔','珊瑚碑':'🪨','潮汐石':'🧿','王城钥':'🗝️','深海珠':'💠'
+  '秘术卷轴':'📜','人鱼鳞':'🐟','沉船锚':'⚓','海心灯':'🪔','珊瑚碑':'🪨','潮汐石':'🧿','王城钥':'🗝️','深海珠':'💠',
+  /* 人鱼之海 */
+  '人鱼竖琴':'🎶','海面浮光':'🌊','潮纹法石':'🔷','海雾纱':'🌁','星砂瓶':'🫙','环礁微景':'🏝️','海蓝宝石':'💎','人鱼泡沫':'🫧'
 };
 function spEmo(s){ return SPECIAL_EMOJI[s]||'🌿'; }
 const TV_LETTERS={
@@ -4715,7 +4730,20 @@ const TV_LETTERS={
  T10:{d:'deco-atlantis',e:'🗿',txt:'王城的墙上画满了壁画：城中的百姓站成一排，脚下是地面，天空是水面。画的最后，所有人都长出了鱼尾，游进了深海。番茄指着画问：「他们都去哪里了？」'},
  T11:{d:'deco-atlantis',e:'🧜',txt:'石壁上刻着一道秘术：只要念出它，人就能短暂地变成人鱼，跃入水中，游出这座海底之城。原来城里的人没有消失，也许他们都用了秘术，一个接一个地回到了陆地。'},
  T12:{d:'deco-atlantis',e:'📜',txt:'我把秘术写到卷轴上，番茄拽着我的衣角：「那我们也能变成人鱼吗？」它眼睛亮亮的，好像一点也不怕了。我点点头，把它抱紧，照着石壁一字一句地念了起来。'},
- T13:{d:'deco-atlantis',e:'🚀',txt:'念完的瞬间，我们长出了银亮和红色的鱼尾，像是天生就会游泳那样，轻轻一摆就冲了出去。我拉着番茄，我们穿过整座城市，一直向上，终于破开水面，又看见了阳光和天空。'}
+ T13:{d:'deco-atlantis',e:'🚀',txt:'念完的瞬间，我们长出了银亮和红色的鱼尾，像是天生就会游泳那样，轻轻一摆就冲了出去。我拉着番茄，我们穿过整座城市，一直向上，终于破开水面，又看见了阳光和天空。'},
+ U1:{d:'deco-merfolk',e:'🌤️',txt:'破开水面的一瞬间，阳光和海风一起涌了过来。我和番茄大口喘着气，没来得及开心，却发现四周的海面下浮着一圈模模糊糊的影子，正围着我们慢慢地打转。'},
+ U2:{d:'deco-merfolk',e:'🧜',txt:'那些影子渐渐清晰，竟是一条条人鱼！银亮的，青蓝的尾鳍在水里轻轻摆动，它们并不躲闪，反而冲我们友好地微笑，像是早就认识我们一样。'},
+ U3:{d:'deco-merfolk',e:'💬',txt:'人鱼们围上来，七嘴八舌地问：「你们是从陆地上来的吧？」我和番茄点点头。它们就说：「我们在附近悄悄看了你们好久啦。」'},
+ U4:{d:'deco-merfolk',e:'🏙️',txt:'我问它们是不是那座城里的人。领头的点点头：「是啊，我们原本都是城里的百姓。」我们这才明白，难怪满城不见人影，原来他们早就化作人鱼，游到了这片海上。'},
+ U5:{d:'deco-merfolk',e:'🔯',txt:'只有海中的生物才能和人鱼沟通。人鱼说，那是因为秘术：「凡人看不见我们的样子，念过秘术的人才能看见真实。你们在城里念过，自然就看得见。」'},
+ U6:{d:'deco-merfolk',e:'💠',txt:'我留了个心眼，悄悄碰了碰番茄。它也想起来了，城里的秘术只能维持很短的时间，可这些人鱼身上的微光一点也没有变淡，完全不像还要变回原本姿态的样子。'},
+ U7:{d:'deco-merfolk',e:'🌀',txt:'番茄不小心把疑惑问了出来。人鱼愣了一下，随即笑着承认：「被你看出来了。我们不是被秘术暂时变成人鱼，是主动留下来的。」它们的尾巴轻轻一摆，看上去对自己的尾巴很是满意。'},
+ U8:{d:'deco-merfolk',e:'🍅',txt:'番茄忍不住追问：「你们为什么不回陆地呢？」这话一出，周围的人鱼都安静了下来，只剩海水还在轻轻地响。'},
+ U9:{d:'deco-merfolk',e:'🌊',txt:'沉默了一会儿，领头的人鱼才笑着开口：「因为我们回去过。可变成人鱼之后，陆地上的人就不再相信我们是无害的了。他们说我们是海里的东西，不愿意接纳这些回来的人。」'},
+ U10:{d:'deco-merfolk',e:'🎶',txt:'「所以我们干脆把秘术合成了一个法阵，」人鱼指了指脚下深海处隐隐发光的一圈纹路，「只要生活在这片海域里，就能一直维持人鱼的姿态。平时唱唱歌，也挺好的。」'},
+ U11:{d:'deco-merfolk',e:'🔮',txt:'说到这里，它们的神色又柔和起来：「这些，全靠王城的那位大魔法师。是它把秘术改成了法阵，我们才能这样安稳地活着。只是那位早就离开这里了。听说它的爱人，就是一条不被人类接纳的人鱼。」'},
+ U12:{d:'deco-merfolk',e:'🤫',txt:'我凑到番茄耳边小声说：「说不定，那个大魔法师才是这一切的罪魁祸首。让王城沉进海底、让城里的人变成人鱼……说不定，全都是报复。」番茄睁大眼睛问我：「你怎么知道？」我说：「猜的。」'},
+ U13:{d:'deco-merfolk',e:'🌅',txt:'我们趁着秘术还没有消失，朝着岸边游去。人鱼的歌声一直送我们到很远很远，直到彼此看不见，直到海边港湾的灯火重新亮在眼前。这场旅行，就这样结束了。'}
 };
 const TV_FRIENDS=[
  {id:'snail',e:'🐌',n:'蜗牛师父',like:['野果','松果','露珠','青苔团'],rare:'A5',t:'听说番茄只是多看了林间的鹿一眼，第二天月巴就牵着番茄绕森林走了三圈。'},
@@ -4793,7 +4821,12 @@ const TV_FRIENDS=[
  {id:'cityStone',e:'🐙',n:'章鱼占卜师',like:['潮汐石','深海珠','珊瑚碑','王城钥'],rare:'T9',t:'章鱼占卜师盘在王城大道上，八条触手各拨着一块潮汐石。问它城里的居民都去了哪里，它只说大家都没事。'},
  {id:'deepLamp',e:'🗣️',n:'空城回声',like:['秘术卷轴','海心灯','人鱼鳞','潮汐石'],rare:'T6',t:'空城回声最爱学人说话。番茄喊一声「有人吗」，它就跟着喊「有人吗」；番茄喊「我们想回家」，它却沉默了很久，才轻轻应了一句「……家」。'},
  {id:'oldCaptain',e:'⚓',n:'沉船老船长',like:['沉船锚','海心灯','珊瑚碑','潮汐石'],rare:'T4',t:'沉船老船长守着他的破船，他也被卷进来过，但他没有和船一同沉向深海，只是说「海水下面有巨大的什么。」'},
- {id:'throneGuard',e:'🦈',n:'沉城鲨',like:['沉船锚','深海珠','人鱼鳞','海心灯'],rare:'T12',t:'沉城鲨是这座城沉进海里之后才来的客人。它不咬人，只在空荡的街道间慢悠悠地游，挑选了喜欢的空屋当成巢穴。'}
+ {id:'throneGuard',e:'🦈',n:'沉城鲨',like:['沉船锚','深海珠','人鱼鳞','海心灯'],rare:'T12',t:'沉城鲨是这座城沉进海里之后才来的客人。它不咬人，只在空荡的街道间慢悠悠地游，挑选了喜欢的空屋当成巢穴。'},
+ {id:'merElder',e:'🧜‍♂️',n:'人鱼长老',like:['人鱼竖琴','潮纹法石','海蓝宝石','海雾纱'],rare:'U10',t:'人鱼长老说：他们在这片海面下等了好些年，等的不是救援，而是一个能看见他们真实模样的人。'},
+ {id:'merSinger',e:'🧜‍♀️',n:'人鱼歌者',like:['人鱼竖琴','海面浮光','人鱼泡沫','星砂瓶'],rare:'U9',t:'人鱼歌者一开口，整片海都安静下来。它说自己是「回归之人」，唱歌只是想让岸上的人知道，他们还好好地活着。'},
+ {id:'merChild',e:'🧜',n:'小人鱼',like:['海面浮光','星砂瓶','人鱼泡沫','环礁微景'],rare:'U2',t:'小人鱼最喜欢追着海面的泡沫跑，它说月巴和番茄是第一次见到陆地上来的客人。'},
+ {id:'archmageEcho',e:'🔮',n:'大魔法师残影',like:['海蓝宝石','潮纹法石','环礁微景','星砂瓶'],rare:'U11',t:'大魔法师残影守着那圈法阵，却不知道本体去了哪里。'},
+ {id:'seafoamSpirit',e:'🫧',n:'海面泡沫灵',like:['海面浮光','人鱼泡沫','海蓝宝石','海雾纱'],rare:'U7',t:'海面泡沫灵在海水中起伏，永不散去。它说，它每天都和这群「回归之人」一起嬉戏。'}
 ];
 function tvFresh(){
   if(!S.travel)S.travel={tomato:300,wh:{food1:0,food2:0,food4:0,food3:0,lamp:0,charm:0,bell:0},bag:[],frog:{status:'home',depart:null,ret:null,mood:''},cards:[],specials:[],destCount:{},friends:[],harvestT:now()+rand(10,30)*60000} ;
@@ -5367,7 +5400,7 @@ function tvOpenNoteHTML(c){ const moods=tvMoodList(c); if(!moods.length)return '
 const TV_REGIONS=[
  {id:'forest', n:'森林',        d:'deco-forest', dests:['forest','fairy','ancient','cursed']},
  {id:'town',   n:'小镇',        d:'deco-town',   dests:['town','moon','nightmare','dream']},
- {id:'sea',    n:'大海',        d:'deco-sea',    dests:['sea','island','atlantis']},
+ {id:'sea',    n:'大海',        d:'deco-sea',    dests:['sea','island','atlantis','merfolk']},
  {id:'snow',   n:'雪地',        d:'deco-snow',   dests:['snow','ruins','ice','empire']}
 ];
 function tvDestById(id){ return TV_DESTS.find(function(x){return x.id===id;}); }
@@ -6593,6 +6626,41 @@ function init(){
   save();
 }
 init();
+/* ================= 新版本自动刷新 ================= */
+/* 原理：定时(60s)及每次切回标签页时，用 HEAD 请求本页，比对 ETag / Last-Modified；
+   一旦发现服务器上的文件已被更新，就自动刷新一次，让玩家用上新版本。
+   仅在 http(s) 环境启用（本地 file:// 打开时不生效）。*/
+(function(){
+  if(!/^https?:/i.test(location.protocol)) return;
+  var base=null, reloading=false, COOL=5*60*1000;
+  function sig(r){
+    var s=(r.headers.get('etag')||'')+'#'+(r.headers.get('last-modified')||'');
+    return s==='#'?null:s;   // 两项都拿不到 → 无法检测
+  }
+  function check(){
+    if(reloading) return;
+    fetch(location.href,{method:'HEAD',cache:'no-store'}).then(sig).then(function(s){
+      if(!s) return;                          // 该环境不返回版本标识时静默跳过
+      if(base===null){ base=s; return; }       // 首次：记录基线
+      if(s===base) return;                     // 版本未变
+      var last=0; try{ last=Number(sessionStorage.getItem('_tvVerReload')||0)||0; }catch(e){}
+      if(Date.now()-last<COOL) return;         // 冷却中，防止标识抖动导致反复刷新
+      reloading=true;
+      try{ sessionStorage.setItem('_tvVerReload',String(Date.now())); }catch(e){}
+      try{ if(typeof toast==='function') toast('✨ 发现新版本，正在自动刷新…'); }catch(e){}
+      setTimeout(function(){
+        try{ if(typeof save==='function') save(); }catch(e){}   // 先存档，刷新不丢进度
+        try{ var u=new URL(location.href); u.searchParams.set('_v',Date.now()); location.replace(u.toString()); }
+        catch(e){ location.reload(); }                          // 带时间戳强行绕开缓存，确保拿到新版
+      },1200);
+    }).catch(function(){});
+  }
+  check();
+  setInterval(check,60000);
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='visible') check();           // 切回页面立刻补查一次
+  });
+})();
 </script>
 </body>
 </html>
