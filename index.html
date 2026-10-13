@@ -338,6 +338,7 @@
   .deco-cursed{--ec:#8a6fa8;--eb:#f1ecf7;--fl:#c3aede;}
   .deco-nightmare{--ec:#6b5f8a;--eb:#ece9f4;--fl:#b3a6d1;}
   .deco-dream{--ec:#5a4a8a;--eb:#e9e5f6;--fl:#a99ad6;}
+  .deco-island{--ec:#2fb8a0;--eb:#e3f7f1;--fl:#8fdccb;}
   .ltr-env{position:relative;width:82px;height:54px;margin:4px auto;cursor:pointer;transition:transform .15s;}
   .ltr-env:active{transform:scale(.95);}
   .ltr-env.big{width:190px;height:126px;margin:12px auto;cursor:default;}
@@ -1333,6 +1334,11 @@ const TYPES2=[
   {id:'m2_zhinian',  name:'执念月巴',  r:4, v:86,  t:800,  cond:{t:'travel', s:'执念之影'}, color:'#4a3f66', shape:'tall'},
   {id:'m2_xinglai',  name:'清醒月巴',  r:4, v:80,  t:770,  cond:{t:'travel', s:'昨日残响'}, color:'#b9a8e0', shape:'star'},
   {id:'m2_mengyan',  name:'梦魇月巴',  r:5, v:258, t:1500, cond:{t:'travel', d:'dream', n:5}, weight:0.01, color:'#8a5fd8', shape:'rainbow'},
+  /* —— 海岛假日（大海第二图）主题月巴 —— */
+  {id:'m2_island',   name:'海岛月巴',  r:4, v:74,  t:740,  cond:{t:'travel', d:'island', n:3}, color:'#3fb5a6', shape:'round'},
+  {id:'m2_bonfire',  name:'篝火月巴',  r:4, v:82,  t:780,  cond:{t:'travel', s:'篝火炭'}, color:'#ff8a5c', shape:'star'},
+  {id:'m2_tide',     name:'潮汐月巴',  r:4, v:80,  t:770,  cond:{t:'travel', s:'潮汐沙'}, color:'#6fb7d6', shape:'drop'},
+  {id:'m2_isleking', name:'岛主月巴',  r:5, v:245, t:1420, cond:{t:'travel', d:'island', n:5}, weight:0.01, color:'#e0b24f', shape:'rainbow'},
 ];
 const RAR_NAME={1:'普通',2:'常见',3:'稀有',4:'史诗',5:'传说',6:'活动'};
 const R_H={1:[2,5],2:[4,8],3:[6,12],4:[10,20],5:[16,30],6:[22,40]};   // 身高 cm 范围
@@ -1531,6 +1537,10 @@ const FAT_INTRO={
   m2_zhinian:'披着斗篷的执念所化的月巴，沉默寡言。它只是想要弥补一份过去的噩梦。',
   m2_xinglai:'从噩梦里睁开眼的月巴，只要还有人记得你，呼唤你的名字，你就一定醒得过来。',
   m2_mengyan:'所有的噩梦合为巨大的梦魇，那些碎片都是真实的记忆。无论是过去也好，梦境也好，都会被人忘记。',
+  m2_island:'一直留在小岛上的月巴，热情款待每一位客人。',
+  m2_bonfire:'会在夜晚上升起篝火，让每个人都感受到温暖，但有时候会吓到番茄。',
+  m2_tide:'跟着潮水来，又跟着潮水走的月巴。它说，海会把人送走，也会把人送回来。',
+  m2_isleking:'据说它守着这座岛已经很久了，久到岛上的传说里，偶尔也会出现它的名字。',
 };
 
 /* ---------------- 界面皮肤（图鉴解锁） ---------------- */
@@ -4447,6 +4457,7 @@ const TV_DESTS=[
  {id:'ancient',n:'上古秘境',desc:'穿过桃源尽头那道半开的石门，是一处不被时间记住的旧地——据说这里住着古老的生物与神话中的存在。',need:'',dur:45,dupTomato:[25,35],specials:['琥珀心','龙鳞','星辰砂','时间沙','月桂枝','神谕石','古神符','巨人指骨'],cards:['N1','N2','N3','N4','N5','N6','N7','N8','N9','N10','N11','N12','N13']},
  {id:'cursed',n:'枯寂幻境',desc:'校对完那本书的瞬间，书页自己翻动，把两位吸进了一场幻境。这里曾是被诅咒的死地，寸草不生。',need:'',dur:70,dupTomato:[30,42],specials:['诅咒石','灰烬','幻梦露','枯骨花','断旗','新生芽','家园基石','守护勋章'],cards:['P1','P2','P3','P4','P5','P6','P7','P8','P9','P10','P11','P12','P13']},
  {id:'sea',n:'海边港湾',need:'lamp',dur:30,dupTomato:[15,22],specials:['海贝','海盐','珊瑚枝','珍珠','海藻','浪花糖','蟹壳扣','漂流木'],cards:['B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','B12','B13','B14','B15']},
+ {id:'island',n:'海岛假日',desc:'月巴和番茄乘着小船出了海，一路上遇见海豚与鲸鱼，最后靠上一座亮着灯火的小岛—。岛上的夜晚，有篝火，也有说不完的传说。',need:'',dur:35,dupTomato:[22,30],specials:['椰壳灯','篝火炭','海豚哨','贝壳风铃','鲸歌螺','潮汐沙','岛花','岛民陶偶'],cards:['S1','S2','S3','S4','S5','S6','S7','S8','S9','S10','S11','S12','S13']},
  {id:'town',n:'小镇入口',need:'bell',dur:25,dupTomato:[12,18],specials:['果子面包','糖果','钟声曲','布丁','风筝','纽扣','明信片'],cards:['C1','C2','C3','C4','C5','C6','C7','C8','C9','C10','C11','C12','C13','C14']},
  {id:'moon',n:'月光夜市',desc:'小镇入夜后，广场后巷会亮起一串暖黄的灯笼。沿着灯火往里走，是一条只有夜里才开张的集市——据说这里卖的都是白天买不到的东西。',need:'',dur:45,dupTomato:[20,28],specials:['桂花糕','糖画','灯笼芯','夜市灯','幸运签','铜板','手作糖','夜来香'],cards:['M1','M2','M3','M4','M5','M6','M7','M8','M9','M10','M11','M12','M13']},
  {id:'nightmare',n:'无月之夜',desc:'又是一个夜市之夜，月巴和番茄重回小镇。可就在灯火最盛的一刻，灯忽然全灭了。',need:'',dur:55,dupTomato:[25,35],specials:['熄灭的灯芯','噩梦残片','阴影碎片','地窖钥匙','暗道地图','阵眼碎片','无月之尘','清醒之种'],cards:['Q1','Q2','Q3','Q4','Q5','Q6','Q7','Q8','Q9','Q10','Q11','Q12','Q13']},
@@ -4483,7 +4494,9 @@ const SPECIAL_EMOJI={
   /* 上古秘境 */
   '琥珀心':'🟡','龙鳞':'🐉','星辰砂':'✨','时间沙':'⏳','月桂枝':'🌿','神谕石':'🔮','古神符':'📜','巨人指骨':'🦴',
   /* 枯寂幻境 */
-  '诅咒石':'🪨','灰烬':'🌫️','幻梦露':'💧','枯骨花':'🥀','断旗':'🏳️','新生芽':'🌱','家园基石':'🧱','守护勋章':'🛡️'
+  '诅咒石':'🪨','灰烬':'🌫️','幻梦露':'💧','枯骨花':'🥀','断旗':'🏳️','新生芽':'🌱','家园基石':'🧱','守护勋章':'🛡️',
+  /* 海岛假日 */
+  '椰壳灯':'🥥','篝火炭':'🔥','海豚哨':'🐬','贝壳风铃':'🎐','鲸歌螺':'🐚','潮汐沙':'⏳','岛花':'🏵️','岛民陶偶':'🗿'
 };
 function spEmo(s){ return SPECIAL_EMOJI[s]||'🌿'; }
 const TV_LETTERS={
@@ -4663,7 +4676,20 @@ const TV_LETTERS={
  R10:{d:'deco-dream',e:'🧥',txt:'就在这时，一个穿着斗篷的黑影挡在了我面前，一言不发，却不肯让我再往前一步。'},
  R11:{d:'deco-dream',e:'🌫️',txt:'我对它说：梦就是梦，不会成为现实的。黑影没有回答，只是沉默地站着。'},
  R12:{d:'deco-dream',e:'💥',txt:'我挥出最后一击，黑影散成了烟雾，很快不见。缠着番茄的线，也在同一刻全部断开。番茄软绵绵地倒下来，我把它抱在怀里。'},
- R13:{d:'deco-dream',e:'🌅',txt:'番茄终于醒了过来，睁眼就问我，那个黑影是什么，是它策划了一切吗？我摸摸它的头说，它只是一份过去的执念，无人在意地虚影，不用在意。'}
+ R13:{d:'deco-dream',e:'🌅',txt:'番茄终于醒了过来，睁眼就问我，那个黑影是什么，是它策划了一切吗？我摸摸它的头说，它只是一份过去的执念，无人在意地虚影，不用在意。'},
+ S1:{d:'deco-island',e:'⛵',txt:'今天我和番茄坐上了小船，从港湾一路往海心出发。番茄紧紧抓着船舷，海风吹乱了它的帽子，它却兴奋地喊：「我们真的出海啦！」'},
+ S2:{d:'deco-island',e:'🐬',txt:'一群海豚忽然跃出水面，围着我们的船打转。番茄伸手想摸，一只海豚竟真的凑过来，用鼻尖蹭了蹭它，溅了番茄一身的水花。'},
+ S3:{d:'deco-island',e:'🐋',txt:'远处传来低吟，是一头座头鲸浮出了海面。番茄把脸贴在船板上听得入神。'},
+ S4:{d:'deco-island',e:'🐠',txt:'海面下是一片会游动的彩虹，成群的小鱼从船底掠过。番茄趴在船舷喊它们的名字，取了七八个，有的名字已经重复了不知道。'},
+ S5:{d:'deco-island',e:'🌩️',txt:'午后忽然起了风浪，船晃得厉害。我把番茄搂在怀里，告诉它别怕，等走出这片区域就好。终于风浪过去，我们都松了口气。'},
+ S6:{d:'deco-island',e:'🏝️',txt:'浪散开的时候，前头出现了一座小岛，岸边亮着一串串灯火。番茄看起来很开心：「这里居然这么热闹！」'},
+ S7:{d:'deco-island',e:'🛖',txt:'岛上的人十分热情，领我们进了用椰叶搭的屋子，端来凉凉的椰汁。他们管我们叫「远方的客人」，番茄一边喝椰汁一边和大家聊天。'},
+ S8:{d:'deco-island',e:'🌴',txt:'白天我们在沙滩上躺了一整天，看云、捡贝壳、听海浪。番茄说这是它这辈子最闲的一天，说这话的时候，它已经打了个小小的哈欠，转头就睡了过去。'},
+ S9:{d:'deco-island',e:'🔥',txt:'天一黑，岛民们就在沙滩上升起了篝火，招呼我们一起围坐。番茄抢着往火里添柴，结果被火星吓得往后跳了三步，逗得大家直笑。'},
+ S10:{d:'deco-island',e:'🎶',txt:'篝火晚会上，大家载歌载舞。有人拉着番茄一起跺脚打拍子，番茄跳得歪歪扭扭，但很认真，周围的人都在鼓掌。'},
+ S11:{d:'deco-island',e:'🌊',txt:'跳累了，岛上的老人给我们讲起了这片海的禁忌：月圆之夜不可以独自下海，也不可以对着深海喊名字，否则会被「海里的东西」记住。番茄听得把身子往我这边缩了缩。'},
+ S12:{d:'deco-island',e:'🧜',txt:'老人还说，这片海里住着传说生物，其中有一种叫「人鱼」，歌声能勾走人的魂。岛上人只远远听过一回，谁也没真正见过。番茄小声问我：「它会不会只是喜欢陆地上的人？」'},
+ S13:{d:'deco-island',e:'🌅',txt:'天亮的时候，我们该回去了。岛民把一串贝壳风铃塞进番茄怀里，说过路的客人都会再来。船开出很远，番茄还回头朝那座小岛挥手，喊：「我们还会再来的！」'}
 };
 const TV_FRIENDS=[
  {id:'snail',e:'🐌',n:'蜗牛师父',like:['野果','松果','露珠','青苔团'],rare:'A5',t:'听说番茄只是多看了林间的鹿一眼，第二天月巴就牵着番茄绕森林走了三圈。'},
@@ -4731,7 +4757,12 @@ const TV_FRIENDS=[
  {id:'cloakShadow',e:'🧥',n:'斗篷残影',like:['斗篷残片','执念之影','噩梦连线','梦境碎片'],rare:'R10',t:'斗篷残影立在梦的边缘，谁问它话它都不答，只是沉默地看着来的人。有人说，它是在等一个早就不会回来的人。'},
  {id:'dreamMoth',e:'🦋',n:'梦蝶',like:['梦境碎片','噩梦连线','昨日残响','额头余温'],rare:'R5',t:'梦蝶在番茄睡过的枕边绕了很久，说它认得那些梦境的碎片，每一片都有浓重的思念。'},
  {id:'sleepWalker',e:'🚶',n:'梦游之人',like:['梦境碎片','额头余温','番茄之核','昨日残响'],rare:'R1',t:'梦游的人总在夜间小镇上游荡，说自己从不做梦，却常常见到一个小小的身影，牵着一颗番茄慢慢走。'},
- {id:'dawnWisp',e:'🌅',n:'破晓微光',like:['昨日残响','额头余温','斩梦之刃','梦境碎片'],rare:'R13',t:'破晓的微光守在梦的出口，说只要天亮了，困在里面的人就能走出来。'}
+ {id:'dawnWisp',e:'🌅',n:'破晓微光',like:['昨日残响','额头余温','斩梦之刃','梦境碎片'],rare:'R13',t:'破晓的微光守在梦的出口，说只要天亮了，困在里面的人就能走出来。'},
+ {id:'dolphin',e:'🐬',n:'海豚向导',like:['海豚哨','潮汐沙','海藻','浪花糖'],rare:'S2',t:'海豚向导在海面上翻了个跟头说：它带过很多船出海，它说看到月巴带着一颗会说话的番茄往岛上去了。'},
+ {id:'islander',e:'🏝️',n:'岛民阿礁',like:['椰壳灯','篝火炭','岛民陶偶','岛花'],rare:'S11',t:'阿礁蹲在篝火边说：来岛上度假的人不少，但像月巴这样，一听说海里的传说，就赶紧把番茄护到身后的，他还是头一个见。'},
+ {id:'humpback',e:'🐋',n:'座头鲸',like:['鲸歌螺','潮汐沙','海盐','海贝'],rare:'S3',t:'座头鲸慢悠悠地说：那天它唱的是给远方听的歌，没想到只有一颗番茄，认认真真听完了全程，还跟着它的调子打拍子。'},
+ {id:'bonfireHost',e:'🔥',n:'篝火主持',like:['篝火炭','椰壳灯','岛花','贝壳风铃'],rare:'S10',t:'篝火主持添了根柴说：晚会散场时，番茄舍不得走，最后帮着把火苗踩灭才肯和月巴回屋。'},
+ {id:'shellGranny',e:'🐚',n:'贝壳婆婆',like:['贝壳风铃','鲸歌螺','珍珠','海贝'],rare:'S12',t:'贝壳婆婆把耳朵贴在海螺上说：这片海的传说她从小听到大，她总说真正的秘密就在海里。'}
 ];
 function tvFresh(){
   if(!S.travel)S.travel={tomato:300,wh:{food1:0,food2:0,food4:0,food3:0,lamp:0,charm:0,bell:0},bag:[],frog:{status:'home',depart:null,ret:null,mood:''},cards:[],specials:[],destCount:{},friends:[],harvestT:now()+rand(10,30)*60000} ;
@@ -5006,15 +5037,22 @@ function tvPickFat(id){ const t=tvFresh(); t.frog.fatId=(id&&id===t.frog.fatId)?
 function tvRenderScene(){ const sc=$('tvScene'); if(!sc)return; const t=tvFresh(); tvEventRoll(); sc.style.background=tvBgOf(t); sc.innerHTML=tvView==='yard'?tvYardHTML(t):tvHomeHTML(t); }
 const TV_SLOTS=['🍅','🌶️','🍑','🍒','🍓','🥫','🌻','⭐'];
 const TV_SLOT_LOW=['🌶️','🍑','🍒','🍓','🌻','⭐']; /* 非番茄类符号，最低档专用 */
-const TV_SLOT_BONUS=['🍅','🥫']; /* 出现即额外加番茄的图标 */
 function tvShuffle(a){ for(let i=a.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const s=a[i]; a[i]=a[j]; a[j]=s; } return a; }
-/* 先按概率定档（最低档 10% / 中档 55% / 高档 35%），再生成与该档语义匹配的三格图标 */
-function tvRollSlot(){ const r=Math.random();
-  if(r<0.10){ const p=tvShuffle(TV_SLOT_LOW.slice()); return {cols:[p[0],p[1],p[2]],gain:randi(3,6),tier:'low'}; }            /* 3~6，三格全不同且无 🍅/🥫 */
-  if(r<0.65){ const c=[TV_SLOT_BONUS[(Math.random()*2)|0]]; for(let i=0;i<2;i++)c.push(TV_SLOTS[(Math.random()*TV_SLOTS.length)|0]); return {cols:tvShuffle(c),gain:randi(6,25),tier:'mid'}; } /* 6~25，含 🍅/🥫 */
-  const c=(Math.random()<0.5)?[TV_SLOTS[(Math.random()*TV_SLOTS.length)|0]]:null; /* 25~50：三格相同 或 含多个 🍅/🥫 */
-  const high=c?[c[0],c[0],c[0]]:[TV_SLOT_BONUS[(Math.random()*2)|0],TV_SLOT_BONUS[(Math.random()*2)|0],TV_SLOTS[(Math.random()*TV_SLOTS.length)|0]];
-  return {cols:tvShuffle(high),gain:randi(25,50),tier:'high'}; }
+/* 图标单价：🍅 比 🥫 贵，其余不计价 */
+function tvSlotPrice(s){ return s==='🍅'?2:(s==='🥫'?1:0); }
+/* 先按概率定档（最低档 10% / 中档 80% / 高档 10%），再生成与该档语义匹配的三格图标并算奖励 */
+function tvRollSlot(){ const r=Math.random(); let cols,tier,gain;
+  if(r<0.10){ /* 最低档：三格全不同且不含 🍅/🥫 → 3~6 */
+    const p=tvShuffle(TV_SLOT_LOW.slice()); cols=[p[0],p[1],p[2]]; tier='low'; gain=3+randi(0,3);
+  } else if(r<0.90){ /* 中档：一对 → 12 + 图标单价 + 0~3（12~20） */
+    const X=TV_SLOTS[(Math.random()*TV_SLOTS.length)|0];
+    const rest=TV_SLOTS.filter(function(s){ return s!==X; });
+    cols=tvShuffle([X,X,rest[(Math.random()*rest.length)|0]]); tier='mid';
+    gain=12+tvSlotPrice(cols[0])+tvSlotPrice(cols[1])+tvSlotPrice(cols[2])+randi(0,3);
+  } else { /* 高档：三连 → 25 + 单价×11 + 0~3（其他 25~28 / 🥫 36~39 / 🍅 47~50） */
+    const X=TV_SLOTS[(Math.random()*TV_SLOTS.length)|0]; cols=[X,X,X]; tier='high'; gain=25+tvSlotPrice(X)*11+randi(0,3);
+  }
+  return {cols:cols,gain:gain,tier:tier}; }
 // 旅行背景：本地随机渐变配色（不使用外链图片），随事件同频切换
 const TV_BGS=[
   ['#b8dcf0','#eef7fd'],['#f7d9a8','#fdf3e3'],['#d6c3f2','#f5eefa'],
@@ -5031,7 +5069,7 @@ function tvSpin(){ const btn=$('tvSpinBtn'); if(!tvSlotReady()){ /* 冷却中：
   const ICON=62, MAX=pool.length*2*ICON, stops=[900,1500,2100], dur=2200, t0=performance.now();
   const step=function(t){ const p=Math.min(1,(t-t0)/dur); for(let i=0;i<3;i++){ const e=els[i]; if(!e)continue; const sp=e.firstChild; if(!sp||!sp.style)continue; const pt=Math.min(1,p*dur/stops[i]); sp.style.transform='translateY('+(-pt*MAX).toFixed(1)+'px)'; if(pt>=1&&!e.classList.contains('land'))e.classList.add('land'); } if(p<1)requestAnimationFrame(step); else { /* 落定后清空长条 DOM，仅保留结果图标并移除 will-change，降低常驻内存/合成层 */ for(let i=0;i<3;i++){ const e=els[i]; if(!e)continue; e.innerHTML='<div class="tvg-strip"><div>'+cols[i]+'</div></div>'; } tvSlotResult(cols,roll.gain,roll.tier); if(btn){ btn.disabled=true; btn.textContent='🕹 已收获 · 月巴们去攒番茄啦'; } } };
   requestAnimationFrame(step); }
-function tvSlotResult(cols,gain,tier){ const t=tvFresh(); const s0=cols[0],s1=cols[1],s2=cols[2]; const allSame=(s0===s1&&s1===s2); const hasBonus=(TV_SLOT_BONUS.indexOf(s0)>=0||TV_SLOT_BONUS.indexOf(s1)>=0||TV_SLOT_BONUS.indexOf(s2)>=0); if(typeof gain!=='number'){ const pairSame=(s0===s1||s1===s2||s0===s2); gain=allSame?randi(25,50):(pairSame?randi(6,25):randi(3,6)); tier=allSame?'high':(pairSame?'mid':'low'); } t.tomato+=gain; t.harvestT=now()+rand(10,30)*60000; const low=(tier==='low'); const stolen=low&&(!!t.lastSlotLow||Math.random()<0.3); /* 仅最低档：连续最低档必触发，否则 30% 概率 */ t.lastSlotLow=low; save(); const r=$('tvSlotResult'); if(r){ if(allSame)r.innerHTML='🎉🎉 JACKPOT！收获 '+gain+' 🍅'; else if(stolen)r.innerHTML='😳 好像番茄被月巴偷偷拿走了……（+'+gain+' 🍅）'; else if(hasBonus)r.innerHTML='🍅 番茄加成！收获 '+gain+' 个 🍅'; else r.innerHTML='🎉 收获 '+gain+' 个 🍅'; } updateTravelIcon(); }
+function tvSlotResult(cols,gain,tier){ const t=tvFresh(); const hasBonus=(tvSlotPrice(cols[0])+tvSlotPrice(cols[1])+tvSlotPrice(cols[2]))>0; if(typeof gain!=='number'){ gain=3+randi(0,3); tier='low'; } t.tomato+=gain; t.harvestT=now()+rand(10,30)*60000; const low=(tier==='low'); const stolen=low&&(!!t.lastSlotLow||Math.random()<0.3); /* 仅最低档：连续最低档必触发偷番茄文案，否则 30% 概率 */ t.lastSlotLow=low; save(); const r=$('tvSlotResult'); if(r){ if(tier==='high')r.innerHTML='🎉🎉 三连大奖！收获 '+gain+' 个 🍅'; else if(stolen)r.innerHTML='😳 好像番茄被月巴偷偷拿走了……（+'+gain+' 🍅）'; else if(hasBonus)r.innerHTML='🍅 番茄加成！收获 '+gain+' 个 🍅'; else r.innerHTML='🎉 收获 '+gain+' 个 🍅'; } updateTravelIcon(); }
 function tvUpdateHarvest(){ const b=$('tvHarvestBtn'); if(b)b.style.display=tvSlotReady()?'':'none'; const h=$('tvHomeTab'); if(h){ const t=tvFresh(); h.classList.toggle('lit',!!(t.homeRewardReady&&t.homeReward&&t.homeReward.n>0)); } const gb=$('tvGambleBtn'); if(gb)gb.textContent=gambleFresh().playing?'🎲 对赌中':'🎲 对赌'; }
 /* ---------------- 受保护单调时钟（防调系统时间作弊） ----------------
    原理：页内时间用 performance.now() 的「流逝」推进 S.clock.base，玩家在页内改系统时间不会让 base 跳变；
@@ -5298,7 +5336,7 @@ function tvOpenNoteHTML(c){ const moods=tvMoodList(c); if(!moods.length)return '
 const TV_REGIONS=[
  {id:'forest', n:'森林',        d:'deco-forest', dests:['forest','fairy','ancient','cursed']},
  {id:'town',   n:'小镇',        d:'deco-town',   dests:['town','moon','nightmare','dream']},
- {id:'sea',    n:'大海',        d:'deco-sea',    dests:['sea']},
+ {id:'sea',    n:'大海',        d:'deco-sea',    dests:['sea','island']},
  {id:'snow',   n:'雪地',        d:'deco-snow',   dests:['snow','ruins','ice','empire']}
 ];
 function tvDestById(id){ return TV_DESTS.find(function(x){return x.id===id;}); }
@@ -5359,9 +5397,9 @@ function tvOpenLetter(c){
 function tvOpenMail(){ openModal('📮 信箱 · 来信', tvMailHTML()); }
 function tvMailHTML(){ const t=tvFresh(); let h='<p style="color:#48614a;font-size:13px">此次旅行月巴寄回、尚未拆开的信件，点击可以拆开：</p><div class="sh-grid">'; if(!t.inbox.length)h+='<p style="color:#999;text-align:center;grid-column:1/-1">信箱空空，还没有未拆的信件</p>'; for(const c of t.inbox)h+=tvLetterEnv(c); h+='</div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'; return h; }
 function tvFriendModal(f,t){ const fr=t.friends.find(function(x){return x.id===f.id;}); const fc=fr?fr.count:0; const emo=f.e; let h='<p style="text-align:center;font-size:40px">'+emo+'</p><p style="text-align:center"><b>'+f.n+'</b>'+(fc?'（第 '+(fc+1)+' 次来访）':'（第一次来访）')+'</p><p style="text-align:center;color:#48614a">'+f.t+'</p><p style="text-align:center;font-size:12px;color:#48614a">喂它喜欢的特产可回礼 🍅</p><div class="sh-grid">'; for(const s of f.like){ const has=t.specials.indexOf(s)>=0; h+='<div class="sh-card"><div class="sh-n">'+(has?(spEmo(s)+' '+s):'❔ ???')+'</div><button class="btn" '+(has?'':'disabled')+' onclick="tvFeed(\''+f.id+'\',\''+s+'\')">招待</button></div>'; } h+='</div><p style="text-align:center;margin-top:6px"><button class="btn" onclick="closeModal()">让它再等等</button> <button class="btn" onclick="tvTurnAway()">请回吧</button></p>'; return h; }
-function tvTurnAway(){ const t=tvFresh(); if(!t.pendingVisit){ closeModal(); return; } t.pendingVisit=null; if(!t.nextVisit||t.nextVisit<now())t.nextVisit=now()+rand(10,15)*60000; save(); tvUpdateDoor(); updateTravelIcon(); tvRenderScene(); closeModal(); toast('🚪 你客气地请访客回去了，它说改天再来。'); }
+function tvTurnAway(){ const t=tvFresh(); if(!t.pendingVisit){ closeModal(); return; } t.pendingVisit=null; if(!t.nextVisit||t.nextVisit<now())t.nextVisit=now()+rand(15,25)*60000; save(); tvUpdateDoor(); updateTravelIcon(); tvRenderScene(); closeModal(); toast('🚪 你客气地请访客回去了，它说改天再来。'); }
 /* 有人上门只在「门口」按钮亮起，不直接弹窗；点开门后才招待 */
-function tvFriendPop(){ const t=tvFresh(); if(t.pendingVisit)return; if(!t.nextVisit)t.nextVisit=now()+rand(10,15)*60000; if(now()<t.nextVisit)return; const f=TV_FRIENDS[Math.floor(Math.random()*TV_FRIENDS.length)]; t.pendingVisit=f.id; t.nextVisit=now()+rand(10,15)*60000; save(); }
+function tvFriendPop(){ const t=tvFresh(); if(t.pendingVisit)return; if(!t.nextVisit)t.nextVisit=now()+rand(15,25)*60000; if(now()<t.nextVisit)return; const f=TV_FRIENDS[Math.floor(Math.random()*TV_FRIENDS.length)]; t.pendingVisit=f.id; t.nextVisit=now()+rand(15,25)*60000; save(); }
 function tvDoorOpen(){ const t=tvFresh(); if(!t.pendingVisit){ toast('🚪 门口没有人，安静得很'); return; } const f=TV_FRIENDS.find(function(x){return x.id===t.pendingVisit;}); if(!f){ t.pendingVisit=null; save(); return; } openModal('👋 门口有人敲门', tvFriendModal(f,t)); }
 function tvUpdateDoor(){ const b=$('tvDoorBtn'); if(b)b.style.display=tvFresh().pendingVisit?'flex':'none'; }
 function tvFeed(fid,s){ const t=tvFresh(); const f=TV_FRIENDS.find(function(x){return x.id===fid;}); if(!f||t.specials.indexOf(s)<0)return; t.pendingVisit=null; tvUpdateDoor(); let fr=t.friends.find(function(x){return x.id===fid;}); if(!fr){ fr={id:fid,count:0}; t.friends.push(fr); } fr.count++; const gain=15+Math.floor(Math.random()*20); let h='<p style="text-align:center;color:#3e5c3f">'+f.n+' 很开心，回礼 🍅 +'+gain+'</p>'; if(Math.random()<0.1&&f.rare&&t.cards.indexOf(f.rare)<0){ t.cards.push(f.rare); t.inbox.push(f.rare); tvNoteCard(f.rare,t.frog.fatId); const tm=t.frog&&t.frog.fatId&&typeById(t.frog.fatId)?typeById(t.frog.fatId).name:'月巴'; h+='<p style="text-align:center">💌 邻居 '+f.e+' '+f.n+' 在外路过时遇到了 <b>'+tm+'</b>，'+tm+' 托它转交一封来自「'+tvDestOfCard(f.rare)+'」的信！</p>'; } h+='<p style="text-align:center"><button class="btn" onclick="closeModal()">收下</button></p>'; openModal('🎁 回礼', h); tvTomato(gain); save(); }
