@@ -5020,7 +5020,7 @@ const TV_FRIENDS=[
  {id:'husky',e:'🐕',n:'雪橇犬',like:['青铜号角','王冠碎片'],rare:'G11',t:'雪橇犬说：王庭那口钟它拖去修过三次，每次月巴都拦下来说别修，钟一响就真的像殿里没人了。'},
  {id:'mammoth',e:'🦣',n:'长毛象',like:['石纹象棋','帝国印玺'],rare:'G13',t:'长毛象用鼻子卷着棋子说：当年下的最后一盘棋，对面那把椅子一直空着，每次月巴去的时候，都会低声说「陛下，该您了」。'},
  {id:'ermine',e:'🐾',n:'雪貂',like:['帝国印玺','御用茶盏'],rare:'G16',t:'雪貂从地宫门缝里钻出来说：门楣上那行字它认得，前半句是君王的名，后半句是个没写完的约定。'},
- {id:'fairy',e:'🧚',n:'小精灵',like:['精灵羽','月光露','星屑糖','花信笺','野果','露珠'],rare:'H2',t:'小精灵们围着番茄转了三圈说：这么大一颗番茄，是从云上面掉下来的吗？'},
+ {id:'fairy',e:'🧚',n:'小精灵',like:['精灵羽','月光露','星屑糖','花信笺'],rare:'H2',t:'小精灵们围着番茄转了三圈说：这么大一颗番茄，是从云上面掉下来的吗？'},
  {id:'unicorn',e:'🦄',n:'独角兽',like:['独角兽毛','月光露','萤石','露珠'],rare:'H10',t:'独角兽低下头让番茄摸它的角，说这是它第一次让谁碰到，因为番茄身上有森林的味道。'},
  {id:'glowfly',e:'✨',n:'流萤',like:['萤石','星屑糖','露珠','青苔团'],rare:'H3',t:'流萤们提着小灯笼排成队，说要把番茄和月巴送回藤门口，免得它们在桃源里走丢。'},
  {id:'mantis',e:'🦗',n:'桃源螳螂',like:['藤编环','风铃草','蘑菇','野果'],rare:'H4',t:'螳螂举着藤环说：这是它照着月巴的尺寸编的，没想到番茄戴上也刚刚好。'},
@@ -7175,6 +7175,49 @@ function ddBreakPenalty(hand, cards){
   });
   return pen;
 }
+/* 估算「把一组牌出完最少还要几手」——困难 AI 用它做全局规划，尽量把牌出得又快又整
+   （成串的顺子/连对优先一起打掉，避免拆散后剩一堆零散单张）。
+   贪心分解顺序：王炸 → 炸弹 → 顺子(≥5) → 连对(≥3) → 三张(带单) → 对子 → 单张 */
+function ddCountHands(c){
+  let h=0, v;
+  if(c[16]>0&&c[17]>0){ c[16]--; c[17]--; h++; }
+  for(v=3;v<=15;v++) if(c[v]>=4){ c[v]-=4; h++; }
+  for(;;){                                        /* 顺子：每次取最长的一条（3~A） */
+    let bs=-1, bl=0;
+    for(let s=3;s<=14;){
+      if(c[s]>=1){ let e=s; while(e+1<=14&&c[e+1]>=1) e++;
+        const len=e-s+1; if(len>=5&&len>bl){ bl=len; bs=s; } s=e+1; }
+      else s++;
+    }
+    if(bs<0) break;
+    for(let k=0;k<bl;k++) c[bs+k]--;
+    h++;
+  }
+  for(;;){                                        /* 连对：每次取最长的一条（3~A） */
+    let bs=-1, bl=0;
+    for(let s=3;s<=14;){
+      if(c[s]>=2){ let e=s; while(e+1<=14&&c[e+1]>=2) e++;
+        const len=e-s+1; if(len>=3&&len>bl){ bl=len; bs=s; } s=e+1; }
+      else s++;
+    }
+    if(bs<0) break;
+    for(let k=0;k<bl;k++) c[bs+k]-=2;
+    h++;
+  }
+  for(v=3;v<=15;v++){                             /* 三张：尽量各带一张单牌，凑「三带一」少花一手 */
+    while(c[v]>=3){ c[v]-=3; h++; for(let w=3;w<=15;w++) if(c[w]>=1){ c[w]--; break; } }
+  }
+  for(v=3;v<=15;v++){ while(c[v]>=2){ c[v]-=2; h++; } }
+  for(v=3;v<=17;v++){ while(c[v]>=1){ c[v]--; h++; } }
+  return h;
+}
+/* 打掉 cards 后，手里这堆牌「还要几手才出得完」（越小越好） */
+function ddHandsLeft(hand, cards){
+  const c=new Array(18).fill(0);
+  for(let i=0;i<hand.length;i++) c[hand[i].v]++;
+  if(cards) for(let i=0;i<cards.length;i++) c[cards[i].v]--;
+  return ddCountHands(c);
+}
 
 /* ---------- 牌型判定 ---------- */
 /* 返回 {type,len,rank,cards} 或 null
@@ -7372,7 +7415,7 @@ const DD_AVS=['🧑','🐰','🍅'];
 const DD_DIFFS={
   easy:  {name:'墨镜月巴', lv:'简单', img:'https://origin.picgo.net/2026/09/03/1115555fb4ab3b2731.th.png', mult:0.2, miss:0.55, bomb:0.05, random:true,  smart:false, handicap:0},
   normal:{name:'进食月巴', lv:'中等', img:'https://origin.picgo.net/2026/09/03/15b077f9364349ae92.th.png', mult:0.5, miss:0.15, bomb:0.25, random:false, smart:false, handicap:0},
-  hard:  {name:'背头月巴', lv:'困难', img:'https://origin.picgo.net/2026/09/29/19daf98c7a185e7e0c3d529a5f921058d74092d7a8ab4c37.gif', mult:1,   miss:0,    bomb:0.55, random:false, smart:true,  handicap:3}
+  hard:  {name:'背头月巴', lv:'困难', img:'https://origin.picgo.net/2026/09/29/19daf98c7a185e7e0c3d529a5f921058d74092d7a8ab4c37.gif', mult:1,   miss:0,    bomb:0.55, random:false, smart:true,  handicap:2}
 };
 let ddDiff='normal';        /* 当前选中的难度 */
 let ddG=null;               /* 当前对局（内存，不持久化） */
@@ -7717,6 +7760,12 @@ function ddAiLead(hand,who,cfg){
   }
   pool.sort(function(a,b){
     const pa=ddParse(a),pb=ddParse(b);
+    /* 困难：优先选「出完之后手里剩牌最少手数」的出法，把顺子/连对成串打掉，
+       避免先甩小单张、把整手牌拆得七零八落 */
+    if(cfg.smart){
+      const ha=ddHandsLeft(hand,a), hb=ddHandsLeft(hand,b);
+      if(ha!==hb) return ha-hb;
+    }
     const ma=ddMaxV(a),mb=ddMaxV(b);
     let penA=ma>=15?1000:0, penB=mb>=15?1000:0;
     /* 困难：优先不拆散手里已有的对子/三张/炸弹，出牌更「整」 */
@@ -7735,25 +7784,23 @@ function ddAiFollow(hand,last,who,cfg){
   if(finish.length) return finish[0];
   const nonBomb=beats.filter(function(c){ const p=ddParse(c); return p.type!=='bomb'&&p.type!=='rocket'; });
   if(sameSide){
-    /* 队友占着牌权。困难 AI 不再无脑让牌，而是精算这一手该不该「抢」：
-       默认仍让给队友，只在下面两种明确的赢面下才接管牌权 */
+    /* 队友占着牌权。困难 AI 不再一味让牌，而是能压就压、尽量接管牌权：
+       默认用最小、最不拆牌的牌「过」掉队友这手（把主动权握在自己手里），
+       只有「队友马上走完」或「只有炸弹能压」时才让给队友。 */
     if(cfg.smart){
       const g=ddG;
       const landIdx=g.role.indexOf('landlord');
       const landLen=g.hands[landIdx].length;    /* 地主还剩几张 */
       const mateLen=g.hands[last.owner].length; /* 队友还剩几张 */
-      /* 队友即将走完，或地主已明确要不起队友这手 → 稳稳让队友掌控，一张不浪费 */
-      if(mateLen>3 && g.plays[landIdx]!=='pass'){
-        /* 只有「抢过来后谁都压不住」的牌才值得抢（场上还可能有炸就不冒这个险） */
-        const unk=ddUnknown(who);
-        const safe=(ddUnkBombCount(unk)>0)?[]:nonBomb.filter(function(c){ return ddNoBiggerSame(c,who); });
-        if(safe.length){
-          safe.sort(function(a,b){ return ddParse(a).rank-ddParse(b).rank; }); /* 用最小的那手，留住更大的控制牌 */
-          /* 1) 地主只剩 1~2 张、马上要走完：抢在他出手前把这一轮堵死 */
-          if(landLen<=2) return safe[0];
-          /* 2) 我明显比队友更接近走完：抢过牌权自己领跑，收得更快 */
-          if(hand.length<=8 && hand.length<=mateLen-4) return safe[0];
-        }
+      /* 队友只剩 1 张、马上要走完 → 不抢，让队友直接出完 */
+      if(mateLen>1 && nonBomb.length){
+        nonBomb.sort(function(a,b){ const pa=ddParse(a),pb=ddParse(b);
+          const ma=ddMaxV(a),mb=ddMaxV(b); let penA=ma>=15?1000:0,penB=mb>=15?1000:0;
+          penA+=ddBreakPenalty(hand,a)*3; penB+=ddBreakPenalty(hand,b)*3;
+          return (penA+pa.rank)-(penB+pb.rank) || (a.length-b.length); });
+        const pick=nonBomb[0];
+        /* 护栏：局面还早（地主牌还多）、自己手牌也多时，不浪费 2/王 这类控制牌 */
+        if(!(landLen>3 && hand.length>5 && ddMaxV(pick)>=15)) return pick;
       }
     }
     return null;                               /* 其余情况：队友的牌，让给他 */
