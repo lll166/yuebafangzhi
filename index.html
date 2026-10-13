@@ -5102,19 +5102,18 @@ function tvRenderScene(){ const sc=$('tvScene'); if(!sc)return; const t=tvFresh(
 const TV_SLOTS=['🍅','🌶️','🍑','🍒','🍓','🥫','🌻','⭐'];
 const TV_SLOT_LOW=['🌶️','🍑','🍒','🍓','🌻','⭐']; /* 非番茄类符号，最低档专用 */
 function tvShuffle(a){ for(let i=a.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const s=a[i]; a[i]=a[j]; a[j]=s; } return a; }
-/* 图标单价：🍅 比 🥫 贵，其余不计价 */
-function tvSlotPrice(s){ return s==='🍅'?2:(s==='🥫'?1:0); }
-/* 先按概率定档（最低档 10% / 中档 80% / 高档 10%），再生成与该档语义匹配的三格图标并算奖励 */
+/* 先按概率定档（最低档 10% / 成对档 80% / 三连档 10%），再生成与该档语义匹配的三格图标并算奖励 */
 function tvRollSlot(){ const r=Math.random(); let cols,tier,gain;
-  if(r<0.10){ /* 最低档：三格全不同且不含 🍅/🥫 → 3~6 */
-    const p=tvShuffle(TV_SLOT_LOW.slice()); cols=[p[0],p[1],p[2]]; tier='low'; gain=3+randi(0,3);
-  } else if(r<0.90){ /* 中档：一对 → 12 + 图标单价 + 0~3（12~20） */
+  if(r<0.10){ /* 最低档：三格全不同且不含 🍅/🥫 → 1~10 */
+    const p=tvShuffle(TV_SLOT_LOW.slice()); cols=[p[0],p[1],p[2]]; tier='low'; gain=randi(1,10);
+  } else if(r<0.90){ /* 成对档：恰好一对 → 普通 15~20 / 🥫 21~25 / 🍅 26~30 */
     const X=TV_SLOTS[(Math.random()*TV_SLOTS.length)|0];
     const rest=TV_SLOTS.filter(function(s){ return s!==X; });
     cols=tvShuffle([X,X,rest[(Math.random()*rest.length)|0]]); tier='mid';
-    gain=12+tvSlotPrice(cols[0])+tvSlotPrice(cols[1])+tvSlotPrice(cols[2])+randi(0,3);
-  } else { /* 高档：三连 → 25 + 单价×11 + 0~3（其他 25~28 / 🥫 36~39 / 🍅 47~50） */
-    const X=TV_SLOTS[(Math.random()*TV_SLOTS.length)|0]; cols=[X,X,X]; tier='high'; gain=25+tvSlotPrice(X)*11+randi(0,3);
+    gain=X==='🍅'?26+randi(0,4):X==='🥫'?21+randi(0,4):15+randi(0,5);
+  } else { /* 三连档：三格全相同 → 普通 31~38 / 🥫 39~44 / 🍅 45~50 */
+    const X=TV_SLOTS[(Math.random()*TV_SLOTS.length)|0]; cols=[X,X,X]; tier='high';
+    gain=X==='🍅'?45+randi(0,5):X==='🥫'?39+randi(0,5):31+randi(0,7);
   }
   return {cols:cols,gain:gain,tier:tier}; }
 // 旅行背景：本地随机渐变配色（不使用外链图片），随事件同频切换
@@ -5133,7 +5132,7 @@ function tvSpin(){ const btn=$('tvSpinBtn'); if(!tvSlotReady()){ /* 冷却中：
   const ICON=62, MAX=pool.length*2*ICON, stops=[900,1500,2100], dur=2200, t0=performance.now();
   const step=function(t){ const p=Math.min(1,(t-t0)/dur); for(let i=0;i<3;i++){ const e=els[i]; if(!e)continue; const sp=e.firstChild; if(!sp||!sp.style)continue; const pt=Math.min(1,p*dur/stops[i]); sp.style.transform='translateY('+(-pt*MAX).toFixed(1)+'px)'; if(pt>=1&&!e.classList.contains('land'))e.classList.add('land'); } if(p<1)requestAnimationFrame(step); else { /* 落定后清空长条 DOM，仅保留结果图标并移除 will-change，降低常驻内存/合成层 */ for(let i=0;i<3;i++){ const e=els[i]; if(!e)continue; e.innerHTML='<div class="tvg-strip"><div>'+cols[i]+'</div></div>'; } tvSlotResult(cols,roll.gain,roll.tier); if(btn){ btn.disabled=true; btn.textContent='🕹 已收获 · 月巴们去攒番茄啦'; } } };
   requestAnimationFrame(step); }
-function tvSlotResult(cols,gain,tier){ const t=tvFresh(); const hasBonus=(tvSlotPrice(cols[0])+tvSlotPrice(cols[1])+tvSlotPrice(cols[2]))>0; if(typeof gain!=='number'){ gain=3+randi(0,3); tier='low'; } t.tomato+=gain; t.harvestT=now()+rand(10,30)*60000; const low=(tier==='low'); const stolen=low&&(!!t.lastSlotLow||Math.random()<0.3); /* 仅最低档：连续最低档必触发偷番茄文案，否则 30% 概率 */ t.lastSlotLow=low; save(); const r=$('tvSlotResult'); if(r){ if(tier==='high')r.innerHTML='🎉🎉 三连大奖！收获 '+gain+' 个 🍅'; else if(stolen)r.innerHTML='😳 好像番茄被月巴偷偷拿走了……（+'+gain+' 🍅）'; else if(hasBonus)r.innerHTML='🍅 番茄加成！收获 '+gain+' 个 🍅'; else r.innerHTML='🎉 收获 '+gain+' 个 🍅'; } updateTravelIcon(); }
+function tvSlotResult(cols,gain,tier){ const t=tvFresh(); if(typeof gain!=='number'){ gain=randi(1,10); tier='low'; } t.tomato+=gain; t.harvestT=now()+rand(10,30)*60000; const stolen=(tier==='low')&&gain<=6; const best=cols.indexOf('🍅')>=0?'🍅':(cols.indexOf('🥫')>=0?'🥫':''); save(); const r=$('tvSlotResult'); if(r){ if(tier==='high')r.innerHTML=(best==='🍅'?'🎉🎉 三连番茄大奖！':best==='🥫'?'🎉🎉 三连罐头大奖！':'🎉🎉 三连大奖！')+'收获 '+gain+' 个 🍅'; else if(stolen)r.innerHTML='😳 好像番茄被月巴偷偷拿走了……（+'+gain+' 🍅）'; else if(tier==='mid'&&best)r.innerHTML=(best==='🍅'?'🍅 番茄成对加成！':'🥫 罐头成对加成！')+'收获 '+gain+' 个 🍅'; else r.innerHTML='🎉 收获 '+gain+' 个 🍅'; } updateTravelIcon(); }
 function tvUpdateHarvest(){ const b=$('tvHarvestBtn'); if(b)b.style.display=tvSlotReady()?'':'none'; const h=$('tvHomeTab'); if(h){ const t=tvFresh(); h.classList.toggle('lit',!!(t.homeRewardReady&&t.homeReward&&t.homeReward.n>0)); } const gb=$('tvGambleBtn'); if(gb)gb.textContent=gambleFresh().playing?'🎲 对赌中':'🎲 对赌'; }
 /* ---------------- 受保护单调时钟（防调系统时间作弊） ----------------
    原理：页内时间用 performance.now() 的「流逝」推进 S.clock.base，玩家在页内改系统时间不会让 base 跳变；
