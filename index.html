@@ -591,6 +591,130 @@
   .fg-result.pass{color:#5c9a35;}
   .fg-result.fail{color:var(--dim);}
 
+  /* ========== 斗月巴（旅行页小游戏） ========== */
+  #ddgame{position:fixed;inset:0;z-index:58;display:none;flex-direction:column;
+    background:linear-gradient(180deg,#efe6ff,#f7f0ff 46%,#fdf6e8);}
+  #ddgame.show{display:flex;}
+  body.dd-lock{overflow:hidden;}
+  #ddgame .dd-top{display:flex;align-items:center;gap:10px;padding:10px 14px;flex-wrap:wrap;
+    background:rgba(255,255,255,.78);font-weight:800;font-size:13px;color:var(--purple2);
+    box-shadow:0 1px 6px rgba(120,100,160,.14);z-index:6;position:relative;}
+  #ddgame .dd-top .dd-info{background:rgba(149,117,205,.16);border-radius:999px;padding:3px 10px;}
+  #ddgame .dd-top .dd-bal b{color:var(--gold);font-size:15px;}
+  #ddgame .dd-top .dd-role{background:rgba(199,150,64,.16);color:#8a6a2e;border-radius:999px;padding:3px 10px;}
+  #ddgame .dd-top .sp{flex:1;}
+  #ddgame .iconbtn{width:30px;height:30px;font-size:15px;font-weight:900;}
+  #ddgame .dd-stage{position:relative;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;
+    padding:10px;width:100%;max-width:620px;margin:0 auto;}
+  /* 月巴与番茄上下两行排布，各自的出牌有整行宽度，看得更清楚 */
+  #ddgame .dd-seats{display:flex;flex-direction:column;gap:6px;}
+  #ddgame .dd-opp{flex:0 0 auto;min-width:0;border-radius:14px;padding:7px 10px;
+    background:rgba(255,255,255,.72);border:1px solid var(--line);box-shadow:0 3px 10px rgba(120,100,160,.1);}
+  #ddgame .dd-opp.turn{border-color:var(--purple);box-shadow:0 0 0 2px rgba(149,117,205,.35),0 3px 10px rgba(120,100,160,.16);}
+  #ddgame .dd-opphead{display:flex;align-items:center;gap:6px;font-weight:800;font-size:12px;color:var(--purple2);}
+  #ddgame .dd-opphead .av{font-size:17px;}
+  #ddgame .dd-opphead .role{margin-left:auto;font-size:10px;border-radius:999px;padding:1px 7px;
+    background:rgba(149,117,205,.14);color:var(--dim);font-weight:800;}
+  #ddgame .dd-opphead .role.ld{background:rgba(224,138,60,.2);color:#c05a1e;}
+  #ddgame .dd-opphead .role.fm{background:rgba(90,160,90,.18);color:#3f7d3f;}
+  #ddgame .dd-cnt{font-size:11px;color:var(--dim);font-weight:700;margin-top:2px;}
+  #ddgame .dd-cnt b{color:var(--purple2);font-size:14px;}
+  #ddgame .dd-played{display:flex;flex-wrap:wrap;gap:1px;margin-top:5px;min-height:34px;align-items:center;}
+  #ddgame .dd-played .pass{font-size:11px;font-weight:800;color:#b0a68e;}
+  #ddgame .dd-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    font-size:13px;color:var(--dim);font-weight:700;text-align:center;padding:6px;}
+  #ddgame .dd-center .big{font-size:20px;color:var(--purple2);font-weight:900;}
+  #ddgame .dd-center .sub{font-size:11px;color:#b0a68e;}
+  #ddgame .dd-myplay{display:flex;flex-wrap:wrap;gap:1px;justify-content:center;min-height:38px;align-items:center;padding:2px 6px;}
+  #ddgame .dd-hand{display:flex;justify-content:center;align-items:flex-end;padding:20px 4px 6px;
+    overflow-x:auto;overflow-y:visible;min-height:82px;scrollbar-width:none;}
+  #ddgame .dd-hand::-webkit-scrollbar{display:none;}
+  /* 手牌分成两组：宽屏下两组并排拼成一行，窄屏下改为上下两行 */
+  #ddgame .dd-hrow{display:flex;align-items:flex-end;justify-content:center;}
+  #ddgame .dd-hrow>div+div{margin-left:-14px;}
+  #ddgame .dd-hand>.dd-hrow+.dd-hrow{margin-left:-14px;}
+  #ddgame .dd-actions{display:flex;gap:8px;justify-content:center;padding:2px 4px 4px;flex-wrap:wrap;min-height:44px;}
+  #ddgame .btn{border:none;font-family:inherit;font-weight:900;font-size:14px;border-radius:12px;
+    padding:10px 18px;cursor:pointer;background:rgba(149,117,205,.14);color:var(--purple2);
+    box-shadow:0 2px 6px rgba(120,100,160,.14);transition:.12s;}
+  #ddgame .btn:active{transform:scale(.96);}
+  #ddgame .btn:hover{transform:none;border-color:transparent;}
+  #ddgame .btn.cta{background:linear-gradient(180deg,#a98ee0,#7e57c2);color:#fff;}
+  #ddgame .btn.gold{background:linear-gradient(180deg,#e8c063,#c79640);color:#4a3611;border-color:transparent;}
+  #ddgame .btn.off{opacity:.42;pointer-events:none;}
+  #ddgame .dd-card{position:relative;flex:0 0 auto;width:40px;height:56px;border-radius:7px;
+    background:linear-gradient(180deg,#fffef9,#f6efdd);border:1.5px solid #d9c9a3;
+    box-shadow:0 2px 4px rgba(120,100,60,.22);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;cursor:pointer;user-select:none;
+    transition:transform .12s ease,box-shadow .12s ease;font-weight:900;}
+  #ddgame .dd-card .dd-rk{font-size:15px;line-height:1;color:#3a3226;}
+  #ddgame .dd-card .dd-su{font-size:13px;line-height:1;margin-top:1px;color:#3a3226;}
+  #ddgame .dd-card.red .dd-rk,#ddgame .dd-card.red .dd-su{color:#d0392c;}
+  #ddgame .dd-card.sel{transform:translateY(-16px);box-shadow:0 7px 14px rgba(120,100,60,.34);}
+  #ddgame .dd-card.joker .dd-jk{font-size:11px;font-weight:900;letter-spacing:1px;writing-mode:vertical-rl;color:#c79640;}
+  #ddgame .dd-card.joker.big .dd-jk{color:#d0392c;}
+  #ddgame .dd-card.mini{width:28px;height:40px;border-width:1px;}
+  #ddgame .dd-card.mini .dd-rk{font-size:11px;}
+  #ddgame .dd-card.mini .dd-su{font-size:9px;}
+  #ddgame .dd-card.mini.joker .dd-jk{font-size:8px;}
+  #ddgame .dd-played>div+div{margin-left:-8px;}
+  #ddgame .dd-layer{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:16px;
+    z-index:8;background:rgba(70,55,120,.34);}
+  #ddgame .dd-layer.show{display:flex;}
+  #ddgame .dd-box{width:min(390px,96%);max-height:92%;overflow-y:auto;border-radius:18px;padding:16px;
+    background:rgba(255,255,255,.96);border:1px solid var(--line);box-shadow:0 16px 44px rgba(90,70,150,.32);}
+  #ddgame .dd-box h3{margin:0 0 8px;font-size:17px;color:var(--purple2);text-align:center;}
+  #ddgame .dd-box p{margin:0 0 8px;font-size:13px;line-height:1.65;color:#6b5f4a;}
+  #ddgame .dd-note{font-size:11px;color:#a08a63;text-align:center;}
+  #ddgame .dd-warn{font-size:11px;font-weight:800;color:#b8532f;text-align:center;line-height:1.55;
+    background:rgba(224,110,74,.12);border:1px solid rgba(224,110,74,.32);border-radius:10px;padding:6px 9px;margin:8px 0 0;}
+  #ddgame .dd-quick{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0;}
+  /* 难度选择 */
+  #ddgame .dd-diffs{display:flex;gap:7px;margin:4px 0 8px;}
+  #ddgame .dd-diff{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;
+    border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.7);
+    font-family:inherit;cursor:pointer;}
+  #ddgame .dd-diff .de{width:40px;height:40px;display:flex;align-items:center;justify-content:center;}
+  #ddgame .dd-diff .de img{width:100%;height:100%;object-fit:contain;}
+  #ddgame .dd-diff .dn{font-weight:900;font-size:12px;color:var(--purple2);}
+  #ddgame .dd-diff .dm{font-size:10px;font-weight:800;color:#a08a63;}
+  #ddgame .dd-diff.on{border-color:var(--gold);background:rgba(197,150,64,.14);
+    box-shadow:0 0 0 2px rgba(197,150,64,.26) inset;}
+  #ddgame .dd-ic{width:16px;height:16px;object-fit:contain;vertical-align:-3px;}
+  #ddgame .dd-quick button{flex:1 1 calc(33% - 5px);border:1px solid var(--line);border-radius:10px;
+    background:rgba(255,255,255,.7);padding:8px 4px;font-family:inherit;font-weight:800;font-size:12px;
+    color:var(--purple2);cursor:pointer;}
+  #ddgame .dd-inputrow{display:flex;align-items:center;gap:8px;margin:8px 0 4px;justify-content:center;}
+  #ddgame .dd-inputrow input{width:120px;padding:9px 10px;border-radius:10px;border:1px solid var(--line);
+    font-family:inherit;font-weight:900;font-size:15px;text-align:center;color:var(--text);background:#fffdf6;}
+  #ddgame .dd-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px;}
+  #ddgame .dd-result{display:flex;justify-content:space-between;font-size:13px;font-weight:700;
+    padding:7px 10px;border-radius:10px;background:rgba(149,117,205,.08);margin-bottom:6px;}
+  #ddgame .dd-result b{color:var(--gold);}
+  #ddgame .dd-result .neg{color:#d0392c;}
+  /* 结算层里的「本局手牌」展示 */
+  #ddgame .dd-reveal{margin-top:10px;border-top:1px dashed var(--line);padding-top:9px;}
+  #ddgame .dd-reveal-t{font-size:12px;font-weight:900;color:var(--purple2);text-align:center;margin-bottom:7px;}
+  #ddgame .dd-reveal-row{margin-bottom:7px;}
+  #ddgame .dd-reveal-hd{font-size:11px;font-weight:800;color:#6b5f4a;margin-bottom:3px;}
+  #ddgame .dd-reveal-hd span{color:#b0a68e;font-weight:700;}
+  #ddgame .dd-reveal .dd-played{min-height:0;margin-top:0;}
+  #ddgame .dd-toast{position:fixed;left:50%;bottom:14%;transform:translateX(-50%);z-index:99;
+    background:rgba(58,50,38,.92);color:#fff;font-weight:800;font-size:13px;padding:9px 16px;
+    border-radius:999px;box-shadow:0 8px 22px rgba(0,0,0,.28);opacity:0;pointer-events:none;transition:opacity .2s;}
+  #ddgame .dd-toast.show{opacity:1;}
+  @media (max-width:560px){
+    /* 窄屏：手牌折成上下两行，看得更清楚 */
+    #ddgame .dd-hand{flex-direction:column;align-items:center;gap:30px;padding-top:44px;
+      overflow:visible;min-height:0;}
+    #ddgame .dd-hand>.dd-hrow+.dd-hrow{margin-left:0;}
+  }
+  @media (max-width:380px){
+    #ddgame .dd-card{width:34px;height:48px;}
+    #ddgame .dd-card .dd-rk{font-size:13px;} #ddgame .dd-card .dd-su{font-size:11px;}
+    #ddgame .dd-hrow>div+div{margin-left:-14px;}
+  }
+
   /* ---------- 番茄钟 ---------- */
   .pomo-wrap{text-align:center;position:relative;}
   .pomo-pipbtn{position:absolute;top:2px;right:2px;width:30px;height:30px;border:none;border-radius:50%;
@@ -892,7 +1016,7 @@
 
 <div id="app">
   <div id="topbar" class="frost">
-    <div class="title">放置<span>月巴</span> 🍄</div>
+    <div class="title">放置<span>月巴</span> 🐰</div>
     <div class="coinbox" id="coinbox"><span class="cico">🪙</span><span id="coinTxt">0</span></div>
     <div class="collbox">
       <div class="top"><span>📖 图鉴收集</span><span id="collTxt">0/0 (0%)</span></div>
@@ -963,6 +1087,7 @@
     <button class="tv-btn" onclick="tvBag()">💼 行囊</button>
     <button class="tv-btn" onclick="tvOpenBook()">🏷 图鉴</button>
     <button class="tv-btn" id="tvGambleBtn" onclick="gambleEntry()">🎲 对赌</button>
+    <button class="tv-btn" id="tvDdBtn" onclick="ddEnter()">🃏 斗月巴</button>
     <button class="tv-btn" id="tvHarvestBtn" onclick="tvSlotOpen()" style="display:none">🎰 惊喜</button>
     <!-- 信箱/门口浮标放在导航栏内，随导航栏折行自动上移，避免与第二行按钮重叠 -->
     <button class="tv-mail" id="tvMail" onclick="tvOpenMail()" title="信箱">📮<span id="tvMailDot" style="display:none"></span></button>
@@ -1024,6 +1149,77 @@
     </div>
   </div>
   <div class="fg-tip">点击屏幕 / 空格键 让月巴往上飞 · 穿过柱子得分</div>
+</div>
+
+<!-- 斗月巴（旅行页小游戏） -->
+<div id="ddgame">
+  <div class="dd-top">
+    <span class="dd-info" id="ddInfo">押注 — 🍅</span>
+    <span class="dd-bal">余额 <b id="ddBal">0</b> 🍅</span>
+    <span class="dd-role" id="ddRoleTag">未开局</span>
+    <span class="sp"></span>
+    <button class="iconbtn" id="ddRulesBtn" title="规则">?</button>
+    <button class="iconbtn" onclick="ddExit()" title="退出">✕</button>
+  </div>
+
+  <div class="dd-stage">
+    <div class="dd-seats">
+      <div class="dd-opp" id="ddOpp1">
+        <div class="dd-opphead"><span class="av">🐰</span><span>月巴</span>
+          <span class="role" id="ddRole1">—</span></div>
+        <div class="dd-cnt">剩 <b id="ddCnt1">17</b> 张</div>
+        <div class="dd-played" id="ddPlay1"></div>
+      </div>
+      <div class="dd-opp" id="ddOpp2">
+        <div class="dd-opphead"><span class="av">🍅</span><span>番茄</span>
+          <span class="role" id="ddRole2">—</span></div>
+        <div class="dd-cnt">剩 <b id="ddCnt2">17</b> 张</div>
+        <div class="dd-played" id="ddPlay2"></div>
+      </div>
+    </div>
+
+    <div class="dd-center" id="ddCenter"></div>
+
+    <div class="dd-myplay" id="ddMyPlay"></div>
+
+    <div class="dd-hand" id="ddHand"></div>
+    <div class="dd-actions" id="ddActions"></div>
+
+    <!-- 下注层 -->
+    <div class="dd-layer" id="ddBet">
+      <div class="dd-box">
+        <h3>🃏 斗月巴</h3>
+        <p>和🐰月巴、🍅番茄同桌打一把斗月巴。<br>先选难度、押上番茄作为赌注，赢家通吃。</p>
+        <div class="dd-note" style="margin:6px 0 4px">选择难度（越高 AI 越强，赢的番茄越多）</div>
+        <div class="dd-diffs" id="ddBetDiff"></div>
+        <div class="dd-inputrow">
+          <span>押注</span><input id="ddBetInput" type="number" min="1" max="100" step="1" value="100"><span>🍅</span>
+        </div>
+        <div class="dd-quick" id="ddBetQuick"></div>
+        <p class="dd-note">当前余额 <b id="ddBetBal">0</b> 🍅 · 押注在开局时扣除</p>
+        <p class="dd-note" id="ddBetLimit"></p>
+        <p class="dd-warn">⚠️ 开局后押注即刻扣除并记 1 次；中途刷新或离开会判为认输，押注不退、次数照扣。</p>
+        <div class="dd-btns">
+          <button class="btn gold" id="ddStartBtn" onclick="ddStart()">开始牌局</button>
+          <button class="btn" onclick="ddStart(true)">随便玩玩（不押注）</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 叫地主由底部按钮栏处理，无需遮罩层 -->
+
+    <!-- 结算层 -->
+    <div class="dd-layer" id="ddResult">
+      <div class="dd-box" id="ddResultBox"></div>
+    </div>
+
+    <!-- 规则层 -->
+    <div class="dd-layer" id="ddRuleLayer">
+      <div class="dd-box" id="ddRuleBox"></div>
+    </div>
+  </div>
+
+  <div class="dd-toast" id="ddToast"></div>
 </div>
 
 <div id="banner">
@@ -3125,7 +3321,7 @@ function feedCollect(got){
   if(!feed)return;
   const el=document.createElement('div');
   el.className='cf-item';
-  el.innerHTML=`<span class="dot" style="background:${got.color}"></span>🍄 ${esc(got.name)} +${fmt(got.val)}🪙`;
+  el.innerHTML=`<span class="dot" style="background:${got.color}"></span>🐰 ${esc(got.name)} +${fmt(got.val)}🪙`;
   feed.appendChild(el);
   setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(),320); },2200);
   while(feed.children.length>6) feed.firstChild.remove();
@@ -4910,6 +5106,8 @@ function tvFresh(){
   if(t.eventT==null)t.eventT=now()+rand(10,30)*60000;
   if(t.stealWant==null)t.stealWant=false;   // 本次庭院刷新是否刷出「偷番茄的月巴」（10% 概率）
   if(t.bgIdx==null)t.bgIdx=(Math.random()*TV_BGS.length)|0;
+  if(t.ddBetDay==null)t.ddBetDay='';        // 斗月巴：上次押注的自然日
+  if(t.ddBetUsed==null)t.ddBetUsed=0;       // 斗月巴：当天已用掉的押注次数
   return t;
 }
 /* 护身符单件耐久：优先取该件的 du，旧数据缺省为满耐久 */
@@ -5714,7 +5912,7 @@ function tvUpdateBar(){ const t=tvFresh(); const e=$('tvTomato'); if(e)e.textCon
 function tvOpenBook(){ openModal('🏷 旅行图鉴', tvBookHTML()); }
 function tvLetterEnv(c){ const L=TV_LETTERS[c]; if(!L)return ''; const t=tvFresh(); const fw=(t.cardFirst&&t.cardFirst[c])||null; let sig=''; if(fw){ const tp=typeById(fw); if(tp)sig='<div class="ltr-sig">'+tp.name+'</div>'; } let note=''; const moods=tvMoodList(c); if(moods.length){ const it=moods[moods.length-1]; const to=tvMoodTo(it); note='<div class="ltr-note">💬 '+(to?(escHTML(to)+'：'):'')+escHTML(it.m||'（无留言）')+'<span class="ltr-note-t">· 出发 '+fmtDT(it.t)+'</span></div>'; } return '<div class="ltr-env mini '+L.d+'" onclick="tvOpenLetter(\''+c+'\')">'+note+'<div class="ltr-front"><div class="ltr-flap"></div><div class="ltr-seal">'+L.e+'</div>'+sig+'</div></div>'; }
 function tvWhoRow(c,right){ const t=tvFresh(); const who=(t.cardWho&&t.cardWho[c])||[]; if(!who.length)return ''; let h='<div class="ltr-who'+(right?' right':'')+'">'; for(const id of who){ const tp=typeById(id); if(!tp)continue; h+='<span class="ltr-who-sq" style="background:'+tp.color+'" title="'+tp.name+'" onclick="tvShowWho(\''+id+'\')">'+tp.name.charAt(0)+'</span>'; } return h+'</div>'; }
-function tvShowWho(id){ const tp=typeById(id); if(!tp)return; openModal('🐤 收到此信的月巴','<div style="text-align:center"><div style="font-size:60px;line-height:1.1;margin:6px 0">'+fatSVG(tp)+'</div><div style="font-weight:800;font-size:16px;color:var(--text)">'+tp.name+'</div><div class="rar-tag rr'+(tp.r||1)+'" style="display:inline-block;margin-top:6px">'+RAR_NAME[tp.r]+'</div></div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'); }
+function tvShowWho(id){ const tp=typeById(id); if(!tp)return; openModal('🐰 收到此信的月巴','<div style="text-align:center"><div style="font-size:60px;line-height:1.1;margin:6px 0">'+fatSVG(tp)+'</div><div style="font-weight:800;font-size:16px;color:var(--text)">'+tp.name+'</div><div class="rar-tag rr'+(tp.r||1)+'" style="display:inline-block;margin-top:6px">'+RAR_NAME[tp.r]+'</div></div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'); }
 function tvOpenNoteHTML(c){ const moods=tvMoodList(c); if(!moods.length)return ''; let h=''; moods.forEach(function(it){ const to=tvMoodTo(it); h+='<div class="ltr-opennote">'+(to?('to：<b>'+escHTML(to)+'</b> · '):'')+'💬 '+escHTML(it.m||'（无留言）')+'<span class="ltr-opentime">· 出发 '+fmtDT(it.t)+'</span></div>'; }); return h; }
 /* 旅行图鉴分区：把地图按区域归类（森林+世外桃源 / 雪地四图等） */
 const TV_REGIONS=[
@@ -5787,7 +5985,7 @@ function tvFriendPop(){ const t=tvFresh(); if(t.pendingVisit)return; if(!t.nextV
 function tvDoorOpen(){ const t=tvFresh(); if(!t.pendingVisit){ toast('🚪 门口没有人，安静得很'); return; } const f=TV_FRIENDS.find(function(x){return x.id===t.pendingVisit;}); if(!f){ t.pendingVisit=null; save(); return; } openModal('👋 门口有人敲门', tvFriendModal(f,t)); }
 function tvUpdateDoor(){ const b=$('tvDoorBtn'); if(b)b.style.display=tvFresh().pendingVisit?'flex':'none'; }
 function tvFeed(fid,s){ const t=tvFresh(); const f=TV_FRIENDS.find(function(x){return x.id===fid;}); if(!f||t.specials.indexOf(s)<0)return; t.pendingVisit=null; tvUpdateDoor(); let fr=t.friends.find(function(x){return x.id===fid;}); if(!fr){ fr={id:fid,count:0}; t.friends.push(fr); } fr.count++; const gain=15+Math.floor(Math.random()*20); let h='<p style="text-align:center;color:#3e5c3f">'+f.n+' 很开心，回礼 🍅 +'+gain+'</p>'; if(Math.random()<0.1&&f.rare&&t.cards.indexOf(f.rare)<0){ t.cards.push(f.rare); t.inbox.push(f.rare); tvNoteCard(f.rare,t.frog.fatId); const tm=t.frog&&t.frog.fatId&&typeById(t.frog.fatId)?typeById(t.frog.fatId).name:'月巴'; h+='<p style="text-align:center">💌 邻居 '+f.e+' '+f.n+' 在外路过时遇到了 <b>'+tm+'</b>，'+tm+' 托它转交一封来自「'+tvDestOfCard(f.rare)+'」的信！</p>'; } h+='<p style="text-align:center"><button class="btn" onclick="closeModal()">收下</button></p>'; openModal('🎁 回礼', h); tvTomato(gain); save(); }
-function tvLabel(f){ return f?f.e||'🐤':'🐤'; }
+function tvLabel(f){ return f?f.e||'🐰':'🐰'; }
 function tvCharmDest(){ const ds=TV_DESTS.filter(function(x){return x.need==='charm'&&!x.hidden;}); return ds[(Math.random()*ds.length)|0]||ds[ds.length-1]||TV_DESTS[TV_DESTS.length-1]; }
 /* —— 小号护身符（永久道具） —— */
 /* 返回当前自然周标识：以周一 00:00 为一周起点 */
@@ -5891,7 +6089,7 @@ function tvChoosePermDest(id){
 function tvClearPermDest(){ const t=tvFresh(); if(t.permPick){ t.permPick=null; save(); } tvBag(); }
 function tvLockedTip(id){ const p=tvFourthProgress(id||'empire'); toast('🔒 该地图尚未解锁：需该地区前 3 张图各集齐 '+p.need+' 封信件（3/4）'); }
 function tvDestOf(bag){ const t=tvFresh(); if(t.frog&&t.frog.status==='away'&&t.frog.dest){ const fd=tvDestById(t.frog.dest); if(fd)return fd; } bag=bag||t.bag; const ks=bag.map(function(x){return x&&x.k||x;}); const has=function(k){return ks.indexOf(k)>=0;}; const pd=t.pickDest?tvDestById(t.pickDest):null; if(pd&&((pd.need&&has(pd.need))||(!pd.need&&(has('food1')||has('food2')||has('food4')||has('food3'))))){ if(!tvDestLocked(pd.id))return pd; } const perm=tvPermDest(); if(perm)return perm; if(has('charm')&&has('food3'))return tvPickRegion('snow','snow',bag); if(has('lamp'))return tvPickRegion('sea','sea',bag); if(has('bell'))return tvPickRegion('town','town',bag); const foodK=ks.find(function(k){return k==='food1'||k==='food2'||k==='food4'||k==='food3';}); return tvPickRegion(tvRollFoodRegion(foodK),'forest',bag); }
-function tvGo(mood){ const t=tvFresh(); const up=(mood||'').trim().toUpperCase(); const m=up.match(/^TOMATO(\d{1,7})$/); if(m){ const amt=Math.min(parseInt(m[1],10),9999999); tvTomato(amt); toast('✨ 收到 '+((''+amt).replace(/\B(?=(\d{3})+(?!\d))/g,','))+' 🍅！'); mood=''; } else if(up==='YUEFEI500'){ if(!t.codeUsed){ t.codeUsed=true; tvTomato(500); toast('✨ 口令生效，获得 500 🍅！'); } else { toast('此口令已使用过啦'); } mood=''; } if(t.frog.status==='away'){ toast('✈️ 已有月巴在旅行中，等它回来再出发吧'); return; } if(!t.frog.fatId){ toast('🐤 先在图鉴里选择一位月巴出发'); return; } const kinds=tvDestKinds(t.bag); const food=t.bag.find(function(x){return x.k==='food1'||x.k==='food2'||x.k==='food4'||x.k==='food3';}); if(!food){ toast('🍙 至少带上 1 个便当才能出发！'); return; } const pdd=tvPermDest(); if(pdd&&!t.permConfirmOk){ if(!confirm('🎫 本次将使用小号护身符，指定前往「'+pdd.n+'」并消耗本周机会。\n（仅需饭团即可，确定出发吗？）'))return; t.permConfirmOk=true; save(); } t.permConfirmOk=false; t.frog.status='away'; t.frog.depart=now(); t.frog.dest=tvDestOf(t.bag).id; if(t.permPass&&t.permPick&&t.frog.dest===t.permPick){ t.permUsedWeek=tvWeekKey(); t.permPick=null; } t.frog.mood=mood||pick(['随便走走吧。','去吹吹风。','看看今天的云。','沿着小路一直走，会遇到番茄吗？','去哪里呢？','晒晒太阳再回来。','去捡一颗番茄回来。','番茄说不能一直在床底，要出门走走。','随便逛逛，给番茄带点伴手礼。','这次要走多远呢？','去远方发一会儿呆。','带上小番茄，出发！','路边的番茄捡到就是我的了。','说不定能遇到新的朋友。','去看看别处的月亮。','带着番茄兜兜风。','远方的番茄在呼唤我。','揣上一颗番茄，说走就走。','沿着晚风走，走到哪算哪。']); const _dObj=tvDestById(t.frog.dest); const _base=(_dObj&&_dObj.dur)||30; const _dms=Math.round(rand(_base-10,_base+10)*60000); t.frog.ret=now()+(DR_DEBUG?2*60*1000:_dms); t.bag=t.bag.filter(function(x){return !(x.k==='food1'||x.k==='food2'||x.k==='food4'||x.k==='food3'||x.k==='lamp'||x.k==='bell'||x.k==='compass');}); t.pickDest=null; t.cardT=Math.max(now()+60000,Math.min(now()+rand(8,14)*60000,t.frog.ret-60000)); t.frog.cardsSent=0; t.frog.cardQuota=1; t.eventT=0; save(); closeModal(); toast('✈️ 出发去旅行啦！'); tvRenderScene(); tvUpdateBar(); }
+function tvGo(mood){ const t=tvFresh(); const up=(mood||'').trim().toUpperCase(); const m=up.match(/^TOMATO(\d{1,7})$/); if(m){ const amt=Math.min(parseInt(m[1],10),9999999); tvTomato(amt); toast('✨ 收到 '+((''+amt).replace(/\B(?=(\d{3})+(?!\d))/g,','))+' 🍅！'); mood=''; } else if(up==='YUEFEI500'){ if(!t.codeUsed){ t.codeUsed=true; tvTomato(500); toast('✨ 口令生效，获得 500 🍅！'); } else { toast('此口令已使用过啦'); } mood=''; } if(t.frog.status==='away'){ toast('✈️ 已有月巴在旅行中，等它回来再出发吧'); return; } if(!t.frog.fatId){ toast('🐰 先在图鉴里选择一位月巴出发'); return; } const kinds=tvDestKinds(t.bag); const food=t.bag.find(function(x){return x.k==='food1'||x.k==='food2'||x.k==='food4'||x.k==='food3';}); if(!food){ toast('🍙 至少带上 1 个便当才能出发！'); return; } const pdd=tvPermDest(); if(pdd&&!t.permConfirmOk){ if(!confirm('🎫 本次将使用小号护身符，指定前往「'+pdd.n+'」并消耗本周机会。\n（仅需饭团即可，确定出发吗？）'))return; t.permConfirmOk=true; save(); } t.permConfirmOk=false; let _autoR=0; /* 出发前兜底发放：玩家不打开室内就直接开始下一轮旅行时，把上一趟的归家奖励自动补给玩家，避免奖励被下一趟回归覆盖而丢失 */ if(t.homeRewardReady&&t.homeReward&&t.homeReward.n>0){ _autoR=t.homeReward.n; t.tomato=(t.tomato||0)+_autoR; t.homeRewardReady=false; t.homeReward=null; } t.frog.status='away'; t.frog.depart=now(); t.frog.dest=tvDestOf(t.bag).id; if(t.permPass&&t.permPick&&t.frog.dest===t.permPick){ t.permUsedWeek=tvWeekKey(); t.permPick=null; } t.frog.mood=mood||pick(['随便走走吧。','去吹吹风。','看看今天的云。','沿着小路一直走，会遇到番茄吗？','去哪里呢？','晒晒太阳再回来。','去捡一颗番茄回来。','番茄说不能一直在床底，要出门走走。','随便逛逛，给番茄带点伴手礼。','这次要走多远呢？','去远方发一会儿呆。','带上小番茄，出发！','路边的番茄捡到就是我的了。','说不定能遇到新的朋友。','去看看别处的月亮。','带着番茄兜兜风。','远方的番茄在呼唤我。','揣上一颗番茄，说走就走。','沿着晚风走，走到哪算哪。']); const _dObj=tvDestById(t.frog.dest); const _base=(_dObj&&_dObj.dur)||30; const _dms=Math.round(rand(_base-10,_base+10)*60000); t.frog.ret=now()+(DR_DEBUG?2*60*1000:_dms); t.bag=t.bag.filter(function(x){return !(x.k==='food1'||x.k==='food2'||x.k==='food4'||x.k==='food3'||x.k==='lamp'||x.k==='bell'||x.k==='compass');}); t.pickDest=null; t.cardT=Math.max(now()+60000,Math.min(now()+rand(8,14)*60000,t.frog.ret-60000)); t.frog.cardsSent=0; t.frog.cardQuota=1; t.eventT=0; save(); closeModal(); toast('✈️ 出发去旅行啦！'+(_autoR>0?('　🐰 上一趟归家奖励 +'+_autoR+' 🍅 已自动发放'):'')); tvRenderScene(); tvUpdateBar(); }
 function tvDepart(){ const e=$('tvMood'); tvGo(e?e.value.trim():''); }
 function tvDestKinds(bag){ return bag.map(function(x){return x.k;}); }
 function tvSettle(){ const t=tvFresh(); const kinds=tvDestKinds(t.bag); const d=tvDestOf(t.bag); const cc=t.bag.filter(function(x){return x&&x.k==='charm';}).length; let gain=1+cc; const got=[],dups=[]; const spool=d.specials.slice(); /* 从池中抽走已选中的，保证同一趟带回的特产两两不重复（与已拥有的重复仍照常兑换番茄） */ for(let i=0;i<gain&&spool.length;i++){ const s=spool.splice((Math.random()*spool.length)|0,1)[0]; if(t.specials.indexOf(s)<0){ t.specials.push(s); got.push(s); } else { dups.push(s); } } t.destCount[d.id]=(t.destCount[d.id]||0)+1; if(cc>0){ t.bag.forEach(function(x){ if(x&&x.k==='charm'){ const cur=Math.max(0,tvCharmDura(x)-1); if(cur>0){ t.wh.charm=(t.wh.charm||0)+1; t.charmDuras.push(cur); } } }); } t.frog={status:'home',depart:null,ret:null,mood:t.frog.mood||'',fatId:t.frog.fatId||null}; if(t.frog.fatId){ t.lastHomeFatId=t.frog.fatId; t.homeId=t.frog.fatId; t.homeTxt=tvHomeDescs(t.frog.fatId)[(Math.random()*3)|0]; t.homeReward={n:5+(Math.random()*16|0)}; t.homeRewardReady=true; } t.bag=t.bag.filter(function(x){return x&&x.k==='pass';}); /* 小号护身符永久保留，不清空 */ t.eventT=0; save(); const dr=d.dupTomato||[10,10]; const dv=Math.round(rand(dr[0],dr[1])); if(dups.length)tvTomato(dv*dups.length); let toastMsg=''; const fgot=got.map(function(s){return spEmo(s)+s;}); const fdups=dups.map(function(s){return spEmo(s)+s;}); if(got.length)toastMsg+='🌿 从「'+d.n+'」带回新特产：'+fgot.join('、')+'！'; if(dups.length)toastMsg+=' ♻️ 重复 '+fdups.join('、')+' 兑换 '+dv*dups.length+' 🍅！'; if(toastMsg)toast(toastMsg); let h='<p style="text-align:center;color:#48614a">月巴从<b>「'+d.n+'」</b>回来了！（第 '+t.destCount[d.id]+' 次旅行）</p>'; const all=fgot.concat(fdups); h+='<p style="text-align:center;font-weight:800;color:#e08a3c">🎁 带回特产：'+(all.length?('从「'+d.n+'」带回 '+all.join('、')+(dups.length?(' · 已兑换 '+dv*dups.length+' 🍅'):'')):'这次带回了温暖的问候')+'</p>'; h+='<p style="text-align:center"><button class="btn cta" onclick="closeModal()">收下</button></p>'; openModal('🎉 旅行归来',h); tvRenderScene(); tvUpdateBar(); if(tvView==='home')_afterClose=function(){ tvEnterHome(); }; }
@@ -5900,9 +6098,9 @@ function tvEnterHome(){ const t=tvFresh(); let changed=false;
   /* 重复累计条只在「打开室内」时结算，旅行途中不更新，避免信件未拆就提前亮起剧透 */
   if(t.pityPending!=null){ t.cardPity=Math.max(0,Math.min(TV_PITY_MAX,t.pityPending)); t.pityPending=null; changed=true; }
   const pages=[];
-  if(t.pityComfort){ t.pityComfort=false; changed=true; const line=TV_PITY_LINES[(Math.random()*TV_PITY_LINES.length)|0]; const _nm=(t.homeId&&typeById(t.homeId))?typeById(t.homeId).name:((t.frog&&t.frog.fatId&&typeById(t.frog.fatId))?typeById(t.frog.fatId).name:'月巴'); const _lt=line.split('{name}').join(_nm); pages.push('<p style="text-align:center;font-size:40px;margin:6px 0">💌</p><p style="text-align:center;color:#48614a">又是一封重复的信……</p><p style="text-align:center;font-weight:700;color:#e08a3c;line-height:1.7">'+escHTML(_lt)+'</p>'); }
+  if(t.pityComfort && t.frog.status!=='away'){ t.pityComfort=false; changed=true; /* 月巴尚未回来时不弹「安慰」，避免旅途中提前弹出；等它回来后再进室内才显示 */ const line=TV_PITY_LINES[(Math.random()*TV_PITY_LINES.length)|0]; const _nm=(t.homeId&&typeById(t.homeId))?typeById(t.homeId).name:((t.frog&&t.frog.fatId&&typeById(t.frog.fatId))?typeById(t.frog.fatId).name:'月巴'); const _lt=line.split('{name}').join(_nm); pages.push('<p style="text-align:center;font-size:40px;margin:6px 0">💌</p><p style="text-align:center;color:#48614a">又是一封重复的信……</p><p style="text-align:center;font-weight:700;color:#e08a3c;line-height:1.7">'+escHTML(_lt)+'</p>'); }
   let hasReward=false;
-  if(t.homeRewardReady&&t.homeReward&&t.homeReward.n>0){ const n=t.homeReward.n; const nm=t.homeId&&typeById(t.homeId)?typeById(t.homeId).name:'月巴'; t.homeRewardReady=false; t.homeReward=null; t.tomato=(t.tomato||0)+n; changed=true; hasReward=true; pages.push('<p style="text-align:center;font-size:40px;margin:6px 0">🐤</p><p style="text-align:center"><b>'+escHTML(nm)+'</b> 回家啦！它把旅途中攒下的 <b style="color:#e08a3c">'+n+'</b> 个 🍅 送给了你</p>'); }
+  if(t.homeRewardReady&&t.homeReward&&t.homeReward.n>0){ const n=t.homeReward.n; const nm=t.homeId&&typeById(t.homeId)?typeById(t.homeId).name:'月巴'; t.homeRewardReady=false; t.homeReward=null; t.tomato=(t.tomato||0)+n; changed=true; hasReward=true; pages.push('<p style="text-align:center;font-size:40px;margin:6px 0">🐰</p><p style="text-align:center"><b>'+escHTML(nm)+'</b> 回家啦！它把旅途中攒下的 <b style="color:#e08a3c">'+n+'</b> 个 🍅 送给了你</p>'); }
   if(changed)save();
   tvUpdateBar(); updateTravelIcon(); tvUpdateHarvest(); tvRenderScene();
   if(pages.length){ _tvPages=pages; _tvPageIdx=0; _tvPageTitle=hasReward?'🎉 旅行归来':'💌 番茄的安慰'; openModal(_tvPageTitle, tvPageHTML()); }
@@ -5922,7 +6120,7 @@ function tvBagHTML(){ const t=tvFresh(); const owned=tvOwnedFats(); const pick=t
     h+='<p style="text-align:center;color:#e08a3c;font-weight:700;padding:8px;background:#fff7e8;border-radius:10px">✈️ 已有月巴正在旅行中<br><span style="font-weight:400;font-size:12px">等它回来后才能再次出发</span></p>';
   }else{
   h+='<div style="text-align:center;margin:4px 0 6px"><input id="tvFatSearch" placeholder="🔍 搜索月巴名字…" value="'+escHTML(_bagFatQ)+'" oninput="tvBagFatSearch(this.value)" style="padding:7px;border:1px solid #ccc;border-radius:8px;width:80%"></div>';
-  h+='<div class="tv-fold" onclick="tvBagFatsToggle()"><span>🐤 选择去旅行的月巴（'+owned.length+'）</span><span>'+(_bagFatsOpen?'▲ 收起':'▼ 展开')+'</span></div>';
+  h+='<div class="tv-fold" onclick="tvBagFatsToggle()"><span>🐰 选择去旅行的月巴（'+owned.length+'）</span><span>'+(_bagFatsOpen?'▲ 收起':'▼ 展开')+'</span></div>';
   h+='<div class="sh-grid" id="tvFatGrid" style="'+((_bagFatsOpen||_bagFatQ)?'':'display:none')+'">';
   if(!owned.length)h+='<p style="color:#999;text-align:center;grid-column:1/-1">图鉴里还没有月巴，先去收集一些吧</p>';
   for(const o of owned){ const sel=pick===o.id?' sel':''; h+='<div class="tv-fatpick'+sel+'" data-name="'+escHTML(o.t.name)+'" onclick="tvPickFat(\''+o.id+'\')"><div class="pic">'+fatSVG(o.t)+'</div><div class="nm">'+o.t.name+'</div></div>'; }
@@ -6947,6 +7145,966 @@ function init(){
   save();
 }
 init();
+/* ================= 斗月巴（旅行页小游戏） ================= */
+/* 三方：玩家🧑 / 月巴🐰 / 番茄🍅。押注从旅行番茄余额扣除，赢家按斗地主规则结算。*/
+/* ============================================================
+ * 引擎常量：牌面 → 数值
+ * 3..10 = 3..10，J=11 Q=12 K=13 A=14 2=15 小王=16 大王=17
+ * ============================================================ */
+const DD_NAME={3:'3',4:'4',5:'5',6:'6',7:'7',8:'8',9:'9',10:'10',11:'J',12:'Q',13:'K',14:'A',15:'2',16:'小王',17:'大王'};
+const DD_SUIT=[['♠','b'],['♥','r'],['♣','b'],['♦','r'],['','j'],['','j']];
+
+function ddDeck(){
+  const a=[]; let id=0;
+  for(let v=3;v<=15;v++) for(let s=0;s<4;s++) a.push({v:v,s:s,id:id++});
+  a.push({v:16,s:4,id:id++}); a.push({v:17,s:5,id:id++});
+  return a;
+}
+function ddShuffle(a){ for(let i=a.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function ddGroup(cards){ const g={}; for(let i=0;i<cards.length;i++){ const c=cards[i]; (g[c.v]=g[c.v]||[]).push(c); } return g; }
+function ddCnt(g,v){ return (g[v]||[]).length; }
+function ddConsec(arr){ for(let i=1;i<arr.length;i++) if(arr[i]!==arr[i-1]+1) return false; return true; }
+function ddMaxV(cards){ let m=0; for(let i=0;i<cards.length;i++) if(cards[i].v>m) m=cards[i].v; return m; }
+/* 出这手牌会拆散多少已有组合（对子/三张/炸弹被拆开）——越大越亏，困难 AI 用来避免乱拆牌 */
+function ddBreakPenalty(hand, cards){
+  const g=ddGroup(hand), u=ddGroup(cards);
+  let pen=0;
+  Object.keys(u).forEach(function(k){
+    const v=+k, have=ddCnt(g,v), take=ddCnt(u,v);
+    if(take<have){ if(have>=4) pen+=8; else if(have===3) pen+=4; else if(have===2) pen+=2; }
+  });
+  return pen;
+}
+
+/* ---------- 牌型判定 ---------- */
+/* 返回 {type,len,rank,cards} 或 null
+   type: single/pair/triple/triple1/triple2/straight/pairs/plane/plane1/plane2/four2/four2p/bomb/rocket
+   len : 顺子长度 / 连对对数 / 飞机三顺长度（其余为 0）
+   rank: 主牌比较值 */
+function ddParse(cards){
+  if(!cards||!cards.length) return null;
+  const n=cards.length, g=ddGroup(cards);
+  const ranks=Object.keys(g).map(Number).sort(function(a,b){return a-b;});
+  const c1=ranks.filter(function(v){return ddCnt(g,v)===1;});
+  const c2=ranks.filter(function(v){return ddCnt(g,v)===2;});
+  const c3=ranks.filter(function(v){return ddCnt(g,v)===3;});
+  const c4=ranks.filter(function(v){return ddCnt(g,v)===4;});
+  const top=ranks[ranks.length-1];
+  if(n===2&&ddCnt(g,16)===1&&ddCnt(g,17)===1) return {type:'rocket',len:0,rank:100,cards:cards};
+  if(n===4&&c4.length===1&&ranks.length===1) return {type:'bomb',len:0,rank:c4[0],cards:cards};
+  if(n===1) return {type:'single',len:0,rank:ranks[0],cards:cards};
+  if(n===2&&c2.length===1&&ranks.length===1) return {type:'pair',len:0,rank:ranks[0],cards:cards};
+  if(n===3&&c3.length===1&&ranks.length===1) return {type:'triple',len:0,rank:c3[0],cards:cards};
+  if(n===4&&c3.length===1&&c1.length===1) return {type:'triple1',len:0,rank:c3[0],cards:cards};
+  if(n===5&&c3.length===1&&c2.length===1) return {type:'triple2',len:0,rank:c3[0],cards:cards};
+  if(n===6&&c4.length===1&&c1.length===2) return {type:'four2',len:0,rank:c4[0],cards:cards};
+  if(n===8&&c4.length===1&&c2.length===2) return {type:'four2p',len:0,rank:c4[0],cards:cards};
+  if(n>=5&&ranks.length===n&&ddConsec(ranks)&&top<=14) return {type:'straight',len:n,rank:top,cards:cards};
+  if(n>=6&&n%2===0&&c2.length===ranks.length&&c2.length>=3&&ddConsec(c2)&&c2[c2.length-1]<=14)
+    return {type:'pairs',len:c2.length,rank:c2[c2.length-1],cards:cards};
+  return ddPlane(cards,g,ranks,n);
+}
+/* 飞机：纯三顺 / 带单 / 带对 */
+function ddPlane(cards,g,ranks,n){
+  const t3=ranks.filter(function(v){return ddCnt(g,v)>=3&&v<=14;}).sort(function(a,b){return a-b;});
+  if(t3.length<2) return null;
+  /* 枚举所有长度>=2 的连续三张链 */
+  const chains=[];
+  for(let i=0;i<t3.length;i++){
+    const run=[t3[i]];
+    for(let j=i+1;j<t3.length;j++){ if(t3[j]===t3[j-1]+1) run.push(t3[j]); else break; }
+    for(let L=2;L<=run.length;L++) chains.push(run.slice(0,L));
+  }
+  for(let ci=0;ci<chains.length;ci++){
+    const chain=chains[ci], k=chain.length;
+    let clean=true;
+    for(let x=0;x<chain.length;x++){ if(ddCnt(g,chain[x])!==3){ clean=false; break; } }
+    if(!clean) continue;
+    const rest=n-3*k;
+    if(rest===0) return {type:'plane',len:k,rank:chain[k-1],cards:cards};
+    if(rest===k) return {type:'plane1',len:k,rank:chain[k-1],cards:cards};
+    if(rest===2*k){
+      const other=ranks.filter(function(v){return chain.indexOf(v)<0;});
+      let ok=other.length===k;
+      for(let x=0;x<other.length;x++){ if(ddCnt(g,other[x])!==2){ ok=false; break; } }
+      if(ok) return {type:'plane2',len:k,rank:chain[k-1],cards:cards};
+    }
+  }
+  return null;
+}
+/* a 能否压过 b（b 可为 null） */
+function ddCanBeat(a,b){
+  if(!a) return false;
+  if(!b) return true;
+  if(a.type==='rocket') return true;
+  if(b.type==='rocket') return false;
+  if(a.type==='bomb'&&b.type!=='bomb') return true;
+  if(b.type==='bomb'&&a.type!=='bomb') return false;
+  if(a.type!==b.type) return false;
+  if(a.len!==b.len) return false;
+  return a.rank>b.rank;
+}
+/* 从 g 中取连续链的实体牌 */
+function ddTakeChain(g,chain,per){ const out=[]; for(let i=0;i<chain.length;i++){ out.push.apply(out,g[chain[i]].slice(0,per)); } return out; }
+/* 找所有「每档至少 per 张、长度 len、顶牌 > minTop」的连续链（顶牌<=14，不含 2 和王） */
+function ddFindChains(g,per,len,minTop){
+  const res=[];
+  const t=Object.keys(g).map(Number).filter(function(v){return v<=14&&ddCnt(g,v)>=per;}).sort(function(a,b){return a-b;});
+  let i=0;
+  while(i<t.length){
+    let j=i; while(j+1<t.length&&t[j+1]===t[j]+1) j++;
+    const run=t.slice(i,j+1);
+    for(let s=0;s+len<=run.length;s++){
+      const chain=run.slice(s,s+len), top=chain[chain.length-1];
+      if(top>minTop) res.push(ddTakeChain(g,chain,per));
+    }
+    i=j+1;
+  }
+  return res;
+}
+/* 给三张配翅膀：per=1 配单张，per=2 配对子。优先用孤张/小牌 */
+function ddWings(g,main,per){
+  const ranks=Object.keys(g).map(Number).sort(function(a,b){return a-b;});
+  const cand=ranks.filter(function(v){ return main.indexOf(v)<0 && ddCnt(g,v)>=per; });
+  if(!cand.length) return null;
+  cand.sort(function(a,b){ return (ddCnt(g,a)-ddCnt(g,b)) || (a-b); });
+  return g[cand[0]].slice(0,per);
+}
+/* 给飞机配翅膀：k 组，每组 per 张 */
+function ddPlaneWings(g,main,per,k){
+  const used=main.slice();
+  const out=[];
+  for(let n=0;n<k;n++){
+    const w=ddWings(g,used,per);
+    if(!w) return null;
+    out.push.apply(out,w);
+    /* 把用掉的那一档标记进 used，避免重复取 */
+    for(let i=0;i<w.length;i++) if(used.indexOf(w[i].v)<0) used.push(w[i].v);
+  }
+  return out;
+}
+
+/* ---------- 找出所有能压过 last 的出法 ---------- */
+function ddFindBeats(hand,last){
+  if(!last) return ddAllLeads(hand);
+  const out=[], g=ddGroup(hand);
+  const ranks=Object.keys(g).map(Number).sort(function(a,b){return a-b;});
+  const take=function(v,k){ return g[v].slice(0,k); };
+  const T=last.type;
+  if(T==='single'){ ranks.forEach(function(v){ if(v>last.rank) out.push(take(v,1)); }); }
+  else if(T==='pair'){ ranks.forEach(function(v){ if(v>last.rank&&ddCnt(g,v)>=2) out.push(take(v,2)); }); }
+  else if(T==='triple'){ ranks.forEach(function(v){ if(v>last.rank&&ddCnt(g,v)>=3) out.push(take(v,3)); }); }
+  else if(T==='triple1'){ ranks.forEach(function(v){ if(v>last.rank&&ddCnt(g,v)>=3){ const w=ddWings(g,[v],1); if(w) out.push(take(v,3).concat(w)); } }); }
+  else if(T==='triple2'){ ranks.forEach(function(v){ if(v>last.rank&&ddCnt(g,v)>=3){ const w=ddWings(g,[v],2); if(w) out.push(take(v,3).concat(w)); } }); }
+  else if(T==='straight'){ out.push.apply(out,ddFindChains(g,1,last.len,last.rank)); }
+  else if(T==='pairs'){ out.push.apply(out,ddFindChains(g,2,last.len,last.rank)); }
+  else if(T==='plane'||T==='plane1'||T==='plane2'){
+    const chains=ddFindChains(g,3,last.len,last.rank);
+    chains.forEach(function(chain){
+      /* chain 是实体牌数组，取它的档位 */
+      const main=[]; chain.forEach(function(c){ if(main.indexOf(c.v)<0) main.push(c.v); });
+      main.sort(function(a,b){return a-b;});
+      if(T==='plane'){ out.push(chain); return; }
+      const per=(T==='plane1')?1:2;
+      const w=ddPlaneWings(g,main,per,last.len);
+      if(w) out.push(chain.concat(w));
+    });
+  }
+  else if(T==='four2'||T==='four2p'){
+    ranks.forEach(function(v){
+      if(v<=last.rank||ddCnt(g,v)!==4) return;
+      const per=(T==='four2')?1:2;
+      const w=[]; const used=[v];
+      for(let n=0;n<2;n++){ const x=ddWings(g,used,per); if(!x){ w.length=0; return; } w.push.apply(w,x); x.forEach(function(c){ if(used.indexOf(c.v)<0) used.push(c.v); }); }
+      if(w.length) out.push(take(v,4).concat(w));
+    });
+  }
+  /* 炸弹 & 王炸 */
+  ranks.forEach(function(v){
+    if(ddCnt(g,v)>=4){
+      if(T==='bomb'){ if(v>last.rank) out.push(take(v,4)); }
+      else out.push(take(v,4));
+    }
+  });
+  if(T!=='bomb'&&T!=='rocket'&&ddCnt(g,16)&&ddCnt(g,17)) out.push([g[16][0],g[17][0]]);
+  /* 统一用解析器兜底校验，保证 AI 不会出非法牌 */
+  return out.filter(function(c){ const p=ddParse(c); return p&&ddCanBeat(p,last); });
+}
+/* 自由出牌时的所有候选（AI 领牌用） */
+function ddAllLeads(hand){
+  const out=[], g=ddGroup(hand);
+  const ranks=Object.keys(g).map(Number).sort(function(a,b){return a-b;});
+  ranks.forEach(function(v){
+    const c=ddCnt(g,v);
+    out.push(g[v].slice(0,1));
+    if(c>=2) out.push(g[v].slice(0,2));
+    if(c>=3){
+      out.push(g[v].slice(0,3));
+      const w1=ddWings(g,[v],1); if(w1) out.push(g[v].slice(0,3).concat(w1));
+      const w2=ddWings(g,[v],2); if(w2) out.push(g[v].slice(0,3).concat(w2));
+    }
+    if(c>=4) out.push(g[v].slice(0,4));
+  });
+  for(let L=5;L<=12;L++) out.push.apply(out,ddFindChains(g,1,L,0));
+  for(let L=3;L<=10;L++) out.push.apply(out,ddFindChains(g,2,L,0));
+  if(ddCnt(g,16)&&ddCnt(g,17)) out.push([g[16][0],g[17][0]]);
+  return out.filter(function(c){ return !!ddParse(c); });
+}
+/* 手牌强度（叫地主用） */
+function ddStrength(hand){
+  const g=ddGroup(hand);
+  let s=0;
+  s+=ddCnt(g,17)*4+ddCnt(g,16)*3;
+  s+=ddCnt(g,15)*2;
+  s+=ddCnt(g,14)*1;
+  let i; for(i=3;i<=15;i++) if(ddCnt(g,i)===4) s+=6;
+  return s;
+}
+
+/* ============================================================
+ * 对局状态与控制
+ * ============================================================ */
+const DD_NAMES=['你','月巴','番茄'];
+const DD_AVS=['🧑','🐰','🍅'];
+/* 难度配置：名称取自图鉴月巴，img 为图鉴立绘；mult 为奖励倍率，miss=能压不压的概率，
+   bomb=炸弹出手概率，random=随机出牌（更笨），smart=进阶策略（更强），
+   handicap=开局给玩家「让牌」的次数（随机把几张 10~A 悄悄换成 AI 的小牌，越大越难且越隐蔽） */
+const DD_DIFFS={
+  easy:  {name:'墨镜月巴', lv:'简单', img:'https://origin.picgo.net/2026/09/03/1115555fb4ab3b2731.th.png', mult:0.2, miss:0.55, bomb:0.05, random:true,  smart:false, handicap:0},
+  normal:{name:'进食月巴', lv:'中等', img:'https://origin.picgo.net/2026/09/03/15b077f9364349ae92.th.png', mult:0.5, miss:0.15, bomb:0.25, random:false, smart:false, handicap:0},
+  hard:  {name:'背头月巴', lv:'困难', img:'https://origin.picgo.net/2026/09/29/19daf98c7a185e7e0c3d529a5f921058d74092d7a8ab4c37.gif', mult:1,   miss:0,    bomb:0.55, random:false, smart:true,  handicap:3}
+};
+let ddDiff='normal';        /* 当前选中的难度 */
+let ddG=null;               /* 当前对局（内存，不持久化） */
+let ddTimer=null;           /* AI 延时句柄 */
+
+/* ---------- 宿主适配层：番茄余额接旅行系统 ---------- */
+const ddHost={
+  getBalance(){ return (tvFresh().tomato|0)||0; },        /* 旅行番茄余额 */
+  addTomato(d){ tvTomato(d); ddSyncBal(); },              /* 增减并刷新顶栏 */
+  toast(msg){ toast(msg); }
+};
+function ddSyncBal(){
+  const bal=ddHost.getBalance();
+  const e=$('ddBal');     if(e) e.textContent=bal;
+  const b=$('ddBetBal');  if(b) b.textContent=bal;
+  const i=$('ddBetInput');if(i) i.max=Math.max(1,Math.min(100,bal));
+}
+
+/* ---------- 每日押注次数：每天 3 次，刷新 / 换标签页都照数 ---------- */
+const DD_BET_MAX=3;
+/* 直接读存档里的 travel：另一标签页刚押过时，本页内存可能还是旧的，必须以存档为准 */
+function ddDiskTravel(){
+  try{ const raw=localStorage.getItem(SAVE_KEY); if(!raw)return null; const d=JSON.parse(raw); return (d&&d.travel)?d.travel:null; }catch(e){ return null; }
+}
+function ddBetUsed(){
+  const today=dayKey(clockNow());
+  const t=tvFresh();
+  const mem=(t.ddBetDay===today)?(t.ddBetUsed|0):0;
+  const d=ddDiskTravel();
+  const disk=(d&&d.ddBetDay===today)?(d.ddBetUsed|0):0;
+  return Math.max(mem,disk);                 /* 取较大值：别页已用掉的那次也算，只多不少 */
+}
+function ddBetLeft(){ return Math.max(0, DD_BET_MAX-ddBetUsed()); }
+/* 以存档为准校准本页余额与押注计数：防止两个页面各花一笔（同一笔番茄被花两次） */
+function ddSyncFromDisk(){
+  const t=tvFresh(), d=ddDiskTravel(); if(!d)return;
+  if(typeof d.tomato==='number'&&isFinite(d.tomato)) t.tomato=d.tomato;
+  const today=dayKey(clockNow());
+  if(d.ddBetDay===today && (t.ddBetDay!==today || (d.ddBetUsed|0)>(t.ddBetUsed|0))){ t.ddBetDay=d.ddBetDay; t.ddBetUsed=d.ddBetUsed|0; }
+}
+/* 记一次押注（跨天自动清零）并立刻入档：刷新 / 关窗也照扣，杜绝「看了手牌再刷新重开」刷结果 */
+function ddStampBet(){
+  const t=tvFresh(), today=dayKey(clockNow());
+  if(t.ddBetDay!==today){ t.ddBetDay=today; t.ddBetUsed=0; }
+  t.ddBetUsed=(t.ddBetUsed|0)+1;
+  save();
+}
+function ddRenderBetLimit(){
+  const left=ddBetLeft();
+  const el=$('ddBetLimit');
+  if(el){ el.innerHTML=left>0
+    ? '今日押注次数：剩余 <b>'+left+'/'+DD_BET_MAX+'</b> 次'
+    : '今日押注次数已用完（'+DD_BET_MAX+'/'+DD_BET_MAX+'），只能「随便玩玩」'; }
+  const btn=$('ddStartBtn'); if(btn){ btn.disabled=left<=0; btn.style.opacity=left<=0?'.45':''; }
+  const inp=$('ddBetInput'); if(inp) inp.disabled=left<=0;
+}
+
+/* ---------- 入口 / 退出 ---------- */
+function ddEnter(){
+  const el=$('ddgame'); if(el) el.classList.add('show');
+  document.body.classList.add('dd-lock');
+  ddSyncFromDisk();                           /* 先以存档为准：别页花掉的番茄/次数，本页要认账 */
+  ddSyncBal();
+  ddRenderDiff();
+  ddShowLayer('ddBet');
+  ddRenderBetQuick();
+  ddRenderBetLimit();
+  const inp=$('ddBetInput');
+  const bal=ddHost.getBalance();
+  if(inp) inp.value=String(Math.min(100,Math.max(1,bal)));
+}
+function ddClose(){
+  const el=$('ddgame'); if(el) el.classList.remove('show');
+  document.body.classList.remove('dd-lock');
+}
+function ddExit(){
+  if(ddG&&ddG.phase!=='over'){
+    if(!confirm('牌局还没结束，现在退出会判为认输，押注不退。确定退出吗？')) return;
+    ddSettle(-1);
+    return;
+  }
+  ddCleanup();
+  ddClose();
+}
+function ddCleanup(){
+  if(ddTimer){ clearTimeout(ddTimer); ddTimer=null; }
+  ddG=null;
+  ddShowLayer(null);
+  ddRenderAll();
+}
+/* ---------- 下注 ---------- */
+/* 难度选择按钮 */
+function ddRenderDiff(){
+  const box=$('ddBetDiff'); if(!box)return;
+  let h='';
+  ['easy','normal','hard'].forEach(function(k){
+    const d=DD_DIFFS[k];
+    h+='<button class="dd-diff'+(k===ddDiff?' on':'')+'" onclick="ddPickDiff(\''+k+'\')">'
+      +'<span class="de"><img src="'+d.img+'" alt="'+d.name+'"></span>'
+      +'<span class="dn">'+d.name+'</span>'
+      +'<span class="dm">'+d.lv+' · 奖励 ×'+d.mult+'</span></button>';
+  });
+  box.innerHTML=h;
+}
+function ddPickDiff(k){ if(!DD_DIFFS[k])return; ddDiff=k; ddRenderDiff(); }
+function ddRenderBetQuick(){
+  const box=$('ddBetQuick'); if(!box)return;
+  const bal=ddHost.getBalance();
+  const noBet=ddBetLeft()<=0;                 /* 今日次数用完：快捷金额一并禁用 */
+  const opts=[10,20,50,100];
+  let h='';
+  opts.forEach(function(v){ const off=(v>bal)||noBet; h+='<button onclick="ddQuick('+v+')" '+(off?'disabled style="opacity:.4"':'')+'>'+v+'</button>'; });
+  box.innerHTML=h;
+}
+function ddQuick(v){
+  const inp=$('ddBetInput');
+  if(!inp)return;
+  const cap=Math.min(100,ddHost.getBalance());
+  inp.value=String(Math.max(1,Math.min(cap,Math.floor(v)||1)));
+}
+function ddStart(free){
+  const inp=$('ddBetInput');
+  let stake=0;
+  if(free){ stake=0; }                        /* 随便玩玩：不押注，不受每日次数限制 */
+  else{
+    ddSyncFromDisk();                         /* 开局前先认账：别页已花掉的番茄 / 押注次数 */
+    if(ddBetLeft()<=0){
+      ddHost.toast('今日押注次数已用完（'+DD_BET_MAX+'/'+DD_BET_MAX+'），只能「随便玩玩」');
+      ddRenderBetLimit(); return;
+    }
+    const bal=ddHost.getBalance();
+    stake=Math.floor(Number(inp&&inp.value)||0);
+    if(!(stake>=1)){ ddHost.toast('押注至少 1 🍅，或点「随便玩玩」'); return; }
+    if(stake>100){ ddHost.toast('最高押注 100 🍅'); return; }
+    if(stake>bal){ ddHost.toast('番茄不够，最多押 '+bal); return; }
+    ddHost.addTomato(-stake);                 /* 开局先扣，防中途关窗刷分 */
+    ddStampBet();                             /* 同刻记次并入档：刷新/关窗也照扣，杜绝看了手牌再重开 */
+  }
+  ddDeal(stake);                              /* ddDeal→ddAskBid 进入出牌阶段（手牌直接渲染在下方） */
+  ddShowLayer(null);                          /* 关闭下注层，露出牌桌 */
+}
+function ddDeal(stake){
+  const deck=ddShuffle(ddDeck());
+  const hands=[[],[],[]];
+  for(let i=0;i<51;i++) hands[i%3].push(deck[i]);
+  const bottom=deck.slice(51);
+  ddApplyHandicap(hands, (DD_DIFFS[ddDiff]||DD_DIFFS.normal).handicap);
+  hands.forEach(function(h){ h.sort(ddSortCmp); });
+  ddG={
+    stake:stake, diff:ddDiff, hands:hands, bottom:bottom,
+    role:['','',''], landlord:-1,
+    turn:0, last:null, plays:[null,null,null], bidDone:[false,false,false],
+    phase:'bid', over:false, winner:-1, sel:[], hintIdx:0, bidder:-1,
+    seen:[]                                    /* 算牌：全场已打出的牌（值），供困难 AI 推断对手剩余牌 */
+  };
+  ddAskBid();
+}
+/* 难度让牌：悄悄把玩家几张「偏大」的牌，与 AI 手里「偏小」的牌对调。
+   只动 10~A 这些不扎眼的中高牌，且随机挑（不是固定取最大的几张），
+   绝不会换走玩家的 2/王 —— 玩家只会觉得手气一般，很难察觉被针对 */
+function ddApplyHandicap(hands, n){
+  n=n|0; if(n<=0) return;
+  for(let t=0;t<n;t++){
+    /* 玩家手里 10~A 的中高牌作为候选（避开 2、大小王，太扎眼） */
+    const pool=hands[0].filter(function(c){ return c.v>=10 && c.v<=14; });
+    if(!pool.length) break;                     /* 没这类牌就不做手脚，保持自然 */
+    const give=pool[Math.floor(Math.random()*pool.length)];
+    /* AI 手里 3~10 的小牌作为候选 */
+    const low=[];
+    for(let i=1;i<3;i++) hands[i].forEach(function(c){ if(c.v<=10) low.push(c); });
+    if(!low.length) break;
+    const get=low[Math.floor(Math.random()*low.length)];
+    ddSwapCard(hands, give, get);
+  }
+}
+/* 交换两张牌在手牌中的位置（仅对调，保证不重复不丢失） */
+function ddSwapCard(hands, c1, c2){
+  let p1=null, p2=null;
+  for(let i=0;i<3;i++) for(let j=0;j<hands[i].length;j++){
+    if(hands[i][j]===c1) p1=[i,j];
+    else if(hands[i][j]===c2) p2=[i,j];
+  }
+  if(!p1||!p2) return;
+  hands[p1[0]][p1[1]]=c2;
+  hands[p2[0]][p2[1]]=c1;
+}
+function ddSortCmp(a,b){ return b.v-a.v || a.s-b.s; }
+
+/* ---------- 叫地主 ---------- */
+function ddAskBid(){
+  /* 不弹遮罩层：叫地主阶段直接把手牌渲染在下方，玩家看完手牌再决定 */
+  ddG.phase='bid';
+  ddG.sel=[];
+  ddRenderAll();
+}
+function ddBid(call){
+  const g=ddG; if(!g||g.phase!=='bid')return;
+  g.bidDone[0]=true;
+  if(call){ g.bidder=0; ddFinishBid(); return; }
+  /* 玩家不叫：让两个 AI 依次决定 */
+  let ld=-1;
+  const s1=ddStrength(g.hands[1]), s2=ddStrength(g.hands[2]);
+  const c1=s1>=9, c2=s2>=9;                 /* 手牌够强才叫 */
+  if(c1) ld=1; else if(c2) ld=2;
+  if(ld<0){                                  /* 都不叫：手牌最强者当地主 */
+    let best=0, bs=ddStrength(g.hands[0]);
+    if(s1>bs){ best=1; bs=s1; }
+    if(s2>bs){ best=2; bs=s2; }
+    ld=best;
+    ddHost.toast('都没人叫地主，手牌最好的「'+DD_NAMES[ld]+'」当地主');
+  }else{
+    ddHost.toast(DD_NAMES[ld]+'叫了地主');
+  }
+  g.bidder=ld;
+  ddFinishBid();
+}
+function ddFinishBid(){
+  const g=ddG;
+  g.landlord=g.bidder;
+  g.role[g.landlord]='landlord';
+  for(let i=0;i<3;i++) if(i!==g.landlord) g.role[i]='farmer';
+  g.hands[g.landlord]=g.hands[g.landlord].concat(g.bottom);
+  g.hands[g.landlord].sort(ddSortCmp);
+  g.phase='play';
+  g.turn=g.landlord;
+  g.last=null; g.plays=[null,null,null];
+  ddShowLayer(null);
+  ddRenderAll();
+  ddHost.toast(DD_NAMES[g.landlord]+'是地主，开始出牌');
+  ddAfterRender();
+}
+
+/* ---------- 出牌流程 ---------- */
+/* 每次渲染后决定是否要轮到谁出牌 */
+function ddAfterRender(){
+  const g=ddG; if(!g||g.phase!=='play'||g.over) return;
+  /* 若上家就是自己（其余人都过了）→ 清桌重开，自由出牌 */
+  if(g.last&&g.last.owner===g.turn){
+    g.last=null; g.plays=[null,null,null];
+    ddRenderAll();
+  }
+  if(g.turn===0) ddRenderActions();
+  else {
+    if(ddTimer) clearTimeout(ddTimer);
+    ddTimer=setTimeout(function(){ ddAiTurn(g.turn); },620);
+  }
+}
+function ddPlay(cards,who){
+  const g=ddG;
+  const p=ddParse(cards);
+  g.plays[who]=cards.slice();
+  /* 算牌：把这一手打出的牌记进全场历史，供困难 AI 推断对手剩余牌 */
+  if(g.seen) cards.forEach(function(c){ g.seen.push(c.v); });
+  /* 从手牌移除 */
+  const ids={}; cards.forEach(function(c){ ids[c.id]=1; });
+  g.hands[who]=g.hands[who].filter(function(c){ return !ids[c.id]; });
+  g.last={cards:cards.slice(),type:p.type,len:p.len,rank:p.rank,owner:who};
+  g.sel=[]; g.hintIdx=0;
+  ddRenderAll();
+  if(g.hands[who].length===0){ ddSettle(who); return; }
+  g.turn=(who+1)%3;
+  ddAfterRender();
+}
+function ddPass(who){
+  const g=ddG;
+  g.plays[who]='pass';
+  g.turn=(who+1)%3;
+  ddRenderAll();
+  ddAfterRender();
+}
+/* 玩家操作 */
+function ddPlayerPlay(){
+  const g=ddG; if(!g||g.phase!=='play'||g.turn!==0)return;
+  if(!g.sel.length){ ddHost.toast('先选牌再出'); return; }
+  const ids={}; g.sel.forEach(function(id){ ids[id]=1; });
+  const cards=g.hands[0].filter(function(c){ return ids[c.id]; });
+  const p=ddParse(cards);
+  if(!p){ ddHost.toast('不是合法的牌型'); return; }
+  if(g.last&&!ddCanBeat(p,g.last)){ ddHost.toast('打不过上家的牌'); return; }
+  ddPlay(cards,0);
+}
+function ddPlayerPass(){
+  const g=ddG; if(!g||g.phase!=='play'||g.turn!==0)return;
+  if(!g.last){ ddHost.toast('你是本轮首家，必须出牌'); return; }
+  ddPass(0);
+}
+function ddPlayerHint(){
+  const g=ddG; if(!g||g.phase!=='play'||g.turn!==0)return;
+  const beats=ddFindBeats(g.hands[0],g.last);
+  if(!beats.length){ ddHost.toast('没有能压过的牌，只能不要'); return; }
+  beats.sort(function(a,b){ const pa=ddParse(a),pb=ddParse(b); return pa.rank-pb.rank||a.length-b.length; });
+  const pick=beats[Math.min(g.hintIdx,beats.length-1)];
+  g.hintIdx=(g.hintIdx+1)%beats.length;
+  g.sel=pick.map(function(c){ return c.id; });
+  ddRenderHand();
+}
+function ddToggleCard(id){
+  const g=ddG; if(!g||g.turn!==0||g.phase!=='play')return;
+  const i=g.sel.indexOf(id);
+  if(i<0) g.sel.push(id); else g.sel.splice(i,1);
+  ddRenderHand();
+}
+/* ---------- AI ---------- */
+function ddAiTurn(who){
+  const g=ddG; if(!g||g.over||g.phase!=='play'||g.turn!==who)return;
+  if(g.last&&g.last.owner===who) g.last=null;
+  const cfg=DD_DIFFS[g.diff]||DD_DIFFS.normal;
+  const hand=g.hands[who];
+  /* 简单难度：有概率「犯迷糊」，能压也不压 */
+  if(g.last&&cfg.miss&&Math.random()<cfg.miss){ ddPass(who); return; }
+  const mv=g.last?ddAiFollow(hand,g.last,who,cfg):ddAiLead(hand,who,cfg);
+  if(mv&&mv.length) ddPlay(mv,who);
+  else if(g.last) ddPass(who);
+  else { /* 不该发生：首家必须有牌出 */
+    const any=[hand[0]]; ddPlay(any,who);
+  }
+}
+function ddAiLead(hand,who,cfg){
+  cfg=cfg||DD_DIFFS.normal;
+  const all=ddAllLeads(hand);
+  if(!all.length) return null;
+  const finish=all.filter(function(c){ return c.length===hand.length; });
+  if(finish.length) return finish[0];
+  const nonBomb=all.filter(function(c){ const p=ddParse(c); return p.type!=='bomb'&&p.type!=='rocket'; });
+  const pool=nonBomb.length?nonBomb:all;
+  /* 简单难度：随机出牌，经常放走好牌 */
+  if(cfg.random) return pool[Math.floor(Math.random()*pool.length)];
+  const oppMin=ddOppMin(who);
+  /* 对手快走完：优先出大单张/对子压制（困难难度提前到 3 张，压得更狠） */
+  const pressAt=cfg.smart?3:1;
+  if(oppMin<=pressAt){
+    const big=pool.filter(function(c){ const p=ddParse(c); return p.type==='single'||p.type==='pair'; });
+    if(big.length){
+      big.sort(function(a,b){
+        const pa=ddParse(a),pb=ddParse(b);
+        /* 困难算牌：优先出「对手已知压不住」的单张/对子，真正卡死对手；其次才比大小 */
+        const ca=cfg.smart&&ddNoBiggerSame(a,who)?1:0, cb=cfg.smart&&ddNoBiggerSame(b,who)?1:0;
+        return (cb-ca) || (pb.rank-pa.rank);
+      });
+      return big[0];
+    }
+  }
+  pool.sort(function(a,b){
+    const pa=ddParse(a),pb=ddParse(b);
+    const ma=ddMaxV(a),mb=ddMaxV(b);
+    let penA=ma>=15?1000:0, penB=mb>=15?1000:0;
+    /* 困难：优先不拆散手里已有的对子/三张/炸弹，出牌更「整」 */
+    if(cfg.smart){ penA+=ddBreakPenalty(hand,a)*3; penB+=ddBreakPenalty(hand,b)*3; }
+    return (penA+pa.rank)-(penB+pb.rank) || (b.length-a.length);
+  });
+  return pool[0];
+}
+function ddAiFollow(hand,last,who,cfg){
+  cfg=cfg||DD_DIFFS.normal;
+  /* 队友刚出的牌：不压（除非自己能一把走完） */
+  const sameSide=ddSameSide(who,last.owner);
+  const beats=ddFindBeats(hand,last);
+  if(!beats.length) return null;
+  const finish=beats.filter(function(c){ return c.length===hand.length; });
+  if(finish.length) return finish[0];
+  const nonBomb=beats.filter(function(c){ const p=ddParse(c); return p.type!=='bomb'&&p.type!=='rocket'; });
+  if(sameSide){
+    /* 队友占着牌权。困难 AI 不再无脑让牌，而是精算这一手该不该「抢」：
+       默认仍让给队友，只在下面两种明确的赢面下才接管牌权 */
+    if(cfg.smart){
+      const g=ddG;
+      const landIdx=g.role.indexOf('landlord');
+      const landLen=g.hands[landIdx].length;    /* 地主还剩几张 */
+      const mateLen=g.hands[last.owner].length; /* 队友还剩几张 */
+      /* 队友即将走完，或地主已明确要不起队友这手 → 稳稳让队友掌控，一张不浪费 */
+      if(mateLen>3 && g.plays[landIdx]!=='pass'){
+        /* 只有「抢过来后谁都压不住」的牌才值得抢（场上还可能有炸就不冒这个险） */
+        const unk=ddUnknown(who);
+        const safe=(ddUnkBombCount(unk)>0)?[]:nonBomb.filter(function(c){ return ddNoBiggerSame(c,who); });
+        if(safe.length){
+          safe.sort(function(a,b){ return ddParse(a).rank-ddParse(b).rank; }); /* 用最小的那手，留住更大的控制牌 */
+          /* 1) 地主只剩 1~2 张、马上要走完：抢在他出手前把这一轮堵死 */
+          if(landLen<=2) return safe[0];
+          /* 2) 我明显比队友更接近走完：抢过牌权自己领跑，收得更快 */
+          if(hand.length<=8 && hand.length<=mateLen-4) return safe[0];
+        }
+      }
+    }
+    return null;                               /* 其余情况：队友的牌，让给他 */
+  }
+  const oppMin=ddOppMin(who);                  /* 敌人里手牌最少的张数 */
+  if(nonBomb.length){
+    /* 简单难度：随机挑一个能压的牌，不一定是小的 */
+    if(cfg.random) return nonBomb[Math.floor(Math.random()*nonBomb.length)];
+    nonBomb.sort(function(a,b){ const pa=ddParse(a),pb=ddParse(b);
+      const ma=ddMaxV(a),mb=ddMaxV(b); let penA=ma>=15?1000:0,penB=mb>=15?1000:0;
+      if(cfg.smart){ penA+=ddBreakPenalty(hand,a)*3; penB+=ddBreakPenalty(hand,b)*3; }
+      return (penA+pa.rank)-(penB+pb.rank) || (a.length-b.length); });
+    /* 困难算牌：对手快走完（剩 1~2 张）时，优先出「对手已知压不住」的牌，
+       保证这一手真的把对手拦住，而不是被反压后再丢一手 */
+    if(cfg.smart && oppMin<=2){
+      const safe=nonBomb.filter(function(c){ return ddNoBiggerSame(c,who); });
+      if(safe.length) return safe[0];
+    }
+    const pick=nonBomb[0];
+    /* 困难：局面还早时不轻易动用 2/王 这类「控制牌」，留着关键回合压制 */
+    if(cfg.smart && oppMin>3 && hand.length>5 && ddMaxV(pick)>=15) return null;
+    return pick;
+  }
+  /* 只剩炸弹：对手快走完或按难度概率才用 */
+  const bombs=beats.filter(function(c){ const p=ddParse(c); return p.type==='bomb'||p.type==='rocket'; });
+  if(bombs.length){
+    /* 困难：炸弹只在能挡住快赢的敌人时才用，不提前浪费 */
+    if(cfg.smart){
+      /* 算牌：对手手里已无炸弹（我的炸不会被反炸）且自己牌不多时，用炸夺回先手顺势走牌 */
+      const noThreat=ddUnkBombCount(ddUnknown(who))===0;
+      if(oppMin<=3||hand.length<=5||(noThreat&&hand.length<=8)){
+        bombs.sort(function(a,b){ return a.length-b.length; }); return bombs[0];
+      }
+      return null;
+    }
+    if(oppMin<=2||Math.random()<cfg.bomb){
+      bombs.sort(function(a,b){ return a.length-b.length; });
+      return bombs[0];
+    }
+  }
+  return null;
+}
+function ddSameSide(a,b){ const g=ddG; return g.role[a]!=='landlord'&&g.role[b]!=='landlord'; }
+function ddOppMin(who){
+  const g=ddG;
+  let m=99;
+  for(let i=0;i<3;i++){
+    if(i===who) continue;
+    if(ddSameSide(who,i)) continue;
+    if(g.hands[i].length<m) m=g.hands[i].length;
+  }
+  return m===99?0:m;
+}
+
+/* ---------- 算牌（仅困难 AI 使用）----------
+   记牌思路：一副牌点数固定（3~15 各 4 张，大小王各 1 张），
+   用「全副 − 自己手牌 − 全场已出」即可还原两名对手手牌的并集分布。 */
+function ddTotalCount(v){ return v>=16?1:4; }
+/* 返回「除 who 外两人」手里各点数还剩几张（并集计数） */
+function ddUnknown(who){
+  const g=ddG, cnt={};
+  for(let v=3;v<=17;v++) cnt[v]=ddTotalCount(v);
+  g.hands[who].forEach(function(c){ cnt[c.v]--; });
+  (g.seen||[]).forEach(function(v){ cnt[v]--; });
+  for(let v=3;v<=17;v++) if(cnt[v]<0) cnt[v]=0;
+  return cnt;
+}
+/* 未知牌里是否还有能压过该牌型的同型更大牌（不含炸弹/王炸） */
+function ddUnkHasBigger(cards,unk){
+  const p=ddParse(cards); if(!p) return true;
+  const T=p.type, r=p.rank, c=function(v){ return unk[v]|0; };
+  if(T==='rocket') return false;
+  if(T==='single'){ for(let v=r+1;v<=17;v++) if(c(v)>=1) return true; return false; }
+  if(T==='pair'){ for(let v=r+1;v<=15;v++) if(c(v)>=2) return true; return false; }
+  if(T==='triple'||T==='triple1'||T==='triple2'){ for(let v=r+1;v<=15;v++) if(c(v)>=3) return true; return false; }
+  if(T==='bomb'){ for(let v=r+1;v<=15;v++) if(c(v)>=4) return true; if(c(16)>=1&&c(17)>=1) return true; return false; }
+  if(T==='straight'||T==='pairs'||T==='plane'||T==='plane1'||T==='plane2'){
+    const per=(T==='straight')?1:(T==='pairs')?2:3;
+    for(let top=r+1;top<=14;top++){
+      let ok=true;
+      for(let k=0;k<p.len;k++){ if(c(top-k)<per){ ok=false; break; } }
+      if(ok) return true;
+    }
+    return false;
+  }
+  if(T==='four2'||T==='four2p'){ for(let v=r+1;v<=15;v++) if(c(v)>=4) return true; return false; }
+  return true;
+}
+/* 未知牌里还剩几个炸弹（含王炸） */
+function ddUnkBombCount(unk){
+  let n=0;
+  for(let v=3;v<=15;v++) if(unk[v]>=4) n++;
+  if(unk[16]>=1&&unk[17]>=1) n++;
+  return n;
+}
+/* 这手牌是否「对手压不住」：未知牌里已无同类更大牌（炸弹威胁另计） */
+function ddNoBiggerSame(cards,who){ return !ddUnkHasBigger(cards, ddUnknown(who)); }
+
+/* ---------- 结算 ---------- */
+function ddSettle(winner){
+  const g=ddG;
+  g.over=true; g.phase='over'; g.winner=winner;
+  const cfg=DD_DIFFS[g.diff]||DD_DIFFS.normal;
+  let win;                                     /* 玩家是否获胜 */
+  if(winner<0){ win=false; }                   /* 认输 */
+  else if(g.role[0]==='landlord') win=(winner===0);
+  else win=(g.role[winner]!=='landlord');
+  let payout=0, net=0;
+  if(g.stake>0){                               /* 有押注才算番茄 */
+    if(win){
+      const base=(g.role[0]==='landlord')?2:1; /* 地主赢 2×，农民赢 1× */
+      net=Math.round(g.stake*base*cfg.mult);   /* 再乘难度倍率 */
+      payout=g.stake+net;
+    }else { payout=0; net=-g.stake; }
+    if(payout) ddHost.addTomato(payout);
+  }
+  ddRenderAll();
+  ddShowResult(win,net,payout,winner);
+}
+function ddShowResult(win,net,payout,winner){
+  const g=ddG;
+  const cfg=DD_DIFFS[g.diff]||DD_DIFFS.normal;
+  const box=$('ddResultBox'); if(!box)return;
+  let head;
+  if(winner<0){ head='🚪 认输退出'; }
+  else if(win){ head='🎉 你赢了！'; }
+  else { head='😿 你输了'; }
+  const side=win?'（'+(g.role[0]==='landlord'?'地主':'农民')+'获胜）':(winner<0?'':'（'+(g.role[winner]==='landlord'?'地主':'农民')+'获胜）');
+  let h='<h3>'+head+'</h3>';
+  h+='<p style="text-align:center;color:#8a7f6c;font-size:12px">'+(g.role[0]==='landlord'?'你的身份：👑 地主':'你的身份：🌾 农民')+side+'</p>';
+  h+='<div class="dd-result"><span>难度</span><b><img class="dd-ic" src="'+cfg.img+'" alt="">'+cfg.name+'（'+cfg.lv+' · 奖励 ×'+cfg.mult+'）</b></div>';
+  if(g.stake>0){
+    h+='<div class="dd-result"><span>押注</span><b>'+g.stake+' 🍅</b></div>';
+    h+='<div class="dd-result"><span>返还</span><b>'+payout+' 🍅</b></div>';
+    h+='<div class="dd-result"><span>净收益</span><b class="'+(net<0?'neg':'')+'">'+(net>0?'+':'')+net+' 🍅</b></div>';
+  }else{
+    h+='<div class="dd-result"><span>押注</span><b>随便玩玩（不押注）</b></div>';
+  }
+  h+='<p class="dd-note">当前余额 '+ddHost.getBalance()+' 🍅</p>';
+  h+=ddRevealHTML();
+  h+='<div class="dd-btns"><button class="btn cta" onclick="ddAgain()">再来一局</button>'
+    +'<button class="btn" onclick="ddQuit()">收手退出</button></div>';
+  box.innerHTML=h;
+  ddShowLayer('ddResult');
+}
+/* 牌局结束：亮出三家剩余手牌 */
+function ddRevealHTML(){
+  const g=ddG; if(!g) return '';
+  let h='<div class="dd-reveal"><div class="dd-reveal-t">🃏 本局手牌</div>';
+  for(let i=0;i<3;i++){
+    const n=g.hands[i].length;
+    const tag=(g.role[i]==='landlord'?'👑':(g.role[i]==='farmer'?'🌾':''));
+    h+='<div class="dd-reveal-row"><div class="dd-reveal-hd">'+DD_AVS[i]+' '+DD_NAMES[i]+' '+tag
+      +' <span>剩 '+n+' 张</span></div>'
+      +'<div class="dd-played">'+(n?ddCardsHTML(g.hands[i],true):'<span class="pass">已出完</span>')+'</div></div>';
+  }
+  return h+'</div>';
+}
+function ddAgain(){ ddShowLayer(null); ddEnter(); }
+function ddQuit(){ ddCleanup(); ddClose(); ddHost.toast('本局结束，余额 '+ddHost.getBalance()+' 🍅'); }
+
+/* ============================================================
+ * 渲染
+ * ============================================================ */
+function ddShowLayer(id){
+  ['ddBet','ddResult','ddRuleLayer'].forEach(function(k){
+    const e=$(k); if(e) e.classList.toggle('show',k===id);
+  });
+}
+function ddCardHTML(c,mini,withId){
+  if(!c) return '';
+  const cls=[];
+  if(c.v>=16) cls.push('joker'); else if(c.s===1||c.s===3) cls.push('red');
+  if(c.v===17) cls.push('big');
+  if(mini) cls.push('mini');
+  /* 点击选择统一由 #ddHand 上的事件委托处理，这里只挂 data-id，避免重复绑定 */
+  const idAttr=(withId!==false)?(' data-id="'+c.id+'"'):'';
+  if(c.v>=16){
+    return '<div class="dd-card '+cls.join(' ')+'"'+idAttr+'><span class="dd-jk">'+(c.v===17?'大王':'小王')+'</span></div>';
+  }
+  const s=DD_SUIT[c.s];
+  return '<div class="dd-card '+cls.join(' ')+'"'+idAttr+'><span class="dd-rk">'+DD_NAME[c.v]+'</span><span class="dd-su">'+s[0]+'</span></div>';
+}
+function ddCardsHTML(list,mini){
+  if(!list) return '';
+  return list.map(function(c){ return ddCardHTML(c,mini,false); }).join('');
+}
+function ddRenderAll(){
+  const g=ddG;
+  const info=$('ddInfo');
+  const roleTag=$('ddRoleTag');
+  ddSyncBal();
+  if(!g||g.phase==='over'){
+    if(info) info.textContent='押注 — 🍅';
+    if(roleTag) roleTag.textContent='本局结束';
+    ddRenderSeats();
+    ddRenderCenter();
+    ddRenderHand();
+    ddRenderActions();
+    return;
+  }
+  if(info){
+    const dcfg=DD_DIFFS[g.diff]||DD_DIFFS.normal;
+    info.innerHTML='押注 '+(g.stake>0?(g.stake+' 🍅'):'随便玩玩')+' · <img class="dd-ic" src="'+dcfg.img+'" alt="">'+dcfg.name;
+  }
+  if(roleTag) roleTag.textContent=(g.role[0]==='landlord'?'👑 地主':(g.role[0]==='farmer'?'🌾 农民':'叫地主中'));
+  ddRenderSeats();
+  ddRenderCenter();
+  ddRenderHand();
+  ddRenderActions();
+}
+function ddRenderSeats(){
+  const g=ddG;
+  for(let i=1;i<=2;i++){
+    const cnt=$('ddCnt'+i);
+    const role=$('ddRole'+i);
+    const box=$('ddOpp'+i);
+    const played=$('ddPlay'+i);
+    if(!g){
+      if(cnt) cnt.textContent='—'; if(role){ role.textContent='—'; role.className='role'; }
+      if(played) played.innerHTML=''; if(box) box.classList.remove('turn');
+      continue;
+    }
+    if(cnt) cnt.textContent=String(g.hands[i].length);
+    if(role){
+      const r=g.role[i];
+      role.textContent=r==='landlord'?'👑地主':(r==='farmer'?'🌾农民':'—');
+      role.className='role'+(r==='landlord'?' ld':(r==='farmer'?' fm':''));
+    }
+    if(box) box.classList.toggle('turn', g.phase==='play'&&g.turn===i);
+    if(played){
+      const p=g.plays[i];
+      if(p==='pass') played.innerHTML='<span class="pass">不要</span>';
+      else if(p) played.innerHTML=ddCardsHTML(p,true);
+      else played.innerHTML='';
+    }
+  }
+}
+function ddRenderCenter(){
+  const g=ddG;
+  const c=$('ddCenter'); if(!c)return;
+  if(!g){ c.innerHTML='<div>点右上角 ? 看规则</div><div class="sub">押注后开始牌局</div>'; return; }
+  if(g.phase==='bid'){
+    const s=ddStrength(g.hands[0]);
+    c.innerHTML='<div class="big">要叫地主吗？</div>'
+      +'<div class="sub">你的手牌评分 <b>'+s+'</b>（越高越适合当地主）</div>'
+      +'<div class="sub">先看下方手牌，再点「👑 叫地主」或「🙅 不叫」</div>';
+    return;
+  }
+  if(g.phase==='over'){
+    const w=g.winner;
+    c.innerHTML='<div class="big">'+(w<0?'认输退出':(w===0?'你赢了 🎉':DD_NAMES[w]+'赢了'))+'</div>';
+    return;
+  }
+  const who=g.turn;
+  const mine=(who===0);
+  let h='<div class="big">'+(mine?'轮到你出牌':DD_NAMES[who]+'思考中…')+'</div>';
+  if(g.last) h+='<div class="sub">上家 '+DD_NAMES[g.last.owner]+' 出了 '+ddTypeName(g.last.type,g.last.len)+'</div>';
+  else h+='<div class="sub">本轮首家，可自由出牌</div>';
+  c.innerHTML=h;
+}
+function ddTypeName(t,len){
+  const m={single:'单张',pair:'对子',triple:'三张',triple1:'三带一',triple2:'三带二',
+    straight:len+'连顺',pairs:len+'连对',plane:'飞机',plane1:'飞机带单',plane2:'飞机带对',
+    four2:'四带二',four2p:'四带两对',bomb:'💥炸弹',rocket:'🚀王炸'};
+  return m[t]||'牌';
+}
+function ddRenderMyPlay(){
+  const g=ddG;
+  const mp=$('ddMyPlay'); if(!mp)return;
+  if(!g||g.phase==='bid'){ mp.innerHTML=''; return; }
+  const p=g.plays[0];
+  if(p==='pass'){ mp.innerHTML='<span class="pass">不要</span>'; return; }
+  if(p&&g.phase!=='over'){ mp.innerHTML=ddCardsHTML(p,true); return; }
+  mp.innerHTML='';
+}
+function ddRenderHand(){
+  const g=ddG;
+  const hand=$('ddHand'); if(!hand)return;
+  if(!g||g.over||(g.phase!=='play'&&g.phase!=='bid')){ hand.innerHTML=''; ddRenderMyPlay(); return; }
+  const bid=(g.phase==='bid');
+  const list=g.hands[0];
+  /* 拆成两组 .dd-hrow：宽屏下并排拼成一行，窄屏下折叠为上下两行 */
+  function rowHTML(arr){
+    return '<div class="dd-hrow">'+arr.map(function(c){
+      let h=ddCardHTML(c,false,!bid);
+      if(!bid&&g.sel.indexOf(c.id)>=0) h=h.replace('class="dd-card','class="dd-card sel');
+      return h;
+    }).join('')+'</div>';
+  }
+  /* 牌少时单行即可（不必强行分两行），牌多时才折成两行 */
+  if(list.length<=12){
+    hand.innerHTML=rowHTML(list);
+  }else{
+    const half=Math.ceil(list.length/2);
+    hand.innerHTML=rowHTML(list.slice(0,half))+rowHTML(list.slice(half));
+  }
+  ddRenderMyPlay();
+}
+function ddRenderActions(){
+  const g=ddG;
+  const box=$('ddActions'); if(!box)return;
+  if(!g||g.over||(g.phase!=='play'&&g.phase!=='bid')){ box.innerHTML=''; return; }
+  if(g.phase==='bid'){
+    box.innerHTML='<button class="btn gold" onclick="ddBid(true)">👑 叫地主</button>'
+      +'<button class="btn" onclick="ddBid(false)">🙅 不叫</button>';
+    return;
+  }
+  const mine=(g.turn===0);
+  if(!mine){ box.innerHTML='<span style="font-size:12px;color:#b0a68e;font-weight:800">等待 '+DD_NAMES[g.turn]+' 出牌…</span>'; return; }
+  const canPass=!!g.last;
+  box.innerHTML='<button class="btn gold" onclick="ddPlayerPlay()">出牌</button>'
+    +'<button class="btn'+(canPass?'':' off')+'" onclick="ddPlayerPass()">不要</button>'
+    +'<button class="btn" onclick="ddPlayerHint()">提示</button>'
+    +'<button class="btn" onclick="ddClearSel()">重选</button>';
+}
+function ddClearSel(){ const g=ddG; if(!g)return; g.sel=[]; ddRenderHand(); }
+
+/* ---------- 规则弹窗 ---------- */
+function ddShowRules(){
+  const box=$('ddRuleBox'); if(!box)return;
+  box.innerHTML=ddRulesHTML();
+  ddShowLayer('ddRuleLayer');
+}
+function ddHideRules(){ ddShowLayer(ddG?(ddG.phase==='over'?'ddResult':null):null); }
+function ddRulesHTML(){
+  return '<h3>📖 斗月巴规则</h3>'
+    +'<p><b>牌面大小</b>：3 &lt; 4 &lt; … &lt; K &lt; A &lt; 2 &lt; 小王 &lt; 大王</p>'
+    +'<p><b>牌型</b>：单张、对子、三张、三带一、三带二、顺子（≥5 张连续单牌）、连对（≥3 对连续）、飞机（连续三张，可带单/带对）、四带二、炸弹（四张相同）、王炸（双王）。</p>'
+    +'<p><b>压牌</b>：同牌型同张数比大小；炸弹可压任意非炸弹牌，王炸最大。</p>'
+    +'<p><b>目标</b>：先把手中牌出完的一方获胜。地主一人对两个农民，任一农民出完则农民方获胜。</p>'
+    +'<p><b>难度与奖励</b>：墨镜月巴（简单，AI 会犯错，奖励 ×0.2）、进食月巴（中等，奖励 ×0.5）、背头月巴（困难，AI 很强很聪明，奖励 ×1）。押注最高 100 🍅，也可以不押注「随便玩玩」。地主赢净赚 2×押注，农民赢净赚 1×押注，再乘难度倍率；输则损失押注。</p>'
+    +'<p><b>每日押注次数</b>：每天最多押注 <b>3 次</b>（北京时间自然日 0 点重置）。3 次用完后，当天只能「随便玩玩」（不押注、不输赢番茄）。</p>'
+    +'<p><b>关于刷新</b>：押注在开局瞬间就扣除并记次。若中途刷新或以任何方式离开牌局，该局判为认输——押注不退、次数照扣。也就是说，看到手牌不好就想刷新重开是不划算的，请想好再开局。</p>'
+    +'<p><b>多开页面</b>：若同时开多个页面，番茄余额与押注次数都以存档为准，不会因为多开而多出次数或重复花掉同一笔番茄。</p>'
+    +'<div class="dd-btns"><button class="btn" onclick="ddHideRules()">知道了</button></div>';
+}
+
+/* ---------- 初始化（入口由旅行页「🃏 斗月巴」按钮触发） ---------- */
+(function(){
+  const rb=$('ddRulesBtn'); if(rb) rb.onclick=ddShowRules;
+  const h=$('ddHand');
+  if(h) h.addEventListener('click',function(e){
+    const el=e.target.closest?e.target.closest('.dd-card'):null;
+    if(!el)return; const id=parseInt(el.getAttribute('data-id'),10);
+    if(isFinite(id)) ddToggleCard(id);
+  });
+  ddSyncBal();
+  ddRenderAll();
+})();
+
 /* ================= 新版本自动刷新 ================= */
 /* 原理：定时(60s)及每次切回标签页时，用 HEAD 请求本页，比对 ETag / Last-Modified；
    一旦发现服务器上的文件已被更新，就自动刷新一次，让玩家用上新版本。
@@ -6966,6 +8124,8 @@ init();
       if(s===base) return;                     // 版本未变
       var last=0; try{ last=Number(sessionStorage.getItem('_tvVerReload')||0)||0; }catch(e){}
       if(Date.now()-last<COOL) return;         // 冷却中，防止标识抖动导致反复刷新
+      /* 牌局进行中不打断：等这局打完、下一轮检查再刷新，避免半途刷新被判负 */
+      try{ if(typeof ddG!=='undefined' && ddG && ddG.phase!=='over') return; }catch(e){}
       reloading=true;
       try{ sessionStorage.setItem('_tvVerReload',String(Date.now())); }catch(e){}
       try{ if(typeof toast==='function') toast('✨ 发现新版本，正在自动刷新…'); }catch(e){}
