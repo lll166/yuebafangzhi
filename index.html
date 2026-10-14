@@ -598,7 +598,7 @@
   body.dd-lock{overflow:hidden;}
   #ddgame .dd-top{display:flex;align-items:center;gap:10px;padding:10px 14px;flex-wrap:wrap;
     background:rgba(255,255,255,.78);font-weight:800;font-size:13px;color:var(--purple2);
-    box-shadow:0 1px 6px rgba(120,100,160,.14);z-index:6;position:relative;}
+    box-shadow:0 1px 6px rgba(120,100,160,.14);z-index:9;position:relative;}  /* 高于遮罩层：下注/结算/规则/记录层打开时也能点「记录」 */
   #ddgame .dd-top .dd-info{background:rgba(149,117,205,.16);border-radius:999px;padding:3px 10px;}
   #ddgame .dd-top .dd-bal b{color:var(--gold);font-size:15px;}
   #ddgame .dd-top .dd-role{background:rgba(199,150,64,.16);color:#8a6a2e;border-radius:999px;padding:3px 10px;}
@@ -699,6 +699,18 @@
   #ddgame .dd-reveal-hd{font-size:11px;font-weight:800;color:#6b5f4a;margin-bottom:3px;}
   #ddgame .dd-reveal-hd span{color:#b0a68e;font-weight:700;}
   #ddgame .dd-reveal .dd-played{min-height:0;margin-top:0;}
+  /* 战绩记录 */
+  #ddgame .dd-rec{margin-top:8px;max-height:54vh;overflow-y:auto;display:flex;flex-direction:column;gap:7px;}
+  #ddgame .dd-rec-row{border:1px solid var(--line);border-radius:12px;padding:7px 10px;background:rgba(255,255,255,.7);}
+  #ddgame .dd-rec-hd{display:flex;align-items:center;justify-content:space-between;font-weight:900;font-size:13px;}
+  #ddgame .dd-rec-hd .w{color:#3f7d3f;}
+  #ddgame .dd-rec-hd .l{color:#c05a1e;}
+  #ddgame .dd-rec-hd .q{color:#8a7f6c;}
+  #ddgame .dd-rec-hd .tm{font-size:11px;font-weight:700;color:#b0a68e;}
+  #ddgame .dd-rec-bd{font-size:11px;color:#6b5f4a;font-weight:700;line-height:1.6;margin-top:3px;}
+  #ddgame .dd-rec-bd b{color:var(--purple2);}
+  #ddgame .dd-rec-bd .pos{color:#3f7d3f;}
+  #ddgame .dd-rec-bd .neg{color:#d0392c;}
   #ddgame .dd-toast{position:fixed;left:50%;bottom:14%;transform:translateX(-50%);z-index:99;
     background:rgba(58,50,38,.92);color:#fff;font-weight:800;font-size:13px;padding:9px 16px;
     border-radius:999px;box-shadow:0 8px 22px rgba(0,0,0,.28);opacity:0;pointer-events:none;transition:opacity .2s;}
@@ -1158,6 +1170,7 @@
     <span class="dd-bal">余额 <b id="ddBal">0</b> 🍅</span>
     <span class="dd-role" id="ddRoleTag">未开局</span>
     <span class="sp"></span>
+    <button class="iconbtn" onclick="ddShowHistory()" title="战绩记录">📜</button>
     <button class="iconbtn" id="ddRulesBtn" title="规则">?</button>
     <button class="iconbtn" onclick="ddExit()" title="退出">✕</button>
   </div>
@@ -1216,6 +1229,11 @@
     <!-- 规则层 -->
     <div class="dd-layer" id="ddRuleLayer">
       <div class="dd-box" id="ddRuleBox"></div>
+    </div>
+
+    <!-- 战绩记录层 -->
+    <div class="dd-layer" id="ddHistoryLayer">
+      <div class="dd-box" id="ddHistoryBox"></div>
     </div>
   </div>
 
@@ -5108,6 +5126,7 @@ function tvFresh(){
   if(t.bgIdx==null)t.bgIdx=(Math.random()*TV_BGS.length)|0;
   if(t.ddBetDay==null)t.ddBetDay='';        // 斗月巴：上次押注的自然日
   if(t.ddBetUsed==null)t.ddBetUsed=0;       // 斗月巴：当天已用掉的押注次数
+  t.ddRecords=t.ddRecords||[];              // 斗月巴：战绩记录（新的在前，最多保留 DD_REC_MAX 条）
   return t;
 }
 /* 护身符单件耐久：优先取该件的 du，旧数据缺省为满耐久 */
@@ -7569,6 +7588,8 @@ function ddDeal(stake){
     role:['','',''], landlord:-1,
     turn:0, last:null, plays:[null,null,null], bidDone:[false,false,false],
     phase:'bid', over:false, winner:-1, sel:[], hintIdx:0, bidder:-1,
+    startAt:now(),                             /* 本局开始时间：用于结算时算「时长」 */
+    initScore:ddStrength(hands[0]),            /* 玩家初始 17 张手牌打分：写入战绩记录 */
     seen:[]                                    /* 算牌：全场已打出的牌（值），供困难 AI 推断对手剩余牌 */
   };
   ddAskBid();
@@ -7917,8 +7938,31 @@ function ddSettle(winner){
     }else { payout=0; net=-g.stake; }
     if(payout) ddHost.addTomato(payout);
   }
+  ddPushRecord(win,net,winner);                /* 写入战绩记录（时间/胜负/地主/时长/番茄/初始牌分） */
   ddRenderAll();
   ddShowResult(win,net,payout,winner);
+}
+/* 记录一局战绩：时间 / 胜负与地主 / 时长 / 番茄盈亏 / 初始手牌打分。新的在前，最多 DD_REC_MAX 条 */
+const DD_REC_MAX=50;
+function ddPushRecord(win,net,winner){
+  const g=ddG; if(!g||g._rec) return;          /* 同一局只记一次（认输也记） */
+  g._rec=true;
+  const t=tvFresh(); t.ddRecords=t.ddRecords||[];
+  t.ddRecords.unshift({
+    t:now(),                                   /* 时间 */
+    win:!!win,                                 /* 玩家是否获胜 */
+    quit:(winner<0),                           /* 是否认输退出 */
+    role:g.role[0]||'',                        /* 玩家身份：landlord / farmer */
+    landlord:(g.landlord|0),                   /* 地主是谁（0你/1月巴/2番茄） */
+    winner:(typeof winner==='number'?winner:-1),/* 获胜方（0/1/2，认输为 -1） */
+    dur:Math.max(0, now()-(g.startAt||now())), /* 时长（毫秒） */
+    stake:g.stake|0,                           /* 押注 */
+    net:net|0,                                 /* 净番茄（正=赚） */
+    score:g.initScore|0,                       /* 初始牌打分 */
+    diff:g.diff                                /* 难度 */
+  });
+  if(t.ddRecords.length>DD_REC_MAX) t.ddRecords.length=DD_REC_MAX;
+  save();
 }
 function ddShowResult(win,net,payout,winner){
   const g=ddG;
@@ -7966,7 +8010,7 @@ function ddQuit(){ ddCleanup(); ddClose(); ddHost.toast('本局结束，余额 '
  * 渲染
  * ============================================================ */
 function ddShowLayer(id){
-  ['ddBet','ddResult','ddRuleLayer'].forEach(function(k){
+  ['ddBet','ddResult','ddRuleLayer','ddHistoryLayer'].forEach(function(k){
     const e=$(k); if(e) e.classList.toggle('show',k===id);
   });
 }
@@ -8137,6 +8181,48 @@ function ddRulesHTML(){
     +'<p><b>关于刷新</b>：押注在开局瞬间就扣除并记次。若中途刷新或以任何方式离开牌局，该局判为认输——押注不退、次数照扣。也就是说，看到手牌不好就想刷新重开是不划算的，请想好再开局。</p>'
     +'<p><b>多开页面</b>：若同时开多个页面，番茄余额与押注次数都以存档为准，不会因为多开而多出次数或重复花掉同一笔番茄。</p>'
     +'<div class="dd-btns"><button class="btn" onclick="ddHideRules()">知道了</button></div>';
+}
+
+/* ---------- 战绩记录弹窗 ---------- */
+function ddFmtClock(ts){ const p=bjParts(ts); return pad(p.mo+1)+'-'+pad(p.d)+' '+pad(p.h)+':'+pad(p.mi); }
+function ddFmtDur(ms){ const s=Math.max(0,Math.round((ms||0)/1000)); const m=(s/60)|0; return m>0?(m+'分'+(s%60)+'秒'):(s+'秒'); }
+function ddShowHistory(){
+  const box=$('ddHistoryBox'); if(!box)return;
+  box.innerHTML=ddHistoryHTML();
+  ddShowLayer('ddHistoryLayer');
+}
+/* 关掉记录层：回到当前应收的层（对局中→结算层/下注层，否则下注层） */
+function ddHideHistory(){ ddShowLayer(!ddG?'ddBet':(ddG.phase==='over'?'ddResult':null)); }
+/* 单条战绩：结果/时间 ｜ 身份·地主·难度 ｜ 初始牌分·时长 ｜ 番茄盈亏 */
+function ddRecRowHTML(r){
+  const head=r.quit?'<span class="q">🚪 认输</span>':(r.win?'<span class="w">🎉 胜</span>':'<span class="l">😿 负</span>');
+  const ldl=(r.landlord===0?'你':(DD_NAMES[r.landlord]||'?'));
+  const roleTxt=(r.role==='landlord')?'👑 你当地主':'🌾 你当农民';
+  const dif=(DD_DIFFS[r.diff]||DD_DIFFS.normal).lv||'';
+  let money;
+  if(!(r.stake|0)) money='<span class="q">随便玩玩（不押注）</span>';
+  else if((r.net|0)>0) money='赚了 <b class="pos">+'+r.net+'🍅</b>（押 '+r.stake+'）';
+  else money='亏了 <b class="neg">'+r.net+'🍅</b>（押 '+r.stake+'）';
+  return '<div class="dd-rec-row">'
+    +'<div class="dd-rec-hd">'+head+'<span class="tm">'+ddFmtClock(r.t)+'</span></div>'
+    +'<div class="dd-rec-bd">'+roleTxt+' · 地主是 <b>'+ldl+'</b>'+(dif?(' · '+dif):'')+'<br>'
+    +'初始牌 <b>'+(r.score|0)+'</b> 分 · 时长 '+ddFmtDur(r.dur)+'<br>'
+    +money+'</div></div>';
+}
+function ddHistoryHTML(){
+  const recs=(tvFresh().ddRecords||[]);
+  let win=0, lose=0, quit=0, net=0;
+  recs.forEach(function(r){ if(r.quit) quit++; else if(r.win) win++; else lose++; net+=(r.net|0); });
+  let html='<h3>📜 斗月巴战绩</h3>'
+    +'<p style="font-size:12px;color:#8a7f6c;font-weight:800;line-height:1.6;">共 <b>'+recs.length+'</b> 局 · 胜 <b>'+win+'</b> · 负 <b>'+lose+'</b>'+(quit?(' · 认输 '+quit):'')
+    +' · 累计 <b class="'+(net>0?'pos':(net<0?'neg':''))+'">'+(net>0?'+':'')+net+'🍅</b></p>';
+  if(!recs.length){
+    html+='<p style="color:#b0a68e;font-weight:800;text-align:center;margin:18px 0;">还没有战绩，去打一局吧～</p>';
+  }else{
+    html+='<div class="dd-rec">'+recs.map(ddRecRowHTML).join('')+'</div>';
+  }
+  html+='<div class="dd-btns"><button class="btn" onclick="ddHideHistory()">返回</button></div>';
+  return html;
 }
 
 /* ---------- 初始化（入口由旅行页「🃏 斗月巴」按钮触发） ---------- */
