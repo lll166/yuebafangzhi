@@ -1475,7 +1475,7 @@ const TYPES=[
   {id:'mb_long',    name:'long～long～巴～', r:3, v:48, t:480, cond:null, color:'#f0a868', shape:'wide'},
   {id:'bairi', name:'百日月巴',  r:6, v:3000, t:3600, cond:{t:'dexfirst', n:99}, weight:0.1, color:'#ffd54f', shape:'big'},
 ];
-/* 第二图鉴：第一图鉴集齐 TYPES.length-5（见 DEX1_MIN）个月巴后开启（掉落池合并）。字段格式与 TYPES 一致，
+/* 第二图鉴：第一图鉴集齐 DEX1_MIN（=TYPES.length-DEX1_MIN_REMAIN，当前 90）个月巴后开启（掉落池合并）。字段格式与 TYPES 一致，
    后续扩充时直接追加即可；第二图鉴月巴与第一图鉴生长速度一致（见 growDur）。 */
 const TYPES2=[
   {id:'m2_dou',    name:'豆月巴',  r:1, v:8,  t:80,  cond:null, color:'#aed581', shape:'round'},
@@ -2157,8 +2157,8 @@ function lockedSVG(){
 function hScale(h){ return clamp(0.7+(h-2)/38,0.7,1.7); }
 
 /* ---------------- 图鉴数据（含极值） ---------------- */
-/* 第二图鉴：第一图鉴剩下 DEX1_MIN_REMAIN(8) 个月巴未集齐即开启，其月巴并入掉落池；id 前缀 m2_ 由 TYPES2 提供 */
-const DEX1_MIN_REMAIN=8, DEX1_MIN=TYPES.length-DEX1_MIN_REMAIN;
+/* 第二图鉴：第一图鉴集齐 DEX1_MIN（=TYPES.length-DEX1_MIN_REMAIN，当前 90）个月巴即开启（剩下 10 个月巴可未集齐），其月巴并入掉落池；id 前缀 m2_ 由 TYPES2 提供 */
+const DEX1_MIN_REMAIN=10, DEX1_MIN=TYPES.length-DEX1_MIN_REMAIN;
 function dex2Unlocked(){ return Object.keys(S.collection).length>=DEX1_MIN; }
 function isDex2(id){ return TYPES2.some(t=>t.id===id); }
 function typeById(id){ return TYPES.find(x=>x.id===id)||TYPES2.find(x=>x.id===id); }
@@ -6047,14 +6047,14 @@ function tvRegionWeights(rgId,bag){
   return out;
 }
 /* 便当 → 大地图分流（先按权重抽定地区，再按 tvRegionWeights 抽该地区内的具体地图）
-   饭团：各地都能去，但以森林为主（维持原样）
-   时蔬：大概率小镇   海味：大概率大海   豪华：大概率雪地
-   未抽中主地区时，其余概率按原比例分摊到另外三个地区 */
+   饭团：各地都能去      时蔬：大概率小镇   海味：大概率大海   豪华：大概率雪地
+   对应地区固定 65%，其余三个地区合计 35%，按“图一时长”反比分配（时长越短概率越高，故越远的地图越低）：
+   森林边缘 20 / 小镇入口 25 / 海边港湾 30 / 雪山 50 → 反比 1/20 : 1/25 : 1/30 : 1/50 */
 const TV_FOOD_REGIONS={
-  food1:[['forest',85],['town',15],['sea',8],['snow',5]],
-  food2:[['town',65],['forest',30],['sea',3],['snow',2]],
-  food4:[['sea',65],['forest',30],['town',3],['snow',2]],
-  food3:[['snow',65],['forest',30],['sea',3],['town',2]]
+  food1:[['forest',65],['town',15],['sea',12.5],['snow',7.5]],
+  food2:[['town',65],['forest',16.94],['sea',11.29],['snow',6.77]],
+  food4:[['sea',65],['forest',15.91],['town',12.73],['snow',6.36]],
+  food3:[['snow',65],['forest',14.19],['town',11.35],['sea',9.46]]
 };
 function tvRollFoodRegion(foodK){
   const w=TV_FOOD_REGIONS[foodK]||TV_FOOD_REGIONS.food1; let tot=0; w.forEach(function(p){tot+=p[1];});
