@@ -1167,7 +1167,9 @@
     <div class="fg-layer" id="fgPick">
       <div class="fg-box">
         <div class="fg-pickhead">🐰 选择要飞的月巴</div>
+        <div style="text-align:center;margin:2px 0 8px"><input id="fgPickSearch" placeholder="🔍 搜索月巴名字…" value="" oninput="fgPickSearch(this.value)" style="padding:7px;border:1px solid var(--line);border-radius:8px;width:82%"></div>
         <div class="fg-pickgrid" id="fgPickGrid"></div>
+        <div id="fgPickEmpty" style="display:none;text-align:center;color:var(--dim);font-size:12px;padding:10px 0">没有找到这个名字的月巴~</div>
         <button class="btn gold fg-pickgo" onclick="fgLvOpen()">下一步 · 选关卡</button>
       </div>
     </div>
@@ -6644,7 +6646,7 @@ function fgLvInfo(){
 function fgRenderPick(){
   const grid=$('fgPickGrid'); if(!grid)return;
   if(!grid._built){
-    grid.innerHTML=fgAllTypes().map(t=>`<div class="fg-pick" data-id="${t.id}"><div class="pic">${fatSVG(t)}</div><div class="nm">${escHTML(t.name)}</div></div>`).join('');
+    grid.innerHTML=fgAllTypes().map(t=>`<div class="fg-pick" data-id="${t.id}" data-name="${escHTML(t.name)}"><div class="pic">${fatSVG(t)}</div><div class="nm">${escHTML(t.name)}</div></div>`).join('');
     grid._built=1;
     grid.addEventListener('click',e=>{
       const c=e.target.closest?e.target.closest('.fg-pick'):null;
@@ -6653,7 +6655,23 @@ function fgRenderPick(){
       sfx.click(); fgMarkPick();
     });
   }
+  fgPickSearch(_fgPickQ);
   fgMarkPick();
+}
+let _fgPickQ='';   /* 飞行选月巴：月巴名字搜索词 */
+function fgPickSearch(q){
+  _fgPickQ=q||'';
+  const grid=$('fgPickGrid'); if(!grid)return;
+  const kw=_fgPickQ.trim().toLowerCase();
+  let shown=0;
+  const items=grid.querySelectorAll('.fg-pick');
+  for(let i=0;i<items.length;i++){
+    const nm=(items[i].getAttribute('data-name')||'').toLowerCase();
+    const ok=!kw||nm.indexOf(kw)>=0;
+    items[i].style.display=ok?'':'none';
+    if(ok)shown++;
+  }
+  const em=$('fgPickEmpty'); if(em)em.style.display=(kw&&!shown&&items.length>0)?'block':'none';
 }
 function fgMarkPick(){
   const grid=$('fgPickGrid'); if(!grid)return;
