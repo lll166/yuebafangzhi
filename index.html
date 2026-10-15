@@ -718,6 +718,16 @@
   #ddgame .dd-rec{margin-top:8px;max-height:54vh;overflow-y:auto;display:flex;flex-direction:column;gap:7px;}
   #ddgame .dd-rec-row{border:1px solid var(--line);border-radius:12px;padding:7px 10px;background:rgba(255,255,255,.7);}
   #ddgame .dd-rec-hd{display:flex;align-items:center;justify-content:space-between;font-weight:900;font-size:13px;}
+  #ddgame .dd-rec-hl{display:flex;align-items:center;gap:6px;}
+  /* 评级徽章：S/A/B/C/D 五档配色 */
+  #ddgame .dd-grad{display:inline-block;min-width:22px;text-align:center;padding:1px 6px;border-radius:8px;
+    font-size:11px;font-weight:900;color:#fff;letter-spacing:.5px;}
+  #ddgame .dd-grad.gS{background:linear-gradient(135deg,#f5a623,#f76b1c);box-shadow:0 2px 8px rgba(245,166,35,.5);}
+  #ddgame .dd-grad.gA{background:linear-gradient(135deg,#8e6bd8,#6a4bb8);}
+  #ddgame .dd-grad.gB{background:linear-gradient(135deg,#4aa3e0,#2f7fc4);}
+  #ddgame .dd-grad.gC{background:linear-gradient(135deg,#9a9182,#7c7364);}
+  #ddgame .dd-grad.gD{background:linear-gradient(135deg,#c9bdb0,#a89887);}
+  #ddgame .dd-grad.none{background:transparent;color:#b0a68e;box-shadow:none;}
   #ddgame .dd-rec-hd .w{color:#3f7d3f;}
   #ddgame .dd-rec-hd .l{color:#c05a1e;}
   #ddgame .dd-rec-hd .q{color:#8a7f6c;}
@@ -752,6 +762,11 @@
   #ddgame .dd-st-bar i{display:block;height:100%;}
   #ddgame .dd-st-bar i.w{background:linear-gradient(90deg,#7dc07d,#5aa95a);}
   #ddgame .dd-st-bar i.l{background:linear-gradient(90deg,#e8a86a,#d9875a);}
+  #ddgame .dd-st-bar i.gr.gS{background:linear-gradient(90deg,#f5a623,#f76b1c);}
+  #ddgame .dd-st-bar i.gr.gA{background:linear-gradient(90deg,#8e6bd8,#6a4bb8);}
+  #ddgame .dd-st-bar i.gr.gB{background:linear-gradient(90deg,#4aa3e0,#2f7fc4);}
+  #ddgame .dd-st-bar i.gr.gC{background:linear-gradient(90deg,#9a9182,#7c7364);}
+  #ddgame .dd-st-bar i.gr.gD{background:linear-gradient(90deg,#c9bdb0,#a89887);}
   #ddgame .dd-st-spark svg{display:block;}
   #ddgame .dd-st-spark-lb{font-size:11px;font-weight:800;color:#8a7f6c;text-align:right;margin-top:2px;}
   #ddgame .dd-toast{position:fixed;left:50%;bottom:14%;transform:translateX(-50%);z-index:99;
@@ -7539,7 +7554,7 @@ let ddTimer=null;           /* AI 延时句柄 */
 const ddHost={
   getBalance(){ return (tvFresh().tomato|0)||0; },        /* 旅行番茄余额 */
   addTomato(d){ tvTomato(d); ddSyncBal(); },              /* 增减并刷新顶栏 */
-  toast(msg){ toast(msg); }
+  toast(msg,sub){ toast(msg,sub); }
 };
 function ddSyncBal(){
   const bal=ddHost.getBalance();
@@ -7685,6 +7700,7 @@ function ddDeal(stake){
     phase:'bid', over:false, winner:-1, sel:[], hintIdx:0, bidder:-1,
     startAt:now(),                             /* 本局开始时间：用于结算时算「时长」 */
     initScore:ddStrength(hands[0]),            /* 玩家初始 17 张手牌打分：写入战绩记录 */
+    playCount:[0,0,0],                         /* 各座位出牌手数（过牌不计）：评级用 */
     seen:[]                                    /* 算牌：全场已打出的牌（值），供困难 AI 推断对手剩余牌 */
   };
   ddAskBid();
@@ -7730,22 +7746,24 @@ function ddAskBid(){
 function ddBid(call){
   const g=ddG; if(!g||g.phase!=='bid')return;
   g.bidDone[0]=true;
-  if(call){ g.bidder=0; ddFinishBid(); return; }
+  if(call){ g.bidder=0; g.bidWhy='你叫了地主'; g.bidWhySub=''; ddFinishBid(); return; }
   /* 玩家不叫：让两个 AI 依次决定 */
-  let ld=-1;
-  const s1=ddStrength(g.hands[1]), s2=ddStrength(g.hands[2]);
+  const s0=ddStrength(g.hands[0]), s1=ddStrength(g.hands[1]), s2=ddStrength(g.hands[2]);
   const c1=s1>=9, c2=s2>=9;                 /* 手牌够强才叫 */
-  if(c1) ld=1; else if(c2) ld=2;
-  if(ld<0){                                  /* 都不叫：手牌最强者当地主 */
-    let best=0, bs=ddStrength(g.hands[0]);
+  let ld=-1, why='', sub='';
+  if(c1){ ld=1; why='月巴叫了地主'; }
+  else if(c2){ ld=2; why='番茄叫了地主'; }
+  else{                                     /* 都不叫：手牌最强者当地主（并列时玩家优先） */
+    let best=0, bs=s0;
     if(s1>bs){ best=1; bs=s1; }
     if(s2>bs){ best=2; bs=s2; }
     ld=best;
-    ddHost.toast('都没人叫地主，手牌最好的「'+DD_NAMES[ld]+'」当地主');
-  }else{
-    ddHost.toast(DD_NAMES[ld]+'叫了地主');
+    const sc='手牌评分 你 '+s0+' / 月巴 '+s1+' / 番茄 '+s2;
+    if(ld===0){ why='月巴和番茄都不叫地主'; sub='只能由你当地主'; }
+    else { why='都没人叫地主，手牌最好的「'+DD_NAMES[ld]+'」当地主'; sub=sc; }
   }
   g.bidder=ld;
+  g.bidWhy=why; g.bidWhySub=sub;
   ddFinishBid();
 }
 function ddFinishBid(){
@@ -7760,7 +7778,8 @@ function ddFinishBid(){
   g.last=null; g.plays=[null,null,null];
   ddShowLayer(null);
   ddRenderAll();
-  ddHost.toast(DD_NAMES[g.landlord]+'是地主，开始出牌');
+  if(g.bidWhySub) ddHost.toast(g.bidWhy,g.bidWhySub);
+  else ddHost.toast(g.bidWhy||(DD_NAMES[g.landlord]+'是地主，开始出牌'));
   ddAfterRender();
 }
 
@@ -7788,6 +7807,7 @@ function ddPlay(cards,who){
   /* 从手牌移除 */
   const ids={}; cards.forEach(function(c){ ids[c.id]=1; });
   g.hands[who]=g.hands[who].filter(function(c){ return !ids[c.id]; });
+  if(g.playCount) g.playCount[who]=(g.playCount[who]|0)+1;   /* 出牌手数 +1（过牌不计） */
   g.last={cards:cards.slice(),type:p.type,len:p.len,rank:p.rank,owner:who};
   g.sel=[]; g.hintIdx=0;
   ddRenderAll();
@@ -8043,18 +8063,31 @@ function ddPushRecord(win,net,winner){
   const g=ddG; if(!g||g._rec) return;          /* 同一局只记一次（认输也记） */
   g._rec=true;
   const t=tvFresh(); t.ddRecords=t.ddRecords||[];
+  const role=g.role[0]||'farmer';
+  const isLd=(role==='landlord');
+  const myTotal=isLd?20:17;                              /* 玩家总牌数：地主 20 / 农民 17 */
+  const foeTotal=isLd?34:20;                             /* 敌方阵营总牌数：地主玩家→两农民 34；农民玩家→地主 20 */
+  const h=(g.hands||[[],[],[]]);
+  const myLeft=(h[0]||[]).length|0;                      /* 玩家结算剩余张数 */
+  const foeLeft=isLd?((h[1]||[]).length+(h[2]||[]).length)   /* 敌方阵营剩余总张数 */
+                   :((h[g.landlord]||[]).length);
   t.ddRecords.unshift({
     t:now(),                                   /* 时间 */
     win:!!win,                                 /* 玩家是否获胜 */
     quit:(winner<0),                           /* 是否认输退出 */
-    role:g.role[0]||'',                        /* 玩家身份：landlord / farmer */
+    role:role,                                 /* 玩家身份：landlord / farmer */
     landlord:(g.landlord|0),                   /* 地主是谁（0你/1月巴/2番茄） */
     winner:(typeof winner==='number'?winner:-1),/* 获胜方（0/1/2，认输为 -1） */
     dur:Math.max(0, now()-(g.startAt||now())), /* 时长（毫秒） */
     stake:g.stake|0,                           /* 押注 */
     net:net|0,                                 /* 净番茄（正=赚） */
     score:g.initScore|0,                       /* 初始牌打分 */
-    diff:g.diff                                /* 难度 */
+    diff:g.diff,                               /* 难度 */
+    plays:((g.playCount&&g.playCount[0])|0),   /* 玩家出牌手数（评级用） */
+    myLeft:myLeft,                             /* 玩家结算剩余张数（评级用） */
+    foeLeft:foeLeft|0,                         /* 敌方阵营结算剩余张数（评级用） */
+    myTotal:myTotal,                           /* 玩家总牌数（评级归一用） */
+    foeTotal:foeTotal                          /* 敌方阵营总牌数（评级归一用） */
   });
   if(t.ddRecords.length>DD_REC_MAX) t.ddRecords.length=DD_REC_MAX;
   save();
@@ -8297,21 +8330,52 @@ function ddHistTabsHTML(){
     +'<button class="dd-rec-tab'+(ddHistTab==='stats'?' on':'')+'" onclick="ddHistTabSet(\'stats\')">📊 统计</button>'
     +'</div>';
 }
-/* 单条战绩：结果/时间 ｜ 身份·地主·难度 ｜ 初始牌分·时长 ｜ 番茄盈亏 */
+/* ---------- 对局评级：按「出牌手数」与「敌方残牌」打分 ----------
+   思路：
+   · 效率 E：玩家自己出牌的手数 P（过牌不计），基准 P0（农民 10 / 地主 11），越少越好。
+     E = (P0 - P) / 5，截断到 [-1, 1]。
+   · 压制 / 惜败 d：赢 → d = 敌方残牌 / 敌方总牌，敌方剩得越多说明压制越强；
+     输 → d = -(自己残牌 / 自己总牌)，自己剩得越少越是惜败。
+   · 合成分：赢 score = 50 + 45·d + 15·E；输 score = 53 + 45·d。
+   · 档位：S/A/B/C/D 各配 +/−，共 15 级，按 minScore 降序切分。
+   · 胜局等级不低于 C、败局等级不高于 C；认输 / 旧记录不评级（返回 null）。 */
+const DD_GRADE_BANDS=[['S+',95],['S',90],['S-',85],['A+',81],['A',77],['A-',72],
+  ['B+',68],['B',64],['B-',58],['C+',54],['C',50],['C-',46],['D+',40],['D',30],['D-',-999]];
+const DD_GRADE_TIER={S:'S 神级',A:'A 优秀',B:'B 良好',C:'C 及格',D:'D 差劲'};
+function ddGrade(r){
+  if(!r||r.quit) return null;                                       /* 认输不评级 */
+  if(r.plays==null||r.myLeft==null||r.foeLeft==null||!r.myTotal||!r.foeTotal) return null; /* 旧记录 */
+  const isLd=(r.role==='landlord');
+  const P0=isLd?11:10;                                              /* 基准手数 */
+  const E=clamp((P0-(r.plays|0))/5,-1,1);                           /* 效率 -1..1 */
+  let score;
+  if(r.win) score=50+45*clamp((r.foeLeft|0)/(r.foeTotal|0),0,1)+15*E;   /* 压制 */
+  else      score=53+45*(-clamp((r.myLeft|0)/(r.myTotal|0),0,1));       /* 惜败 / 惨败 */
+  let idx=DD_GRADE_BANDS.length-1;
+  for(let i=0;i<DD_GRADE_BANDS.length;i++){ if(score>=DD_GRADE_BANDS[i][1]){ idx=i; break; } }
+  const cIdx=DD_GRADE_BANDS.findIndex(function(b){ return b[0]==='C'; });
+  idx = r.win?Math.min(idx,cIdx):Math.max(idx,cIdx);               /* 胜局下限 C / 败局上限 C */
+  return {g:DD_GRADE_BANDS[idx][0], score:Math.round(score)};
+}
+/* 单条战绩：结果+评级/时间 ｜ 身份·地主·难度 ｜ 初始牌分·时长 ｜ 手数·残牌 ｜ 番茄盈亏 */
 function ddRecRowHTML(r){
-  const head=r.quit?'<span class="q">🚪 认输</span>':(r.win?'<span class="w">🎉 胜</span>':'<span class="l">😿 负</span>');
   const ldl=(r.landlord===0?'你':(DD_NAMES[r.landlord]||'?'));
   const roleTxt=(r.role==='landlord')?'👑 你当地主':'🌾 你当农民';
   const dif=(DD_DIFFS[r.diff]||DD_DIFFS.normal).lv||'';
+  const head=r.quit?'<span class="q">🚪 认输</span>':(r.win?'<span class="w">🎉 胜</span>':'<span class="l">😿 负</span>');
+  const grade=ddGrade(r);
+  const badge=grade?('<span class="dd-grad g'+grade.g.charAt(0)+'" title="评级分 '+grade.score+'">'+grade.g+'</span>')
+                   :'<span class="dd-grad none">—</span>';
   let money;
   if(!(r.stake|0)) money='<span class="q">随便玩玩（不押注）</span>';
   else if((r.net|0)>0) money='赚了 <b class="pos">+'+r.net+'🍅</b>（押 '+r.stake+'）';
   else money='亏了 <b class="neg">'+r.net+'🍅</b>（押 '+r.stake+'）';
+  const gline=grade?('出牌 <b>'+(r.plays|0)+'</b> 手 · 自家残牌 <b>'+(r.myLeft|0)+'</b> 张 · 敌方残牌 <b>'+(r.foeLeft|0)+'</b> 张<br>'):'';
   return '<div class="dd-rec-row">'
-    +'<div class="dd-rec-hd">'+head+'<span class="tm">'+ddFmtClock(r.t)+'</span></div>'
+    +'<div class="dd-rec-hd"><span class="dd-rec-hl">'+head+badge+'</span><span class="tm">'+ddFmtClock(r.t)+'</span></div>'
     +'<div class="dd-rec-bd">'+roleTxt+' · 地主是 <b>'+ldl+'</b>'+(dif?(' · '+dif):'')+'<br>'
     +'初始牌 <b>'+(r.score|0)+'</b> 分 · 时长 '+ddFmtDur(r.dur)+'<br>'
-    +money+'</div></div>';
+    +gline+money+'</div></div>';
 }
 function ddHistoryHTML(){
   const recs=(tvFresh().ddRecords||[]);
@@ -8375,6 +8439,21 @@ function ddStatsHTML(recs){
   html+=ddBarHTML('👑 你当地主', roleStat.landlord.w, roleStat.landlord.l, roleStat.landlord.w+roleStat.landlord.l);
   html+=ddBarHTML('🌾 你当农民', roleStat.farmer.w, roleStat.farmer.l, roleStat.farmer.w+roleStat.farmer.l);
   html+='</div>';
+
+  /* 评级分布：S/A/B/C/D 五档 */
+  const gCount={S:0,A:0,B:0,C:0,D:0}; let gN=0;
+  recs.forEach(function(r){ const g=ddGrade(r); if(!g) return; const k=g.g.charAt(0); if(gCount[k]!==undefined) gCount[k]++; gN++; });
+  if(gN){
+    html+='<div class="dd-st-sec"><div class="dd-st-t">评级分布（'+gN+' 局已评级）</div>';
+    ['S','A','B','C','D'].forEach(function(k){
+      const c=gCount[k]; const pct=gN?Math.round(c*100/gN):0;
+      html+='<div class="dd-st-bar-row">'
+        +'<div class="dd-st-bar-hd"><span>'+DD_GRADE_TIER[k]+'</span><span>'+c+' 局 · '+pct+'%</span></div>'
+        +'<div class="dd-st-bar"><i class="gr g'+k+'" style="width:'+(gN?c*100/gN:0).toFixed(1)+'%"></i></div>'
+        +'</div>';
+    });
+    html+='</div>';
+  }
 
   html+='<div class="dd-st-sec"><div class="dd-st-t">累计番茄走势</div>'+ddSparkHTML(cum)+'</div>';
   return html;
