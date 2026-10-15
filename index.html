@@ -8020,7 +8020,7 @@ function ddSettle(winner){
   ddShowResult(win,net,payout,winner);
 }
 /* 记录一局战绩：时间 / 胜负与地主 / 时长 / 番茄盈亏 / 初始手牌打分。新的在前，最多 DD_REC_MAX 条 */
-const DD_REC_MAX=50;
+const DD_REC_MAX=1000;
 function ddPushRecord(win,net,winner){
   const g=ddG; if(!g||g._rec) return;          /* 同一局只记一次（认输也记） */
   g._rec=true;
