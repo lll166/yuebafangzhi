@@ -8541,17 +8541,25 @@ function ddSparkHTML(cum){
    仅在 http(s) 环境启用（本地 file:// 打开时不生效）。*/
 (function(){
   if(!/^https?:/i.test(location.protocol)) return;
-  var base=null, reloading=false, COOL=5*60*1000;
+  var base=null, pend=null, reloading=false, COOL=5*60*1000;
+  /* 版本标识：优先 ETag，其次 Last-Modified；两者都没有 → 该环境无法检测，跳过判断。
+     不再把两项拼成一个字符串，避免「一次只有 ETag、一次只有 Last-Modified」被误判成更新。 */
   function sig(r){
-    var s=(r.headers.get('etag')||'')+'#'+(r.headers.get('last-modified')||'');
-    return s==='#'?null:s;   // 两项都拿不到 → 无法检测
+    var e=r.headers.get('etag'), m=r.headers.get('last-modified');
+    if(e) return 'e:'+e;
+    if(m) return 'm:'+m;
+    return null;
   }
   function check(){
     if(reloading) return;
     fetch(location.href,{method:'HEAD',cache:'no-store'}).then(sig).then(function(s){
       if(!s) return;                          // 该环境不返回版本标识时静默跳过
       if(base===null){ base=s; return; }       // 首次：记录基线
-      if(s===base) return;                     // 版本未变
+      if(s===base){ pend=null; return; }       // 与基线一致：版本未变
+      /* 标识和基线不一样：先别急着刷。预览服务器/代理/CDN 可能每次响应都给出
+         不同的 ETag，单次不一致就刷新会误报「有新版本」。这里要求连续两次检查
+         都拿到同一个新标识，才认定服务器上的文件真的被换过。 */
+      if(pend!==s){ pend=s; return; }          // 第一次看到的新标识：待确认
       var last=0; try{ last=Number(sessionStorage.getItem('_tvVerReload')||0)||0; }catch(e){}
       if(Date.now()-last<COOL) return;         // 冷却中，防止标识抖动导致反复刷新
       /* 牌局进行中不打断：等这局打完、下一轮检查再刷新，避免半途刷新被判负 */
