@@ -8599,6 +8599,9 @@ function ddSparkHTML(cum){
       if(Date.now()-last<COOL) return;         // 冷却中，防止标识抖动导致反复刷新
       /* 牌局进行中不打断：等这局打完、下一轮检查再刷新，避免半途刷新被判负 */
       try{ if(typeof ddG!=='undefined' && ddG && ddG.phase!=='over') return; }catch(e){}
+      /* 飞行小游戏进行中同样不打断（含起飞倒计时）：等这一把飞完、下一轮检查再刷新，
+         避免半途刷新把正在飞的一把作废 */
+      try{ if(typeof fg!=='undefined' && fg && (fg.run || fg.cdT || fg.goT)) return; }catch(e){}
       reloading=true;
       try{ sessionStorage.setItem('_tvVerReload',String(Date.now())); }catch(e){}
       try{ if(typeof toast==='function') toast('✨ 发现新版本，正在自动刷新…'); }catch(e){}
