@@ -707,13 +707,27 @@
     padding:7px 10px;border-radius:10px;background:rgba(149,117,205,.08);margin-bottom:6px;}
   #ddgame .dd-result b{color:var(--gold);}
   #ddgame .dd-result .neg{color:#d0392c;}
-  /* 结算层里的「本局手牌」展示 */
+  /* 结算层里的「本局牌面」展示：赢家最后一手（金色高亮） vs 没出的牌（灰化压暗） */
   #ddgame .dd-reveal{margin-top:10px;border-top:1px dashed var(--line);padding-top:9px;}
   #ddgame .dd-reveal-t{font-size:12px;font-weight:900;color:var(--purple2);text-align:center;margin-bottom:7px;}
-  #ddgame .dd-reveal-row{margin-bottom:7px;}
-  #ddgame .dd-reveal-hd{font-size:11px;font-weight:800;color:#6b5f4a;margin-bottom:3px;}
-  #ddgame .dd-reveal-hd span{color:#b0a68e;font-weight:700;}
-  #ddgame .dd-reveal .dd-played{min-height:0;margin-top:0;}
+  #ddgame .dd-reveal-row{border-radius:12px;padding:7px 9px;margin-bottom:8px;background:rgba(149,117,205,.07);}
+  #ddgame .dd-reveal-row.win{background:linear-gradient(180deg,rgba(232,192,99,.24),rgba(232,192,99,.07));
+    box-shadow:inset 0 0 0 1px rgba(201,151,28,.45);}
+  #ddgame .dd-reveal-hd{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:800;color:#6b5f4a;margin-bottom:5px;}
+  #ddgame .dd-reveal-hd em{font-style:normal;font-size:10px;font-weight:900;color:#7a5a0f;
+    background:linear-gradient(180deg,#f3dd9a,#e7c664);border-radius:7px;padding:1px 6px;}
+  #ddgame .dd-lastrow{display:flex;align-items:center;gap:6px;min-height:40px;}
+  #ddgame .dd-lastrow+.dd-lastrow{margin-top:4px;}
+  #ddgame .dd-lastrow .dd-played{margin-top:0;min-height:0;flex:1 1 auto;}
+  #ddgame .dd-tag{flex:0 0 auto;font-size:10px;font-weight:900;border-radius:7px;padding:2px 6px;
+    white-space:nowrap;color:#8a7f6c;background:rgba(0,0,0,.06);}
+  #ddgame .dd-tag.gold{color:#7a5a0f;background:linear-gradient(180deg,#f3dd9a,#e7c664);}
+  /* 赢家最后出的牌：金色描边高亮 */
+  #ddgame .dd-reveal-row.win .dd-lastrow.last .dd-card{border-color:#d8ad3c;
+    background:linear-gradient(180deg,#fffdf2,#fff4d6);
+    box-shadow:0 0 0 1px rgba(216,173,60,.55),0 3px 9px rgba(201,151,28,.3);}
+  /* 没出的牌：灰化压暗，和「最后一手」拉开对比 */
+  #ddgame .dd-lastrow.rest .dd-card{opacity:.5;filter:grayscale(.4) saturate(.55);}
   /* 战绩记录 */
   #ddgame .dd-rec{margin-top:8px;max-height:54vh;overflow-y:auto;display:flex;flex-direction:column;gap:7px;}
   #ddgame .dd-rec-row{border:1px solid var(--line);border-radius:12px;padding:7px 10px;background:rgba(255,255,255,.7);}
@@ -8118,16 +8132,33 @@ function ddShowResult(win,net,payout,winner){
   box.innerHTML=h;
   ddShowLayer('ddResult');
 }
-/* 牌局结束：亮出三家剩余手牌 */
+/* 牌局结束：亮出三家牌面 —— 每家分别显示「最后一手」（赢家用金色高亮）
+   与「没出的牌」（灰化压暗），两者一眼区分。 */
 function ddRevealHTML(){
   const g=ddG; if(!g) return '';
-  let h='<div class="dd-reveal"><div class="dd-reveal-t">🃏 本局手牌</div>';
+  let h='<div class="dd-reveal"><div class="dd-reveal-t">🃏 本局牌面</div>';
   for(let i=0;i<3;i++){
+    const isWin=(i===g.winner);
     const n=g.hands[i].length;
     const tag=(g.role[i]==='landlord'?'👑':(g.role[i]==='farmer'?'🌾':''));
-    h+='<div class="dd-reveal-row"><div class="dd-reveal-hd">'+DD_AVS[i]+' '+DD_NAMES[i]+' '+tag
-      +' <span>剩 '+n+' 张</span></div>'
-      +'<div class="dd-played">'+(n?ddCardsHTML(g.hands[i],true):'<span class="pass">已出完</span>')+'</div></div>';
+    /* 该玩家最后一手：牌数组 / 'pass' / null（本轮没轮到他出牌，如认输的玩家） */
+    const lp=g.plays[i];
+    let last, meta='';
+    if(Array.isArray(lp)&&lp.length){
+      last=ddCardsHTML(lp,true);
+      meta=(g.last&&g.last.owner===i&&g.last.len===lp.length)?ddTypeName(g.last.type,g.last.len):(lp.length+' 张');
+    }else{
+      last='<span class="pass">'+(lp==='pass'?'不要':'未出牌')+'</span>';
+    }
+    const rest=n?ddCardsHTML(g.hands[i],true):'<span class="pass">已出完</span>';
+    h+='<div class="dd-reveal-row'+(isWin?' win':'')+'">'
+      +'<div class="dd-reveal-hd">'+DD_AVS[i]+' '+DD_NAMES[i]+' '+tag
+      +(isWin?'<em>🏆 赢家</em>':'')+'</div>'
+      +'<div class="dd-lastrow last"><span class="dd-tag gold">最后一手'+(meta?' · '+meta:'')+'</span>'
+      +'<div class="dd-played">'+last+'</div></div>'
+      +'<div class="dd-lastrow rest"><span class="dd-tag">没出的牌 · '+n+'</span>'
+      +'<div class="dd-played">'+rest+'</div></div>'
+      +'</div>';
   }
   return h+'</div>';
 }
