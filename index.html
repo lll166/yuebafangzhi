@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+、<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -640,6 +640,13 @@
     font-size:13px;color:var(--dim);font-weight:700;text-align:center;padding:6px;}
   #ddgame .dd-center .big{font-size:20px;color:var(--purple2);font-weight:900;}
   #ddgame .dd-center .sub{font-size:11px;color:#b0a68e;}
+  /* 本局底牌面板（3 张）：叫地主前隐藏，地主确定后常驻显示在牌桌中央 */
+  #ddgame .dd-bottom{display:inline-flex;flex-direction:column;align-items:center;gap:3px;
+    padding:5px 9px 6px;border-radius:11px;margin:1px 0;
+    background:linear-gradient(180deg,rgba(232,192,99,.2),rgba(232,192,99,.06));
+    box-shadow:inset 0 0 0 1px rgba(201,151,28,.34);}
+  #ddgame .dd-bottom-t{font-size:10px;font-weight:900;color:#8a6a2e;letter-spacing:.5px;}
+  #ddgame .dd-bottom-cards{display:flex;gap:4px;}
   #ddgame .dd-myplay{display:flex;flex-wrap:wrap;gap:1px;justify-content:center;min-height:38px;align-items:center;padding:2px 6px;}
   #ddgame .dd-hand{display:flex;justify-content:center;align-items:flex-end;padding:20px 4px 6px;
     overflow-x:auto;overflow-y:visible;min-height:82px;scrollbar-width:none;}
@@ -8246,6 +8253,14 @@ function ddRenderSeats(){
     }
   }
 }
+/* 本局底牌（3 张）：叫地主前隐藏，地主确定后全程常驻显示。
+   （地主是玩家时这 3 张也会并入其手牌，这里只作公开信息展示） */
+function ddBottomHTML(){
+  const g=ddG;
+  if(!g||g.landlord<0||g.phase==='bid'||!g.bottom||!g.bottom.length) return '';
+  return '<div class="dd-bottom"><span class="dd-bottom-t">🃏 本局底牌</span>'
+    +'<div class="dd-bottom-cards">'+ddCardsHTML(g.bottom,true)+'</div></div>';
+}
 function ddRenderCenter(){
   const g=ddG;
   const c=$('ddCenter'); if(!c)return;
@@ -8254,12 +8269,13 @@ function ddRenderCenter(){
     const s=ddStrength(g.hands[0]);
     c.innerHTML='<div class="big">要叫地主吗？</div>'
       +'<div class="sub">你的手牌评分 <b>'+s+'</b>（越高越适合当地主）</div>'
-      +'<div class="sub">先看下方手牌，再点「👑 叫地主」或「🙅 不叫」</div>';
+      +'<div class="sub">看完手牌，再点「👑 叫地主」或「🙅 不叫」</div>';
     return;
   }
   if(g.phase==='over'){
     const w=g.winner;
-    c.innerHTML='<div class="big">'+(w<0?'认输退出':(w===0?'你赢了 🎉':DD_NAMES[w]+'赢了'))+'</div>';
+    c.innerHTML='<div class="big">'+(w<0?'认输退出':(w===0?'你赢了 🎉':DD_NAMES[w]+'赢了'))+'</div>'
+      +ddBottomHTML();
     return;
   }
   const who=g.turn;
@@ -8267,7 +8283,7 @@ function ddRenderCenter(){
   let h='<div class="big">'+(mine?'轮到你出牌':DD_NAMES[who]+'思考中…')+'</div>';
   if(g.last) h+='<div class="sub">上家 '+DD_NAMES[g.last.owner]+' 出了 '+ddTypeName(g.last.type,g.last.len)+'</div>';
   else h+='<div class="sub">本轮首家，可自由出牌</div>';
-  c.innerHTML=h;
+  c.innerHTML=h+ddBottomHTML();
 }
 function ddTypeName(t,len){
   const m={single:'单张',pair:'对子',triple:'三张',triple1:'三带一',triple2:'三带二',
