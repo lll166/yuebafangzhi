@@ -781,6 +781,9 @@
   #ddgame .dd-rec-hd .w{color:#3f7d3f;}
   #ddgame .dd-rec-hd .l{color:#c05a1e;}
   #ddgame .dd-rec-hd .q{color:#8a7f6c;}
+  /* 战绩里的「出千月巴出现过」标记：金色小签，和座位上的金色调呼应 */
+  #ddgame .dd-rec-hd .chq{font-size:10px;font-weight:900;color:#b8791f;border-radius:8px;padding:1px 6px;
+    background:linear-gradient(180deg,#fff2d6,#ffe6b0);border:1px solid #e2c07a;}
   #ddgame .dd-rec-hd .tm{font-size:11px;font-weight:700;color:#b0a68e;}
   #ddgame .dd-rec-bd{font-size:11px;color:#6b5f4a;font-weight:700;line-height:1.6;margin-top:3px;}
   #ddgame .dd-rec-bd b{color:var(--purple2);}
@@ -8552,8 +8555,10 @@ function ddRecRowHTML(r){
   else if((r.net|0)>0) money='赚了 <b class="pos">+'+r.net+'🍅</b>（押 '+r.stake+'）';
   else money='亏了 <b class="neg">'+r.net+'🍅</b>（押 '+r.stake+'）';
   const gline=grade?('出牌 <b>'+(r.plays|0)+'</b> 手 · 自家残牌 <b>'+(r.myLeft|0)+'</b> 张 · 敌方残牌 <b>'+(r.foeLeft|0)+'</b> 张<br>'):'';
+  /* 出千月巴标记：本局 1 号位是它顶替的，单独打一个金色小签，便于在战绩里一眼挑出来 */
+  const chq=r.cheat?'<span class="chq" title="本局 1 号位是出千月巴：它用手里最小的单牌换走了你最大的一张">🃏 出千</span>':'';
   return '<div class="dd-rec-row">'
-    +'<div class="dd-rec-hd"><span class="dd-rec-hl">'+head+badge+'</span><span class="tm">'+ddFmtClock(r.t)+'</span></div>'
+    +'<div class="dd-rec-hd"><span class="dd-rec-hl">'+head+badge+chq+'</span><span class="tm">'+ddFmtClock(r.t)+'</span></div>'
     +'<div class="dd-rec-bd">'+roleTxt+' · 地主是 <b>'+ldl+'</b>'+(dif?(' · '+dif):'')+'<br>'
     +'初始牌 <b>'+(r.score|0)+'</b> 分 · 时长 '+ddFmtDur(r.dur)+'<br>'
     +gline+money+'</div></div>';
@@ -8566,9 +8571,10 @@ function ddHistoryHTML(){
 }
 /* 记录页：汇总 + 逐条列表 */
 function ddRecListHTML(recs){
-  let win=0, lose=0, quit=0, net=0;
-  recs.forEach(function(r){ if(r.quit) quit++; else if(r.win) win++; else lose++; net+=(r.net|0); });
+  let win=0, lose=0, quit=0, net=0, chq=0;
+  recs.forEach(function(r){ if(r.quit) quit++; else if(r.win) win++; else lose++; net+=(r.net|0); if(r.cheat) chq++; });
   let html='<p style="font-size:12px;color:#8a7f6c;font-weight:800;line-height:1.6;">共 <b>'+recs.length+'</b> 局 · 胜 <b>'+win+'</b> · 负 <b>'+lose+'</b>'+(quit?(' · 认输 '+quit):'')
+    +(chq?(' · 🃏 出千 <b>'+chq+'</b> 局'):'')
     +' · 累计 <b class="'+(net>0?'pos':(net<0?'neg':''))+'">'+(net>0?'+':'')+net+'🍅</b></p>';
   if(!recs.length){
     html+='<p style="color:#b0a68e;font-weight:800;text-align:center;margin:18px 0;">还没有战绩，去打一局吧～</p>';
@@ -8620,6 +8626,23 @@ function ddStatsHTML(recs){
   html+=ddBarHTML('👑 你当地主', roleStat.landlord.w, roleStat.landlord.l, roleStat.landlord.w+roleStat.landlord.l);
   html+=ddBarHTML('🌾 你当农民', roleStat.farmer.w, roleStat.farmer.l, roleStat.farmer.w+roleStat.farmer.l);
   html+='</div>';
+
+  /* 特殊对局：出千月巴露面的局 / 打出 S+ 评级的局，各自统计出现次数与胜负 */
+  const specials=[
+    {t:'🃏 出千月巴对局', bar:'🃏 撞上出千月巴的局', desc:'它一共露面',
+     hit:function(r){ return !!r.cheat; }},
+    {t:'⭐ S+ 对局', bar:'⭐ 打出 S+ 评级的局', desc:'你一共打出 S+ 评级',
+     hit:function(r){ const g=ddGrade(r); return !!(g&&g.g==='S+'); }}
+  ];
+  specials.forEach(function(sp){
+    let w=0, l=0, q=0;
+    recs.forEach(function(r){ if(!sp.hit(r)) return; if(r.quit) q++; else if(r.win) w++; else l++; });
+    if(!(w+l+q)) return;
+    html+='<div class="dd-st-sec"><div class="dd-st-t">'+sp.t+'</div>'
+      +'<p style="font-size:11px;color:#8a7f6c;font-weight:800;margin:0 0 7px;line-height:1.6;">'+sp.desc+' <b>'+(w+l+q)+'</b> 局；其中你赢 <b>'+w+'</b> · 输 <b>'+l+'</b>'+(q?(' · 认输 <b>'+q+'</b>'):'')+'。</p>'
+      +ddBarHTML(sp.bar, w, l+q, w+l+q)
+      +'</div>';
+  });
 
   /* 评级分布：S/A/B/C/D 五档 */
   const gCount={S:0,A:0,B:0,C:0,D:0}; let gN=0;
