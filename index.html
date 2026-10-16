@@ -726,8 +726,12 @@
   #ddgame .dd-reveal-row.win .dd-lastrow.last .dd-card{border-color:#d8ad3c;
     background:linear-gradient(180deg,#fffdf2,#fff4d6);
     box-shadow:0 0 0 1px rgba(216,173,60,.55),0 3px 9px rgba(201,151,28,.3);}
-  /* 没出的牌：灰化压暗，和「最后一手」拉开对比 */
-  #ddgame .dd-lastrow.rest .dd-card{opacity:.5;filter:grayscale(.4) saturate(.55);}
+  /* 没出的牌：灰化调暗（不用半透明，避免牌面叠压处发黑），和「最后一手」拉开对比 */
+  #ddgame .dd-lastrow.rest .dd-card{background:linear-gradient(180deg,#f7f6f2,#e9e7df);
+    border-color:#ddd8ca;box-shadow:0 1px 2px rgba(120,100,60,.14);
+    filter:grayscale(.85) saturate(.4);}
+  #ddgame .dd-lastrow.rest .dd-card .dd-rk,
+  #ddgame .dd-lastrow.rest .dd-card .dd-su{color:#7e7767;}
   /* 战绩记录 */
   #ddgame .dd-rec{margin-top:8px;max-height:54vh;overflow-y:auto;display:flex;flex-direction:column;gap:7px;}
   #ddgame .dd-rec-row{border:1px solid var(--line);border-radius:12px;padding:7px 10px;background:rgba(255,255,255,.7);}
