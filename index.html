@@ -627,7 +627,11 @@
     background:rgba(255,255,255,.72);border:1px solid var(--line);box-shadow:0 3px 10px rgba(120,100,160,.1);}
   #ddgame .dd-opp.turn{border-color:var(--purple);box-shadow:0 0 0 2px rgba(149,117,205,.35),0 3px 10px rgba(120,100,160,.16);}
   #ddgame .dd-opphead{display:flex;align-items:center;gap:6px;font-weight:800;font-size:12px;color:var(--purple2);}
-  #ddgame .dd-opphead .av{font-size:17px;}
+  /* 座位头像：1 号位放月巴立绘（按难度/出千切换），2 号位仍是番茄 emoji，统一用同尺寸方框居中 */
+  #ddgame .dd-opphead .av{width:32px;height:32px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+    font-size:17px;border-radius:9px;overflow:hidden;}
+  #ddgame .dd-opphead .av img{width:100%;height:100%;object-fit:contain;display:block;}
+  #ddgame .dd-opphead .av svg{width:100%;height:100%;display:block;}
   #ddgame .dd-opphead .role{margin-left:auto;font-size:10px;border-radius:999px;padding:1px 7px;
     background:rgba(149,117,205,.14);color:var(--dim);font-weight:800;}
   #ddgame .dd-opphead .role.ld{background:rgba(224,138,60,.2);color:#c05a1e;}
@@ -647,6 +651,19 @@
     box-shadow:inset 0 0 0 1px rgba(201,151,28,.34);}
   #ddgame .dd-bottom-t{font-size:10px;font-weight:900;color:#8a6a2e;letter-spacing:.5px;}
   #ddgame .dd-bottom-cards{display:flex;gap:4px;}
+  /* 出千月巴：10% 概率顶掉 1 号位的月巴，座位换成金色调，好和普通月巴区分 */
+  #ddgame .dd-opp.cheat{border-color:#d8a13c;background:linear-gradient(180deg,rgba(255,242,214,.92),rgba(255,249,233,.72));
+    box-shadow:0 0 0 2px rgba(216,161,60,.26),0 3px 10px rgba(160,110,40,.18);}
+  #ddgame .dd-opp.cheat .dd-opphead{color:#b8791f;}
+  /* 出千公示条：出千月巴动过手后，把「用什么换走了什么」摆在牌桌中央 */
+  #ddgame .dd-cheat{display:inline-flex;flex-direction:column;align-items:center;gap:3px;
+    padding:5px 9px 6px;border-radius:11px;margin:1px 0;
+    background:linear-gradient(180deg,rgba(224,90,90,.16),rgba(224,90,90,.05));
+    box-shadow:inset 0 0 0 1px rgba(200,70,70,.32);}
+  #ddgame .dd-cheat-t{font-size:10px;font-weight:900;color:#a8402e;letter-spacing:.5px;}
+  #ddgame .dd-cheat-row{display:flex;align-items:center;gap:5px;font-size:10px;color:#8a6a5e;font-weight:800;}
+  #ddgame .dd-cheat-cards{display:flex;gap:4px;align-items:center;}
+  #ddgame .dd-cheat-row .mid{color:#c07a2e;}
   #ddgame .dd-myplay{display:flex;flex-wrap:wrap;gap:1px;justify-content:center;min-height:38px;align-items:center;padding:2px 6px;}
   #ddgame .dd-hand{display:flex;justify-content:center;align-items:flex-end;padding:20px 4px 6px;
     overflow-x:auto;overflow-y:visible;min-height:82px;scrollbar-width:none;}
@@ -1272,7 +1289,7 @@
   <div class="dd-stage">
     <div class="dd-seats">
       <div class="dd-opp" id="ddOpp1">
-        <div class="dd-opphead"><span class="av">🐰</span><span>月巴</span>
+        <div class="dd-opphead"><span class="av" id="ddAv1"></span><span id="ddName1">月巴</span>
           <span class="role" id="ddRole1">—</span></div>
         <div class="dd-cnt">剩 <b id="ddCnt1">17</b> 张</div>
         <div class="dd-played" id="ddPlay1"></div>
@@ -1305,6 +1322,7 @@
         <div class="dd-quick" id="ddBetQuick"></div>
         <p class="dd-note">当前余额 <b id="ddBetBal">0</b> 🍅 · 押注在开局时扣除</p>
         <p class="dd-note" id="ddBetLimit"></p>
+        <p class="dd-note" id="ddCheatHint"></p>
         <p class="dd-warn">⚠️ 开局后押注即刻扣除并记 1 次；中途刷新或离开会判为认输，押注不退、次数照扣。</p>
         <div class="dd-btns">
           <button class="btn gold" id="ddStartBtn" onclick="ddStart()">开始牌局</button>
@@ -1696,6 +1714,8 @@ const TYPES2=[
   {id:'m2_fazhen',   name:'法阵月巴',  r:4, v:80,  t:770,  cond:{t:'travel', s:'潮纹法石'}, color:'#6f8fd0', shape:'cube'},
   {id:'m2_paomo',    name:'泡沫月巴',  r:4, v:84,  t:790,  cond:{t:'travel', s:'人鱼泡沫'}, color:'#4fb0a8', shape:'squish'},
   {id:'m2_damofa',   name:'大魔法师月巴', r:5, v:258, t:1500, cond:{t:'travel', d:'merfolk', n:5}, weight:0.01, color:'#8f6fd8', shape:'rainbow'},
+  /* —— 彩蛋：斗月巴牌桌上的不速之客 —— */
+  {id:'m2_chuqian',  name:'出千月巴',  r:5, v:240, t:1400, cond:null, weight:0.01, color:'#2f8f72', shape:'cube'},
 ];
 const RAR_NAME={1:'普通',2:'常见',3:'稀有',4:'史诗',5:'传说',6:'活动'};
 const R_H={1:[2,5],2:[4,8],3:[6,12],4:[10,20],5:[16,30],6:[22,40]};   // 身高 cm 范围
@@ -1907,6 +1927,7 @@ const FAT_INTRO={
   m2_fazhen:'身上纹着法阵的月巴，一圈圈光纹里藏着让人维持人鱼姿态的秘术。它说，这个法阵不是为了困住任何人。',
   m2_paomo:'在海面上成串冒起的月巴。它说，死去的人鱼真的会变成泡沫。',
   m2_damofa:'把秘术改成法阵的月巴，是那片海里所有传说的源头。它究竟是怀着怎样的心思做这些事的呢？',
+  m2_chuqian:'只在牌桌上现身的月巴，对它来说没有赢不了的赌局。如果有，一定是它刻意为之。',
 };
 
 /* ---------------- 界面皮肤（图鉴解锁） ---------------- */
@@ -5220,6 +5241,7 @@ function tvFresh(){
   if(t.bgIdx==null)t.bgIdx=(Math.random()*TV_BGS.length)|0;
   if(t.ddBetDay==null)t.ddBetDay='';        // 斗月巴：上次押注的自然日
   if(t.ddBetUsed==null)t.ddBetUsed=0;       // 斗月巴：当天已用掉的押注次数
+  if(t.ddStreak==null)t.ddStreak=0;         // 斗月巴：玩家连胜场数（每场 +2% 遇出千月巴的概率，它现身后清零）
   t.ddRecords=t.ddRecords||[];              // 斗月巴：战绩记录（新的在前，最多保留 DD_REC_MAX 条）
   t.journal=t.journal||[];                  // 旅行笔记：每次旅行的记录（新的在前，最多保留 TV_JOURNAL_MAX 条）
   return t;
@@ -7571,6 +7593,34 @@ function ddStrength(hand){
  * ============================================================ */
 const DD_NAMES=['你','月巴','番茄'];
 const DD_AVS=['🧑','🐰','🍅'];
+/* 出千月巴：斗月巴里的彩蛋对手。开局发牌时按概率顶掉 1 号位的月巴，
+   出牌前先手用它手里最小的单牌，换走玩家最大的一张（一次性），并把换了什么公示给玩家。
+   出现概率基础 3%，玩家每连胜一场 +2%（上限 95%），直到它真的现身；它一露面，连胜清零、概率回落 3% */
+const DD_CHEAT_BASE=0.03;                  /* 基础概率：3% */
+const DD_CHEAT_STEP=0.02;                  /* 玩家每连胜一场的加成：+2% */
+const DD_CHEAT_MAX=0.95;                   /* 概率上限，免得连胜太多变成必出 */
+/* 玩家当前连胜场数（斗月巴）：随存档持久化，用来抬高出千月巴的出现概率 */
+function ddStreak(){ const t=tvFresh(); return Math.max(0, t.ddStreak|0); }
+/* 本局遇到出千月巴的概率：3% + 连胜 ×2%，封顶 95% */
+function ddCheatChance(){ return Math.min(DD_CHEAT_MAX, DD_CHEAT_BASE + DD_CHEAT_STEP*ddStreak()); }
+/* 座位显示名：本局若被出千月巴顶替，1 号位改叫「出千月巴」 */
+function ddName(i){ const g=ddG; return (g&&g.cheat&&i===1)?'出千月巴':DD_NAMES[i]; }
+/* 1 号位此刻该挂哪张立绘：出千月巴顶替时用图鉴里「出千月巴」（m2_chuqian）那张，
+   否则按本局（未开局则按当前所选）难度的月巴立绘。返回 {key,html}，key 用于判断是否需要重建节点 */
+function ddFoeArt(){
+  const g=ddG;
+  if(g&&g.cheat) return {key:'dex:m2_chuqian', html:fatSVG(typeById('m2_chuqian'))};
+  const d=DD_DIFFS[(g&&g.diff)||ddDiff]||DD_DIFFS.normal;
+  return {key:'img:'+d.img, html:'<img src="'+d.img+'" alt="'+ddName(1)+'" draggable="false">'};
+}
+/* 座位立绘：只在立绘真的换了时才重建节点，免得每次渲染都重新加载图片 */
+function ddRenderAvatar(){
+  const av=$('ddAv1'); if(!av) return;
+  const art=ddFoeArt();
+  if(av._src===art.key) return;
+  av._src=art.key;
+  av.innerHTML=art.html;
+}
 /* 难度配置：名称取自图鉴月巴，img 为图鉴立绘；mult 为奖励倍率，miss=能压不压的概率，
    bomb=炸弹出手概率，random=随机出牌（更笨），smart=进阶策略（更强），
    handicap=开局给玩家「让牌」的次数（随机把几张 10~A 悄悄换成 AI 的小牌，越大越难且越隐蔽） */
@@ -7634,6 +7684,15 @@ function ddRenderBetLimit(){
   const btn=$('ddStartBtn'); if(btn){ btn.disabled=left<=0; btn.style.opacity=left<=0?'.45':''; }
   const inp=$('ddBetInput'); if(inp) inp.disabled=left<=0;
 }
+/* 下注层：把「本局遇到出千月巴的概率」摊给玩家看，连胜加成才有体感 */
+function ddRenderCheatHint(){
+  const el=$('ddCheatHint'); if(!el) return;
+  const n=ddStreak(), p=ddCheatChance();
+  const pct=String(Math.round(p*1000)/10)+'%';
+  el.innerHTML=n>0
+    ? '🃏 连胜 <b>'+n+'</b> 场：本局遇到出千月巴概率 <b>'+pct+'</b>（基础 3% + 连胜 ×2%）'
+    : '🃏 本局遇到出千月巴概率 <b>'+pct+'</b>（每连胜一场 +2%）';
+}
 
 /* ---------- 入口 / 退出 ---------- */
 function ddEnter(){
@@ -7645,6 +7704,7 @@ function ddEnter(){
   ddShowLayer('ddBet');
   ddRenderBetQuick();
   ddRenderBetLimit();
+  ddRenderCheatHint();
   const inp=$('ddBetInput');
   const bal=ddHost.getBalance();
   if(inp) inp.value=String(Math.min(100,Math.max(1,bal)));
@@ -7682,7 +7742,7 @@ function ddRenderDiff(){
   });
   box.innerHTML=h;
 }
-function ddPickDiff(k){ if(!DD_DIFFS[k])return; ddDiff=k; ddRenderDiff(); }
+function ddPickDiff(k){ if(!DD_DIFFS[k])return; ddDiff=k; ddRenderDiff(); ddRenderAvatar(); }
 function ddRenderBetQuick(){
   const box=$('ddBetQuick'); if(!box)return;
   const bal=ddHost.getBalance();
@@ -7734,6 +7794,8 @@ function ddDeal(stake){
     startAt:now(),                             /* 本局开始时间：用于结算时算「时长」 */
     initScore:ddStrength(hands[0]),            /* 玩家初始 17 张手牌打分：写入战绩记录 */
     playCount:[0,0,0],                         /* 各座位出牌手数（过牌不计）：评级用 */
+    cheat:(Math.random()<ddCheatChance()),     /* 本局 1 号位是不是出千月巴（基础 3% + 连胜 ×2%） */
+    cheatInfo:null,                            /* 出千交换的牌：{give:它给的, take:换走的}，用于公示 */
     seen:[]                                    /* 算牌：全场已打出的牌（值），供困难 AI 推断对手剩余牌 */
   };
   ddAskBid();
@@ -7768,6 +7830,28 @@ function ddSwapCard(hands, c1, c2){
   hands[p2[0]][p2[1]]=c1;
 }
 function ddSortCmp(a,b){ return b.v-a.v || a.s-b.s; }
+/* 一张牌的短名（公示/提示用）：如「♠A」「大王」 */
+function ddCardName(c){
+  if(!c) return '?';
+  if(c.v>=16) return DD_NAME[c.v];
+  return (DD_SUIT[c.s]?DD_SUIT[c.s][0]:'')+DD_NAME[c.v];
+}
+/* 出千月巴出千：用它手里最小的单牌，换走玩家最大的一张。
+   手牌此刻都按 ddSortCmp 降序排好，故玩家首位最大、它的末位最小；
+   只在真正开局（地主确定、出牌阶段开始）时动手一次，换不到更好的就不动，免得白露馅 */
+function ddCheatSwap(){
+  const g=ddG;
+  if(!g||!g.cheat||g.cheatInfo) return null;
+  const take=g.hands[0][0];                        /* 玩家最大的一张 */
+  const give=g.hands[1][g.hands[1].length-1];      /* 出千月巴最小的一张 */
+  if(!take||!give||give.v>=take.v) return null;
+  ddSwapCard(g.hands, take, give);
+  g.hands[0].sort(ddSortCmp);
+  g.hands[1].sort(ddSortCmp);
+  g.initScore=ddStrength(g.hands[0]);              /* 手牌变了，同步初始打分（评级用） */
+  g.cheatInfo={give:give, take:take};
+  return g.cheatInfo;
+}
 
 /* ---------- 叫地主 ---------- */
 function ddAskBid(){
@@ -7784,16 +7868,16 @@ function ddBid(call){
   const s0=ddStrength(g.hands[0]), s1=ddStrength(g.hands[1]), s2=ddStrength(g.hands[2]);
   const c1=s1>=9, c2=s2>=9;                 /* 手牌够强才叫 */
   let ld=-1, why='', sub='';
-  if(c1){ ld=1; why='月巴叫了地主'; }
-  else if(c2){ ld=2; why='番茄叫了地主'; }
+  if(c1){ ld=1; why=ddName(1)+'叫了地主'; }
+  else if(c2){ ld=2; why=ddName(2)+'叫了地主'; }
   else{                                     /* 都不叫：手牌最强者当地主（并列时玩家优先） */
     let best=0, bs=s0;
     if(s1>bs){ best=1; bs=s1; }
     if(s2>bs){ best=2; bs=s2; }
     ld=best;
-    const sc='手牌评分 你 '+s0+' / 月巴 '+s1+' / 番茄 '+s2;
-    if(ld===0){ why='月巴和番茄都不叫地主'; sub='只能由你当地主'; }
-    else { why='都没人叫地主，手牌最好的「'+DD_NAMES[ld]+'」当地主'; sub=sc; }
+    const sc='手牌评分 你 '+s0+' / '+ddName(1)+' '+s1+' / '+ddName(2)+' '+s2;
+    if(ld===0){ why=ddName(1)+'和'+ddName(2)+'都不叫地主'; sub='只能由你当地主'; }
+    else { why='都没人叫地主，手牌最好的「'+ddName(ld)+'」当地主'; sub=sc; }
   }
   g.bidder=ld;
   g.bidWhy=why; g.bidWhySub=sub;
@@ -7806,13 +7890,21 @@ function ddFinishBid(){
   for(let i=0;i<3;i++) if(i!==g.landlord) g.role[i]='farmer';
   g.hands[g.landlord]=g.hands[g.landlord].concat(g.bottom);
   g.hands[g.landlord].sort(ddSortCmp);
+  ddCheatSwap();                            /* 出千月巴开局出千：换玩家最大的牌（换不动就作罢） */
   g.phase='play';
   g.turn=g.landlord;
   g.last=null; g.plays=[null,null,null];
   ddShowLayer(null);
   ddRenderAll();
   if(g.bidWhySub) ddHost.toast(g.bidWhy,g.bidWhySub);
-  else ddHost.toast(g.bidWhy||(DD_NAMES[g.landlord]+'是地主，开始出牌'));
+  else ddHost.toast(g.bidWhy||(ddName(g.landlord)+'是地主，开始出牌'));
+  if(g.cheatInfo){
+    /* 叫地主的提示先出，隔一会儿再报出千的事，免得两条提示互相顶掉 */
+    setTimeout(function(){
+      if(!ddG||!ddG.cheatInfo||ddG.phase==='over') return;   /* 这局已经散了就别再提示 */
+      ddHost.toast('🃏 出千月巴出千了！','它用 '+ddCardName(ddG.cheatInfo.give)+' 换走了你的 '+ddCardName(ddG.cheatInfo.take));
+    },2300);
+  }
   ddAfterRender();
 }
 
@@ -8086,6 +8178,10 @@ function ddSettle(winner){
     }else { payout=0; net=-g.stake; }
     if(payout) ddHost.addTomato(payout);
   }
+  /* 连胜结算：出千月巴露过面就清零（概率回落 3%）；普通局赢一场连胜 +1（下次更容易再遇到它）。
+     紧接着的 ddPushRecord 里有 save()，这条改动随之一并入档 */
+  const tr=tvFresh();
+  if(g.cheat||!win) tr.ddStreak=0; else tr.ddStreak=(tr.ddStreak|0)+1;
   ddPushRecord(win,net,winner);                /* 写入战绩记录（时间/胜负/地主/时长/番茄/初始牌分） */
   ddRenderAll();
   ddShowResult(win,net,payout,winner);
@@ -8116,6 +8212,7 @@ function ddPushRecord(win,net,winner){
     net:net|0,                                 /* 净番茄（正=赚） */
     score:g.initScore|0,                       /* 初始牌打分 */
     diff:g.diff,                               /* 难度 */
+    cheat:!!g.cheat,                           /* 本局 1 号位是不是出千月巴 */
     plays:((g.playCount&&g.playCount[0])|0),   /* 玩家出牌手数（评级用） */
     myLeft:myLeft,                             /* 玩家结算剩余张数（评级用） */
     foeLeft:foeLeft|0,                         /* 敌方阵营结算剩余张数（评级用） */
@@ -8154,6 +8251,7 @@ function ddShowResult(win,net,payout,winner){
     h+='<div class="dd-result"><span>押注</span><b>随便玩玩（不押注）</b></div>';
   }
   h+='<p class="dd-note">当前余额 '+ddHost.getBalance()+' 🍅</p>';
+  if(g.cheat) h+='<p class="dd-note">🃏 这局出千月巴露过面：连胜清零，下次遇到它的概率回到 3%</p>';
   h+=ddRevealHTML();
   h+='<div class="dd-btns"><button class="btn cta" onclick="ddAgain()">再来一局</button>'
     +'<button class="btn" onclick="ddQuit()">收手退出</button></div>';
@@ -8180,7 +8278,7 @@ function ddRevealHTML(){
     }
     const rest=n?ddCardsHTML(g.hands[i],true):'<span class="pass">已出完</span>';
     h+='<div class="dd-reveal-row'+(isWin?' win':'')+'">'
-      +'<div class="dd-reveal-hd">'+DD_AVS[i]+' '+DD_NAMES[i]+' '+tag
+      +'<div class="dd-reveal-hd">'+DD_AVS[i]+' '+ddName(i)+' '+tag
       +(isWin?'<em>🏆 赢家</em>':'')+'</div>'
       +'<div class="dd-lastrow last"><span class="dd-tag gold">最后一手'+(meta?' · '+meta:'')+'</span>'
       +'<div class="dd-played">'+last+'</div></div>'
@@ -8245,11 +8343,15 @@ function ddRenderAll(){
 }
 function ddRenderSeats(){
   const g=ddG;
+  ddRenderAvatar();                                           /* 1 号位立绘：按难度/出千切换 */
   for(let i=1;i<=2;i++){
     const cnt=$('ddCnt'+i);
     const role=$('ddRole'+i);
     const box=$('ddOpp'+i);
     const played=$('ddPlay'+i);
+    const nm=$('ddName'+i);
+    if(nm) nm.textContent=ddName(i);                            /* 本局 1 号位可能被出千月巴顶替 */
+    if(i===1&&box) box.classList.toggle('cheat', !!(g&&g.cheat)); /* 出千月巴的座位换成金色调 */
     if(!g){
       if(cnt) cnt.textContent='—'; if(role){ role.textContent='—'; role.className='role'; }
       if(played) played.innerHTML=''; if(box) box.classList.remove('turn');
@@ -8278,6 +8380,17 @@ function ddBottomHTML(){
   return '<div class="dd-bottom"><span class="dd-bottom-t">🃏 本局底牌</span>'
     +'<div class="dd-bottom-cards">'+ddCardsHTML(g.bottom,true)+'</div></div>';
 }
+/* 出千公示：出千月巴换走了哪张、塞回哪张，全程挂在牌桌中央，玩家随时能回头看 */
+function ddCheatHTML(){
+  const g=ddG;
+  if(!g||!g.cheatInfo) return '';
+  const ci=g.cheatInfo;
+  return '<div class="dd-cheat"><span class="dd-cheat-t">🃏 出千月巴出千了</span>'
+    +'<div class="dd-cheat-row"><span>它用</span>'
+    +'<div class="dd-cheat-cards">'+ddCardHTML(ci.give,true,false)+'</div>'
+    +'<span class="mid">换走了你的</span>'
+    +'<div class="dd-cheat-cards">'+ddCardHTML(ci.take,true,false)+'</div></div></div>';
+}
 function ddRenderCenter(){
   const g=ddG;
   const c=$('ddCenter'); if(!c)return;
@@ -8291,16 +8404,16 @@ function ddRenderCenter(){
   }
   if(g.phase==='over'){
     const w=g.winner;
-    c.innerHTML='<div class="big">'+(w<0?'认输退出':(w===0?'你赢了 🎉':DD_NAMES[w]+'赢了'))+'</div>'
-      +ddBottomHTML();
+    c.innerHTML='<div class="big">'+(w<0?'认输退出':(w===0?'你赢了 🎉':ddName(w)+'赢了'))+'</div>'
+      +ddBottomHTML()+ddCheatHTML();
     return;
   }
   const who=g.turn;
   const mine=(who===0);
-  let h='<div class="big">'+(mine?'轮到你出牌':DD_NAMES[who]+'思考中…')+'</div>';
-  if(g.last) h+='<div class="sub">上家 '+DD_NAMES[g.last.owner]+' 出了 '+ddTypeName(g.last.type,g.last.len)+'</div>';
+  let h='<div class="big">'+(mine?'轮到你出牌':ddName(who)+'思考中…')+'</div>';
+  if(g.last) h+='<div class="sub">上家 '+ddName(g.last.owner)+' 出了 '+ddTypeName(g.last.type,g.last.len)+'</div>';
   else h+='<div class="sub">本轮首家，可自由出牌</div>';
-  c.innerHTML=h+ddBottomHTML();
+  c.innerHTML=h+ddBottomHTML()+ddCheatHTML();
 }
 function ddTypeName(t,len){
   const m={single:'单张',pair:'对子',triple:'三张',triple1:'三带一',triple2:'三带二',
@@ -8350,7 +8463,7 @@ function ddRenderActions(){
     return;
   }
   const mine=(g.turn===0);
-  if(!mine){ box.innerHTML='<span style="font-size:12px;color:#b0a68e;font-weight:800">等待 '+DD_NAMES[g.turn]+' 出牌…</span>'; return; }
+  if(!mine){ box.innerHTML='<span style="font-size:12px;color:#b0a68e;font-weight:800">等待 '+ddName(g.turn)+' 出牌…</span>'; return; }
   const canPass=!!g.last;
   box.innerHTML='<button class="btn gold" onclick="ddPlayerPlay()">出牌</button>'
     +'<button class="btn'+(canPass?'':' off')+'" onclick="ddPlayerPass()">不要</button>'
@@ -8427,7 +8540,7 @@ function ddGrade(r){
 }
 /* 单条战绩：结果+评级/时间 ｜ 身份·地主·难度 ｜ 初始牌分·时长 ｜ 手数·残牌 ｜ 番茄盈亏 */
 function ddRecRowHTML(r){
-  const ldl=(r.landlord===0?'你':(DD_NAMES[r.landlord]||'?'));
+  const ldl=(r.landlord===0?'你':((r.cheat&&r.landlord===1)?'出千月巴':(DD_NAMES[r.landlord]||'?')));
   const roleTxt=(r.role==='landlord')?'👑 你当地主':'🌾 你当农民';
   const dif=(DD_DIFFS[r.diff]||DD_DIFFS.normal).lv||'';
   const head=r.quit?'<span class="q">🚪 认输</span>':(r.win?'<span class="w">🎉 胜</span>':'<span class="l">😿 负</span>');
