@@ -8627,20 +8627,27 @@ function ddStatsHTML(recs){
   html+=ddBarHTML('🌾 你当农民', roleStat.farmer.w, roleStat.farmer.l, roleStat.farmer.w+roleStat.farmer.l);
   html+='</div>';
 
-  /* 特殊对局：出千月巴露面的局 / 打出 S+ 评级的局，各自统计出现次数与胜负 */
+  /* 特殊对局：出千月巴露面的局 / 打出 S+ 评级的局，各自统计出现次数与胜负。
+     S+ 只可能出在胜局里，所以细分「你赢」（自己出完牌）/「队友赢」（队友先出完、你被带飞） */
   const specials=[
     {t:'🃏 出千月巴对局', bar:'🃏 撞上出千月巴的局', desc:'它一共露面',
-     hit:function(r){ return !!r.cheat; }},
+     hit:function(r){ return !!r.cheat; },
+     split:function(r){ return r.quit?'q':(r.win?'w':'l'); }},
     {t:'⭐ S+ 对局', bar:'⭐ 打出 S+ 评级的局', desc:'你一共打出 S+ 评级',
-     hit:function(r){ const g=ddGrade(r); return !!(g&&g.g==='S+'); }}
+     hit:function(r){ const g=ddGrade(r); return !!(g&&g.g==='S+'); },
+     split:function(r){ return r.quit?'q':(((typeof r.winner==='number')&&r.winner!==0)?'a':'w'); }}
   ];
   specials.forEach(function(sp){
-    let w=0, l=0, q=0;
-    recs.forEach(function(r){ if(!sp.hit(r)) return; if(r.quit) q++; else if(r.win) w++; else l++; });
-    if(!(w+l+q)) return;
+    const c={w:0,a:0,l:0,q:0};
+    recs.forEach(function(r){ if(sp.hit(r)) c[sp.split(r)]++; });
+    const n=c.w+c.a+c.l+c.q;
+    if(!n) return;
     html+='<div class="dd-st-sec"><div class="dd-st-t">'+sp.t+'</div>'
-      +'<p style="font-size:11px;color:#8a7f6c;font-weight:800;margin:0 0 7px;line-height:1.6;">'+sp.desc+' <b>'+(w+l+q)+'</b> 局；其中你赢 <b>'+w+'</b> · 输 <b>'+l+'</b>'+(q?(' · 认输 <b>'+q+'</b>'):'')+'。</p>'
-      +ddBarHTML(sp.bar, w, l+q, w+l+q)
+      +'<p style="font-size:11px;color:#8a7f6c;font-weight:800;margin:0 0 7px;line-height:1.6;">'+sp.desc+' <b>'+n+'</b> 局；其中你赢 <b>'+c.w+'</b>'
+      +(c.a?(' · 队友赢 <b>'+c.a+'</b>'):'')
+      +(c.l?(' · 输 <b>'+c.l+'</b>'):'')
+      +(c.q?(' · 认输 <b>'+c.q+'</b>'):'')+'。</p>'
+      +ddBarHTML(sp.bar, c.w+c.a, c.l+c.q, n)
       +'</div>';
   });
 
