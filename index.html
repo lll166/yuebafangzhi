@@ -1,4 +1,4 @@
-、<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -714,6 +714,14 @@
     padding:7px 10px;border-radius:10px;background:rgba(149,117,205,.08);margin-bottom:6px;}
   #ddgame .dd-result b{color:var(--gold);}
   #ddgame .dd-result .neg{color:#d0392c;}
+  /* 结算层里的评级：复用战绩那套 S/A/B/C/D 徽章，直接把本局评级标在结果页上 */
+  #ddgame .dd-gradbox{display:flex;align-items:center;gap:9px;justify-content:center;
+    padding:8px 10px;border-radius:12px;margin:0 0 7px;
+    background:rgba(199,150,64,.12);border:1px solid rgba(201,151,28,.3);}
+  #ddgame .dd-gradbox .dd-grad{font-size:15px;min-width:36px;padding:3px 9px;border-radius:9px;}
+  #ddgame .dd-gradbox .tx{font-size:12px;font-weight:800;color:#6b5f4a;line-height:1.45;}
+  #ddgame .dd-gradbox .tx b{color:var(--purple2);}
+  #ddgame .dd-gradbox .sc{font-size:11px;color:#a08a63;font-weight:800;}
   /* 结算层里的「本局牌面」展示：赢家最后一手（金色高亮） vs 没出的牌（灰化压暗） */
   #ddgame .dd-reveal{margin-top:10px;border-top:1px dashed var(--line);padding-top:9px;}
   #ddgame .dd-reveal-t{font-size:12px;font-weight:900;color:var(--purple2);text-align:center;margin-bottom:7px;}
@@ -8117,6 +8125,9 @@ function ddPushRecord(win,net,winner){
   if(t.ddRecords.length>DD_REC_MAX) t.ddRecords.length=DD_REC_MAX;
   save();
 }
+/* 刚写入的那条战绩（ddSettle 里先 ddPushRecord 再 ddShowResult，故首位就是本局）：
+   结算页直接拿它算评级，不再重复推导一遍 */
+function ddLastRec(){ return (tvFresh().ddRecords||[])[0]||null; }
 function ddShowResult(win,net,payout,winner){
   const g=ddG;
   const cfg=DD_DIFFS[g.diff]||DD_DIFFS.normal;
@@ -8128,6 +8139,12 @@ function ddShowResult(win,net,payout,winner){
   const side=win?'（'+(g.role[0]==='landlord'?'地主':'农民')+'获胜）':(winner<0?'':'（'+(g.role[winner]==='landlord'?'地主':'农民')+'获胜）');
   let h='<h3>'+head+'</h3>';
   h+='<p style="text-align:center;color:#8a7f6c;font-size:12px">'+(g.role[0]==='landlord'?'你的身份：👑 地主':'你的身份：🌾 农民')+side+'</p>';
+  const grade=ddGrade(ddLastRec());            /* 与战绩记录同一套评级：认输不评级，故此处不显示 */
+  if(grade){
+    h+='<div class="dd-gradbox"><span class="dd-grad g'+grade.g.charAt(0)+'" title="评级分 '+grade.score+'">'+grade.g+'</span>'
+      +'<span class="tx">本局评级 <b>'+DD_GRADE_TIER[grade.g.charAt(0)]+'</b>'
+      +'<br><span class="sc">评分 '+grade.score+'</span></span></div>';
+  }
   h+='<div class="dd-result"><span>难度</span><b><img class="dd-ic" src="'+cfg.img+'" alt="">'+cfg.name+'（'+cfg.lv+' · 奖励 ×'+cfg.mult+'）</b></div>';
   if(g.stake>0){
     h+='<div class="dd-result"><span>押注</span><b>'+g.stake+' 🍅</b></div>';
