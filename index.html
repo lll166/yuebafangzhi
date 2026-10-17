@@ -1782,7 +1782,7 @@
   /* cursed 斗月巴：像素硬跳 */
   html[data-skin="cursed"] #ddgame .dd-card.sel{transform:translateY(-16px);box-shadow:0 6px 0 #0e1024,0 10px 16px rgba(0,0,0,.55);transition:transform .12s steps(2,jump-end);}
   html[data-skin="cursed"] #ddgame .dd-card{transition:transform .12s steps(2,jump-end);}
-  html[data-skin="cursed"] #ddgame .dd-card:hover{transform:translateY(-6px);}
+  html[data-skin="cursed"] #ddgame .dd-card:not(.sel):hover{transform:translateY(-6px);}
   html[data-skin="cursed"] #ddgame .dd-opp.turn{animation:skDdCursed .8s steps(4,jump-end) forwards;}
   html[data-skin="cursed"] #ddgame .dd-opp.cheat{animation:skDdCursed .6s steps(4,jump-end) forwards;}
   html[data-skin="cursed"] #ddgame .dd-opp.turn,html[data-skin="cursed"] #ddgame .dd-opp.cheat{animation-iteration-count:1;}
@@ -2169,7 +2169,7 @@
   /* dreamink 斗月巴：墨线柔化 */
   html[data-skin="dreamink"] #ddgame .dd-card.sel{transform:translateY(-16px) rotate(-.8deg);box-shadow:0 8px 18px rgba(193,77,150,.42),0 2px 6px rgba(91,43,122,.35);transition:transform .22s cubic-bezier(.4,0,.6,1);}
   html[data-skin="dreamink"] #ddgame .dd-card{transition:transform .22s cubic-bezier(.4,0,.6,1);}
-  html[data-skin="dreamink"] #ddgame .dd-card:hover{transform:translateY(-5px) rotate(-.5deg);}
+  html[data-skin="dreamink"] #ddgame .dd-card:not(.sel):hover{transform:translateY(-5px) rotate(-.5deg);}
   html[data-skin="dreamink"] #ddgame .dd-opp.turn{animation:skDdInk .9s cubic-bezier(.4,0,.6,1) forwards;}
   html[data-skin="dreamink"] #ddgame .dd-opp.cheat{animation:skDdInk .7s cubic-bezier(.4,0,.6,1) forwards;}
   html[data-skin="dreamink"] #ddgame .dd-opp:not(.turn):not(.cheat){transform:none;}
@@ -2587,7 +2587,7 @@
   /* mermaidsea 斗月巴：水晶琉璃 */
   html[data-skin="mermaidsea"] #ddgame .dd-card.sel{transform:translateY(-16px) scale(1.04);box-shadow:0 9px 20px rgba(42,143,168,.35),0 2px 8px rgba(111,224,224,.5);transition:transform .28s cubic-bezier(.2,.8,.3,1);}
   html[data-skin="mermaidsea"] #ddgame .dd-card{transition:transform .28s cubic-bezier(.2,.8,.3,1);}
-  html[data-skin="mermaidsea"] #ddgame .dd-card:hover{transform:translateY(-5px) scale(1.02);}
+  html[data-skin="mermaidsea"] #ddgame .dd-card:not(.sel):hover{transform:translateY(-5px) scale(1.02);}
   html[data-skin="mermaidsea"] #ddgame .dd-opp.turn{animation:skDdGlass 1.0s cubic-bezier(.2,.8,.3,1) forwards;}
   html[data-skin="mermaidsea"] #ddgame .dd-opp.cheat{animation:skDdGlass .8s cubic-bezier(.2,.8,.3,1) forwards;}
   html[data-skin="mermaidsea"] #ddgame .dd-opp:not(.turn):not(.cheat){transform:none;opacity:1;}
@@ -2980,7 +2980,7 @@
   /* court 斗月巴：王冠克制 */
   html[data-skin="court"] #ddgame .dd-card.sel{transform:translateY(-14px) scale(1.03);box-shadow:0 8px 18px rgba(30,58,138,.38),0 2px 6px rgba(61,143,216,.3);transition:transform .3s cubic-bezier(.2,.8,.3,1);}
   html[data-skin="court"] #ddgame .dd-card{transition:transform .3s cubic-bezier(.2,.8,.3,1);}
-  html[data-skin="court"] #ddgame .dd-card:hover{transform:translateY(-4px) scale(1.01);}
+  html[data-skin="court"] #ddgame .dd-card:not(.sel):hover{transform:translateY(-4px) scale(1.01);}
   html[data-skin="court"] #ddgame .dd-opp.turn{animation:skDdCrown 1.1s cubic-bezier(.2,.8,.3,1) forwards;}
   html[data-skin="court"] #ddgame .dd-opp.cheat{animation:skDdCrown .9s cubic-bezier(.2,.8,.3,1) forwards;}
   html[data-skin="court"] #ddgame .dd-opp:not(.turn):not(.cheat){transform:none;}
@@ -4243,6 +4243,29 @@ const sfx={
   // 月巴飞行小游戏
   flap(){ tone(680,0.06,'square',0.05); tone(1020,0.06,'square',0.04,0.02); },
   hit(){ tone(200,0.14,'sawtooth',0.12); tone(90,0.26,'sine',0.12,0.06); },
+  /* ---- 事件音效（旅行 / 访客 / 捉拿 / 番茄机 / 庭院；天降事件沿用 dex） ---- */
+  depart(){ [523,659,784,1046].forEach((f,i)=>tone(f,0.13,'triangle',0.12,i*0.07)); tone(1568,0.3,'sine',0.05,0.28,420); }, // 旅行出发：木吉他上行 + 上扬的风
+  codeOk(){ [784,1046,1318].forEach((f,i)=>tone(f,0.11,'sine',0.1,i*0.06)); },                                 // 特殊口令生效
+  cardNew(){ tone(1318,0.1,'sine',0.11); tone(1760,0.14,'triangle',0.08,0.08); },                          // 旅途中寄回新信
+  cardDup(){ tone(1046,0.09,'sine',0.06); tone(1318,0.11,'sine',0.05,0.07); },                            // 旅途中寄回重复信
+  openLetter(){ tone(587,0.06,'triangle',0.05); tone(880,0.07,'sine',0.07,0.05); tone(1318,0.14,'sine',0.08,0.12); }, // 拆信：纸页翻折 + 叮
+  homeGain(){ [659,784,988,1318].forEach((f,i)=>tone(f,0.15,'triangle',0.13,i*0.08)); tone(1976,0.26,'sine',0.05,0.34); }, // 旅行归来（带回特产 / 归家番茄礼）
+  homeDup(){ [659,784,988].forEach((f,i)=>tone(f,0.13,'triangle',0.1,i*0.07)); tone(1175,0.2,'sine',0.05,0.22); },  // 归来只有重复特产
+  homeEmpty(){ tone(659,0.22,'sine',0.07); tone(494,0.26,'sine',0.06,0.16); },                             // 空手归来：温暖的问候
+  knock(){ tone(392,0.07,'square',0.08); tone(392,0.07,'square',0.07,0.16); },                              // 访客敲门：两下木叩
+  guestYes(){ [880,1175,1568].forEach((f,i)=>tone(f,0.12,'triangle',0.12,i*0.07)); },                       // 招待命中「更想要」
+  guestOk(){ tone(880,0.09,'triangle',0.09); tone(1175,0.12,'sine',0.06,0.06); },                            // 招待其他特产
+  bye(){ tone(523,0.12,'triangle',0.07,0,-90); tone(392,0.16,'sine',0.05,0.08); },                          // 请访客回去
+  stealAlert(){ tone(196,0.3,'sawtooth',0.06); tone(880,0.1,'square',0.06,0.1); tone(660,0.12,'square',0.05,0.22); }, // 月巴鬼鬼祟祟：悬疑低音 + 两下警示
+  stealWin(){ [659,880,1175,1568].forEach((f,i)=>tone(f,0.14,'triangle',0.12,i*0.08)); },                    // 捉拿 · 大获全胜
+  stealMid(){ [659,880].forEach((f,i)=>tone(f,0.12,'triangle',0.1,i*0.08)); },                             // 捉拿 · 追回一部分
+  stealLose(){ tone(330,0.16,'sawtooth',0.09); tone(247,0.22,'sine',0.08,0.1); },                            // 捉拿 · 番茄不保
+  slotSpin(){ [523,659,784,988,1175,1318].forEach((f,i)=>tone(f,0.07,'square',0.06,i*0.06)); },             // 拉杆：转轮加速
+  slotHigh(){ [784,988,1318,1568].forEach((f,i)=>tone(f,0.15,'triangle',0.13,i*0.08)); tone(2093,0.24,'sine',0.05,0.34); }, // 番茄机 · 三连大奖
+  slotMid(){ tone(880,0.11,'triangle',0.11); tone(1318,0.14,'sine',0.07,0.08); },                            // 番茄机 · 成对加成
+  slotStolen(){ tone(988,0.1,'sine',0.08); tone(740,0.12,'sine',0.06,0.09); tone(587,0.18,'sine',0.07,0.18); }, // 番茄被偷偷拿走：俏皮下滑
+  slotLow(){ tone(880,0.1,'sine',0.075); },                                                                   // 番茄机 · 普通收获
+  yardEv(){ tone(1318,0.06,'sine',0.05); tone(1760,0.09,'sine',0.04,0.06); },                                // 庭院事件出现：轻闪
 };
 
 /* ---------------- 轻提示 ---------------- */
@@ -7493,6 +7516,7 @@ function tvEventRoll(){
     t.homeTxt=o?tvHomeDescs(o.id)[(Math.random()*3)|0]:'';
   }
   save();
+  sfx.yardEv();
   return true;
 }
 function tvYardHTML(t){
@@ -7546,6 +7570,7 @@ function tvStealOpen(id){
   const tp=typeById(id)||{name:'月巴'};
   _tvStealWho=id;              // 标记这只月巴，让庭院里它也显示为黑色剪影
   tvStealSyncYard();
+  sfx.stealAlert();
   openModal('🍅 有月巴鬼鬼祟祟',
     '<div class="tv-steal">'
     +'<div class="tv-steal-stage"><div class="tv-steal-fat">'+fatSVG(tp)+'</div><div class="tv-steal-tom">🍅</div></div>'
@@ -7578,6 +7603,7 @@ function tvStealResolve(hits){
     msg='你追回了部分番茄。';
   }
   if(reward>0)tvTomato(reward); else save();
+  if(hits<=0)sfx.stealLose(); else if(hits>=TS_ROUNDS)sfx.stealWin(); else sfx.stealMid();
   const tail = reward>0 ? ('🍅 奖励 +'+reward+' 个番茄！') : '🍅 这次没有奖励……';
   openModal(title,
     '<div class="tv-sg-res"><span class="big">'+big+'</span>'+escHTML(msg)+'<br>'
@@ -7800,13 +7826,13 @@ function tvRollSlot(){ const r=Math.random(); let cols,tier,gain;
 function tvSlotReady(){ const t=tvFresh(); return now()>=(t.harvestT); }
 function tvSlotOpen(){ if(!tvSlotReady()){ toast('🧺 月巴们还在攒番茄，稍后再来'); return; } openModal('🎰 好运收获', tvSlotHTML()); }
 function tvSlotHTML(){ let h='<p style="text-align:center;color:#48614a;font-size:13px">月巴们为你攒好了惊喜，拉杆收获 🍅！</p><div class="tvg-slot"><div class="tvg-reels">'; for(let i=0;i<3;i++)h+='<div class="tvg-reel" id="tvReel'+i+'">🍅</div>'; h+='</div></div><p id="tvSlotResult" style="text-align:center;min-height:20px;color:#e08a3c;font-weight:700"></p><div style="text-align:center;margin-top:6px"><button class="btn cta" id="tvSpinBtn" onclick="tvSpin()">🕹 拉杆！</button></div><p style="text-align:center;margin-top:4px"><button class="btn" onclick="closeModal()">收下离开</button></p>'; return h; }
-function tvSpin(){ const btn=$('tvSpinBtn'); if(!tvSlotReady()){ /* 冷却中：明确告知并锁住拉杆，避免「按了没反应」 */ if(btn){ btn.disabled=true; btn.textContent='🕹 月巴们去攒番茄啦'; } return; } if(btn)btn.disabled=true; const r=$('tvSlotResult'); if(r)r.textContent=''; const roll=tvRollSlot(); const cols=roll.cols; const els=[0,1,2].map(function(i){return $('tvReel'+i);}); const pool=TV_SLOTS;
+function tvSpin(){ const btn=$('tvSpinBtn'); if(!tvSlotReady()){ /* 冷却中：明确告知并锁住拉杆，避免「按了没反应」 */ if(btn){ btn.disabled=true; btn.textContent='🕹 月巴们去攒番茄啦'; } return; } if(btn)btn.disabled=true; sfx.slotSpin(); const r=$('tvSlotResult'); if(r)r.textContent=''; const roll=tvRollSlot(); const cols=roll.cols; const els=[0,1,2].map(function(i){return $('tvReel'+i);}); const pool=TV_SLOTS;
   // 构建转轮条：一次性写DOM，之后仅靠 transform 滑动，避免逐帧改文字导致的掉帧卡顿
   for(let i=0;i<3;i++){ const e=els[i]; if(!e)continue; e.classList.remove('land'); e.innerHTML='<div class="tvg-strip">'+pool.concat(pool,[cols[i]]).map(function(s){return '<div>'+s+'</div>';}).join('')+'</div>'; const sp0=e.firstChild; if(sp0&&sp0.style)sp0.style.willChange='transform'; }
   const ICON=62, MAX=pool.length*2*ICON, stops=[900,1500,2100], dur=2200, t0=performance.now();
   const step=function(t){ const p=Math.min(1,(t-t0)/dur); for(let i=0;i<3;i++){ const e=els[i]; if(!e)continue; const sp=e.firstChild; if(!sp||!sp.style)continue; const pt=Math.min(1,p*dur/stops[i]); sp.style.transform='translateY('+(-pt*MAX).toFixed(1)+'px)'; if(pt>=1&&!e.classList.contains('land'))e.classList.add('land'); } if(p<1)requestAnimationFrame(step); else { /* 落定后清空长条 DOM，仅保留结果图标并移除 will-change，降低常驻内存/合成层 */ for(let i=0;i<3;i++){ const e=els[i]; if(!e)continue; e.innerHTML='<div class="tvg-strip"><div>'+cols[i]+'</div></div>'; } tvSlotResult(cols,roll.gain,roll.tier); if(btn){ btn.disabled=true; btn.textContent='🕹 已收获 · 月巴们去攒番茄啦'; } } };
   requestAnimationFrame(step); }
-function tvSlotResult(cols,gain,tier){ const t=tvFresh(); if(typeof gain!=='number'){ gain=randi(1,10); tier='low'; } t.tomato+=gain; t.harvestT=now()+rand(10,30)*60000; const stolen=(tier==='low')&&gain<=6; const best=cols.indexOf('🍅')>=0?'🍅':(cols.indexOf('🥫')>=0?'🥫':''); save(); const r=$('tvSlotResult'); if(r){ if(tier==='high')r.innerHTML=(best==='🍅'?'🎉🎉 三连番茄大奖！':best==='🥫'?'🎉🎉 三连罐头大奖！':'🎉🎉 三连大奖！')+'收获 '+gain+' 个 🍅'; else if(stolen)r.innerHTML='😳 好像番茄被月巴偷偷拿走了……（+'+gain+' 🍅）'; else if(tier==='mid'&&best)r.innerHTML=(best==='🍅'?'🍅 番茄成对加成！':'🥫 罐头成对加成！')+'收获 '+gain+' 个 🍅'; else r.innerHTML='🎉 收获 '+gain+' 个 🍅'; } updateTravelIcon(); }
+function tvSlotResult(cols,gain,tier){ const t=tvFresh(); if(typeof gain!=='number'){ gain=randi(1,10); tier='low'; } t.tomato+=gain; t.harvestT=now()+rand(10,30)*60000; const stolen=(tier==='low')&&gain<=6; const best=cols.indexOf('🍅')>=0?'🍅':(cols.indexOf('🥫')>=0?'🥫':''); save(); const r=$('tvSlotResult'); if(r){ if(tier==='high')r.innerHTML=(best==='🍅'?'🎉🎉 三连番茄大奖！':best==='🥫'?'🎉🎉 三连罐头大奖！':'🎉🎉 三连大奖！')+'收获 '+gain+' 个 🍅'; else if(stolen)r.innerHTML='😳 好像番茄被月巴偷偷拿走了……（+'+gain+' 🍅）'; else if(tier==='mid'&&best)r.innerHTML=(best==='🍅'?'🍅 番茄成对加成！':'🥫 罐头成对加成！')+'收获 '+gain+' 个 🍅'; else r.innerHTML='🎉 收获 '+gain+' 个 🍅'; } if(tier==='high')sfx.slotHigh(); else if(stolen)sfx.slotStolen(); else if(tier==='mid')sfx.slotMid(); else sfx.slotLow(); updateTravelIcon(); }
 function tvUpdateHarvest(){ const b=$('tvHarvestBtn'); if(b)b.style.display=tvSlotReady()?'':'none'; const h=$('tvHomeTab'); if(h){ const t=tvFresh(); h.classList.toggle('lit',!!(t.homeRewardReady&&t.homeReward&&t.homeReward.n>0)); } const gb=$('tvGambleBtn'); if(gb)gb.textContent=gambleFresh().playing?'🎲 对赌中':'🎲 对赌'; }
 /* ---------------- 受保护单调时钟（防调系统时间作弊） ----------------
    原理：页内时间用 performance.now() 的「流逝」推进 S.clock.base，玩家在页内改系统时间不会让 base 跳变；
@@ -8112,7 +8138,7 @@ function tvPityP(){ return Math.max(0,Math.min(1,tvPity()/TV_PITY_MAX)); }
 function tvPityDots(n){ let s=''; for(let i=1;i<=TV_PITY_MAX;i++)s+='<span class="tv-pity-dot'+(i<=n?' on':'')+'"></span>'; return s; }
 function tvPityHTML(){ const n=tvPity(); return '<div class="tv-pity" id="tvPity"><div class="tv-pity-head"><span class="tv-pity-lbl" id="tvPityLbl">✉️ 重复累计 '+n+'/'+TV_PITY_MAX+'</span><span class="tv-pity-tip" id="tvPityTip">'+(n>=TV_PITY_MAX?'下次必得新信':'满 '+TV_PITY_MAX+' 封必得新信')+'</span></div><span class="tv-pity-track" id="tvPityTrack" style="--pity:'+tvPityP()+'">'+tvPityDots(n)+'</span></div>'; }
 function tvPityRefresh(){ const n=tvPity(); const lb=$('tvPityLbl'),tk=$('tvPityTrack'),tp=$('tvPityTip'); if(lb)lb.textContent='✉️ 重复累计 '+n+'/'+TV_PITY_MAX; if(tk){ tk.style.setProperty('--pity',tvPityP()); tk.innerHTML=tvPityDots(n); } if(tp)tp.textContent=(n>=TV_PITY_MAX?'下次必得新信':'满 '+TV_PITY_MAX+' 封必得新信'); }
-function tvSendCardIf(){ const t=tvFresh(); if(t.frog.status!=='away')return; if((t.frog.cardsSent||0)>=(t.frog.cardQuota||1))return; const d=tvDestOf(t.bag); const unread=d.cards.some(function(c){return t.cards.indexOf(c)<0;}); let pend=(t.pityPending!=null)?t.pityPending:(t.cardPity||0); let c; if(unread&&pend>=TV_PITY_MAX){ const pool=d.cards.filter(function(x){return t.cards.indexOf(x)<0;}); c=pool[Math.floor(Math.random()*pool.length)]; pend=0; } else { c=d.cards[Math.floor(Math.random()*d.cards.length)]; if(t.cards.indexOf(c)>=0){ const _b=pend; pend=Math.min(TV_PITY_MAX,_b+1); if(pend>_b)t.pityComfort=true; } } const _isNew=(t.cards.indexOf(c)<0); if(_isNew)t.cards.push(c); if(t.inbox.indexOf(c)<0)t.inbox.push(c); if(!t.frog.cardsGot)t.frog.cardsGot=[]; t.frog.cardsGot.push({c:c,new:_isNew}); tvNoteCard(c,t.frog.fatId); tvNoteMood(c); t.frog.cardsSent=(t.frog.cardsSent||0)+1; t.pityPending=pend; /* 累计条只在「打开室内」时结算（见 tvEnterHome），旅行途中不更新，避免剧透 */ tvUpdateBar(); save(); }
+function tvSendCardIf(){ const t=tvFresh(); if(t.frog.status!=='away')return; if((t.frog.cardsSent||0)>=(t.frog.cardQuota||1))return; const d=tvDestOf(t.bag); const unread=d.cards.some(function(c){return t.cards.indexOf(c)<0;}); let pend=(t.pityPending!=null)?t.pityPending:(t.cardPity||0); let c; if(unread&&pend>=TV_PITY_MAX){ const pool=d.cards.filter(function(x){return t.cards.indexOf(x)<0;}); c=pool[Math.floor(Math.random()*pool.length)]; pend=0; } else { c=d.cards[Math.floor(Math.random()*d.cards.length)]; if(t.cards.indexOf(c)>=0){ const _b=pend; pend=Math.min(TV_PITY_MAX,_b+1); if(pend>_b)t.pityComfort=true; } } const _isNew=(t.cards.indexOf(c)<0); if(_isNew)t.cards.push(c); if(t.inbox.indexOf(c)<0)t.inbox.push(c); if(!t.frog.cardsGot)t.frog.cardsGot=[]; t.frog.cardsGot.push({c:c,new:_isNew}); tvNoteCard(c,t.frog.fatId); tvNoteMood(c); t.frog.cardsSent=(t.frog.cardsSent||0)+1; t.pityPending=pend; /* 累计条只在「打开室内」时结算（见 tvEnterHome），旅行途中不更新，避免剧透 */ tvUpdateBar(); if(_isNew)sfx.cardNew(); else sfx.cardDup(); save(); }
 function tvUpdateBar(){ const t=tvFresh(); const e=$('tvTomato'); if(e)e.textContent=t.tomato; const s=$('tvState'); if(s)s.textContent=t.frog.status==='away'?'旅途中':(t.frog.status==='pack'?'准备行囊':'在家'); const d=$('tvMailDot'); if(d)d.style.display=(t.inbox.length>0)?'block':'none'; }
 function tvOpenBook(){ openModal('🏷 旅行图鉴', tvBookHTML()); }
 function tvLetterEnv(c){ const L=TV_LETTERS[c]; if(!L)return ''; const t=tvFresh(); const fw=(t.cardFirst&&t.cardFirst[c])||null; let sig=''; if(fw){ const tp=typeById(fw); if(tp)sig='<div class="ltr-sig">'+tp.name+'</div>'; } let note=''; const moods=tvMoodList(c); if(moods.length){ const it=moods[moods.length-1]; const to=tvMoodTo(it); note='<div class="ltr-note">💬 '+(to?(escHTML(to)+'：'):'')+escHTML(it.m||'（无留言）')+'<span class="ltr-note-t">· 出发 '+fmtDT(it.t)+'</span></div>'; } return '<div class="ltr-env mini '+L.d+'" onclick="tvOpenLetter(\''+c+'\')">'+note+'<div class="ltr-front"><div class="ltr-flap"></div><div class="ltr-seal">'+L.e+'</div>'+sig+'</div></div>'; }
@@ -8179,19 +8205,19 @@ function tvOpenLetter(c){
   openModal('💌 来信', h);
   if(from==='📮 信箱 · 来信'){ _afterClose=function(){ openModal('📮 信箱 · 来信', tvMailHTML()); }; }
   else if(from==='🏷 旅行图鉴'){ _afterClose=function(){ openModal('🏷 旅行图鉴', tvBookHTML()); }; }
-  setTimeout(function(){ const e=$('ltrEnv'); if(e&&e.classList)e.classList.add('open'); }, 80);
+  setTimeout(function(){ sfx.openLetter(); const e=$('ltrEnv'); if(e&&e.classList)e.classList.add('open'); }, 80);
 }
 function tvOpenMail(){ openModal('📮 信箱 · 来信', tvMailHTML()); }
 function tvMailHTML(){ const t=tvFresh(); let h='<p style="color:#48614a;font-size:13px">此次旅行月巴寄回、尚未拆开的信件，点击可以拆开：</p><div class="sh-grid">'; if(!t.inbox.length)h+='<p style="color:#999;text-align:center;grid-column:1/-1">信箱空空，还没有未拆的信件</p>'; for(const c of t.inbox)h+=tvLetterEnv(c); h+='</div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'; return h; }
 function tvFriendModal(f,t){ const fr=t.friends.find(function(x){return x.id===f.id;}); const fc=fr?fr.count:0; const emo=f.e; const want=t.pendingVisitWant; const wantHas=!!want&&t.specials.indexOf(want)>=0; const sayLine=!want?'💬 「今天就是路过看看你呀。」':(wantHas?('💬 「今天我特别想要 '+spEmo(want)+' '+want+' 呢。」'):'💬 「我今天想要的一样特产，你好像还没收着呢。」'); let h='<p style="text-align:center;font-size:40px">'+emo+'</p><p style="text-align:center"><b>'+f.n+'</b>'+(fc?'（第 '+(fc+1)+' 次来访）':'（第一次来访）')+'</p><p style="text-align:center;color:#48614a">'+f.t+'</p><p style="text-align:center;color:#3e5c3f;font-weight:700">'+sayLine+(want?'<p style="text-align:center;font-size:12px;color:#8a9a80">喂它「💛 更想要」的会回礼更多 🍅，给别的就少一些</p>':'')+'<div class="sh-grid">'; for(const s of f.like){ const has=t.specials.indexOf(s)>=0; const isWant=(s===want); h+='<div class="sh-card'+(isWant?' want':'')+'">'+(isWant?'<div class="sh-want">💛 更想要</div>':'')+'<div class="sh-n">'+(has?(spEmo(s)+' '+s):'❔ ???')+'</div><button class="btn" '+(has?'':'disabled')+' onclick="tvFeed(\''+f.id+'\',\''+s+'\')">招待</button></div>'; } h+='</div><p style="text-align:center;margin-top:6px"><button class="btn" onclick="closeModal()">让它再等等</button> <button class="btn" onclick="tvTurnAway()">请回吧</button></p>'; return h; }
-function tvTurnAway(){ const t=tvFresh(); if(!t.pendingVisit){ closeModal(); return; } t.pendingVisit=null; t.pendingVisitWant=null; if(!t.nextVisit||t.nextVisit<now())t.nextVisit=now()+rand(15,25)*60000; save(); tvUpdateDoor(); updateTravelIcon(); tvRenderScene(); closeModal(); toast('🚪 你客气地请访客回去了，它说改天再来。'); }
+function tvTurnAway(){ const t=tvFresh(); if(!t.pendingVisit){ closeModal(); return; } t.pendingVisit=null; t.pendingVisitWant=null; if(!t.nextVisit||t.nextVisit<now())t.nextVisit=now()+rand(15,25)*60000; save(); tvUpdateDoor(); updateTravelIcon(); tvRenderScene(); sfx.bye(); closeModal(); toast('🚪 你客气地请访客回去了，它说改天再来。'); }
 /* 访客本次「更想要」的特产：从它喜欢的特产里随机挑一个（每次来访重新抽） */
 function tvPickWant(f){ return (f&&f.like&&f.like.length)?f.like[Math.floor(Math.random()*f.like.length)]:null; }
 /* 有人上门只在「门口」按钮亮起，不直接弹窗；点开门后才招待 */
-function tvFriendPop(){ const t=tvFresh(); if(t.pendingVisit)return; if(!t.nextVisit)t.nextVisit=now()+rand(15,25)*60000; if(now()<t.nextVisit)return; const f=TV_FRIENDS[Math.floor(Math.random()*TV_FRIENDS.length)]; t.pendingVisit=f.id; t.pendingVisitWant=tvPickWant(f); t.nextVisit=now()+rand(15,25)*60000; save(); }
-function tvDoorOpen(){ const t=tvFresh(); if(!t.pendingVisit){ toast('🚪 门口没有人，安静得很'); return; } const f=TV_FRIENDS.find(function(x){return x.id===t.pendingVisit;}); if(!f){ t.pendingVisit=null; t.pendingVisitWant=null; save(); return; } openModal('👋 门口有人敲门', tvFriendModal(f,t)); }
+function tvFriendPop(){ const t=tvFresh(); if(t.pendingVisit)return; if(!t.nextVisit)t.nextVisit=now()+rand(15,25)*60000; if(now()<t.nextVisit)return; const f=TV_FRIENDS[Math.floor(Math.random()*TV_FRIENDS.length)]; t.pendingVisit=f.id; t.pendingVisitWant=tvPickWant(f); t.nextVisit=now()+rand(15,25)*60000; save(); sfx.knock(); }
+function tvDoorOpen(){ const t=tvFresh(); if(!t.pendingVisit){ toast('🚪 门口没有人，安静得很'); return; } const f=TV_FRIENDS.find(function(x){return x.id===t.pendingVisit;}); if(!f){ t.pendingVisit=null; t.pendingVisitWant=null; save(); return; } if(!t.pendingVisitWant){ t.pendingVisitWant=tvPickWant(f); save(); } sfx.tap(); openModal('👋 门口有人敲门', tvFriendModal(f,t)); }
 function tvUpdateDoor(){ const b=$('tvDoorBtn'); if(b)b.style.display=tvFresh().pendingVisit?'flex':'none'; }
-function tvFeed(fid,s){ const t=tvFresh(); const f=TV_FRIENDS.find(function(x){return x.id===fid;}); if(!f||t.specials.indexOf(s)<0)return; const want=t.pendingVisitWant; const liked=!!want&&s===want; t.pendingVisit=null; t.pendingVisitWant=null; tvUpdateDoor(); let fr=t.friends.find(function(x){return x.id===fid;}); if(!fr){ fr={id:fid,count:0}; t.friends.push(fr); } fr.count++; const gain=!want?(15+Math.floor(Math.random()*20)):(liked?(20+Math.floor(Math.random()*20)):(6+Math.floor(Math.random()*14))); let h=!want?('<p style="text-align:center;color:#48614a">'+f.n+' 收下了 '+spEmo(s)+' '+s+'，开心地回礼 🍅 +'+gain+'</p>'):(liked?('<p style="text-align:center;color:#3e5c3f">正好是 '+f.n+' 更想要的 '+spEmo(s)+' '+s+'，它开心极了，回礼 🍅 +'+gain+'</p>'):('<p style="text-align:center;color:#48614a">'+f.n+' 收下了 '+spEmo(s)+' '+s+'，不过它今天更想要别的，回礼 🍅 +'+gain+'</p>')); if(Math.random()<0.1&&f.rare&&t.cards.indexOf(f.rare)<0){ t.cards.push(f.rare); t.inbox.push(f.rare); tvNoteCard(f.rare,t.frog.fatId); const tm=t.frog&&t.frog.fatId&&typeById(t.frog.fatId)?typeById(t.frog.fatId).name:'月巴'; h+='<p style="text-align:center">💌 邻居 '+f.e+' '+f.n+' 在外路过时遇到了 <b>'+tm+'</b>，'+tm+' 托它转交一封来自「'+tvDestOfCard(f.rare)+'」的信！</p>'; } h+='<p style="text-align:center"><button class="btn" onclick="closeModal()">收下</button></p>'; openModal('🎁 回礼', h); tvTomato(gain); save(); }
+function tvFeed(fid,s){ const t=tvFresh(); const f=TV_FRIENDS.find(function(x){return x.id===fid;}); if(!f||t.specials.indexOf(s)<0)return; const want=t.pendingVisitWant; const liked=!!want&&s===want; t.pendingVisit=null; t.pendingVisitWant=null; tvUpdateDoor(); let fr=t.friends.find(function(x){return x.id===fid;}); if(!fr){ fr={id:fid,count:0}; t.friends.push(fr); } fr.count++; const gain=!want?(15+Math.floor(Math.random()*20)):(liked?(20+Math.floor(Math.random()*20)):(6+Math.floor(Math.random()*14))); let h=!want?('<p style="text-align:center;color:#48614a">'+f.n+' 收下了 '+spEmo(s)+' '+s+'，开心地回礼 🍅 +'+gain+'</p>'):(liked?('<p style="text-align:center;color:#3e5c3f">正好是 '+f.n+' 更想要的 '+spEmo(s)+' '+s+'，它开心极了，回礼 🍅 +'+gain+'</p>'):('<p style="text-align:center;color:#48614a">'+f.n+' 收下了 '+spEmo(s)+' '+s+'，不过它今天更想要别的，回礼 🍅 +'+gain+'</p>')); if(Math.random()<0.1&&f.rare&&t.cards.indexOf(f.rare)<0){ t.cards.push(f.rare); t.inbox.push(f.rare); tvNoteCard(f.rare,t.frog.fatId); const tm=t.frog&&t.frog.fatId&&typeById(t.frog.fatId)?typeById(t.frog.fatId).name:'月巴'; h+='<p style="text-align:center">💌 邻居 '+f.e+' '+f.n+' 在外路过时遇到了 <b>'+tm+'</b>，'+tm+' 托它转交一封来自「'+tvDestOfCard(f.rare)+'」的信！</p>'; } h+='<p style="text-align:center"><button class="btn" onclick="closeModal()">收下</button></p>'; liked?sfx.guestYes():sfx.guestOk(); openModal('🎁 回礼', h); tvTomato(gain); save(); }
 function tvLabel(f){ return f?f.e||'🐰':'🐰'; }
 function tvCharmDest(){ const ds=TV_DESTS.filter(function(x){return x.need==='charm'&&!x.hidden;}); return ds[(Math.random()*ds.length)|0]||ds[ds.length-1]||TV_DESTS[TV_DESTS.length-1]; }
 /* —— 小号护身符（永久道具） —— */
@@ -8296,7 +8322,7 @@ function tvChoosePermDest(id){
 function tvClearPermDest(){ const t=tvFresh(); if(t.permPick){ t.permPick=null; save(); } tvBag(); }
 function tvLockedTip(id){ const p=tvFourthProgress(id||'empire'); toast('🔒 该地图尚未解锁：需该地区前 3 张图各集齐 '+p.need+' 封信件（3/4）'); }
 function tvDestOf(bag){ const t=tvFresh(); if(t.frog&&t.frog.status==='away'&&t.frog.dest){ const fd=tvDestById(t.frog.dest); if(fd)return fd; } bag=bag||t.bag; const ks=bag.map(function(x){return x&&x.k||x;}); const has=function(k){return ks.indexOf(k)>=0;}; const pd=t.pickDest?tvDestById(t.pickDest):null; if(pd&&((pd.need&&has(pd.need))||(!pd.need&&(has('food1')||has('food2')||has('food4')||has('food3'))))){ if(!tvDestLocked(pd.id))return pd; } const perm=tvPermDest(); if(perm)return perm; if(has('charm')&&has('food3'))return tvPickRegion('snow','snow',bag); if(has('lamp'))return tvPickRegion('sea','sea',bag); if(has('bell'))return tvPickRegion('town','town',bag); const foodK=ks.find(function(k){return k==='food1'||k==='food2'||k==='food4'||k==='food3';}); return tvPickRegion(tvRollFoodRegion(foodK),'forest',bag); }
-function tvGo(mood){ const t=tvFresh(); const up=(mood||'').trim().toUpperCase(); const m=up.match(/^TOMATO(\d{1,7})$/); if(m){ const amt=Math.min(parseInt(m[1],10),9999999); tvTomato(amt); toast('✨ 收到 '+((''+amt).replace(/\B(?=(\d{3})+(?!\d))/g,','))+' 🍅！'); mood=''; } else if(up==='YUEFEI500'){ if(!t.codeUsed){ t.codeUsed=true; tvTomato(500); toast('✨ 口令生效，获得 500 🍅！'); } else { toast('此口令已使用过啦'); } mood=''; } if(t.frog.status==='away'){ toast('✈️ 已有月巴在旅行中，等它回来再出发吧'); return; } if(!t.frog.fatId){ toast('🐰 先在图鉴里选择一位月巴出发'); return; } const kinds=tvDestKinds(t.bag); const food=t.bag.find(function(x){return x.k==='food1'||x.k==='food2'||x.k==='food4'||x.k==='food3';}); if(!food){ toast('🍙 至少带上 1 个便当才能出发！'); return; } const pdd=tvPermDest(); if(pdd&&!t.permConfirmOk){ if(!confirm('🎫 本次将使用小号护身符，指定前往「'+pdd.n+'」并消耗本周机会。\n（仅需饭团即可，确定出发吗？）'))return; t.permConfirmOk=true; save(); } t.permConfirmOk=false; let _autoR=0; /* 出发前兜底发放：玩家不打开室内就直接开始下一轮旅行时，把上一趟的归家奖励自动补给玩家，避免奖励被下一趟回归覆盖而丢失 */ if(t.homeRewardReady&&t.homeReward&&t.homeReward.n>0){ _autoR=t.homeReward.n; t.tomato=(t.tomato||0)+_autoR; t.homeRewardReady=false; t.homeReward=null; } t.frog.status='away'; t.frog.depart=now(); t.frog.dest=tvDestOf(t.bag).id; if(t.permPass&&t.permPick&&t.frog.dest===t.permPick){ t.permUsedWeek=tvWeekKey(); t.permPick=null; } t.frog.mood=mood||pick(['随便走走吧。','去吹吹风。','看看今天的云。','沿着小路一直走，会遇到番茄吗？','去哪里呢？','晒晒太阳再回来。','去捡一颗番茄回来。','番茄说不能一直在床底，要出门走走。','随便逛逛，给番茄带点伴手礼。','这次要走多远呢？','去远方发一会儿呆。','带上小番茄，出发！','路边的番茄捡到就是我的了。','说不定能遇到新的朋友。','去看看别处的月亮。','带着番茄兜兜风。','远方的番茄在呼唤我。','揣上一颗番茄，说走就走。','沿着晚风走，走到哪算哪。']); const _dObj=tvDestById(t.frog.dest); const _base=(_dObj&&_dObj.dur)||30; const _dms=Math.round(rand(_base-10,_base+10)*60000); t.frog.ret=now()+(DR_DEBUG?2*60*1000:_dms); t.bag=t.bag.filter(function(x){return !(x.k==='food1'||x.k==='food2'||x.k==='food4'||x.k==='food3'||x.k==='lamp'||x.k==='bell'||x.k==='compass');}); t.pickDest=null; t.cardT=Math.max(now()+60000,Math.min(now()+rand(8,14)*60000,t.frog.ret-60000)); t.frog.cardsSent=0; t.frog.cardQuota=1; t.frog.cardsGot=[]; t.eventT=0; save(); closeModal(); toast('✈️ 出发去旅行啦！'+(_autoR>0?('　🐰 上一趟归家奖励 +'+_autoR+' 🍅 已自动发放'):'')); tvRenderScene(); tvUpdateBar(); }
+function tvGo(mood){ const t=tvFresh(); const up=(mood||'').trim().toUpperCase(); const m=up.match(/^TOMATO(\d{1,7})$/); if(m){ const amt=Math.min(parseInt(m[1],10),9999999); tvTomato(amt); sfx.codeOk(); toast('✨ 收到 '+((''+amt).replace(/\B(?=(\d{3})+(?!\d))/g,','))+' 🍅！'); mood=''; } else if(up==='YUEFEI500'){ if(!t.codeUsed){ t.codeUsed=true; tvTomato(500); sfx.codeOk(); toast('✨ 口令生效，获得 500 🍅！'); } else { toast('此口令已使用过啦'); } mood=''; } if(t.frog.status==='away'){ toast('✈️ 已有月巴在旅行中，等它回来再出发吧'); return; } if(!t.frog.fatId){ toast('🐰 先在图鉴里选择一位月巴出发'); return; } const kinds=tvDestKinds(t.bag); const food=t.bag.find(function(x){return x.k==='food1'||x.k==='food2'||x.k==='food4'||x.k==='food3';}); if(!food){ toast('🍙 至少带上 1 个便当才能出发！'); return; } const pdd=tvPermDest(); if(pdd&&!t.permConfirmOk){ if(!confirm('🎫 本次将使用小号护身符，指定前往「'+pdd.n+'」并消耗本周机会。\n（仅需饭团即可，确定出发吗？）'))return; t.permConfirmOk=true; save(); } t.permConfirmOk=false; let _autoR=0; /* 出发前兜底发放：玩家不打开室内就直接开始下一轮旅行时，把上一趟的归家奖励自动补给玩家，避免奖励被下一趟回归覆盖而丢失 */ if(t.homeRewardReady&&t.homeReward&&t.homeReward.n>0){ _autoR=t.homeReward.n; t.tomato=(t.tomato||0)+_autoR; t.homeRewardReady=false; t.homeReward=null; } t.frog.status='away'; t.frog.depart=now(); t.frog.dest=tvDestOf(t.bag).id; if(t.permPass&&t.permPick&&t.frog.dest===t.permPick){ t.permUsedWeek=tvWeekKey(); t.permPick=null; } t.frog.mood=mood||pick(['随便走走吧。','去吹吹风。','看看今天的云。','沿着小路一直走，会遇到番茄吗？','去哪里呢？','晒晒太阳再回来。','去捡一颗番茄回来。','番茄说不能一直在床底，要出门走走。','随便逛逛，给番茄带点伴手礼。','这次要走多远呢？','去远方发一会儿呆。','带上小番茄，出发！','路边的番茄捡到就是我的了。','说不定能遇到新的朋友。','去看看别处的月亮。','带着番茄兜兜风。','远方的番茄在呼唤我。','揣上一颗番茄，说走就走。','沿着晚风走，走到哪算哪。']); const _dObj=tvDestById(t.frog.dest); const _base=(_dObj&&_dObj.dur)||30; const _dms=Math.round(rand(_base-10,_base+10)*60000); t.frog.ret=now()+(DR_DEBUG?2*60*1000:_dms); t.bag=t.bag.filter(function(x){return !(x.k==='food1'||x.k==='food2'||x.k==='food4'||x.k==='food3'||x.k==='lamp'||x.k==='bell'||x.k==='compass');}); t.pickDest=null; t.cardT=Math.max(now()+60000,Math.min(now()+rand(8,14)*60000,t.frog.ret-60000)); t.frog.cardsSent=0; t.frog.cardQuota=1; t.frog.cardsGot=[]; t.eventT=0; save(); sfx.depart(); closeModal(); toast('✈️ 出发去旅行啦！'+(_autoR>0?('　🐰 上一趟归家奖励 +'+_autoR+' 🍅 已自动发放'):'')); tvRenderScene(); tvUpdateBar(); }
 function tvDepart(){ const e=$('tvMood'); tvGo(e?e.value.trim():''); }
 function tvDestKinds(bag){ return bag.map(function(x){return x.k;}); }
 /* ============================================================
@@ -8331,7 +8357,7 @@ function tvJournalHTML(){
   return h;
 }
 function tvOpenJournal(){ openModal('📔 旅行笔记', tvJournalHTML()); }
-function tvSettle(){ const t=tvFresh(); const kinds=tvDestKinds(t.bag); const d=tvDestOf(t.bag); const _jDepart=t.frog.depart,_jMood=t.frog.mood,_jFat=t.frog.fatId,_jCards=(t.frog.cardsGot||[]).slice(); const cc=t.bag.filter(function(x){return x&&x.k==='charm';}).length; let gain=1+cc; const got=[],dups=[]; const spool=d.specials.slice(); /* 从池中抽走已选中的，保证同一趟带回的特产两两不重复（与已拥有的重复仍照常兑换番茄） */ for(let i=0;i<gain&&spool.length;i++){ const s=spool.splice((Math.random()*spool.length)|0,1)[0]; if(t.specials.indexOf(s)<0){ t.specials.push(s); got.push(s); } else { dups.push(s); } } t.destCount[d.id]=(t.destCount[d.id]||0)+1; if(cc>0){ t.bag.forEach(function(x){ if(x&&x.k==='charm'){ const cur=Math.max(0,tvCharmDura(x)-1); if(cur>0){ t.wh.charm=(t.wh.charm||0)+1; t.charmDuras.push(cur); } } }); } t.frog={status:'home',depart:null,ret:null,mood:t.frog.mood||'',fatId:t.frog.fatId||null}; if(t.frog.fatId){ t.lastHomeFatId=t.frog.fatId; t.homeId=t.frog.fatId; t.homeTxt=tvHomeDescs(t.frog.fatId)[(Math.random()*3)|0]; t.homeReward={n:5+(Math.random()*16|0)}; t.homeRewardReady=true; } t.bag=t.bag.filter(function(x){return x&&x.k==='pass';}); /* 小号护身符永久保留，不清空 */ t.eventT=0; save(); const dr=d.dupTomato||[10,10]; const dv=Math.round(rand(dr[0],dr[1])); if(dups.length)tvTomato(dv*dups.length); tvJournalPush({t:now(),depart:_jDepart,mood:_jMood||'',fatId:_jFat,dest:d.id,destN:d.n,rg:(tvRegionOf(d.id)||{}).n||'',visit:t.destCount[d.id],got:got.slice(),dups:dups.slice(),tomato:(dups.length?dv*dups.length:0),cards:_jCards}); let toastMsg=''; const fgot=got.map(function(s){return spEmo(s)+s;}); const fdups=dups.map(function(s){return spEmo(s)+s;}); if(got.length)toastMsg+='🌿 从「'+d.n+'」带回新特产：'+fgot.join('、')+'！'; if(dups.length)toastMsg+=' ♻️ 重复 '+fdups.join('、')+' 兑换 '+dv*dups.length+' 🍅！'; if(toastMsg)toast(toastMsg); let h='<p style="text-align:center;color:#48614a">月巴从<b>「'+d.n+'」</b>回来了！（第 '+t.destCount[d.id]+' 次旅行）</p>'; const all=fgot.concat(fdups); h+='<p style="text-align:center;font-weight:800;color:#e08a3c">🎁 带回特产：'+(all.length?('从「'+d.n+'」带回 '+all.join('、')+(dups.length?(' · 已兑换 '+dv*dups.length+' 🍅'):'')):'这次带回了温暖的问候')+'</p>'; h+='<p style="text-align:center"><button class="btn cta" onclick="closeModal()">收下</button></p>'; openModal('🎉 旅行归来',h); tvRenderScene(); tvUpdateBar(); if(tvView==='home')_afterClose=function(){ tvEnterHome(); }; }
+function tvSettle(){ const t=tvFresh(); const kinds=tvDestKinds(t.bag); const d=tvDestOf(t.bag); const _jDepart=t.frog.depart,_jMood=t.frog.mood,_jFat=t.frog.fatId,_jCards=(t.frog.cardsGot||[]).slice(); const cc=t.bag.filter(function(x){return x&&x.k==='charm';}).length; let gain=1+cc; const got=[],dups=[]; const spool=d.specials.slice(); /* 从池中抽走已选中的，保证同一趟带回的特产两两不重复（与已拥有的重复仍照常兑换番茄） */ for(let i=0;i<gain&&spool.length;i++){ const s=spool.splice((Math.random()*spool.length)|0,1)[0]; if(t.specials.indexOf(s)<0){ t.specials.push(s); got.push(s); } else { dups.push(s); } } t.destCount[d.id]=(t.destCount[d.id]||0)+1; if(cc>0){ t.bag.forEach(function(x){ if(x&&x.k==='charm'){ const cur=Math.max(0,tvCharmDura(x)-1); if(cur>0){ t.wh.charm=(t.wh.charm||0)+1; t.charmDuras.push(cur); } } }); } t.frog={status:'home',depart:null,ret:null,mood:t.frog.mood||'',fatId:t.frog.fatId||null}; if(t.frog.fatId){ t.lastHomeFatId=t.frog.fatId; t.homeId=t.frog.fatId; t.homeTxt=tvHomeDescs(t.frog.fatId)[(Math.random()*3)|0]; t.homeReward={n:5+(Math.random()*16|0)}; t.homeRewardReady=true; } t.bag=t.bag.filter(function(x){return x&&x.k==='pass';}); /* 小号护身符永久保留，不清空 */ t.eventT=0; save(); const dr=d.dupTomato||[10,10]; const dv=Math.round(rand(dr[0],dr[1])); if(dups.length)tvTomato(dv*dups.length); tvJournalPush({t:now(),depart:_jDepart,mood:_jMood||'',fatId:_jFat,dest:d.id,destN:d.n,rg:(tvRegionOf(d.id)||{}).n||'',visit:t.destCount[d.id],got:got.slice(),dups:dups.slice(),tomato:(dups.length?dv*dups.length:0),cards:_jCards}); let toastMsg=''; const fgot=got.map(function(s){return spEmo(s)+s;}); const fdups=dups.map(function(s){return spEmo(s)+s;}); if(got.length)toastMsg+='🌿 从「'+d.n+'」带回新特产：'+fgot.join('、')+'！'; if(dups.length)toastMsg+=' ♻️ 重复 '+fdups.join('、')+' 兑换 '+dv*dups.length+' 🍅！'; if(toastMsg)toast(toastMsg); let h='<p style="text-align:center;color:#48614a">月巴从<b>「'+d.n+'」</b>回来了！（第 '+t.destCount[d.id]+' 次旅行）</p>'; const all=fgot.concat(fdups); h+='<p style="text-align:center;font-weight:800;color:#e08a3c">🎁 带回特产：'+(all.length?('从「'+d.n+'」带回 '+all.join('、')+(dups.length?(' · 已兑换 '+dv*dups.length+' 🍅'):'')):'这次带回了温暖的问候')+'</p>'; h+='<p style="text-align:center"><button class="btn cta" onclick="closeModal()">收下</button></p>'; if(got.length)sfx.homeGain(); else if(dups.length)sfx.homeDup(); else sfx.homeEmpty(); openModal('🎉 旅行归来',h); tvRenderScene(); tvUpdateBar(); if(tvView==='home')_afterClose=function(){ tvEnterHome(); }; }
 let _tvPages=[], _tvPageIdx=0, _tvPageTitle=''; /* 进入室内时的翻页弹窗：第 1 页「安慰」、后一页「月巴赠送的番茄」 */
 function tvEnterHome(){ const t=tvFresh(); let changed=false;
   /* 重复累计条只在「打开室内」时结算，旅行途中不更新，避免信件未拆就提前亮起剧透 */
@@ -8342,7 +8368,7 @@ function tvEnterHome(){ const t=tvFresh(); let changed=false;
   if(t.homeRewardReady&&t.homeReward&&t.homeReward.n>0){ const n=t.homeReward.n; const nm=t.homeId&&typeById(t.homeId)?typeById(t.homeId).name:'月巴'; t.homeRewardReady=false; t.homeReward=null; t.tomato=(t.tomato||0)+n; changed=true; hasReward=true; pages.push('<p style="text-align:center;font-size:40px;margin:6px 0">🐰</p><p style="text-align:center"><b>'+escHTML(nm)+'</b> 回家啦！它把旅途中攒下的 <b style="color:#e08a3c">'+n+'</b> 个 🍅 送给了你</p>'); }
   if(changed)save();
   tvUpdateBar(); updateTravelIcon(); tvUpdateHarvest(); tvRenderScene();
-  if(pages.length){ _tvPages=pages; _tvPageIdx=0; _tvPageTitle=hasReward?'🎉 旅行归来':'💌 番茄的安慰'; openModal(_tvPageTitle, tvPageHTML()); }
+  if(pages.length){ _tvPages=pages; _tvPageIdx=0; _tvPageTitle=hasReward?'🎉 旅行归来':'💌 番茄的安慰'; if(hasReward)sfx.homeGain(); else sfx.cardDup(); openModal(_tvPageTitle, tvPageHTML()); }
   else tvPityRefresh(); }
 function tvPageHTML(){ const total=_tvPages.length; let h=_tvPages[_tvPageIdx]; if(total>1)h+='<p style="text-align:center;font-size:12px;color:#999;margin:6px 0 0">第 '+(_tvPageIdx+1)+' / '+total+' 页</p>'; h+='<p style="text-align:center;margin-top:8px">'; if(_tvPageIdx>0)h+='<button class="btn" onclick="tvPageGo(-1)">‹ 上一页</button> '; if(_tvPageIdx<total-1)h+='<button class="btn cta" onclick="tvPageGo(1)">下一页 ›</button>'; else h+='<button class="btn cta" onclick="closeModal()">收下</button>'; h+='</p>'; return h; }
 function tvPageGo(d){ _tvPageIdx=Math.max(0,Math.min(_tvPages.length-1,_tvPageIdx+d)); openModal(_tvPageTitle, tvPageHTML()); }
@@ -9418,55 +9444,74 @@ const DD_SUIT=[['♠','b'],['♥','r'],['♣','b'],['♦','r'],['','j'],['','j']
  * 结构：DDSND 按「皮肤 key」存配方，ddSfx(name,a,b) 统一分发。
  * 目前只接入「海岛假日 islandbay」，其余皮肤 ddsnd() 返回 null → 保持静音；
  * 验收通过后按同一套接口补全所有皮肤即可，各调用点无需改动。
- * 听感定位 —— 海岛假日 · 椰影篝火：以三角波/正弦的暖木质音为主，
- * 滑音模拟海风与浪；炸弹/王炸用「椰壳重击 + 低频余震」。
+ * 听感定位 —— 海岛假日 · 椰影篝火「沙滩牌桌」：
+ *   出牌一律贴近真实打牌声——极短高频急落的「唰」+ 牌落桌的「嗒」闷响（ddFlick），
+ *   按牌的张数/厚薄区分；叫地主、地主落定、结算用椰壳叩桌与尤克里里和弦扫弦。
+ *   刻意避开全局事件音效的「上行音阶」动机（斗月巴自成一套，不与旅行事件撞听感）。
  * 一律复用既有 tone()：单音音量钳制 0.03~0.2、并发上限 8、总输出限幅 0.7。
  * ============================================================ */
+/* 一记甩牌拟声：高频急落（唰）+ 牌落桌的闷响（嗒），模拟真实打牌落桌
+   v=音量系数（自己 1 / 敌方更收敛）；when=延迟；hi=起音频率；soft=敌方用更钝的三角波 */
+function ddFlick(v,when,hi,soft){
+  const h=hi||2500, w=soft?'triangle':'sawtooth';
+  tone(h,0.032,w,0.08*v,when,-(h*0.8));
+  tone(300,0.05,'triangle',0.06*v,(when||0)+0.012);
+}
 const DDSND={
   islandbay:{
-    /* 手牌：选中 / 取消（椰壳轻敲，最轻最短，可高频触发不刺耳） */
-    pick(){ tone(988,0.045,'triangle',0.07); tone(1480,0.05,'sine',0.03,0.02); },
-    unpick(){ tone(784,0.045,'triangle',0.06); },
-    /* 发牌：一阵海风上行 */
-    deal(){ [659,784,988,1175].forEach(function(f,i){ tone(f,0.1,'triangle',0.05,i*0.055); }); },
-    /* 叫地主 / 不叫 */
-    bidYes(){ [523,659,784,1046].forEach(function(f,i){ tone(f,0.11,'triangle',0.1,i*0.07); }); tone(1568,0.14,'sine',0.045,0.22); },
-    bidNo(){ tone(494,0.12,'triangle',0.07); tone(392,0.16,'sine',0.055,0.08); },
-    /* 地主落定：延迟 0.38s 起音，避开上面「叫地主」的尾音，听感是「一拍之后落锤」 */
-    landlord(){ const d=0.38; [392,523,659,880].forEach(function(f,i){ tone(f,0.14,'triangle',0.1,d+i*0.08); }); tone(1760,0.26,'sine',0.05,d+0.34); },
-    /* 出牌：按牌型区分。who===0 是自己的牌（亮、稍响），敌方更收敛 */
+    /* 选牌 / 取消：指尖轻弹纸牌，最轻最短，可高频触发不刺耳 */
+    pick(){ ddFlick(0.55,0,1900); },
+    unpick(){ ddFlick(0.42,0,1150,true); },
+    /* 发牌：洗牌——五声错落的甩牌 */
+    deal(){ for(let i=0;i<5;i++) ddFlick(0.42,i*0.05,2400-i*150,true); },
+    /* 叫地主：两记椰壳叩桌 + 一声上扬口哨（区别于「出发」的上行音阶） */
+    bidYes(){ tone(175,0.055,'triangle',0.09); tone(175,0.055,'triangle',0.08,0.085); tone(330,0.26,'sawtooth',0.045,0.16,780); tone(1175,0.1,'sine',0.045,0.34); },
+    /* 不叫：一记闷响 + 尾音下沉 */
+    bidNo(){ tone(210,0.11,'square',0.075); tone(150,0.2,'sawtooth',0.05,0.08,-110); },
+    /* 地主落定：延迟 0.38s 重锤落桌（椰壳沉响 + 木身共鸣），避开上面叫地主的尾音 */
+    landlord(){ const d=0.38; tone(85,0.45,'sine',0.11,d); tone(170,0.26,'triangle',0.1,d+0.01); tone(340,0.18,'triangle',0.06,d+0.03); tone(680,0.14,'sine',0.04,d+0.06); },
+    /* 出牌：一律是「打牌声」，按牌的张数/厚薄区分；who===0 自己（亮、脆），敌方更钝更收敛 */
     play(type,who){
-      const mine=(who===0), v=mine?1:0.6, w=mine?'triangle':'sine';
+      const mine=(who===0), v=mine?1:0.62, sf=!mine;
       switch(type){
-        case 'pair': tone(880,0.075,w,0.09*v); tone(880,0.075,w,0.075*v,0.05); tone(1175,0.09,'sine',0.04*v,0.1); break;
+        case 'pair': ddFlick(v,0,2500); ddFlick(v,0.045,2500); break;                     /* 两张：两声甩牌 */
         case 'triple': case 'triple1': case 'triple2':
-          [784,988,1175].forEach(function(f,i){ tone(f,0.085,w,0.085*v,i*0.045); }); break;
-        case 'straight': tone(523,0.26,'triangle',0.085*v,0,880); tone(1568,0.18,'sine',0.04*v,0.1); break;   /* 顺子：海风长扫 */
-        case 'pairs': [659,659,784,784].forEach(function(f,i){ tone(f,0.065,w,0.075*v,i*0.04); }); break;
-        case 'plane': case 'plane1': case 'plane2':
-          [523,659,784,988,1175].forEach(function(f,i){ tone(f,0.075,w,0.07*v,i*0.04); }); break;
-        case 'four2': case 'four2p':
-          [392,494,523,659].forEach(function(f,i){ tone(f,0.095,w,0.09*v,i*0.05); }); tone(1046,0.13,'sine',0.045*v,0.22); break;
-        case 'bomb':   /* 炸弹：椰壳重击 + 低频余震 */
-          tone(98,0.4,'sine',0.11*v,0.02); tone(196,0.22,'triangle',0.13*v); tone(392,0.18,'triangle',0.095*v,0.03); tone(784,0.22,'sine',0.055*v,0.06); break;
-        case 'rocket': /* 王炸：上冲长滑 + 高音闪光 */
-          tone(392,0.5,'triangle',0.12*v,0,1500); [1046,1318,1568,2093].forEach(function(f,i){ tone(f,0.2,'sine',0.055*v,0.12+i*0.07); }); break;
-        default: tone(880,0.09,w,0.095*v); tone(1320,0.1,'sine',0.04*v,0.03);   /* 单张 */
+          ddFlick(v,0,2500); ddFlick(v,0.04,2450); ddFlick(v,0.08,2400); break;            /* 三张：三连甩 */
+        case 'straight':                                                                   /* 顺子：一手牌横扫过桌 */
+          tone(1500,0.3,'sawtooth',0.05*v,0,-1150);
+          ddFlick(v,0.03,2700,sf); ddFlick(v,0.09,2550,sf); ddFlick(v,0.15,2400,sf); ddFlick(v,0.21,2250,sf); break;
+        case 'pairs':                                                                      /* 连对：成对甩出 */
+          ddFlick(v,0,2500); ddFlick(v,0.035,2500); ddFlick(v,0.09,2450); ddFlick(v,0.125,2450); break;
+        case 'plane': case 'plane1': case 'plane2':                                        /* 飞机：一串牌连续拍下 */
+          for(let i=0;i<5;i++) ddFlick(v,i*0.045,2600-i*90,sf); break;
+        case 'four2': case 'four2p':                                                       /* 四带二：四张重拍 + 桌响 */
+          ddFlick(v,0,2200); ddFlick(v,0.04,2200); ddFlick(v,0.08,2200); ddFlick(v,0.12,2200);
+          tone(150,0.16,'triangle',0.08*v,0.14); break;
+        case 'bomb':                                                                       /* 炸弹：一大摞牌砸桌 + 低频余震 */
+          tone(90,0.42,'sine',0.12*v,0.02); tone(170,0.24,'triangle',0.11*v,0.05);
+          ddFlick(v,0.01,2000); ddFlick(v,0.05,2000); ddFlick(v,0.09,2000); ddFlick(v,0.13,2000);
+          tone(1500,0.2,'sawtooth',0.06*v,0.14,-1200); break;
+        case 'rocket':                                                                     /* 王炸：甩牌冲天 + 顿响落地 */
+          tone(260,0.5,'sawtooth',0.11*v,0,1600);
+          for(let i=0;i<4;i++) ddFlick(v,0.16+i*0.06,2600,sf);
+          tone(90,0.4,'sine',0.1*v,0.42); break;
+        default: ddFlick(v,0,2500); break;                                                 /* 单张：一记清脆甩牌 */
       }
     },
-    /* 不要：一声轻柔的下沉 */
-    pass(){ tone(440,0.1,'triangle',0.075,0,-120); tone(330,0.14,'sine',0.05,0.05); },
-    /* 提示：温柔的搜寻音 */
-    hint(){ tone(1046,0.075,'sine',0.06); tone(1318,0.09,'sine',0.05,0.06); },
-    /* 一轮跑完、清桌重开：海浪退去 */
-    clean(){ tone(880,0.24,'sine',0.05,0,-320); },
-    /* 结算：赢 = 尤克里里上行 + 闪光；输 = 柔和下行 */
-    win(){ [523,659,784,1046,1318].forEach(function(f,i){ tone(f,0.17,'triangle',0.12,i*0.085); }); [1568,2093].forEach(function(f,i){ tone(f,0.26,'sine',0.055,0.45+i*0.1); }); },
-    lose(){ tone(494,0.16,'triangle',0.095); tone(392,0.2,'triangle',0.085,0.12); tone(294,0.3,'sine',0.075,0.24); },
-    /* 出千月巴露馅：半音下滑的「捣鬼」音 */
-    cheat(){ tone(622,0.1,'triangle',0.085); tone(587,0.11,'triangle',0.075,0.08); tone(494,0.2,'sine',0.085,0.16); },
-    /* 无效操作：木鱼低音 */
-    err(){ tone(220,0.13,'triangle',0.095); tone(175,0.17,'sine',0.075,0.06); },
+    /* 不要：把牌轻轻推到一边（一声低沉短扫 + 牌角轻触） */
+    pass(){ tone(620,0.13,'sawtooth',0.045,0,-430); tone(190,0.12,'triangle',0.045,0.05); },
+    /* 提示：两记轻巧的铃音（小三度下行，非音阶动机） */
+    hint(){ tone(1480,0.05,'sine',0.05); tone(1108,0.08,'sine',0.04,0.05); },
+    /* 清桌重开：一手把台面的牌横扫干净 */
+    clean(){ tone(1500,0.34,'sawtooth',0.045,0,-1250); tone(220,0.14,'triangle',0.04,0.2); },
+    /* 结算·赢：尤克里里和弦扫弦（同时起音的和弦，刻意不是上行音阶）+ 风铃闪光 */
+    win(){ [523,659,784,1046].forEach(function(f,i){ tone(f,0.24,'triangle',0.105,0.028*i); }); tone(1318,0.22,'sine',0.05,0.14); tone(2093,0.3,'sine',0.045,0.24); },
+    /* 结算·输：牌堆慢慢塌落 */
+    lose(){ tone(300,0.2,'sawtooth',0.06); tone(240,0.26,'triangle',0.07,0.1,-90); tone(160,0.34,'sine',0.06,0.22); },
+    /* 出千月巴露馅：两声「捣鬼」的错拍闷响 + 心虚下滑 */
+    cheat(){ tone(560,0.09,'square',0.06); tone(530,0.09,'square',0.055,0.07); tone(420,0.22,'sawtooth',0.05,0.14,-160); },
+    /* 无效操作：木牌面闷敲（区别于全局 error 的锯齿低鸣） */
+    err(){ tone(150,0.1,'square',0.08); tone(105,0.15,'triangle',0.06,0.05); },
   }
 };
 /* 当前皮肤的音效配方；未接入的皮肤返回 null（保持静音，行为与接入前一致） */
