@@ -663,7 +663,8 @@
   /* ==== 斗月巴出牌入场动效（基础）==== */
   #ddgame .dd-played,#ddgame .dd-myplay{animation:skDdPlayIn .32s cubic-bezier(.2,.8,.3,1) both;}
   /* 单张卡 stagger 入场：通用入场 + nth-child 错开（最多 10 张足够斗地主） */
-  #ddgame .dd-played>.dd-card,#ddgame .dd-myplay>.dd-card{opacity:0;animation:skDdCardIn .32s cubic-bezier(.2,.8,.3,1) both;}
+  /* 注意：去掉 base opacity:0，让无动画时也能看见牌；opacity 只由关键帧 0% 提供入场起点 */
+  #ddgame .dd-played>.dd-card,#ddgame .dd-myplay>.dd-card{animation:skDdCardIn .32s cubic-bezier(.2,.8,.3,1) both;}
   #ddgame .dd-played>.dd-card:nth-child(1),#ddgame .dd-myplay>.dd-card:nth-child(1){animation-delay:0ms;}
   #ddgame .dd-played>.dd-card:nth-child(2),#ddgame .dd-myplay>.dd-card:nth-child(2){animation-delay:18ms;}
   #ddgame .dd-played>.dd-card:nth-child(3),#ddgame .dd-myplay>.dd-card:nth-child(3){animation-delay:36ms;}
@@ -744,7 +745,7 @@
   #ddgame .dd-cheat-row .mid{color:#c07a2e;}
   #ddgame .dd-myplay{display:flex;flex-wrap:wrap;gap:1px;justify-content:center;min-height:38px;align-items:center;padding:2px 6px;}
   #ddgame .dd-hand{flex:0 0 auto;display:flex;justify-content:center;align-items:flex-end;padding:20px 4px 6px;
-    overflow-x:auto;overflow-y:visible;min-height:82px;scrollbar-width:none;}
+    overflow-x:auto;overflow-y:hidden;min-height:82px;scrollbar-width:none;}
   #ddgame .dd-hand::-webkit-scrollbar{display:none;}
   /* 手牌分成两组：宽屏下两组并排拼成一行，窄屏下改为上下两行 */
   #ddgame .dd-hrow{display:flex;align-items:flex-end;justify-content:center;}
@@ -1277,7 +1278,7 @@
   @keyframes skDdStraightIn{0%{opacity:0;transform:translateX(-6px) translateY(8px);}100%{opacity:1;transform:translateX(0) translateY(0);}}
   @keyframes skDdPlaneIn{0%{opacity:0;transform:translate(-8px,10px) rotate(-2deg);}100%{opacity:1;transform:translate(0,0) rotate(0);}}
   @keyframes skDdCardIn{0%{opacity:0;transform:translateY(8px) scale(.95);}100%{opacity:1;transform:translateY(0) scale(1);}}
-  @keyframes skDdBombCard{0%{transform:scale(1);}40%{transform:scale(1.15);}70%{transform:scale(.97);}100%{transform:scale(1);}}
+  @keyframes skDdBombCard{0%{opacity:0;transform:scale(1);}40%{opacity:1;transform:scale(1.15);}70%{opacity:1;transform:scale(.97);}100%{opacity:1;transform:scale(1);}}
   @keyframes skDdRocketCard{0%{opacity:0;transform:scale(.6);}25%{opacity:1;transform:scale(1.35);}55%{opacity:.9;transform:scale(1.18);}85%{opacity:1;transform:scale(1);}100%{opacity:1;transform:scale(1);}}
   @keyframes skDdTripleCard{0%{opacity:0;transform:translateY(6px) scale(.92);}60%{opacity:1;transform:translateY(-2px) scale(1.06);}100%{opacity:1;transform:translateY(0) scale(1);}}
   /* 斗月巴结算弹窗入场 */
@@ -9986,13 +9987,17 @@ function ddPlayerHint(){
   const pick=beats[Math.min(g.hintIdx,beats.length-1)];
   g.hintIdx=(g.hintIdx+1)%beats.length;
   g.sel=pick.map(function(c){ return c.id; });
-  ddRenderHand();
+  /* 精准 DOM 更新：先清所有 sel，再给 hint 选中的牌加 sel，避免全量重绘触发入场动画重播 */
+  document.querySelectorAll('#ddHand .dd-card.sel').forEach(function(el){ el.classList.remove('sel'); });
+  g.sel.forEach(function(id){ const el=document.querySelector('#ddHand .dd-card[data-id="'+id+'"]'); if(el) el.classList.add('sel'); });
 }
 function ddToggleCard(id){
   const g=ddG; if(!g||g.turn!==0||g.phase!=='play')return;
   const i=g.sel.indexOf(id);
   if(i<0) g.sel.push(id); else g.sel.splice(i,1);
-  ddRenderHand();
+  /* 只 toggle 这张牌的 .sel class，不重建整个手牌 DOM — 避免滚动条闪烁和入场动画重播 */
+  const el=document.querySelector('#ddHand .dd-card[data-id="'+id+'"]');
+  if(el) el.classList.toggle('sel', i<0);
 }
 /* ---------- AI ---------- */
 function ddAiTurn(who){
