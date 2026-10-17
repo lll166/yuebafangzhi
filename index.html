@@ -531,7 +531,7 @@
     background:linear-gradient(180deg,#e8f0ff,#efe6ff 58%,#f8efff);}
   #flygame.show{display:flex;}
   #flygame .fg-top{display:flex;align-items:center;gap:12px;padding:10px 14px;
-    background:rgba(255,255,255,.72);font-weight:800;font-size:14px;color:var(--purple2);z-index:6;}
+    background:var(--panel);font-weight:800;font-size:14px;color:var(--purple2);z-index:6;}
   #flygame .fg-top b{color:var(--gold);font-size:16px;}
   #flygame .fg-top .fg-best b{color:var(--purple);}
   .fg-stage{position:relative;flex:1;overflow:hidden;width:100%;max-width:560px;margin:0 auto;cursor:pointer;}
@@ -555,13 +555,13 @@
   #fgCount span{font-size:86px;font-weight:900;color:#fff;text-shadow:0 6px 18px rgba(90,70,150,.6);
     animation:fgCountPop .55s ease;}
   @keyframes fgCountPop{0%{transform:scale(.3);opacity:0;}60%{transform:scale(1.15);opacity:1;}100%{transform:scale(1);opacity:1;}}
-  #fgOver{background:rgba(70,55,120,.36);}
+  #fgOver{background:rgba(24,18,40,.44);}
   .fg-box{width:min(370px,94%);max-height:92%;overflow-y:auto;border-radius:18px;padding:14px;
-    background:rgba(255,255,255,.92);border:1px solid var(--line);box-shadow:0 14px 40px rgba(90,70,150,.3);}
+    background:var(--panel);border:1px solid var(--line);box-shadow:0 14px 40px rgba(90,70,150,.3);}
   .fg-pickhead{font-weight:800;color:var(--purple2);font-size:14px;text-align:center;margin-bottom:8px;}
   .fg-pickgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(66px,1fr));gap:6px;
     max-height:52vh;overflow-y:auto;padding:2px;}
-  .fg-pick{border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.7);
+  .fg-pick{border:1px solid var(--line);border-radius:10px;background:var(--panel2);
     padding:4px 2px 3px;text-align:center;cursor:pointer;transition:.15s;overflow:hidden;}
   .fg-pick .pic{height:34px;display:flex;align-items:center;justify-content:center;}
   .fg-pick .pic svg{width:30px!important;height:30px!important;}
@@ -573,12 +573,12 @@
   .fg-overtitle{font-weight:900;color:var(--purple2);font-size:17px;text-align:center;}
   .fg-overscore{text-align:center;font-size:13px;color:var(--dim);font-weight:700;margin:5px 0 9px;}
   .fg-overscore b{color:var(--gold);font-size:20px;}
-  .fg-quote{font-size:13px;line-height:1.7;color:#6b5a2e;
+  .fg-quote{font-size:13px;line-height:1.7;color:var(--text);
     background:linear-gradient(180deg,rgba(255,239,181,.6),rgba(255,224,130,.4));
     border-radius:10px;padding:9px 11px;text-align:left;}
   .fg-lbhead{font-weight:800;color:var(--purple2);font-size:13px;margin:12px 0 6px;text-align:center;}
   .fg-lbrow{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--text);
-    padding:4px 8px;border-radius:9px;background:rgba(149,117,205,.08);margin-bottom:4px;}
+    padding:4px 8px;border-radius:9px;background:var(--panel2);margin-bottom:4px;}
   .fg-lbrow.me{background:rgba(255,224,130,.5);}
   .fg-lbrow .rk{width:18px;text-align:center;color:var(--dim);font-weight:900;}
   .fg-lbrow .pic{width:22px;height:22px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;}
@@ -589,26 +589,26 @@
   .fg-lbempty{font-size:12px;color:var(--dim);text-align:center;padding:6px 0;}
   .fg-lbtabs{display:flex;gap:6px;margin-bottom:7px;}
   .fg-lbtabs button{flex:1;border:none;cursor:pointer;font-family:inherit;font-size:11px;font-weight:900;
-    padding:6px 4px;border-radius:9px;background:rgba(149,117,205,.12);color:var(--dim);}
+    padding:6px 4px;border-radius:9px;background:var(--panel2);color:var(--dim);}
   .fg-lbtabs button.on{background:var(--purple);color:#fff;box-shadow:0 2px 6px rgba(149,117,205,.35);}
   .fg-lbrow .sc.tm{color:#5c9a35;}
   .fg-overbtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
   .fg-overbtns .btn{flex:1 1 calc(50% - 4px);text-align:center;padding:9px 6px;}
   .fg-tip{text-align:center;font-size:11px;color:var(--dim);padding:6px;font-weight:600;}
   body.fg-lock{overflow:hidden;}
-  #flygame .fg-mode{background:rgba(149,117,205,.16);color:var(--purple2);border-radius:999px;
+  #flygame .fg-mode{background:var(--panel2);color:var(--purple2);border-radius:999px;
     padding:3px 10px;font-size:12px;font-weight:800;white-space:nowrap;
     min-width:0;overflow:hidden;text-overflow:ellipsis;}
   #flygame .fg-score,#flygame .fg-best{flex:0 0 auto;white-space:nowrap;}
   .fg-lvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:7px;
     max-height:44vh;overflow-y:auto;padding:2px;}
-  .fg-lv{border:1px solid var(--line);border-radius:11px;background:rgba(255,255,255,.72);
+  .fg-lv{border:1px solid var(--line);border-radius:11px;background:var(--panel2);
     padding:7px 6px;text-align:center;cursor:pointer;transition:.15s;}
   .fg-lv .t{font-size:12px;font-weight:900;color:var(--purple2);}
   .fg-lv .s{font-size:10px;color:var(--dim);font-weight:700;margin-top:2px;}
   .fg-lv .b{font-size:10px;color:var(--gold);font-weight:800;margin-top:1px;min-height:13px;}
   .fg-lv.sel{border-color:var(--purple);background:rgba(149,117,205,.18);box-shadow:0 0 0 2px rgba(149,117,205,.35);}
-  .fg-lv.lock{opacity:.55;cursor:not-allowed;background:rgba(240,238,246,.72);}
+  .fg-lv.lock{opacity:.55;cursor:not-allowed;background:var(--panel2);}
   .fg-lv.lock .t{color:var(--dim);}
   .fg-lvinfo{font-size:11px;color:var(--dim);font-weight:700;text-align:center;margin-top:9px;line-height:1.65;}
   .fg-lvinfo b{color:var(--purple2);}
@@ -621,15 +621,15 @@
 
   /* ========== 斗月巴（旅行页小游戏） ========== */
   #ddgame{position:fixed;inset:0;z-index:70;display:none;flex-direction:column;
-    background:linear-gradient(180deg,#efe6ff,#f7f0ff 46%,#fdf6e8);}
+    background:linear-gradient(180deg,var(--bg),var(--bg2));}
   #ddgame.show{display:flex;}
   body.dd-lock{overflow:hidden;}
   #ddgame .dd-top{display:flex;align-items:center;gap:10px;padding:10px 14px;flex-wrap:wrap;
-    background:rgba(255,255,255,.78);font-weight:800;font-size:13px;color:var(--purple2);
+    background:var(--panel);font-weight:800;font-size:13px;color:var(--purple2);
     box-shadow:0 1px 6px rgba(120,100,160,.14);z-index:9;position:relative;}  /* 高于遮罩层：下注/结算/规则/记录层打开时也能点「记录」 */
-  #ddgame .dd-top .dd-info{background:rgba(149,117,205,.16);border-radius:999px;padding:3px 10px;}
+  #ddgame .dd-top .dd-info{background:var(--panel2);border-radius:999px;padding:3px 10px;}
   #ddgame .dd-top .dd-bal b{color:var(--gold);font-size:15px;}
-  #ddgame .dd-top .dd-role{background:rgba(199,150,64,.16);color:#8a6a2e;border-radius:999px;padding:3px 10px;}
+  #ddgame .dd-top .dd-role{background:rgba(199,150,64,.16);color:var(--gold);border-radius:999px;padding:3px 10px;}
   #ddgame .dd-top .sp{flex:1;}
   #ddgame .iconbtn{width:30px;height:30px;font-size:15px;font-weight:900;}
   #ddgame .dd-stage{position:relative;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;
@@ -641,7 +641,7 @@
   /* 月巴与番茄上下两行排布，各自的出牌有整行宽度，看得更清楚 */
   #ddgame .dd-seats{display:flex;flex-direction:column;gap:6px;}
   #ddgame .dd-opp{flex:0 0 auto;min-width:0;border-radius:14px;padding:7px 10px;
-    background:rgba(255,255,255,.72);border:1px solid var(--line);box-shadow:0 3px 10px rgba(120,100,160,.1);}
+    background:var(--panel);border:1px solid var(--line);box-shadow:0 3px 10px rgba(120,100,160,.1);}
   #ddgame .dd-opp.turn{border-color:var(--purple);box-shadow:0 0 0 2px rgba(149,117,205,.35),0 3px 10px rgba(120,100,160,.16);}
   #ddgame .dd-opphead{display:flex;align-items:center;gap:6px;font-weight:800;font-size:12px;color:var(--purple2);}
   /* 座位头像：1 号位放月巴立绘（按难度/出千切换），2 号位仍是番茄 emoji，统一用同尺寸方框居中 */
@@ -650,23 +650,23 @@
   #ddgame .dd-opphead .av img{width:100%;height:100%;object-fit:contain;display:block;}
   #ddgame .dd-opphead .av svg{width:100%;height:100%;display:block;}
   #ddgame .dd-opphead .role{margin-left:auto;font-size:10px;border-radius:999px;padding:1px 7px;
-    background:rgba(149,117,205,.14);color:var(--dim);font-weight:800;}
-  #ddgame .dd-opphead .role.ld{background:rgba(224,138,60,.2);color:#c05a1e;}
-  #ddgame .dd-opphead .role.fm{background:rgba(90,160,90,.18);color:#3f7d3f;}
+    background:var(--panel2);color:var(--dim);font-weight:800;}
+  #ddgame .dd-opphead .role.ld{background:rgba(224,138,60,.2);color:#e08a3c;}
+  #ddgame .dd-opphead .role.fm{background:rgba(90,160,90,.18);color:#7dc07d;}
   #ddgame .dd-cnt{font-size:11px;color:var(--dim);font-weight:700;margin-top:2px;}
   #ddgame .dd-cnt b{color:var(--purple2);font-size:14px;}
   #ddgame .dd-played{display:flex;flex-wrap:wrap;gap:1px;margin-top:5px;min-height:34px;align-items:center;}
-  #ddgame .dd-played .pass{font-size:11px;font-weight:800;color:#b0a68e;}
+  #ddgame .dd-played .pass{font-size:11px;font-weight:800;color:var(--dim);}
   #ddgame .dd-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
     font-size:13px;color:var(--dim);font-weight:700;text-align:center;padding:6px;}
   #ddgame .dd-center .big{font-size:20px;color:var(--purple2);font-weight:900;}
-  #ddgame .dd-center .sub{font-size:11px;color:#b0a68e;}
+  #ddgame .dd-center .sub{font-size:11px;color:var(--dim);}
   /* 本局底牌面板（3 张）：叫地主前隐藏，地主确定后常驻显示在牌桌中央 */
   #ddgame .dd-bottom{display:inline-flex;flex-direction:column;align-items:center;gap:3px;
     padding:5px 9px 6px;border-radius:11px;margin:1px 0;
     background:linear-gradient(180deg,rgba(232,192,99,.2),rgba(232,192,99,.06));
     box-shadow:inset 0 0 0 1px rgba(201,151,28,.34);}
-  #ddgame .dd-bottom-t{font-size:10px;font-weight:900;color:#8a6a2e;letter-spacing:.5px;}
+  #ddgame .dd-bottom-t{font-size:10px;font-weight:900;color:var(--gold);letter-spacing:.5px;}
   #ddgame .dd-bottom-cards{display:flex;gap:4px;}
   /* 出千月巴：10% 概率顶掉 1 号位的月巴，座位换成金色调，好和普通月巴区分 */
   #ddgame .dd-opp.cheat{border-color:#d8a13c;background:linear-gradient(180deg,rgba(255,242,214,.92),rgba(255,249,233,.72));
@@ -677,8 +677,8 @@
     padding:5px 9px 6px;border-radius:11px;margin:1px 0;
     background:linear-gradient(180deg,rgba(224,90,90,.16),rgba(224,90,90,.05));
     box-shadow:inset 0 0 0 1px rgba(200,70,70,.32);}
-  #ddgame .dd-cheat-t{font-size:10px;font-weight:900;color:#a8402e;letter-spacing:.5px;}
-  #ddgame .dd-cheat-row{display:flex;align-items:center;gap:5px;font-size:10px;color:#8a6a5e;font-weight:800;}
+  #ddgame .dd-cheat-t{font-size:10px;font-weight:900;color:var(--danger);letter-spacing:.5px;}
+  #ddgame .dd-cheat-row{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--dim);font-weight:800;}
   #ddgame .dd-cheat-cards{display:flex;gap:4px;align-items:center;}
   #ddgame .dd-cheat-row .mid{color:#c07a2e;}
   #ddgame .dd-myplay{display:flex;flex-wrap:wrap;gap:1px;justify-content:center;min-height:38px;align-items:center;padding:2px 6px;}
@@ -692,11 +692,11 @@
   #ddgame .dd-actions{flex:0 0 auto;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;
     padding:4px 4px calc(6px + env(safe-area-inset-bottom));min-height:44px;}
   #ddgame .btn{border:none;font-family:inherit;font-weight:900;font-size:14px;border-radius:12px;
-    padding:10px 18px;cursor:pointer;background:rgba(149,117,205,.14);color:var(--purple2);
+    padding:10px 18px;cursor:pointer;background:var(--panel2);color:var(--purple2);
     box-shadow:0 2px 6px rgba(120,100,160,.14);transition:.12s;}
   #ddgame .btn:active{transform:scale(.96);}
   #ddgame .btn:hover{transform:none;border-color:transparent;}
-  #ddgame .btn.cta{background:linear-gradient(180deg,#a98ee0,#7e57c2);color:#fff;}
+  #ddgame .btn.cta{background:linear-gradient(180deg,var(--purple),var(--purple2));color:#fff;}
   #ddgame .btn.gold{background:linear-gradient(180deg,#e8c063,#c79640);color:#4a3611;border-color:transparent;}
   #ddgame .btn.off{opacity:.42;pointer-events:none;}
   #ddgame .dd-card{position:relative;flex:0 0 auto;width:40px;height:56px;border-radius:7px;
@@ -716,37 +716,37 @@
   #ddgame .dd-card.mini.joker .dd-jk{font-size:8px;}
   #ddgame .dd-played>div+div{margin-left:-8px;}
   #ddgame .dd-layer{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:16px;
-    z-index:8;background:rgba(70,55,120,.34);}
+    z-index:8;background:rgba(24,18,40,.46);}
   #ddgame .dd-layer.show{display:flex;}
   #ddgame .dd-box{width:min(390px,96%);max-height:92%;overflow-y:auto;border-radius:18px;padding:16px;
-    background:rgba(255,255,255,.96);border:1px solid var(--line);box-shadow:0 16px 44px rgba(90,70,150,.32);}
+    background:var(--panel);border:1px solid var(--line);box-shadow:0 16px 44px rgba(90,70,150,.32);}
   #ddgame .dd-box h3{margin:0 0 8px;font-size:17px;color:var(--purple2);text-align:center;}
-  #ddgame .dd-box p{margin:0 0 8px;font-size:13px;line-height:1.65;color:#6b5f4a;}
-  #ddgame .dd-note{font-size:11px;color:#a08a63;text-align:center;}
+  #ddgame .dd-box p{margin:0 0 8px;font-size:13px;line-height:1.65;color:var(--text);}
+  #ddgame .dd-note{font-size:11px;color:var(--dim);text-align:center;}
   #ddgame .dd-warn{font-size:11px;font-weight:800;color:#b8532f;text-align:center;line-height:1.55;
     background:rgba(224,110,74,.12);border:1px solid rgba(224,110,74,.32);border-radius:10px;padding:6px 9px;margin:8px 0 0;}
   #ddgame .dd-quick{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0;}
   /* 难度选择 */
   #ddgame .dd-diffs{display:flex;gap:7px;margin:4px 0 8px;}
   #ddgame .dd-diff{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;
-    border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.7);
+    border:1px solid var(--line);border-radius:12px;background:var(--panel2);
     font-family:inherit;cursor:pointer;}
   #ddgame .dd-diff .de{width:40px;height:40px;display:flex;align-items:center;justify-content:center;}
   #ddgame .dd-diff .de img{width:100%;height:100%;object-fit:contain;}
   #ddgame .dd-diff .dn{font-weight:900;font-size:12px;color:var(--purple2);}
-  #ddgame .dd-diff .dm{font-size:10px;font-weight:800;color:#a08a63;}
+  #ddgame .dd-diff .dm{font-size:10px;font-weight:800;color:var(--dim);}
   #ddgame .dd-diff.on{border-color:var(--gold);background:rgba(197,150,64,.14);
     box-shadow:0 0 0 2px rgba(197,150,64,.26) inset;}
   #ddgame .dd-ic{width:16px;height:16px;object-fit:contain;vertical-align:-3px;}
   #ddgame .dd-quick button{flex:1 1 calc(33% - 5px);border:1px solid var(--line);border-radius:10px;
-    background:rgba(255,255,255,.7);padding:8px 4px;font-family:inherit;font-weight:800;font-size:12px;
+    background:var(--panel2);padding:8px 4px;font-family:inherit;font-weight:800;font-size:12px;
     color:var(--purple2);cursor:pointer;}
   #ddgame .dd-inputrow{display:flex;align-items:center;gap:8px;margin:8px 0 4px;justify-content:center;}
   #ddgame .dd-inputrow input{width:120px;padding:9px 10px;border-radius:10px;border:1px solid var(--line);
-    font-family:inherit;font-weight:900;font-size:15px;text-align:center;color:var(--text);background:#fffdf6;}
+    font-family:inherit;font-weight:900;font-size:15px;text-align:center;color:var(--text);background:var(--panel);}
   #ddgame .dd-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px;}
   #ddgame .dd-result{display:flex;justify-content:space-between;font-size:13px;font-weight:700;
-    padding:7px 10px;border-radius:10px;background:rgba(149,117,205,.08);margin-bottom:6px;}
+    padding:7px 10px;border-radius:10px;background:var(--panel2);margin-bottom:6px;}
   #ddgame .dd-result b{color:var(--gold);}
   #ddgame .dd-result .neg{color:#d0392c;}
   /* 结算层里的评级：复用战绩那套 S/A/B/C/D 徽章，直接把本局评级标在结果页上 */
@@ -754,23 +754,23 @@
     padding:8px 10px;border-radius:12px;margin:0 0 7px;
     background:rgba(199,150,64,.12);border:1px solid rgba(201,151,28,.3);}
   #ddgame .dd-gradbox .dd-grad{font-size:15px;min-width:36px;padding:3px 9px;border-radius:9px;}
-  #ddgame .dd-gradbox .tx{font-size:12px;font-weight:800;color:#6b5f4a;line-height:1.45;}
+  #ddgame .dd-gradbox .tx{font-size:12px;font-weight:800;color:var(--text);line-height:1.45;}
   #ddgame .dd-gradbox .tx b{color:var(--purple2);}
-  #ddgame .dd-gradbox .sc{font-size:11px;color:#a08a63;font-weight:800;}
+  #ddgame .dd-gradbox .sc{font-size:11px;color:var(--dim);font-weight:800;}
   /* 结算层里的「本局牌面」展示：赢家最后一手（金色高亮） vs 没出的牌（灰化压暗） */
   #ddgame .dd-reveal{margin-top:10px;border-top:1px dashed var(--line);padding-top:9px;}
   #ddgame .dd-reveal-t{font-size:12px;font-weight:900;color:var(--purple2);text-align:center;margin-bottom:7px;}
-  #ddgame .dd-reveal-row{border-radius:12px;padding:7px 9px;margin-bottom:8px;background:rgba(149,117,205,.07);}
+  #ddgame .dd-reveal-row{border-radius:12px;padding:7px 9px;margin-bottom:8px;background:var(--panel2);}
   #ddgame .dd-reveal-row.win{background:linear-gradient(180deg,rgba(232,192,99,.24),rgba(232,192,99,.07));
     box-shadow:inset 0 0 0 1px rgba(201,151,28,.45);}
-  #ddgame .dd-reveal-hd{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:800;color:#6b5f4a;margin-bottom:5px;}
+  #ddgame .dd-reveal-hd{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:800;color:var(--text);margin-bottom:5px;}
   #ddgame .dd-reveal-hd em{font-style:normal;font-size:10px;font-weight:900;color:#7a5a0f;
     background:linear-gradient(180deg,#f3dd9a,#e7c664);border-radius:7px;padding:1px 6px;}
   #ddgame .dd-lastrow{display:flex;align-items:center;gap:6px;min-height:40px;}
   #ddgame .dd-lastrow+.dd-lastrow{margin-top:4px;}
   #ddgame .dd-lastrow .dd-played{margin-top:0;min-height:0;flex:1 1 auto;}
   #ddgame .dd-tag{flex:0 0 auto;font-size:10px;font-weight:900;border-radius:7px;padding:2px 6px;
-    white-space:nowrap;color:#8a7f6c;background:rgba(0,0,0,.06);}
+    white-space:nowrap;color:var(--dim);background:var(--panel2);}
   #ddgame .dd-tag.gold{color:#7a5a0f;background:linear-gradient(180deg,#f3dd9a,#e7c664);}
   /* 赢家最后出的牌：金色描边高亮 */
   #ddgame .dd-reveal-row.win .dd-lastrow.last .dd-card{border-color:#d8ad3c;
@@ -784,7 +784,7 @@
   #ddgame .dd-lastrow.rest .dd-card .dd-su{color:#7e7767;}
   /* 战绩记录 */
   #ddgame .dd-rec{margin-top:8px;max-height:54vh;overflow-y:auto;display:flex;flex-direction:column;gap:7px;}
-  #ddgame .dd-rec-row{border:1px solid var(--line);border-radius:12px;padding:7px 10px;background:rgba(255,255,255,.7);}
+  #ddgame .dd-rec-row{border:1px solid var(--line);border-radius:12px;padding:7px 10px;background:var(--panel2);}
   #ddgame .dd-rec-hd{display:flex;align-items:center;justify-content:space-between;font-weight:900;font-size:13px;}
   #ddgame .dd-rec-hl{display:flex;align-items:center;gap:6px;}
   /* 评级徽章：S/A/B/C/D 五档配色 */
@@ -795,15 +795,15 @@
   #ddgame .dd-grad.gB{background:linear-gradient(135deg,#4aa3e0,#2f7fc4);}
   #ddgame .dd-grad.gC{background:linear-gradient(135deg,#9a9182,#7c7364);}
   #ddgame .dd-grad.gD{background:linear-gradient(135deg,#c9bdb0,#a89887);}
-  #ddgame .dd-grad.none{background:transparent;color:#b0a68e;box-shadow:none;}
+  #ddgame .dd-grad.none{background:transparent;color:var(--dim);box-shadow:none;}
   #ddgame .dd-rec-hd .w{color:#3f7d3f;}
   #ddgame .dd-rec-hd .l{color:#c05a1e;}
-  #ddgame .dd-rec-hd .q{color:#8a7f6c;}
+  #ddgame .dd-rec-hd .q{color:var(--dim);}
   /* 战绩里的「出千月巴出现过」标记：金色小签，和座位上的金色调呼应 */
   #ddgame .dd-rec-hd .chq{font-size:10px;font-weight:900;color:#b8791f;border-radius:8px;padding:1px 6px;
     background:linear-gradient(180deg,#fff2d6,#ffe6b0);border:1px solid #e2c07a;}
-  #ddgame .dd-rec-hd .tm{font-size:11px;font-weight:700;color:#b0a68e;}
-  #ddgame .dd-rec-bd{font-size:11px;color:#6b5f4a;font-weight:700;line-height:1.6;margin-top:3px;}
+  #ddgame .dd-rec-hd .tm{font-size:11px;font-weight:700;color:var(--dim);}
+  #ddgame .dd-rec-bd{font-size:11px;color:var(--text);font-weight:700;line-height:1.6;margin-top:3px;}
   #ddgame .dd-rec-bd b{color:var(--purple2);}
   #ddgame .dd-rec-bd .pos{color:#3f7d3f;}
   #ddgame .dd-rec-bd .neg{color:#d0392c;}
@@ -811,25 +811,25 @@
   #ddgame #ddHistoryBox .neg{color:#d0392c;}
   /* 战绩：记录/统计 分页 tab */
   #ddgame .dd-rec-tabs{display:flex;gap:6px;margin:2px 0 8px;}
-  #ddgame .dd-rec-tab{flex:1;border:1px solid var(--line);background:rgba(255,255,255,.6);border-radius:999px;
-    padding:6px 0;font-weight:900;font-size:12px;color:#8a7f6c;cursor:pointer;}
+  #ddgame .dd-rec-tab{flex:1;border:1px solid var(--line);background:var(--panel2);border-radius:999px;
+    padding:6px 0;font-weight:900;font-size:12px;color:var(--dim);cursor:pointer;}
   #ddgame .dd-rec-tab.on{background:var(--purple2);border-color:var(--purple2);color:#fff;box-shadow:0 3px 10px rgba(120,100,160,.35);}
   /* 战绩统计页 */
   #ddgame .dd-st-cards{display:flex;gap:8px;margin:4px 0 10px;}
-  #ddgame .dd-st-card{flex:1;text-align:center;border:1px solid var(--line);border-radius:12px;padding:8px 4px;background:rgba(255,255,255,.7);}
+  #ddgame .dd-st-card{flex:1;text-align:center;border:1px solid var(--line);border-radius:12px;padding:8px 4px;background:var(--panel2);}
   #ddgame .dd-st-card .n{display:block;font-size:19px;font-weight:900;color:var(--purple2);line-height:1.2;}
   #ddgame .dd-st-card .n.pos{color:#3f7d3f;}
   #ddgame .dd-st-card .n.neg{color:#d0392c;}
-  #ddgame .dd-st-card .lb{display:block;font-size:10px;font-weight:800;color:#b0a68e;margin-top:2px;}
+  #ddgame .dd-st-card .lb{display:block;font-size:10px;font-weight:800;color:var(--dim);margin-top:2px;}
   #ddgame .dd-st-sec{margin:12px 0;}
   #ddgame .dd-st-t{font-size:12px;font-weight:900;color:var(--purple2);margin-bottom:7px;}
   #ddgame .dd-st-donut{display:flex;align-items:center;gap:14px;}
-  #ddgame .dd-st-legend{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:800;color:#6b5f4a;}
+  #ddgame .dd-st-legend{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:800;color:var(--text);}
   #ddgame .dd-st-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;}
   #ddgame .dd-st-bar-row{margin-bottom:9px;}
-  #ddgame .dd-st-bar-hd{display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#6b5f4a;margin-bottom:3px;}
-  #ddgame .dd-st-bar-hd span:last-child{color:#b0a68e;}
-  #ddgame .dd-st-bar{display:flex;height:14px;border-radius:999px;overflow:hidden;background:rgba(120,100,160,.12);}
+  #ddgame .dd-st-bar-hd{display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:var(--text);margin-bottom:3px;}
+  #ddgame .dd-st-bar-hd span:last-child{color:var(--dim);}
+  #ddgame .dd-st-bar{display:flex;height:14px;border-radius:999px;overflow:hidden;background:var(--line);}
   #ddgame .dd-st-bar i{display:block;height:100%;}
   #ddgame .dd-st-bar i.w{background:linear-gradient(90deg,#7dc07d,#5aa95a);}
   #ddgame .dd-st-bar i.l{background:linear-gradient(90deg,#e8a86a,#d9875a);}
@@ -839,7 +839,7 @@
   #ddgame .dd-st-bar i.gr.gC{background:linear-gradient(90deg,#9a9182,#7c7364);}
   #ddgame .dd-st-bar i.gr.gD{background:linear-gradient(90deg,#c9bdb0,#a89887);}
   #ddgame .dd-st-spark svg{display:block;}
-  #ddgame .dd-st-spark-lb{font-size:11px;font-weight:800;color:#8a7f6c;text-align:right;margin-top:2px;}
+  #ddgame .dd-st-spark-lb{font-size:11px;font-weight:800;color:var(--dim);text-align:right;margin-top:2px;}
   #ddgame .dd-toast{position:fixed;left:50%;bottom:14%;transform:translateX(-50%);z-index:99;
     background:rgba(58,50,38,.92);color:#fff;font-weight:800;font-size:13px;padding:9px 16px;
     border-radius:999px;box-shadow:0 8px 22px rgba(0,0,0,.28);opacity:0;pointer-events:none;transition:opacity .2s;}
@@ -1230,6 +1230,17 @@
   html[data-skin="forestedge"] #travel .tv-btn{background:linear-gradient(180deg,#ffffff,#eef7f0);border:1.2px solid rgba(111,174,135,.32);color:#2f6b4f;border-radius:12px;}
   html[data-skin="forestedge"] #travel .tv-btn:hover{background:#e7f5ea;border-color:#6fae87;}
   html[data-skin="forestedge"] #travel .tv-note{background:rgba(255,255,255,.88);border:1.2px solid rgba(111,174,135,.32);color:#22402f;}
+  /* 斗月巴：青雾绿外壳 */
+  html[data-skin="forestedge"] #ddgame .dd-top{background:linear-gradient(180deg,rgba(255,255,255,.94),rgba(238,247,240,.96));color:#2f6b4f;border-bottom:1.2px solid rgba(111,174,135,.30);}
+  html[data-skin="forestedge"] #ddgame .dd-opp:not(.cheat):not(.turn){background:rgba(255,255,255,.92);border-color:rgba(111,174,135,.32);}
+  html[data-skin="forestedge"] #ddgame .dd-box{background:rgba(255,255,255,.94);border-color:rgba(111,174,135,.32);}
+  html[data-skin="forestedge"] #ddgame .btn{background:linear-gradient(180deg,#ffffff,#eef7f0);color:#2f6b4f;border:1.2px solid rgba(111,174,135,.34);}
+  html[data-skin="forestedge"] #ddgame .btn.cta{background:linear-gradient(180deg,#6fae87,#2f6b4f);color:#fff;border-color:transparent;}
+  /* 飞行小游戏：青雾绿外壳与弹窗（关卡天空/地面/柱子保留） */
+  html[data-skin="forestedge"] #flygame .fg-top{background:linear-gradient(180deg,rgba(255,255,255,.94),rgba(238,247,240,.96));color:#2f6b4f;border-bottom:1.2px solid rgba(111,174,135,.30);}
+  html[data-skin="forestedge"] .fg-box{background:rgba(255,255,255,.95);border-color:rgba(111,174,135,.34);}
+  html[data-skin="forestedge"] .fg-pick:not(.sel),html[data-skin="forestedge"] .fg-lv:not(.sel){background:rgba(255,255,255,.92);border-color:rgba(111,174,135,.30);}
+  html[data-skin="forestedge"] .fg-lbtabs button:not(.on){background:#eef7f0;color:#2f6b4f;}
 
   /* ===================== 皮肤二：世外桃源 · 木屋手帐 ===================== */
   html[data-skin="fairy"] body{
@@ -1299,6 +1310,17 @@
   html[data-skin="fairy"] #travel .tv-btn{background:linear-gradient(180deg,#fffdf6,#f7ecd6);border:2px solid #c9b18e;color:#5b3f2a;border-radius:10px 12px 9px 11px;box-shadow:2px 3px 0 rgba(91,63,42,.18);}
   html[data-skin="fairy"] #travel .tv-btn:hover{background:#fff8e6;border-color:#a2734a;}
   html[data-skin="fairy"] #travel .tv-note{background:#fffaf0;border:2px solid #a2734a;border-radius:14px 18px 12px 20px;color:#4a3524;}
+  /* 斗月巴：奶油纸 + 木框缝线 */
+  html[data-skin="fairy"] #ddgame .dd-top{background:linear-gradient(180deg,rgba(255,250,240,.96),rgba(247,236,214,.96));color:#5b3f2a;border-bottom:2px dashed #c9b18e;}
+  html[data-skin="fairy"] #ddgame .dd-opp:not(.cheat):not(.turn){background:rgba(255,250,240,.94);border-color:#c9b18e;}
+  html[data-skin="fairy"] #ddgame .dd-box{background:#fffaf0;border:2px solid #a2734a;border-radius:14px 18px 12px 20px;}
+  html[data-skin="fairy"] #ddgame .btn{background:linear-gradient(180deg,#fffdf6,#f7ecd6);border:2px solid #c9b18e;color:#5b3f2a;border-radius:10px 12px 9px 11px;box-shadow:2px 3px 0 rgba(91,63,42,.18);}
+  html[data-skin="fairy"] #ddgame .btn.cta{background:linear-gradient(180deg,#d1663f,#a94a2a);color:#fff;border-color:#a2734a;box-shadow:2px 3px 0 rgba(91,63,42,.28);}
+  /* 飞行小游戏：奶油纸 + 木框缝线（关卡天空/地面/柱子保留） */
+  html[data-skin="fairy"] #flygame .fg-top{background:linear-gradient(180deg,rgba(255,250,240,.96),rgba(247,236,214,.96));color:#5b3f2a;border-bottom:2px dashed #c9b18e;}
+  html[data-skin="fairy"] .fg-box{background:#fffaf0;border:2px solid #a2734a;border-radius:14px 18px 12px 20px;}
+  html[data-skin="fairy"] .fg-pick:not(.sel),html[data-skin="fairy"] .fg-lv:not(.sel){background:#fffaf0;border-color:#c9b18e;}
+  html[data-skin="fairy"] .fg-lbtabs button:not(.on){background:#f7ecd6;color:#5b3f2a;}
 
   /* ===================== 皮肤三：上古秘境 · 幽林幻夜 ===================== */
   html[data-skin="ancient"] body{
@@ -1382,6 +1404,18 @@
   html[data-skin="ancient"] #travel .tv-btn{background:linear-gradient(180deg,#173327,#12291f);border:1.5px solid rgba(110,240,176,.24);color:#c9ffe8;border-radius:10px;}
   html[data-skin="ancient"] #travel .tv-btn:hover{background:linear-gradient(180deg,#1d4133,#12291f);border-color:rgba(110,240,176,.60);box-shadow:0 0 16px rgba(110,240,176,.26);}
   html[data-skin="ancient"] #travel .tv-note{background:rgba(23,51,39,.94);border:1.5px solid rgba(110,240,176,.30);color:#e6fff5;}
+  /* 斗月巴：暗林霓虹 */
+  html[data-skin="ancient"] #ddgame .dd-top{background:linear-gradient(180deg,rgba(23,51,39,.94),rgba(18,41,31,.96));color:#c9ffe8;border-bottom:1.5px solid rgba(110,240,176,.22);}
+  html[data-skin="ancient"] #ddgame .dd-opp:not(.cheat):not(.turn){background:rgba(23,51,39,.82);border-color:rgba(110,240,176,.20);}
+  html[data-skin="ancient"] #ddgame .dd-box{background:rgba(18,41,31,.96);border-color:rgba(110,240,176,.30);}
+  html[data-skin="ancient"] #ddgame .btn{background:linear-gradient(180deg,#173327,#12291f);color:#c9ffe8;border:1.5px solid rgba(110,240,176,.24);}
+  html[data-skin="ancient"] #ddgame .btn:hover{box-shadow:0 0 16px rgba(110,240,176,.26);}
+  html[data-skin="ancient"] #ddgame .btn.cta{background:linear-gradient(180deg,#6ef0b0,#2f9e79);color:#06231b;border-color:transparent;}
+  /* 飞行小游戏：暗林霓虹外壳与弹窗（关卡天空/地面/柱子保留） */
+  html[data-skin="ancient"] #flygame .fg-top{background:linear-gradient(180deg,rgba(23,51,39,.94),rgba(18,41,31,.96));color:#c9ffe8;border-bottom:1.5px solid rgba(110,240,176,.22);}
+  html[data-skin="ancient"] .fg-box{background:rgba(18,41,31,.96);border-color:rgba(110,240,176,.30);}
+  html[data-skin="ancient"] .fg-pick:not(.sel),html[data-skin="ancient"] .fg-lv:not(.sel){background:rgba(23,51,39,.86);border-color:rgba(110,240,176,.22);}
+  html[data-skin="ancient"] .fg-lbtabs button:not(.on){background:rgba(23,51,39,.86);color:#c9e8dc;}
 
   /* ===================== 皮肤四：枯寂幻境 · 像素森屿 ===================== */
   html[data-skin="cursed"] body{
@@ -1468,6 +1502,19 @@
   html[data-skin="cursed"] #travel .tv-btn:hover{background:#3d4478;border-color:#4c5391;}
   html[data-skin="cursed"] #travel .tv-note{background:#2a2d52;border:2px solid #0e1024;border-radius:0;color:#eef2ff;
     box-shadow:inset 2px 2px 0 #4c5391,inset -2px -2px 0 #14162e,0 3px 0 #090b18;}
+  /* 斗月巴：8bit 像素硬边 */
+  html[data-skin="cursed"] #ddgame .dd-top{background:linear-gradient(180deg,#2a2d52,#232650);color:#eef2ff;border:0;border-bottom:3px solid #0e1024;box-shadow:inset 0 3px 0 #4c5391;}
+  html[data-skin="cursed"] #ddgame .dd-opp:not(.cheat):not(.turn){border-radius:0;background:#232650;border:2px solid #0e1024;}
+  html[data-skin="cursed"] #ddgame .dd-box{border-radius:0;background:#2a2d52;border:2px solid #0e1024;}
+  html[data-skin="cursed"] #ddgame .btn{border-radius:0;background:#333a6b;color:#eef2ff;border:2px solid #0e1024;box-shadow:inset 2px 2px 0 #5a62a8,inset -2px -2px 0 #14162e;}
+  html[data-skin="cursed"] #ddgame .btn.cta{background:#4bd15a;color:#06231b;border-color:#0e1024;box-shadow:inset 2px 2px 0 #8ff09a,inset -2px -2px 0 #1d7a2a;}
+  html[data-skin="cursed"] #ddgame .dd-bottom,html[data-skin="cursed"] #ddgame .dd-cheat{border-radius:0;}
+  /* 飞行小游戏：8bit 像素硬边外壳与弹窗（关卡天空/地面/柱子保留） */
+  html[data-skin="cursed"] #flygame .fg-top{background:linear-gradient(180deg,#2a2d52,#232650);color:#eef2ff;border:0;border-bottom:3px solid #0e1024;box-shadow:inset 0 3px 0 #4c5391;}
+  html[data-skin="cursed"] .fg-box{border-radius:0;background:#2a2d52;border:2px solid #0e1024;}
+  html[data-skin="cursed"] .fg-pick,html[data-skin="cursed"] .fg-lv{border-radius:0;}
+  html[data-skin="cursed"] .fg-pick:not(.sel),html[data-skin="cursed"] .fg-lv:not(.sel){background:#232650;border:2px solid #0e1024;}
+  html[data-skin="cursed"] .fg-lbtabs button:not(.on){border-radius:0;background:#232650;color:#9aa0d0;}
 
   /* 深色皮肤下信纸保持可读（信纸本身是浅色纸面，故只调正文与落款） */
   html[data-skin="ancient"] .ltr-full{background:linear-gradient(180deg,#12312a,#0d211b);border-color:rgba(110,240,176,.30);}
