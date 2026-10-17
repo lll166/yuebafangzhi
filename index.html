@@ -21,7 +21,7 @@
       radial-gradient(900px 520px at 85% -8%, var(--glow1), transparent 60%),
       radial-gradient(800px 480px at -8% 108%, var(--glow2), transparent 60%),
       linear-gradient(180deg,var(--bg),var(--bg2));
-    color:var(--text); overflow-x:hidden; padding-bottom:92px;
+    color:var(--text); overflow-x:hidden; overflow-y:clip; padding-bottom:92px;
   }
   /* 磨砂玻璃通用 */
   body.low-power *{animation:none!important;transition:none!important;}
@@ -778,7 +778,7 @@
   #ddgame .dd-card.mini.joker .dd-jk{font-size:8px;}
   #ddgame .dd-played>div+div{margin-left:-8px;}
   #ddgame .dd-layer{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:16px;
-    z-index:8;background:rgba(24,18,40,.46);}
+    z-index:8;background:rgba(24,18,40,.46);overflow:hidden;}
   #ddgame .dd-layer.show{display:flex;}
   #ddgame .dd-box{width:min(390px,96%);max-height:92%;overflow-y:auto;border-radius:18px;padding:16px;
     background:var(--panel);border:1px solid var(--line);box-shadow:0 16px 44px rgba(90,70,150,.32);}
