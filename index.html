@@ -4492,6 +4492,8 @@ function addCoins(n){
    避免多个收获音叠加成噪音；窗口 180ms ≥ 单个收获音时长（0.05+0.12s） */
 let _hvSfxAt=0;
 function hvSfx(isNew){
+  /* 斗月巴牌局打开时暂停收获音（自动收集照常在后台进行，只是不出声，避免打扰牌局） */
+  const dgEl=$('ddgame'); if(dgEl&&dgEl.classList.contains('show'))return;
   const t=(window.performance&&performance.now)?performance.now():Date.now();
   if(t-_hvSfxAt<180) return; _hvSfxAt=t;
   sfx.harvest(0);
@@ -10857,7 +10859,15 @@ function ddRenderActions(){
     +'<button class="btn" onclick="ddPlayerHint()">提示</button>'
     +'<button class="btn" onclick="ddClearSel()">重选</button>';
 }
-function ddClearSel(){ const g=ddG; if(!g)return; g.sel=[]; ddSfx('unpick'); ddRenderHand(); }
+/* 重选：清空选中。不能靠 ddRenderHand 全量重绘——手牌签名缓存只在整手重建时更新，
+   而选牌走的是 ddToggleCard 精准改 DOM；清空后签名会「变回」缓存里的旧值，ddRenderHand 误判无变化直接 return，
+   导致选中高亮残留、看起来按钮失效。故与 ddPlayerHint 一致，精准摘除 .sel */
+function ddClearSel(){
+  const g=ddG; if(!g)return;
+  g.sel=[];
+  ddSfx('unpick');
+  document.querySelectorAll('#ddHand .dd-card.sel').forEach(function(el){ el.classList.remove('sel'); });
+}
 
 /* ---------- 规则弹窗 ---------- */
 function ddShowRules(){
