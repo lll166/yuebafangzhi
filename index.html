@@ -221,7 +221,7 @@
   #fdOverlay .fd-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-weight:800;color:var(--purple2);font-size:15px;}
 
   /* 图鉴 */
-  .book{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;content-visibility:auto;contain-intrinsic-size:176px;}
+  .book{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;}
   .booktabs{display:flex;gap:6px;margin-bottom:10px;}
   .btab{flex:1;padding:7px 0;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.6);color:var(--dim);font-weight:800;font-size:12px;cursor:pointer;}
   .btab.on{background:var(--purple2);color:#fff;border-color:var(--purple2);}
@@ -447,6 +447,7 @@
   .bcard .cd{font-size:10px;color:var(--dim);margin-top:3px;line-height:1.3;}
   .bcard.allgold{background:linear-gradient(180deg,rgba(255,239,181,.75),rgba(255,224,130,.7));
     border-color:#e6b84c;animation:goldbox 1.8s ease-in-out infinite;}
+  .bcard.allgold.anim-in{animation:skStaggerIn .35s var(--stagger,0ms) cubic-bezier(.2,.8,.3,1) both, goldbox 1.8s ease-in-out .35s infinite;}
   .bcard.allgold .cd{color:#8a6a00;font-weight:800;}
   @keyframes goldbox{0%,100%{box-shadow:0 0 8px rgba(245,200,60,.6),0 0 0 1.5px rgba(230,184,76,.9);}
     50%{box-shadow:0 0 20px rgba(255,215,70,.95),0 0 30px rgba(255,190,50,.55),0 0 0 2px rgba(230,184,76,1);}}
@@ -455,6 +456,7 @@
   .bcard.epic{box-shadow:0 0 0 1px #b39ddb;}
   .bcard.legend{box-shadow:0 0 12px rgba(149,117,205,.5),0 0 0 1px #9575cd;}
   .bcard.bairi{position:relative;border:none;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(214,214,222,.85));box-shadow:0 0 18px rgba(255,255,255,.9),0 0 0 2px #d2d2da;animation:bairiGlow 1.8s ease-in-out infinite;}
+  .bcard.bairi.anim-in{animation:skStaggerIn .35s var(--stagger,0ms) cubic-bezier(.2,.8,.3,1) both, bairiGlow 1.8s ease-in-out .35s infinite;}
   .bcard.bairi::before{content:'';position:absolute;inset:-3px;border-radius:17px;padding:3px;background:linear-gradient(120deg,#ffffff,#242429,#ffffff,#242429);background-size:300% 300%;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:bairiFlow 3s linear infinite;}
   @keyframes bairiGlow{0%,100%{box-shadow:0 0 14px rgba(255,255,255,.9),0 0 0 2px #ffffff;}50%{box-shadow:0 0 26px rgba(18,18,24,.8),0 0 0 2px #242429;}}
   @keyframes bairiFlow{0%{background-position:0% 50%;}100%{background-position:300% 50%;;}}
@@ -1194,11 +1196,20 @@
   @keyframes skGlassShimmer{0%,100%{transform:scale(1);opacity:.95;}50%{transform:scale(1.015);opacity:1;}}
   /* court 雪落王庭：王冠呼吸，极轻微 scale，优雅 ease-out */
   @keyframes skCourtCrown{0%,100%{transform:scale(1);}50%{transform:scale(1.012);}}
+  /* ---------- 图四皮肤：金色发光定制 keyframes（allgold + gb-tier） ---------- */
+  @keyframes cursedGold{0%,100%{box-shadow:0 0 6px rgba(255,215,94,.7),0 0 0 2px #ffd75e;}
+    50%{box-shadow:0 0 16px rgba(255,215,94,.95),0 0 28px rgba(89,200,232,.55),0 0 0 2px #ffd75e;}}
+  @keyframes dreaminkGold{0%,100%{box-shadow:0 0 6px rgba(255,192,128,.55),0 0 0 1.5px rgba(255,200,90,.7);}
+    50%{box-shadow:0 0 18px rgba(193,77,150,.65),0 0 26px rgba(224,138,117,.45),0 0 0 2px rgba(255,200,90,.95);}}
+  @keyframes mermaidGold{0%,100%{box-shadow:0 0 8px rgba(255,215,94,.55),0 0 0 1.5px rgba(111,224,224,.6);}
+    50%{box-shadow:0 0 18px rgba(255,215,94,.85),0 0 30px rgba(111,224,224,.55),0 0 0 2px rgba(255,230,140,.9);}}
+  @keyframes courtGold{0%,100%{box-shadow:0 0 6px rgba(255,220,130,.4),0 0 0 1.5px rgba(255,220,130,.55);}
+    50%{box-shadow:0 0 14px rgba(255,220,130,.7),0 0 22px rgba(61,143,216,.35),0 0 0 2px rgba(255,235,160,.85);}}
   /* ---------- 入场 stagger：通用 + 四皮肤变体 ---------- */
   @keyframes skStaggerIn{0%{opacity:0;transform:translateY(10px) scale(.96);}100%{opacity:1;transform:translateY(0) scale(1);}}
   .anim-in{opacity:0;animation:skStaggerIn .35s var(--stagger,0ms) cubic-bezier(.2,.8,.3,1) both;}
   /* 四皮肤各自的入场风格化 */
-  html[data-skin="cursed"] .anim-in{animation-name:skPxPop;animation-timing-function:steps(4,jump-end);animation-duration:.42s;}
+  html[data-skin="cursed"] .anim-in{animation-timing-function:steps(4,jump-end);animation-duration:.42s;}
   html[data-skin="dreamink"] .anim-in{animation-name:skStaggerIn;animation-timing-function:cubic-bezier(.4,0,.6,1);animation-duration:.44s;}
   html[data-skin="mermaidsea"] .anim-in{animation-name:skStaggerIn;animation-timing-function:cubic-bezier(.2,.8,.3,1);animation-duration:.38s;}
   html[data-skin="court"] .anim-in{animation-name:skStaggerIn;animation-timing-function:cubic-bezier(.2,.8,.3,1);animation-duration:.48s;}
@@ -1323,6 +1334,15 @@
   html[data-skin="forestedge"] .fg-box{background:rgba(255,255,255,.95);border-color:rgba(111,174,135,.34);}
   html[data-skin="forestedge"] .fg-pick:not(.sel),html[data-skin="forestedge"] .fg-lv:not(.sel){background:rgba(255,255,255,.92);border-color:rgba(111,174,135,.30);}
   html[data-skin="forestedge"] .fg-lbtabs button:not(.on){background:#eef7f0;color:#2f6b4f;}
+  /* forestedge allgold：晨雾金 + 森林绿 */
+  html[data-skin="forestedge"] .bcard.allgold{background:linear-gradient(180deg,rgba(255,242,185,.75),rgba(200,225,180,.6));border-color:#6fae87;box-shadow:0 0 10px rgba(111,174,135,.4),0 0 0 1.5px rgba(230,184,76,.9);}
+  html[data-skin="forestedge"] .bcard.allgold.anim-in{animation:skStaggerIn .35s var(--stagger,0ms) cubic-bezier(.2,.8,.3,1) both;box-shadow:0 0 10px rgba(111,174,135,.4),0 0 0 1.5px rgba(230,184,76,.9);}
+  html[data-skin="forestedge"] .bcard.allgold .cd{color:#5d8a4d;}
+  html[data-skin="forestedge"] .gb-tier{border-color:#6fae87;background:linear-gradient(180deg,#fff6df,#eef7f0);}
+  html[data-skin="forestedge"] .gb-tier:hover{box-shadow:0 4px 12px rgba(111,174,135,.3);}
+  html[data-skin="forestedge"] .gb-tier-pct{color:#2f6b4f;}
+  html[data-skin="forestedge"] .gb-tier-gold{color:#8a6a2e;}
+  html[data-skin="forestedge"] .gb-tier-tom{color:#d8542a;}
 
   /* ===================== 皮肤二：世外桃源 · 木屋手帐 ===================== */
   html[data-skin="fairy"] body{
@@ -1403,6 +1423,15 @@
   html[data-skin="fairy"] .fg-box{background:#fffaf0;border:2px solid #a2734a;border-radius:14px 18px 12px 20px;}
   html[data-skin="fairy"] .fg-pick:not(.sel),html[data-skin="fairy"] .fg-lv:not(.sel){background:#fffaf0;border-color:#c9b18e;}
   html[data-skin="fairy"] .fg-lbtabs button:not(.on){background:#f7ecd6;color:#5b3f2a;}
+  /* fairy allgold：奶油金 + 木框橙 */
+  html[data-skin="fairy"] .bcard.allgold{background:linear-gradient(180deg,rgba(255,245,195,.85),rgba(255,200,130,.7));border-color:#a2734a;border-radius:14px 18px 12px 20px;box-shadow:0 0 10px rgba(162,115,74,.35),0 0 0 2px rgba(230,184,76,.9);}
+  html[data-skin="fairy"] .bcard.allgold.anim-in{animation:skStaggerIn .35s var(--stagger,0ms) cubic-bezier(.2,.8,.3,1) both;box-shadow:0 0 10px rgba(162,115,74,.35),0 0 0 2px rgba(230,184,76,.9);}
+  html[data-skin="fairy"] .bcard.allgold .cd{color:#a2734a;}
+  html[data-skin="fairy"] .gb-tier{border-color:#a2734a;background:linear-gradient(180deg,#fffdf6,#f7ecd6);border-radius:14px 18px 12px 20px;box-shadow:2px 3px 0 rgba(91,63,42,.18);}
+  html[data-skin="fairy"] .gb-tier:hover{transform:translateY(-2px);box-shadow:4px 5px 0 rgba(91,63,42,.2);}
+  html[data-skin="fairy"] .gb-tier-pct{color:#a2734a;}
+  html[data-skin="fairy"] .gb-tier-gold{color:#8a6a2e;}
+  html[data-skin="fairy"] .gb-tier-tom{color:#d1663f;}
 
   /* ===================== 皮肤三：上古秘境 · 幽林幻夜 ===================== */
   html[data-skin="ancient"] body{
@@ -1498,6 +1527,15 @@
   html[data-skin="ancient"] .fg-box{background:rgba(18,41,31,.96);border-color:rgba(110,240,176,.30);}
   html[data-skin="ancient"] .fg-pick:not(.sel),html[data-skin="ancient"] .fg-lv:not(.sel){background:rgba(23,51,39,.86);border-color:rgba(110,240,176,.22);}
   html[data-skin="ancient"] .fg-lbtabs button:not(.on){background:rgba(23,51,39,.86);color:#c9e8dc;}
+  /* ancient allgold：幽林暗金 + 翡翠绿 */
+  html[data-skin="ancient"] .bcard.allgold{background:linear-gradient(180deg,#2d4a3e,#173327);border-color:#6ef0b0;box-shadow:0 0 10px rgba(110,240,176,.35),0 0 0 1.5px rgba(200,170,80,.7);}
+  html[data-skin="ancient"] .bcard.allgold.anim-in{animation:skStaggerIn .35s var(--stagger,0ms) cubic-bezier(.2,.8,.3,1) both;box-shadow:0 0 10px rgba(110,240,176,.35),0 0 0 1.5px rgba(200,170,80,.7);}
+  html[data-skin="ancient"] .bcard.allgold .cd{color:#6ef0b0;}
+  html[data-skin="ancient"] .gb-tier{border-color:#6ef0b0;background:linear-gradient(180deg,#2d4a3e,#173327);}
+  html[data-skin="ancient"] .gb-tier:hover{box-shadow:0 0 12px rgba(110,240,176,.4);}
+  html[data-skin="ancient"] .gb-tier-pct{color:#6ef0b0;}
+  html[data-skin="ancient"] .gb-tier-gold{color:#ffd08a;}
+  html[data-skin="ancient"] .gb-tier-tom{color:#e08a3c;}
 
   /* ===================== 皮肤四：枯寂幻境 · 像素森屿 ===================== */
   html[data-skin="cursed"] body{
@@ -1621,6 +1659,15 @@
   /* cursed 弹窗入场：像素弹跳 */
   html[data-skin="cursed"] #modal{animation:skPxPop .35s steps(4,jump-end) both;animation-iteration-count:1;}
   html[data-skin="cursed"] #fdOverlay .fd-card{animation:skPxPop .32s steps(4,jump-end) both;animation-iteration-count:1;}
+  /* cursed allgold：像素暗金 + 霓虹青混光 */
+  html[data-skin="cursed"] .bcard.allgold{background:linear-gradient(180deg,#3a3d6b,#2a2d52);border-color:#ffd75e;border-width:2px;border-radius:0;animation:cursedGold 1.8s steps(4,jump-end) infinite;}
+  html[data-skin="cursed"] .bcard.allgold.anim-in{animation:skStaggerIn .42s var(--stagger,0ms) steps(4,jump-end) both, cursedGold 1.8s steps(4,jump-end) .42s infinite;}
+  html[data-skin="cursed"] .bcard.allgold .cd{color:#ffd75e;}
+  html[data-skin="cursed"] .gb-tier{border-color:#ffd75e;background:linear-gradient(180deg,#3a3d6b,#2a2d52);border-radius:0;border-width:2px;}
+  html[data-skin="cursed"] .gb-tier:hover{transform:translateY(-1px);box-shadow:0 0 12px rgba(255,215,94,.5);}
+  html[data-skin="cursed"] .gb-tier-pct{color:#ffd75e;}
+  html[data-skin="cursed"] .gb-tier-gold{color:#ffd75e;}
+  html[data-skin="cursed"] .gb-tier-tom{color:#e89a5a;}
 
   /* ===================== 皮肤五：小镇入口 · 暖巷集市 ===================== */
   html[data-skin="townentry"] body{
@@ -1693,6 +1740,15 @@
   html[data-skin="townentry"] .fg-box{background:rgba(255,253,248,.95);border-color:rgba(138,90,59,.34);}
   html[data-skin="townentry"] .fg-pick:not(.sel),html[data-skin="townentry"] .fg-lv:not(.sel){background:rgba(255,253,248,.92);border-color:rgba(138,90,59,.30);}
   html[data-skin="townentry"] .fg-lbtabs button:not(.on){background:#f6e9d2;color:#8f3a29;}
+  /* townentry allgold：暖巷金 + 砖红 */
+  html[data-skin="townentry"] .bcard.allgold{background:linear-gradient(180deg,rgba(255,243,185,.85),rgba(255,180,120,.65));border-color:#c1553f;box-shadow:0 0 10px rgba(193,85,63,.35),0 0 0 1.5px rgba(230,184,76,.9);}
+  html[data-skin="townentry"] .bcard.allgold.anim-in{animation:skStaggerIn .35s var(--stagger,0ms) cubic-bezier(.2,.8,.3,1) both;box-shadow:0 0 10px rgba(193,85,63,.35),0 0 0 1.5px rgba(230,184,76,.9);}
+  html[data-skin="townentry"] .bcard.allgold .cd{color:#c1553f;}
+  html[data-skin="townentry"] .gb-tier{border-color:#c1553f;background:linear-gradient(180deg,#fff6df,#f6e9d2);}
+  html[data-skin="townentry"] .gb-tier:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(193,85,63,.3);}
+  html[data-skin="townentry"] .gb-tier-pct{color:#c1553f;}
+  html[data-skin="townentry"] .gb-tier-gold{color:#8a6a2e;}
+  html[data-skin="townentry"] .gb-tier-tom{color:#d8542a;}
 
   /* ===================== 皮肤六：月光夜市 · 灯笼夜市 ===================== */
   html[data-skin="moonmarket"] body{
@@ -1770,6 +1826,15 @@
   html[data-skin="moonmarket"] .ltr-full{background:linear-gradient(180deg,#232b55,#1a2043);border-color:rgba(255,207,107,.30);}
   html[data-skin="moonmarket"] .ltr-txt{color:#e6ebff;}
   html[data-skin="moonmarket"] .ltr-sig{color:#93a0d0;}
+  /* moonmarket allgold：夜市金 + 深紫灯笼 */
+  html[data-skin="moonmarket"] .bcard.allgold{background:linear-gradient(180deg,#3b4780,#232b55);border-color:#ffcf6b;box-shadow:0 0 10px rgba(255,207,107,.4),0 0 0 1.5px rgba(255,207,107,.9);}
+  html[data-skin="moonmarket"] .bcard.allgold.anim-in{animation:skStaggerIn .35s var(--stagger,0ms) cubic-bezier(.2,.8,.3,1) both;box-shadow:0 0 10px rgba(255,207,107,.4),0 0 0 1.5px rgba(255,207,107,.9);}
+  html[data-skin="moonmarket"] .bcard.allgold .cd{color:#ffcf6b;}
+  html[data-skin="moonmarket"] .gb-tier{border-color:#ffcf6b;background:linear-gradient(180deg,#3b4780,#232b55);}
+  html[data-skin="moonmarket"] .gb-tier:hover{box-shadow:0 0 12px rgba(255,207,107,.4);}
+  html[data-skin="moonmarket"] .gb-tier-pct{color:#ffcf6b;}
+  html[data-skin="moonmarket"] .gb-tier-gold{color:#ffcf6b;}
+  html[data-skin="moonmarket"] .gb-tier-tom{color:#e08a3c;}
 
   /* ===================== 皮肤七：无月之夜 · 熄灯之夜 ===================== */
   html[data-skin="moonless"] body{
@@ -1843,6 +1908,15 @@
   html[data-skin="moonless"] .ltr-full{background:linear-gradient(180deg,#1a1f2b,#11151d);border-color:rgba(200,56,46,.30);}
   html[data-skin="moonless"] .ltr-txt{color:#dfe4ec;}
   html[data-skin="moonless"] .ltr-sig{color:#8f9aa8;}
+  /* moonless allgold：暗夜金 + 暗红微光 */
+  html[data-skin="moonless"] .bcard.allgold{background:linear-gradient(180deg,#2c3040,#171d28);border-color:#c8382e;box-shadow:0 0 10px rgba(200,56,46,.35),0 0 0 1.5px rgba(230,184,76,.85);}
+  html[data-skin="moonless"] .bcard.allgold.anim-in{animation:skStaggerIn .35s var(--stagger,0ms) cubic-bezier(.2,.8,.3,1) both;box-shadow:0 0 10px rgba(200,56,46,.35),0 0 0 1.5px rgba(230,184,76,.85);}
+  html[data-skin="moonless"] .bcard.allgold .cd{color:#ffd08a;}
+  html[data-skin="moonless"] .gb-tier{border-color:#c8382e;background:linear-gradient(180deg,#2c3040,#171d28);}
+  html[data-skin="moonless"] .gb-tier:hover{box-shadow:0 0 12px rgba(200,56,46,.4);}
+  html[data-skin="moonless"] .gb-tier-pct{color:#c8382e;}
+  html[data-skin="moonless"] .gb-tier-gold{color:#ffd08a;}
+  html[data-skin="moonless"] .gb-tier-tom{color:#e08a3c;}
 
   /* ===================== 皮肤八：番茄之梦 · 狂乱墨线 ===================== */
   html[data-skin="dreamink"] body{
@@ -1937,6 +2011,15 @@
   /* dreamink 弹窗入场：墨线柔化弹入 */
   html[data-skin="dreamink"] #modal{animation:popin .38s cubic-bezier(.4,0,.6,1) both;}
   html[data-skin="dreamink"] #fdOverlay .fd-card{animation:popin .34s cubic-bezier(.4,0,.6,1) both;}
+  /* dreamink allgold：玫瑰金 + 洋红晕染 */
+  html[data-skin="dreamink"] .bcard.allgold{background:linear-gradient(180deg,rgba(255,215,160,.65),rgba(200,120,140,.55));border-color:#c14d96;animation:dreaminkGold 2.1s cubic-bezier(.4,0,.6,1) infinite;}
+  html[data-skin="dreamink"] .bcard.allgold.anim-in{animation:skStaggerIn .44s var(--stagger,0ms) cubic-bezier(.4,0,.6,1) both, dreaminkGold 2.1s cubic-bezier(.4,0,.6,1) .44s infinite;}
+  html[data-skin="dreamink"] .bcard.allgold .cd{color:#e08a3c;}
+  html[data-skin="dreamink"] .gb-tier{border-color:#c14d96;background:linear-gradient(180deg,rgba(255,215,160,.7),rgba(193,77,150,.35));}
+  html[data-skin="dreamink"] .gb-tier:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(193,77,150,.4);}
+  html[data-skin="dreamink"] .gb-tier-pct{color:#c14d96;}
+  html[data-skin="dreamink"] .gb-tier-gold{color:#8a4220;}
+  html[data-skin="dreamink"] .gb-tier-tom{color:#e08a3c;}
 
   /* ===================== 皮肤九：海边港湾 · 晴滩白浪 ===================== */
   html[data-skin="seaharbor"] body{
@@ -2015,6 +2098,15 @@
   html[data-skin="seaharbor"] .ltr-full{background:linear-gradient(180deg,#ffffff,#eef8fb);border-color:rgba(47,176,192,.34);}
   html[data-skin="seaharbor"] .ltr-txt{color:#224653;}
   html[data-skin="seaharbor"] .ltr-sig{color:#5f8494;}
+  /* seaharbor allgold：晴滩金 + 海浪青 */
+  html[data-skin="seaharbor"] .bcard.allgold{background:linear-gradient(180deg,rgba(255,245,195,.85),rgba(200,230,240,.7));border-color:#2fb0c0;box-shadow:0 0 10px rgba(47,176,192,.35),0 0 0 1.5px rgba(230,184,76,.9);}
+  html[data-skin="seaharbor"] .bcard.allgold.anim-in{animation:skStaggerIn .35s var(--stagger,0ms) cubic-bezier(.2,.8,.3,1) both;box-shadow:0 0 10px rgba(47,176,192,.35),0 0 0 1.5px rgba(230,184,76,.9);}
+  html[data-skin="seaharbor"] .bcard.allgold .cd{color:#177f99;}
+  html[data-skin="seaharbor"] .gb-tier{border-color:#2fb0c0;background:linear-gradient(180deg,#fff6df,#e6f4f7);}
+  html[data-skin="seaharbor"] .gb-tier:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(47,176,192,.3);}
+  html[data-skin="seaharbor"] .gb-tier-pct{color:#177f99;}
+  html[data-skin="seaharbor"] .gb-tier-gold{color:#8a6a2e;}
+  html[data-skin="seaharbor"] .gb-tier-tom{color:#d8542a;}
 
   /* ===================== 皮肤十：海岛假日 · 柔沙绿荫 ===================== */
   html[data-skin="islandbay"] body{
@@ -2092,6 +2184,15 @@
   html[data-skin="islandbay"] .ltr-full{background:linear-gradient(180deg,#fdfaf3,#f4ead8);border-color:rgba(138,162,134,.36);}
   html[data-skin="islandbay"] .ltr-txt{color:#38493d;}
   html[data-skin="islandbay"] .ltr-sig{color:#7e9384;}
+  /* islandbay allgold：柔沙金 + 绿荫绿 */
+  html[data-skin="islandbay"] .bcard.allgold{background:linear-gradient(180deg,rgba(255,240,200,.85),rgba(215,230,195,.7));border-color:#8aa286;box-shadow:0 0 10px rgba(138,162,134,.35),0 0 0 1.5px rgba(230,184,76,.9);}
+  html[data-skin="islandbay"] .bcard.allgold.anim-in{animation:skStaggerIn .35s var(--stagger,0ms) cubic-bezier(.2,.8,.3,1) both;box-shadow:0 0 10px rgba(138,162,134,.35),0 0 0 1.5px rgba(230,184,76,.9);}
+  html[data-skin="islandbay"] .bcard.allgold .cd{color:#4e6a55;}
+  html[data-skin="islandbay"] .gb-tier{border-color:#8aa286;background:linear-gradient(180deg,#fff6df,#f0e7d4);}
+  html[data-skin="islandbay"] .gb-tier:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(138,162,134,.3);}
+  html[data-skin="islandbay"] .gb-tier-pct{color:#4e6a55;}
+  html[data-skin="islandbay"] .gb-tier-gold{color:#8a6a2e;}
+  html[data-skin="islandbay"] .gb-tier-tom{color:#d8542a;}
 
   /* ===================== 皮肤十一：沉海遗城 · 拓本碑铭 ===================== */
   html[data-skin="sunkcity"] body{
@@ -2185,6 +2286,15 @@
     box-shadow:inset 0 0 0 4px #f2ead9,inset 0 0 0 5px rgba(42,35,27,.5);}
   html[data-skin="sunkcity"] .ltr-txt{color:#241d15;font-family:"Songti SC","STSong","SimSun",serif;}
   html[data-skin="sunkcity"] .ltr-sig{color:#82241c;}
+  /* sunkcity allgold：拓本金 + 碑铭红 */
+  html[data-skin="sunkcity"] .bcard.allgold{background:linear-gradient(180deg,#f2ead9,#e3d8bc);border-color:#ad3529;border-radius:0;box-shadow:0 0 10px rgba(173,53,41,.4),0 0 0 1.5px rgba(180,140,40,.85);}
+  html[data-skin="sunkcity"] .bcard.allgold.anim-in{animation:skStaggerIn .35s var(--stagger,0ms) cubic-bezier(.2,.8,.3,1) both;box-shadow:0 0 10px rgba(173,53,41,.4),0 0 0 1.5px rgba(180,140,40,.85);}
+  html[data-skin="sunkcity"] .bcard.allgold .cd{color:#ad3529;}
+  html[data-skin="sunkcity"] .gb-tier{border-color:#ad3529;background:linear-gradient(180deg,#fff6df,#f2ead9);border-radius:0;box-shadow:2px 2px 0 rgba(42,35,27,.18);}
+  html[data-skin="sunkcity"] .gb-tier:hover{transform:translateY(-2px);box-shadow:4px 4px 0 rgba(42,35,27,.22);}
+  html[data-skin="sunkcity"] .gb-tier-pct{color:#ad3529;}
+  html[data-skin="sunkcity"] .gb-tier-gold{color:#8a6a2e;}
+  html[data-skin="sunkcity"] .gb-tier-tom{color:#d8542a;}
 
   /* ===================== 皮肤十二：人鱼之海 · 虹光琉璃 ===================== */
   html[data-skin="mermaidsea"] body{
@@ -2296,6 +2406,15 @@
   /* mermaidsea 弹窗入场：水晶丝滑弹入 */
   html[data-skin="mermaidsea"] #modal{animation:popin .36s cubic-bezier(.2,.8,.3,1) both;}
   html[data-skin="mermaidsea"] #fdOverlay .fd-card{animation:popin .32s cubic-bezier(.2,.8,.3,1) both;}
+  /* mermaidsea allgold：金青流光 + 琉璃呼吸 */
+  html[data-skin="mermaidsea"] .bcard.allgold{background:linear-gradient(180deg,rgba(255,232,160,.72),rgba(190,220,240,.6));border-color:#3fb8c8;animation:mermaidGold 2.0s cubic-bezier(.2,.8,.3,1) infinite;}
+  html[data-skin="mermaidsea"] .bcard.allgold.anim-in{animation:skStaggerIn .38s var(--stagger,0ms) cubic-bezier(.2,.8,.3,1) both, mermaidGold 2.0s cubic-bezier(.2,.8,.3,1) .38s infinite;}
+  html[data-skin="mermaidsea"] .bcard.allgold .cd{color:#2a8fa8;}
+  html[data-skin="mermaidsea"] .gb-tier{border-color:#3fb8c8;background:linear-gradient(180deg,rgba(255,232,160,.75),rgba(190,220,240,.55));}
+  html[data-skin="mermaidsea"] .gb-tier:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(63,184,200,.4);}
+  html[data-skin="mermaidsea"] .gb-tier-pct{color:#2a8fa8;}
+  html[data-skin="mermaidsea"] .gb-tier-gold{color:#8a6a2e;}
+  html[data-skin="mermaidsea"] .gb-tier-tom{color:#d8542a;}
 
   /* ==========================================================
      雪地主题皮肤（4 款）
@@ -2627,6 +2746,15 @@
   /* court 弹窗入场：王庭优雅弹入 */
   html[data-skin="court"] #modal{animation:popin .42s cubic-bezier(.2,.8,.3,1) both;}
   html[data-skin="court"] #fdOverlay .fd-card{animation:popin .38s cubic-bezier(.2,.8,.3,1) both;}
+  /* court allgold：典雅冷金 + 宝蓝微闪 */
+  html[data-skin="court"] .bcard.allgold{background:linear-gradient(180deg,#222840,#121520);border-color:rgba(255,220,130,.7);animation:courtGold 2.2s cubic-bezier(.2,.8,.3,1) infinite;}
+  html[data-skin="court"] .bcard.allgold.anim-in{animation:skStaggerIn .48s var(--stagger,0ms) cubic-bezier(.2,.8,.3,1) both, courtGold 2.2s cubic-bezier(.2,.8,.3,1) .48s infinite;}
+  html[data-skin="court"] .bcard.allgold .cd{color:#ffdc82;}
+  html[data-skin="court"] .gb-tier{border-color:rgba(255,220,130,.6);background:linear-gradient(180deg,#222840,#121520);border-radius:99px;}
+  html[data-skin="court"] .gb-tier:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(255,220,130,.25);}
+  html[data-skin="court"] .gb-tier-pct{color:#ffdc82;}
+  html[data-skin="court"] .gb-tier-gold{color:#ffdc82;}
+  html[data-skin="court"] .gb-tier-tom{color:#e89a5a;}
 
   /* ========== 成就 ========== */
   .iconbtn.achbtn{position:relative;}
