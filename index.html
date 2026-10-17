@@ -9305,10 +9305,11 @@ function init(){
   // 松手/取消可能发生在弹窗边界外，故挂到 window 保证必然触发回弹
   window.addEventListener('pointerup',bkEnd);
   window.addEventListener('pointercancel',bkEnd);
-  window.addEventListener('beforeunload',save);
+  window.addEventListener('beforeunload',ddSaveGame);   // 刷新/关窗前把进行中对局一并入档
+  window.addEventListener('pagehide',ddSaveGame);       // 移动端被回收时兜底
   document.addEventListener('visibilitychange',()=>{
     // 置顶小窗存在期间，切到别处不自动暂停（小窗即计时焦点）；否则原规则：失焦暂停、回来自动继续
-    if(document.hidden){ if(S.pomo.running && !pipping() && !S.pomo.bgIdle) pomoPause(true); syncAnimState(); save(); }
+    if(document.hidden){ if(S.pomo.running && !pipping() && !S.pomo.bgIdle) pomoPause(true); syncAnimState(); ddSaveGame(); }
     else if(S.pomo.pausedByBlur){ pomoResume(); }
   });
   $('btnBook').onclick=()=>{ sfx.click(); openBook(); };
@@ -9341,6 +9342,8 @@ function init(){
   $('sceneWeather').onclick=useWeather;
   $('slotBtn').onclick=openSlotMenu;
   save();
+  /* 恢复上一局：等脚本全部执行完（顶层 let 已初始化）再进牌桌，避开暂死区 */
+  setTimeout(function(){ try{ ddRestore(); }catch(e){} },0);
 }
 init();
 /* ================= 斗月巴（旅行页小游戏） ================= */
@@ -9740,8 +9743,49 @@ function ddExit(){
 function ddCleanup(){
   if(ddTimer){ clearTimeout(ddTimer); ddTimer=null; }
   ddG=null;
+  ddClearGame();                                /* 主动收手/退出：待恢复快照一并清掉 */
+  save();
   ddShowLayer(null);
   ddRenderAll();
+}
+/* ---------- 进行中对局的持久化：刷新 / 关窗后原样恢复，不丢局 ---------- */
+/* 用独立的 localStorage key 存快照，不塞进共享存档 S：
+   多开页面时，空闲标签页 unload 时会 save() 自己那份不含对局的 S，
+   若快照存 S 里就会被抹掉；独立 key 只由拥有对局的页面写/清，互不干扰。 */
+const DD_GAME_KEY='idle-yueba-ddgame-v1';
+/* ddG 全是纯数据（牌为 {v,s,id}），可直接 JSON 序列化；phase==='over' 视为无对局 */
+function ddSaveGame(){
+  try{
+    if(ddG && ddG.phase!=='over') localStorage.setItem(DD_GAME_KEY, JSON.stringify(ddG));
+    /* 无对局时不动作：避免空闲标签页把别页正在进行的对局清掉 */
+  }catch(e){}
+  save();
+}
+function ddClearGame(){ try{ localStorage.removeItem(DD_GAME_KEY); }catch(e){} }
+/* 读档后恢复上一局：回到牌桌接着打（押注开局已扣，恢复不重开、不换牌，反作弊不受影响） */
+function ddRestore(){
+  let saved=null;
+  try{ const raw=localStorage.getItem(DD_GAME_KEY); saved=raw?JSON.parse(raw):null; }catch(e){}
+  if(!saved||saved.phase==='over') return false;
+  if(!saved.hands||saved.hands.length!==3||!saved.hands[0]){ ddClearGame(); save(); return false; }
+  ddG=saved;
+  ddG.sel=ddG.sel||[]; ddG.hintIdx=ddG.hintIdx|0;
+  ddG.plays=ddG.plays||[null,null,null];
+  ddG.bidDone=ddG.bidDone||[false,false,false];
+  ddG.playCount=ddG.playCount||[0,0,0];
+  ddG.role=ddG.role||['','',''];
+  ddG.seen=ddG.seen||[];
+  ddDiff=ddG.diff||ddDiff;
+  if(ddTimer){ clearTimeout(ddTimer); ddTimer=null; }
+  ddRenderSeats._last=['','',''];               /* 重置签名缓存：恢复时强制重建一次 DOM */
+  ddRenderMyPlay._last='';
+  const el=$('ddgame'); if(el) el.classList.add('show');
+  document.body.classList.add('dd-lock');
+  ddShowLayer(null);
+  ddRenderAll();
+  ddAfterRender();                              /* 若正轮到 AI，重新排一次出牌 */
+  ddHost.toast('已恢复上一局','接着打，押注与手牌都还在');
+  return true;
 }
 /* ---------- 下注 ---------- */
 /* 难度选择按钮 */
@@ -9816,6 +9860,7 @@ function ddDeal(stake){
     seen:[]                                    /* 算牌：全场已打出的牌（值），供困难 AI 推断对手剩余牌 */
   };
   ddAskBid();
+  ddSaveGame();                                /* 开局即入档：刷新后可恢复这一局 */
 }
 /* 难度让牌：悄悄把玩家几张「偏大」的牌，与 AI 手里「偏小」的牌对调。
    只动 10~A 这些不扎眼的中高牌，且随机挑（不是固定取最大的几张），
@@ -9923,6 +9968,7 @@ function ddFinishBid(){
     },2300);
   }
   ddAfterRender();
+  ddSaveGame();                                /* 地主确定、进入出牌阶段：更新入档 */
 }
 
 /* ---------- 出牌流程 ---------- */
@@ -9958,6 +10004,7 @@ function ddPlay(cards,who){
   g.turn=(who+1)%3;
   ddRenderAll();
   ddAfterRender();
+  ddSaveGame();                                /* 每出一手都入档，刷新可原地续打 */
 }
 function ddPass(who){
   const g=ddG;
@@ -9965,6 +10012,7 @@ function ddPass(who){
   g.turn=(who+1)%3;
   ddRenderAll();
   ddAfterRender();
+  ddSaveGame();
 }
 /* 玩家操作 */
 function ddPlayerPlay(){
@@ -10214,6 +10262,7 @@ const DD_REC_MAX=1000;
 function ddPushRecord(win,net,winner){
   const g=ddG; if(!g||g._rec) return;          /* 同一局只记一次（认输也记） */
   g._rec=true;
+  ddClearGame();                               /* 本局已结算：清掉待恢复快照，避免刷新后重进旧局 */
   const t=tvFresh(); t.ddRecords=t.ddRecords||[];
   const role=g.role[0]||'farmer';
   const isLd=(role==='landlord');
@@ -10570,7 +10619,7 @@ function ddRulesHTML(){
     +'<p><b>目标</b>：先把手中牌出完的一方获胜。地主一人对两个农民，任一农民出完则农民方获胜。</p>'
     +'<p><b>难度与奖励</b>：墨镜月巴（简单，AI 会犯错，奖励 ×0.2）、进食月巴（中等，奖励 ×0.5）、背头月巴（困难，AI 很强很聪明，奖励 ×1）。押注最高 100 🍅，也可以不押注「随便玩玩」。地主赢净赚 2×押注，农民赢净赚 1×押注，再乘难度倍率；输则损失押注。</p>'
     +'<p><b>每日押注次数</b>：每天最多押注 <b>3 次</b>（北京时间自然日 0 点重置）。3 次用完后，当天只能「随便玩玩」（不押注、不输赢番茄）。</p>'
-    +'<p><b>关于刷新</b>：押注在开局瞬间就扣除并记次。若中途刷新或以任何方式离开牌局，该局判为认输。押注不退、次数照扣。也就是说，看到手牌不好就想刷新重开是不划算的，请想好再开局。</p>'
+    +'<p><b>关于刷新</b>：押注在开局瞬间就扣除并记次。中途刷新或关窗不会丢局——回到游戏会自动恢复到牌桌接着打（手牌、押注、进度都在），打完这一局才写入战绩。所以刷新并不能重开换牌，看到手牌不好想刷新重来是不划算的，请想好再开局。</p>'
     +'<p><b>多开页面</b>：若同时开多个页面，番茄余额与押注次数都以存档为准，不会因为多开而多出次数或重复花掉同一笔番茄。</p>'
     +'<div class="dd-btns"><button class="btn" onclick="ddHideRules()">知道了</button></div>';
 }
@@ -10862,7 +10911,7 @@ function ddSparkHTML(cum){
       try{ sessionStorage.setItem('_tvVerReload',String(Date.now())); }catch(e){}
       try{ if(typeof toast==='function') toast('✨ 发现新版本，正在自动刷新…'); }catch(e){}
       setTimeout(function(){
-        try{ if(typeof save==='function') save(); }catch(e){}   // 先存档，刷新不丢进度
+        try{ if(typeof ddSaveGame==='function') ddSaveGame(); else if(typeof save==='function') save(); }catch(e){}   // 先存档（含进行中对局），刷新不丢进度
         try{ var u=new URL(location.href); u.searchParams.set('_v',Date.now()); location.replace(u.toString()); }
         catch(e){ location.reload(); }                          // 带时间戳强行绕开缓存，确保拿到新版
       },1200);
