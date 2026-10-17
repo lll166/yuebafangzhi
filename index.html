@@ -620,7 +620,11 @@
   #ddgame .dd-top .sp{flex:1;}
   #ddgame .iconbtn{width:30px;height:30px;font-size:15px;font-weight:900;}
   #ddgame .dd-stage{position:relative;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;
-    padding:10px;width:100%;max-width:620px;margin:0 auto;}
+    padding:10px;width:100%;max-width:620px;margin:0 auto;overflow:hidden;}
+  /* 对手区 / 中央信息 / 我方出牌：矮屏内容超出时本区上下滚动，
+     手牌与按钮固定在下方常驻，保证「出牌·不要·提示·重选」永远可见 */
+  #ddgame .dd-scroll{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;
+    overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
   /* 月巴与番茄上下两行排布，各自的出牌有整行宽度，看得更清楚 */
   #ddgame .dd-seats{display:flex;flex-direction:column;gap:6px;}
   #ddgame .dd-opp{flex:0 0 auto;min-width:0;border-radius:14px;padding:7px 10px;
@@ -665,14 +669,15 @@
   #ddgame .dd-cheat-cards{display:flex;gap:4px;align-items:center;}
   #ddgame .dd-cheat-row .mid{color:#c07a2e;}
   #ddgame .dd-myplay{display:flex;flex-wrap:wrap;gap:1px;justify-content:center;min-height:38px;align-items:center;padding:2px 6px;}
-  #ddgame .dd-hand{display:flex;justify-content:center;align-items:flex-end;padding:20px 4px 6px;
+  #ddgame .dd-hand{flex:0 0 auto;display:flex;justify-content:center;align-items:flex-end;padding:20px 4px 6px;
     overflow-x:auto;overflow-y:visible;min-height:82px;scrollbar-width:none;}
   #ddgame .dd-hand::-webkit-scrollbar{display:none;}
   /* 手牌分成两组：宽屏下两组并排拼成一行，窄屏下改为上下两行 */
   #ddgame .dd-hrow{display:flex;align-items:flex-end;justify-content:center;}
   #ddgame .dd-hrow>div+div{margin-left:-14px;}
   #ddgame .dd-hand>.dd-hrow+.dd-hrow{margin-left:-14px;}
-  #ddgame .dd-actions{display:flex;gap:8px;justify-content:center;padding:2px 4px 4px;flex-wrap:wrap;min-height:44px;}
+  #ddgame .dd-actions{flex:0 0 auto;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;
+    padding:4px 4px calc(6px + env(safe-area-inset-bottom));min-height:44px;}
   #ddgame .btn{border:none;font-family:inherit;font-weight:900;font-size:14px;border-radius:12px;
     padding:10px 18px;cursor:pointer;background:rgba(149,117,205,.14);color:var(--purple2);
     box-shadow:0 2px 6px rgba(120,100,160,.14);transition:.12s;}
@@ -827,10 +832,19 @@
     border-radius:999px;box-shadow:0 8px 22px rgba(0,0,0,.28);opacity:0;pointer-events:none;transition:opacity .2s;}
   #ddgame .dd-toast.show{opacity:1;}
   @media (max-width:560px){
-    /* 窄屏：手牌折成上下两行，看得更清楚 */
-    #ddgame .dd-hand{flex-direction:column;align-items:center;gap:30px;padding-top:44px;
+    /* 窄屏：手牌折成上下两行，看得更清楚；同时收紧上下预留与间距，把高度让给可滚动的信息区 */
+    #ddgame .dd-stage{padding:8px;}
+    #ddgame .dd-hand{flex-direction:column;align-items:center;gap:12px;padding-top:26px;
       overflow:visible;min-height:0;}
     #ddgame .dd-hand>.dd-hrow+.dd-hrow{margin-left:0;}
+    #ddgame .dd-card.sel{transform:translateY(-10px);}
+    #ddgame .dd-seats{gap:5px;}
+    #ddgame .dd-opp{padding:6px 8px;}
+    #ddgame .dd-played{margin-top:3px;min-height:30px;}
+    #ddgame .dd-center{gap:4px;padding:4px;}
+    #ddgame .dd-myplay{min-height:30px;}
+    #ddgame .dd-actions{gap:6px;}
+    #ddgame .dd-actions .btn{padding:9px 15px;font-size:13px;}
   }
   @media (max-width:380px){
     #ddgame .dd-card{width:34px;height:48px;}
@@ -1108,6 +1122,320 @@
   .skin.owned .sc{color:var(--purple2);}
   .skin.on .sc{color:var(--good);font-weight:800;}
 
+  /* ---------- 皮肤折叠分组（森林 / 后续小镇·大海·雪地各成一组） ---------- */
+  .skingrp{margin-top:10px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.42);overflow:hidden;}
+  .skingrp__head{display:flex;align-items:center;gap:7px;padding:8px 11px;cursor:pointer;
+    background:linear-gradient(180deg,var(--eb,#f2f5f0),rgba(255,255,255,.15));border-bottom:1px solid var(--line);}
+  .skingrp:not(.is-open) .skingrp__head{border-bottom:none;}
+  .skingrp__arrow{font-size:11px;color:var(--ec,#6fa84e);width:12px;display:inline-block;}
+  .skingrp__title{font-size:12px;font-weight:800;color:var(--ec,#6fa84e);}
+  .skingrp__count{margin-left:auto;font-size:10px;font-weight:700;color:var(--dim);}
+  .skingrp__body{max-height:0;overflow:hidden;transition:max-height .32s ease;}
+  .skingrp.is-open .skingrp__body{max-height:300px;}
+  .skingrp__inner{padding:9px;}
+  .skingrp.is-open .skingrp__inner{animation:skPop .28s ease both;}
+
+  /* ---------- 皮肤氛围层通用动效帧 ---------- */
+  @keyframes skPop{0%{transform:scale(.94);opacity:0;}60%{transform:scale(1.02);opacity:1;}100%{transform:scale(1);opacity:1;}}
+  @keyframes skDrift1{0%{transform:translate3d(0,0,0) scale(1);}100%{transform:translate3d(38px,26px,0) scale(1.08);}}
+  @keyframes skDrift2{0%{transform:translate3d(0,0,0) scale(1.06);}100%{transform:translate3d(-34px,30px,0) scale(1);}}
+  @keyframes skBreathe{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-6px) scale(1.03);}}
+  @keyframes skSway{0%,100%{transform:rotate(-.38deg);}50%{transform:rotate(.38deg);}}
+  @keyframes skSweep{0%{transform:translateX(-130%);}100%{transform:translateX(270%);}}
+  @keyframes skTwinkle{0%,100%{opacity:.38;}50%{opacity:.95;}}
+  @keyframes skStarTwinkle{0%,100%{opacity:1;}50%{opacity:0;}}
+  @keyframes skCrt{0%{top:-25%;}100%{top:125%;}}
+
+  /* 低功耗 / 减少动效：皮肤氛围层同样要停 */
+  body.low-power::before, body.low-power::after{animation:none!important;}
+  @media (prefers-reduced-motion: reduce){
+    html[data-skin] *, html[data-skin] body::before, html[data-skin] body::after{animation:none!important;}
+  }
+
+  /* ===================== 皮肤一：森林边缘 · 晨雾林泉 ===================== */
+  html[data-skin="forestedge"] body{
+    background:
+      radial-gradient(900px 520px at 85% -8%, rgba(111,174,135,.26), transparent 60%),
+      radial-gradient(800px 480px at -8% 108%, rgba(217,232,106,.24), transparent 60%),
+      linear-gradient(180deg,#f4f9f5,#e3f0e8);
+  }
+  html[data-skin="forestedge"] body::before{
+    content:"";position:fixed;inset:-18% -8%;z-index:-1;pointer-events:none;filter:blur(7px);
+    background:
+      radial-gradient(closest-side,rgba(255,255,255,.85),transparent 70%) 10% 16%/46% 34% no-repeat,
+      radial-gradient(closest-side,rgba(191,227,216,.72),transparent 70%) 66% 6%/54% 38% no-repeat,
+      radial-gradient(closest-side,rgba(217,232,106,.38),transparent 72%) 38% 76%/62% 42% no-repeat;
+    animation:skDrift1 34s ease-in-out infinite alternate;
+  }
+  html[data-skin="forestedge"] body::after{
+    content:"";position:fixed;left:0;right:0;bottom:0;height:36vh;z-index:-1;pointer-events:none;
+    background:linear-gradient(0deg,rgba(47,107,79,.15),rgba(47,107,79,0));
+    animation:skBreathe 9s ease-in-out infinite;
+  }
+  html[data-skin="forestedge"] .frost{background:linear-gradient(180deg,rgba(253,255,253,.92),rgba(241,248,243,.84));
+    backdrop-filter:none;-webkit-backdrop-filter:none;border:1.2px solid rgba(111,174,135,.30);border-radius:22px;
+    box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 6px 16px rgba(47,107,79,.10),0 14px 30px rgba(47,107,79,.07),0 24px 52px rgba(47,107,79,.05);}
+  html[data-skin="forestedge"] .btn{background:linear-gradient(180deg,#93d3a9,#5fa97a 52%,#3f8a63);color:#fff;
+    border:1px solid rgba(47,107,79,.42);border-radius:999px;
+    box-shadow:0 1px 0 rgba(255,255,255,.75) inset,0 -2px 6px rgba(23,64,44,.28) inset,0 8px 18px rgba(47,107,79,.30);}
+  html[data-skin="forestedge"] .btn:hover{transform:translateY(-2px);filter:brightness(1.06);border-color:rgba(47,107,79,.55);}
+  html[data-skin="forestedge"] .btn.gold{background:linear-gradient(180deg,#ffe9a0,#d9a72c 55%,#b98c14);color:#4a3406;
+    border-color:rgba(160,116,20,.5);box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 -2px 6px rgba(120,84,8,.3) inset,0 8px 18px rgba(160,120,20,.26);}
+  html[data-skin="forestedge"] .btn:disabled{opacity:.45;filter:grayscale(.4);}
+  html[data-skin="forestedge"] .chip{background:linear-gradient(180deg,#ffffff,#eef7f0);border:1.2px solid rgba(111,174,135,.32);}
+  html[data-skin="forestedge"] .iconbtn{background:linear-gradient(180deg,#ffffff,#eef7f0);border:1.2px solid rgba(111,174,135,.32);color:#2f6b4f;border-radius:14px;}
+  html[data-skin="forestedge"] .bar{background:rgba(111,174,135,.20);}
+  html[data-skin="forestedge"] .bar i{background:linear-gradient(90deg,#bfe3d8,#4f9e6a 70%,#2f6b4f);}
+  html[data-skin="forestedge"] .dockbtn{background:linear-gradient(180deg,#ffffff,#eef7f0);border:1.2px solid rgba(111,174,135,.32);color:#2f6b4f;border-radius:16px;}
+  html[data-skin="forestedge"] .dockbtn:hover{border-color:#6fae87;}
+  html[data-skin="forestedge"] #overlay{background:rgba(34,64,47,.34);}
+  html[data-skin="forestedge"] #modal-head{border-bottom:1.2px solid rgba(111,174,135,.30);}
+  html[data-skin="forestedge"] .btab{background:linear-gradient(180deg,#ffffff,#eef7f0);border:1.2px solid rgba(111,174,135,.28);color:#6d8a78;border-radius:999px;}
+  html[data-skin="forestedge"] .btab.on{background:linear-gradient(180deg,#93d3a9,#3f8a63);color:#fff;border-color:rgba(47,107,79,.45);}
+  html[data-skin="forestedge"] .zcard{border:1.2px solid rgba(111,174,135,.30);border-radius:22px;box-shadow:0 8px 24px rgba(47,107,79,.14);}
+  html[data-skin="forestedge"] .zcard .zover{background:linear-gradient(180deg,rgba(244,249,245,.05) 30%,rgba(227,240,232,.82));}
+  html[data-skin="forestedge"] .zcard.locked .zover{background:linear-gradient(180deg,rgba(244,249,245,.10),rgba(207,227,213,.90));}
+  html[data-skin="forestedge"] .rg-head{color:#22402f;background:linear-gradient(180deg,#eaf3df,#dcecdf);border:1.2px solid rgba(111,174,135,.28);}
+  html[data-skin="forestedge"] .rg-arrow{color:#5f7d69;}
+  html[data-skin="forestedge"] .rg-sub{color:#5f7d69;}
+  html[data-skin="forestedge"] .skinbar{background:linear-gradient(180deg,rgba(255,255,255,.66),rgba(238,247,240,.52));border:1.2px solid rgba(111,174,135,.28);}
+  html[data-skin="forestedge"] .skin{background:linear-gradient(180deg,#ffffff,#eef7f0);border:1.2px solid rgba(111,174,135,.28);}
+  html[data-skin="forestedge"] .skin.on{border-color:#4f9e6a;box-shadow:0 0 0 2px #a8d9bd;}
+  html[data-skin="forestedge"] .cf-item{background:rgba(253,255,253,.94);border:1.2px solid rgba(111,174,135,.36);}
+  html[data-skin="forestedge"] .rsum-row{background:rgba(111,174,135,.12);}
+  html[data-skin="forestedge"] .ach-card{background:rgba(255,255,255,.62);}
+  html[data-skin="forestedge"] .ach-card.on{background:linear-gradient(180deg,rgba(217,232,106,.40),rgba(168,217,189,.40));border-color:#8fc47a;box-shadow:0 0 10px rgba(111,174,135,.4);}
+  html[data-skin="forestedge"] .ach-ic{background:rgba(111,174,135,.16);}
+  html[data-skin="forestedge"] .bcard{background:linear-gradient(180deg,rgba(255,255,255,.8),rgba(238,247,240,.62));}
+  html[data-skin="forestedge"] .sh-card{background:linear-gradient(180deg,#ffffff,#eef7f0);border:1.2px solid rgba(111,174,135,.36);}
+  html[data-skin="forestedge"] .sh-n{color:#2f6b4f;}
+  html[data-skin="forestedge"] .pc.on{background:#e7f5ea;border-color:#8fc47a;color:#2f6b4f;}
+  html[data-skin="forestedge"] .pc.off{background:#eef2ef;color:#a9b6ad;}
+
+  /* ===================== 皮肤二：世外桃源 · 木屋手帐 ===================== */
+  html[data-skin="fairy"] body{
+    background:
+      radial-gradient(900px 520px at 84% -6%, rgba(232,176,75,.24), transparent 62%),
+      radial-gradient(760px 460px at -6% 106%, rgba(162,115,74,.22), transparent 62%),
+      linear-gradient(180deg,#fdf6e7,#f3e5cc);
+  }
+  html[data-skin="fairy"] body::before{
+    content:"";position:fixed;inset:-1%;z-index:-1;pointer-events:none;opacity:.55;
+    background-image:
+      repeating-linear-gradient(0deg,rgba(162,115,74,.07) 0 1px,transparent 1px 26px),
+      repeating-linear-gradient(90deg,rgba(162,115,74,.05) 0 1px,transparent 1px 26px);
+    animation:skSway 7.5s ease-in-out infinite;
+  }
+  html[data-skin="fairy"] body::after{
+    content:"";position:fixed;left:-4%;right:-4%;top:-10%;height:52vh;z-index:-1;pointer-events:none;filter:blur(9px);
+    background:
+      radial-gradient(closest-side,rgba(232,176,75,.30),transparent 72%) 78% 0/58% 62% no-repeat,
+      radial-gradient(closest-side,rgba(122,155,94,.22),transparent 74%) 12% 22%/50% 52% no-repeat;
+    animation:skDrift2 41s ease-in-out infinite alternate;
+  }
+  html[data-skin="fairy"] .frost{background:linear-gradient(180deg,rgba(255,250,240,.95),rgba(247,236,214,.90));
+    backdrop-filter:none;-webkit-backdrop-filter:none;border:2px solid #a2734a;border-radius:14px 18px 12px 20px;
+    box-shadow:3px 4px 0 rgba(91,63,42,.22),0 12px 26px rgba(91,63,42,.14);}
+  html[data-skin="fairy"] .btn{position:relative;background:linear-gradient(180deg,#ffffff,#f6ead3);color:#5b3f2a;
+    border:2px solid #5b3f2a;border-radius:11px 15px 10px 14px;box-shadow:2px 3px 0 rgba(91,63,42,.22);}
+  html[data-skin="fairy"] .btn::after{content:"";position:absolute;inset:3px;border:1.5px dashed rgba(91,63,42,.34);
+    border-radius:8px 11px 7px 10px;pointer-events:none;}
+  html[data-skin="fairy"] .btn:hover{transform:translateY(-2px) rotate(-.4deg);border-color:#5b3f2a;}
+  html[data-skin="fairy"] .btn.gold{background:linear-gradient(180deg,#ffe6a8,#e8b04b);color:#5b3f2a;border-color:#8a5f2a;}
+  html[data-skin="fairy"] .chip{background:linear-gradient(180deg,#fffdf6,#f7ecd6);border:1.6px solid #c9b18e;}
+  html[data-skin="fairy"] .iconbtn{background:linear-gradient(180deg,#fffdf6,#f7ecd6);border:1.6px solid #c9b18e;color:#5b3f2a;border-radius:12px 14px 11px 13px;}
+  html[data-skin="fairy"] .bar{height:11px;background-color:#efe2c9;background-image:repeating-linear-gradient(45deg,#efe2c9 0 6px,#e7d7b9 6px 12px);border:2px solid #a2734a;border-radius:6px;}
+  html[data-skin="fairy"] .bar i{background-image:repeating-linear-gradient(48deg,#86a867 0 5px,#6d8d50 5px 10px);border-radius:4px;}
+  html[data-skin="fairy"] .dockbtn{background:linear-gradient(180deg,#fffdf6,#f7ecd6);border:2px solid #a2734a;color:#5b3f2a;border-radius:12px 14px 12px 14px;box-shadow:2px 3px 0 rgba(91,63,42,.18);}
+  html[data-skin="fairy"] #overlay{background:rgba(74,53,36,.42);}
+  html[data-skin="fairy"] #modal-head{border-bottom:2px dashed #c9b18e;}
+  html[data-skin="fairy"] .btab{background:linear-gradient(180deg,#fffdf6,#f7ecd6);border:2px solid #c9b18e;color:#8b7355;border-radius:10px 12px 9px 11px;}
+  html[data-skin="fairy"] .btab.on{background:linear-gradient(180deg,#e8b04b,#d1663f);color:#fff8ec;border-color:#8a5f2a;}
+  html[data-skin="fairy"] .zcard{border:2px solid #a2734a;border-radius:14px 18px 12px 20px;box-shadow:3px 4px 0 rgba(91,63,42,.22);}
+  html[data-skin="fairy"] .zcard .zover{background:linear-gradient(180deg,rgba(253,246,231,.05) 30%,rgba(247,236,214,.86));}
+  html[data-skin="fairy"] .zcard.locked .zover{background:linear-gradient(180deg,rgba(253,246,231,.10),rgba(224,207,174,.92));}
+  html[data-skin="fairy"] .rg-head{color:#4a3524;background:linear-gradient(180deg,#f7ecd6,#efdfc0);border:2px solid #c9b18e;}
+  html[data-skin="fairy"] .rg-arrow{color:#8b7355;}
+  html[data-skin="fairy"] .rg-sub{color:#8b7355;}
+  html[data-skin="fairy"] .skinbar{background:linear-gradient(180deg,rgba(255,250,240,.80),rgba(247,236,214,.62));border:2px solid #c9b18e;}
+  html[data-skin="fairy"] .skin{background:linear-gradient(180deg,#fffdf6,#f7ecd6);border:2px solid #c9b18e;border-radius:12px 15px 11px 14px;}
+  html[data-skin="fairy"] .skin.on{border-color:#a2734a;box-shadow:2px 3px 0 rgba(91,63,42,.26);}
+  html[data-skin="fairy"] .cf-item{background:rgba(255,250,240,.96);border:1.6px solid #c9b18e;}
+  html[data-skin="fairy"] .rsum-row{background:rgba(162,115,74,.11);}
+  html[data-skin="fairy"] .ach-card{background:rgba(255,250,240,.72);}
+  html[data-skin="fairy"] .ach-card.on{background:linear-gradient(180deg,rgba(232,176,75,.42),rgba(209,102,63,.28));border-color:#d1663f;}
+  html[data-skin="fairy"] .ach-ic{background:rgba(162,115,74,.16);}
+  html[data-skin="fairy"] .bcard{background:linear-gradient(180deg,rgba(255,250,240,.86),rgba(247,236,214,.70));}
+  html[data-skin="fairy"] .sh-card{background:linear-gradient(180deg,#fffdf6,#f7ecd6);border:2px solid #c9b18e;}
+  html[data-skin="fairy"] .sh-n{color:#5b3f2a;}
+  html[data-skin="fairy"] .sh-dest{background:#f7ecd6;color:#8b7355;}
+  html[data-skin="fairy"] .sh-stock{background:#f7ecd6;color:#8b7355;}
+  html[data-skin="fairy"] .pc.on{background:#fbecc8;border-color:#d1663f;color:#7a4a1e;}
+  html[data-skin="fairy"] .pc.off{background:#f0e9da;color:#b3a68d;}
+  html[data-skin="fairy"] .sh-card.rose{border-color:#d1663f;background:#fff0e4;}
+
+  /* ===================== 皮肤三：上古秘境 · 幽林幻夜 ===================== */
+  html[data-skin="ancient"] body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    background:
+      radial-gradient(900px 560px at 84% -10%, rgba(110,240,176,.16), transparent 62%),
+      radial-gradient(820px 520px at -10% 108%, rgba(79,216,200,.14), transparent 62%),
+      linear-gradient(180deg,#0a1714,#0e2019);
+  }
+  html[data-skin="ancient"] body::before{
+    content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background-image:
+      radial-gradient(1.6px 1.6px at 12% 18%,rgba(110,240,176,.9),transparent),
+      radial-gradient(1.4px 1.4px at 34% 8%,rgba(255,207,122,.85),transparent),
+      radial-gradient(1.8px 1.8px at 58% 26%,rgba(79,216,200,.9),transparent),
+      radial-gradient(1.4px 1.4px at 78% 14%,rgba(110,240,176,.8),transparent),
+      radial-gradient(1.6px 1.6px at 88% 38%,rgba(255,207,122,.7),transparent),
+      radial-gradient(1.4px 1.4px at 24% 52%,rgba(79,216,200,.75),transparent),
+      radial-gradient(1.8px 1.8px at 66% 66%,rgba(110,240,176,.8),transparent),
+      radial-gradient(1.4px 1.4px at 44% 82%,rgba(255,207,122,.6),transparent);
+    animation:skTwinkle 5s ease-in-out infinite;
+  }
+  html[data-skin="ancient"] body::after{
+    content:"";position:fixed;left:0;right:0;height:22vh;z-index:-1;pointer-events:none;
+    background:linear-gradient(180deg,rgba(110,240,176,0),rgba(110,240,176,.10) 55%,rgba(79,216,200,0));
+    animation:skCrt 8.5s linear infinite;
+  }
+  html[data-skin="ancient"] .frost{background:linear-gradient(180deg,rgba(23,51,39,.92),rgba(18,41,31,.94));
+    backdrop-filter:none;-webkit-backdrop-filter:none;border:1.5px solid rgba(110,240,176,.22);border-radius:18px;
+    box-shadow:inset 0 0 20px rgba(110,240,176,.10),0 10px 26px rgba(0,0,0,.45),0 0 22px rgba(110,240,176,.08);}
+  html[data-skin="ancient"] .btn{position:relative;overflow:hidden;background:linear-gradient(180deg,#1d4133,#12291f);
+    color:#6ef0b0;border:1.5px solid rgba(110,240,176,.35);border-radius:12px;letter-spacing:.5px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 14px rgba(110,240,176,.14);}
+  html[data-skin="ancient"] .btn::before{content:"";position:absolute;top:0;bottom:0;left:0;width:38%;
+    background:linear-gradient(100deg,transparent,rgba(110,240,176,.28),transparent);
+    transform:translateX(-130%);animation:skSweep 7.5s ease-in-out infinite;pointer-events:none;}
+  html[data-skin="ancient"] .btn:hover{transform:translateY(-2px);border-color:rgba(110,240,176,.7);color:#c9ffe8;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 0 20px rgba(110,240,176,.34);}
+  html[data-skin="ancient"] .btn.gold{background:linear-gradient(135deg,#ffcf7a,#ffb347);color:#3d2a06;border-color:rgba(255,207,122,.6);
+    box-shadow:0 0 18px rgba(255,183,71,.40),inset 0 1px 0 rgba(255,255,255,.40);}
+  html[data-skin="ancient"] .btn:disabled{opacity:.40;filter:grayscale(.5);}
+  html[data-skin="ancient"] .chip{background:linear-gradient(180deg,#173327,#12291f);border:1.5px solid rgba(110,240,176,.24);color:#e6fff5;}
+  html[data-skin="ancient"] .iconbtn{background:linear-gradient(180deg,#173327,#12291f);border:1.5px solid rgba(110,240,176,.28);color:#6ef0b0;border-radius:12px;box-shadow:0 0 12px rgba(110,240,176,.12);}
+  html[data-skin="ancient"] .iconbtn:hover{border-color:rgba(110,240,176,.65);box-shadow:0 0 18px rgba(110,240,176,.32);}
+  html[data-skin="ancient"] .bar{background:rgba(110,240,176,.12);box-shadow:inset 0 0 6px rgba(0,0,0,.5);}
+  html[data-skin="ancient"] .bar i{background:linear-gradient(90deg,#4fd8c8,#6ef0b0);box-shadow:0 0 10px rgba(110,240,176,.6);}
+  html[data-skin="ancient"] .dockbtn{background:linear-gradient(180deg,#173327,#12291f);border:1.5px solid rgba(110,240,176,.24);color:#6ef0b0;border-radius:14px;}
+  html[data-skin="ancient"] .dockbtn small{color:#7fa898;}
+  html[data-skin="ancient"] .dockbtn:hover{border-color:rgba(110,240,176,.6);box-shadow:0 0 16px rgba(110,240,176,.26);}
+  html[data-skin="ancient"] #overlay{background:rgba(3,12,9,.66);}
+  html[data-skin="ancient"] #modal-head{border-bottom:1.5px solid rgba(110,240,176,.20);}
+  html[data-skin="ancient"] .btab{background:linear-gradient(180deg,#173327,#12291f);border:1.5px solid rgba(110,240,176,.22);color:#7fa898;border-radius:10px;}
+  html[data-skin="ancient"] .btab.on{background:linear-gradient(135deg,#6ef0b0,#4fd8c8);color:#052018;border-color:rgba(110,240,176,.6);box-shadow:0 0 16px rgba(110,240,176,.40);}
+  html[data-skin="ancient"] .zcard{border:1.5px solid rgba(110,240,176,.22);border-radius:18px;box-shadow:0 10px 26px rgba(0,0,0,.5),0 0 18px rgba(110,240,176,.08);}
+  html[data-skin="ancient"] .zcard .zover{background:linear-gradient(180deg,rgba(10,23,20,.10) 30%,rgba(11,29,23,.86));}
+  html[data-skin="ancient"] .zcard.locked .zover{background:linear-gradient(180deg,rgba(10,23,20,.20),rgba(8,20,16,.92));}
+  html[data-skin="ancient"] .rg-head{color:#e6fff5;background:linear-gradient(180deg,#1b3d2e,#12291f);border:1.5px solid rgba(110,240,176,.22);}
+  html[data-skin="ancient"] .rg-arrow{color:#7fa898;}
+  html[data-skin="ancient"] .rg-sub{color:#7fa898;}
+  html[data-skin="ancient"] .skinbar{background:linear-gradient(180deg,rgba(23,51,39,.72),rgba(18,41,31,.62));border:1.5px solid rgba(110,240,176,.22);}
+  html[data-skin="ancient"] .skin{background:linear-gradient(180deg,#173327,#12291f);border:1.5px solid rgba(110,240,176,.22);}
+  html[data-skin="ancient"] .skin.on{border-color:#6ef0b0;box-shadow:0 0 0 2px rgba(110,240,176,.35),0 0 18px rgba(110,240,176,.28);}
+  html[data-skin="ancient"] .skin .sn{color:#6ef0b0;}
+  html[data-skin="ancient"] .cf-item{background:rgba(18,41,31,.94);border:1.5px solid rgba(110,240,176,.34);color:#e6fff5;backdrop-filter:none;}
+  html[data-skin="ancient"] .rsum-row{background:rgba(110,240,176,.10);}
+  html[data-skin="ancient"] .ach-card{background:rgba(23,51,39,.60);}
+  html[data-skin="ancient"] .ach-card.on{background:linear-gradient(180deg,rgba(110,240,176,.20),rgba(79,216,200,.12));border-color:#6ef0b0;box-shadow:0 0 12px rgba(110,240,176,.30);}
+  html[data-skin="ancient"] .ach-ic{background:rgba(110,240,176,.14);}
+  html[data-skin="ancient"] .ach-t{color:#ffcf7a;}
+  html[data-skin="ancient"] .bcard{background:rgba(23,51,39,.70);}
+  html[data-skin="ancient"] .sh-card{background:linear-gradient(180deg,#173327,#12291f);border:1.5px solid rgba(110,240,176,.28);}
+  html[data-skin="ancient"] .sh-n{color:#6ef0b0;}
+  html[data-skin="ancient"] .sh-d{color:#7fa898;}
+  html[data-skin="ancient"] .sh-dest{background:#12291f;color:#7fa898;}
+  html[data-skin="ancient"] .sh-stock{background:#12291f;color:#7fa898;}
+  html[data-skin="ancient"] .pc.on{background:rgba(110,240,176,.16);border-color:#6ef0b0;color:#c9ffe8;}
+  html[data-skin="ancient"] .pc.off{background:rgba(20,40,32,.70);color:#5c7466;}
+
+  /* ===================== 皮肤四：枯寂幻境 · 像素森屿 ===================== */
+  html[data-skin="cursed"] body{
+    font-family:'Courier New',ui-monospace,Consolas,monospace;letter-spacing:.6px;
+    background:
+      repeating-linear-gradient(0deg,#191b36 0 2px,#1b1d3a 2px 4px),
+      radial-gradient(circle at 50% 0%, #2a2d52, #1b1d3a 72%);
+  }
+  html[data-skin="cursed"] body::before{
+    content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.55;
+    background-image:
+      radial-gradient(2px 2px at 10% 16%,#ffd75e,transparent),radial-gradient(2px 2px at 30% 8%,#f4f7ff,transparent),
+      radial-gradient(2px 2px at 52% 22%,#59c8e8,transparent),radial-gradient(2px 2px at 74% 12%,#f4f7ff,transparent),
+      radial-gradient(2px 2px at 88% 32%,#ffd75e,transparent),radial-gradient(2px 2px at 20% 46%,#59c8e8,transparent),
+      radial-gradient(2px 2px at 62% 58%,#f4f7ff,transparent),radial-gradient(2px 2px at 40% 76%,#ffd75e,transparent);
+    animation:skStarTwinkle 2.2s steps(2, jump-none) infinite;
+  }
+  html[data-skin="cursed"] body::after{
+    content:"";position:fixed;left:0;right:0;height:18vh;z-index:-1;pointer-events:none;
+    background:linear-gradient(180deg,rgba(89,200,232,0),rgba(89,200,232,.16) 55%,rgba(255,215,94,0));
+    animation:skCrt 7.5s linear infinite;
+  }
+  html[data-skin="cursed"] .frost{background:linear-gradient(180deg,#333a6b,#2a2d52);
+    backdrop-filter:none;-webkit-backdrop-filter:none;border:3px solid #0e1024;border-radius:0;
+    box-shadow:inset 3px 3px 0 #4c5391,inset -3px -3px 0 #14162e,0 6px 0 #090b18;}
+  html[data-skin="cursed"] .btn{background:#333a6b;color:#f4f7ff;border:3px solid #0e1024;border-radius:0;
+    box-shadow:inset 3px 3px 0 #5a62a8,inset -3px -3px 0 #14162e,0 4px 0 #090b18;}
+  html[data-skin="cursed"] .btn:hover{transform:translateY(-2px);border-color:#0e1024;
+    box-shadow:inset 3px 3px 0 #5a62a8,inset -3px -3px 0 #14162e,0 6px 0 #090b18;}
+  html[data-skin="cursed"] .btn:active{transform:translateY(2px);
+    box-shadow:inset 3px 3px 0 #5a62a8,inset -3px -3px 0 #14162e,0 1px 0 #090b18;}
+  html[data-skin="cursed"] .btn.gold{background:#8a7326;color:#ffd75e;border-color:#0e1024;
+    box-shadow:inset 3px 3px 0 #d8b84a,inset -3px -3px 0 #4a3d10,0 4px 0 #090b18;}
+  html[data-skin="cursed"] .btn:disabled{opacity:.45;filter:grayscale(.6);}
+  html[data-skin="cursed"] .chip{background:#1b1d3a;border:2px solid #0e1024;border-radius:0;
+    box-shadow:inset 2px 2px 0 #3d4478,inset -2px -2px 0 #14162e,2px 2px 0 #090b18;}
+  html[data-skin="cursed"] .iconbtn{background:#1b1d3a;border:2px solid #0e1024;color:#59c8e8;border-radius:0;
+    box-shadow:inset 2px 2px 0 #3d4478,inset -2px -2px 0 #14162e,2px 2px 0 #090b18;}
+  html[data-skin="cursed"] .bar{height:11px;background-color:#14162e;border:2px solid #0e1024;border-radius:0;
+    background-image:repeating-linear-gradient(90deg,#14162e 0 8px,#0b0d1c 8px 10px);box-shadow:inset 2px 2px 0 #0b0d1c;}
+  html[data-skin="cursed"] .bar i{background-image:repeating-linear-gradient(90deg,#4bd15a 0 8px,#2a8c3f 8px 10px);border-radius:0;
+    box-shadow:inset 0 3px 0 #8bf296;border-right:2px solid #0e1024;}
+  html[data-skin="cursed"] .dockbtn{background:#2a2d52;border:3px solid #0e1024;color:#f4f7ff;border-radius:0;
+    box-shadow:inset 2px 2px 0 #4c5391,inset -2px -2px 0 #14162e,0 4px 0 #090b18;}
+  html[data-skin="cursed"] .dockbtn small{color:#9aa0d0;}
+  html[data-skin="cursed"] #overlay{background:rgba(9,11,24,.72);}
+  html[data-skin="cursed"] #modal-head{border-bottom:3px solid #0e1024;}
+  html[data-skin="cursed"] #modal-head h2{color:#ffd75e;}
+  html[data-skin="cursed"] .btab{background:#1b1d3a;border:2px solid #0e1024;color:#9aa0d0;border-radius:0;}
+  html[data-skin="cursed"] .btab.on{background:#4bd15a;color:#0b1d0e;border-color:#0e1024;}
+  html[data-skin="cursed"] .zcard{border:3px solid #0e1024;border-radius:0;
+    box-shadow:inset 3px 3px 0 #4c5391,inset -3px -3px 0 #14162e,0 6px 0 #090b18;}
+  html[data-skin="cursed"] .zcard .zover{background:linear-gradient(180deg,rgba(27,29,58,.10) 30%,rgba(42,45,82,.88));}
+  html[data-skin="cursed"] .zcard.locked .zover{background:linear-gradient(180deg,rgba(27,29,58,.24),rgba(14,16,36,.92));}
+  html[data-skin="cursed"] .rg-head{color:#f4f7ff;background:#2a2d52;border:2px solid #0e1024;border-radius:0;
+    box-shadow:inset 2px 2px 0 #4c5391,inset -2px -2px 0 #14162e;}
+  html[data-skin="cursed"] .rg-arrow{color:#9aa0d0;}
+  html[data-skin="cursed"] .rg-sub{color:#9aa0d0;}
+  html[data-skin="cursed"] .skinbar{background:#1b1d3a;border:2px solid #0e1024;border-radius:0;
+    box-shadow:inset 2px 2px 0 #3d4478,inset -2px -2px 0 #14162e;}
+  html[data-skin="cursed"] .skin{background:#2a2d52;border:2px solid #0e1024;border-radius:0;box-shadow:2px 2px 0 #090b18;}
+  html[data-skin="cursed"] .skin.on{border-color:#ffd75e;box-shadow:0 0 0 2px #ffd75e,2px 2px 0 #090b18;}
+  html[data-skin="cursed"] .skin .sn{color:#59c8e8;}
+  html[data-skin="cursed"] .cf-item{background:rgba(27,29,58,.96);border:2px solid #0e1024;color:#f4f7ff;border-radius:0;backdrop-filter:none;}
+  html[data-skin="cursed"] .rsum-row{background:rgba(89,200,232,.12);border-radius:0;}
+  html[data-skin="cursed"] .ach-card{background:rgba(42,45,82,.60);border-radius:0;}
+  html[data-skin="cursed"] .ach-card.on{background:linear-gradient(180deg,rgba(255,215,94,.24),rgba(75,209,90,.16));border-color:#ffd75e;box-shadow:0 0 12px rgba(255,215,94,.30);}
+  html[data-skin="cursed"] .ach-ic{background:rgba(89,200,232,.16);border-radius:0;}
+  html[data-skin="cursed"] .bcard{background:rgba(42,45,82,.70);border-radius:0;}
+  html[data-skin="cursed"] .sh-card{background:#2a2d52;border:2px solid #0e1024;border-radius:0;box-shadow:2px 2px 0 #090b18;}
+  html[data-skin="cursed"] .sh-n{color:#8bf296;}
+  html[data-skin="cursed"] .sh-d{color:#9aa0d0;}
+  html[data-skin="cursed"] .sh-dest{background:#1b1d3a;color:#9aa0d0;}
+  html[data-skin="cursed"] .sh-stock{background:#1b1d3a;color:#9aa0d0;}
+  html[data-skin="cursed"] .pc{border:2px solid #0e1024;border-radius:0;}
+  html[data-skin="cursed"] .pc.on{background:#3a3f22;border-color:#ffd75e;color:#ffd75e;}
+  html[data-skin="cursed"] .pc.off{background:#14162e;color:#5c6392;}
+
+  /* 深色皮肤下信纸保持可读（信纸本身是浅色纸面，故只调正文与落款） */
+  html[data-skin="ancient"] .ltr-full{background:linear-gradient(180deg,#12312a,#0d211b);border-color:rgba(110,240,176,.30);}
+  html[data-skin="ancient"] .ltr-txt{color:#c9e8dc;}
+  html[data-skin="ancient"] .ltr-sig{color:#7fa898;}
+  html[data-skin="cursed"] .ltr-full{background:linear-gradient(180deg,#2a2d52,#1b1d3a);border:2px solid #0e1024;border-radius:0;}
+  html[data-skin="cursed"] .ltr-txt{color:#dfe6ff;}
+  html[data-skin="cursed"] .ltr-sig{color:#9aa0d0;}
+
   /* ========== 成就 ========== */
   .iconbtn.achbtn{position:relative;}
   .iconbtn.achbtn.new{background:linear-gradient(180deg,#fff6d8,#ffe49b);border-color:#e6c04a;animation:codeglow 1.6s ease-in-out infinite;}
@@ -1290,24 +1618,26 @@
   </div>
 
   <div class="dd-stage">
-    <div class="dd-seats">
-      <div class="dd-opp" id="ddOpp1">
-        <div class="dd-opphead"><span class="av" id="ddAv1"></span><span id="ddName1">月巴</span>
-          <span class="role" id="ddRole1">—</span></div>
-        <div class="dd-cnt">剩 <b id="ddCnt1">17</b> 张</div>
-        <div class="dd-played" id="ddPlay1"></div>
+    <div class="dd-scroll">
+      <div class="dd-seats">
+        <div class="dd-opp" id="ddOpp1">
+          <div class="dd-opphead"><span class="av" id="ddAv1"></span><span id="ddName1">月巴</span>
+            <span class="role" id="ddRole1">—</span></div>
+          <div class="dd-cnt">剩 <b id="ddCnt1">17</b> 张</div>
+          <div class="dd-played" id="ddPlay1"></div>
+        </div>
+        <div class="dd-opp" id="ddOpp2">
+          <div class="dd-opphead"><span class="av">🍅</span><span>番茄</span>
+            <span class="role" id="ddRole2">—</span></div>
+          <div class="dd-cnt">剩 <b id="ddCnt2">17</b> 张</div>
+          <div class="dd-played" id="ddPlay2"></div>
+        </div>
       </div>
-      <div class="dd-opp" id="ddOpp2">
-        <div class="dd-opphead"><span class="av">🍅</span><span>番茄</span>
-          <span class="role" id="ddRole2">—</span></div>
-        <div class="dd-cnt">剩 <b id="ddCnt2">17</b> 张</div>
-        <div class="dd-played" id="ddPlay2"></div>
-      </div>
+
+      <div class="dd-center" id="ddCenter"></div>
+
+      <div class="dd-myplay" id="ddMyPlay"></div>
     </div>
-
-    <div class="dd-center" id="ddCenter"></div>
-
-    <div class="dd-myplay" id="ddMyPlay"></div>
 
     <div class="dd-hand" id="ddHand"></div>
     <div class="dd-actions" id="ddActions"></div>
@@ -1935,33 +2265,119 @@ const FAT_INTRO={
 
 /* ---------------- 界面皮肤（图鉴解锁） ---------------- */
 const SKIN_DEFAULT={bg:'#ece9f6',bg2:'#e2ddf2',panel:'#ffffff',panel2:'#f5f2fc',line:'#ddd6ef',text:'#413c5b',dim:'#8d86ab',purple:'#9575cd',purple2:'#7e57c2',accent:'#b39ddb',gold:'#c9971c',good:'#6fb26a',danger:'#e05b6f',glow1:'rgba(149,117,205,.20)',glow2:'rgba(179,157,219,.22)'};
+/* 皮肤分组：同一张大地图的皮肤折叠收纳在一起（后续小镇/大海/雪地各自成组） */
+const SKIN_GROUPS=[
+  {id:'forest', n:'森林', emoji:'🌲', d:'deco-forest'},
+];
+/* 森林主题皮肤的解锁：集齐对应旅行地图的全部信件 + 全部特产；枯寂幻境额外要求该图主题月巴全部集齐 */
+let skinGrpOpen={forest:true};
 const SKINS=[
   {id:'default', name:'🎨 默认', emoji:'🎨', need:null, needN:0, vars:SKIN_DEFAULT},
   {id:'spring', name:'🌱 春', emoji:'🌱', need:'mb_chun', needN:500, vars:{bg:'#eef7ec',bg2:'#e0f0dc',panel:'#ffffff',panel2:'#f4faf2',line:'#d3e8cd',text:'#3d5a3a',dim:'#8aa884',purple:'#7cb86e',purple2:'#5a9e4c',accent:'#a5d69a',gold:'#c9971c',good:'#6fb26a',danger:'#e05b6f',glow1:'rgba(124,184,110,.20)',glow2:'rgba(165,214,154,.22)'}},
   {id:'summer', name:'☀️ 夏', emoji:'☀️', need:'mb_xia', needN:1000, vars:{bg:'#ecf4fb',bg2:'#dcebf7',panel:'#ffffff',panel2:'#f2f8fd',line:'#cfe2f0',text:'#3a5570',dim:'#87a3ba',purple:'#6fa8dc',purple2:'#4a8cc9',accent:'#a3c8ec',gold:'#c9971c',good:'#6fb26a',danger:'#e05b6f',glow1:'rgba(111,168,220,.20)',glow2:'rgba(163,200,236,.22)'}},
   {id:'autumn', name:'🍂 秋', emoji:'🍂', need:'mb_qiu', needN:1500, vars:{bg:'#fbf1e8',bg2:'#f5e2d0',panel:'#ffffff',panel2:'#fdf6ef',line:'#ecd6bd',text:'#6b4a33',dim:'#b08d6f',purple:'#d98a4e',purple2:'#c26a2e',accent:'#e8b98f',gold:'#c9971c',good:'#6fb26a',danger:'#e05b6f',glow1:'rgba(217,138,78,.20)',glow2:'rgba(232,185,143,.22)'}},
   {id:'winter', name:'❄️ 冬', emoji:'❄️', need:'mb_dong', needN:2000, vars:{bg:'#f0f2f5',bg2:'#e2e6ec',panel:'#ffffff',panel2:'#f5f7fa',line:'#d5dbe3',text:'#4a5568',dim:'#94a0b0',purple:'#8a97a8',purple2:'#6b7a8d',accent:'#b3bfcc',gold:'#c9971c',good:'#6fb26a',danger:'#e05b6f',glow1:'rgba(138,151,168,.20)',glow2:'rgba(179,191,204,.22)'}},
+  /* ↓ 森林主题四款：集齐对应旅行地图的全部信件 + 全部特产即解锁 */
+  {id:'forestedge', name:'森林边缘', emoji:'🌲', theme:'晨雾林泉', group:'forest', unlock:{dests:['forest']},
+    vars:{bg:'#f4f9f5',bg2:'#e3f0e8',panel:'#ffffff',panel2:'#eef7f0',line:'#cfe3d5',text:'#22402f',dim:'#6d8a78',purple:'#6fae87',purple2:'#2f6b4f',accent:'#a8d9bd',gold:'#c9a227',good:'#4f9e6a',danger:'#d9614f',glow1:'rgba(111,174,135,.26)',glow2:'rgba(217,232,106,.24)'}},
+  {id:'fairy', name:'世外桃源', emoji:'🏡', theme:'木屋手帐', group:'forest', unlock:{dests:['fairy']},
+    vars:{bg:'#fdf6e7',bg2:'#f3e5cc',panel:'#fffaf0',panel2:'#f7ecd6',line:'#e0cfae',text:'#4a3524',dim:'#9a8360',purple:'#a2734a',purple2:'#5b3f2a',accent:'#d1663f',gold:'#e8b04b',good:'#6f9a45',danger:'#c9524a',glow1:'rgba(162,115,74,.22)',glow2:'rgba(232,176,75,.24)'}},
+  {id:'ancient', name:'上古秘境', emoji:'🔮', theme:'幽林幻夜', group:'forest', unlock:{dests:['ancient']},
+    vars:{bg:'#0a1714',bg2:'#0f2419',panel:'#12291f',panel2:'#173327',line:'#2a5343',text:'#e6fff5',dim:'#7fa898',purple:'#4fd8c8',purple2:'#6ef0b0',accent:'#ffcf7a',gold:'#ffcf7a',good:'#6ef0b0',danger:'#ff7a8a',glow1:'rgba(110,240,176,.18)',glow2:'rgba(79,216,200,.16)'}},
+  {id:'cursed', name:'枯寂幻境', emoji:'👾', theme:'像素森屿', group:'forest', unlock:{dests:['cursed'], moonbas:['m2_kuji','m2_xinsheng','m2_shouhu','m2_huanmeng']},
+    vars:{bg:'#191b36',bg2:'#232650',panel:'#2a2d52',panel2:'#333a6b',line:'#4c5391',text:'#eef2ff',dim:'#9aa0d0',purple:'#59c8e8',purple2:'#4bd15a',accent:'#ffd75e',gold:'#ffd75e',good:'#4bd15a',danger:'#ff6b8a',glow1:'rgba(89,200,232,.20)',glow2:'rgba(75,209,90,.16)'}},
 ];
+function skinById(id){ return SKINS.find(x=>x.id===id); }
 function applySkin(id){
-  const s=SKINS.find(x=>x.id===id);
-  const vars=s?s.vars:SKIN_DEFAULT;
+  const s=skinById(id);
+  const vars=(s&&s.vars)||SKIN_DEFAULT;
   const root=document.documentElement;
-  if(!root||!root.style)return;
-  for(const k in vars) root.style.setProperty('--'+k, vars[k]);
+  if(!root)return;
+  if(root.style) for(const k in vars) root.style.setProperty('--'+k, vars[k]);
+  if(root.setAttribute) root.setAttribute('data-skin', s?s.id:'default');
 }
-function skinMet(id){
-  const s=SKINS.find(x=>x.id===id);
-  return !s||!s.need || colCount(s.need)>=s.needN;
+/* 某张旅行地图的信件 / 特产收集进度 */
+function skinDestProgress(destId){
+  const t=tvFresh(), d=tvDestById(destId);
+  if(!d) return {cards:{got:0,all:0},specs:{got:0,all:0}};
+  let cg=0, sg=0;
+  for(const c of d.cards) if(t.cards.indexOf(c)>=0) cg++;
+  for(const s of d.specials) if(t.specials.indexOf(s)>=0) sg++;
+  return {cards:{got:cg,all:d.cards.length},specs:{got:sg,all:d.specials.length}};
+}
+/* 皮肤解锁判定：返回 {met, parts:[{label,got,all,ok}]} */
+function skinUnlockInfo(s){
+  if(!s) return {met:true,parts:[]};
+  if(S.skins.unlocked.indexOf(s.id)>=0) return {met:true,parts:[]};
+  if(s.unlock && s.unlock.dests){
+    const parts=[];
+    for(const d of s.unlock.dests){
+      const p=skinDestProgress(d), dd=tvDestById(d), nm=dd?dd.n:d;
+      parts.push({label:nm+' 信件', got:p.cards.got, all:p.cards.all, ok:p.cards.got>=p.cards.all});
+      parts.push({label:nm+' 特产', got:p.specs.got, all:p.specs.all, ok:p.specs.got>=p.specs.all});
+    }
+    if(s.unlock.moonbas){
+      let got=0; for(const id of s.unlock.moonbas) if(colCount(id)>0) got++;
+      parts.push({label:'幻境月巴', got:got, all:s.unlock.moonbas.length, ok:got>=s.unlock.moonbas.length});
+    }
+    return {met:parts.every(p=>p.ok), parts:parts};
+  }
+  if(s.need){
+    const cur=colCount(s.need), tp=typeById(s.need), nm=tp?tp.name:s.need;
+    return {met:cur>=s.needN, parts:[{label:nm, got:cur, all:s.needN, ok:cur>=s.needN}]};
+  }
+  return {met:true,parts:[]};
+}
+function skinMet(id){ return skinUnlockInfo(skinById(id)).met; }
+function skinStatusText(info,owned,active){
+  if(owned) return active?'✓ 使用中':'点击切换';
+  if(info.met) return '✨ 可领取';
+  return info.parts.map(p=>p.label+' '+p.got+'/'+p.all).join(' · ');
 }
 function useSkin(id){
-  const s=SKINS.find(x=>x.id===id);
+  const s=skinById(id);
   if(!s)return;
-  if(!skinMet(id)){ toast('⚠️ 尚未达成解锁条件'); return; }
-  if(!S.skins.unlocked.includes(id)) S.skins.unlocked.push(id);
+  const info=skinUnlockInfo(s);
+  if(!info.met){ toast('⚠️ 尚未达成解锁条件', info.parts.map(p=>p.label+' '+p.got+'/'+p.all).join(' · ')); return; }
+  if(S.skins.unlocked.indexOf(id)<0) S.skins.unlocked.push(id);
   S.skins.active=id;
   applySkin(id); save();
   toast(`🎨 已启用「${s.name}」皮肤`);
   openBook();
+}
+function toggleSkinGroup(id){ skinGrpOpen[id]=!skinGrpOpen[id]; openBook(); }
+/* 第二图鉴顶部的皮肤选区（含森林折叠分组） */
+function skinBarHTML(){
+  const card=s=>{
+    const info=skinUnlockInfo(s);
+    const owned=S.skins.unlocked.indexOf(s.id)>=0;
+    const active=S.skins.active===s.id;
+    const st=skinStatusText(info,owned,active);
+    const tip=[s.theme?'风格：'+s.theme:'', owned?'':(info.met?'可领取':'未达成')].filter(Boolean).join(' · ');
+    return `<div class="skin ${info.met?'met':''} ${owned?'owned':''} ${active?'on':''}" title="${esc(tip)}" onclick="useSkin('${s.id}')">
+      <div class="sw" style="background:linear-gradient(180deg,${s.vars.bg},${s.vars.bg2})">${s.emoji}</div>
+      <div class="sn">${esc(s.name)}</div>
+      <div class="sc">${esc(st)}</div>
+    </div>`;
+  };
+  let h=`<div class="skinbar">
+    <div class="skin-sec">🎨 界面皮肤 <small>（收获对应月巴 / 集齐地图收藏解锁，点击领取·切换）</small></div>
+    <div class="skins">${SKINS.filter(s=>!s.group).map(card).join('')}</div>`;
+  for(const g of SKIN_GROUPS){
+    const list=SKINS.filter(s=>s.group===g.id);
+    if(!list.length) continue;
+    const open=!!skinGrpOpen[g.id];
+    const metN=list.filter(s=>skinUnlockInfo(s).met||S.skins.unlocked.indexOf(s.id)>=0).length;
+    h+=`<div class="skingrp ${g.d} ${open?'is-open':''}">
+      <div class="skingrp__head" onclick="toggleSkinGroup('${g.id}')">
+        <span class="skingrp__arrow">${open?'▾':'▸'}</span>
+        <span class="skingrp__title">${g.emoji} ${esc(g.n)}皮肤</span>
+        <span class="skingrp__count">${metN}/${list.length} 已解锁</span>
+      </div>
+      <div class="skingrp__body"><div class="skingrp__inner"><div class="skins">${list.map(card).join('')}</div></div></div>
+    </div>`;
+  }
+  return h+'</div>';
 }
 
 /* ---------------- 全局状态 ---------------- */
@@ -2314,7 +2730,7 @@ function colGet(id){
 function colCount(id){ const c=isDex2(id)?S.collection2:S.collection; return (c[id]&&c[id].count)||0; }
 function colRec(id){ return isDex2(id)?S.collection2[id]:S.collection[id]; }
 /* ===== 调试预留（不向玩家展示）：在控制台调用 debugUnlockAll()，或在 URL 后加 #debugall 自动执行 ===== */
-function debugUnlockAll(){ for(const t of TYPES){ const c=colGet(t.id); if(!c.count)c.count=1; if(!c.last)c.last={h:50,w:50,t:now()}; } for(const t of TYPES2){ const c=colGet(t.id); if(!c.count)c.count=1; if(!c.last)c.last={h:50,w:50,t:now()}; } if(!S.dex2Celebrated)S.dex2Celebrated=true; save(); updateTravelIcon(); updateFlyIcon(); return '🧪 已解锁全部图鉴：第一页 '+Object.keys(S.collection).length+'/'+TYPES.length+'，第二页 '+Object.keys(S.collection2).length+'/'+TYPES2.length; }
+function debugUnlockAll(){ for(const t of TYPES){ const c=colGet(t.id); if(!c.count)c.count=1; if(!c.last)c.last={h:50,w:50,t:now()}; } for(const t of TYPES2){ const c=colGet(t.id); if(!c.count)c.count=1; if(!c.last)c.last={h:50,w:50,t:now()}; } if(!S.dex2Celebrated)S.dex2Celebrated=true; let skN=0; for(const sk of SKINS){ if(S.skins.unlocked.indexOf(sk.id)<0){ S.skins.unlocked.push(sk.id); skN++; } } save(); updateTravelIcon(); updateFlyIcon(); return '🧪 已解锁全部图鉴：第一页 '+Object.keys(S.collection).length+'/'+TYPES.length+'，第二页 '+Object.keys(S.collection2).length+'/'+TYPES2.length+'；皮肤 '+S.skins.unlocked.length+'/'+SKINS.length+'（本次新增 '+skN+'）'; }
 /* 取值向中段集中：越接近上下极值概率越低（极值低频化，非时间冷却）。
    但纯「两次取平均」会让上下极值几乎不可达（图鉴的「最高/最矮/最重/最轻」金框要求正好达到区间边界），
    故留 ROLL_TAIL 比例的样本直接取均匀值：整体仍向中段集中（中段密度约为两端的 5 倍），
@@ -3121,21 +3537,7 @@ function openBook(){
     <button class="btab ${dexPage===1?'on':''}" onclick="switchDexPage(1)">📕 第一图鉴</button>
     <button class="btab ${dexPage===2?'on':''} ${unlocked?'':'lock'}" onclick="${unlocked?'switchDexPage(2)':''}" title="${unlocked?'':'第一图鉴集齐 '+DEX1_MIN+' 个月巴后开启'}">📕 第二图鉴 ${unlocked?'':'🔒'}</button>
   </div>`;
-  const skinHTML=dexPage===1?`<div class="skinbar">
-    <div class="skin-sec">🎨 界面皮肤 <small>（收获对应月巴解锁，点击领取/切换）</small></div>
-    <div class="skins">${SKINS.map(s=>{
-      const met=skinMet(s.id);
-      const owned=S.skins.unlocked.includes(s.id);
-      const active=S.skins.active===s.id;
-      const cur=colCount(s.need);
-      const st=owned?(active?'✓ 使用中':'点击切换'):(met?'✨ 可领取':(s.need?`${TYPES.find(t=>t.id===s.need).name} x${cur}/${s.needN}`:''));
-      return `<div class="skin ${met?'met':''} ${owned?'owned':''} ${active?'on':''}" onclick="useSkin('${s.id}')">
-        <div class="sw" style="background:linear-gradient(180deg,${s.vars.bg},${s.vars.bg2})">${s.emoji}</div>
-        <div class="sn">${s.name}</div>
-        <div class="sc">${st}</div>
-      </div>`;
-    }).join('')}</div>
-  </div>`:'';
+  const skinHTML=dexPage===2?skinBarHTML():'';
   openModal(`📗 图鉴 · 第${dexPage}页 ${got}/${total} (${Math.round(got/total*100)}%)`,
     `${tabs}${skinHTML}<div class="book">${bookRowsHTML(list)}</div>`);
 }
