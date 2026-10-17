@@ -2346,8 +2346,8 @@ function useSkin(id){
   openBook();
 }
 function toggleSkinGroup(id){ skinGrpOpen[id]=!skinGrpOpen[id]; openBook(); }
-/* 第二图鉴顶部的皮肤选区（含森林折叠分组） */
-function skinBarHTML(){
+/* 皮肤选区：第一图鉴顶部=春夏秋冬等基础款；第二图鉴顶部=按地图分组的新增皮肤 */
+function skinBarHTML(page){
   const card=s=>{
     const info=skinUnlockInfo(s);
     const owned=S.skins.unlocked.indexOf(s.id)>=0;
@@ -2360,22 +2360,26 @@ function skinBarHTML(){
       <div class="sc">${esc(st)}</div>
     </div>`;
   };
-  let h=`<div class="skinbar">
-    <div class="skin-sec">🎨 界面皮肤 <small>（收获对应月巴 / 集齐地图收藏解锁，点击领取·切换）</small></div>
+  let h=`<div class="skinbar">`;
+  if(page===2){
+    h+=`<div class="skin-sec">🗺 地图皮肤 <small>（集齐对应地图的信件与特产解锁，点击领取·切换）</small></div>`;
+    for(const g of SKIN_GROUPS){
+      const list=SKINS.filter(s=>s.group===g.id);
+      if(!list.length) continue;
+      const open=!!skinGrpOpen[g.id];
+      const metN=list.filter(s=>skinUnlockInfo(s).met||S.skins.unlocked.indexOf(s.id)>=0).length;
+      h+=`<div class="skingrp ${g.d} ${open?'is-open':''}">
+        <div class="skingrp__head" onclick="toggleSkinGroup('${g.id}')">
+          <span class="skingrp__arrow">${open?'▾':'▸'}</span>
+          <span class="skingrp__title">${g.emoji} ${esc(g.n)}皮肤</span>
+          <span class="skingrp__count">${metN}/${list.length} 已解锁</span>
+        </div>
+        <div class="skingrp__body"><div class="skingrp__inner"><div class="skins">${list.map(card).join('')}</div></div></div>
+      </div>`;
+    }
+  }else{
+    h+=`<div class="skin-sec">🎨 界面皮肤 <small>（收获对应月巴解锁，点击领取·切换）</small></div>
     <div class="skins">${SKINS.filter(s=>!s.group).map(card).join('')}</div>`;
-  for(const g of SKIN_GROUPS){
-    const list=SKINS.filter(s=>s.group===g.id);
-    if(!list.length) continue;
-    const open=!!skinGrpOpen[g.id];
-    const metN=list.filter(s=>skinUnlockInfo(s).met||S.skins.unlocked.indexOf(s.id)>=0).length;
-    h+=`<div class="skingrp ${g.d} ${open?'is-open':''}">
-      <div class="skingrp__head" onclick="toggleSkinGroup('${g.id}')">
-        <span class="skingrp__arrow">${open?'▾':'▸'}</span>
-        <span class="skingrp__title">${g.emoji} ${esc(g.n)}皮肤</span>
-        <span class="skingrp__count">${metN}/${list.length} 已解锁</span>
-      </div>
-      <div class="skingrp__body"><div class="skingrp__inner"><div class="skins">${list.map(card).join('')}</div></div></div>
-    </div>`;
   }
   return h+'</div>';
 }
@@ -3537,7 +3541,7 @@ function openBook(){
     <button class="btab ${dexPage===1?'on':''}" onclick="switchDexPage(1)">📕 第一图鉴</button>
     <button class="btab ${dexPage===2?'on':''} ${unlocked?'':'lock'}" onclick="${unlocked?'switchDexPage(2)':''}" title="${unlocked?'':'第一图鉴集齐 '+DEX1_MIN+' 个月巴后开启'}">📕 第二图鉴 ${unlocked?'':'🔒'}</button>
   </div>`;
-  const skinHTML=dexPage===2?skinBarHTML():'';
+  const skinHTML=skinBarHTML(dexPage);
   openModal(`📗 图鉴 · 第${dexPage}页 ${got}/${total} (${Math.round(got/total*100)}%)`,
     `${tabs}${skinHTML}<div class="book">${bookRowsHTML(list)}</div>`);
 }
