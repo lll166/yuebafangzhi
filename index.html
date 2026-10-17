@@ -1190,31 +1190,36 @@
   .skfx{position:fixed;z-index:9999;pointer-events:none;
     left:var(--x,50%);top:var(--y,50%);
     transform:translate(-50%,-50%);}
-  /* cursed：像素小爆裂（点击点黄青方块闪一下） */
+  /* cursed：像素小爆裂（点击点黄青方块闪一下，ease-out 快速放大） */
   .skfx.cursed{
     width:48px;height:48px;
     background:
       repeating-linear-gradient(0deg,#ffd75e 0 3px,#59c8e8 3px 6px,#f4f7ff 6px 9px),
       repeating-linear-gradient(90deg,rgba(255,215,94,.5) 0 3px,transparent 3px 6px);
-    animation:skDotBurst .5s steps(3,end) forwards;border-radius:2px;}
+    animation:skDotBurst .32s ease-out forwards;border-radius:2px;}
   /* dreamink：墨点扩散（点击点玫红晕开） */
   .skfx.dreamink{
     width:64px;height:64px;border-radius:50%;
     background:radial-gradient(circle,rgba(193,77,150,.85) 0%,rgba(224,85,63,.5) 40%,transparent 72%);
-    animation:skDotBurst .55s ease-out forwards;}
+    animation:skDotBurst .4s ease-out forwards;}
   /* mermaidsea：同心涟漪圈 */
   .skfx.mermaidsea{
     width:56px;height:56px;border-radius:50%;
     border:2px solid rgba(111,224,224,.7);
     box-shadow:0 0 12px rgba(111,224,224,.3);
-    animation:skDotRipple .6s ease-out forwards;}
-  /* court：银星光点碎片爆裂 */
+    animation:skDotRipple .45s ease-out forwards;}
+  /* court：银星光点爆闪（轻量单元素，不用 8 颗碎片） */
   .skfx.court{
-    width:6px;height:6px;border-radius:50%;
-    background:#e4e8f0;box-shadow:0 0 8px rgba(228,232,240,.7);
-    animation:skDotFragments .65s ease-out forwards;
-    --dx:0px;--dy:-60px;}
-  /* court 多方向碎片（JS 会生成多个，设不同 --dx --dy） */
+    width:80px;height:80px;border-radius:50%;
+    background:
+      radial-gradient(circle at 50% 50%,rgba(228,232,240,.85) 0%,rgba(184,192,204,.5) 24%,transparent 58%),
+      radial-gradient(1px 1px at 50% 20%,#e4e8f0 99%,transparent),
+      radial-gradient(1px 1px at 78% 50%,#b8c0cc 99%,transparent),
+      radial-gradient(1px 1px at 50% 80%,#e4e8f0 99%,transparent),
+      radial-gradient(1px 1px at 22% 50%,#b8c0cc 99%,transparent),
+      radial-gradient(1px 1px at 30% 30%,#e4e8f0 99%,transparent),
+      radial-gradient(1px 1px at 70% 70%,#b8c0cc 99%,transparent);
+    animation:skDotBurst .38s ease-out forwards;}
   /* 省点模式 / reduced-motion 自动抑制 */
   body.low-power .skfx{display:none!important;pointer-events:none!important;}
   @media (prefers-reduced-motion: reduce){
@@ -3419,39 +3424,20 @@ function applySkin(id){
 /* -------- 图四皮肤：点击位置小特效（鼠标 click + 触屏 touchstart） -------- */
 (function initSkinClickFx(){
   const fxSkins=['cursed','dreamink','mermaidsea','court'];
-  let _skipClick=false; // 触屏触发 touchstart 后跳过紧跟的 click
+  let _skipClick=false;
   const spawn=(x,y)=>{
     const active=(S.skins&&S.skins.active)||'';
     if(fxSkins.indexOf(active)<0) return;
     if(document.body.classList.contains('low-power')) return;
     const prefs=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if(prefs) return;
-    // court 生成 8 个碎片（不同方向）
-    if(active==='court'){
-      const angles=[0,45,90,135,180,225,270,315];
-      for(const a of angles){
-        const fx=document.createElement('div');
-        fx.className='skfx court';
-        const rad=a*Math.PI/180;
-        const d=60+Math.random()*28;
-        fx.style.setProperty('--x',x+'px');
-        fx.style.setProperty('--y',y+'px');
-        fx.style.setProperty('--dx',Math.cos(rad)*d+'px');
-        fx.style.setProperty('--dy',Math.sin(rad)*d+'px');
-        document.body.appendChild(fx);
-        fx.addEventListener('animationend',()=>fx.remove(),{once:true});
-        setTimeout(()=>fx.remove(),1200);
-      }
-      return;
-    }
-    // cursed / dreamink / mermaidsea 单点特效
     const fx=document.createElement('div');
     fx.className='skfx '+active;
     fx.style.setProperty('--x',x+'px');
     fx.style.setProperty('--y',y+'px');
     document.body.appendChild(fx);
     fx.addEventListener('animationend',()=>fx.remove(),{once:true});
-    setTimeout(()=>fx.remove(),1200);
+    setTimeout(()=>fx.remove(),800);
   };
   document.addEventListener('click', e=>{
     if(_skipClick){_skipClick=false;return;}
