@@ -780,7 +780,7 @@
   #ddgame .dd-layer{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;
     z-index:8;background:rgba(24,18,40,.46);visibility:hidden;opacity:0;pointer-events:none;}
   #ddgame .dd-layer.show{visibility:visible;opacity:1;pointer-events:auto;}
-  #ddgame .dd-box{width:min(390px,96%);max-height:92%;overflow-y:auto;border-radius:18px;padding:16px;
+  #ddgame .dd-box{width:min(390px,96%);max-height:92%;overflow-x:hidden;overflow-y:auto;border-radius:18px;padding:16px;
     background:var(--panel);border:1px solid var(--line);box-shadow:0 16px 44px rgba(90,70,150,.32);}
   #ddgame .dd-box h3{margin:0 0 8px;font-size:17px;color:var(--purple2);text-align:center;}
   #ddgame .dd-box p{margin:0 0 8px;font-size:13px;line-height:1.65;color:var(--text);}
@@ -9795,6 +9795,8 @@ function ddStart(free){
   ddShowLayer(null);                          /* 关闭下注层，露出牌桌 */
 }
 function ddDeal(stake){
+  ddRenderSeats._last=['','',''];   /* 新局重置签名缓存，确保手牌入场动画正常触发 */
+  ddRenderMyPlay._last='';
   const deck=ddShuffle(ddDeck());
   const hands=[[],[],[]];
   for(let i=0;i<51;i++) hands[i%3].push(deck[i]);
@@ -10369,6 +10371,8 @@ function ddRenderAll(dealing){
 function ddRenderSeats(){
   const g=ddG;
   ddRenderAvatar();                                           /* 1 号位立绘：按难度/出千切换 */
+  /* 跟踪每个座位上一次渲染的牌型签名，避免数据没变时重建 DOM 触发入场动画重播 */
+  ddRenderSeats._last=ddRenderSeats._last||['','',''];
   for(let i=1;i<=2;i++){
     const cnt=$('ddCnt'+i);
     const role=$('ddRole'+i);
@@ -10379,7 +10383,9 @@ function ddRenderSeats(){
     if(i===1&&box) box.classList.toggle('cheat', !!(g&&g.cheat)); /* 出千月巴的座位换成金色调 */
     if(!g){
       if(cnt) cnt.textContent='—'; if(role){ role.textContent='—'; role.className='role'; }
-      if(played) played.innerHTML=''; if(box) box.classList.remove('turn');
+      if(played){ if(played.innerHTML) played.innerHTML=''; if(played.className!=='dd-played') played.className='dd-played'; }
+      if(box) box.classList.remove('turn');
+      ddRenderSeats._last[i]='';
       continue;
     }
     if(cnt) cnt.textContent=String(g.hands[i].length);
@@ -10391,16 +10397,26 @@ function ddRenderSeats(){
     if(box) box.classList.toggle('turn', g.phase==='play'&&g.turn===i);
     if(played){
       const p=g.plays[i];
-      /* 先清除上一手的牌型 class 和动画，强制下次重新触发入场 */
+      /* 计算这一手的签名（pass 用 'pass'，数组用 type+len+各牌 id） */
+      let sig;
+      if(!p) sig='';
+      else if(p==='pass') sig='pass';
+      else {
+        const pt=ddParse(p);
+        sig=(pt?pt.type+':'+pt.len+':' : '')+p.map(function(c){return c.id||c.v;}).join(',');
+      }
+      /* 签名没变：数据完全相同，跳过重建 — 保留已有 DOM 和动画状态 */
+      if(sig===ddRenderSeats._last[i]) continue;
+      ddRenderSeats._last[i]=sig;
+      /* 签名变了才重建：清 class/动画 + 建新 DOM + 重启入场动画 */
       played.className='dd-played';
       played.style.animation='none';
       if(p==='pass') played.innerHTML='<span class="pass">不要</span>';
       else if(p){
         const pt=ddParse(p);
         if(pt){
-          played.classList.add('type-'+pt.type);  /* bomb/rocket/straight/plane/triple/... */
+          played.classList.add('type-'+pt.type);
           played.innerHTML=ddCardsHTML(p,true);
-          /* 强制 reflow 后重启动画，让每次出牌都播一次入场 */
           requestAnimationFrame(function(){ played.style.animation=''; });
         } else played.innerHTML=ddCardsHTML(p,true);
       } else played.innerHTML='';
@@ -10459,22 +10475,35 @@ function ddTypeName(t,len){
 function ddRenderMyPlay(){
   const g=ddG;
   const mp=$('ddMyPlay'); if(!mp)return;
-  /* 先清除上一手的牌型 class 和动画，强制下次重新触发入场 */
+  ddRenderMyPlay._last=ddRenderMyPlay._last||'';
+  /* 计算签名 */
+  let sig;
+  if(!g||g.phase==='bid') sig='';
+  else {
+    const p=g.plays[0];
+    if(!p) sig='';
+    else if(p==='pass') sig='pass';
+    else {
+      const pt=ddParse(p);
+      sig=(pt?pt.type+':'+pt.len+':' : '')+p.map(function(c){return c.id||c.v;}).join(',');
+    }
+  }
+  /* phase===over 时清空并重置 */
+  if(g&&g.phase==='over'){ sig=''; }
+  if(sig===ddRenderMyPlay._last) return;
+  ddRenderMyPlay._last=sig;
+  /* 签名变了才重建 */
   mp.className='dd-myplay';
   mp.style.animation='none';
-  if(!g||g.phase==='bid'){ mp.innerHTML=''; return; }
+  if(!sig){ mp.innerHTML=''; return; }
+  if(sig==='pass'){ mp.innerHTML='<span class="pass">不要</span>'; return; }
   const p=g.plays[0];
-  if(p==='pass'){ mp.innerHTML='<span class="pass">不要</span>'; return; }
-  if(p&&g.phase!=='over'){
-    const pt=ddParse(p);
-    if(pt){
-      mp.classList.add('type-'+pt.type);
-      mp.innerHTML=ddCardsHTML(p,true);
-      requestAnimationFrame(function(){ mp.style.animation=''; });
-    } else mp.innerHTML=ddCardsHTML(p,true);
-    return;
-  }
-  mp.innerHTML='';
+  const pt=ddParse(p);
+  if(pt){
+    mp.classList.add('type-'+pt.type);
+    mp.innerHTML=ddCardsHTML(p,true);
+    requestAnimationFrame(function(){ mp.style.animation=''; });
+  } else mp.innerHTML=ddCardsHTML(p,true);
 }
 function ddRenderHand(dealing){
   const g=ddG;
