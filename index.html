@@ -437,6 +437,8 @@
   .pc.on{background:#fff7e0;border-color:#e6c04a;color:#8a6d1a;}
   .pc.off{background:#f0f0f0;color:#b9b9b9;}
   .sh-card.rose{border-color:#eaa7a7;background:#fff0f0;}
+  .sh-card.want{background:linear-gradient(180deg,#fffdf5,#fff4d6);outline:2px solid rgba(230,184,74,.8);outline-offset:-2px;}
+  .sh-want{font-size:10px;font-weight:700;color:#b8860b;letter-spacing:.3px;margin-bottom:3px;}
   .tv-tom{color:#d0342c;}
   .bcard{background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:14px;padding:8px;text-align:center;}
   .bcard .pic{height:52px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
@@ -664,65 +666,92 @@
   #ddgame .dd-cnt b{color:var(--purple2);font-size:14px;}
   #ddgame .dd-played{display:flex;flex-wrap:wrap;gap:1px;margin-top:5px;min-height:34px;align-items:center;}
   #ddgame .dd-played .pass{font-size:11px;font-weight:800;color:var(--dim);}
-  /* ==== 斗月巴出牌入场动效（基础）==== */
-  #ddgame .dd-played,#ddgame .dd-myplay{animation:skDdPlayIn .32s cubic-bezier(.2,.8,.3,1) both;}
-  /* 单张卡 stagger 入场：通用入场 + nth-child 错开（最多 10 张足够斗地主） */
-  /* 注意：去掉 base opacity:0，让无动画时也能看见牌；opacity 只由关键帧 0% 提供入场起点 */
-  #ddgame .dd-played>.dd-card,#ddgame .dd-myplay>.dd-card{animation:skDdCardIn .32s cubic-bezier(.2,.8,.3,1) both;}
-  #ddgame .dd-played>.dd-card:nth-child(1),#ddgame .dd-myplay>.dd-card:nth-child(1){animation-delay:0ms;}
-  #ddgame .dd-played>.dd-card:nth-child(2),#ddgame .dd-myplay>.dd-card:nth-child(2){animation-delay:18ms;}
-  #ddgame .dd-played>.dd-card:nth-child(3),#ddgame .dd-myplay>.dd-card:nth-child(3){animation-delay:36ms;}
-  #ddgame .dd-played>.dd-card:nth-child(4),#ddgame .dd-myplay>.dd-card:nth-child(4){animation-delay:54ms;}
-  #ddgame .dd-played>.dd-card:nth-child(5),#ddgame .dd-myplay>.dd-card:nth-child(5){animation-delay:72ms;}
-  #ddgame .dd-played>.dd-card:nth-child(6),#ddgame .dd-myplay>.dd-card:nth-child(6){animation-delay:90ms;}
-  #ddgame .dd-played>.dd-card:nth-child(7),#ddgame .dd-myplay>.dd-card:nth-child(7){animation-delay:108ms;}
-  #ddgame .dd-played>.dd-card:nth-child(8),#ddgame .dd-myplay>.dd-card:nth-child(8){animation-delay:126ms;}
-  /* 炸弹：容器爆炸 + 单卡同步爆炸 */
-  #ddgame .dd-played.type-bomb,#ddgame .dd-myplay.type-bomb{animation:skDdBombIn .52s cubic-bezier(.2,.8,.3,1) both;}
-  #ddgame .dd-played.type-bomb>.dd-card,#ddgame .dd-myplay.type-bomb>.dd-card{animation:skDdBombCard .52s cubic-bezier(.2,.8,.3,1) both;}
-  #ddgame .dd-played.type-bomb>.dd-card:nth-child(1){animation-delay:0ms;}
-  #ddgame .dd-played.type-bomb>.dd-card:nth-child(2){animation-delay:10ms;}
-  #ddgame .dd-played.type-bomb>.dd-card:nth-child(3){animation-delay:20ms;}
-  #ddgame .dd-played.type-bomb>.dd-card:nth-child(4){animation-delay:30ms;}
-  /* 火箭双王：容器爆闪 + 双卡同步大闪 */
-  #ddgame .dd-played.type-rocket,#ddgame .dd-myplay.type-rocket{animation:skDdRocketIn .64s cubic-bezier(.2,.8,.3,1) both;}
-  #ddgame .dd-played.type-rocket>.dd-card,#ddgame .dd-myplay.type-rocket>.dd-card{animation:skDdRocketCard .64s cubic-bezier(.2,.8,.3,1) both;}
-  /* 顺子：左→右滑入 */
-  #ddgame .dd-played.type-straight,#ddgame .dd-myplay.type-straight{animation:skDdStraightIn .36s cubic-bezier(.2,.8,.3,1) both;}
-  #ddgame .dd-played.type-straight>.dd-card:nth-child(1){animation-delay:0ms;}
-  #ddgame .dd-played.type-straight>.dd-card:nth-child(2){animation-delay:16ms;}
-  #ddgame .dd-played.type-straight>.dd-card:nth-child(3){animation-delay:32ms;}
-  #ddgame .dd-played.type-straight>.dd-card:nth-child(4){animation-delay:48ms;}
-  #ddgame .dd-played.type-straight>.dd-card:nth-child(5){animation-delay:64ms;}
-  #ddgame .dd-played.type-straight>.dd-card:nth-child(6){animation-delay:80ms;}
-  #ddgame .dd-played.type-straight>.dd-card:nth-child(7){animation-delay:96ms;}
-  #ddgame .dd-played.type-straight>.dd-card:nth-child(8){animation-delay:112ms;}
-  /* 连对：同顺子但慢一点 */
-  #ddgame .dd-played.type-pairs,#ddgame .dd-myplay.type-pairs{animation:skDdStraightIn .4s cubic-bezier(.2,.8,.3,1) both;}
-  #ddgame .dd-played.type-pairs>.dd-card:nth-child(odd){animation-delay:0ms;}
-  #ddgame .dd-played.type-pairs>.dd-card:nth-child(even){animation-delay:22ms;}
-  /* 飞机：整体飘移 */
-  #ddgame .dd-played.type-plane,#ddgame .dd-played.type-plane1,#ddgame .dd-played.type-plane2,
-  #ddgame .dd-myplay.type-plane,#ddgame .dd-myplay.type-plane1,#ddgame .dd-myplay.type-plane2{animation:skDdPlaneIn .44s cubic-bezier(.2,.8,.3,1) both;}
-  /* 三张：单卡放大入场 */
-  #ddgame .dd-played.type-triple>.dd-card,#ddgame .dd-played.type-triple1>.dd-card,#ddgame .dd-played.type-triple2>.dd-card,
-  #ddgame .dd-myplay.type-triple>.dd-card,#ddgame .dd-myplay.type-triple1>.dd-card,#ddgame .dd-myplay.type-triple2>.dd-card{animation:skDdTripleCard .4s cubic-bezier(.2,.8,.3,1) both;}
-  /* 四带二：类似炸弹但缓一点 */
-  #ddgame .dd-played.type-four2,#ddgame .dd-played.type-four2p,
-  #ddgame .dd-myplay.type-four2,#ddgame .dd-myplay.type-four2p{animation:skDdBombIn .46s cubic-bezier(.2,.8,.3,1) both;}
+  /* ==== 斗月巴出牌入场动效（基础 · 全皮肤通用）====
+     语言源自海岛假日：柔沙绿荫 · 椰影篝火 —— 海风托叶 / 双叶合拢 / 椰影轻摇 / 椰风拂过 / 沙丘缓落 / 篝火绽开。
+     同一手牌因牌型不同而入场姿态不同，让「这手是什么牌型」一眼可辨（反馈 + 状态提示）。
+     全程只用 transform / opacity，不使用 scale(0)；统一超柔缓出曲线 cubic-bezier(.2,.8,.3,1)；时长 ≤ .58s，无回弹震荡。
+     各皮肤可在自身规则块里覆盖 animation-duration / animation-timing-function 保留个性（普通皮肤相对克制，图四用硬跳/墨染/水晶/王冠）；
+     对手回合 `.dd-opp.turn` 的专属动效由四款图四各自覆盖，其余皮肤用这里的通用单次脉冲。
+     省电模式：由全局 body.low-power *{animation:none!important} 一键压掉全部动效。
+     注意：去掉 base opacity:0，让无动画时也能看见牌；opacity 只由关键帧 0% 提供入场起点。 */
+  #ddgame :is(.dd-played,.dd-myplay){animation:skDdGFadeIn .3s cubic-bezier(.2,.8,.3,1) both;}
+  #ddgame :is(.dd-played,.dd-myplay)>.dd-card{animation:skDdGDriftCard .34s cubic-bezier(.2,.8,.3,1) both;animation-delay:0ms;}
+  #ddgame :is(.dd-played,.dd-myplay)>.dd-card:nth-child(2){animation-delay:16ms;}
+  #ddgame :is(.dd-played,.dd-myplay)>.dd-card:nth-child(3){animation-delay:32ms;}
+  #ddgame :is(.dd-played,.dd-myplay)>.dd-card:nth-child(4){animation-delay:48ms;}
+  /* ---- 单张 · 海风托叶：从上轻轻飘落 ---- */
+  #ddgame :is(.dd-played,.dd-myplay).type-single{animation:skDdGDriftIn .34s cubic-bezier(.2,.8,.3,1) both;}
+  #ddgame :is(.dd-played,.dd-myplay).type-single>.dd-card{animation:skDdGDriftCard .34s cubic-bezier(.2,.8,.3,1) both;animation-delay:0ms;}
+  /* ---- 对子 · 双叶合拢：左右两张向中线合上 ---- */
+  #ddgame :is(.dd-played,.dd-myplay).type-pair{animation:skDdGPairIn .36s cubic-bezier(.2,.8,.3,1) both;}
+  #ddgame :is(.dd-played,.dd-myplay).type-pair>.dd-card{animation:skDdGPairL .36s cubic-bezier(.2,.8,.3,1) both;animation-delay:0ms;}
+  #ddgame :is(.dd-played,.dd-myplay).type-pair>.dd-card:nth-child(even){animation-name:skDdGPairR;animation-delay:22ms;}
+  /* ---- 三张 / 三带一 / 三带二 · 椰影轻摇：微微抬升后落定 ---- */
+  #ddgame :is(.dd-played,.dd-myplay):is(.type-triple,.type-triple1,.type-triple2){animation:skDdGPairIn .38s cubic-bezier(.2,.8,.3,1) both;}
+  #ddgame :is(.dd-played,.dd-myplay):is(.type-triple,.type-triple1,.type-triple2)>.dd-card{animation:skDdGTripleCard .38s cubic-bezier(.2,.8,.3,1) both;animation-delay:0ms;}
+  #ddgame :is(.dd-played,.dd-myplay):is(.type-triple,.type-triple1,.type-triple2)>.dd-card:nth-child(even){animation-delay:26ms;}
+  #ddgame :is(.dd-played,.dd-myplay):is(.type-triple,.type-triple1,.type-triple2)>.dd-card:is(:nth-child(3),:nth-child(5)){animation-delay:52ms;}
+  /* ---- 顺子 · 椰风拂过：由左向右顺次拂入 ---- */
+  #ddgame :is(.dd-played,.dd-myplay).type-straight{animation:skDdGSweepIn .4s cubic-bezier(.2,.8,.3,1) both;}
+  #ddgame :is(.dd-played,.dd-myplay).type-straight>.dd-card{animation:skDdGSweepCard .4s cubic-bezier(.2,.8,.3,1) both;animation-delay:0ms;}
+  #ddgame :is(.dd-played,.dd-myplay).type-straight>.dd-card:nth-child(2){animation-delay:14ms;}
+  #ddgame :is(.dd-played,.dd-myplay).type-straight>.dd-card:nth-child(3){animation-delay:28ms;}
+  #ddgame :is(.dd-played,.dd-myplay).type-straight>.dd-card:nth-child(4){animation-delay:42ms;}
+  #ddgame :is(.dd-played,.dd-myplay).type-straight>.dd-card:nth-child(5){animation-delay:56ms;}
+  #ddgame :is(.dd-played,.dd-myplay).type-straight>.dd-card:is(:nth-child(6),:nth-child(7),:nth-child(8)){animation-delay:70ms;}
+  /* ---- 连对 · 双叶成串合拢 ---- */
+  #ddgame :is(.dd-played,.dd-myplay).type-pairs{animation:skDdGPairIn .42s cubic-bezier(.2,.8,.3,1) both;}
+  #ddgame :is(.dd-played,.dd-myplay).type-pairs>.dd-card{animation:skDdGPairL .42s cubic-bezier(.2,.8,.3,1) both;animation-delay:0ms;}
+  #ddgame :is(.dd-played,.dd-myplay).type-pairs>.dd-card:nth-child(even){animation-name:skDdGPairR;animation-delay:18ms;}
+  /* ---- 飞机 / 飞机带翅膀 · 成组飘移：整组带一点倾角滑入 ---- */
+  #ddgame :is(.dd-played,.dd-myplay):is(.type-plane,.type-plane1,.type-plane2){animation:skDdGGlideIn .44s cubic-bezier(.2,.8,.3,1) both;}
+  #ddgame :is(.dd-played,.dd-myplay):is(.type-plane,.type-plane1,.type-plane2)>.dd-card{animation:skDdGGlideCard .44s cubic-bezier(.2,.8,.3,1) both;animation-delay:0ms;}
+  #ddgame :is(.dd-played,.dd-myplay):is(.type-plane,.type-plane1,.type-plane2)>.dd-card:nth-child(even){animation-delay:24ms;}
+  #ddgame :is(.dd-played,.dd-myplay):is(.type-plane,.type-plane1,.type-plane2)>.dd-card:is(:nth-child(3),:nth-child(5)){animation-delay:48ms;}
+  /* ---- 四带二 · 沙丘缓落：比炸弹更沉稳的一落 ---- */
+  #ddgame :is(.dd-played,.dd-myplay):is(.type-four2,.type-four2p){animation:skDdGSettleIn .46s cubic-bezier(.2,.8,.3,1) both;}
+  #ddgame :is(.dd-played,.dd-myplay):is(.type-four2,.type-four2p)>.dd-card{animation:skDdGSettleCard .46s cubic-bezier(.2,.8,.3,1) both;animation-delay:0ms;}
+  #ddgame :is(.dd-played,.dd-myplay):is(.type-four2,.type-four2p)>.dd-card:nth-child(even){animation-delay:26ms;}
+  #ddgame :is(.dd-played,.dd-myplay):is(.type-four2,.type-four2p)>.dd-card:is(:nth-child(3),:nth-child(5),:nth-child(7)){animation-delay:52ms;}
+  /* ---- 炸弹 · 篝火绽开：暖光扩散，峰值收得更紧 ---- */
+  #ddgame :is(.dd-played,.dd-myplay).type-bomb{animation:skDdGEmberIn .5s cubic-bezier(.2,.8,.3,1) both;}
+  #ddgame :is(.dd-played,.dd-myplay).type-bomb>.dd-card{animation:skDdGEmberCard .5s cubic-bezier(.2,.8,.3,1) both;animation-delay:0ms;}
+  #ddgame :is(.dd-played,.dd-myplay).type-bomb>.dd-card:nth-child(2){animation-delay:9ms;}
+  #ddgame :is(.dd-played,.dd-myplay).type-bomb>.dd-card:nth-child(3){animation-delay:18ms;}
+  #ddgame :is(.dd-played,.dd-myplay).type-bomb>.dd-card:nth-child(4){animation-delay:27ms;}
+  /* ---- 双王 · 双焰自两侧聚拢 ---- */
+  #ddgame :is(.dd-played,.dd-myplay).type-rocket{animation:skDdGTwinIn .58s cubic-bezier(.2,.8,.3,1) both;}
+  #ddgame :is(.dd-played,.dd-myplay).type-rocket>.dd-card{animation:skDdGTwinL .58s cubic-bezier(.2,.8,.3,1) both;animation-delay:0ms;}
+  #ddgame :is(.dd-played,.dd-myplay).type-rocket>.dd-card:nth-child(even){animation-name:skDdGTwinR;}
+  /* ---- 对手回合 · 单次脉冲后收敛到待机态（不循环、不抖；四款图四各自覆盖为专属动效）---- */
+  #ddgame .dd-opp.turn{animation:skDdGTurn 1.1s cubic-bezier(.2,.8,.3,1) forwards;}
+  #ddgame .dd-opp.cheat{animation:skDdGTurn .9s cubic-bezier(.2,.8,.3,1) forwards;}
+  /* 减弱动态偏好：保留「淡入」这类帮助理解的反馈，去掉位移/缩放类运动。
+     需要 !important 才能压过按牌型以及各皮肤更高优先级的选择器。 */
+  @media (prefers-reduced-motion: reduce){
+    #ddgame :is(.dd-played,.dd-myplay),
+    #ddgame .dd-layer.show,
+    #ddgame .dd-layer.show .dd-box,
+    #ddgame .dd-hand.dealing>.dd-hrow,
+    #ddgame .dd-center .big,
+    #ddgame .dd-center .sub{animation:skDdGFadeIn .28s ease-out both!important;animation-delay:0ms!important;}
+    #ddgame :is(.dd-played,.dd-myplay)>.dd-card,
+    #ddgame .dd-opp.turn,
+    #ddgame .dd-opp.cheat{animation:none!important;}
+  }
   /* ==== 斗月巴结算弹窗入场 ==== */
-  #ddgame .dd-layer.show{animation:skDdLayerFade .28s ease both;}
-  #ddgame .dd-layer.show .dd-box{animation:skDdBoxPop .48s cubic-bezier(.2,.8,.3,1) both;}
+  #ddgame .dd-layer.show{animation:skDdGFadeIn .3s ease-out both;}
+  #ddgame .dd-layer.show .dd-box{animation:skDdGBoxIn .5s cubic-bezier(.2,.8,.3,1) both;}
   #ddResultBox h3{animation:skDdWinShine .56s cubic-bezier(.2,.8,.3,1) both;}
   #ddResultBox h3:nth-child(1){animation-delay:.22s;}
   /* ==== 叫地主开场：手牌 deal 入场（只在初始 deal 时播，出牌后重建不重播）==== */
-  #ddgame .dd-hand.dealing>.dd-hrow{animation:skDdDealCard .42s cubic-bezier(.2,.8,.3,1) both;}
+  #ddgame .dd-hand.dealing>.dd-hrow{animation:skDdGDealCard .44s cubic-bezier(.2,.8,.3,1) both;}
   #ddgame .dd-hand.dealing>.dd-hrow:nth-child(1){animation-delay:.04s;}
   #ddgame .dd-hand.dealing>.dd-hrow:nth-child(2){animation-delay:.14s;}
   #ddgame .dd-hand.dealing>.dd-hrow+.dd-hrow+.dd-hrow{animation-delay:.24s;}
   /* 叫地主按钮区域入场 — 去掉 base opacity:0，省电模式下也能看见 */
-  #ddgame .dd-center .big{animation:skDdDealCard .42s cubic-bezier(.2,.8,.3,1) both;animation-delay:.08s;}
-  #ddgame .dd-center .sub{animation:skDdDealCard .36s cubic-bezier(.2,.8,.3,1) both;animation-delay:.18s;}
+  #ddgame .dd-center .big{animation:skDdGDealCard .42s cubic-bezier(.2,.8,.3,1) both;animation-delay:.08s;}
+  #ddgame .dd-center .sub{animation:skDdGDealCard .38s cubic-bezier(.2,.8,.3,1) both;animation-delay:.18s;}
   #ddgame .dd-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
     font-size:13px;color:var(--dim);font-weight:700;text-align:center;padding:6px;}
   #ddgame .dd-center .big{font-size:20px;color:var(--purple2);font-weight:900;}
@@ -1278,57 +1307,44 @@
   @keyframes skDdInk{0%{transform:rotate(0);}15%{transform:rotate(-1.8deg);}30%{transform:rotate(1deg);}50%{transform:rotate(-.5deg);}70%{transform:rotate(.2deg);}100%{transform:rotate(0) scale(1.01);}}
   @keyframes skDdGlass{0%{transform:scale(1);opacity:.95;}20%{transform:scale(1.04);opacity:1;}45%{transform:scale(.99);opacity:.97;}70%{transform:scale(1.01);opacity:1;}100%{transform:scale(1.02);opacity:1;}}
   @keyframes skDdCrown{0%{transform:scale(1) translateY(0);}15%{transform:scale(1.025) translateY(-2px);}35%{transform:scale(.99) translateY(0);}60%{transform:scale(1.01) translateY(-1px);}100%{transform:scale(1.015) translateY(-1px);}}
-  /* 斗月巴出牌入场 —— 单次，每次出牌重新触发 */
-  @keyframes skDdPlayIn{0%{opacity:0;transform:translateY(10px);}100%{opacity:1;transform:translateY(0);}}
-  @keyframes skDdBombIn{0%{opacity:0;transform:scale(.85) translateY(12px);}30%{opacity:1;transform:scale(1.18) translateY(-4px);}55%{transform:scale(.94) translateY(2px);}100%{transform:scale(1) translateY(0);}}
-  @keyframes skDdRocketIn{0%{opacity:0;transform:scale(.75);}20%{opacity:1;transform:scale(1.3);}40%{opacity:.85;transform:scale(1.15);}65%{opacity:1;transform:scale(1.05);}100%{opacity:1;transform:scale(1);}}
-  @keyframes skDdStraightIn{0%{opacity:0;transform:translateX(-6px) translateY(8px);}100%{opacity:1;transform:translateX(0) translateY(0);}}
-  @keyframes skDdPlaneIn{0%{opacity:0;transform:translate(-8px,10px) rotate(-2deg);}100%{opacity:1;transform:translate(0,0) rotate(0);}}
-  @keyframes skDdCardIn{0%{opacity:0;transform:translateY(8px) scale(.95);}100%{opacity:1;transform:translateY(0) scale(1);}}
-  @keyframes skDdBombCard{0%{opacity:0;transform:scale(1);}40%{opacity:1;transform:scale(1.15);}70%{opacity:1;transform:scale(.97);}100%{opacity:1;transform:scale(1);}}
-  @keyframes skDdRocketCard{0%{opacity:0;transform:scale(.6);}25%{opacity:1;transform:scale(1.35);}55%{opacity:.9;transform:scale(1.18);}85%{opacity:1;transform:scale(1);}100%{opacity:1;transform:scale(1);}}
-  @keyframes skDdTripleCard{0%{opacity:0;transform:translateY(6px) scale(.92);}60%{opacity:1;transform:translateY(-2px) scale(1.06);}100%{opacity:1;transform:translateY(0) scale(1);}}
+  /* 通用出牌手势关键帧见下方「斗月巴出牌手势关键帧（全皮肤通用 · 源自海岛假日设计）」 */
   /* 斗月巴结算弹窗入场 */
-  @keyframes skDdLayerFade{0%{opacity:0;}100%{opacity:1;}}
-  @keyframes skDdBoxPop{0%{opacity:0;transform:translateY(20px) scale(.9);}60%{opacity:1;transform:translateY(-4px) scale(1.02);}100%{opacity:1;transform:translateY(0) scale(1);}}
   @keyframes skDdWinShine{0%{opacity:0;transform:scale(.8);}40%{opacity:1;transform:scale(1.15);}70%{opacity:1;transform:scale(1);}100%{opacity:1;transform:scale(1);}}
   @keyframes skDdLoseSink{0%{opacity:0;transform:translateY(-10px);}100%{opacity:1;transform:translateY(0);}}
-  /* 叫地主开场：手牌 deal 入场（deal 完后每张牌从上方落入） */
-  @keyframes skDdDealCard{0%{opacity:0;transform:translateY(-30px) rotate(var(--dr,0deg)) scale(.85);}100%{opacity:1;transform:translateY(0) rotate(0) scale(1);}}
-  /* ==================== 海岛假日（islandbay）斗月巴动效关键帧 ====================
+  /* ==================== 斗月巴出牌手势关键帧（全皮肤通用 · 源自海岛假日设计）====================
      语言：柔沙绿荫 · 椰影篝火。海风托叶 / 双叶合拢 / 椰影轻摇 / 椰风拂过 / 沙丘缓落 / 篝火绽开。
-     全程只用 transform + opacity（合成层，零 layout / 零 paint），且不使用 scale(0)。 */
-  @keyframes skIbFadeIn{0%{opacity:0;}100%{opacity:1;}}
+     由样式表顶部「斗月巴出牌入场动效（基础 · 全皮肤通用）」统一引用；全程只用 transform + opacity，且不使用 scale(0)。 */
+  @keyframes skDdGFadeIn{0%{opacity:0;}100%{opacity:1;}}
   /* 单张 · 海风托叶：从上轻飘落，带一点叶片的倾角 */
-  @keyframes skIbDriftIn{0%{opacity:0;transform:translateY(-11px) rotate(-2.2deg);}58%{opacity:1;transform:translateY(1px) rotate(.7deg);}100%{opacity:1;transform:translateY(0) rotate(0);}}
-  @keyframes skIbDriftCard{0%{opacity:0;transform:translateY(-10px) scale(.96) rotate(-2deg);}62%{opacity:1;transform:translateY(1px) scale(1.006) rotate(.6deg);}100%{opacity:1;transform:translateY(0) scale(1) rotate(0);}}
+  @keyframes skDdGDriftIn{0%{opacity:0;transform:translateY(-11px) rotate(-2.2deg);}58%{opacity:1;transform:translateY(1px) rotate(.7deg);}100%{opacity:1;transform:translateY(0) rotate(0);}}
+  @keyframes skDdGDriftCard{0%{opacity:0;transform:translateY(-10px) scale(.96) rotate(-2deg);}62%{opacity:1;transform:translateY(1px) scale(1.006) rotate(.6deg);}100%{opacity:1;transform:translateY(0) scale(1) rotate(0);}}
   /* 对子 / 连对 · 双叶合拢：左右两张向中线合上 */
-  @keyframes skIbPairIn{0%{opacity:0;transform:translateY(7px) scale(.97);}100%{opacity:1;transform:translateY(0) scale(1);}}
-  @keyframes skIbPairL{0%{opacity:0;transform:translateX(-9px) translateY(5px) rotate(-1.4deg);}100%{opacity:1;transform:translateX(0) translateY(0) rotate(0);}}
-  @keyframes skIbPairR{0%{opacity:0;transform:translateX(9px) translateY(5px) rotate(1.4deg);}100%{opacity:1;transform:translateX(0) translateY(0) rotate(0);}}
+  @keyframes skDdGPairIn{0%{opacity:0;transform:translateY(7px) scale(.97);}100%{opacity:1;transform:translateY(0) scale(1);}}
+  @keyframes skDdGPairL{0%{opacity:0;transform:translateX(-9px) translateY(5px) rotate(-1.4deg);}100%{opacity:1;transform:translateX(0) translateY(0) rotate(0);}}
+  @keyframes skDdGPairR{0%{opacity:0;transform:translateX(9px) translateY(5px) rotate(1.4deg);}100%{opacity:1;transform:translateX(0) translateY(0) rotate(0);}}
   /* 三张 · 椰影轻摇：微微抬升后落定 */
-  @keyframes skIbTripleCard{0%{opacity:0;transform:translateY(9px) scale(.94) rotate(-1.6deg);}55%{opacity:1;transform:translateY(-2px) scale(1.04) rotate(.9deg);}100%{opacity:1;transform:translateY(0) scale(1) rotate(0);}}
+  @keyframes skDdGTripleCard{0%{opacity:0;transform:translateY(9px) scale(.94) rotate(-1.6deg);}55%{opacity:1;transform:translateY(-2px) scale(1.04) rotate(.9deg);}100%{opacity:1;transform:translateY(0) scale(1) rotate(0);}}
   /* 顺子 · 椰风拂过：由左向右顺次拂入 */
-  @keyframes skIbSweepIn{0%{opacity:0;transform:translateX(-8px);}100%{opacity:1;transform:translateX(0);}}
-  @keyframes skIbSweepCard{0%{opacity:0;transform:translateY(7px) rotate(-1.2deg);}100%{opacity:1;transform:translateY(0) rotate(0);}}
+  @keyframes skDdGSweepIn{0%{opacity:0;transform:translateX(-8px);}100%{opacity:1;transform:translateX(0);}}
+  @keyframes skDdGSweepCard{0%{opacity:0;transform:translateY(7px) rotate(-1.2deg);}100%{opacity:1;transform:translateY(0) rotate(0);}}
   /* 飞机 · 成组飘移：整组带一点倾角滑入 */
-  @keyframes skIbGlideIn{0%{opacity:0;transform:translate(-9px,11px) rotate(-1.5deg);}100%{opacity:1;transform:translate(0,0) rotate(0);}}
-  @keyframes skIbGlideCard{0%{opacity:0;transform:translateY(10px) scale(.95) rotate(-2deg);}60%{opacity:1;transform:translateY(-1px) scale(1.03) rotate(.7deg);}100%{opacity:1;transform:translateY(0) scale(1) rotate(0);}}
+  @keyframes skDdGGlideIn{0%{opacity:0;transform:translate(-9px,11px) rotate(-1.5deg);}100%{opacity:1;transform:translate(0,0) rotate(0);}}
+  @keyframes skDdGGlideCard{0%{opacity:0;transform:translateY(10px) scale(.95) rotate(-2deg);}60%{opacity:1;transform:translateY(-1px) scale(1.03) rotate(.7deg);}100%{opacity:1;transform:translateY(0) scale(1) rotate(0);}}
   /* 四带二 · 沙丘缓落：比炸弹更缓一档的沉稳落定 */
-  @keyframes skIbSettleIn{0%{opacity:0;transform:translateY(14px) scale(.94);}55%{opacity:1;transform:translateY(-2px) scale(1.045);}100%{opacity:1;transform:translateY(0) scale(1);}}
-  @keyframes skIbSettleCard{0%{opacity:0;transform:translateY(10px) scale(.95);}55%{opacity:1;transform:translateY(-3px) scale(1.07);}100%{opacity:1;transform:translateY(0) scale(1);}}
+  @keyframes skDdGSettleIn{0%{opacity:0;transform:translateY(14px) scale(.94);}55%{opacity:1;transform:translateY(-2px) scale(1.045);}100%{opacity:1;transform:translateY(0) scale(1);}}
+  @keyframes skDdGSettleCard{0%{opacity:0;transform:translateY(10px) scale(.95);}55%{opacity:1;transform:translateY(-3px) scale(1.07);}100%{opacity:1;transform:translateY(0) scale(1);}}
   /* 炸弹 · 篝火绽开：暖光扩散，峰值收在 1.10/1.12（比全局 1.18/1.15 更收敛、不刺眼） */
-  @keyframes skIbEmberIn{0%{opacity:0;transform:scale(.88) translateY(10px);}36%{opacity:1;transform:scale(1.1) translateY(-3px);}64%{opacity:1;transform:scale(.97) translateY(1px);}100%{opacity:1;transform:scale(1) translateY(0);}}
-  @keyframes skIbEmberCard{0%{opacity:0;transform:scale(.9) rotate(-3deg);}42%{opacity:1;transform:scale(1.12) rotate(2deg);}72%{opacity:1;transform:scale(.98) rotate(-.6deg);}100%{opacity:1;transform:scale(1) rotate(0);}}
+  @keyframes skDdGEmberIn{0%{opacity:0;transform:scale(.88) translateY(10px);}36%{opacity:1;transform:scale(1.1) translateY(-3px);}64%{opacity:1;transform:scale(.97) translateY(1px);}100%{opacity:1;transform:scale(1) translateY(0);}}
+  @keyframes skDdGEmberCard{0%{opacity:0;transform:scale(.9) rotate(-3deg);}42%{opacity:1;transform:scale(1.12) rotate(2deg);}72%{opacity:1;transform:scale(.98) rotate(-.6deg);}100%{opacity:1;transform:scale(1) rotate(0);}}
   /* 火箭双王 · 双焰合拢：两王自两侧向中线聚拢 */
-  @keyframes skIbTwinIn{0%{opacity:0;transform:scale(.86);}28%{opacity:1;transform:scale(1.12);}58%{opacity:1;transform:scale(1.025);}100%{opacity:1;transform:scale(1);}}
-  @keyframes skIbTwinL{0%{opacity:0;transform:translateX(-13px) scale(.88) rotate(-4deg);}58%{opacity:1;transform:translateX(0) scale(1.08) rotate(1.6deg);}100%{opacity:1;transform:translateX(0) scale(1) rotate(0);}}
-  @keyframes skIbTwinR{0%{opacity:0;transform:translateX(13px) scale(.88) rotate(4deg);}58%{opacity:1;transform:translateX(0) scale(1.08) rotate(-1.6deg);}100%{opacity:1;transform:translateX(0) scale(1) rotate(0);}}
+  @keyframes skDdGTwinIn{0%{opacity:0;transform:scale(.86);}28%{opacity:1;transform:scale(1.12);}58%{opacity:1;transform:scale(1.025);}100%{opacity:1;transform:scale(1);}}
+  @keyframes skDdGTwinL{0%{opacity:0;transform:translateX(-13px) scale(.88) rotate(-4deg);}58%{opacity:1;transform:translateX(0) scale(1.08) rotate(1.6deg);}100%{opacity:1;transform:translateX(0) scale(1) rotate(0);}}
+  @keyframes skDdGTwinR{0%{opacity:0;transform:translateX(13px) scale(.88) rotate(4deg);}58%{opacity:1;transform:translateX(0) scale(1.08) rotate(-1.6deg);}100%{opacity:1;transform:translateX(0) scale(1) rotate(0);}}
   /* 对手回合 · 单次快脉冲 + 缓慢收敛到待机态（不循环、不抖，出牌后自动静止） */
-  @keyframes skIbTurn{0%{transform:scale(1) translateY(0);}16%{transform:scale(1.016) translateY(-1.6px);}46%{transform:scale(.998) translateY(.6px);}100%{transform:scale(1.004) translateY(0);}}
+  @keyframes skDdGTurn{0%{transform:scale(1) translateY(0);}16%{transform:scale(1.016) translateY(-1.6px);}46%{transform:scale(.998) translateY(.6px);}100%{transform:scale(1.004) translateY(0);}}
   /* 结算弹窗 / 开场发牌 */
-  @keyframes skIbBoxIn{0%{opacity:0;transform:translateY(18px) scale(.93);}60%{opacity:1;transform:translateY(-3px) scale(1.015);}100%{opacity:1;transform:translateY(0) scale(1);}}
-  @keyframes skIbDealCard{0%{opacity:0;transform:translateY(-26px) rotate(var(--dr,0deg)) scale(.87);}100%{opacity:1;transform:translateY(0) rotate(0) scale(1);}}
+  @keyframes skDdGBoxIn{0%{opacity:0;transform:translateY(18px) scale(.93);}60%{opacity:1;transform:translateY(-3px) scale(1.015);}100%{opacity:1;transform:translateY(0) scale(1);}}
+  @keyframes skDdGDealCard{0%{opacity:0;transform:translateY(-26px) rotate(var(--dr,0deg)) scale(.87);}100%{opacity:1;transform:translateY(0) rotate(0) scale(1);}}
   .anim-in{opacity:0;animation:skStaggerIn .35s var(--stagger,0ms) cubic-bezier(.2,.8,.3,1) both;}
   /* 四皮肤各自的入场风格化 */
   html[data-skin="cursed"] .anim-in{animation-timing-function:steps(4,jump-end);animation-duration:.42s;}
@@ -2355,79 +2371,9 @@
   html[data-skin="islandbay"] #ddgame .dd-box{background:rgba(253,250,243,.95);border-color:rgba(138,162,134,.34);}
   html[data-skin="islandbay"] #ddgame .btn{background:linear-gradient(180deg,#fdfaf3,#f0e7d4);color:#4e6a55;border:1.2px solid rgba(138,162,134,.36);}
   html[data-skin="islandbay"] #ddgame .btn.cta{background:linear-gradient(180deg,#8aa286,#4e6a55);color:#fbfdf8;border-color:transparent;}
-  /* ==================== 海岛假日 · 斗月巴出牌动效（按牌型区分）====================
-     语言：柔沙绿荫 · 椰影篝火 —— 海风托叶 / 双叶合拢 / 椰影轻摇 / 椰风拂过 / 沙丘缓落 / 篝火绽开。
-     同一手牌因牌型不同而入场姿态不同，让「这手是什么牌型」一眼可辨（反馈 + 状态提示）。
-     只用 transform / opacity；统一超柔缓出曲线 cubic-bezier(.2,.8,.3,1)；时长 ≤ .58s，无回弹震荡。
-     省电模式：由全局 body.low-power *{animation:none!important} 一键压掉全部动效。 */
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay){animation:skIbFadeIn .3s cubic-bezier(.2,.8,.3,1) both;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay)>.dd-card{animation:skIbDriftCard .34s cubic-bezier(.2,.8,.3,1) both;}
-  /* ---- 单张 · 海风托叶：从上轻轻飘落 ---- */
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay).type-single{animation:skIbDriftIn .34s cubic-bezier(.2,.8,.3,1) both;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay).type-single>.dd-card{animation:skIbDriftCard .34s cubic-bezier(.2,.8,.3,1) both;animation-delay:0ms;}
-  /* ---- 对子 · 双叶合拢：左右两张向中线合上 ---- */
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay).type-pair{animation:skIbPairIn .36s cubic-bezier(.2,.8,.3,1) both;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay).type-pair>.dd-card{animation:skIbPairL .36s cubic-bezier(.2,.8,.3,1) both;animation-delay:0ms;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay).type-pair>.dd-card:nth-child(even){animation-name:skIbPairR;animation-delay:22ms;}
-  /* ---- 三张 / 三带一 / 三带二 · 椰影轻摇：微微抬升后落定 ---- */
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay):is(.type-triple,.type-triple1,.type-triple2){animation:skIbPairIn .38s cubic-bezier(.2,.8,.3,1) both;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay):is(.type-triple,.type-triple1,.type-triple2)>.dd-card{animation:skIbTripleCard .38s cubic-bezier(.2,.8,.3,1) both;animation-delay:0ms;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay):is(.type-triple,.type-triple1,.type-triple2)>.dd-card:nth-child(even){animation-delay:26ms;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay):is(.type-triple,.type-triple1,.type-triple2)>.dd-card:is(:nth-child(3),:nth-child(5)){animation-delay:52ms;}
-  /* ---- 顺子 · 椰风拂过：由左向右顺次拂入 ---- */
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay).type-straight{animation:skIbSweepIn .4s cubic-bezier(.2,.8,.3,1) both;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay).type-straight>.dd-card{animation:skIbSweepCard .4s cubic-bezier(.2,.8,.3,1) both;animation-delay:0ms;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay).type-straight>.dd-card:nth-child(2){animation-delay:14ms;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay).type-straight>.dd-card:nth-child(3){animation-delay:28ms;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay).type-straight>.dd-card:nth-child(4){animation-delay:42ms;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay).type-straight>.dd-card:nth-child(5){animation-delay:56ms;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay).type-straight>.dd-card:is(:nth-child(6),:nth-child(7),:nth-child(8)){animation-delay:70ms;}
-  /* ---- 连对 · 双叶成串合拢 ---- */
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay).type-pairs{animation:skIbPairIn .42s cubic-bezier(.2,.8,.3,1) both;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay).type-pairs>.dd-card{animation:skIbPairL .42s cubic-bezier(.2,.8,.3,1) both;animation-delay:0ms;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay).type-pairs>.dd-card:nth-child(even){animation-name:skIbPairR;animation-delay:18ms;}
-  /* ---- 飞机 / 飞机带翅膀 · 成组飘移：整组带一点倾角滑入 ---- */
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay):is(.type-plane,.type-plane1,.type-plane2){animation:skIbGlideIn .44s cubic-bezier(.2,.8,.3,1) both;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay):is(.type-plane,.type-plane1,.type-plane2)>.dd-card{animation:skIbGlideCard .44s cubic-bezier(.2,.8,.3,1) both;animation-delay:0ms;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay):is(.type-plane,.type-plane1,.type-plane2)>.dd-card:nth-child(even){animation-delay:24ms;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay):is(.type-plane,.type-plane1,.type-plane2)>.dd-card:is(:nth-child(3),:nth-child(5)){animation-delay:48ms;}
-  /* ---- 四带二 · 沙丘缓落：比炸弹更沉稳的一落 ---- */
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay):is(.type-four2,.type-four2p){animation:skIbSettleIn .46s cubic-bezier(.2,.8,.3,1) both;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay):is(.type-four2,.type-four2p)>.dd-card{animation:skIbSettleCard .46s cubic-bezier(.2,.8,.3,1) both;animation-delay:0ms;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay):is(.type-four2,.type-four2p)>.dd-card:nth-child(even){animation-delay:26ms;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay):is(.type-four2,.type-four2p)>.dd-card:is(:nth-child(3),:nth-child(5),:nth-child(7)){animation-delay:52ms;}
-  /* ---- 炸弹 · 篝火绽开：暖光扩散，峰值收得更紧 ---- */
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay).type-bomb{animation:skIbEmberIn .5s cubic-bezier(.2,.8,.3,1) both;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay).type-bomb>.dd-card{animation:skIbEmberCard .5s cubic-bezier(.2,.8,.3,1) both;animation-delay:0ms;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay).type-bomb>.dd-card:nth-child(2){animation-delay:9ms;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay).type-bomb>.dd-card:nth-child(3){animation-delay:18ms;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay).type-bomb>.dd-card:nth-child(4){animation-delay:27ms;}
-  /* ---- 双王 · 双焰自两侧聚拢 ---- */
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay).type-rocket{animation:skIbTwinIn .58s cubic-bezier(.2,.8,.3,1) both;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay).type-rocket>.dd-card{animation:skIbTwinL .58s cubic-bezier(.2,.8,.3,1) both;animation-delay:0ms;}
-  html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay).type-rocket>.dd-card:nth-child(even){animation-name:skIbTwinR;}
-  /* ---- 对手回合 · 单次脉冲后收敛到待机态（不循环、不抖） ---- */
-  html[data-skin="islandbay"] #ddgame .dd-opp.turn{animation:skIbTurn 1.1s cubic-bezier(.2,.8,.3,1) forwards;}
-  html[data-skin="islandbay"] #ddgame .dd-opp.cheat{animation:skIbTurn .9s cubic-bezier(.2,.8,.3,1) forwards;}
-  /* ---- 结算弹窗 / 叫地主开场（与出牌动效同一套语言） ---- */
-  html[data-skin="islandbay"] #ddgame .dd-layer.show{animation:skIbFadeIn .3s ease-out both;}
-  html[data-skin="islandbay"] #ddgame .dd-layer.show .dd-box{animation:skIbBoxIn .5s cubic-bezier(.2,.8,.3,1) both;}
-  html[data-skin="islandbay"] #ddgame .dd-hand.dealing>.dd-hrow{animation:skIbDealCard .44s cubic-bezier(.2,.8,.3,1) both;}
-  html[data-skin="islandbay"] #ddgame .dd-center .big{animation:skIbDealCard .42s cubic-bezier(.2,.8,.3,1) both;animation-delay:.08s;}
-  html[data-skin="islandbay"] #ddgame .dd-center .sub{animation:skIbDealCard .38s cubic-bezier(.2,.8,.3,1) both;animation-delay:.18s;}
-  /* 减弱动态偏好：保留「淡入」这类帮助理解的反馈，去掉位移/缩放类运动。
-     此处需要 !important，才能压过上面按牌型区分的更高优先级选择器。 */
-  @media (prefers-reduced-motion: reduce){
-    html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay),
-    html[data-skin="islandbay"] #ddgame .dd-layer.show,
-    html[data-skin="islandbay"] #ddgame .dd-layer.show .dd-box,
-    html[data-skin="islandbay"] #ddgame .dd-hand.dealing>.dd-hrow,
-    html[data-skin="islandbay"] #ddgame .dd-center .big,
-    html[data-skin="islandbay"] #ddgame .dd-center .sub{animation:skIbFadeIn .28s ease-out both!important;animation-delay:0ms!important;}
-    html[data-skin="islandbay"] #ddgame :is(.dd-played,.dd-myplay)>.dd-card,
-    html[data-skin="islandbay"] #ddgame .dd-opp.turn,
-    html[data-skin="islandbay"] #ddgame .dd-opp.cheat{animation:none!important;}
-  }
+  /* 海岛假日的按牌型出牌动效已提升为全皮肤通用基础层
+     （见样式表顶部「斗月巴出牌入场动效（基础 · 全皮肤通用）」），此处不再重复定义，
+     仅保留海岛假日的配色与其它页面样式。 */
   html[data-skin="islandbay"] #flygame .fg-top{background:linear-gradient(180deg,rgba(253,250,243,.95),rgba(240,231,212,.96));color:#4e6a55;border-bottom:1.2px solid rgba(138,162,134,.32);}
   html[data-skin="islandbay"] .fg-box{background:rgba(253,250,243,.95);border-color:rgba(138,162,134,.36);}
   html[data-skin="islandbay"] .fg-pick:not(.sel),html[data-skin="islandbay"] .fg-lv:not(.sel){background:rgba(253,250,243,.92);border-color:rgba(138,162,134,.32);}
@@ -5350,34 +5296,32 @@ function openHelp(){
   openModal('❓ 玩法说明',
     `<div class="helplines">
       <div style="margin:2px 0 8px;padding:8px 10px;border-radius:10px;background:rgba(255,193,7,.14);border:1px solid rgba(255,193,7,.45);font-size:11px;line-height:1.6;color:var(--text)">
-        ⚠️ <b>免责声明：这个游戏还在开发中，所有存档都存放在浏览器缓存里</b>，清理缓存、换设备或浏览器异常都可能让存档丢失。请大家一定定期用下方「💾 导出文件」备份，以免辛苦养的月巴不见了。
+        ⚠️ <b>游戏尚在开发中，存档只存在浏览器缓存里</b>，清缓存、换设备或浏览器异常都可能丢失，请定期用下方「💾 导出文件」备份。
       </div>
       <div class="sec">🎯 目标</div>
-      收集图鉴里的所有月巴！每发现新种类，首收 <b>3 倍金币</b>。图鉴会记录每种月巴的<b>最高/最矮/最重/最轻</b>极值与首次出现时间。<b>部分极稀有月巴</b>任何条件都满足、但概率极低（图鉴标注「✨ 概率极低」）。集齐第一图鉴（${DEX1_MIN} 种起，仅剩超稀有补齐）即可解锁<b>第二图鉴与旅行系统</b>；收集到<b>百日月巴</b>后解锁<b>🪽 飞行小游戏</b>。
-      <div class="sec">🌱 生长阶段</div>
-      月巴在木头上经历<b>幼年期 → 成长期 → 成熟期</b>三个阶段。幼年与成长长得都一样，<b>只有成熟后</b>才能看到真面目并收获。每只月巴都随机拥有<b>身高与体重</b>，稀有度越高越难出现。成熟后需<b>手动点击收取</b>（番茄钟专注期间会自动收集）。
-      <div class="sec">🏡 场地与木头</div>
-      点击总览里的场地卡片进入场景，能看到背景、木头与正在生长的月巴。<b>买新木头、升级槽位（每根木头可多养几只）都在场景里完成</b>。共 8 个场地（庭院 → 潮湿地下室 → 玻璃温室 → 天台风场 → 幽暗森林 → 冰雪洞穴 → 熔岩深坑 → 云端之上），不同场地会解锁不同月巴。<b>离线也会继续生长，最多结算 12 小时</b>。
-      <div class="sec">🪙 经济</div>
-      收获得金币 → 买新木头、升级槽位、解锁新场地、买道具与加速 → 触发新月巴条件 → 图鉴推进。金币与番茄是两条独立资源线（金币用于场地，🍅 番茄用于旅行）。
+      收集图鉴里所有月巴，每发现新种类首收 <b>3 倍金币</b>。集齐第一图鉴解锁<b>第二图鉴与旅行</b>；收集到<b>百日月巴</b>后解锁<b>🪽 飞行小游戏</b>。
+      <div class="sec">🌱 生长与收获</div>
+      月巴在木头上经历<b>幼年 → 成长 → 成熟</b>，只有成熟后才能看到真面目并收获，稀有度越高越难出现。成熟后需<b>手动点击收取</b>（番茄钟专注期间自动收集）。离线也会生长，最多结算 <b>12 小时</b>。
+      <div class="sec">🏡 场地</div>
+      共 8 个场地，不同场地解锁不同月巴；<b>买木头、扩槽位都在场景内完成</b>，每根木头可养多只。
       <div class="sec">🍅 番茄钟</div>
-      点底部「🍅 番茄钟」开始专注，可自定义<b>名称与时长</b>（5~120 分钟，常用时长可存为预设），也能<b>绑定当天的待办任务</b>。专注期间<b>月巴生长速度 x2 且成熟自动收集</b>；<b>切出界面计时自动暂停</b>，回来自动继续（开启<b>后台挂机</b>可切出页面继续计时）。<b>只有完整的番茄才记满时长</b>，中途停止只记录已专注时间（不足 5 分钟不记录），也可<b>手动打卡</b>。完成后自动进入休息，休息结束可开始下一个。所有记录都能在<b>打卡日历</b>与📊统计（今日/本周/本月）里复盘；还可开<b>📌 置顶小窗</b>边做别的边看进度。
-      <div class="sec">🕰️ 游戏时间与天气</div>
-      游戏内时间以<b>约 2 现实小时 = 1 游戏年</b>的速度流逝，季节与昼夜快速轮转；天气每 8~18 分钟变化一次（与现实同速）。番茄钟与待办都按<b>现实时间</b>计时。
-      <div class="sec">🗓️ 稀有月巴条件</div>
-      稀有月巴依赖<b>游戏时间</b>（季节/昼夜）、<b>天气</b>（雨 / 雪 / 雷 / 雨后彩虹）、<b>场地</b>、<b>道具</b>与<b>累计收获</b>。状态栏与图鉴里都有提示。想定向刷天气月巴可买「🌦️ 天气瓶」自选天气（2 现实小时内生效）。
+      专注期间<b>生长速度 x2 且成熟自动收集</b>；切出界面自动暂停，回来自动继续（开后台挂机可继续计时）。完整番茄才记满时长，不足 5 分钟不记录，也可手动打卡。记录可在<b>打卡日历</b>与 📊 统计中复盘，还支持<b>📌 置顶小窗</b>。
+      <div class="sec">🕰️ 时间与天气</div>
+      游戏内<b>约 2 现实小时 = 1 游戏年</b>，季节与昼夜快速轮转，天气每 8~18 分钟变化一次。番茄钟与待办按<b>现实时间</b>计时。
+      <div class="sec">🗓️ 稀有月巴</div>
+      依赖<b>游戏时间（季节/昼夜）、天气、场地、道具与累计收获</b>，状态栏与图鉴都有提示；个别超稀有月巴无门槛但概率极低。
       <div class="sec">🧳 旅行</div>
-      <b>集齐第一图鉴后解锁</b>。月巴会出门旅行，用🍅番茄在<b>旅行商店</b>买便当与道具（如幸运护身符），指定去处后就出发；归来带回<b>信件、照片、纪念品</b>与第二图鉴的新月巴，还会随机有<b>🚪 门口访客</b>。旁支玩法：<b>🎰 好运收获</b>拉杆老虎机（消耗🍅换奖励，有冷却）、<b>📮 信箱</b>回看信件。
+      <b>集齐第一图鉴后解锁</b>。月巴带着便当出门，归来带回<b>信件、照片、特产</b>与第二图鉴的新月巴，还会随机遇到<b>🚪 门口访客</b>。相关玩法：<b>🎰 好运收获</b>老虎机、<b>📮 信箱</b>回看信件。
       <div class="sec">🪽 飞行小游戏</div>
-      <b>收集到百日月巴后解锁</b>（底部「❓」按钮会变成「🪽」）。选一只月巴，点屏幕或按空格让它往上飞、穿过柱子得分。分<b>关卡模式</b>与<b>自由模式</b>两种，柱子越过后速度会逐渐加快，成绩记入 🏆 排行榜。
+      <b>收集到百日月巴后解锁</b>。选一只月巴，点屏幕或按空格让它上飞、穿过柱子得分，分<b>关卡</b>与<b>自由</b>两种模式，成绩记入 🏆 排行榜。
       <div class="sec">✅ 任务 / 待办</div>
-      记录待办事项，支持<b>分类、优先级（🔴高/🟡中/🟢低）、#标签、起止日期</b>。用 <b>🍅 预估</b>（把大任务按番茄数自动拆成子项）规划时间，跨天则显示为时间段任务；开启<b>🔄 习惯</b>会在时间段内每天自动生成一条待办。完成的番茄会关联到对应任务，方便复盘。
+      支持<b>分类、优先级、#标签、起止日期</b>；可用 <b>🍅 预估</b>按番茄数自动拆成子项，开启<b>🔄 习惯</b>后按时间段每天自动生成。完成的番茄会关联到任务。
       <div class="sec">📗 图鉴与皮肤</div>
-      图鉴记录每种月巴的极值、首次出现时间与简介，可点开看详情。收集进度达标还能解锁<b>皮肤/主题</b>（默认 · 🌱春 · ☀️夏 · 🍂秋 · ❄️冬），随时切换外观。
+      记录每种月巴的<b>身高/体重极值</b>、首次出现时间与简介，收集进度达标可解锁<b>皮肤/主题</b>并随时切换。
       <div class="sec">💫 天降事件</div>
-      状态栏出现「💫 天降事件！」时点一下，会有限时的突发奖励或惊喜，别错过。
-      <div class="sec">⚙️ 其他小设置</div>
-      顶栏可开<b>🔊 静音</b>与<b>⚡ 低功耗模式</b>（省电、减少特效）；<b>🏆 成就</b>共 40 项，随进度自动达成（达成时会提示一次），点顶栏 🏆 查看进度；极少数日子会限时出现口令入口。游戏内时间跑得很快，季节/昼夜月巴很容易等到。
+      状态栏出现「💫 天降事件！」时点一下，领取限时惊喜。
+      <div class="sec">⚙️ 其他</div>
+      顶栏可开<b>🔊 静音</b>与<b>⚡ 低功耗</b>；<b>🏆 成就</b>共 40 项随进度自动达成，点顶栏 🏆 查看进度；极少数日子会限时出现口令入口。
       <div class="sec">💾 存档备份</div>
       <div style="font-size:11px;color:var(--dim);margin:4px 0 2px">📦 备份内容：图鉴 ${Object.keys(S.collection).length} 种 · 场地 ${S.zones.filter(z=>z.bought).length}/${ZONES.length} · 🍅 打卡 ${S.pomo.history.length} 条 · 任务 ${(S.tasks||[]).length} 条 · 番茄钟设置</div>
       <div style="margin:6px 0 2px;padding:7px 10px;border-radius:10px;background:rgba(66,165,245,.14);border:1px solid rgba(66,165,245,.45);font-size:11px;line-height:1.6;color:var(--text)">
@@ -7357,6 +7301,7 @@ function tvFresh(){
   t.cardWho=t.cardWho||{}; t.cardFirst=t.cardFirst||{}; t.cardMood=t.cardMood||{}; t.cardMoods=t.cardMoods||{};
   t.friends=t.friends||[];t.yard=t.yard||[];
   if(t.pendingVisit===undefined)t.pendingVisit=null; // 正在门口等候的访客（未招待前一直留着）
+  if(t.pendingVisitWant===undefined)t.pendingVisitWant=null; // 本次来访「更想要」的特产（每次来访重新随机）
   if(!t.frog)t.frog={status:'home',depart:null,ret:null,mood:''};
   if(t.tomato==null)t.tomato=300;
   else if(!isFinite(t.tomato))t.tomato=0;   // 异常存档（NaN/Infinity）清零，避免污染后续计算，也不白送 300
@@ -8238,13 +8183,15 @@ function tvOpenLetter(c){
 }
 function tvOpenMail(){ openModal('📮 信箱 · 来信', tvMailHTML()); }
 function tvMailHTML(){ const t=tvFresh(); let h='<p style="color:#48614a;font-size:13px">此次旅行月巴寄回、尚未拆开的信件，点击可以拆开：</p><div class="sh-grid">'; if(!t.inbox.length)h+='<p style="color:#999;text-align:center;grid-column:1/-1">信箱空空，还没有未拆的信件</p>'; for(const c of t.inbox)h+=tvLetterEnv(c); h+='</div><p style="text-align:center"><button class="btn" onclick="closeModal()">返回</button></p>'; return h; }
-function tvFriendModal(f,t){ const fr=t.friends.find(function(x){return x.id===f.id;}); const fc=fr?fr.count:0; const emo=f.e; let h='<p style="text-align:center;font-size:40px">'+emo+'</p><p style="text-align:center"><b>'+f.n+'</b>'+(fc?'（第 '+(fc+1)+' 次来访）':'（第一次来访）')+'</p><p style="text-align:center;color:#48614a">'+f.t+'</p><p style="text-align:center;font-size:12px;color:#48614a">喂它喜欢的特产可回礼 🍅</p><div class="sh-grid">'; for(const s of f.like){ const has=t.specials.indexOf(s)>=0; h+='<div class="sh-card"><div class="sh-n">'+(has?(spEmo(s)+' '+s):'❔ ???')+'</div><button class="btn" '+(has?'':'disabled')+' onclick="tvFeed(\''+f.id+'\',\''+s+'\')">招待</button></div>'; } h+='</div><p style="text-align:center;margin-top:6px"><button class="btn" onclick="closeModal()">让它再等等</button> <button class="btn" onclick="tvTurnAway()">请回吧</button></p>'; return h; }
-function tvTurnAway(){ const t=tvFresh(); if(!t.pendingVisit){ closeModal(); return; } t.pendingVisit=null; if(!t.nextVisit||t.nextVisit<now())t.nextVisit=now()+rand(15,25)*60000; save(); tvUpdateDoor(); updateTravelIcon(); tvRenderScene(); closeModal(); toast('🚪 你客气地请访客回去了，它说改天再来。'); }
+function tvFriendModal(f,t){ const fr=t.friends.find(function(x){return x.id===f.id;}); const fc=fr?fr.count:0; const emo=f.e; const want=t.pendingVisitWant; const wantHas=!!want&&t.specials.indexOf(want)>=0; const sayLine=!want?'💬 「今天就是路过看看你呀。」':(wantHas?('💬 「今天我特别想要 '+spEmo(want)+' '+want+' 呢。」'):'💬 「我今天想要的一样特产，你好像还没收着呢。」'); let h='<p style="text-align:center;font-size:40px">'+emo+'</p><p style="text-align:center"><b>'+f.n+'</b>'+(fc?'（第 '+(fc+1)+' 次来访）':'（第一次来访）')+'</p><p style="text-align:center;color:#48614a">'+f.t+'</p><p style="text-align:center;color:#3e5c3f;font-weight:700">'+sayLine+(want?'<p style="text-align:center;font-size:12px;color:#8a9a80">喂它「💛 更想要」的会回礼更多 🍅，给别的就少一些</p>':'')+'<div class="sh-grid">'; for(const s of f.like){ const has=t.specials.indexOf(s)>=0; const isWant=(s===want); h+='<div class="sh-card'+(isWant?' want':'')+'">'+(isWant?'<div class="sh-want">💛 更想要</div>':'')+'<div class="sh-n">'+(has?(spEmo(s)+' '+s):'❔ ???')+'</div><button class="btn" '+(has?'':'disabled')+' onclick="tvFeed(\''+f.id+'\',\''+s+'\')">招待</button></div>'; } h+='</div><p style="text-align:center;margin-top:6px"><button class="btn" onclick="closeModal()">让它再等等</button> <button class="btn" onclick="tvTurnAway()">请回吧</button></p>'; return h; }
+function tvTurnAway(){ const t=tvFresh(); if(!t.pendingVisit){ closeModal(); return; } t.pendingVisit=null; t.pendingVisitWant=null; if(!t.nextVisit||t.nextVisit<now())t.nextVisit=now()+rand(15,25)*60000; save(); tvUpdateDoor(); updateTravelIcon(); tvRenderScene(); closeModal(); toast('🚪 你客气地请访客回去了，它说改天再来。'); }
+/* 访客本次「更想要」的特产：从它喜欢的特产里随机挑一个（每次来访重新抽） */
+function tvPickWant(f){ return (f&&f.like&&f.like.length)?f.like[Math.floor(Math.random()*f.like.length)]:null; }
 /* 有人上门只在「门口」按钮亮起，不直接弹窗；点开门后才招待 */
-function tvFriendPop(){ const t=tvFresh(); if(t.pendingVisit)return; if(!t.nextVisit)t.nextVisit=now()+rand(15,25)*60000; if(now()<t.nextVisit)return; const f=TV_FRIENDS[Math.floor(Math.random()*TV_FRIENDS.length)]; t.pendingVisit=f.id; t.nextVisit=now()+rand(15,25)*60000; save(); }
-function tvDoorOpen(){ const t=tvFresh(); if(!t.pendingVisit){ toast('🚪 门口没有人，安静得很'); return; } const f=TV_FRIENDS.find(function(x){return x.id===t.pendingVisit;}); if(!f){ t.pendingVisit=null; save(); return; } openModal('👋 门口有人敲门', tvFriendModal(f,t)); }
+function tvFriendPop(){ const t=tvFresh(); if(t.pendingVisit)return; if(!t.nextVisit)t.nextVisit=now()+rand(15,25)*60000; if(now()<t.nextVisit)return; const f=TV_FRIENDS[Math.floor(Math.random()*TV_FRIENDS.length)]; t.pendingVisit=f.id; t.pendingVisitWant=tvPickWant(f); t.nextVisit=now()+rand(15,25)*60000; save(); }
+function tvDoorOpen(){ const t=tvFresh(); if(!t.pendingVisit){ toast('🚪 门口没有人，安静得很'); return; } const f=TV_FRIENDS.find(function(x){return x.id===t.pendingVisit;}); if(!f){ t.pendingVisit=null; t.pendingVisitWant=null; save(); return; } openModal('👋 门口有人敲门', tvFriendModal(f,t)); }
 function tvUpdateDoor(){ const b=$('tvDoorBtn'); if(b)b.style.display=tvFresh().pendingVisit?'flex':'none'; }
-function tvFeed(fid,s){ const t=tvFresh(); const f=TV_FRIENDS.find(function(x){return x.id===fid;}); if(!f||t.specials.indexOf(s)<0)return; t.pendingVisit=null; tvUpdateDoor(); let fr=t.friends.find(function(x){return x.id===fid;}); if(!fr){ fr={id:fid,count:0}; t.friends.push(fr); } fr.count++; const gain=15+Math.floor(Math.random()*20); let h='<p style="text-align:center;color:#3e5c3f">'+f.n+' 很开心，回礼 🍅 +'+gain+'</p>'; if(Math.random()<0.1&&f.rare&&t.cards.indexOf(f.rare)<0){ t.cards.push(f.rare); t.inbox.push(f.rare); tvNoteCard(f.rare,t.frog.fatId); const tm=t.frog&&t.frog.fatId&&typeById(t.frog.fatId)?typeById(t.frog.fatId).name:'月巴'; h+='<p style="text-align:center">💌 邻居 '+f.e+' '+f.n+' 在外路过时遇到了 <b>'+tm+'</b>，'+tm+' 托它转交一封来自「'+tvDestOfCard(f.rare)+'」的信！</p>'; } h+='<p style="text-align:center"><button class="btn" onclick="closeModal()">收下</button></p>'; openModal('🎁 回礼', h); tvTomato(gain); save(); }
+function tvFeed(fid,s){ const t=tvFresh(); const f=TV_FRIENDS.find(function(x){return x.id===fid;}); if(!f||t.specials.indexOf(s)<0)return; const want=t.pendingVisitWant; const liked=!!want&&s===want; t.pendingVisit=null; t.pendingVisitWant=null; tvUpdateDoor(); let fr=t.friends.find(function(x){return x.id===fid;}); if(!fr){ fr={id:fid,count:0}; t.friends.push(fr); } fr.count++; const gain=!want?(15+Math.floor(Math.random()*20)):(liked?(20+Math.floor(Math.random()*20)):(6+Math.floor(Math.random()*14))); let h=!want?('<p style="text-align:center;color:#48614a">'+f.n+' 收下了 '+spEmo(s)+' '+s+'，开心地回礼 🍅 +'+gain+'</p>'):(liked?('<p style="text-align:center;color:#3e5c3f">正好是 '+f.n+' 更想要的 '+spEmo(s)+' '+s+'，它开心极了，回礼 🍅 +'+gain+'</p>'):('<p style="text-align:center;color:#48614a">'+f.n+' 收下了 '+spEmo(s)+' '+s+'，不过它今天更想要别的，回礼 🍅 +'+gain+'</p>')); if(Math.random()<0.1&&f.rare&&t.cards.indexOf(f.rare)<0){ t.cards.push(f.rare); t.inbox.push(f.rare); tvNoteCard(f.rare,t.frog.fatId); const tm=t.frog&&t.frog.fatId&&typeById(t.frog.fatId)?typeById(t.frog.fatId).name:'月巴'; h+='<p style="text-align:center">💌 邻居 '+f.e+' '+f.n+' 在外路过时遇到了 <b>'+tm+'</b>，'+tm+' 托它转交一封来自「'+tvDestOfCard(f.rare)+'」的信！</p>'; } h+='<p style="text-align:center"><button class="btn" onclick="closeModal()">收下</button></p>'; openModal('🎁 回礼', h); tvTomato(gain); save(); }
 function tvLabel(f){ return f?f.e||'🐰':'🐰'; }
 function tvCharmDest(){ const ds=TV_DESTS.filter(function(x){return x.need==='charm'&&!x.hidden;}); return ds[(Math.random()*ds.length)|0]||ds[ds.length-1]||TV_DESTS[TV_DESTS.length-1]; }
 /* —— 小号护身符（永久道具） —— */
@@ -9465,6 +9412,68 @@ init();
 const DD_NAME={3:'3',4:'4',5:'5',6:'6',7:'7',8:'8',9:'9',10:'10',11:'J',12:'Q',13:'K',14:'A',15:'2',16:'小王',17:'大王'};
 const DD_SUIT=[['♠','b'],['♥','r'],['♣','b'],['♦','r'],['','j'],['','j']];
 
+/* ============================================================
+ * 斗月巴音效
+ * ------------------------------------------------------------
+ * 结构：DDSND 按「皮肤 key」存配方，ddSfx(name,a,b) 统一分发。
+ * 目前只接入「海岛假日 islandbay」，其余皮肤 ddsnd() 返回 null → 保持静音；
+ * 验收通过后按同一套接口补全所有皮肤即可，各调用点无需改动。
+ * 听感定位 —— 海岛假日 · 椰影篝火：以三角波/正弦的暖木质音为主，
+ * 滑音模拟海风与浪；炸弹/王炸用「椰壳重击 + 低频余震」。
+ * 一律复用既有 tone()：单音音量钳制 0.03~0.2、并发上限 8、总输出限幅 0.7。
+ * ============================================================ */
+const DDSND={
+  islandbay:{
+    /* 手牌：选中 / 取消（椰壳轻敲，最轻最短，可高频触发不刺耳） */
+    pick(){ tone(988,0.045,'triangle',0.07); tone(1480,0.05,'sine',0.03,0.02); },
+    unpick(){ tone(784,0.045,'triangle',0.06); },
+    /* 发牌：一阵海风上行 */
+    deal(){ [659,784,988,1175].forEach(function(f,i){ tone(f,0.1,'triangle',0.05,i*0.055); }); },
+    /* 叫地主 / 不叫 */
+    bidYes(){ [523,659,784,1046].forEach(function(f,i){ tone(f,0.11,'triangle',0.1,i*0.07); }); tone(1568,0.14,'sine',0.045,0.22); },
+    bidNo(){ tone(494,0.12,'triangle',0.07); tone(392,0.16,'sine',0.055,0.08); },
+    /* 地主落定：延迟 0.38s 起音，避开上面「叫地主」的尾音，听感是「一拍之后落锤」 */
+    landlord(){ const d=0.38; [392,523,659,880].forEach(function(f,i){ tone(f,0.14,'triangle',0.1,d+i*0.08); }); tone(1760,0.26,'sine',0.05,d+0.34); },
+    /* 出牌：按牌型区分。who===0 是自己的牌（亮、稍响），敌方更收敛 */
+    play(type,who){
+      const mine=(who===0), v=mine?1:0.6, w=mine?'triangle':'sine';
+      switch(type){
+        case 'pair': tone(880,0.075,w,0.09*v); tone(880,0.075,w,0.075*v,0.05); tone(1175,0.09,'sine',0.04*v,0.1); break;
+        case 'triple': case 'triple1': case 'triple2':
+          [784,988,1175].forEach(function(f,i){ tone(f,0.085,w,0.085*v,i*0.045); }); break;
+        case 'straight': tone(523,0.26,'triangle',0.085*v,0,880); tone(1568,0.18,'sine',0.04*v,0.1); break;   /* 顺子：海风长扫 */
+        case 'pairs': [659,659,784,784].forEach(function(f,i){ tone(f,0.065,w,0.075*v,i*0.04); }); break;
+        case 'plane': case 'plane1': case 'plane2':
+          [523,659,784,988,1175].forEach(function(f,i){ tone(f,0.075,w,0.07*v,i*0.04); }); break;
+        case 'four2': case 'four2p':
+          [392,494,523,659].forEach(function(f,i){ tone(f,0.095,w,0.09*v,i*0.05); }); tone(1046,0.13,'sine',0.045*v,0.22); break;
+        case 'bomb':   /* 炸弹：椰壳重击 + 低频余震 */
+          tone(98,0.4,'sine',0.11*v,0.02); tone(196,0.22,'triangle',0.13*v); tone(392,0.18,'triangle',0.095*v,0.03); tone(784,0.22,'sine',0.055*v,0.06); break;
+        case 'rocket': /* 王炸：上冲长滑 + 高音闪光 */
+          tone(392,0.5,'triangle',0.12*v,0,1500); [1046,1318,1568,2093].forEach(function(f,i){ tone(f,0.2,'sine',0.055*v,0.12+i*0.07); }); break;
+        default: tone(880,0.09,w,0.095*v); tone(1320,0.1,'sine',0.04*v,0.03);   /* 单张 */
+      }
+    },
+    /* 不要：一声轻柔的下沉 */
+    pass(){ tone(440,0.1,'triangle',0.075,0,-120); tone(330,0.14,'sine',0.05,0.05); },
+    /* 提示：温柔的搜寻音 */
+    hint(){ tone(1046,0.075,'sine',0.06); tone(1318,0.09,'sine',0.05,0.06); },
+    /* 一轮跑完、清桌重开：海浪退去 */
+    clean(){ tone(880,0.24,'sine',0.05,0,-320); },
+    /* 结算：赢 = 尤克里里上行 + 闪光；输 = 柔和下行 */
+    win(){ [523,659,784,1046,1318].forEach(function(f,i){ tone(f,0.17,'triangle',0.12,i*0.085); }); [1568,2093].forEach(function(f,i){ tone(f,0.26,'sine',0.055,0.45+i*0.1); }); },
+    lose(){ tone(494,0.16,'triangle',0.095); tone(392,0.2,'triangle',0.085,0.12); tone(294,0.3,'sine',0.075,0.24); },
+    /* 出千月巴露馅：半音下滑的「捣鬼」音 */
+    cheat(){ tone(622,0.1,'triangle',0.085); tone(587,0.11,'triangle',0.075,0.08); tone(494,0.2,'sine',0.085,0.16); },
+    /* 无效操作：木鱼低音 */
+    err(){ tone(220,0.13,'triangle',0.095); tone(175,0.17,'sine',0.075,0.06); },
+  }
+};
+/* 当前皮肤的音效配方；未接入的皮肤返回 null（保持静音，行为与接入前一致） */
+function ddsnd(){ const a=(S.skins&&S.skins.active)||''; return DDSND[a]||null; }
+/* 统一分发：name=配方名，a/b=可选参数；任何异常都吞掉，绝不影响牌局逻辑 */
+function ddSfx(name,a,b){ const r=ddsnd(); if(!r)return; const f=r[name]; if(typeof f!=='function')return; try{ f(a,b); }catch(e){} }
+
 function ddDeck(){
   const a=[]; let id=0;
   for(let v=3;v<=15;v++) for(let s=0;s<4;s++) a.push({v:v,s:s,id:id++});
@@ -10039,10 +10048,12 @@ function ddAskBid(){
   /* 不弹遮罩层：叫地主阶段直接把手牌渲染在下方，玩家看完手牌再决定 */
   ddG.phase='bid';
   ddG.sel=[];
+  ddSfx('deal');      /* 发牌：一阵海风上行 */
   ddRenderAll(true);  /* 初始发牌：手牌带入场动画 */
 }
 function ddBid(call){
   const g=ddG; if(!g||g.phase!=='bid')return;
+  ddSfx(call?'bidYes':'bidNo');
   g.bidDone[0]=true;
   if(call){ g.bidder=0; g.bidWhy='你叫了地主'; g.bidWhySub=''; ddFinishBid(); return; }
   /* 玩家不叫：让两个 AI 依次决定 */
@@ -10075,6 +10086,7 @@ function ddFinishBid(){
   g.phase='play';
   g.turn=g.landlord;
   g.last=null; g.plays=[null,null,null];
+  ddSfx('landlord');                         /* 地主落定：延迟起音的暖上行 */
   ddShowLayer(null);
   ddRenderAll();
   if(g.bidWhySub) ddHost.toast(g.bidWhy,g.bidWhySub);
@@ -10083,6 +10095,7 @@ function ddFinishBid(){
     /* 叫地主的提示先出，隔一会儿再报出千的事，免得两条提示互相顶掉 */
     setTimeout(function(){
       if(!ddG||!ddG.cheatInfo||ddG.phase==='over') return;   /* 这局已经散了就别再提示 */
+      ddSfx('cheat');                                        /* 出千露馅：半音下滑的捣鬼音 */
       ddHost.toast('🃏 出千月巴出千了！','它用 '+ddCardName(ddG.cheatInfo.give)+' 换走了你的 '+ddCardName(ddG.cheatInfo.take));
     },2300);
   }
@@ -10097,6 +10110,7 @@ function ddAfterRender(){
   /* 若上家就是自己（其余人都过了）→ 清桌重开，自由出牌 */
   if(g.last&&g.last.owner===g.turn){
     g.last=null; g.plays=[null,null,null];
+    ddSfx('clean');                            /* 清桌重开：海浪退去 */
     ddRenderAll();
   }
   if(g.turn===0) ddRenderActions();
@@ -10108,6 +10122,7 @@ function ddAfterRender(){
 function ddPlay(cards,who){
   const g=ddG;
   const p=ddParse(cards);
+  ddSfx('play',p&&p.type,who);                /* 出牌音：按牌型区分，敌方更收敛 */
   g.plays[who]=cards.slice();
   /* 算牌：把这一手打出的牌记进全场历史，供困难 AI 推断对手剩余牌 */
   if(g.seen) cards.forEach(function(c){ g.seen.push(c.v); });
@@ -10127,6 +10142,7 @@ function ddPlay(cards,who){
 }
 function ddPass(who){
   const g=ddG;
+  ddSfx('pass');
   g.plays[who]='pass';
   g.turn=(who+1)%3;
   ddRenderAll();
@@ -10136,23 +10152,23 @@ function ddPass(who){
 /* 玩家操作 */
 function ddPlayerPlay(){
   const g=ddG; if(!g||g.phase!=='play'||g.turn!==0)return;
-  if(!g.sel.length){ ddHost.toast('先选牌再出'); return; }
+  if(!g.sel.length){ ddSfx('err'); ddHost.toast('先选牌再出'); return; }
   const ids={}; g.sel.forEach(function(id){ ids[id]=1; });
   const cards=g.hands[0].filter(function(c){ return ids[c.id]; });
   const p=ddParse(cards);
-  if(!p){ ddHost.toast('不是合法的牌型'); return; }
-  if(g.last&&!ddCanBeat(p,g.last)){ ddHost.toast('打不过上家的牌'); return; }
+  if(!p){ ddSfx('err'); ddHost.toast('不是合法的牌型'); return; }
+  if(g.last&&!ddCanBeat(p,g.last)){ ddSfx('err'); ddHost.toast('打不过上家的牌'); return; }
   ddPlay(cards,0);
 }
 function ddPlayerPass(){
   const g=ddG; if(!g||g.phase!=='play'||g.turn!==0)return;
-  if(!g.last){ ddHost.toast('你是本轮首家，必须出牌'); return; }
+  if(!g.last){ ddSfx('err'); ddHost.toast('你是本轮首家，必须出牌'); return; }
   ddPass(0);
 }
 function ddPlayerHint(){
   const g=ddG; if(!g||g.phase!=='play'||g.turn!==0)return;
   const beats=ddFindBeats(g.hands[0],g.last);
-  if(!beats.length){ ddHost.toast('没有能压过的牌，只能不要'); return; }
+  if(!beats.length){ ddSfx('err'); ddHost.toast('没有能压过的牌，只能不要'); return; }
   const hand=g.hands[0];
   /* 提示顺序：① 优先不甩炸弹/王炸（留到关键回合）② 优先不拆散手里的对子/三张/炸弹
      —— 例如打单张时，先提示真正的孤张，而不是从对子/三张里拆一张出来
@@ -10166,6 +10182,7 @@ function ddPlayerHint(){
     if(ka!==kb) return ka-kb;
     return (pa.rank-pb.rank) || (a.length-b.length);
   });
+  ddSfx('hint');
   const pick=beats[Math.min(g.hintIdx,beats.length-1)];
   g.hintIdx=(g.hintIdx+1)%beats.length;
   g.sel=pick.map(function(c){ return c.id; });
@@ -10177,6 +10194,7 @@ function ddToggleCard(id){
   const g=ddG; if(!g||g.turn!==0||g.phase!=='play')return;
   const i=g.sel.indexOf(id);
   if(i<0) g.sel.push(id); else g.sel.splice(i,1);
+  ddSfx(i<0?'pick':'unpick');
   /* 只 toggle 这张牌的 .sel class，不重建整个手牌 DOM — 避免滚动条闪烁和入场动画重播 */
   const el=document.querySelector('#ddHand .dd-card[data-id="'+id+'"]');
   if(el) el.classList.toggle('sel', i<0);
@@ -10393,6 +10411,7 @@ function ddSettle(winner){
   if(g.cheat||!win) tr.ddStreak=0; else tr.ddStreak=(tr.ddStreak|0)+1;
   ddPushRecord(win,net,winner);                /* 写入战绩记录（时间/胜负/地主/时长/番茄/初始牌分） */
   ddRenderAll();
+  ddSfx(win?'win':'lose');
   ddShowResult(win,net,payout,winner);
 }
 /* 记录一局战绩：时间 / 胜负与地主 / 时长 / 番茄盈亏 / 初始手牌打分。新的在前，最多 DD_REC_MAX 条 */
@@ -10761,7 +10780,7 @@ function ddRenderActions(){
     +'<button class="btn" onclick="ddPlayerHint()">提示</button>'
     +'<button class="btn" onclick="ddClearSel()">重选</button>';
 }
-function ddClearSel(){ const g=ddG; if(!g)return; g.sel=[]; ddRenderHand(); }
+function ddClearSel(){ const g=ddG; if(!g)return; g.sel=[]; ddSfx('unpick'); ddRenderHand(); }
 
 /* ---------- 规则弹窗 ---------- */
 function ddShowRules(){
