@@ -4206,13 +4206,21 @@ function weatherTick(){
 }
 
 /* ---------------- 音频（WebAudio 合成） ---------------- */
-let AC=null, ACmaster=null, _tones=0;
+let AC=null, ACmaster=null, ACdd=null, _tones=0, _ddBus=false;
 function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
   if(AC && !ACmaster){ try{ ACmaster=AC.createGain(); ACmaster.gain.value=0.7; /* 总输出限幅，防多音叠加爆音量 */ ACmaster.connect(AC.destination); }catch(e){ ACmaster=null; } }
+  /* 斗月巴专属总线：3× 增益，仅作用于 _ddBus 期间的音效（即 ddSfx 触发的斗月巴音效），
+     后接压缩器防止和弦/连点叠加时削波变刺耳 */
+  if(AC && ACmaster && !ACdd){ try{
+    const dg=AC.createGain(); dg.gain.value=3;
+    const dc=AC.createDynamicsCompressor();
+    dc.threshold.value=-6; dc.knee.value=6; dc.ratio.value=12; dc.attack.value=0.003; dc.release.value=0.12;
+    dg.connect(dc); dc.connect(ACmaster); ACdd=dg;
+  }catch(e){ ACdd=null; } }
   return AC; }
 function tone(freq,dur,type,vol,when,slide){
   if(S.muted)return; if(_tones>=8)return; /* 并发上限，防止瞬时过多音效叠加变爆音 */
-  const c=ac(); if(!c)return; const out=ACmaster||(AC?AC.destination:null); if(!out)return;
+  const c=ac(); if(!c)return; const out=(_ddBus&&ACdd)?ACdd:(ACmaster||(AC?AC.destination:null)); if(!out)return; /* 斗月巴期间的音效走专属增益总线 */
   const o=c.createOscillator(), g=c.createGain();
   const t0=c.currentTime+(when||0);
   o.type=type||'sine'; o.frequency.setValueAtTime(freq,t0);
@@ -4265,6 +4273,7 @@ const sfx={
   slotMid(){ tone(880,0.11,'triangle',0.11); tone(1318,0.14,'sine',0.07,0.08); },                            // 番茄机 · 成对加成
   slotStolen(){ tone(988,0.1,'sine',0.08); tone(740,0.12,'sine',0.06,0.09); tone(587,0.18,'sine',0.07,0.18); }, // 番茄被偷偷拿走：俏皮下滑
   slotLow(){ tone(880,0.1,'sine',0.075); },                                                                   // 番茄机 · 普通收获
+  slotReady(){ tone(880,0.09,'sine',0.07); tone(1318,0.13,'triangle',0.06,0.08); },                          // 好运收获攒够可拉（旅行图标 🎰 亮起）
   yardEv(){ tone(1318,0.06,'sine',0.05); tone(1760,0.09,'sine',0.04,0.06); },                                // 庭院事件出现：轻闪
 };
 
@@ -4479,6 +4488,15 @@ function addCoins(n){
   const el=$('coinbox'); el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse');
   $('coinTxt').textContent=fmt(S.coins);
 }
+/* 收获音效节流：同一时刻多只月巴一起收获（自动收集/批量收获）时，整体只发一次声，
+   避免多个收获音叠加成噪音；窗口 180ms ≥ 单个收获音时长（0.05+0.12s） */
+let _hvSfxAt=0;
+function hvSfx(isNew){
+  const t=(window.performance&&performance.now)?performance.now():Date.now();
+  if(t-_hvSfxAt<180) return; _hvSfxAt=t;
+  sfx.harvest(0);
+  if(isNew) sfx.unlock(); else sfx.coin();
+}
 function doHarvest(z,w,i,cell,el,quiet){
   const type=cellTypeOf(cell);
   if(!type){ renderCell(z,w,i); return null; }   // 失效的月巴 id：槽位已清空待重播，不参与收获
@@ -4507,10 +4525,10 @@ function doHarvest(z,w,i,cell,el,quiet){
     burst(x,y,col,isNew?26:14,isNew?5:3.4);
     floatText(x,y-8,`+${fmt(val)} 🪙 · ${cell.h}cm`,isNew?'#e6c44c':'#7e57c2');
     coinFly(x,y,coinTarget());
-    if(!quiet) sfx.harvest(0);
   }
   if(beats.length) toast(`📐 新纪录！「${type.name}」${beats.join('、')} ${cell.h}cm / ${cell.w}g`);
-  if(isNew){ unlockBanner(type,cell); if(!quiet) sfx.unlock(); } else if(!quiet) sfx.coin();
+  if(isNew) unlockBanner(type,cell);
+  if(!quiet) hvSfx(isNew); /* 收获音（含金币/新解锁音）：同一时刻多只月巴收获合并为一次 */
   cell.t=null; cell.delay=now()+rand(900,2600);
   updateHeader();
   renderCell(z,w,i);
@@ -7343,7 +7361,7 @@ function tvCharmDura(x){ return Math.max(0,(x&&x.du!=null)?(x.du|0):TV_ITEMS.cha
 /* 仓库中护身符的耐久文本：每趟只能带 1 个，实际只会用到最前面那件，故只显示第一件 */
 function tvCharmDuraText(list){ const d=TV_ITEMS.charm.durab; if(!list||!list.length)return '—'; return (list[0]|0)+'/'+d; }
 function tvTomato(d){ const t=tvFresh(); const dd=(typeof d==='number'&&isFinite(d))?d:0; t.tomato=Math.max(0,(t.tomato||0)+dd); const e=$('tvTomato'); if(e)e.textContent=t.tomato; save(); }
-function updateTravelIcon(){ const el=$('btnTravel'); if(!el)return; const ready=!!S.travel&&tvSlotReady(); const door=!!S.travel&&!!S.travel.pendingVisit; const home=!!S.travel&&!!S.travel.homeRewardReady; const on=dex2Unlocked(); const key=(on?1:0)+'|'+(ready?1:0)+'|'+(door?1:0)+'|'+(home?1:0); if(el._tvIcon===key)return; el._tvIcon=key; if(el.classList)el.classList.toggle('hasbadge',ready||door||home); el.innerHTML=(on?'<b>🧳</b><small>旅行</small>':'<b>❓</b><small>旅行</small>')+(door?'<span class="dock-badge">🚪</span>':(home?'<span class="dock-badge">🍅</span>':(ready?'<span class="dock-badge">🎰</span>':''))); }
+function updateTravelIcon(){ const el=$('btnTravel'); if(!el)return; const ready=!!S.travel&&tvSlotReady(); const door=!!S.travel&&!!S.travel.pendingVisit; const home=!!S.travel&&!!S.travel.homeRewardReady; const on=dex2Unlocked(); const key=(on?1:0)+'|'+(ready?1:0)+'|'+(door?1:0)+'|'+(home?1:0); const first=(el._tvIcon===undefined); const wasReady=!!el._tvReady; el._tvReady=ready; if(el._tvIcon===key)return; el._tvIcon=key; /* 好运收获攒够、🎰 徽标亮起时给一次轻提示音（仅「未就绪→就绪」的跃迁，且跳过首次渲染） */ if(!first&&ready&&!wasReady&&sfx.slotReady)sfx.slotReady(); if(el.classList)el.classList.toggle('hasbadge',ready||door||home); el.innerHTML=(on?'<b>🧳</b><small>旅行</small>':'<b>❓</b><small>旅行</small>')+(door?'<span class="dock-badge">🚪</span>':(home?'<span class="dock-badge">🍅</span>':(ready?'<span class="dock-badge">🎰</span>':''))); }
 function travelEntry(){ if(!dex2Unlocked()){ toast('🔒 第一图鉴集齐'+DEX1_MIN+'个月巴后可解锁旅行！'); return; } openTravel(); }
 let DR_DEBUG=false; // #debugall 调试开关（旅行加速、无限资源等调试功能使用）
 let tvView='yard';
@@ -9453,10 +9471,10 @@ const DD_SUIT=[['♠','b'],['♥','r'],['♣','b'],['♦','r'],['','j'],['','j']
  * ============================================================ */
 /* 一记打牌声：一次极短、干净、无滑移的正弦脉冲（类似常见卡牌游戏的牌桌 UI「嗒」声）。
    刻意不做频率滑移——滑移的听感是电子「boing」，不像牌。
-   音量 0.13×v；每个配方只占 1 个并发音，连续出牌也不会超出 tone() 的 8 路并发上限。
+   音量 0.16×v；每个配方只占 1 个并发音，连续出牌也不会超出 tone() 的 8 路并发上限。
    v=音量系数（自己 1 / 敌方更收敛）；when=延迟；hi=脉冲频率。 */
 function ddFlick(v,when,hi){
-  tone(hi||760,0.026,'sine',0.13*v,when);
+  tone(hi||760,0.026,'sine',0.16*v,when);
 }
 const DDSND={
   islandbay:{
@@ -9466,14 +9484,14 @@ const DDSND={
     /* 发牌：五声错落的轻点 */
     deal(){ for(let i=0;i<5;i++) ddFlick(0.55,i*0.055,700+i*20); },
     /* 叫地主：两记低频叩桌 + 两声柔和上行 */
-    bidYes(){ tone(175,0.06,'triangle',0.11); tone(175,0.06,'triangle',0.1,0.09); tone(660,0.05,'sine',0.09,0.2); tone(880,0.06,'sine',0.09,0.28); },
+    bidYes(){ tone(175,0.06,'triangle',0.15); tone(175,0.06,'triangle',0.14,0.09); tone(660,0.05,'sine',0.12,0.2); tone(880,0.06,'sine',0.12,0.28); },
     /* 不叫：一记闷响 + 尾音下沉 */
-    bidNo(){ tone(190,0.07,'triangle',0.1); tone(150,0.12,'sine',0.07,0.07); },
+    bidNo(){ tone(190,0.07,'triangle',0.14); tone(150,0.12,'sine',0.11,0.07); },
     /* 地主落定：延迟 0.38s 低频重锤，避开叫地主的尾音 */
-    landlord(){ const d=0.38; tone(85,0.35,'sine',0.13,d); tone(170,0.2,'triangle',0.12,d+0.01); tone(340,0.14,'triangle',0.07,d+0.03); },
+    landlord(){ const d=0.38; tone(85,0.35,'sine',0.17,d); tone(170,0.2,'triangle',0.16,d+0.01); tone(340,0.14,'triangle',0.11,d+0.03); },
     /* 出牌：干净的牌桌「嗒」按张数堆叠；who===0 自己（响），敌方更收敛 */
     play(type,who){
-      const v=(who===0)?1:0.55;
+      const v=(who===0)?1:0.7;
       switch(type){
         case 'pair': ddFlick(v,0,780); ddFlick(v,0.055,760); break;                        /* 两张：两声 */
         case 'triple': case 'triple1': case 'triple2':
@@ -9486,35 +9504,47 @@ const DDSND={
           for(let i=0;i<5;i++) ddFlick(v,i*0.05,790-i*10); break;
         case 'four2': case 'four2p':                                                       /* 四带二：四下连点 + 桌响 */
           ddFlick(v,0,720); ddFlick(v,0.05,720); ddFlick(v,0.1,720); ddFlick(v,0.15,720);
-          tone(150,0.09,'triangle',0.1*v,0.16); break;
+          tone(150,0.09,'triangle',0.14*v,0.16); break;
         case 'bomb':                                                                       /* 炸弹：一记低频冲击 + 余震，不堆高频 */
-          tone(140,0.1,'sine',0.16*v); tone(88,0.26,'sine',0.12*v,0.04); break;
+          tone(140,0.1,'sine',0.19*v); tone(88,0.26,'sine',0.15*v,0.04); break;
         case 'rocket':                                                                     /* 王炸：低频冲击 + 两声扬起 + 落地余震 */
-          tone(170,0.1,'sine',0.16*v); ddFlick(v,0.08,760); ddFlick(v,0.14,820);
-          tone(80,0.3,'sine',0.11*v,0.2); break;
+          tone(170,0.1,'sine',0.19*v); ddFlick(v,0.08,760); ddFlick(v,0.14,820);
+          tone(80,0.3,'sine',0.14*v,0.2); break;
         default: ddFlick(v,0,780); break;                                                  /* 单张：一记牌桌「嗒」 */
       }
     },
     /* 不要：把牌轻轻推到一边（两声柔和下沉） */
-    pass(){ tone(430,0.06,'sine',0.08); tone(330,0.07,'sine',0.07,0.06); },
+    pass(){ tone(430,0.06,'sine',0.12); tone(330,0.07,'sine',0.11,0.06); },
     /* 提示：两记轻巧的铃音（小三度下行，非音阶动机） */
-    hint(){ tone(880,0.045,'sine',0.075); tone(740,0.06,'sine',0.06,0.05); },
+    hint(){ tone(880,0.045,'sine',0.11); tone(740,0.06,'sine',0.1,0.05); },
     /* 清桌重开：三下由高到低的轻扫 */
-    clean(){ tone(700,0.05,'sine',0.08); tone(620,0.05,'sine',0.075,0.05); tone(540,0.06,'sine',0.07,0.1); },
+    clean(){ tone(700,0.05,'sine',0.12); tone(620,0.05,'sine',0.11,0.05); tone(540,0.06,'sine',0.11,0.1); },
     /* 结算·赢：尤克里里和弦扫弦（同时起音的和弦，刻意不是上行音阶）+ 风铃闪光 */
-    win(){ [523,659,784].forEach(function(f,i){ tone(f,0.24,'triangle',0.13,0.03*i); }); tone(1046,0.26,'sine',0.06,0.1); tone(1318,0.3,'sine',0.045,0.2); },
+    win(){ [523,659,784].forEach(function(f,i){ tone(f,0.24,'triangle',0.17,0.03*i); }); tone(1046,0.26,'sine',0.1,0.1); tone(1318,0.3,'sine',0.09,0.2); },
     /* 结算·输：牌堆慢慢塌落 */
-    lose(){ tone(300,0.14,'triangle',0.075); tone(240,0.2,'sine',0.07,0.09); tone(170,0.28,'sine',0.06,0.2); },
+    lose(){ tone(300,0.14,'triangle',0.11); tone(240,0.2,'sine',0.11,0.09); tone(170,0.28,'sine',0.1,0.2); },
     /* 出千月巴露馅：两声「捣鬼」的错拍闷响 + 心虚下沉 */
-    cheat(){ tone(520,0.08,'triangle',0.075); tone(500,0.08,'triangle',0.07,0.07); tone(400,0.12,'sine',0.06,0.14); },
+    cheat(){ tone(520,0.08,'triangle',0.11); tone(500,0.08,'triangle',0.11,0.07); tone(400,0.12,'sine',0.1,0.14); },
     /* 无效操作：木牌面闷敲（区别于全局 error 的锯齿低鸣） */
-    err(){ tone(150,0.09,'triangle',0.09); tone(110,0.12,'triangle',0.07,0.05); },
+    err(){ tone(150,0.09,'triangle',0.13); tone(110,0.12,'triangle',0.11,0.05); },
+    /* 上桌开局：一记椰壳叩桌 + 两声轻快风铃（非音阶动机） */
+    enter(){ tone(220,0.09,'triangle',0.16); tone(196,0.07,'triangle',0.12,0.09); ddFlick(0.6,0.06,820); ddFlick(0.42,0.15,700); },
+    /* 押注 / 选选项：单记筹码触桌的干脆轻点 */
+    bet(){ ddFlick(0.68,0,720); tone(260,0.05,'triangle',0.09,0.02); },
+    /* 弹层开合（规则 / 战绩 / 页签）：一记柔和的纸牌轻掠 */
+    panel(){ tone(660,0.05,'sine',0.09); tone(990,0.08,'sine',0.08,0.05); },
+    /* 出千月巴悄悄换牌：极轻的两记鬼祟轻点（比露馅的 cheat 更收敛、不下沉） */
+    sneak(){ tone(300,0.05,'sine',0.09); ddFlick(0.38,0.06,560); },
+    /* 收手退出：把牌收拢的两声下行 */
+    out(){ tone(520,0.1,'sine',0.11); tone(392,0.16,'sine',0.1,0.09); },
   }
 };
 /* 当前皮肤的音效配方；未接入专属配方的皮肤（含未选皮肤）统一回落到 islandbay */
 function ddsnd(){ const a=(S.skins&&S.skins.active)||''; return DDSND[a]||DDSND.islandbay; }
 /* 统一分发：name=配方名，a/b=可选参数；任何异常都吞掉，绝不影响牌局逻辑 */
-function ddSfx(name,a,b){ const r=ddsnd(); if(!r)return; const f=r[name]; if(typeof f!=='function')return; try{ f(a,b); }catch(e){} }
+function ddSfx(name,a,b){ const r=ddsnd(); if(!r)return; const f=r[name]; if(typeof f!=='function')return;
+  const prev=_ddBus; _ddBus=true; /* 标记期间所有 tone() 走斗月巴专属增益总线，放完立刻还原 */
+  try{ f(a,b); }catch(e){} finally{ _ddBus=prev; } }
 
 function ddDeck(){
   const a=[]; let id=0;
@@ -9876,6 +9906,7 @@ function ddRenderCheatHint(){
 
 /* ---------- 入口 / 退出 ---------- */
 function ddEnter(){
+  ddSfx('enter');                              /* 上桌开局：椰壳叩桌 + 风铃 */
   const el=$('ddgame'); if(el) el.classList.add('show');
   document.body.classList.add('dd-lock');
   ddSyncFromDisk();                           /* 先以存档为准：别页花掉的番茄/次数，本页要认账 */
@@ -9890,6 +9921,7 @@ function ddEnter(){
   if(inp) inp.value=String(Math.min(100,Math.max(1,bal)));
 }
 function ddClose(){
+  ddSfx('out');                                /* 收手退出：把牌收拢的两声下行 */
   const el=$('ddgame'); if(el) el.classList.remove('show');
   document.body.classList.remove('dd-lock');
   const tv=$('travel'); if(tv&&tv.style.display==='flex') tvRenderAll();
@@ -9966,7 +9998,7 @@ function ddRenderDiff(){
   });
   box.innerHTML=h;
 }
-function ddPickDiff(k){ if(!DD_DIFFS[k])return; ddDiff=k; ddRenderDiff(); ddRenderAvatar(); }
+function ddPickDiff(k){ if(!DD_DIFFS[k])return; ddDiff=k; ddSfx('panel'); ddRenderDiff(); ddRenderAvatar(); }
 function ddRenderBetQuick(){
   const box=$('ddBetQuick'); if(!box)return;
   const bal=ddHost.getBalance();
@@ -9979,6 +10011,7 @@ function ddRenderBetQuick(){
 function ddQuick(v){
   const inp=$('ddBetInput');
   if(!inp)return;
+  ddSfx('bet');                                /* 押注金额快捷选择 */
   const cap=Math.min(100,ddHost.getBalance());
   inp.value=String(Math.max(1,Math.min(cap,Math.floor(v)||1)));
 }
@@ -10000,6 +10033,7 @@ function ddStart(free){
     ddHost.addTomato(-stake);                 /* 开局先扣，防中途关窗刷分 */
     ddStampBet();                             /* 同刻记次并入档：刷新/关窗也照扣，杜绝看了手牌再重开 */
   }
+  if(!free) ddSfx('bet');                     /* 押注入池：一记筹码触桌 */
   ddDeal(stake);                              /* ddDeal→ddAskBid 进入出牌阶段（手牌直接渲染在下方） */
   ddShowLayer(null);                          /* 关闭下注层，露出牌桌 */
 }
@@ -10082,6 +10116,7 @@ function ddCheatSwap(){
   g.hands[1].sort(ddSortCmp);
   g.initScore=ddStrength(g.hands[0]);              /* 手牌变了，同步初始打分（评级用） */
   g.cheatInfo={give:give, take:take};
+  ddSfx('sneak');                              /* 悄悄换牌：极轻的鬼祟点，2.3s 后再由 cheat 音揭示 */
   return g.cheatInfo;
 }
 
@@ -10827,6 +10862,7 @@ function ddClearSel(){ const g=ddG; if(!g)return; g.sel=[]; ddSfx('unpick'); ddR
 /* ---------- 规则弹窗 ---------- */
 function ddShowRules(){
   const box=$('ddRuleBox'); if(!box)return;
+  ddSfx('panel');                              /* 弹层开合 */
   box.innerHTML=ddRulesHTML();
   ddShowLayer('ddRuleLayer');
 }
@@ -10849,6 +10885,7 @@ function ddFmtClock(ts){ const p=bjParts(ts); return pad(p.mo+1)+'-'+pad(p.d)+' 
 function ddFmtDur(ms){ const s=Math.max(0,Math.round((ms||0)/1000)); const m=(s/60)|0; return m>0?(m+'分'+(s%60)+'秒'):(s+'秒'); }
 function ddShowHistory(){
   const box=$('ddHistoryBox'); if(!box)return;
+  ddSfx('panel');                              /* 弹层开合 */
   box.innerHTML=ddHistoryHTML();
   ddShowLayer('ddHistoryLayer');
 }
@@ -10856,7 +10893,7 @@ function ddShowHistory(){
 function ddHideHistory(){ ddShowLayer(!ddG?'ddBet':(ddG.phase==='over'?'ddResult':null)); }
 /* 顶部分页：记录 / 统计 */
 let ddHistTab='rec';
-function ddHistTabSet(tab){ ddHistTab=(tab==='stats')?'stats':'rec'; const box=$('ddHistoryBox'); if(box) box.innerHTML=ddHistoryHTML(); }
+function ddHistTabSet(tab){ ddHistTab=(tab==='stats')?'stats':'rec'; ddSfx('panel'); const box=$('ddHistoryBox'); if(box) box.innerHTML=ddHistoryHTML(); }
 function ddHistTabsHTML(){
   return '<div class="dd-rec-tabs">'
     +'<button class="dd-rec-tab'+(ddHistTab==='rec'?' on':'')+'" onclick="ddHistTabSet(\'rec\')">📜 记录</button>'
