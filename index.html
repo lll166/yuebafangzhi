@@ -287,6 +287,14 @@
   #travel .tv-door:hover{background:#fff7e8;}
   #travel .tv-door .tv-door-paw{position:absolute;top:-12px;right:-10px;font-size:17px;pointer-events:none;animation:tvbob 1.2s ease-in-out infinite;}
   @keyframes tvDoorGlow{0%,100%{box-shadow:0 2px 6px rgba(0,0,0,.25),0 0 0 0 rgba(255,190,0,.55);}50%{box-shadow:0 2px 6px rgba(0,0,0,.25),0 0 16px 6px rgba(255,190,0,.85);}}
+  /* ---------- 皮肤跟随：旅行页上下两条功能栏（顶栏 + 底部导航）随当前皮肤主题变色 ---------- */
+  #travel .tv-top{background:linear-gradient(180deg,var(--panel),var(--bg2));color:var(--text);border-bottom:1px solid var(--line);}
+  #travel .tv-st{color:var(--dim);}
+  #travel .tv-nav{background:linear-gradient(180deg,var(--panel),var(--bg2));border-top:1px solid var(--line);}
+  #travel .tv-btn{background:var(--panel2);border:1px solid var(--line);color:var(--text);}
+  #travel .tv-btn:hover{background:var(--accent);border-color:var(--purple);}
+  #travel .tv-mail,#travel .tv-door{background:var(--panel);border-color:var(--purple);}
+  #travel .tv-mail:hover,#travel .tv-door:hover{background:var(--panel2);}
   .tvyard{position:absolute;inset:0;overflow:hidden;contain:content;}
   .tvg-bg{position:absolute;inset:0;width:100%;height:100%;}
   .tvg-toms{position:absolute;inset:0;}
@@ -1211,6 +1219,11 @@
   html[data-skin="forestedge"] .sh-n{color:#2f6b4f;}
   html[data-skin="forestedge"] .pc.on{background:#e7f5ea;border-color:#8fc47a;color:#2f6b4f;}
   html[data-skin="forestedge"] .pc.off{background:#eef2ef;color:#a9b6ad;}
+  /* 旅行两行功能栏：青雾绿调胶囊 */
+  html[data-skin="forestedge"] #travel .tv-top,
+  html[data-skin="forestedge"] #travel .tv-nav{background:linear-gradient(180deg,rgba(255,255,255,.88),rgba(238,247,240,.94));border-color:rgba(111,174,135,.30);}
+  html[data-skin="forestedge"] #travel .tv-btn{background:linear-gradient(180deg,#ffffff,#eef7f0);border:1.2px solid rgba(111,174,135,.32);color:#2f6b4f;border-radius:12px;}
+  html[data-skin="forestedge"] #travel .tv-btn:hover{background:#e7f5ea;border-color:#6fae87;}
 
   /* ===================== 皮肤二：世外桃源 · 木屋手帐 ===================== */
   html[data-skin="fairy"] body{
@@ -1273,6 +1286,12 @@
   html[data-skin="fairy"] .pc.on{background:#fbecc8;border-color:#d1663f;color:#7a4a1e;}
   html[data-skin="fairy"] .pc.off{background:#f0e9da;color:#b3a68d;}
   html[data-skin="fairy"] .sh-card.rose{border-color:#d1663f;background:#fff0e4;}
+  /* 旅行两行功能栏：奶油纸 + 木框 + 缝线 */
+  html[data-skin="fairy"] #travel .tv-top,
+  html[data-skin="fairy"] #travel .tv-nav{background:linear-gradient(180deg,rgba(255,250,240,.94),rgba(247,236,214,.94));border-color:#c9b18e;}
+  html[data-skin="fairy"] #travel .tv-top{border-bottom:2px dashed #c9b18e;}
+  html[data-skin="fairy"] #travel .tv-btn{background:linear-gradient(180deg,#fffdf6,#f7ecd6);border:2px solid #c9b18e;color:#5b3f2a;border-radius:10px 12px 9px 11px;box-shadow:2px 3px 0 rgba(91,63,42,.18);}
+  html[data-skin="fairy"] #travel .tv-btn:hover{background:#fff8e6;border-color:#a2734a;}
 
   /* ===================== 皮肤三：上古秘境 · 幽林幻夜 ===================== */
   html[data-skin="ancient"] body{
@@ -1350,6 +1369,11 @@
   html[data-skin="ancient"] .sh-stock{background:#12291f;color:#7fa898;}
   html[data-skin="ancient"] .pc.on{background:rgba(110,240,176,.16);border-color:#6ef0b0;color:#c9ffe8;}
   html[data-skin="ancient"] .pc.off{background:rgba(20,40,32,.70);color:#5c7466;}
+  /* 旅行两行功能栏：暗林霓虹 */
+  html[data-skin="ancient"] #travel .tv-top,
+  html[data-skin="ancient"] #travel .tv-nav{background:linear-gradient(180deg,rgba(23,51,39,.94),rgba(18,41,31,.96));border-color:rgba(110,240,176,.20);}
+  html[data-skin="ancient"] #travel .tv-btn{background:linear-gradient(180deg,#173327,#12291f);border:1.5px solid rgba(110,240,176,.24);color:#c9ffe8;border-radius:10px;}
+  html[data-skin="ancient"] #travel .tv-btn:hover{background:linear-gradient(180deg,#1d4133,#12291f);border-color:rgba(110,240,176,.60);box-shadow:0 0 16px rgba(110,240,176,.26);}
 
   /* ===================== 皮肤四：枯寂幻境 · 像素森屿 ===================== */
   html[data-skin="cursed"] body{
@@ -1427,6 +1451,13 @@
   html[data-skin="cursed"] .pc{border:2px solid #0e1024;border-radius:0;}
   html[data-skin="cursed"] .pc.on{background:#3a3f22;border-color:#ffd75e;color:#ffd75e;}
   html[data-skin="cursed"] .pc.off{background:#14162e;color:#5c6392;}
+  /* 旅行两行功能栏：8bit 像素硬边 */
+  html[data-skin="cursed"] #travel .tv-top,
+  html[data-skin="cursed"] #travel .tv-nav{background:linear-gradient(180deg,#2a2d52,#232650);border-radius:0;}
+  html[data-skin="cursed"] #travel .tv-top{border:0;border-bottom:3px solid #0e1024;box-shadow:inset 0 3px 0 #4c5391;}
+  html[data-skin="cursed"] #travel .tv-nav{border:0;border-top:3px solid #0e1024;box-shadow:inset 0 -3px 0 #14162e;}
+  html[data-skin="cursed"] #travel .tv-btn{background:#333a6b;border:2px solid #0e1024;color:#eef2ff;border-radius:0;box-shadow:inset 2px 2px 0 #5a62a8,inset -2px -2px 0 #14162e;}
+  html[data-skin="cursed"] #travel .tv-btn:hover{background:#3d4478;border-color:#4c5391;}
 
   /* 深色皮肤下信纸保持可读（信纸本身是浅色纸面，故只调正文与落款） */
   html[data-skin="ancient"] .ltr-full{background:linear-gradient(180deg,#12312a,#0d211b);border-color:rgba(110,240,176,.30);}
