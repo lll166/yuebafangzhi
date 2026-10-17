@@ -9442,80 +9442,77 @@ const DD_SUIT=[['♠','b'],['♥','r'],['♣','b'],['♦','r'],['','j'],['','j']
  * 斗月巴音效
  * ------------------------------------------------------------
  * 结构：DDSND 按「皮肤 key」存配方，ddSfx(name,a,b) 统一分发。
- * 目前只接入「海岛假日 islandbay」，其余皮肤 ddsnd() 返回 null → 保持静音；
- * 验收通过后按同一套接口补全所有皮肤即可，各调用点无需改动。
+ * 当前所有皮肤（含未选皮肤）都用同一套「海岛假日 islandbay」配方；
+ * ddsnd() 未匹配到皮肤 key 时回落到 islandbay，因此默认皮肤同样生效。
+ * 将来某套皮肤要换专属音效，只需往 DDSND 补一个同名 key，各调用点无需改动。
  * 听感定位 —— 海岛假日 · 椰影篝火「沙滩牌桌」：
- *   出牌一律贴近真实打牌声——极短高频急落的「唰」+ 牌落桌的「嗒」闷响（ddFlick），
- *   按牌的张数/厚薄区分；叫地主、地主落定、结算用椰壳叩桌与尤克里里和弦扫弦。
+ *   出牌一律是干净短促的牌桌「嗒」声（ddFlick），按张数堆叠；不用频率滑移，
+ *   叫地主、地主落定、结算用椰壳叩桌与尤克里里和弦扫弦。
  *   刻意避开全局事件音效的「上行音阶」动机（斗月巴自成一套，不与旅行事件撞听感）。
  * 一律复用既有 tone()：单音音量钳制 0.03~0.2、并发上限 8、总输出限幅 0.7。
  * ============================================================ */
-/* 一记甩牌拟声：高频急落（唰）+ 牌落桌的闷响（嗒），模拟真实打牌落桌
-   v=音量系数（自己 1 / 敌方更收敛）；when=延迟；hi=起音频率；soft=敌方用更钝的三角波 */
-function ddFlick(v,when,hi,soft){
-  const h=hi||2500, w=soft?'triangle':'sawtooth';
-  tone(h,0.032,w,0.08*v,when,-(h*0.8));
-  tone(300,0.05,'triangle',0.06*v,(when||0)+0.012);
+/* 一记打牌声：一次极短、干净、无滑移的正弦脉冲（类似常见卡牌游戏的牌桌 UI「嗒」声）。
+   刻意不做频率滑移——滑移的听感是电子「boing」，不像牌。
+   音量 0.13×v；每个配方只占 1 个并发音，连续出牌也不会超出 tone() 的 8 路并发上限。
+   v=音量系数（自己 1 / 敌方更收敛）；when=延迟；hi=脉冲频率。 */
+function ddFlick(v,when,hi){
+  tone(hi||760,0.026,'sine',0.13*v,when);
 }
 const DDSND={
   islandbay:{
-    /* 选牌 / 取消：指尖轻弹纸牌，最轻最短，可高频触发不刺耳 */
-    pick(){ ddFlick(0.55,0,1900); },
-    unpick(){ ddFlick(0.42,0,1150,true); },
-    /* 发牌：洗牌——五声错落的甩牌 */
-    deal(){ for(let i=0;i<5;i++) ddFlick(0.42,i*0.05,2400-i*150,true); },
-    /* 叫地主：两记椰壳叩桌 + 一声上扬口哨（区别于「出发」的上行音阶） */
-    bidYes(){ tone(175,0.055,'triangle',0.09); tone(175,0.055,'triangle',0.08,0.085); tone(330,0.26,'sawtooth',0.045,0.16,780); tone(1175,0.1,'sine',0.045,0.34); },
+    /* 选牌 / 取消：指尖轻点纸牌 */
+    pick(){ ddFlick(0.75,0,740); },
+    unpick(){ ddFlick(0.5,0,600); },
+    /* 发牌：五声错落的轻点 */
+    deal(){ for(let i=0;i<5;i++) ddFlick(0.55,i*0.055,700+i*20); },
+    /* 叫地主：两记低频叩桌 + 两声柔和上行 */
+    bidYes(){ tone(175,0.06,'triangle',0.11); tone(175,0.06,'triangle',0.1,0.09); tone(660,0.05,'sine',0.09,0.2); tone(880,0.06,'sine',0.09,0.28); },
     /* 不叫：一记闷响 + 尾音下沉 */
-    bidNo(){ tone(210,0.11,'square',0.075); tone(150,0.2,'sawtooth',0.05,0.08,-110); },
-    /* 地主落定：延迟 0.38s 重锤落桌（椰壳沉响 + 木身共鸣），避开上面叫地主的尾音 */
-    landlord(){ const d=0.38; tone(85,0.45,'sine',0.11,d); tone(170,0.26,'triangle',0.1,d+0.01); tone(340,0.18,'triangle',0.06,d+0.03); tone(680,0.14,'sine',0.04,d+0.06); },
-    /* 出牌：一律是「打牌声」，按牌的张数/厚薄区分；who===0 自己（亮、脆），敌方更钝更收敛 */
+    bidNo(){ tone(190,0.07,'triangle',0.1); tone(150,0.12,'sine',0.07,0.07); },
+    /* 地主落定：延迟 0.38s 低频重锤，避开叫地主的尾音 */
+    landlord(){ const d=0.38; tone(85,0.35,'sine',0.13,d); tone(170,0.2,'triangle',0.12,d+0.01); tone(340,0.14,'triangle',0.07,d+0.03); },
+    /* 出牌：干净的牌桌「嗒」按张数堆叠；who===0 自己（响），敌方更收敛 */
     play(type,who){
-      const mine=(who===0), v=mine?1:0.62, sf=!mine;
+      const v=(who===0)?1:0.55;
       switch(type){
-        case 'pair': ddFlick(v,0,2500); ddFlick(v,0.045,2500); break;                     /* 两张：两声甩牌 */
+        case 'pair': ddFlick(v,0,780); ddFlick(v,0.055,760); break;                        /* 两张：两声 */
         case 'triple': case 'triple1': case 'triple2':
-          ddFlick(v,0,2500); ddFlick(v,0.04,2450); ddFlick(v,0.08,2400); break;            /* 三张：三连甩 */
-        case 'straight':                                                                   /* 顺子：一手牌横扫过桌 */
-          tone(1500,0.3,'sawtooth',0.05*v,0,-1150);
-          ddFlick(v,0.03,2700,sf); ddFlick(v,0.09,2550,sf); ddFlick(v,0.15,2400,sf); ddFlick(v,0.21,2250,sf); break;
-        case 'pairs':                                                                      /* 连对：成对甩出 */
-          ddFlick(v,0,2500); ddFlick(v,0.035,2500); ddFlick(v,0.09,2450); ddFlick(v,0.125,2450); break;
-        case 'plane': case 'plane1': case 'plane2':                                        /* 飞机：一串牌连续拍下 */
-          for(let i=0;i<5;i++) ddFlick(v,i*0.045,2600-i*90,sf); break;
-        case 'four2': case 'four2p':                                                       /* 四带二：四张重拍 + 桌响 */
-          ddFlick(v,0,2200); ddFlick(v,0.04,2200); ddFlick(v,0.08,2200); ddFlick(v,0.12,2200);
-          tone(150,0.16,'triangle',0.08*v,0.14); break;
-        case 'bomb':                                                                       /* 炸弹：一大摞牌砸桌 + 低频余震 */
-          tone(90,0.42,'sine',0.12*v,0.02); tone(170,0.24,'triangle',0.11*v,0.05);
-          ddFlick(v,0.01,2000); ddFlick(v,0.05,2000); ddFlick(v,0.09,2000); ddFlick(v,0.13,2000);
-          tone(1500,0.2,'sawtooth',0.06*v,0.14,-1200); break;
-        case 'rocket':                                                                     /* 王炸：甩牌冲天 + 顿响落地 */
-          tone(260,0.5,'sawtooth',0.11*v,0,1600);
-          for(let i=0;i<4;i++) ddFlick(v,0.16+i*0.06,2600,sf);
-          tone(90,0.4,'sine',0.1*v,0.42); break;
-        default: ddFlick(v,0,2500); break;                                                 /* 单张：一记清脆甩牌 */
+          ddFlick(v,0,780); ddFlick(v,0.05,770); ddFlick(v,0.1,760); break;               /* 三张：三声 */
+        case 'straight':                                                                   /* 顺子：一串轻快的连点 */
+          for(let i=0;i<5;i++) ddFlick(v,i*0.055,700+i*35); break;
+        case 'pairs':                                                                      /* 连对：成对两下、两对 */
+          ddFlick(v,0,780); ddFlick(v,0.05,780); ddFlick(v,0.11,760); ddFlick(v,0.16,760); break;
+        case 'plane': case 'plane1': case 'plane2':                                        /* 飞机：五连点 */
+          for(let i=0;i<5;i++) ddFlick(v,i*0.05,790-i*10); break;
+        case 'four2': case 'four2p':                                                       /* 四带二：四下连点 + 桌响 */
+          ddFlick(v,0,720); ddFlick(v,0.05,720); ddFlick(v,0.1,720); ddFlick(v,0.15,720);
+          tone(150,0.09,'triangle',0.1*v,0.16); break;
+        case 'bomb':                                                                       /* 炸弹：一记低频冲击 + 余震，不堆高频 */
+          tone(140,0.1,'sine',0.16*v); tone(88,0.26,'sine',0.12*v,0.04); break;
+        case 'rocket':                                                                     /* 王炸：低频冲击 + 两声扬起 + 落地余震 */
+          tone(170,0.1,'sine',0.16*v); ddFlick(v,0.08,760); ddFlick(v,0.14,820);
+          tone(80,0.3,'sine',0.11*v,0.2); break;
+        default: ddFlick(v,0,780); break;                                                  /* 单张：一记牌桌「嗒」 */
       }
     },
-    /* 不要：把牌轻轻推到一边（一声低沉短扫 + 牌角轻触） */
-    pass(){ tone(620,0.13,'sawtooth',0.045,0,-430); tone(190,0.12,'triangle',0.045,0.05); },
+    /* 不要：把牌轻轻推到一边（两声柔和下沉） */
+    pass(){ tone(430,0.06,'sine',0.08); tone(330,0.07,'sine',0.07,0.06); },
     /* 提示：两记轻巧的铃音（小三度下行，非音阶动机） */
-    hint(){ tone(1480,0.05,'sine',0.05); tone(1108,0.08,'sine',0.04,0.05); },
-    /* 清桌重开：一手把台面的牌横扫干净 */
-    clean(){ tone(1500,0.34,'sawtooth',0.045,0,-1250); tone(220,0.14,'triangle',0.04,0.2); },
+    hint(){ tone(880,0.045,'sine',0.075); tone(740,0.06,'sine',0.06,0.05); },
+    /* 清桌重开：三下由高到低的轻扫 */
+    clean(){ tone(700,0.05,'sine',0.08); tone(620,0.05,'sine',0.075,0.05); tone(540,0.06,'sine',0.07,0.1); },
     /* 结算·赢：尤克里里和弦扫弦（同时起音的和弦，刻意不是上行音阶）+ 风铃闪光 */
-    win(){ [523,659,784,1046].forEach(function(f,i){ tone(f,0.24,'triangle',0.105,0.028*i); }); tone(1318,0.22,'sine',0.05,0.14); tone(2093,0.3,'sine',0.045,0.24); },
+    win(){ [523,659,784].forEach(function(f,i){ tone(f,0.24,'triangle',0.13,0.03*i); }); tone(1046,0.26,'sine',0.06,0.1); tone(1318,0.3,'sine',0.045,0.2); },
     /* 结算·输：牌堆慢慢塌落 */
-    lose(){ tone(300,0.2,'sawtooth',0.06); tone(240,0.26,'triangle',0.07,0.1,-90); tone(160,0.34,'sine',0.06,0.22); },
-    /* 出千月巴露馅：两声「捣鬼」的错拍闷响 + 心虚下滑 */
-    cheat(){ tone(560,0.09,'square',0.06); tone(530,0.09,'square',0.055,0.07); tone(420,0.22,'sawtooth',0.05,0.14,-160); },
+    lose(){ tone(300,0.14,'triangle',0.075); tone(240,0.2,'sine',0.07,0.09); tone(170,0.28,'sine',0.06,0.2); },
+    /* 出千月巴露馅：两声「捣鬼」的错拍闷响 + 心虚下沉 */
+    cheat(){ tone(520,0.08,'triangle',0.075); tone(500,0.08,'triangle',0.07,0.07); tone(400,0.12,'sine',0.06,0.14); },
     /* 无效操作：木牌面闷敲（区别于全局 error 的锯齿低鸣） */
-    err(){ tone(150,0.1,'square',0.08); tone(105,0.15,'triangle',0.06,0.05); },
+    err(){ tone(150,0.09,'triangle',0.09); tone(110,0.12,'triangle',0.07,0.05); },
   }
 };
-/* 当前皮肤的音效配方；未接入的皮肤返回 null（保持静音，行为与接入前一致） */
-function ddsnd(){ const a=(S.skins&&S.skins.active)||''; return DDSND[a]||null; }
+/* 当前皮肤的音效配方；未接入专属配方的皮肤（含未选皮肤）统一回落到 islandbay */
+function ddsnd(){ const a=(S.skins&&S.skins.active)||''; return DDSND[a]||DDSND.islandbay; }
 /* 统一分发：name=配方名，a/b=可选参数；任何异常都吞掉，绝不影响牌局逻辑 */
 function ddSfx(name,a,b){ const r=ddsnd(); if(!r)return; const f=r[name]; if(typeof f!=='function')return; try{ f(a,b); }catch(e){} }
 
