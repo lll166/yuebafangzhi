@@ -1185,11 +1185,47 @@
   @keyframes skClickSplash{0%{transform:scale(.2);opacity:.9;}60%{transform:scale(1.4);opacity:.5;}100%{transform:scale(2.2);opacity:0;}}
   @keyframes skClickRipple{0%{transform:scale(.3);opacity:.8;border-width:6px;}100%{transform:scale(3.2);opacity:0;border-width:1px;}}
   @keyframes skClickStarburst{0%{transform:rotate(0deg) scale(.4);opacity:.9;}100%{transform:rotate(180deg) scale(2.4);opacity:0;}}
-  /* 通用点击 overlay 层 */
-  body.skin-clicking{position:relative;}
-  body.skin-clicking::before{content:"";position:fixed;inset:0;z-index:9999;pointer-events:none;animation:skClickGlitch .45s ease-out forwards;}
+  /* 动态创建的 overlay div（JS 负责 insert/remove）—— 用小尺寸，不遮按钮 */
+  .skfx{position:fixed;z-index:9999;pointer-events:none;
+    top:50%;left:50%;transform:translate(-50%,-50%);
+    width:60vw;height:56vh;border-radius:8px;overflow:hidden;}
+  .skfx.cursed{
+    background:
+      repeating-linear-gradient(0deg,#ffd75e 0 2px,#59c8e8 2px 4px,#f4f7ff 4px 6px),
+      repeating-linear-gradient(90deg,rgba(255,215,94,.4) 0 3px,transparent 3px 6px);
+    animation:skClickGlitch .45s steps(4,end) forwards;opacity:.75;}
+  .skfx.dreamink{
+    background:
+      radial-gradient(1px 1px at 20% 50%,rgba(193,77,150,.85),transparent),
+      radial-gradient(1px 1px at 80% 40%,rgba(224,85,63,.75),transparent),
+      radial-gradient(1px 1px at 50% 80%,rgba(142,43,107,.9),transparent);
+    animation:skClickSplash .5s ease-out forwards;opacity:.75;}
+  .skfx.mermaidsea{
+    width:220px;height:220px;border-radius:50%;
+    background:
+      radial-gradient(circle at 50% 50%,transparent 30%,rgba(111,224,224,.45) 32%,transparent 36%,transparent 44%,rgba(201,166,240,.35) 46%,transparent 50%),
+      radial-gradient(circle at 50% 50%,rgba(111,224,224,.25) 0%,transparent 40%);
+    border:2px solid rgba(111,224,224,.55);
+    animation:skClickRipple .55s ease-out forwards;}
+  .skfx.court{
+    width:70vw;height:64vh;border-radius:0;
+    background:
+      radial-gradient(1px 1px at 50% 50%,#e4e8f0 99%,transparent),
+      radial-gradient(1px 1px at 18% 32%,#b8c0cc 99%,transparent),
+      radial-gradient(1px 1px at 72% 28%,#e4e8f0 99%,transparent),
+      radial-gradient(1px 1px at 40% 72%,#b8c0cc 99%,transparent),
+      radial-gradient(1px 1px at 62% 62%,#e4e8f0 99%,transparent),
+      radial-gradient(1px 1px at 22% 72%,#b8c0cc 99%,transparent),
+      radial-gradient(1px 1px at 82% 68%,#e4e8f0 99%,transparent),
+      radial-gradient(1px 1px at 30% 20%,#b8c0cc 99%,transparent),
+      radial-gradient(1px 1px at 76% 80%,#e4e8f0 99%,transparent),
+      radial-gradient(1px 1px at 10% 54%,#b8c0cc 99%,transparent),
+      radial-gradient(1px 1px at 92% 48%,#e4e8f0 99%,transparent),
+      radial-gradient(1px 1px at 50% 92%,#b8c0cc 99%,transparent),
+      radial-gradient(1px 1px at 50% 8%,#e4e8f0 99%,transparent);
+    animation:skClickStarburst .6s ease-out forwards;opacity:.85;}
   /* 省点模式 / reduced-motion 自动抑制 */
-  body.low-power.skin-clicking::before, html[data-skin] body.low-power.skin-clicking::before{animation:none!important;}
+  body.low-power .skfx{display:none!important;}
 
   /* 低功耗 / 减少动效：皮肤氛围层同样要停 */
   body.low-power::before, body.low-power::after, body.low-power #travel::before, body.low-power #travel::after{animation:none!important;}
@@ -1553,13 +1589,6 @@
   html[data-skin="cursed"] .fg-pick,html[data-skin="cursed"] .fg-lv{border-radius:0;}
   html[data-skin="cursed"] .fg-pick:not(.sel),html[data-skin="cursed"] .fg-lv:not(.sel){background:#232650;border:2px solid #0e1024;}
   html[data-skin="cursed"] .fg-lbtabs button:not(.on){border-radius:0;background:#232650;color:#9aa0d0;}
-  /* cursed 点击专属：像素爆裂 RGB 闪烁 */
-  html[data-skin="cursed"].skin-clicking::before{
-    background:
-      repeating-linear-gradient(0deg,#ffd75e 0 2px,#59c8e8 2px 4px,#f4f7ff 4px 6px),
-      repeating-linear-gradient(90deg,rgba(255,215,94,.4) 0 3px,transparent 3px 6px);
-    animation:skClickGlitch .45s steps(4,end) forwards;
-  }
 
   /* 深色皮肤下信纸保持可读（信纸本身是浅色纸面，故只调正文与落款） */
   html[data-skin="ancient"] .ltr-full{background:linear-gradient(180deg,#12312a,#0d211b);border-color:rgba(110,240,176,.30);}
@@ -1869,14 +1898,6 @@
   html[data-skin="dreamink"] .ltr-full{background:linear-gradient(180deg,#2a1548,#1b0d30);border-color:rgba(193,77,150,.40);}
   html[data-skin="dreamink"] .ltr-txt{color:#ecdcf5;}
   html[data-skin="dreamink"] .ltr-sig{color:#9a83b4;}
-  /* dreamink 点击专属：墨迹飞溅扩散 */
-  html[data-skin="dreamink"].skin-clicking::before{
-    background:
-      radial-gradient(1px 1px at 20% 50%,rgba(193,77,150,.85),transparent),
-      radial-gradient(1px 1px at 80% 40%,rgba(224,85,63,.75),transparent),
-      radial-gradient(1px 1px at 50% 80%,rgba(142,43,107,.9),transparent);
-    animation:skClickSplash .5s ease-out forwards;
-  }
 
   /* ===================== 皮肤九：海边港湾 · 晴滩白浪 ===================== */
   html[data-skin="seaharbor"] body{
@@ -2221,15 +2242,6 @@
   html[data-skin="mermaidsea"] .ltr-full{background:linear-gradient(180deg,#ffffff,#f2eefc);border-color:rgba(111,224,224,.42);}
   html[data-skin="mermaidsea"] .ltr-txt{color:#2c4a63;}
   html[data-skin="mermaidsea"] .ltr-sig{color:#7493ad;}
-  /* mermaidsea 点击专属：水波涟漪 */
-  html[data-skin="mermaidsea"].skin-clicking::before{
-    background:
-      radial-gradient(circle at 50% 50%,transparent 30%,rgba(111,224,224,.45) 32%,transparent 36%,transparent 44%,rgba(201,166,240,.35) 46%,transparent 50%),
-      radial-gradient(circle at 50% 50%,rgba(111,224,224,.25) 0%,transparent 40%);
-    animation:skClickRipple .55s ease-out forwards;
-    border:2px solid rgba(111,224,224,.55);border-radius:50%;
-    top:50%;left:50%;width:220px;height:220px;transform:translate(-50%,-50%);
-  }
 
   /* ==========================================================
      雪地主题皮肤（4 款）
@@ -2522,24 +2534,6 @@
   html[data-skin="court"] .fg-box{background:linear-gradient(180deg,#121520,#1a1e2c);border:1.2px solid rgba(184,192,204,.42);color:#e4e8f0;border-radius:12px;}
   html[data-skin="court"] .fg-pick:not(.sel),html[data-skin="court"] .fg-lv:not(.sel){background:#1a1e2c;border:1.2px solid rgba(184,192,204,.38);color:#e4e8f0;border-radius:12px;}
   html[data-skin="court"] .fg-lbtabs button:not(.on){background:#121520;color:#8b95a8;border-radius:12px;}
-  /* court 点击专属：银色星光冲击波 */
-  html[data-skin="court"].skin-clicking::before{
-    background:
-      radial-gradient(1px 1px at 50% 50%,#e4e8f0 99%,transparent),
-      radial-gradient(1px 1px at 18% 32%,#b8c0cc 99%,transparent),
-      radial-gradient(1px 1px at 72% 28%,#e4e8f0 99%,transparent),
-      radial-gradient(1px 1px at 40% 72%,#b8c0cc 99%,transparent),
-      radial-gradient(1px 1px at 62% 62%,#e4e8f0 99%,transparent),
-      radial-gradient(1px 1px at 22% 72%,#b8c0cc 99%,transparent),
-      radial-gradient(1px 1px at 82% 68%,#e4e8f0 99%,transparent),
-      radial-gradient(1px 1px at 30% 20%,#b8c0cc 99%,transparent),
-      radial-gradient(1px 1px at 76% 80%,#e4e8f0 99%,transparent),
-      radial-gradient(1px 1px at 10% 54%,#b8c0cc 99%,transparent),
-      radial-gradient(1px 1px at 92% 48%,#e4e8f0 99%,transparent),
-      radial-gradient(1px 1px at 50% 92%,#b8c0cc 99%,transparent),
-      radial-gradient(1px 1px at 50% 8%,#e4e8f0 99%,transparent);
-    animation:skClickStarburst .6s ease-out forwards;
-  }
 
   /* ========== 成就 ========== */
   .iconbtn.achbtn{position:relative;}
@@ -3476,14 +3470,17 @@ function useSkin(id){
   if(!info.met){ toast('⚠️ 尚未达成解锁条件', info.parts.map(p=>p.label+' '+p.got+'/'+p.all).join(' · ')); return; }
   if(S.skins.unlocked.indexOf(id)<0) S.skins.unlocked.push(id);
   S.skins.active=id;
-  /* 切换动画：只对四个图四生效，省点模式自动抑制 */
+  /* 切换点击动效：只对四个图四生效，省点模式自动跳过 */
   const clickAnimSkins=['cursed','dreamink','mermaidsea','court'];
   if(clickAnimSkins.indexOf(id)>=0 && !document.body.classList.contains('low-power')){
-    document.body.classList.remove('skin-clicking');
-    // 强制 reflow 确保动画可重触发
-    void document.body.offsetWidth;
-    document.body.classList.add('skin-clicking');
-    setTimeout(()=>document.body.classList.remove('skin-clicking'), 700);
+    // 清掉残留的旧 overlay
+    document.querySelectorAll('.skfx').forEach(el=>el.remove());
+    const fx=document.createElement('div');
+    fx.className='skfx '+id;
+    document.body.appendChild(fx);
+    fx.addEventListener('animationend', ()=>fx.remove(), {once:true});
+    // 兜底：5s 后强制移除，防止 animationend 未触发
+    setTimeout(()=>fx.remove(), 5000);
   }
   applySkin(id); save();
   toast(`🎨 已启用「${s.name}」皮肤`);
