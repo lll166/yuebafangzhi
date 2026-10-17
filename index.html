@@ -1168,6 +1168,8 @@
   @keyframes skDrift1{0%{transform:translate3d(0,0,0) scale(1);}100%{transform:translate3d(38px,26px,0) scale(1.08);}}
   @keyframes skDrift2{0%{transform:translate3d(0,0,0) scale(1.06);}100%{transform:translate3d(-34px,30px,0) scale(1);}}
   @keyframes skBreathe{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-6px) scale(1.03);}}
+  /* 雪下落：translateY 从 -50vh 到 +50vh，linear 匀速 → GPU 合成层，零 CPU */
+  @keyframes skSnowFall{0%{transform:translateY(-50vh);}100%{transform:translateY(50vh);}}
   @keyframes skSway{0%,100%{transform:rotate(-.38deg);}50%{transform:rotate(.38deg);}}
   @keyframes skSweep{0%{transform:translateX(-130%);}100%{transform:translateX(270%);}}
   @keyframes skTwinkle{0%,100%{opacity:.38;}50%{opacity:.95;}}
@@ -1196,30 +1198,27 @@
     background:
       repeating-linear-gradient(0deg,#ffd75e 0 3px,#59c8e8 3px 6px,#f4f7ff 6px 9px),
       repeating-linear-gradient(90deg,rgba(255,215,94,.5) 0 3px,transparent 3px 6px);
-    animation:skDotBurst .32s ease-out forwards;border-radius:2px;}
+    animation:skDotBurst .32s ease-out forwards;border-radius:2px;
+    will-change:transform,opacity;}
   /* dreamink：墨点扩散（点击点玫红晕开） */
   .skfx.dreamink{
     width:64px;height:64px;border-radius:50%;
     background:radial-gradient(circle,rgba(193,77,150,.85) 0%,rgba(224,85,63,.5) 40%,transparent 72%);
-    animation:skDotBurst .4s ease-out forwards;}
+    animation:skDotBurst .4s ease-out forwards;
+    will-change:transform,opacity;}
   /* mermaidsea：同心涟漪圈 */
   .skfx.mermaidsea{
     width:56px;height:56px;border-radius:50%;
     border:2px solid rgba(111,224,224,.7);
     box-shadow:0 0 12px rgba(111,224,224,.3);
-    animation:skDotRipple .45s ease-out forwards;}
-  /* court：银星光点爆闪（轻量单元素，不用 8 颗碎片） */
+    animation:skDotRipple .45s ease-out forwards;
+    will-change:transform,opacity;}
+  /* court：极简银光爆闪（单层渐变，零多余层） */
   .skfx.court{
-    width:80px;height:80px;border-radius:50%;
-    background:
-      radial-gradient(circle at 50% 50%,rgba(228,232,240,.85) 0%,rgba(184,192,204,.5) 24%,transparent 58%),
-      radial-gradient(1px 1px at 50% 20%,#e4e8f0 99%,transparent),
-      radial-gradient(1px 1px at 78% 50%,#b8c0cc 99%,transparent),
-      radial-gradient(1px 1px at 50% 80%,#e4e8f0 99%,transparent),
-      radial-gradient(1px 1px at 22% 50%,#b8c0cc 99%,transparent),
-      radial-gradient(1px 1px at 30% 30%,#e4e8f0 99%,transparent),
-      radial-gradient(1px 1px at 70% 70%,#b8c0cc 99%,transparent);
-    animation:skDotBurst .38s ease-out forwards;}
+    width:60px;height:60px;border-radius:50%;
+    background:radial-gradient(circle,rgba(228,232,240,.95) 0%,rgba(184,192,204,.6) 30%,transparent 70%);
+    animation:skDotBurst .28s ease-out forwards;
+    will-change:transform,opacity;}
   /* 省点模式 / reduced-motion 自动抑制 */
   body.low-power .skfx{display:none!important;pointer-events:none!important;}
   @media (prefers-reduced-motion: reduce){
@@ -1228,8 +1227,11 @@
 
   /* 低功耗 / 减少动效：皮肤氛围层同样要停 */
   body.low-power::before, body.low-power::after, body.low-power #travel::before, body.low-power #travel::after{animation:none!important;}
+  /* 雪落王庭的雪层用 html::before，靠 :has(body.low-power) 匹配省点模式 */
+  html[data-skin="court"]:has(body.low-power)::before{animation:none!important;}
   @media (prefers-reduced-motion: reduce){
     html[data-skin] *, html[data-skin] body::before, html[data-skin] body::after, html[data-skin] #travel::before, html[data-skin] #travel::after{animation:none!important;}
+    html[data-skin="court"]::before{animation:none!important;}
   }
 
   /* ---------- 皮肤生效时：旅行「室内 / 庭院」露出皮肤背景色与氛围特效 ---------- */
@@ -2458,6 +2460,57 @@
   html[data-skin="court"] body{
     background:linear-gradient(180deg,#0d0f16,#07080d 60%,#05060a);
     color:#e4e8f0;
+  }
+  /* 纯 CSS 雪层：html::before（body/::before/::after 已占满，用 html 的）
+     几十上百个 1-1.5px 白点 → transform translateY 匀速下落 → GPU 合成零 CPU */
+  html[data-skin="court"]::before{
+    content:"";position:fixed;inset:-50vh 0;z-index:-2;pointer-events:none;
+    opacity:.7;animation:skSnowFall 10s linear infinite;animation-play-state:running;
+    background:
+      /* 近景大雪片（1.5px，低 opacity） */
+      radial-gradient(1.5px 1.5px at 4% 2%, rgba(255,255,255,.85) 99%, transparent),
+      radial-gradient(1.5px 1.5px at 18% 12%, rgba(255,255,255,.7) 99%, transparent),
+      radial-gradient(1.5px 1.5px at 32% 4%, rgba(255,255,255,.8) 99%, transparent),
+      radial-gradient(1.5px 1.5px at 46% 18%, rgba(255,255,255,.75) 99%, transparent),
+      radial-gradient(1.5px 1.5px at 60% 8%, rgba(255,255,255,.85) 99%, transparent),
+      radial-gradient(1.5px 1.5px at 74% 14%, rgba(255,255,255,.7) 99%, transparent),
+      radial-gradient(1.5px 1.5px at 88% 6%, rgba(255,255,255,.8) 99%, transparent),
+      radial-gradient(1.5px 1.5px at 92% 28%, rgba(255,255,255,.75) 99%, transparent),
+      radial-gradient(1.5px 1.5px at 26% 26%, rgba(255,255,255,.85) 99%, transparent),
+      radial-gradient(1.5px 1.5px at 54% 30%, rgba(255,255,255,.7) 99%, transparent),
+      /* 远景小雪片（1px，更低 opacity） */
+      radial-gradient(1px 1px at 1% 8%, rgba(255,255,255,.55) 99%, transparent),
+      radial-gradient(1px 1px at 10% 22%, rgba(255,255,255,.5) 99%, transparent),
+      radial-gradient(1px 1px at 22% 36%, rgba(255,255,255,.6) 99%, transparent),
+      radial-gradient(1px 1px at 38% 44%, rgba(255,255,255,.5) 99%, transparent),
+      radial-gradient(1px 1px at 52% 20%, rgba(255,255,255,.55) 99%, transparent),
+      radial-gradient(1px 1px at 66% 34%, rgba(255,255,255,.5) 99%, transparent),
+      radial-gradient(1px 1px at 80% 42%, rgba(255,255,255,.6) 99%, transparent),
+      radial-gradient(1px 1px at 94% 18%, rgba(255,255,255,.5) 99%, transparent),
+      radial-gradient(1px 1px at 8% 50%, rgba(255,255,255,.55) 99%, transparent),
+      radial-gradient(1px 1px at 28% 56%, rgba(255,255,255,.5) 99%, transparent),
+      radial-gradient(1px 1px at 42% 60%, rgba(255,255,255,.6) 99%, transparent),
+      radial-gradient(1px 1px at 58% 64%, rgba(255,255,255,.5) 99%, transparent),
+      radial-gradient(1px 1px at 72% 54%, rgba(255,255,255,.55) 99%, transparent),
+      radial-gradient(1px 1px at 86% 68%, rgba(255,255,255,.5) 99%, transparent),
+      radial-gradient(1px 1px at 14% 72%, rgba(255,255,255,.6) 99%, transparent),
+      radial-gradient(1px 1px at 34% 78%, rgba(255,255,255,.5) 99%, transparent),
+      radial-gradient(1px 1px at 48% 82%, rgba(255,255,255,.55) 99%, transparent),
+      radial-gradient(1px 1px at 62% 88%, rgba(255,255,255,.5) 99%, transparent),
+      radial-gradient(1px 1px at 78% 92%, rgba(255,255,255,.6) 99%, transparent),
+      radial-gradient(1px 1px at 96% 76%, rgba(255,255,255,.5) 99%, transparent),
+      /* 更多远景点（填充上半部分让雪看起来从上往下落） */
+      radial-gradient(1px 1px at 6% 60%, rgba(255,255,255,.5) 99%, transparent),
+      radial-gradient(1px 1px at 20% 66%, rgba(255,255,255,.55) 99%, transparent),
+      radial-gradient(1px 1px at 36% 70%, rgba(255,255,255,.5) 99%, transparent),
+      radial-gradient(1px 1px at 50% 48%, rgba(255,255,255,.55) 99%, transparent),
+      radial-gradient(1px 1px at 64% 46%, rgba(255,255,255,.5) 99%, transparent),
+      radial-gradient(1px 1px at 78% 62%, rgba(255,255,255,.6) 99%, transparent),
+      radial-gradient(1px 1px at 90% 54%, rgba(255,255,255,.5) 99%, transparent),
+      radial-gradient(1px 1px at 2% 82%, rgba(255,255,255,.55) 99%, transparent),
+      radial-gradient(1px 1px at 16% 90%, rgba(255,255,255,.5) 99%, transparent),
+      radial-gradient(1px 1px at 40% 96%, rgba(255,255,255,.6) 99%, transparent),
+      radial-gradient(1px 1px at 70% 98%, rgba(255,255,255,.5) 99%, transparent);
   }
   html[data-skin="court"] body::before,html[data-skin="court"] #travel::before{
     content:"";position:fixed;inset:-16% -8%;z-index:-1;pointer-events:none;opacity:.85;filter:blur(12px);
