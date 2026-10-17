@@ -30,15 +30,13 @@
   body.low-power #overlay, body.low-power #overlay *, body.low-power #toast, body.low-power #banner{animation:initial!important;}
   .frost{
     background:rgba(255,255,255,.55);
-    backdrop-filter:blur(8px) saturate(160%);
-    -webkit-backdrop-filter:blur(8px) saturate(160%);
     border:1px solid rgba(255,255,255,.65);
     box-shadow:0 10px 32px rgba(100,80,160,.14);
   }
   #fx{position:fixed;inset:0;pointer-events:none;z-index:80;}
   #collectFeed{position:fixed;top:70px;right:12px;z-index:65;display:flex;flex-direction:column;gap:6px;align-items:flex-end;pointer-events:none;}
-  .cf-item{font-size:12px;font-weight:800;color:var(--text);background:rgba(255,255,255,.9);
-    backdrop-filter:blur(8px);border:1px solid rgba(149,117,205,.35);border-radius:99px;padding:5px 11px;
+  .cf-item{font-size:12px;font-weight:800;color:var(--text);background:rgba(255,255,255,.96);
+    border:1px solid rgba(149,117,205,.35);border-radius:99px;padding:5px 11px;
     box-shadow:0 4px 14px rgba(100,80,160,.14);display:flex;align-items:center;gap:6px;
     animation:cfin .28s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;}
   .cf-item.out{opacity:0;transform:translateY(-6px);transition:all .3s;}
@@ -120,7 +118,7 @@
   #weatherHold{
     position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:45;
     font-size:12px;font-weight:800;color:var(--purple2);
-    background:rgba(255,255,255,.88);backdrop-filter:blur(10px);
+    background:rgba(255,255,255,.88);
     border:1px solid rgba(149,117,205,.35);border-radius:99px;padding:6px 14px;
     box-shadow:0 4px 14px rgba(100,80,160,.14);white-space:nowrap;
     animation:whpop .3s cubic-bezier(.34,1.56,.64,1);
@@ -625,6 +623,8 @@
     background:linear-gradient(180deg,var(--bg),var(--bg2));}
   #ddgame.show{display:flex;}
   body.dd-lock{overflow:hidden;}
+  /* 斗月巴全屏时隐藏底层页面（保留布局与 JS 状态），杜绝任何合成器光栅伪影闪出室内/其他页面 */
+  body.dd-lock #app,body.dd-lock #dock,body.dd-lock #travel{visibility:hidden;}
   #ddgame .dd-top{display:flex;align-items:center;gap:10px;padding:10px 14px;flex-wrap:wrap;
     background:var(--panel);font-weight:800;font-size:13px;color:var(--purple2);
     box-shadow:0 1px 6px rgba(120,100,160,.14);z-index:9;position:relative;}  /* 高于遮罩层：下注/结算/规则/记录层打开时也能点「记录」 */
@@ -1174,20 +1174,26 @@
   @keyframes skSweep{0%{transform:translateX(-130%);}100%{transform:translateX(270%);}}
   @keyframes skTwinkle{0%,100%{opacity:.38;}50%{opacity:.95;}}
   @keyframes skStarTwinkle{0%,100%{opacity:1;}50%{opacity:0;}}
-  @keyframes skCrt{0%{top:-25%;}100%{top:125%;}}
-  /* 以下为雪地四套 + 前三图四新增动效 */
-  @keyframes skRgbShift{0%,100%{filter:hue-rotate(0deg) saturate(1);}25%{filter:hue-rotate(8deg) saturate(1.15);}50%{filter:hue-rotate(-6deg) saturate(.9);}75%{filter:hue-rotate(4deg) saturate(1.1);}}
-  @keyframes skPixelJitter{0%,100%{transform:translate(0,0);}20%{transform:translate(1px,-1px);}40%{transform:translate(-1px,1px);}60%{transform:translate(1px,1px);}80%{transform:translate(-1px,-1px);}}
-  @keyframes skBubbleUp{0%{transform:translateY(0) scale(.8);opacity:.5;}60%{opacity:.9;}100%{transform:translateY(-420px) scale(1.2);opacity:0;}}
-  @keyframes skShimmer{0%,100%{opacity:.35;transform:scale(1);}50%{opacity:.85;transform:scale(1.12);}}
-  @keyframes skSwirl{0%{transform:rotate(0deg) scale(1);}100%{transform:rotate(360deg) scale(1.05);}}
-  @keyframes skInkDrift{0%,100%{transform:translate3d(0,0,0) rotate(0deg);opacity:.4;}50%{transform:translate3d(18px,-12px,0) rotate(1.2deg);opacity:.8;}}
+  /* CRT 扫描带：用 translateY(vh) 走 GPU 合成（原先动画 top 会每帧 layout+paint）。
+     元素层补 top:0，位移与旧版 -25%→125% 视口高度完全等价 */
+  @keyframes skCrt{0%{transform:translateY(-25vh);}100%{transform:translateY(125vh);}}
+  /* 墨线缓移：纯 translate3d + 温和 opacity，无 rotate/scale → 不触发合成层重光栅 */
+  @keyframes skInkSlide{0%{transform:translate3d(0,0,0);opacity:.62;}50%{transform:translate3d(16px,-11px,0);opacity:.8;}100%{transform:translate3d(0,0,0);opacity:.62;}}
   /* ---- 点击位置小特效 ---- */
   @keyframes skFxFade{0%{opacity:.9;}100%{opacity:0;}}
   @keyframes skFxRing{0%{opacity:.9;transform:translate(-50%,-50%) scale(.4);}100%{opacity:0;transform:translate(-50%,-50%) scale(1.8);}}
   @keyframes skFxBurst{0%{opacity:.9;transform:translate(-50%,-50%) scale(.2);}100%{opacity:0;transform:translate(-50%,-50%) scale(1.4);}}
   /* court 逸散粒子：每颗从点击点飞向 --dx --dy 方向 */
   @keyframes skFxEscape{0%{opacity:1;transform:translate(-50%,-50%) translate(0,0);}100%{opacity:0;transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)));}}
+  /* ---------- 图四皮肤 UI 动效：仅 transform+opacity，全靠 body.low-power 统一杀死 ---------- */
+  /* cursed 枯寂幻境：像素跳步，2 帧 steps 制造像素弹跳感 */
+  @keyframes skPxPop{0%,88%,100%{transform:scale(1);}92%{transform:scale(1.08);}96%{transform:scale(1);}}
+  /* dreamink 番茄之梦：墨线微漂，慢速 ease-in-out + 轻微 rotate/translate */
+  @keyframes skInkDrift{0%,100%{transform:translate(0,0) rotate(0);}50%{transform:translate(0,2px) rotate(.6deg);}}
+  /* mermaidsea 人鱼之海：水晶流光，超轻 scale+opacity 营造琉璃呼吸 */
+  @keyframes skGlassShimmer{0%,100%{transform:scale(1);opacity:.95;}50%{transform:scale(1.015);opacity:1;}}
+  /* court 雪落王庭：王冠呼吸，极轻微 scale，优雅 ease-out */
+  @keyframes skCourtCrown{0%,100%{transform:scale(1);}50%{transform:scale(1.012);}}
   .skfx{position:fixed;z-index:9999;pointer-events:none;
     left:var(--x,50%);top:var(--y,50%);transform:translate(-50%,-50%);}
   /* cursed：纯色小方块闪 */
@@ -1409,7 +1415,7 @@
     animation:skTwinkle 5s ease-in-out infinite;
   }
   html[data-skin="ancient"] body::after,html[data-skin="ancient"] #travel::after{
-    content:"";position:fixed;left:0;right:0;height:22vh;z-index:-1;pointer-events:none;
+    content:"";position:fixed;left:0;right:0;top:0;height:22vh;z-index:-1;pointer-events:none;
     background:linear-gradient(180deg,rgba(110,240,176,0),rgba(110,240,176,.10) 55%,rgba(79,216,200,0));
     animation:skCrt 8.5s linear infinite;
   }
@@ -1499,7 +1505,7 @@
     animation:skStarTwinkle 2.2s steps(2, jump-none) infinite;
   }
   html[data-skin="cursed"] body::after,html[data-skin="cursed"] #travel::after{
-    content:"";position:fixed;left:0;right:0;height:18vh;z-index:-1;pointer-events:none;
+    content:"";position:fixed;left:0;right:0;top:0;height:18vh;z-index:-1;pointer-events:none;
     background:linear-gradient(180deg,rgba(89,200,232,0),rgba(89,200,232,.16) 55%,rgba(255,215,94,0));
     animation:skCrt 7.5s linear infinite;
   }
@@ -1588,6 +1594,12 @@
   html[data-skin="cursed"] .ltr-full{background:linear-gradient(180deg,#2a2d52,#1b1d3a);border:2px solid #0e1024;border-radius:0;}
   html[data-skin="cursed"] .ltr-txt{color:#dfe6ff;}
   html[data-skin="cursed"] .ltr-sig{color:#9aa0d0;}
+  /* cursed UI 动效：选中态像素跳（仅 1-2 个元素 infinite；hover 才触发 chip/iconbtn，省 GPU） */
+  html[data-skin="cursed"] .chip,html[data-skin="cursed"] .iconbtn:not(.codebtn):not(.achbtn){transition:transform .16s steps(2,jump-end),opacity .2s ease;}
+  html[data-skin="cursed"] .chip:hover,html[data-skin="cursed"] .iconbtn:not(.codebtn):not(.achbtn):hover{transform:translateY(-1px);opacity:.88;}
+  html[data-skin="cursed"] .btab.on,html[data-skin="cursed"] .skin.on{animation:skPxPop 7s ease-in-out infinite;}
+  html[data-skin="cursed"] .btab,html[data-skin="cursed"] .skin{transition:transform .16s steps(2,jump-end);}
+  html[data-skin="cursed"] .btab:hover,html[data-skin="cursed"] .skin:hover{transform:translateY(-1px);}
 
   /* ===================== 皮肤五：小镇入口 · 暖巷集市 ===================== */
   html[data-skin="townentry"] body{
@@ -1678,7 +1690,7 @@
     animation:skTwinkle 4.5s ease-in-out infinite;
   }
   html[data-skin="moonmarket"] body::after,html[data-skin="moonmarket"] #travel::after{
-    content:"";position:fixed;left:0;right:0;height:20vh;z-index:-1;pointer-events:none;
+    content:"";position:fixed;left:0;right:0;top:0;height:20vh;z-index:-1;pointer-events:none;
     background:linear-gradient(180deg,rgba(255,207,107,0),rgba(255,207,107,.10) 55%,rgba(240,168,60,0));
     animation:skCrt 9s linear infinite;
   }
@@ -1751,7 +1763,7 @@
     animation:skTwinkle 3.2s steps(1,end) infinite;
   }
   html[data-skin="moonless"] body::after,html[data-skin="moonless"] #travel::after{
-    content:"";position:fixed;left:0;right:0;height:16vh;z-index:-1;pointer-events:none;
+    content:"";position:fixed;left:0;right:0;top:0;height:16vh;z-index:-1;pointer-events:none;
     background:linear-gradient(180deg,rgba(200,56,46,0),rgba(200,56,46,.12) 55%,rgba(126,138,153,0));
     animation:skCrt 6.5s linear infinite;
   }
@@ -1825,7 +1837,7 @@
       repeating-linear-gradient(-47deg,rgba(142,43,107,.15) 0 2px,transparent 2px 26px),
       repeating-linear-gradient(78deg, rgba(224,85,63,.10) 0 2px,transparent 2px 34px),
       repeating-linear-gradient(-14deg,rgba(74,35,114,.16)  0 2px,transparent 2px 30px);
-    animation:skSway 5.5s steps(1,end) infinite, skSwirl 28s linear infinite;
+    animation:skInkSlide 24s ease-in-out infinite;
   }
   html[data-skin="dreamink"] body::after,html[data-skin="dreamink"] #travel::after{
     content:"";position:fixed;left:0;right:0;bottom:0;height:40vh;z-index:-1;pointer-events:none;
@@ -1888,6 +1900,12 @@
   html[data-skin="dreamink"] .ltr-full{background:linear-gradient(180deg,#2a1548,#1b0d30);border-color:rgba(193,77,150,.40);}
   html[data-skin="dreamink"] .ltr-txt{color:#ecdcf5;}
   html[data-skin="dreamink"] .ltr-sig{color:#9a83b4;}
+  /* dreamink UI 动效：选中态墨线漂（仅 1-2 个元素 infinite；hover 才触发 chip/iconbtn） */
+  html[data-skin="dreamink"] .chip,html[data-skin="dreamink"] .iconbtn:not(.codebtn):not(.achbtn){transition:transform .22s cubic-bezier(.4,0,.6,1),opacity .28s ease;}
+  html[data-skin="dreamink"] .chip:hover,html[data-skin="dreamink"] .iconbtn:not(.codebtn):not(.achbtn):hover{transform:translateY(-1px) rotate(-.6deg);opacity:.88;}
+  html[data-skin="dreamink"] .btab.on,html[data-skin="dreamink"] .skin.on{animation:skInkDrift 8s ease-in-out infinite;}
+  html[data-skin="dreamink"] .btab,html[data-skin="dreamink"] .skin{transition:transform .22s cubic-bezier(.4,0,.6,1);}
+  html[data-skin="dreamink"] .btab:hover,html[data-skin="dreamink"] .skin:hover{transform:translateY(-2px) rotate(-.6deg);}
 
   /* ===================== 皮肤九：海边港湾 · 晴滩白浪 ===================== */
   html[data-skin="seaharbor"] body{
@@ -2152,7 +2170,7 @@
       radial-gradient(closest-side,rgba(201,166,240,.72),transparent 70%) 70% 6%/50% 32% no-repeat,
       radial-gradient(closest-side,rgba(111,224,224,.62),transparent 72%) 42% 34%/46% 28% no-repeat,
       radial-gradient(closest-side,rgba(240,166,216,.46),transparent 72%) 8% 78%/38% 26% no-repeat;
-    animation:skDrift2 30s ease-in-out infinite alternate, skShimmer 4.6s ease-in-out infinite;
+    animation:skDrift2 30s ease-in-out infinite alternate, skTwinkle 4.6s ease-in-out infinite;
   }
   html[data-skin="mermaidsea"] body::after,html[data-skin="mermaidsea"] #travel::after{
     content:"";position:fixed;left:0;right:0;bottom:0;height:26vh;z-index:-1;pointer-events:none;
@@ -2231,6 +2249,12 @@
   html[data-skin="mermaidsea"] .ltr-full{background:linear-gradient(180deg,#ffffff,#f2eefc);border-color:rgba(111,224,224,.42);}
   html[data-skin="mermaidsea"] .ltr-txt{color:#2c4a63;}
   html[data-skin="mermaidsea"] .ltr-sig{color:#7493ad;}
+  /* mermaidsea UI 动效：选中态水晶光（仅 1-2 个元素 infinite；hover 才触发 chip/iconbtn） */
+  html[data-skin="mermaidsea"] .chip,html[data-skin="mermaidsea"] .iconbtn:not(.codebtn):not(.achbtn){transition:transform .28s cubic-bezier(.2,.8,.3,1),opacity .24s ease;}
+  html[data-skin="mermaidsea"] .chip:hover,html[data-skin="mermaidsea"] .iconbtn:not(.codebtn):not(.achbtn):hover{transform:translateY(-1px) scale(1.02);opacity:.88;}
+  html[data-skin="mermaidsea"] .btab.on,html[data-skin="mermaidsea"] .skin.on{animation:skGlassShimmer 7s ease-in-out infinite;}
+  html[data-skin="mermaidsea"] .btab,html[data-skin="mermaidsea"] .skin{transition:transform .28s cubic-bezier(.2,.8,.3,1);}
+  html[data-skin="mermaidsea"] .btab:hover,html[data-skin="mermaidsea"] .skin:hover{transform:translateY(-2px) scale(1.02);}
 
   /* ==========================================================
      雪地主题皮肤（4 款）
@@ -2546,6 +2570,12 @@
   html[data-skin="court"] .fg-box{background:linear-gradient(180deg,#121520,#1a1e2c);border:1.2px solid rgba(184,192,204,.42);color:#e4e8f0;border-radius:12px;}
   html[data-skin="court"] .fg-pick:not(.sel),html[data-skin="court"] .fg-lv:not(.sel){background:#1a1e2c;border:1.2px solid rgba(184,192,204,.38);color:#e4e8f0;border-radius:12px;}
   html[data-skin="court"] .fg-lbtabs button:not(.on){background:#121520;color:#8b95a8;border-radius:12px;}
+  /* court UI 动效：选中态王冠呼吸（仅 1-2 个元素 infinite；hover 才触发 chip/iconbtn） */
+  html[data-skin="court"] .chip,html[data-skin="court"] .iconbtn:not(.codebtn):not(.achbtn){transition:transform .24s cubic-bezier(.2,.8,.3,1),opacity .24s ease;}
+  html[data-skin="court"] .chip:hover,html[data-skin="court"] .iconbtn:not(.codebtn):not(.achbtn):hover{transform:translateY(-1px);opacity:.88;}
+  html[data-skin="court"] .btab.on,html[data-skin="court"] .skin.on{animation:skCourtCrown 6s ease-out infinite;}
+  html[data-skin="court"] .btab,html[data-skin="court"] .skin{transition:transform .24s cubic-bezier(.2,.8,.3,1);}
+  html[data-skin="court"] .btab:hover,html[data-skin="court"] .skin:hover{transform:translateY(-2px) scale(1.015);}
 
   /* ========== 成就 ========== */
   .iconbtn.achbtn{position:relative;}
@@ -7605,7 +7635,7 @@ function gambleFinalHTML(gain){
     +'<p style="text-align:center"><button class="btn cta" onclick="closeModal()">收下离开</button></p>';
 }
 function travelSettleIf(){ if(tsGame)return false; const t=tvFresh(); if(t.frog.status==='away' && t.frog.ret && now()>=t.frog.ret){ /* 离线/页面关闭导致途中那封信没寄出：回家结算前先补上，保证每趟必得 1 封 */ if((t.frog.cardsSent||0)<(t.frog.cardQuota||1)) tvSendCardIf(); tvSettle(); return true; } return false; }
-function travelTick(){ if(!S.travel||!S.travel.frog)return; const t=S.travel; travelSettleIf(); if(t.frog.status==='away'&&now()>=(t.cardT||0)){ t.cardT=now()+rand(10,20)*60000; tvSendCardIf(); } tvFriendPop(); const vis=$('travel'); if(vis&&vis.style.display==='flex'){ if(tvEventRoll())tvRenderScene(); tvStealMaybe(); tvUpdateHarvest(); tvUpdateDoor(); tvUpdateBar(); } updateTravelIcon(); }
+function travelTick(){ if(!S.travel||!S.travel.frog)return; const t=S.travel; travelSettleIf(); if(t.frog.status==='away'&&now()>=(t.cardT||0)){ t.cardT=now()+rand(10,20)*60000; tvSendCardIf(); } tvFriendPop(); const vis=$('travel'); const ddOpen=!!($('ddgame')&&$('ddgame').classList.contains('show')); if(vis&&vis.style.display==='flex'&&!ddOpen){ if(tvEventRoll())tvRenderScene(); tvStealMaybe(); tvUpdateHarvest(); tvUpdateDoor(); tvUpdateBar(); } updateTravelIcon(); }
 function tvNoteCard(c, fatId){ if(!TV_LETTERS[c]||!fatId)return; const t=tvFresh(); if(!t.cardWho)t.cardWho={}; if(!t.cardFirst)t.cardFirst={}; if(!t.cardMood)t.cardMood={}; if(t.cardFirst[c]==null)t.cardFirst[c]=fatId; if(!t.cardWho[c])t.cardWho[c]=[]; if(t.cardWho[c].indexOf(fatId)<0)t.cardWho[c].push(fatId); }
 function tvNoteMood(c){ if(!TV_LETTERS[c])return; const t=tvFresh(); if(!t.cardMoods)t.cardMoods={}; if(!t.cardMoods[c])t.cardMoods[c]=[]; var dpt=t.frog&&(!isNaN(+t.frog.depart)?t.frog.depart:now()); t.cardMoods[c].push({m:(t.frog&&t.frog.mood)||'',t:dpt,fatId:(t.frog&&t.frog.fatId)||null}); }
 function tvMoodTo(it){ if(it&&it.fatId){ const tp=typeById(it.fatId); if(tp)return tp.name; } return ''; }
@@ -9309,6 +9339,7 @@ function ddEnter(){
 function ddClose(){
   const el=$('ddgame'); if(el) el.classList.remove('show');
   document.body.classList.remove('dd-lock');
+  const tv=$('travel'); if(tv&&tv.style.display==='flex') tvRenderAll();
 }
 function ddExit(){
   if(ddG&&ddG.phase!=='over'){
