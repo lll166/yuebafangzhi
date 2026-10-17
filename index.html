@@ -1194,6 +1194,17 @@
   @keyframes skGlassShimmer{0%,100%{transform:scale(1);opacity:.95;}50%{transform:scale(1.015);opacity:1;}}
   /* court 雪落王庭：王冠呼吸，极轻微 scale，优雅 ease-out */
   @keyframes skCourtCrown{0%,100%{transform:scale(1);}50%{transform:scale(1.012);}}
+  /* ---------- 入场 stagger：通用 + 四皮肤变体 ---------- */
+  @keyframes skStaggerIn{0%{opacity:0;transform:translateY(10px) scale(.96);}100%{opacity:1;transform:translateY(0) scale(1);}}
+  .anim-in{opacity:0;animation:skStaggerIn .35s var(--stagger,0ms) cubic-bezier(.2,.8,.3,1) both;}
+  /* 四皮肤各自的入场风格化 */
+  html[data-skin="cursed"] .anim-in{animation-name:skPxPop;animation-timing-function:steps(4,jump-end);animation-duration:.42s;}
+  html[data-skin="dreamink"] .anim-in{animation-name:skStaggerIn;animation-timing-function:cubic-bezier(.4,0,.6,1);animation-duration:.44s;}
+  html[data-skin="mermaidsea"] .anim-in{animation-name:skStaggerIn;animation-timing-function:cubic-bezier(.2,.8,.3,1);animation-duration:.38s;}
+  html[data-skin="court"] .anim-in{animation-name:skStaggerIn;animation-timing-function:cubic-bezier(.2,.8,.3,1);animation-duration:.48s;}
+  /* 省电/偏好低动画：关闭 stagger，直接显示 */
+  body.low-power .anim-in, html body.low-power .anim-in{opacity:1!important;animation:none!important;}
+  @media (prefers-reduced-motion: reduce){.anim-in{opacity:1!important;animation:none!important;}}
   .skfx{position:fixed;z-index:9999;pointer-events:none;
     left:var(--x,50%);top:var(--y,50%);transform:translate(-50%,-50%);}
   /* cursed：纯色小方块闪 */
@@ -1600,6 +1611,16 @@
   html[data-skin="cursed"] .btab.on,html[data-skin="cursed"] .skin.on{animation:skPxPop 7s ease-in-out infinite;}
   html[data-skin="cursed"] .btab,html[data-skin="cursed"] .skin{transition:transform .16s steps(2,jump-end);}
   html[data-skin="cursed"] .btab:hover,html[data-skin="cursed"] .skin:hover{transform:translateY(-1px);}
+  /* cursed 按压反馈：像素硬跳 + 下沉 + active focus */
+  html[data-skin="cursed"] .btn:active,html[data-skin="cursed"] .btab:active,html[data-skin="cursed"] .skin:active,
+  html[data-skin="cursed"] .zcard:active,html[data-skin="cursed"] .dockbtn:active,html[data-skin="cursed"] .ach-card:active,
+  html[data-skin="cursed"] .bcard:active,html[data-skin="cursed"] .tv-btn:active,html[data-skin="cursed"] .chip:active,
+  html[data-skin="cursed"] .iconbtn:active{transform:scale(.96) translateY(1px);transition:transform .08s steps(2,jump-end);}
+  html[data-skin="cursed"] .btn:focus-visible,html[data-skin="cursed"] .btab:focus-visible,html[data-skin="cursed"] .skin:focus-visible,
+  html[data-skin="cursed"] .dockbtn:focus-visible,html[data-skin="cursed"] .iconbtn:focus-visible{outline:2px solid #ffd75e;outline-offset:2px;transform:scale(1.04);}
+  /* cursed 弹窗入场：像素弹跳 */
+  html[data-skin="cursed"] #modal{animation:skPxPop .35s steps(4,jump-end) both;animation-iteration-count:1;}
+  html[data-skin="cursed"] #fdOverlay .fd-card{animation:skPxPop .32s steps(4,jump-end) both;animation-iteration-count:1;}
 
   /* ===================== 皮肤五：小镇入口 · 暖巷集市 ===================== */
   html[data-skin="townentry"] body{
@@ -1906,6 +1927,16 @@
   html[data-skin="dreamink"] .btab.on,html[data-skin="dreamink"] .skin.on{animation:skInkDrift 8s ease-in-out infinite;}
   html[data-skin="dreamink"] .btab,html[data-skin="dreamink"] .skin{transition:transform .22s cubic-bezier(.4,0,.6,1);}
   html[data-skin="dreamink"] .btab:hover,html[data-skin="dreamink"] .skin:hover{transform:translateY(-2px) rotate(-.6deg);}
+  /* dreamink 按压反馈：墨线扭曲下沉 + active focus */
+  html[data-skin="dreamink"] .btn:active,html[data-skin="dreamink"] .btab:active,html[data-skin="dreamink"] .skin:active,
+  html[data-skin="dreamink"] .zcard:active,html[data-skin="dreamink"] .dockbtn:active,html[data-skin="dreamink"] .ach-card:active,
+  html[data-skin="dreamink"] .bcard:active,html[data-skin="dreamink"] .tv-btn:active,html[data-skin="dreamink"] .chip:active,
+  html[data-skin="dreamink"] .iconbtn:active{transform:scale(.97) translateY(1px) rotate(-.5deg);transition:transform .1s cubic-bezier(.4,0,.6,1);}
+  html[data-skin="dreamink"] .btn:focus-visible,html[data-skin="dreamink"] .btab:focus-visible,html[data-skin="dreamink"] .skin:focus-visible,
+  html[data-skin="dreamink"] .dockbtn:focus-visible,html[data-skin="dreamink"] .iconbtn:focus-visible{outline:2px solid #c14d96;outline-offset:2px;transform:scale(1.04);}
+  /* dreamink 弹窗入场：墨线柔化弹入 */
+  html[data-skin="dreamink"] #modal{animation:popin .38s cubic-bezier(.4,0,.6,1) both;}
+  html[data-skin="dreamink"] #fdOverlay .fd-card{animation:popin .34s cubic-bezier(.4,0,.6,1) both;}
 
   /* ===================== 皮肤九：海边港湾 · 晴滩白浪 ===================== */
   html[data-skin="seaharbor"] body{
@@ -2255,6 +2286,16 @@
   html[data-skin="mermaidsea"] .btab.on,html[data-skin="mermaidsea"] .skin.on{animation:skGlassShimmer 7s ease-in-out infinite;}
   html[data-skin="mermaidsea"] .btab,html[data-skin="mermaidsea"] .skin{transition:transform .28s cubic-bezier(.2,.8,.3,1);}
   html[data-skin="mermaidsea"] .btab:hover,html[data-skin="mermaidsea"] .skin:hover{transform:translateY(-2px) scale(1.02);}
+  /* mermaidsea 按压反馈：水晶丝滑下沉 + active focus */
+  html[data-skin="mermaidsea"] .btn:active,html[data-skin="mermaidsea"] .btab:active,html[data-skin="mermaidsea"] .skin:active,
+  html[data-skin="mermaidsea"] .zcard:active,html[data-skin="mermaidsea"] .dockbtn:active,html[data-skin="mermaidsea"] .ach-card:active,
+  html[data-skin="mermaidsea"] .bcard:active,html[data-skin="mermaidsea"] .tv-btn:active,html[data-skin="mermaidsea"] .chip:active,
+  html[data-skin="mermaidsea"] .iconbtn:active{transform:scale(.97) translateY(1px);transition:transform .12s cubic-bezier(.2,.8,.3,1);}
+  html[data-skin="mermaidsea"] .btn:focus-visible,html[data-skin="mermaidsea"] .btab:focus-visible,html[data-skin="mermaidsea"] .skin:focus-visible,
+  html[data-skin="mermaidsea"] .dockbtn:focus-visible,html[data-skin="mermaidsea"] .iconbtn:focus-visible{outline:2px solid #3fb8c8;outline-offset:2px;transform:scale(1.04);}
+  /* mermaidsea 弹窗入场：水晶丝滑弹入 */
+  html[data-skin="mermaidsea"] #modal{animation:popin .36s cubic-bezier(.2,.8,.3,1) both;}
+  html[data-skin="mermaidsea"] #fdOverlay .fd-card{animation:popin .32s cubic-bezier(.2,.8,.3,1) both;}
 
   /* ==========================================================
      雪地主题皮肤（4 款）
@@ -2576,6 +2617,16 @@
   html[data-skin="court"] .btab.on,html[data-skin="court"] .skin.on{animation:skCourtCrown 6s ease-out infinite;}
   html[data-skin="court"] .btab,html[data-skin="court"] .skin{transition:transform .24s cubic-bezier(.2,.8,.3,1);}
   html[data-skin="court"] .btab:hover,html[data-skin="court"] .skin:hover{transform:translateY(-2px) scale(1.015);}
+  /* court 按压反馈：王庭克制下沉 + active focus */
+  html[data-skin="court"] .btn:active,html[data-skin="court"] .btab:active,html[data-skin="court"] .skin:active,
+  html[data-skin="court"] .zcard:active,html[data-skin="court"] .dockbtn:active,html[data-skin="court"] .ach-card:active,
+  html[data-skin="court"] .bcard:active,html[data-skin="court"] .tv-btn:active,html[data-skin="court"] .chip:active,
+  html[data-skin="court"] .iconbtn:active{transform:scale(.98) translateY(1px);transition:transform .14s cubic-bezier(.2,.8,.3,1);}
+  html[data-skin="court"] .btn:focus-visible,html[data-skin="court"] .btab:focus-visible,html[data-skin="court"] .skin:focus-visible,
+  html[data-skin="court"] .dockbtn:focus-visible,html[data-skin="court"] .iconbtn:focus-visible{outline:2px solid #3d8fd8;outline-offset:2px;transform:scale(1.04);}
+  /* court 弹窗入场：王庭优雅弹入 */
+  html[data-skin="court"] #modal{animation:popin .42s cubic-bezier(.2,.8,.3,1) both;}
+  html[data-skin="court"] #fdOverlay .fd-card{animation:popin .38s cubic-bezier(.2,.8,.3,1) both;}
 
   /* ========== 成就 ========== */
   .iconbtn.achbtn{position:relative;}
@@ -3567,13 +3618,13 @@ function useSkin(id){
 function toggleSkinGroup(id){ skinGrpOpen[id]=!skinGrpOpen[id]; openBook(); }
 /* 皮肤选区：第一图鉴顶部=春夏秋冬等基础款；第二图鉴顶部=按地图分组的新增皮肤 */
 function skinBarHTML(page){
-  const card=s=>{
+  const card=(s,i)=>{
     const info=skinUnlockInfo(s);
     const owned=S.skins.unlocked.indexOf(s.id)>=0;
     const active=S.skins.active===s.id;
     const st=skinStatusText(info,owned,active);
     const tip=[s.theme?'风格：'+s.theme:'', owned?'':(info.met?'可领取':'未达成')].filter(Boolean).join(' · ');
-    return `<div class="skin ${info.met?'met':''} ${owned?'owned':''} ${active?'on':''}" title="${esc(tip)}" onclick="useSkin('${s.id}')">
+    return `<div class="skin anim-in ${info.met?'met':''} ${owned?'owned':''} ${active?'on':''}" style="--stagger:${i*36}ms" title="${esc(tip)}" onclick="useSkin('${s.id}')">
       <div class="sw" style="background:linear-gradient(180deg,${s.vars.bg},${s.vars.bg2})">${s.emoji}</div>
       <div class="sn">${esc(s.name)}</div>
       <div class="sc">${esc(st)}</div>
@@ -3593,12 +3644,12 @@ function skinBarHTML(page){
           <span class="skingrp__title">${g.emoji} ${esc(g.n)}皮肤</span>
           <span class="skingrp__count">${metN}/${list.length} 已解锁</span>
         </div>
-        <div class="skingrp__body"><div class="skingrp__inner"><div class="skins">${list.map(card).join('')}</div></div></div>
+        <div class="skingrp__body"><div class="skingrp__inner"><div class="skins">${list.map((s,i)=>card(s,i)).join('')}</div></div></div>
       </div>`;
     }
   }else{
     h+=`<div class="skin-sec">🎨 界面皮肤 <small>（收获对应月巴解锁，点击领取·切换）</small></div>
-    <div class="skins">${SKINS.filter(s=>!s.group).map(card).join('')}</div>`;
+    <div class="skins">${SKINS.filter(s=>!s.group).map((s,i)=>card(s,i)).join('')}</div>`;
   }
   return h+'</div>';
 }
@@ -4658,7 +4709,7 @@ const DEX_EVENTS=[
   '🥂 {name}轻轻抵着番茄微笑：「是等着被谁一口吃掉吗……还是让我来吃掉讨厌的番茄吧。」',
 ];
 function bookRowsHTML(list){
-  let rows='';
+  let rows=''; let i=0;
   for(const t of list){
     const c=colCount(t.id);
     const rec=colRec(t.id);
@@ -4681,13 +4732,13 @@ function bookRowsHTML(list){
         ⚖️ 最轻 ${ss(rec.lightest, gL,'g')} · ${rec.lightest?fmtTS(rec.lightest.t):''}
       </div>`;
     }
-    const rowM=false; rows+=`<div class="bcard ${c?'':'locked'} ${t.r>=4?'epic':''} ${t.r===5?'legend':''}${t.id==='bairi'&&c?' bairi':''}${allGold?' allgold':''}" ${c?`onclick="openFatDetail('${t.id}')"`:''}>
+    const rowM=false; rows+=`<div class="bcard anim-in ${c?'':'locked'} ${t.r>=4?'epic':''} ${t.r===5?'legend':''}${t.id==='bairi'&&c?' bairi':''}${allGold?' allgold':''}" style="--stagger:${i*36}ms" ${c?`onclick="openFatDetail('${t.id}')"`:''}>
       <div class="pic">${c?`<span style="display:inline-block;transform:scale(${t.size||1})">${fatSVG(t)}</span>`:lockedSVG()}</div>
       <div class="nm">${c?t.name:'???'}</div>
       <div class="cnt">${c?('收获 x'+c):'未发现'} <span class="rar-tag ${rcl}">${RAR_NAME[t.r]}</span></div>
       ${stats}
       <div class="cd">${t.id==='bairi'||(t.weight==null||t.weight>=1)?('条件：'+condText(t.cond)):('✨ 概率极低 · 永久可遇')}</div>
-    </div>`;
+    </div>`; i++;
   }
   return rows;
 }
@@ -8847,7 +8898,7 @@ function checkAch(silent){
 function openAch(){
   pomoModalOpen=false;
   const got=achGot();
-  const cards=ACHS.map(function(a){
+  const cards=ACHS.map(function(a,i){
     const t=S.ach&&S.ach.got[a.id];
     let sub='';
     if(t) sub='<div class="ach-t">🏆 '+fmtDT(t)+' 达成</div>';
@@ -8856,7 +8907,7 @@ function openAch(){
       if(pg&&pg[1]>0){ const cur=Math.min(pg[0],pg[1]), pct=Math.round(cur/pg[1]*100);
         sub='<div class="ach-bar"><i style="width:'+pct+'%"></i></div><div class="ach-pg">'+fmt(cur)+' / '+fmt(pg[1])+'</div>'; }
     }
-    return '<div class="ach-card'+(t?' on':'')+'"><div class="ach-ic">'+(t?a.ic:'🔒')+'</div><div class="ach-main">'
+    return '<div class="ach-card anim-in'+(t?' on':'')+'" style="--stagger:'+(i*32)+'ms"><div class="ach-ic">'+(t?a.ic:'🔒')+'</div><div class="ach-main">'
       +'<div class="ach-n">'+esc(a.n)+'</div><div class="ach-d">'+esc(a.d)+'</div>'+sub+'</div></div>';
   }).join('');
   openModal('🏆 成就 '+got+'/'+ACHS.length,
