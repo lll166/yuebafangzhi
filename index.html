@@ -247,7 +247,7 @@
   .pomo-mini input:checked+.tk{background:var(--purple2);}
   .pomo-mini input:checked+.tk::after{left:14px;}
   .pomo-mini:hover .tk{box-shadow:inset 0 0 0 1px rgba(149,117,205,.5);}
-  #travel{position:fixed;inset:0;display:none;flex-direction:column;z-index:60;background:linear-gradient(180deg,#e6f2e0,#b4d9a8);}
+  #travel{position:fixed;inset:0;display:none;flex-direction:column;z-index:60;background:linear-gradient(180deg,var(--bg),var(--bg2));}
   #travel .tv-top{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,255,255,.65);font-weight:700;color:#3c5a3f;}
   #travel .tv-cur{font-size:15px;}
   #travel .tv-tom{color:#d0342c;}
@@ -267,7 +267,7 @@
   .tv-jr-new{background:#e9f6e0;color:#4f8a3a;}
   .tv-jr-dup{background:#f0ece1;color:#9a8f7a;}
   .tv-jr-none{color:#a9a191;}
-  #travel .tv-scene{flex:1;position:relative;overflow:hidden;}
+  #travel .tv-scene{flex:1;position:relative;overflow:hidden;background:linear-gradient(180deg,var(--bg),var(--bg2));}
   /* 窄屏时像首页 dock 一样自动折成两行；position:relative 让信箱/门口两个浮标锚定在导航栏上沿 */
   #travel .tv-nav{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:8px;background:rgba(255,255,255,.7);position:relative;}
   #travel .tv-btn{border:1px solid #8fae8a;background:#fff;color:#48614a;border-radius:10px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;}
@@ -295,6 +295,11 @@
   #travel .tv-btn:hover{background:var(--accent);border-color:var(--purple);}
   #travel .tv-mail,#travel .tv-door{background:var(--panel);border-color:var(--purple);}
   #travel .tv-mail:hover,#travel .tv-door:hover{background:var(--panel2);}
+  /* 场景内的外壳与卡片（便签 / 空态提示 / 选月巴卡片）跟随主题 */
+  #travel .tv-note{background:var(--panel);color:var(--text);border:1px solid var(--line);}
+  #travel .tvh-empty{color:var(--dim);}
+  .tv-fatpick{background:var(--panel);border-color:var(--line);}
+  .tv-fatpick .nm{color:var(--text);}
   .tvyard{position:absolute;inset:0;overflow:hidden;contain:content;}
   .tvg-bg{position:absolute;inset:0;width:100%;height:100%;}
   .tvg-toms{position:absolute;inset:0;}
@@ -1224,6 +1229,7 @@
   html[data-skin="forestedge"] #travel .tv-nav{background:linear-gradient(180deg,rgba(255,255,255,.88),rgba(238,247,240,.94));border-color:rgba(111,174,135,.30);}
   html[data-skin="forestedge"] #travel .tv-btn{background:linear-gradient(180deg,#ffffff,#eef7f0);border:1.2px solid rgba(111,174,135,.32);color:#2f6b4f;border-radius:12px;}
   html[data-skin="forestedge"] #travel .tv-btn:hover{background:#e7f5ea;border-color:#6fae87;}
+  html[data-skin="forestedge"] #travel .tv-note{background:rgba(255,255,255,.88);border:1.2px solid rgba(111,174,135,.32);color:#22402f;}
 
   /* ===================== 皮肤二：世外桃源 · 木屋手帐 ===================== */
   html[data-skin="fairy"] body{
@@ -1292,6 +1298,7 @@
   html[data-skin="fairy"] #travel .tv-top{border-bottom:2px dashed #c9b18e;}
   html[data-skin="fairy"] #travel .tv-btn{background:linear-gradient(180deg,#fffdf6,#f7ecd6);border:2px solid #c9b18e;color:#5b3f2a;border-radius:10px 12px 9px 11px;box-shadow:2px 3px 0 rgba(91,63,42,.18);}
   html[data-skin="fairy"] #travel .tv-btn:hover{background:#fff8e6;border-color:#a2734a;}
+  html[data-skin="fairy"] #travel .tv-note{background:#fffaf0;border:2px solid #a2734a;border-radius:14px 18px 12px 20px;color:#4a3524;}
 
   /* ===================== 皮肤三：上古秘境 · 幽林幻夜 ===================== */
   html[data-skin="ancient"] body{
@@ -1374,6 +1381,7 @@
   html[data-skin="ancient"] #travel .tv-nav{background:linear-gradient(180deg,rgba(23,51,39,.94),rgba(18,41,31,.96));border-color:rgba(110,240,176,.20);}
   html[data-skin="ancient"] #travel .tv-btn{background:linear-gradient(180deg,#173327,#12291f);border:1.5px solid rgba(110,240,176,.24);color:#c9ffe8;border-radius:10px;}
   html[data-skin="ancient"] #travel .tv-btn:hover{background:linear-gradient(180deg,#1d4133,#12291f);border-color:rgba(110,240,176,.60);box-shadow:0 0 16px rgba(110,240,176,.26);}
+  html[data-skin="ancient"] #travel .tv-note{background:rgba(23,51,39,.94);border:1.5px solid rgba(110,240,176,.30);color:#e6fff5;}
 
   /* ===================== 皮肤四：枯寂幻境 · 像素森屿 ===================== */
   html[data-skin="cursed"] body{
@@ -1458,6 +1466,8 @@
   html[data-skin="cursed"] #travel .tv-nav{border:0;border-top:3px solid #0e1024;box-shadow:inset 0 -3px 0 #14162e;}
   html[data-skin="cursed"] #travel .tv-btn{background:#333a6b;border:2px solid #0e1024;color:#eef2ff;border-radius:0;box-shadow:inset 2px 2px 0 #5a62a8,inset -2px -2px 0 #14162e;}
   html[data-skin="cursed"] #travel .tv-btn:hover{background:#3d4478;border-color:#4c5391;}
+  html[data-skin="cursed"] #travel .tv-note{background:#2a2d52;border:2px solid #0e1024;border-radius:0;color:#eef2ff;
+    box-shadow:inset 2px 2px 0 #4c5391,inset -2px -2px 0 #14162e,0 3px 0 #090b18;}
 
   /* 深色皮肤下信纸保持可读（信纸本身是浅色纸面，故只调正文与落款） */
   html[data-skin="ancient"] .ltr-full{background:linear-gradient(180deg,#12312a,#0d211b);border-color:rgba(110,240,176,.30);}
@@ -5678,7 +5688,6 @@ function tvFresh(){
   if(t.harvestT==null)t.harvestT=now()+rand(10,30)*60000;
   if(t.eventT==null)t.eventT=now()+rand(10,30)*60000;
   if(t.stealWant==null)t.stealWant=false;   // 本次庭院刷新是否刷出「偷番茄的月巴」（10% 概率）
-  if(t.bgIdx==null)t.bgIdx=(Math.random()*TV_BGS.length)|0;
   if(t.ddBetDay==null)t.ddBetDay='';        // 斗月巴：上次押注的自然日
   if(t.ddBetUsed==null)t.ddBetUsed=0;       // 斗月巴：当天已用掉的押注次数
   if(t.ddStreak==null)t.ddStreak=0;         // 斗月巴：玩家连胜场数（每场 +2% 遇出千月巴的概率，它现身后清零）
@@ -5863,8 +5872,6 @@ function tvEventRoll(){
     t.homeId=o?o.id:null;
     t.homeTxt=o?tvHomeDescs(o.id)[(Math.random()*3)|0]:'';
   }
-  // 背景配色与事件同频切换：每次事件重掷时换一个不同的渐变
-  t.bgIdx=((t.bgIdx==null?0:t.bgIdx)+1+(Math.random()*(TV_BGS.length-1)|0))%TV_BGS.length;
   save();
   return true;
 }
@@ -6143,7 +6150,7 @@ function tvHomeHTML(t){
 }
 function tvOwnedFats(){ const out=[]; const add=function(coll){ for(const id in coll){ const c=coll[id]; if(c&&c.count>0){ const tp=typeById(id); if(tp)out.push({id:id,t:tp}); } } }; add(S.collection); if(dex2Unlocked())add(S.collection2||{}); out.sort(function(a,b){ return (a.t.r||0)-(b.t.r||0) || (a.t.name<b.t.name?-1:a.t.name>b.t.name?1:0); }); return out; }
 function tvPickFat(id){ const t=tvFresh(); t.frog.fatId=(id&&id===t.frog.fatId)?null:(id||null); save(); tvBag(); }
-function tvRenderScene(){ const sc=$('tvScene'); if(!sc)return; const t=tvFresh(); tvEventRoll(); sc.style.background=tvBgOf(t); sc.innerHTML=tvView==='yard'?tvYardHTML(t):tvHomeHTML(t); if(tvView==='yard')tvStealMaybe(); }
+function tvRenderScene(){ const sc=$('tvScene'); if(!sc)return; const t=tvFresh(); tvEventRoll(); sc.innerHTML=tvView==='yard'?tvYardHTML(t):tvHomeHTML(t); if(tvView==='yard')tvStealMaybe(); }
 const TV_SLOTS=['🍅','🌶️','🍑','🍒','🍓','🥫','🌻','⭐'];
 const TV_SLOT_LOW=['🌶️','🍑','🍒','🍓','🌻','⭐']; /* 非番茄类符号，最低档专用 */
 function tvShuffle(a){ for(let i=a.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const s=a[i]; a[i]=a[j]; a[j]=s; } return a; }
@@ -6161,13 +6168,6 @@ function tvRollSlot(){ const r=Math.random(); let cols,tier,gain;
     gain=X==='🍅'?45+randi(0,5):X==='🥫'?39+randi(0,5):31+randi(0,7);
   }
   return {cols:cols,gain:gain,tier:tier}; }
-// 旅行背景：本地随机渐变配色（不使用外链图片），随事件同频切换
-const TV_BGS=[
-  ['#b8dcf0','#eef7fd'],['#f7d9a8','#fdf3e3'],['#d6c3f2','#f5eefa'],
-  ['#f5c9cd','#fdeef0'],['#bfe3cf','#edf9f1'],['#f8cf9c','#fdf1e1'],
-  ['#c6d6f2','#eef3fc'],['#e3c9a9','#f9f0e4']
-];
-function tvBgOf(t){ const p=TV_BGS[((t&&t.bgIdx)||0)%TV_BGS.length]; return 'linear-gradient(180deg,'+p[0]+','+p[1]+')'; }
 function tvSlotReady(){ const t=tvFresh(); return now()>=(t.harvestT); }
 function tvSlotOpen(){ if(!tvSlotReady()){ toast('🧺 月巴们还在攒番茄，稍后再来'); return; } openModal('🎰 好运收获', tvSlotHTML()); }
 function tvSlotHTML(){ let h='<p style="text-align:center;color:#48614a;font-size:13px">月巴们为你攒好了惊喜，拉杆收获 🍅！</p><div class="tvg-slot"><div class="tvg-reels">'; for(let i=0;i<3;i++)h+='<div class="tvg-reel" id="tvReel'+i+'">🍅</div>'; h+='</div></div><p id="tvSlotResult" style="text-align:center;min-height:20px;color:#e08a3c;font-weight:700"></p><div style="text-align:center;margin-top:6px"><button class="btn cta" id="tvSpinBtn" onclick="tvSpin()">🕹 拉杆！</button></div><p style="text-align:center;margin-top:4px"><button class="btn" onclick="closeModal()">收下离开</button></p>'; return h; }
