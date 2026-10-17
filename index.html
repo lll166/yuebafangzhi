@@ -1207,6 +1207,11 @@
     50%{box-shadow:0 0 14px rgba(255,220,130,.7),0 0 22px rgba(61,143,216,.35),0 0 0 2px rgba(255,235,160,.85);}}
   /* ---------- 入场 stagger：通用 + 四皮肤变体 ---------- */
   @keyframes skStaggerIn{0%{opacity:0;transform:translateY(10px) scale(.96);}100%{opacity:1;transform:translateY(0) scale(1);}}
+  /* 斗月巴专属紧张动画 —— 语义：对手在思考/蓄势，非悠闲呼吸 */
+  @keyframes skDdCursed{0%,100%{transform:translateX(0);}33%{transform:translateX(-2px);}66%{transform:translateX(2px);}}
+  @keyframes skDdInk{0%,100%{transform:rotate(0);}50%{transform:rotate(-1.2deg);}}
+  @keyframes skDdGlass{0%,100%{transform:scale(1);opacity:.9;}50%{transform:scale(1.025);opacity:1;}}
+  @keyframes skDdCrown{0%,100%{transform:scale(1) translateY(0);}50%{transform:scale(1.015) translateY(-1px);}}
   .anim-in{opacity:0;animation:skStaggerIn .35s var(--stagger,0ms) cubic-bezier(.2,.8,.3,1) both;}
   /* 四皮肤各自的入场风格化 */
   html[data-skin="cursed"] .anim-in{animation-timing-function:steps(4,jump-end);animation-duration:.42s;}
@@ -1629,7 +1634,14 @@
   html[data-skin="cursed"] #ddgame .btn{border-radius:0;background:#333a6b;color:#eef2ff;border:2px solid #0e1024;box-shadow:inset 2px 2px 0 #5a62a8,inset -2px -2px 0 #14162e;}
   html[data-skin="cursed"] #ddgame .btn.cta{background:#4bd15a;color:#06231b;border-color:#0e1024;box-shadow:inset 2px 2px 0 #8ff09a,inset -2px -2px 0 #1d7a2a;}
   html[data-skin="cursed"] #ddgame .dd-bottom,html[data-skin="cursed"] #ddgame .dd-cheat{border-radius:0;}
-  /* 飞行小游戏：8bit 像素硬边外壳与弹窗（关卡天空/地面/柱子保留） */
+  /* cursed 斗月巴：像素硬跳 */
+  html[data-skin="cursed"] #ddgame .dd-card.sel{transform:translateY(-16px);transition:transform .12s steps(2,jump-end);}
+  html[data-skin="cursed"] #ddgame .dd-card{transition:transform .12s steps(2,jump-end);}
+  html[data-skin="cursed"] #ddgame .dd-card:hover{transform:translateY(-6px);}
+  html[data-skin="cursed"] #ddgame .dd-opp.turn{animation:skDdCursed .36s steps(3,jump-end) infinite;}
+  html[data-skin="cursed"] #ddgame .dd-opp.cheat{animation:skDdCursed .24s steps(3,jump-end) infinite;}
+  html[data-skin="cursed"] #ddgame .dd-actions .btn:active{transform:scale(.95);transition:transform .06s steps(2,jump-end);}
+  /* cursed 飞行小游戏：8bit 像素硬边外壳与弹窗（关卡天空/地面/柱子保留） */
   html[data-skin="cursed"] #flygame .fg-top{background:linear-gradient(180deg,#2a2d52,#232650);color:#eef2ff;border:0;border-bottom:3px solid #0e1024;box-shadow:inset 0 3px 0 #4c5391;}
   html[data-skin="cursed"] .fg-box{border-radius:0;background:#2a2d52;border:2px solid #0e1024;}
   html[data-skin="cursed"] .fg-pick,html[data-skin="cursed"] .fg-lv{border-radius:0;}
@@ -1647,6 +1659,8 @@
   html[data-skin="cursed"] .chip,html[data-skin="cursed"] .iconbtn:not(.codebtn):not(.achbtn){transition:transform .16s steps(2,jump-end),opacity .2s ease;}
   html[data-skin="cursed"] .chip:hover,html[data-skin="cursed"] .iconbtn:not(.codebtn):not(.achbtn):hover{transform:translateY(-1px);opacity:.88;}
   html[data-skin="cursed"] .btab.on,html[data-skin="cursed"] .skin.on{animation:skPxPop 7s ease-in-out infinite;}
+  /* cursed：.on 叠加 anim-in 时用双动画（入场→无限发光），避免 opacity 覆盖卡死 */
+  html[data-skin="cursed"] .btab.on.anim-in,html[data-skin="cursed"] .skin.on.anim-in{animation:skStaggerIn .35s var(--stagger,0ms) steps(4,jump-end) both, skPxPop 7s ease-in-out .35s infinite;}
   html[data-skin="cursed"] .btab,html[data-skin="cursed"] .skin{transition:transform .16s steps(2,jump-end);}
   html[data-skin="cursed"] .btab:hover,html[data-skin="cursed"] .skin:hover{transform:translateY(-1px);}
   /* cursed 按压反馈：像素硬跳 + 下沉 + active focus */
@@ -1988,6 +2002,13 @@
   html[data-skin="dreamink"] #ddgame .dd-box{background:rgba(32,19,47,.96);border-color:rgba(193,77,150,.38);}
   html[data-skin="dreamink"] #ddgame .btn{background:linear-gradient(180deg,#33204f,#20132f);color:#e4d6f0;border:1.2px solid rgba(193,77,150,.34);}
   html[data-skin="dreamink"] #ddgame .btn.cta{background:linear-gradient(180deg,#c14d96,#5b2b7a);color:#fff;border-color:transparent;}
+  /* dreamink 斗月巴：墨线柔化 */
+  html[data-skin="dreamink"] #ddgame .dd-card.sel{transform:translateY(-16px) rotate(-.8deg);transition:transform .22s cubic-bezier(.4,0,.6,1);}
+  html[data-skin="dreamink"] #ddgame .dd-card{transition:transform .22s cubic-bezier(.4,0,.6,1);}
+  html[data-skin="dreamink"] #ddgame .dd-card:hover{transform:translateY(-5px) rotate(-.5deg);}
+  html[data-skin="dreamink"] #ddgame .dd-opp.turn{animation:skDdInk .48s cubic-bezier(.4,0,.6,1) infinite;}
+  html[data-skin="dreamink"] #ddgame .dd-opp.cheat{animation:skDdInk .32s cubic-bezier(.4,0,.6,1) infinite;}
+  html[data-skin="dreamink"] #ddgame .dd-actions .btn:active{transform:scale(.97) rotate(-.3deg);transition:transform .1s cubic-bezier(.4,0,.6,1);}
   html[data-skin="dreamink"] #flygame .fg-top{background:linear-gradient(180deg,rgba(51,32,79,.94),rgba(32,19,47,.96));color:#e4d6f0;border-bottom:1.2px solid rgba(193,77,150,.32);}
   html[data-skin="dreamink"] .fg-box{background:rgba(32,19,47,.96);border-color:rgba(193,77,150,.38);}
   html[data-skin="dreamink"] .fg-pick:not(.sel),html[data-skin="dreamink"] .fg-lv:not(.sel){background:rgba(51,32,79,.86);border-color:rgba(193,77,150,.30);}
@@ -1999,6 +2020,7 @@
   html[data-skin="dreamink"] .chip,html[data-skin="dreamink"] .iconbtn:not(.codebtn):not(.achbtn){transition:transform .22s cubic-bezier(.4,0,.6,1),opacity .28s ease;}
   html[data-skin="dreamink"] .chip:hover,html[data-skin="dreamink"] .iconbtn:not(.codebtn):not(.achbtn):hover{transform:translateY(-1px) rotate(-.6deg);opacity:.88;}
   html[data-skin="dreamink"] .btab.on,html[data-skin="dreamink"] .skin.on{animation:skInkDrift 8s ease-in-out infinite;}
+  html[data-skin="dreamink"] .btab.on.anim-in,html[data-skin="dreamink"] .skin.on.anim-in{animation:skStaggerIn .44s var(--stagger,0ms) cubic-bezier(.4,0,.6,1) both, skInkDrift 8s ease-in-out .44s infinite;}
   html[data-skin="dreamink"] .btab,html[data-skin="dreamink"] .skin{transition:transform .22s cubic-bezier(.4,0,.6,1);}
   html[data-skin="dreamink"] .btab:hover,html[data-skin="dreamink"] .skin:hover{transform:translateY(-2px) rotate(-.6deg);}
   /* dreamink 按压反馈：墨线扭曲下沉 + active focus */
@@ -2383,6 +2405,13 @@
   html[data-skin="mermaidsea"] #ddgame .dd-box{background:rgba(255,255,255,.94);border-color:rgba(111,224,224,.42);}
   html[data-skin="mermaidsea"] #ddgame .btn{background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(240,238,255,.74));color:#2a8fa8;border:1.2px solid rgba(111,224,224,.44);}
   html[data-skin="mermaidsea"] #ddgame .btn.cta{background:linear-gradient(180deg,#7fe4e4,#2a8fa8);color:#fff;border-color:transparent;}
+  /* mermaidsea 斗月巴：水晶琉璃 */
+  html[data-skin="mermaidsea"] #ddgame .dd-card.sel{transform:translateY(-16px) scale(1.04);transition:transform .28s cubic-bezier(.2,.8,.3,1);}
+  html[data-skin="mermaidsea"] #ddgame .dd-card{transition:transform .28s cubic-bezier(.2,.8,.3,1);}
+  html[data-skin="mermaidsea"] #ddgame .dd-card:hover{transform:translateY(-5px) scale(1.02);}
+  html[data-skin="mermaidsea"] #ddgame .dd-opp.turn{animation:skDdGlass .56s cubic-bezier(.2,.8,.3,1) infinite;}
+  html[data-skin="mermaidsea"] #ddgame .dd-opp.cheat{animation:skDdGlass .4s cubic-bezier(.2,.8,.3,1) infinite;}
+  html[data-skin="mermaidsea"] #ddgame .dd-actions .btn:active{transform:scale(.97);transition:transform .12s cubic-bezier(.2,.8,.3,1);}
   html[data-skin="mermaidsea"] #flygame .fg-top{background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(238,236,255,.94));color:#2a8fa8;border-bottom:1.2px solid rgba(111,224,224,.38);}
   html[data-skin="mermaidsea"] .fg-box{background:rgba(255,255,255,.94);border-color:rgba(111,224,224,.44);}
   html[data-skin="mermaidsea"] .fg-pick:not(.sel),html[data-skin="mermaidsea"] .fg-lv:not(.sel){background:rgba(255,255,255,.88);border-color:rgba(111,224,224,.40);}
@@ -2753,6 +2782,13 @@
   html[data-skin="court"] #ddgame .dd-opp:not(.cheat):not(.turn),html[data-skin="court"] #ddgame .dd-box{background:linear-gradient(180deg,#121520,#1a1e2c);border:1.2px solid rgba(184,192,204,.42);color:#e4e8f0;border-radius:12px;}
   html[data-skin="court"] #ddgame .btn{background:linear-gradient(180deg,#121520,#1a1e2c);color:#e4e8f0;border:1.2px solid rgba(184,192,204,.42);border-radius:14px;}
   html[data-skin="court"] #ddgame .btn.cta{background:linear-gradient(180deg,#2c5bb5,#1e3a8a);color:#eaf0fa;border:1.2px solid #3d8fd8;border-radius:14px;box-shadow:0 4px 12px rgba(30,58,138,.35);}
+  /* court 斗月巴：王冠克制 */
+  html[data-skin="court"] #ddgame .dd-card.sel{transform:translateY(-14px) scale(1.03);transition:transform .3s cubic-bezier(.2,.8,.3,1);}
+  html[data-skin="court"] #ddgame .dd-card{transition:transform .3s cubic-bezier(.2,.8,.3,1);}
+  html[data-skin="court"] #ddgame .dd-card:hover{transform:translateY(-4px) scale(1.01);}
+  html[data-skin="court"] #ddgame .dd-opp.turn{animation:skDdCrown .64s cubic-bezier(.2,.8,.3,1) infinite;}
+  html[data-skin="court"] #ddgame .dd-opp.cheat{animation:skDdCrown .44s cubic-bezier(.2,.8,.3,1) infinite;}
+  html[data-skin="court"] #ddgame .dd-actions .btn:active{transform:scale(.98);transition:transform .14s cubic-bezier(.2,.8,.3,1);}
   html[data-skin="court"] #flygame .fg-top{background:linear-gradient(180deg,#0d0f16,#121520);color:#e4e8f0;border-bottom:1.4px solid rgba(184,192,204,.42);}
   html[data-skin="court"] .fg-box{background:linear-gradient(180deg,#121520,#1a1e2c);border:1.2px solid rgba(184,192,204,.42);color:#e4e8f0;border-radius:12px;}
   html[data-skin="court"] .fg-pick:not(.sel),html[data-skin="court"] .fg-lv:not(.sel){background:#1a1e2c;border:1.2px solid rgba(184,192,204,.38);color:#e4e8f0;border-radius:12px;}
@@ -2761,6 +2797,7 @@
   html[data-skin="court"] .chip,html[data-skin="court"] .iconbtn:not(.codebtn):not(.achbtn){transition:transform .24s cubic-bezier(.2,.8,.3,1),opacity .24s ease;}
   html[data-skin="court"] .chip:hover,html[data-skin="court"] .iconbtn:not(.codebtn):not(.achbtn):hover{transform:translateY(-1px);opacity:.88;}
   html[data-skin="court"] .btab.on,html[data-skin="court"] .skin.on{animation:skCourtCrown 6s ease-out infinite;}
+  html[data-skin="court"] .btab.on.anim-in,html[data-skin="court"] .skin.on.anim-in{animation:skStaggerIn .48s var(--stagger,0ms) cubic-bezier(.2,.8,.3,1) both, skCourtCrown 6s ease-out .48s infinite;}
   html[data-skin="court"] .btab,html[data-skin="court"] .skin{transition:transform .24s cubic-bezier(.2,.8,.3,1);}
   html[data-skin="court"] .btab:hover,html[data-skin="court"] .skin:hover{transform:translateY(-2px) scale(1.015);}
   /* court 按压反馈：王庭克制下沉 + active focus */
