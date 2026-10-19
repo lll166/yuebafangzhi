@@ -3893,7 +3893,7 @@ const SKIN_GROUPS=[
   {id:'snow',   n:'雪地', emoji:'❄️', d:'deco-snow'},
 ];
 /* 地图主题皮肤的解锁：集齐对应旅行地图的全部信件 + 全部特产；各图第 4 款（枯寂幻境 / 番茄之梦 / 人鱼之海）额外要求该图主题月巴全部集齐 */
-let skinGrpOpen={forest:true, town:true, sea:true, snow:true};
+let skinGrpOpen={forest:false, town:false, sea:false, snow:false};   // 地图皮肤分组默认折叠，点分组头才展开
 const SKINS=[
   {id:'default', name:'🎨 默认', emoji:'🎨', need:null, needN:0, vars:SKIN_DEFAULT},
   {id:'spring', name:'🌱 春', emoji:'🌱', need:'mb_chun', needN:500, vars:{bg:'#eef7ec',bg2:'#e0f0dc',panel:'#ffffff',panel2:'#f4faf2',line:'#d3e8cd',text:'#3d5a3a',dim:'#8aa884',purple:'#7cb86e',purple2:'#5a9e4c',accent:'#a5d69a',gold:'#c9971c',good:'#6fb26a',danger:'#e05b6f',glow1:'rgba(124,184,110,.20)',glow2:'rgba(165,214,154,.22)'}},
