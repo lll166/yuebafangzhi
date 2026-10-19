@@ -209,6 +209,9 @@
   #modal{
     border-radius:20px;max-width:700px;width:100%;
     max-height:88vh;display:flex;flex-direction:column;overflow:hidden;position:relative;
+    /* 磨砂玻璃：仅弹窗（图鉴/商店/设置等共用）保留模糊；全宽顶栏/底栏不恢复，避免全屏实时模糊的 GPU 开销。
+       省电模式仍可通过 body.low-power .frost 一键压掉 */
+    backdrop-filter:blur(8px) saturate(160%);-webkit-backdrop-filter:blur(8px) saturate(160%);
     animation:popin .25s ease;
   }
   @keyframes popin{0%{transform:scale(.86);opacity:0;}100%{transform:scale(1);opacity:1;}}
@@ -479,18 +482,20 @@
   .fd-pic.legend{border-color:#9575cd;box-shadow:0 0 16px rgba(149,117,205,.45);}
   .fd-meta{display:flex;align-items:center;justify-content:center;gap:8px;margin:4px 0 8px;}
   .fd-author{font-size:11px;color:var(--dim);font-weight:700;margin:-2px 0 6px;}
-  .fd-intro .fd-author{font-size:11px;color:#8a6a00;text-align:right;margin:6px 0 0;}
+  .fd-intro .fd-author{font-size:11px;color:var(--dim);text-align:right;margin:6px 0 0;}
   .fd-cnt{font-size:12px;color:var(--dim);font-weight:700;}
   .fd-stats{font-size:12px;color:var(--dim);line-height:1.7;text-align:left;background:rgba(149,117,205,.08);
     border-radius:10px;padding:8px 10px;margin-bottom:8px;}
   .fd-stats .gold{color:var(--gold);font-weight:900;}
   .fd-stats .t{font-size:10px;color:#a89fc2;margin-left:2px;}
-  .fd-cond{font-size:11px;color:var(--dim);background:rgba(255,255,255,.6);border:1px dashed var(--line);
+  /* 条件/简介改用皮肤令牌：原来是半透明白/黄底 + 固定深色字（为浅色皮肤调的），
+     叠在深色皮肤的深色卡面上底色被压暗而文字不变 → 深色皮肤下不可读 */
+  .fd-cond{font-size:11px;color:var(--dim);background:var(--panel2);border:1px dashed var(--line);
     border-radius:10px;padding:5px 8px;margin-bottom:8px;}
-  .fd-intro{font-size:12px;color:var(--purple2);text-align:left;background:linear-gradient(180deg,rgba(255,239,181,.5),rgba(255,224,130,.35));
+  .fd-intro{font-size:12px;color:var(--purple2);text-align:left;background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--purple);
     border-radius:10px;padding:8px 10px;}
-  .fd-intro b{color:#8a6a00;}
-  .fd-intro p{margin:4px 0 0;color:#6b5a2e;line-height:1.6;}
+  .fd-intro b{color:var(--purple2);}
+  .fd-intro p{margin:4px 0 0;color:var(--text);line-height:1.6;}
   .rar-tag{font-size:9px;font-weight:800;padding:1px 6px;border-radius:99px;color:#fff;}
   .rr1{background:#a5a0bd;} .rr2{background:#6fb26a;} .rr3{background:#4fa8c9;}
   .rr4{background:#9575cd;} .rr5{background:#7e57c2;} .rr6{background:#e05b6f;}
@@ -8490,7 +8495,7 @@ function checkDexEvent(){
     tomato=tomato*2;
     const culprit=(Math.random()<0.5?typeById('m2_xianyi'):typeById('m2_tanwu'));
     const cn=(culprit&&culprit.name)||'嫌疑月巴';
-    line='👮 警察巴捉拿了'+cn+'，'+cn+'缴纳了罚款，这里是所有的番茄。';
+    line='👮 警察巴捉拿了'+cn+'，'+cn+'缴纳了罚款，这是所有的番茄。';
   }
   _dexEv={t,line,reward:dexEventReward(), tomato:tomato};
   S.dexPending=_dexEv;
