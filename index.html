@@ -10464,7 +10464,10 @@ function tvEventRoll(){
   const n=Math.min(3,tmp.length);
   for(let i=0;i<n&&tmp.length;i++){ pick.push(tmp.splice((Math.random()*tmp.length)|0,1)[0]); }
   t.yardEv=pick.map(function(o){ return {id:o.id,x:(10+Math.random()*80).toFixed(1),y:(32+Math.random()*42).toFixed(1)}; });
-  t.yardTxt=pick.length?tvYardEvent(pick.map(function(o){return o.t.name;})):'';
+  /* 记录模板与参演月巴 id：切语言时按当前语言重新生成这句发言（旧存档只有 yardTxt，沿用原文） */
+  t.yardKey=pick.length?TV_YARD_EVENTS[(Math.random()*TV_YARD_EVENTS.length)|0]:'';
+  t.yardIds=pick.map(function(o){return o.id;});
+  t.yardTxt=pick.length?tvYardEventText(t.yardKey,pick.map(function(o){return o.t.name;})):'';
   const po=tvOwnedFats();
   // 有最近旅行回家的月巴时，室内保持显示它，直到下一个月巴旅行回家再切换
   if(t.lastHomeFatId && po.some(function(o){return o.id===t.lastHomeFatId;})){
@@ -10487,7 +10490,15 @@ function tvYardHTML(t){
     h+='<div class="tv-yf'+(o.id===_tvStealWho?' steal-silhouette':'')+'" style="left:'+o.x+'%;top:'+o.y+'%"><span class="tv-traveler">'+fatSVG(typeById(o.id))+'</span></div>';
   });
   h+='</div>';
-  if(shown.length)h+='<div class="tv-note">'+t.yardTxt+'</div>';
+  if(shown.length){
+    let txt=t.yardTxt;
+    if(!t.yardKey && t.yardTxt) t.yardKey=tvYardMatchKey(t.yardTxt);   // 旧存档：按原发言反查模板
+    if(t.yardKey){   /* 有模板时按当前语言重建，保证切语言后这句发言同步变语 */
+      const names=(t.yardIds||[]).map(function(id){ const tp=typeById(id); return tp?tp.name:''; });
+      txt=tvYardEventText(t.yardKey,names);
+    }
+    h+='<div class="tv-note">'+txt+'</div>';
+  }
   else h+='<div class="tv-note">'+$tm('ui_tv_yard_empty','🧺 庭院安安静静，先去图鉴里收集一些月巴吧')+'</div>';
   return h;
 }
@@ -10497,12 +10508,27 @@ function tvStealSyncYard(){
   const sc=$('tvScene'); if(!sc)return;
   sc.innerHTML=tvYardHTML(tvFresh());
 }
-function tvYardEvent(names){
-  const tpl=$t(TV_YARD_EVENTS[(Math.random()*TV_YARD_EVENTS.length)|0]);
+function tvYardEventText(tpl,names){
   const a=names[0]||$t('一只月巴'), b=names[1]||$t('另一只月巴');
   // {n} 优先用第 3 只（若有），避免与互动中的 {a}/{b} 点名同一月巴而重复
   const n=names[2]||a;
-  return tpl.split('{a}').join(a).split('{b}').join(b).split('{n}').join(n);
+  return $t(tpl).split('{a}').join(a).split('{b}').join(b).split('{n}').join(n);
+}
+/* 旧存档只存了成稿发言：按四种语言的模板反查，找回模板键（结果缓存，查不到返回空串） */
+const _tvYardKeyCache={};
+function tvYardMatchKey(txt){
+  if(_tvYardKeyCache[txt]!=null)return _tvYardKeyCache[txt];
+  const esc=function(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); };
+  for(let i=0;i<TV_YARD_EVENTS.length;i++){
+    const key=TV_YARD_EVENTS[i], tr=I18N_UI[key]||{};
+    const cands=[key,tr.en,tr.ja,tr.ko];
+    for(let j=0;j<cands.length;j++){
+      if(!cands[j])continue;
+      const re=new RegExp('^'+esc(cands[j]).replace(/\\\{[abn]\\\}/g,'.+')+'$');
+      if(re.test(txt))return _tvYardKeyCache[txt]=key;
+    }
+  }
+  return _tvYardKeyCache[txt]='';
 }
 /* ---------------- 月巴偷番茄：概率触发 + 三回合捉拿小游戏 ----------------
    触发：每次渲染庭院时按概率弹出「月巴偷番茄」窗口（带冷却与其它弹窗互斥）。
