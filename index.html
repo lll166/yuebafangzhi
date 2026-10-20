@@ -222,7 +222,20 @@
   @keyframes popin{0%{transform:scale(.86);opacity:0;}100%{transform:scale(1);opacity:1;}}
   #modal-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(149,117,205,.18);}
   #modal-head h2{font-size:16px;color:var(--purple2);}
+  /* 通知页翻页器：多条自动提醒共用一个弹窗，避免互相顶替 */
+  .npager{display:flex;align-items:center;gap:6px;margin-left:auto;margin-right:8px;
+    font-size:12px;font-weight:800;color:var(--dim);}
+  .npager .npg{width:26px;height:26px;padding:0;border-radius:9px;border:1px solid var(--line);
+    background:rgba(255,255,255,.65);color:var(--purple2);font-size:16px;font-weight:900;
+    line-height:1;cursor:pointer;}
+  .npager .npg:disabled{opacity:.32;cursor:not-allowed;}
+  .npager span{min-width:34px;text-align:center;font-variant-numeric:tabular-nums;}
   #modal-body{padding:14px;overflow-y:auto;}
+  /* 成熟月巴提醒：引导开启番茄钟 */
+  .ripe-tip p{font-size:13px;line-height:1.85;color:var(--dim);margin:2px 0;text-align:center;}
+  .ripe-tip p b{color:var(--purple2);}
+  .ripe-tip-actions{display:flex;flex-direction:column;gap:8px;margin-top:16px;}
+  .ripe-tip-actions .btn{width:100%;}
   /* 图鉴详情悬浮层（叠在图鉴之上，不关闭图鉴） */
   #fdOverlay{position:absolute;inset:0;display:none;z-index:30;}
   #fdOverlay.show{display:flex;align-items:center;justify-content:center;}
@@ -3178,6 +3191,7 @@
   <button class="dockbtn" id="btnShop"><b>🛒</b><small data-i18n="商店">商店</small></button>
   <button class="dockbtn" id="btnTravel" onclick="travelEntry()"><b>🧳</b><small data-i18n="旅行">旅行</small></button>
   <button class="dockbtn" id="btnDress"><b>❓</b></button>
+  <button class="dockbtn" id="btnSurvivor" style="display:none" onclick="survivorEntry()" title="番茄幸存者"><b>🍅⚔️</b><small data-i18n="幸存者">幸存者</small></button>
 </div>
 
 <!-- 场地场景视图 -->
@@ -4300,6 +4314,8 @@ const I18N_GLOSSARY={
   '待办':{en:'To-do',ja:'やること',ko:'할 일'},
   '统计':{en:'Stats',ja:'統計',ko:'통계'},
   '飞行':{en:'Fly',ja:'飛行',ko:'비행'},
+  '幸存者':{en:'Survivors',ja:'サバイバーズ',ko:'서바이버즈'},
+  '番茄幸存者':{en:'Tomato Survivors',ja:'トマトサバイバー',ko:'토마토 서바이버'},
 };
 /* 三语风格约定（P0 已定稿，P1 起所有译文按此执行）：
    日文：叙事类（信件正文、月巴简介、事件文案）用常体（だ・である）；UI 类（按钮、提示、toast）用敬体（です・ます）
@@ -5520,6 +5536,14 @@ const I18N_UI={
   '<span class="rep-diff">— 上期无记录</span>':{en:'<span class="rep-diff">— No record last period</span>',ja:'<span class="rep-diff">— 前期の記録なし</span>',ko:'<span class="rep-diff">— 지난 기간 기록 없음</span>'},
   '⏭ 跳过休息 · 下一个番茄':{en:'⏭ Skip break · next Pomodoro',ja:'⏭ 休憩を飛ばす · 次のポモドーロ',ko:'⏭ 휴식 건너뛰기 · 다음 뽀모도로'},
   '⏳ 专注中 · 生长 x2 · 自动收集':{en:'⏳ Focusing · Growth ×2 · Auto-collect',ja:'⏳ 集中中 · 成長 ×2 · 自動回収',ko:'⏳ 집중 중 · 성장 ×2 · 자동 수확'},
+  '🍅 成熟的月巴还没收':{en:'🍅 Ripe Bannies are waiting',ja:'🍅 成熟したバニーが残っています',ko:'🍅 성숙한 배니가 남아 있어요'},
+  '场上有 {n} 只月巴已经成熟，还没有收掉。':{en:'Ripe Bannies on the field: {n} — still uncollected.',ja:'フィールドに成熟したバニーが {n} 体、まだ未回収です。',ko:'필드에 성숙한 배니가 {n}마리 있고 아직 수확하지 않았어요.'},
+  '开启番茄钟后：生长速度 ×2，成熟的月巴会自动收集。':{en:'Start a Pomodoro to grow ×2 and auto-collect ripe Bannies.',ja:'ポモドーロを開始すると成長 ×2、成熟したバニーは自動回収されます。',ko:'뽀모도로를 시작하면 성장 ×2, 성숙한 배니는 자동 수확됩니다.'},
+  '开启番茄钟':{en:'Start Pomodoro',ja:'ポモドーロ開始',ko:'뽀모도로 시작'},
+  '稍后再说（30 分钟）':{en:'Later (30 min)',ja:'あとで（30 分）',ko:'나중에 (30분)'},
+  '今日不再提醒':{en:'Don’t remind me today',ja:'今日はもう通知しない',ko:'오늘은 다시 알리지 않기'},
+  '30 分钟内不再提醒':{en:'No reminders for 30 minutes',ja:'30 分間は通知しません',ko:'30분 동안 알리지 않습니다'},
+  '今天不再提醒':{en:'No reminders today',ja:'今日はもう通知しません',ko:'오늘은 알리지 않습니다'},
   '⏸ 已暂停':{en:'⏸ Paused',ja:'⏸ 一時停止',ko:'⏸ 일시정지'},
   '☕ 休息':{en:'☕ Break',ja:'☕ 休憩',ko:'☕ 휴식'},
   '☕ 休息中 · 时长 ':{en:'☕ On a break · Length ',ja:'☕ 休憩中 · 時間 ',ko:'☕ 휴식 중 · 시간 '},
@@ -6198,6 +6222,10 @@ const I18N_BANNY={
   ach_p7:{n:{en:'200 Focus Hours',ja:'集中200時間',ko:'집중 200시간'}},
   ach_g2:{n:{en:'Millionaire',ja:'百万長者',ko:'백만장자'}},
   ach_d7:{n:{en:'Codex Complete',ja:'図鑑コンプリート',ko:'도감 컴플리트'}},
+  ach_sv1:{n:{en:'Tomato Survivor',ja:'トマトサバイバー',ko:'토마토 서바이버'}},
+  ach_sv2:{n:{en:'Hundred-Day Guardian',ja:'百日の守り手',ko:'백일의 수호자'}},
+  ach_sv3:{n:{en:'Past Three Stages',ja:'三つの関門',ko:'세 관문 통과'}},
+  ach_sv4:{n:{en:'The Road Home',ja:'帰郷の道',ko:'귀향의 길'}},
 
   food_food1:{n:{en:'Rice Ball Bento',ja:'おにぎり弁当',ko:'주먹밥 도시락'}},
   food_food2:{n:{en:'Seasonal Vegetable Bento',ja:'旬の野菜弁当',ko:'제철 채소 도시락'}},
@@ -6465,6 +6493,10 @@ const I18N_BANNY={
   ach_p7_desc:{d:{en:'Focus for 200 hours in total',ja:'累計の集中時間を 200 時間にする',ko:'누적 집중 시간 200시간 달성하기'}},
   ach_g2_desc:{d:{en:'Earn 100,000,000 Coins in total',ja:'累計 100,000,000 コインを稼ぐ',ko:'누적 100,000,000 코인 벌기'}},
   ach_d7_desc:{d:{en:'Unlock 150 Banny species across both Codexes',ja:'2 つの図鑑を合わせて 150 種のバニーを解放する',ko:'두 도감을 합쳐 배니 150종 해금하기'}},
+  ach_sv1_desc:{d:{en:'Win for the first time in Tomato Survivors',ja:'「トマトサバイバー」で初勝利する',ko:'토마토 서바이버에서 첫 승리하기'}},
+  ach_sv2_desc:{d:{en:'Win 3 times in Tomato Survivors',ja:'「トマトサバイバー」で通算 3 回勝利する',ko:'토마토 서바이버에서 통산 3회 승리하기'}},
+  ach_sv3_desc:{d:{en:'Clear 3 stages in Tomato Survivors',ja:'「トマトサバイバー」で 3 ステージをクリアする',ko:'토마토 서바이버에서 3개 스테이지를 클리어하기'}},
+  ach_sv4_desc:{d:{en:'Clear all 6 stages in Tomato Survivors',ja:'「トマトサバイバー」の全 6 ステージをクリアする',ko:'토마토 서바이버의 6개 스테이지를 모두 클리어하기'}},
   /* ---------- P5：旅行地图描述 dest_<id>_desc（字段 d，叙事体） ---------- */
   dest_fairy_desc:{d:{en:'Through the breathing vine gate at the far end of the Forest Edge lies a hidden realm that time seems to have forgotten — they say fairies live here.',ja:'森のほとりの突き当たりにある、息づくような蔦の門をくぐると、時間に忘れられたかのような秘境が広がっている——ここには精霊が住むという。',ko:'숲의 가장자리 끝, 숨 쉬는 듯한 덩굴 문을 지나면 시간에게 잊힌 듯한 비경이 펼쳐져 있다——이곳에는 정령이 산다고 한다.'}},
   dest_ancient_desc:{d:{en:'Through the half-open stone gate at the end of Fairy Hideaway lies an old land time does not remember — they say ancient creatures and mythical beings live here.',ja:'桃源郷の突き当たりにある半開きの石門をくぐると、時間に記憶されない古き地が広がっている——ここには古き生き物と神話の存在が住むという。',ko:'무릉도원 끝, 반쯤 열린 돌문을 지나면 시간이 기억하지 않는 옛 땅이 펼쳐져 있다——이곳에는 고대의 생물과 신화 속 존재가 산다고 한다.'}},
@@ -6921,6 +6953,8 @@ function defaultState(){
   return {
     coins:0, totalCoins:null, accelLv:0, boughtItems:[], collection:{}, collection2:{}, dex2Celebrated:false, totalHarvest:0, lastFast:0, lowPower:false,
     flyTop:[], flyPick:null, flySel:1, flyClear:0, flyLvBest:{}, flyLvTime:{},
+    survivor:{v:1, clears:0, bestTime:0, bestKills:0, unlocked:{}, read:{}, lastReward:null,
+      stageClear:0, stageSel:1, stageBest:{}},
     weather:'sunny', lastRainAt:-1e12, weatherHoldEnd:0,
     nextWeatherAt:now()+rand(2,4)*60000, muted:false, lastSave:now(),
     lang:null,   // 界面语言：null=尚未选择（首次进入按浏览器语言判定），之后以手动选择为准
@@ -6935,6 +6969,8 @@ function defaultState(){
     pomo:{name:'专注', total:25*60000, remain:25*60000, running:false, end:0, start:0, pausedByBlur:false,
       history:[], presets:['工作','学习'], mode:'focus', breakMin:5, focusTotal:25*60000, roundItems:[], taskId:null, bgIdle:false,
       goalMin:120, reportSeen:{week:'',month:''}},
+    // 成熟月巴提醒：until=静默截止时间戳，day=「今日不再提醒」的日期键
+    pomoTip:{until:0, day:''},
     zones:ZONES.map((z,i)=>({id:i, bought:i===0, woods: i===0?[{cells:[null,null,null]}]:[]})),
   };
 }
@@ -6966,6 +7002,12 @@ function load(){
       S=Object.assign(defaultState(),d);
       // 深合并番茄钟字段，旧存档缺少 presets/mode/breakMin/focusTotal 时补默认值
       S.pomo=Object.assign(defaultState().pomo, d.pomo||{});
+      // 番茄幸存者：独立页会直接写回该字段，这里补齐旧档缺失的子对象
+      const _svDef=defaultState().survivor;
+      S.survivor=Object.assign(_svDef, d.survivor||{});
+      S.survivor.unlocked=Object.assign({}, (d.survivor&&d.survivor.unlocked)||{});
+      S.survivor.read=Object.assign({}, (d.survivor&&d.survivor.read)||{});
+      S.survivor.stageBest=Object.assign({}, (d.survivor&&d.survivor.stageBest)||{});
       galInitLegacy();   // 画廊：本次上线前就已达成条件的条目记为「时间未知」
       return true;
     }
@@ -7910,6 +7952,7 @@ function buyItem(id){
 }
 
 /* ---------------- 弹窗 ---------------- */
+let _ripeTipOpen=false;   // 成熟月巴提醒是否正打开（关闭时按 30 分钟静默处理）
 function openModal(title,html,rebuild){
   title=$t(title);   // P2：标题以中文原文为键自动查表（带变量的标题由调用处先用 $tf() 拼好）
   openModal._rebuild=rebuild||null;   // P3.8：记下弹层「重建器」，切语言时若该弹层仍打开则原样重建
@@ -7948,7 +7991,80 @@ function $walkText(root){
   }catch(e){}
 }
 let _lastModalTitle='';
-function closeModal(){ document.body.classList.remove('gb-rolling'); $('overlay').classList.remove('show'); closeFatDetail(); closeGalDetail(); pomoModalOpen=false; if(_tvStealWho){ _tvStealWho=null; tvStealSyncYard(); } if(_afterClose){ const f=_afterClose; _afterClose=null; f(); } }
+function closeModal(){ if(_noticeOpen){ _noticeOpen=false; if(_ripeTipOpen && NOTICE_QUEUE.some(function(x){return x.key==='ripe';})){ _ripeTipOpen=false; pomoTipState().until=now()+30*60000; save(); } NOTICE_QUEUE.length=0; } document.body.classList.remove('gb-rolling'); $('overlay').classList.remove('show'); closeFatDetail(); closeGalDetail(); pomoModalOpen=false; if(_tvStealWho){ _tvStealWho=null; tvStealSyncYard(); } if(_afterClose){ const f=_afterClose; _afterClose=null; f(); } if(!_noticeOpen && NOTICE_QUEUE.length) setTimeout(renderNotice,0); }
+
+/* ---------------- 通知页队列 ----------------
+   自动弹出的提醒不再互相顶替：全部进同一个队列，按优先级排序后用 ‹ 1/N › 翻页。
+   番茄钟提醒优先级最高（100），永远在第一页。 */
+const NOTICE_QUEUE=[];
+let _noticePage=0, _noticeOpen=false;
+function openNotice(key,title,html,priority){
+  const pri=priority==null?10:priority;
+  const old=NOTICE_QUEUE.findIndex(function(x){ return x.key===key; });
+  if(old>=0) NOTICE_QUEUE.splice(old,1);
+  NOTICE_QUEUE.push({key:key,title:title,html:html,pri:pri});
+  NOTICE_QUEUE.sort(function(a,b){ return b.pri-a.pri; });
+  const idx=NOTICE_QUEUE.findIndex(function(x){ return x.key===key; });
+  if(_noticeOpen){
+    const cur=NOTICE_QUEUE[_noticePage];
+    // 只有新页面优先级更高时才跳过去（番茄钟提醒永远抢到第一页）；否则留在当前页
+    if(!cur || pri>cur.pri) _noticePage=idx>=0?idx:0;
+    else _noticePage=NOTICE_QUEUE.findIndex(function(x){ return x.key===cur.key; });
+    if(_noticePage<0) _noticePage=0;
+    renderNotice(); return;
+  }
+  if($('overlay').classList.contains('show')) return;   // 其他弹窗开着：等它关闭后再展示
+  _noticePage=0;
+  renderNotice();
+}
+function renderNotice(){
+  if(!NOTICE_QUEUE.length){ _noticeOpen=false; return; }
+  _noticeOpen=true;
+  _noticePage=clamp(_noticePage,0,NOTICE_QUEUE.length-1);
+  const p=NOTICE_QUEUE[_noticePage];
+  const body=(typeof p.html==='function')?p.html():p.html;
+  openModal(p.title, '<div class="npage">'+body+'</div>', renderNotice);
+  renderNoticePager();
+}
+function renderNoticePager(){
+  const head=$('modal-head'); if(!head) return;
+  const old=head.querySelector('.npager'); if(old) old.remove();
+  if(NOTICE_QUEUE.length<=1) return;
+  const close=head.querySelector('.iconbtn');
+  const html='<div class="npager">'
+    +'<button class="npg" onclick="noticeGo(-1)"'+(_noticePage<=0?' disabled':'')+'>‹</button>'
+    +'<span>'+(_noticePage+1)+' / '+NOTICE_QUEUE.length+'</span>'
+    +'<button class="npg" onclick="noticeGo(1)"'+(_noticePage>=NOTICE_QUEUE.length-1?' disabled':'')+'>›</button>'
+    +'</div>';
+  if(close) close.insertAdjacentHTML('beforebegin',html);
+  else head.insertAdjacentHTML('beforeend',html);
+}
+function noticeGo(d){
+  if(!_noticeOpen) return;
+  const n=_noticePage+d;
+  if(n<0 || n>=NOTICE_QUEUE.length) return;
+  _noticePage=n;
+  renderNotice();
+  try{ sfx.tap&&sfx.tap(); }catch(e){}
+}
+/* 只把某页移出队列，不立即重绘（交互流程要接管弹窗时用） */
+function noticeDrop(key){
+  const i=NOTICE_QUEUE.findIndex(function(x){ return x.key===key; });
+  if(i<0) return false;
+  NOTICE_QUEUE.splice(i,1);
+  if(_noticePage>=i && _noticePage>0) _noticePage--;
+  _noticePage=clamp(_noticePage,0,Math.max(0,NOTICE_QUEUE.length-1));
+  return true;
+}
+/* 某页的事做完了：移除该页，还有别的页就翻过去，没有就关掉。
+   保留 _afterClose，避免「旅行归来→进入室内」这类收尾动作被丢掉。 */
+function noticeRemove(key){
+  const ac=_afterClose;
+  if(!noticeDrop(key)) return false;
+  if(!NOTICE_QUEUE.length){ _noticeOpen=false; _afterClose=ac; closeModal(); return true; }
+  if(_noticeOpen){ renderNotice(); _afterClose=ac; }
+  return true;
+}
 let _afterClose=null;
 let dexPage=1; // 图鉴页码：1=第一图鉴 2=第二图鉴 3=画廊（CG 收藏）
 let tvBookPage='letter'; // 旅行图鉴页：letter=信件页 special=特产页
@@ -8133,7 +8249,7 @@ function openDexEvent(){
   }
   const extra=tomato>0?`<div style="font-size:12px;color:#e08a3c;font-weight:800;margin:-4px 0 6px">${$tf('+ 附赠 {n} 个 🍅 番茄（第二图鉴已开启）',{n:tomato})}</div>`:'';
   const skim=dexSkim(t)?`<div style="font-size:11px;color:#9aa0a6;margin:-2px 0 8px">${$t('啊哦，月巴好像藏了一些番茄，不愿意给你')}</div>`:'';
-  openModal($t('🍅 天降事件'), `
+  openNotice('dex', $t('🍅 天降事件'), `
     <div style="text-align:center">
       <div style="font-size:52px;line-height:1.1">💫</div>
       <div style="margin:8px 0;width:96px;height:96px;margin-left:auto;margin-right:auto">${fatSVG(t)}</div>
@@ -8142,7 +8258,7 @@ function openDexEvent(){
       ${extra}
       ${skim}
       <button class="btn gold" onclick="claimDexEvent()">${$t('收下')} · +${fmt(reward)} 🪙${tomato>0?' +'+tomato+' 🍅':''}</button>
-    </div>`, ()=>openDexEvent());
+    </div>`, 60);
 }
 function claimDexEvent(){
   if(!_dexEv) return;
@@ -8422,6 +8538,79 @@ function pomoStart(name,dur){
   toast($tf('🍅 番茄开始：「{n}」专注中，月巴生长 x2',{n:pomoName()}));
   renderPomoModal(); updatePomoUI();
 }
+/* ---------------- 成熟月巴提醒（引导开启番茄钟） ---------------- */
+let _ripeTipCheckAt=0;
+const _pageOpenAt=now();
+function pomoTipState(){
+  if(!S.pomoTip || typeof S.pomoTip!=='object') S.pomoTip={until:0, day:''};
+  if(!S.pomoTip.until) S.pomoTip.until=0;
+  if(!S.pomoTip.day) S.pomoTip.day='';
+  return S.pomoTip;
+}
+/* 统计场上已经成熟、但还没收掉的月巴数量 */
+function ripeCellCount(){
+  if(!S || !S.zones) return 0;
+  let n=0;
+  for(let z=0;z<S.zones.length;z++){
+    const woods=(S.zones[z] && S.zones[z].woods) || [];
+    for(let w=0;w<woods.length;w++){
+      const cells=woods[w].cells || [];
+      for(let i=0;i<cells.length;i++){
+        const c=cells[i];
+        if(c && cellReady(c)) n++;
+      }
+    }
+  }
+  return n;
+}
+function ripePomoTipTick(){
+  const t=now();
+  if(t-_ripeTipCheckAt<60000) return;          // 每 1 分钟检查一次
+  _ripeTipCheckAt=t;
+  if(document.hidden) return;
+  if(pomoBusy()) return;                       // 正在专注/休息/暂停中，不打扰
+  if($('overlay').classList.contains('show') && !_noticeOpen) return;   // 其他弹窗开着先不抢，通知页已打开时可加入队列
+  if(document.body.classList.contains('gb-rolling') || document.body.classList.contains('ts-playing')) return;
+  if(t-_pageOpenAt<8000) return;               // 刚打开页面先不打扰
+  if(ripeCellCount()<=0) return;
+  const tip=pomoTipState();
+  if(tip.day===dayKey(t)) return;              // 今日不再提醒
+  if(tip.until && t<tip.until) return;         // 30 分钟静默期
+  showRipePomoTip();
+}
+function showRipePomoTip(){
+  _ripeTipOpen=true;
+  openNotice('ripe', '🍅 成熟的月巴还没收', function(){
+    const n=ripeCellCount();
+    return `<div class="ripe-tip">
+      <p>${esc($tf('场上有 {n} 只月巴已经成熟，还没有收掉。',{n:n}))}</p>
+      <p>${$t('开启番茄钟后：生长速度 ×2，成熟的月巴会自动收集。')}</p>
+      <div class="ripe-tip-actions">
+        <button class="btn gold" onclick="ripeTipStartPomo()">🍅 ${$t('开启番茄钟')}</button>
+        <button class="btn" onclick="ripeTipLater()">${$t('稍后再说（30 分钟）')}</button>
+        <button class="btn" onclick="ripeTipToday()">${$t('今日不再提醒')}</button>
+      </div>
+    </div>`;
+  }, 100);
+}
+function ripeTipStartPomo(){
+  _ripeTipOpen=false;   // 先清标记，避免 closeModal 又写入 30 分钟静默
+  closeModal();
+  sfx.click();
+  pomoStart(pomoName(), S.pomo.focusTotal || 25*60000);
+}
+function ripeTipLater(){
+  _ripeTipOpen=false;
+  pomoTipState().until=now()+30*60000;
+  save(); closeModal();
+  toast($t('30 分钟内不再提醒'));
+}
+function ripeTipToday(){
+  _ripeTipOpen=false;
+  pomoTipState().day=dayKey(now());
+  save(); closeModal();
+  toast($t('今天不再提醒'));
+}
 function pomoPause(byBlur){
   if(!S.pomo.running)return;
   S.pomo.remain=Math.max(0,S.pomo.end-now());
@@ -8523,11 +8712,11 @@ function pomoRoundSummary(){
     const t=TYPES.find(x=>x.id===id); if(!t)continue;
     rows+=`<div class="rsum-row"><span class="dot" style="background:${t.color}"></span>${esc(t.name)} <b>x${byId[id]}</b></div>`;
   }
-  openModal($tf('🍅 「{n}」本轮收获',{n:esc(pomoName())}), `
+  openNotice('pomoRound', $tf('🍅 「{n}」本轮收获',{n:esc(pomoName())}), `
     <div class="rsum">${rows}
       <div class="rsum-total">共 ${n} 个月巴 · 收获 +${fmt(total)}🪙</div>
       <button class="btn" style="width:100%" onclick="closeModal();openPomo()">👍 好的</button>
-    </div>`);
+    </div>`, 80);
 }
 function pomoBreakPreset(min){
   S.pomo.breakMin=min;
@@ -9888,7 +10077,7 @@ function pomoReport(period){
   for(const r of cur){ const k=r.n||$t('未命名'); agg[k]=(agg[k]||0)+r.d; }
   const top=Object.keys(agg).sort((a,b)=>agg[b]-agg[a]).slice(0,5)
     .map(k=>`<div class="rep-row"><b>${esc(k)}</b><em>${fmtDur(agg[k])}</em></div>`).join('');
-  openModal(isWeek?$t('📄 本周专注周报'):$t('📄 本月专注月报'),
+  openNotice('pomoReport', isWeek?$t('📄 本周专注周报'):$t('📄 本月专注月报'),
     `<div class="ck-summary">
       <div class="ck-card"><b>${fmtDur(curDur)}</b><small>专注时长</small></div>
       <div class="ck-card"><b>${cur.length}次</b><small>打卡次数</small></div>
@@ -9900,7 +10089,7 @@ function pomoReport(period){
     ${top||$t('<div class="empty">本期还没有打卡记录</div>')}
     <div class="pomo-controls">
       <button class="btn" onclick="openStats()">返回统计</button>
-    </div>`);
+    </div>`, 40);
 }
 /* 每周日晚 / 每月最后一天晚 20 点后：自动生成一次报告 */
 function pomoReportCheck(){
@@ -10608,7 +10797,7 @@ function tvStealOpen(id){
   _tvStealWho=id;              // 标记这只月巴，让庭院里它也显示为黑色剪影
   tvStealSyncYard();
   sfx.stealAlert();
-  openModal($t('🍅 有月巴鬼鬼祟祟'),
+  openNotice('tvTheft', $t('🍅 有月巴鬼鬼祟祟'),
     '<div class="tv-steal">'
     +'<div class="tv-steal-stage"><div class="tv-steal-fat">'+fatSVG(tp)+'</div><div class="tv-steal-tom">🍅</div></div>'
     +'<p class="tv-steal-msg">'+escHTML(tp.name)+$t('正在偷你的番茄……</p>')
@@ -10616,12 +10805,14 @@ function tvStealOpen(id){
     +'<div class="tv-steal-btns">'
     +$t('<button class="btn cta" onclick="tvStealAccept()">🚨 捉拿它</button>')
     +$t('<button class="btn" onclick="tvStealDecline()">😴 放过它</button>')
-    +'</div></div>');
+    +'</div></div>', 90);
 }
-function tvStealDecline(){ _tvStealWho=null; tvStealSyncYard(); try{ sfx.click&&sfx.click(); }catch(e){} closeModal(); toast($t('你放过了它，番茄总算保住了。')); }
+function tvStealDecline(){ _tvStealWho=null; tvStealSyncYard(); try{ sfx.click&&sfx.click(); }catch(e){} if(!noticeRemove('tvTheft')) closeModal(); toast($t('你放过了它，番茄总算保住了。')); }
 function tvStealAccept(){
   _tvStealWho=null; tvStealSyncYard();
   try{ sfx.click&&sfx.click(); }catch(e){}
+  noticeDrop('tvTheft');        // 只移出通知队列，剩余通知等小游戏结束后再显示
+  _noticeOpen=false;
   openModal($t('🎯 捉拿月巴！'), tvStealGameHTML());
   tsStart();
 }
@@ -11452,7 +11643,7 @@ function tvJournalHTML(){
   return h;
 }
 function tvOpenJournal(){ openModal('📔 旅行笔记', tvJournalHTML(), ()=>tvOpenJournal()); }
-function tvSettle(){ const t=tvFresh(); const kinds=tvDestKinds(t.bag); const d=tvDestOf(t.bag); const _jDepart=t.frog.depart,_jMood=t.frog.mood,_jFat=t.frog.fatId,_jCards=(t.frog.cardsGot||[]).slice(); const cc=t.bag.filter(function(x){return x&&x.k==='charm';}).length; let gain=1+cc; const got=[],dups=[]; const spool=d.specials.slice(); /* 从池中抽走已选中的，保证同一趟带回的特产两两不重复（与已拥有的重复仍照常兑换番茄） */ for(let i=0;i<gain&&spool.length;i++){ const s=spool.splice((Math.random()*spool.length)|0,1)[0]; if(t.specials.indexOf(s)<0){ t.specials.push(s); got.push(s); } else { dups.push(s); } } t.destCount[d.id]=(t.destCount[d.id]||0)+1; if(cc>0){ t.bag.forEach(function(x){ if(x&&x.k==='charm'){ const cur=Math.max(0,tvCharmDura(x)-1); if(cur>0){ t.wh.charm=(t.wh.charm||0)+1; t.charmDuras.push(cur); } } }); } t.frog={status:'home',depart:null,ret:null,mood:t.frog.mood||'',moodKey:t.frog.moodKey||'',fatId:t.frog.fatId||null}; if(t.frog.fatId){ t.lastHomeFatId=t.frog.fatId; t.homeId=t.frog.fatId; t.homeIdx=(Math.random()*3)|0; t.homeTxt=tvHomeDescs(t.frog.fatId)[t.homeIdx]; t.homeReward={n:5+(Math.random()*16|0)}; t.homeRewardReady=true; } t.bag=t.bag.filter(function(x){return x&&x.k==='pass';}); /* 小号护身符永久保留，不清空 */ t.eventT=0; save(); const dr=d.dupTomato||[10,10]; const dv=Math.round(rand(dr[0],dr[1])); if(dups.length)tvTomato(dv*dups.length); tvJournalPush({t:now(),depart:_jDepart,mood:_jMood||'',fatId:_jFat,dest:d.id,destN:d.n,rg:(tvRegionOf(d.id)||{}).n||'',visit:t.destCount[d.id],got:got.slice(),dups:dups.slice(),tomato:(dups.length?dv*dups.length:0),cards:_jCards}); let toastMsg=''; const fgot=got.map(function(s){return spEmo(s)+$sp(s);}); const fdups=dups.map(function(s){return spEmo(s)+$sp(s);}); if(got.length)toastMsg+=$tf('🌿 从「{a}」带回新特产：{b}！',{a:d.n,b:fgot.join('、')}); if(dups.length)toastMsg+=' '+$tf('♻️ 重复 {a} 兑换 {n} 🍅！',{a:fdups.join('、'),n:dv*dups.length}); if(toastMsg)toast(toastMsg); let h='<p style="text-align:center;color:var(--text)">'+$tf('月巴从<b>「{a}」</b>回来了！（第 {n} 次旅行）',{a:d.n,n:t.destCount[d.id]})+'</p>'; const all=fgot.concat(fdups); h+='<p style="text-align:center;font-weight:800;color:#e08a3c">'+$t('🎁 带回特产：')+(all.length?($tf('从「{a}」带回 {b}',{a:d.n,b:all.join('、')})+(dups.length?$tf(' · 已兑换 {n} 🍅',{n:dv*dups.length}):'')):$t('这次带回了温暖的问候'))+'</p>'; h+='<p style="text-align:center"><button class="btn cta" onclick="closeModal()">'+$t('收下')+'</button></p>'; if(got.length)sfx.homeGain(); else if(dups.length)sfx.homeDup(); else sfx.homeEmpty(); openModal('🎉 旅行归来',h); tvRenderScene(); tvUpdateBar(); if(tvView==='home')_afterClose=function(){ tvEnterHome(); }; }
+function tvSettle(){ const t=tvFresh(); const kinds=tvDestKinds(t.bag); const d=tvDestOf(t.bag); const _jDepart=t.frog.depart,_jMood=t.frog.mood,_jFat=t.frog.fatId,_jCards=(t.frog.cardsGot||[]).slice(); const cc=t.bag.filter(function(x){return x&&x.k==='charm';}).length; let gain=1+cc; const got=[],dups=[]; const spool=d.specials.slice(); /* 从池中抽走已选中的，保证同一趟带回的特产两两不重复（与已拥有的重复仍照常兑换番茄） */ for(let i=0;i<gain&&spool.length;i++){ const s=spool.splice((Math.random()*spool.length)|0,1)[0]; if(t.specials.indexOf(s)<0){ t.specials.push(s); got.push(s); } else { dups.push(s); } } t.destCount[d.id]=(t.destCount[d.id]||0)+1; if(cc>0){ t.bag.forEach(function(x){ if(x&&x.k==='charm'){ const cur=Math.max(0,tvCharmDura(x)-1); if(cur>0){ t.wh.charm=(t.wh.charm||0)+1; t.charmDuras.push(cur); } } }); } t.frog={status:'home',depart:null,ret:null,mood:t.frog.mood||'',moodKey:t.frog.moodKey||'',fatId:t.frog.fatId||null}; if(t.frog.fatId){ t.lastHomeFatId=t.frog.fatId; t.homeId=t.frog.fatId; t.homeIdx=(Math.random()*3)|0; t.homeTxt=tvHomeDescs(t.frog.fatId)[t.homeIdx]; t.homeReward={n:5+(Math.random()*16|0)}; t.homeRewardReady=true; } t.bag=t.bag.filter(function(x){return x&&x.k==='pass';}); /* 小号护身符永久保留，不清空 */ t.eventT=0; save(); const dr=d.dupTomato||[10,10]; const dv=Math.round(rand(dr[0],dr[1])); if(dups.length)tvTomato(dv*dups.length); tvJournalPush({t:now(),depart:_jDepart,mood:_jMood||'',fatId:_jFat,dest:d.id,destN:d.n,rg:(tvRegionOf(d.id)||{}).n||'',visit:t.destCount[d.id],got:got.slice(),dups:dups.slice(),tomato:(dups.length?dv*dups.length:0),cards:_jCards}); let toastMsg=''; const fgot=got.map(function(s){return spEmo(s)+$sp(s);}); const fdups=dups.map(function(s){return spEmo(s)+$sp(s);}); if(got.length)toastMsg+=$tf('🌿 从「{a}」带回新特产：{b}！',{a:d.n,b:fgot.join('、')}); if(dups.length)toastMsg+=' '+$tf('♻️ 重复 {a} 兑换 {n} 🍅！',{a:fdups.join('、'),n:dv*dups.length}); if(toastMsg)toast(toastMsg); let h='<p style="text-align:center;color:var(--text)">'+$tf('月巴从<b>「{a}」</b>回来了！（第 {n} 次旅行）',{a:d.n,n:t.destCount[d.id]})+'</p>'; const all=fgot.concat(fdups); h+='<p style="text-align:center;font-weight:800;color:#e08a3c">'+$t('🎁 带回特产：')+(all.length?($tf('从「{a}」带回 {b}',{a:d.n,b:all.join('、')})+(dups.length?$tf(' · 已兑换 {n} 🍅',{n:dv*dups.length}):'')):$t('这次带回了温暖的问候'))+'</p>'; h+='<p style="text-align:center"><button class="btn cta" onclick="noticeRemove(\'tvReturn\')">'+$t('收下')+'</button></p>'; if(got.length)sfx.homeGain(); else if(dups.length)sfx.homeDup(); else sfx.homeEmpty(); openNotice('tvReturn','🎉 旅行归来',h,70); tvRenderScene(); tvUpdateBar(); if(tvView==='home')_afterClose=function(){ tvEnterHome(); }; }
 let _tvPages=[], _tvPageIdx=0, _tvPageTitle=''; /* 进入室内时的翻页弹窗：第 1 页「安慰」、后一页「月巴赠送的番茄」 */
 function tvEnterHome(){ const t=tvFresh(); let changed=false;
   /* 重复累计条只在「打开室内」时结算，旅行途中不更新，避免信件未拆就提前亮起剧透 */
@@ -11463,10 +11654,11 @@ function tvEnterHome(){ const t=tvFresh(); let changed=false;
   if(t.homeRewardReady&&t.homeReward&&t.homeReward.n>0){ const n=t.homeReward.n; const nm=t.homeId&&typeById(t.homeId)?typeById(t.homeId).name:$t('月巴'); t.homeRewardReady=false; t.homeReward=null; t.tomato=(t.tomato||0)+n; changed=true; hasReward=true; pages.push('<p style="text-align:center;font-size:40px;margin:6px 0">🐰</p><p style="text-align:center">'+$tf('{a} 回家啦！它把旅途中攒下的 <b>{b}</b> 个 🍅 送给了你',{a:escHTML(nm),b:n})+'</p>'); }
   if(changed)save();
   tvUpdateBar(); updateTravelIcon(); tvUpdateHarvest(); tvRenderScene();
-  if(pages.length){ _tvPages=pages; _tvPageIdx=0; _tvPageTitle=hasReward?$t('🎉 旅行归来'):$t('💌 番茄的安慰'); if(hasReward)sfx.homeGain(); else sfx.cardDup(); openModal(_tvPageTitle, tvPageHTML()); }
+  if(pages.length){ _tvPages=pages; _tvPageIdx=0; _tvPageTitle=hasReward?$t('🎉 旅行归来'):$t('💌 番茄的安慰'); if(hasReward)sfx.homeGain(); else sfx.cardDup(); openNotice('tvHome', _tvPageTitle, tvPageHTML, 65); }
   else tvPityRefresh(); }
-function tvPageHTML(){ const total=_tvPages.length; let h=_tvPages[_tvPageIdx]; if(total>1)h+='<p style="text-align:center;font-size:12px;color:var(--dim);margin:6px 0 0">'+$tf('第 {a} / {b} 页',{a:_tvPageIdx+1,b:total})+'</p>'; h+='<p style="text-align:center;margin-top:8px">'; if(_tvPageIdx>0)h+='<button class="btn" onclick="tvPageGo(-1)">'+$t('‹ 上一页')+'</button> '; if(_tvPageIdx<total-1)h+='<button class="btn cta" onclick="tvPageGo(1)">'+$t('下一页 ›')+'</button>'; else h+='<button class="btn cta" onclick="closeModal()">'+$t('收下')+'</button>'; h+='</p>'; return h; }
-function tvPageGo(d){ _tvPageIdx=Math.max(0,Math.min(_tvPages.length-1,_tvPageIdx+d)); openModal(_tvPageTitle, tvPageHTML()); }
+function tvPageHTML(){ const total=_tvPages.length; let h=_tvPages[_tvPageIdx]; if(total>1)h+='<p style="text-align:center;font-size:12px;color:var(--dim);margin:6px 0 0">'+$tf('第 {a} / {b} 页',{a:_tvPageIdx+1,b:total})+'</p>'; h+='<p style="text-align:center;margin-top:8px">'; if(_tvPageIdx>0)h+='<button class="btn" onclick="tvPageGo(-1)">'+$t('‹ 上一页')+'</button> '; if(_tvPageIdx<total-1)h+='<button class="btn cta" onclick="tvPageGo(1)">'+$t('下一页 ›')+'</button>'; else h+='<button class="btn cta" onclick="tvHomeDone()">'+$t('收下')+'</button>'; h+='</p>'; return h; }
+function tvHomeDone(){ if(!noticeRemove('tvHome')) closeModal(); }
+function tvPageGo(d){ _tvPageIdx=Math.max(0,Math.min(_tvPages.length-1,_tvPageIdx+d)); if(_noticeOpen && NOTICE_QUEUE[_noticePage] && NOTICE_QUEUE[_noticePage].key==='tvHome') renderNotice(); else openModal(_tvPageTitle, tvPageHTML()); }
 function tvShop(){ openModal('🛍 商店 · 用 🍅 购买', tvShopHTML(), ()=>tvShop()); }
 function tvShopHTML(){ const t=tvFresh(); let h='<p style="color:var(--text);font-size:13px">'+$t('🍅 番茄余额：')+'<b class="tv-tom">'+t.tomato+'</b></p><div class="sh-grid">'; const list=[['food1','🍙','饭团便当',50,'大概率前往森林，小概率去小镇/大海/雪地'],['food2','🍱','时蔬便当',150,'大概率前往小镇，小概率去森林/大海/雪地'],['food4','🐟','海味便当',250,'大概率前往大海，小概率去森林/小镇/雪地'],['food3','🥡','豪华便当',400,'大概率前往雪地，小概率去森林/小镇/大海'],['bell','🔔','铃铛',200,'一次性·需配便当，前往「小镇」地区的任一地图'],['lamp','🏮','油灯',300,'一次性·需配便当，必定前往「大海」地区的任一地图'],['charm','🍀','幸运护身符',500,'特产+1/件（耐久3）·配豪华便当前往雪地'],['compass','🧭','指南针',200,'一次性·仅配豪华便当+护身符去雪地时可用，指定去雪山/遗迹/冰湖/失落王庭'],['pass','🎫','小号护身符',200,'永久只买一次·需装进行囊才生效·每周（周一0点刷新）可指定前往任意地图一次·不改变去哪个地区，只调整同一地区内「图一~图四」的抽取概率（更偏向靠后的地图）']]; const charmNote=TV_DESTS.filter(function(x){return x.need==='charm';}).map(function(x){return '<div class="sh-dest"><b>'+x.n+'</b>：'+(x.desc||'')+'</div>'; }).join(''); for(const r of list){ const isPass=(r[0]==='pass'); const owned=isPass&&t.permPass; const stock=t.wh[r[0]]||0; h+='<div class="sh-card"><div class="sh-ic">'+r[1]+'</div><div class="sh-n">'+(TV_FOODS[r[0]]||TV_ITEMS[r[0]]).n+'</div><div class="sh-d">'+$tn(I18N_BANNY,(r[0].indexOf('food')===0?'food_':'tvi_')+r[0]+'_desc','d',r[4])+'</div>'+(r[0]==='charm'?charmNote:'')+(isPass&&owned?'<div class="sh-dest">'+$t('✅ 已拥有（永久有效）')+'</div>':'')+'<div class="sh-stock">'+$tf('库存 ×{n}',{n:stock})+'</div><div class="sh-price">🍅 '+r[3]+'</div>'+(owned?'<button class="btn" disabled>'+$t('已拥有')+'</button>':'<button class="btn" onclick="tvBuy(\''+r[0]+'\')">'+$t('购买')+'</button>')+'</div>'; } h+='</div><p style="text-align:center"><button class="btn" onclick="closeModal()">'+$t('返回')+'</button></p>'; return h; }
 function tvBuy(k){ const t=tvFresh(); const it=TV_FOODS[k]||TV_ITEMS[k]; if(!it)return; if(k==='pass'&&t.permPass){ toast($t('🎫 小号护身符只需购买一次')); return; } if(t.tomato<it.p){ toast($t('🍅 番茄不够')); return; } t.tomato-=it.p; if(k==='pass'){ t.permPass=true; t.permPick=null; t.permWeek=''; t.wh.pass=(t.wh.pass||0)+1; tvTomato(0); save(); openModal($t('🎫 小号护身符'),$t('<p style="text-align:center">已拥有 <b>小号护身符</b>，永久有效！</p><p style="text-align:center;font-size:12px;color:var(--dim)">把它<b>装进行囊</b>后生效：每周（周一 0 点刷新）可指定前往任意一张地图一次；随身带着，也会调整同一地区内「图一~图四」的抽取概率（更偏向靠后的地图），但不会改变去哪个地区。</p><p style="text-align:center"><button class="btn cta" onclick="tvShop()">')+$t('继续购物')+'</button></p>'); return; } t.wh[k]=(t.wh[k]||0)+1; if(k==='charm') t.charmDuras.push(TV_ITEMS.charm.durab); save(); tvTomato(0); openModal($t('🛍 商店 · 用 🍅 购买'), tvShopHTML(), ()=>tvShop()); }
@@ -11586,6 +11778,7 @@ function tick(){
   pomoReportCheck();
   weatherTick();
   pomoTick();
+  ripePomoTipTick();
   for(let z=0;z<S.zones.length;z++){
     for(let w=0;w<S.zones[z].woods.length;w++){
       for(let i=0;i<S.zones[z].woods[w].cells.length;i++){
@@ -11844,6 +12037,22 @@ function flyExit(){
   document.body.classList.remove('fg-lock');
   fgLayer(null);
   fgClearPipes();
+}
+/* ================= 番茄幸存者（独立页入口） =================
+   游戏本体在 survivor.html，index 只保留入口与存档/成就字段。
+   SV_PUBLIC=false：调试期只有 #debugall 能看到入口；上线时改为 true。 */
+const SV_PUBLIC=false;
+function svVisible(){ return SV_PUBLIC || DR_DEBUG; }
+function updateSurvivorIcon(){
+  const el=$('btnSurvivor'); if(!el)return;
+  el.style.display=svVisible()?'':'none';
+  el.title=$t('番茄幸存者');
+}
+function survivorEntry(){
+  if(!svVisible())return;
+  sfx.click();
+  try{ save(); }catch(e){}   // 先落盘，避免游戏读到旧存档
+  location.href='survivor.html'+(DR_DEBUG?'#debugall':'');
 }
 function fgLayer(id){
   ['fgPick','fgLv','fgCount','fgOver'].forEach(k=>{ const e=$(k); if(e) e.classList.toggle('show',k===id); });
@@ -12389,6 +12598,11 @@ const ACHS=[
   {id:'p7',  ic:'🧘', n:'专注 200 小时',d:'累计专注时长达到 200 小时',       c:()=>achPomoMs()>=200*3600000,           p:()=>[Math.floor(achPomoMs()/3600000),200]},
   {id:'g2',  ic:'💰', n:'百万富翁',    d:'累计赚取 100,000,000 金币',     c:()=>(S.totalCoins||0)>=1e8,             p:()=>[S.totalCoins||0,1e8]},
   {id:'d7',  ic:'🎓', n:'图鉴全收集',  d:'两页图鉴合计解锁 150 种月巴',      c:()=>achDexTotal()>=150,                 p:()=>[achDexTotal(),150]},
+  /* —— 番茄幸存者 —— */
+  {id:'sv1', ic:'🍅⚔️', n:'番茄幸存者', d:'在「番茄幸存者」中首次获胜',        c:()=>((S.survivor&&S.survivor.clears)||0)>=1, p:()=>[((S.survivor&&S.survivor.clears)||0),1]},
+  {id:'sv2', ic:'👑', n:'百日守卫',    d:'累计在「番茄幸存者」中获胜 3 次',    c:()=>((S.survivor&&S.survivor.clears)||0)>=3, p:()=>[((S.survivor&&S.survivor.clears)||0),3]},
+  {id:'sv3', ic:'🌫️', n:'跨越三关',    d:'在「番茄幸存者」中通关 3 个关卡',    c:()=>((S.survivor&&S.survivor.stageClear)||0)>=3, p:()=>[Math.min(3,((S.survivor&&S.survivor.stageClear)||0)),3]},
+  {id:'sv4', ic:'🏡', n:'归家之路',    d:'通关「番茄幸存者」全部 6 个关卡',    c:()=>((S.survivor&&S.survivor.stageClear)||0)>=6, p:()=>[Math.min(6,((S.survivor&&S.survivor.stageClear)||0)),6]},
 ];
 let _achT=0;
 function achGot(){ return Object.keys((S.ach&&S.ach.got)||{}).length; }
@@ -12460,11 +12674,12 @@ function init(){
   applySkin(S.skins.active);
   renderOverview(); updateHeader(); updateStatus(); updatePomoUI(); updateSceneBar(); updateWeatherHold();
   applyI18n();   // 静态文案/顶栏语言按钮按当前语言刷新（P0 无译文时显示中文原文）
-  updateTravelIcon(); updateFlyIcon(); updateCodeIcon(); updateCodeIcon2();
+  updateTravelIcon(); updateFlyIcon(); updateCodeIcon(); updateCodeIcon2(); updateSurvivorIcon();
   checkAch(true); updateAchBtn();   // 读档后静默结算一次已满足的成就（只登记、不弹提示）
   // 调试后门：任意网址加 #debugall 均可解锁全图鉴（与旧版行为一致）
   if(typeof location!=='undefined' && location.hash && location.hash.indexOf('#debugall')>=0){
     DR_DEBUG=true; setTimeout(debugUnlockAll,300);
+    updateSurvivorIcon();   // DR_DEBUG 在 init 后段才置位，这里补一次入口刷新
     // 调试模式：金币与旅行番茄数量始终为无限
     setInterval(function(){
       S.coins=999999999;
