@@ -3626,7 +3626,7 @@ const TYPES=[
   {id:'mb_long',    name:'long～long～巴～', r:3, v:48, t:480, cond:null, color:'#f0a868', shape:'wide'},
   {id:'bairi', name:'百日月巴',  r:6, v:3000, t:3600, cond:{t:'dexfirst', n:99}, weight:0.1, color:'#ffd54f', shape:'big'},
 ];
-/* 第二图鉴：第一图鉴集齐 DEX1_MIN（=TYPES.length-DEX1_MIN_REMAIN，当前 90）个月巴后开启（掉落池合并）。字段格式与 TYPES 一致，
+/* 第二图鉴：第一图鉴集齐 DEX1_MIN（=85）个月巴后开启（掉落池合并）。字段格式与 TYPES 一致，
    后续扩充时直接追加即可；第二图鉴月巴与第一图鉴生长速度一致（见 growDur）。 */
 const TYPES2=[
   {id:'m2_dou',    name:'豆月巴',  r:1, v:8,  t:80,  cond:null, color:'#aed581', shape:'round'},
@@ -7321,8 +7321,8 @@ function lockedSVG(){
 function hScale(h){ return clamp(0.7+(h-2)/38,0.7,1.7); }
 
 /* ---------------- 图鉴数据（含极值） ---------------- */
-/* 第二图鉴：第一图鉴集齐 DEX1_MIN（=TYPES.length-DEX1_MIN_REMAIN，当前 90）个月巴即开启（剩下 10 个月巴可未集齐），其月巴并入掉落池；id 前缀 m2_ 由 TYPES2 提供 */
-const DEX1_MIN_REMAIN=10, DEX1_MIN=TYPES.length-DEX1_MIN_REMAIN;
+/* 第二图鉴：第一图鉴集齐 DEX1_MIN（=85）个月巴即开启（其余可未集齐），其月巴并入掉落池；id 前缀 m2_ 由 TYPES2 提供 */
+const DEX1_MIN=85;
 function dex2Unlocked(){ return Object.keys(S.collection).length>=DEX1_MIN; }
 function isDex2(id){ return TYPES2.some(t=>t.id===id); }
 function typeById(id){ return TYPES.find(x=>x.id===id)||TYPES2.find(x=>x.id===id); }
