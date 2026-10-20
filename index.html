@@ -94,6 +94,13 @@
   .iconbtn:hover{transform:translateY(-1px);border-color:var(--purple);}
   .iconbtn:active{transform:scale(.92);}
   .iconbtn.codebtn{background:linear-gradient(180deg,#fff6d8,#ffe49b);border-color:#e6c04a;animation:codeglow 1.6s ease-in-out infinite;}
+  /* 顶栏投稿入口：金色描边（雪落王庭皮肤按该皮肤规则避开金色，改为银白） */
+  .iconbtn.goldsbtn{border:1.6px solid #e6c04a;background:linear-gradient(180deg,#fffaf0,#ffeec2);
+    box-shadow:0 0 0 1px rgba(230,192,74,.35),0 4px 12px rgba(230,192,74,.28);}
+  .iconbtn.goldsbtn:hover{border-color:#d9a92c;box-shadow:0 0 0 1px rgba(230,192,74,.5),0 6px 16px rgba(230,192,74,.36);}
+  html[data-skin="court"] .iconbtn.goldsbtn{border-color:#cfd6e2;background:linear-gradient(180deg,#1a1e2c,#121520);
+    box-shadow:0 0 0 1px rgba(184,192,204,.35),0 4px 12px rgba(0,0,0,.6);}
+  html[data-skin="court"] .iconbtn.goldsbtn:hover{border-color:#e4e8f0;box-shadow:0 0 0 1px rgba(228,232,240,.5),0 6px 16px rgba(0,0,0,.7);}
   @keyframes codeglow{0%,100%{box-shadow:0 0 0 0 rgba(242,201,76,.65);}50%{box-shadow:0 0 0 5px rgba(242,201,76,0);}}
 
   /* ---------- 状态条 ---------- */
@@ -251,6 +258,32 @@
   .btab{flex:1;padding:7px 0;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.6);color:var(--dim);font-weight:800;font-size:12px;cursor:pointer;}
   .btab.on{background:var(--purple2);color:#fff;border-color:var(--purple2);}
   .btab.lock{opacity:.55;cursor:not-allowed;}
+  /* ---------- 投稿页：还没有立绘的月巴 ---------- */
+  /* 顶部外链/搜索条吸顶：用透明背景 + 模糊，不写死底色，深浅皮肤都不会出现突兀色块 */
+  .subtop{position:sticky;top:-14px;z-index:3;margin:-14px 0 8px;padding:14px 0 0;
+    background:transparent;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+  .sub-form{display:flex;align-items:center;gap:10px;text-decoration:none;padding:10px 12px;border-radius:14px;
+    background:linear-gradient(135deg,var(--purple2),var(--accent));color:#fff;box-shadow:0 6px 18px rgba(90,70,150,.22);transition:transform .15s;}
+  .sub-form:hover{transform:translateY(-1px);}
+  .sub-form .si{font-size:20px;line-height:1;}
+  .sub-form .st{flex:1;min-width:0;text-align:left;}
+  .sub-form .st b{display:block;font-size:13px;font-weight:900;}
+  .sub-form .st small{display:block;font-size:10px;opacity:.85;margin-top:1px;}
+  .sub-form .sa{font-size:16px;font-weight:900;opacity:.9;}
+  .subsearch{margin-top:0;width:100%;box-sizing:border-box;padding:9px 12px;border-radius:12px;
+    border:1px solid var(--line);background:var(--panel2);color:var(--text);font-size:13px;outline:none;}
+  .subsearch:focus{border-color:var(--purple2);}
+  .subcount{font-size:11px;color:var(--dim);margin:7px 2px 0;}
+  .subbook{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));}
+  .scard .sintro{font-size:10px;line-height:1.45;color:var(--dim);margin-top:4px;text-align:left;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+  .sub-need{color:#e08a3c;font-weight:800;}
+  /* 投稿说明：放在表单下方，走皮肤令牌，深色皮肤下同样可读 */
+  .sub-note{margin:0 0 10px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);
+    background:var(--panel2);color:var(--dim);font-size:11px;line-height:1.65;}
+  .sub-note .sn-t{display:block;color:var(--text);font-size:11.5px;font-weight:900;margin-bottom:3px;}
+  .sub-note ul{margin:0;padding-left:16px;}
+  .sub-note li{margin:2px 0;}
   /* ---------- 画廊（CG 收藏）：缩略图网格 + 解锁详情 ----------
      全部走皮肤令牌，21 套皮肤（5 基础 + 16 地图）自动适配，深色皮肤下文字保持可读 */
   .gal-empty{grid-column:1/-1;text-align:center;padding:26px 12px;color:var(--dim);font-size:13px;line-height:1.9;
@@ -507,10 +540,13 @@
   .sh-want{font-size:10px;font-weight:700;color:var(--purple2);letter-spacing:.3px;margin-bottom:3px;}
   .tv-tom{color:var(--danger);}
   .bcard{background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:14px;padding:8px;text-align:center;}
-  .bcard .pic{height:52px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .bcard .pic{position:relative;height:52px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
   .bcard .pic svg{width:42px!important;height:42px!important;}
   .ybimg{width:100%;height:100%;object-fit:contain;display:block;}
   .bcard .pic .ybimg{width:48px;height:48px;}
+  /* 多立绘角标：这张月巴有几张立绘可切换 */
+  .artn{position:absolute;right:2px;top:0;font-size:9px;font-weight:900;line-height:13px;padding:0 4px;
+    border-radius:7px;color:var(--dim);background:var(--panel);border:1px solid var(--line);pointer-events:none;}
   .bcard .nm{font-size:12px;font-weight:800;color:var(--purple2);margin-top:2px;}
   .bcard .cnt{font-size:11px;color:var(--dim);}
   .bcard .stats{font-size:10px;color:var(--dim);margin-top:4px;line-height:1.5;text-align:left;background:rgba(149,117,205,.08);border-radius:8px;padding:4px 6px;}
@@ -543,6 +579,10 @@
   .fd-pic .ybimg{width:96px;height:96px;object-fit:contain;}
   .fd-pic.epic{border-color:#b39ddb;}
   .fd-pic.legend{border-color:#9575cd;box-shadow:0 0 16px rgba(149,117,205,.45);}
+  /* 多立绘切换：详情里立绘下方的 ‹ 序号 › */
+  .fd-arts{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 4px;}
+  .fd-arts .iconbtn{width:26px;height:26px;padding:0;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;}
+  .fd-arts span{font-size:11px;font-weight:800;color:var(--dim);min-width:56px;text-align:center;}
   .fd-meta{display:flex;align-items:center;justify-content:center;gap:8px;margin:4px 0 8px;}
   .fd-author{font-size:11px;color:var(--dim);font-weight:700;margin:-2px 0 6px;}
   .fd-intro .fd-author{font-size:11px;color:var(--dim);text-align:right;margin:6px 0 0;}
@@ -3162,6 +3202,7 @@
     <button class="iconbtn" id="btnHelp" title="帮助" data-i18n-title="帮助">❓</button>
     <button class="iconbtn" id="btnMute" title="声音" data-i18n-title="声音">🔊</button>
     <button class="iconbtn" id="btnLow" title="低功耗模式" data-i18n-title="低功耗模式" onclick="toggleLowPower()">⚡</button>
+    <button class="iconbtn goldsbtn" id="btnSubmit" title="投稿" data-i18n-title="投稿" onclick="openSubmitPage()">🎨</button>
     <button class="iconbtn" id="btnLang" title="语言 / Language" data-i18n-title="语言 / Language" onclick="openLangModal()">🌐</button>
     <!-- 口令入口：目前无启用的口令，故不渲染按钮；机制与弹窗格式保留（openCode* / claimCode*），以后新增口令时在此加按钮即可 -->
   </div>
@@ -4349,6 +4390,7 @@ const I18N_UI={
   '帮助':{en:'Help',ja:'ヘルプ',ko:'도움말'},
   '声音':{en:'Sound',ja:'サウンド',ko:'소리'},
   '低功耗模式':{en:'Low-power mode',ja:'低電力モード',ko:'저전력 모드'},
+  '投稿':{en:'Submit art',ja:'投稿',ko:'투고'},
   '低功耗模式(开启中)':{en:'Low-power mode (on)',ja:'低電力モード（オン）',ko:'저전력 모드 (켜짐)'},
   '语言 / Language':{en:'Language',ja:'言語 / Language',ko:'언어 / Language'},
   '中秋口令':{en:'Mid-Autumn Code',ja:'中秋の合言葉',ko:'추석 코드'},
@@ -4765,6 +4807,22 @@ const I18N_UI={
   '🖼 画廊':{en:'🖼 Gallery',ja:'🖼 ギャラリー',ko:'🖼 갤러리'},
   '第一图鉴集齐 {n} 个月巴后开启':{en:'Unlocks after collecting {n} Bannies in Codex I',ja:'第一図鑑でバニーを{n}体集めると解放',ko:'도감 1에서 배니 {n}마리를 모으면 해금'},
   '收集旅途中的画面':{en:'Scenes collected on your trips',ja:'旅先で集めた情景',ko:'여행 중 모은 장면'},
+  '✏️ 投稿':{en:'✏️ Submit',ja:'✏️ 投稿',ko:'✏️ 투고'},
+  '给还没有立绘的月巴投稿':{en:'Submit artwork for Bannies without illustrations',ja:'まだ立ち絵のないバニーの投稿',ko:'아직 일러스트가 없는 배니 투고'},
+  '✏️ 投稿 · {n} 只月巴还缺立绘':{en:'✏️ Submit · {n} Bannies still need art',ja:'✏️ 投稿 · 立ち絵待ちのバニー {n} 体',ko:'✏️ 투고 · 일러스트가 필요한 배니 {n}마리'},
+  '打开投稿表单':{en:'Open submission form',ja:'投稿フォームを開く',ko:'투고 양식 열기'},
+  'Google 表单 · 上传 PNG 立绘':{en:'Google Form · upload a PNG illustration',ja:'Google フォーム · PNG 立ち絵をアップロード',ko:'Google 설문지 · PNG 일러스트 업로드'},
+  '搜索月巴名字或简介…':{en:'Search by name or description…',ja:'名前や紹介文で検索…',ko:'이름이나 소개로 검색…'},
+  '共 {n} 只还缺立绘':{en:'{n} Bannies still need art',ja:'立ち絵待ち {n} 体',ko:'일러스트가 필요한 배니 {n}마리'},
+  '找到 {n} 只':{en:'{n} found',ja:'{n} 体見つかりました',ko:'{n}마리 찾음'},
+  '没有找到匹配的月巴':{en:'No matching Bannies',ja:'該当するバニーが見つかりません',ko:'일치하는 배니가 없습니다'},
+  '缺立绘':{en:'No art yet',ja:'立ち絵なし',ko:'일러스트 없음'},
+  '为它投稿':{en:'Submit art for this one',ja:'この子に投稿する',ko:'이 배니에 투고하기'},
+  '切换立绘':{en:'Switch artwork',ja:'立ち絵を切り替え',ko:'일러스트 전환'},
+  '共 {n} 张立绘':{en:'{n} artworks',ja:'立ち絵 {n} 枚',ko:'일러스트 {n}장'},
+  '投稿说明':{en:'How submission works',ja:'投稿について',ko:'투고 안내'},
+  '同一只月巴被画了多次时，通过的作品都会保留，可以在图鉴里自由切换。':{en:'If the same Banny gets several approved artworks, all of them are kept — you can switch freely in the Codex.',ja:'同じバニーに複数の作品が届いた場合、採用された絵はすべて保存され、図鑑で自由に切り替えられます。',ko:'같은 배니에 여러 작품이 모이면 승인된 그림을 모두 보관하고, 도감에서 자유롭게 전환할 수 있어요.'},
+  '透明背景 PNG 优先（1024×1024，≤5MB）。JPG / WebP 会由开发者抠成透明底，边缘可能有瑕疵。':{en:'Transparent PNG preferred (1024×1024, ≤5MB). JPG / WebP will be cut into a transparent PNG by the developer; edges may look rough.',ja:'透明背景の PNG を推奨（1024×1024、5MB 以下）。JPG / WebP は開発者が透過 PNG に切り抜きます（輪郭が粗くなる場合あり）。',ko:'투명 배경 PNG 권장(1024×1024, 5MB 이하). JPG / WebP는 개발자가 투명 PNG로 누끼 처리하며, 가장자리가 거칠 수 있어요.'},
   '此次旅行月巴寄回、尚未拆开的信件，点击可以拆开：':{en:'Letters your Banny mailed home on this trip, still unopened — tap to open:',ja:'今回の旅でバニーが送り返した、まだ開けていない手紙。タップで開けます：',ko:'이번 여행에서 배니가 보내온, 아직 열지 않은 편지. 눌러서 열어 보세요:'},
   '信箱空空，还没有未拆的信件':{en:'Mailbox is empty — no unopened letters',ja:'郵便受けは空です。未開封の手紙はありません',ko:'우체통이 비었어요. 아직 열지 않은 편지가 없어요'},
   /* H18. 旅行笔记 / 结算补充 */
@@ -6952,6 +7010,7 @@ let S;
 function defaultState(){
   return {
     coins:0, totalCoins:null, accelLv:0, boughtItems:[], collection:{}, collection2:{}, dex2Celebrated:false, totalHarvest:0, lastFast:0, lowPower:false,
+    artPick:{},   // 多立绘：{月巴id: 选中的立绘序号}，同一只月巴被画了多次时用
     flyTop:[], flyPick:null, flySel:1, flyClear:0, flyLvBest:{}, flyLvTime:{},
     survivor:{v:1, clears:0, bestTime:0, bestKills:0, unlocked:{}, read:{}, lastReward:null,
       stageClear:0, stageSel:1, stageBest:{}},
@@ -7281,9 +7340,35 @@ function shapeBody(sh,c,dk,lt){
     default:       return `<circle cx="20" cy="21" r="13" ${f} ${s}/>`;
   }
 }
+/* ---------- 多立绘：同一只月巴可以有多张通过审核的立绘 ----------
+   img 为主图（兼容旧数据），imgs:[{url,by}] 存全部立绘；
+   玩家在图鉴里选中的序号存于 S.artPick[id]，未选过则为 0（主图）。 */
+function artList(t){
+  if(!t) return [];
+  const out=[];
+  for(const a of (Array.isArray(t.imgs)?t.imgs:[])){
+    if(a&&a.url&&!out.some(x=>x.url===a.url)) out.push({url:a.url,by:a.by||''});
+  }
+  if(t.img&&!out.some(x=>x.url===t.img)) out.unshift({url:t.img,by:(YB_PIC_AUTHOR[t.id]||'')});
+  return out;
+}
+function artIndex(t){
+  const n=artList(t).length;
+  if(n<2) return 0;
+  const p=(typeof S!=='undefined'&&S&&S.artPick)?S.artPick[t.id]:0;
+  return (typeof p==='number'&&p>=0&&p<n)?p:0;
+}
+function artURL(t){ const l=artList(t); return l.length?l[artIndex(t)].url:''; }
+function artBy(t){ const l=artList(t); return l.length?l[artIndex(t)].by:''; }
+/* 图鉴卡片右上角的「🎨n」角标：这只月巴有几张立绘 */
+function artBadgeHTML(t){
+  const n=artList(t).length;
+  return n>1?`<span class="artn" title="${esc($tf('共 {n} 张立绘',{n:n}))}">🎨${n}</span>`:'';
+}
 function fatSVG(type){
-  if(type.img){ // 外链 PNG（玩家不可见，仅代码内配置），未配置则走默认 SVG
-    return `<img class="fat ybimg" src="${type.img}" alt="" decoding="async">`;
+  const u=artURL(type);
+  if(u){ // 外链 PNG（玩家不可见，仅代码内配置），未配置则走默认 SVG
+    return `<img class="fat ybimg" src="${esc(u)}" alt="" decoding="async">`;
   }
   const h=hashStr(type.id), c=type.color, dk=shade(c,-26);
   const body=shapeBody(type.shape||'round',c,dk,shade(c,26));
@@ -7323,6 +7408,8 @@ function hScale(h){ return clamp(0.7+(h-2)/38,0.7,1.7); }
 /* ---------------- 图鉴数据（含极值） ---------------- */
 /* 第二图鉴：第一图鉴集齐 DEX1_MIN（=85）个月巴即开启（其余可未集齐），其月巴并入掉落池；id 前缀 m2_ 由 TYPES2 提供 */
 const DEX1_MIN=85;
+/* 玩家投稿用的 Google 表单外链（投稿页顶部按钮 / 详情里的「为它投稿」都用它）。 */
+const SUBMIT_FORM_URL='https://docs.google.com/forms/d/e/1FAIpQLSfaNsYl7xQczLcorhHt9dlmneHYreDYkAUjH6TN_2hwQpFkkg/viewform';
 function dex2Unlocked(){ return Object.keys(S.collection).length>=DEX1_MIN; }
 function isDex2(id){ return TYPES2.some(t=>t.id===id); }
 function typeById(id){ return TYPES.find(x=>x.id===id)||TYPES2.find(x=>x.id===id); }
@@ -8184,8 +8271,8 @@ function bookRowsHTML(list){
         ${$tf('⚖️ 最轻 {a}',{a:ss(rec.lightest, gL,'g')})} · ${rec.lightest?fmtTS(rec.lightest.t):''}
       </div>`;
     }
-    const rowM=false; rows+=`<div class="bcard anim-in ${c?'':'locked'} ${t.r>=4?'epic':''} ${t.r===5?'legend':''}${t.id==='bairi'&&c?' bairi':''}${allGold?' allgold':''}" style="--stagger:${i*36}ms" ${c?`onclick="openFatDetail('${t.id}')"`:''}>
-      <div class="pic">${c?`<span style="display:inline-block;transform:scale(${t.size||1})">${fatSVG(t)}</span>`:lockedSVG()}</div>
+    const rowM=false; rows+=`<div class="bcard anim-in ${c?'':'locked'} ${t.r>=4?'epic':''} ${t.r===5?'legend':''}${t.id==='bairi'&&c?' bairi':''}${allGold?' allgold':''}" data-id="${t.id}" style="--stagger:${i*36}ms" ${c?`onclick="openFatDetail('${t.id}')"`:''}>
+      <div class="pic">${c?`<span style="display:inline-block;transform:scale(${artURL(t)?1:(t.size||1)})">${fatSVG(t)}</span>${artBadgeHTML(t)}`:lockedSVG()}</div>
       <div class="nm">${c?t.name:'???'}</div>
       <div class="cnt">${c?$tf('收获 x{n}',{n:c}):$t('未发现')} <span class="rar-tag ${rcl}">${$t(RAR_NAME[t.r])}</span></div>
       ${stats}
@@ -8308,6 +8395,79 @@ function openBook(){
     `${tabs}${skinHTML}<div class="book">${bookRowsHTML(list)}</div>`, openBook);
 }
 function switchDexPage(p){ dexPage=p; openBook(); }
+/* ---------------- 投稿页：还没有立绘的月巴 ----------------
+   只列出 TYPES/TYPES2 中一张立绘都没有的月巴（已有立绘的不再需要投稿）。
+   顶部固定 Google 表单外链；卡片沿用图鉴样式，保留名字 + 简介；支持名字/ID/简介搜索。 */
+let _subQ='';
+function subMissing(){ return TYPES.concat(TYPES2).filter(t=>!artList(t).length); }
+function subFiltered(){
+  const all=subMissing();
+  const q=_subQ.trim().toLowerCase();
+  if(!q) return all;
+  return all.filter(t=>{
+    const s=[t.name,t._zhN||'',t.id,$fi(t.id)].join(' ').toLowerCase();
+    return s.indexOf(q)>=0;
+  });
+}
+function subCardHTML(t,i){
+  const rcl={1:'rr1',2:'rr2',3:'rr3',4:'rr4',5:'rr5',6:'rr6'}[t.r];
+  return `<div class="bcard scard anim-in" style="--stagger:${Math.min(i,20)*22}ms" onclick="openSubDetail('${t.id}')">
+    <div class="pic"><span style="display:inline-block;transform:scale(${t.size||1})">${fatSVG(t)}</span></div>
+    <div class="nm">${esc(t.name)}</div>
+    <div class="cnt"><span class="rar-tag ${rcl}">${$t(RAR_NAME[t.r])}</span> <span class="sub-need">${$t('缺立绘')}</span></div>
+    <div class="sintro">${esc($fi(t.id))}</div>
+  </div>`;
+}
+function subRowsHTML(){
+  const list=subFiltered();
+  if(!list.length) return `<div class="gal-empty">${$t('没有找到匹配的月巴')}</div>`;
+  return list.map(subCardHTML).join('');
+}
+function subCountText(){
+  const n=subFiltered().length;
+  return _subQ.trim()?$tf('找到 {n} 只',{n:n}):$tf('共 {n} 只还缺立绘',{n:n});
+}
+function subSearchInput(v){
+  _subQ=v;
+  const g=$('subGrid'); if(g) g.innerHTML=subRowsHTML();
+  const c=$('subCount'); if(c) c.textContent=subCountText();
+}
+function openSubmitPage(){
+  openModal($tf('✏️ 投稿 · {n} 只月巴还缺立绘',{n:subMissing().length}),
+    `<div class="subtop">
+      <a class="sub-form" href="${SUBMIT_FORM_URL}" target="_blank" rel="noopener">
+        <span class="si">📮</span>
+        <span class="st"><b>${$t('打开投稿表单')}</b><small>${$t('Google 表单 · 上传 PNG 立绘')}</small></span>
+        <span class="sa">↗</span>
+      </a>
+    </div>
+    <div class="sub-note">
+      <span class="sn-t">${$t('投稿说明')}</span>
+      <ul>
+        <li>${$t('同一只月巴被画了多次时，通过的作品都会保留，可以在图鉴里自由切换。')}</li>
+        <li>${$t('透明背景 PNG 优先（1024×1024，≤5MB）。JPG / WebP 会由开发者抠成透明底，边缘可能有瑕疵。')}</li>
+      </ul>
+    </div>
+    <input class="subsearch" id="subSearch" value="${esc(_subQ)}" placeholder="${$t('搜索月巴名字或简介…')}" oninput="subSearchInput(this.value)">
+    <div class="subcount" id="subCount">${subCountText()}</div>
+    <div class="book subbook" id="subGrid">${subRowsHTML()}</div>`, openSubmitPage);
+}
+function openSubDetail(id){
+  const t=typeById(id); if(!t) return;
+  const rcl={1:'rr1',2:'rr2',3:'rr3',4:'rr4',5:'rr5',6:'rr6'}[t.r];
+  const ov=$('fdOverlay');
+  ov.innerHTML=`<div class="fd-back" onclick="closeFatDetail()"></div>
+    <div class="fd-card">
+      <div class="fd-head"><span>✏️ ${esc(t.name)}</span><button class="iconbtn" onclick="closeFatDetail()">✕</button></div>
+      <div class="fd">
+        <div class="fd-pic ${t.r>=4?'epic':''} ${t.r===5?'legend':''}"><span style="display:inline-block;transform:scale(${t.size||1})">${fatSVG(t)}</span></div>
+        <div class="fd-meta"><span class="rar-tag ${rcl}">${$t(RAR_NAME[t.r])}</span><span class="sub-need">${$t('缺立绘')}</span></div>
+        <div class="fd-intro"><b>${$t('📜 简介')}</b><p>${esc($fi(t.id))}</p></div>
+        <a class="btn cta" style="display:block;margin-top:10px;text-decoration:none" href="${SUBMIT_FORM_URL}" target="_blank" rel="noopener" onclick="closeFatDetail()">${$t('为它投稿')} ↗</a>
+      </div>
+    </div>`;
+  ov.classList.add('show');
+}
 function openDex2Celebrate(){
   openModal($t('🎉 恭喜收集齐全！'), `
     <div style="text-align:center;padding:6px 0 2px">
@@ -8334,8 +8494,13 @@ function openFatDetail(id){ // 图鉴点开某月巴：悬浮层放大图 + 记�
     <div class="fd-card">
       <div class="fd-head"><span>📖 ${t.name}</span><button class="iconbtn" onclick="closeFatDetail()">✕</button></div>
       <div class="fd">
-        <div class="fd-pic ${t.r>=4?'epic':''} ${t.r===5?'legend':''}"><span style="display:inline-block;transform:scale(${t.img?1:(t.size||1)})">${fatSVG(t)}</span></div>
-        ${YB_PIC_AUTHOR[t.id]?`<div class="fd-author">🎨 by ${esc(YB_PIC_AUTHOR[t.id])}</div>`:''}
+        <div class="fd-pic ${t.r>=4?'epic':''} ${t.r===5?'legend':''}"><span style="display:inline-block;transform:scale(${artURL(t)?1:(t.size||1)})">${fatSVG(t)}</span></div>
+        ${artList(t).length>1?`<div class="fd-arts">
+          <button class="iconbtn" title="${esc($t('切换立绘'))}" onclick="switchArt('${t.id}',-1)">‹</button>
+          <span>🎨 ${artIndex(t)+1} / ${artList(t).length}</span>
+          <button class="iconbtn" title="${esc($t('切换立绘'))}" onclick="switchArt('${t.id}',1)">›</button>
+        </div>`:''}
+        ${artBy(t)?`<div class="fd-author">🎨 by ${esc(artBy(t))}</div>`:''}
         <div class="fd-meta">
           <span class="rar-tag ${rcl}">${$t(RAR_NAME[t.r])}</span>
           <span class="fd-cnt">${$tf('收获 x{n}',{n:rec.count})}</span>
@@ -8354,6 +8519,24 @@ function openFatDetail(id){ // 图鉴点开某月巴：悬浮层放大图 + 记�
   ov.classList.add('show');
 }
 function closeFatDetail(){ const ov=$('fdOverlay'); if(ov){ ov.classList.remove('show'); ov.innerHTML=''; } }
+/* 切换同一只月巴的立绘（图鉴详情里的 ‹ ›）：写存档 → 重建详情 → 同步图鉴卡片 */
+function switchArt(id,d){
+  const t=typeById(id); if(!t) return;
+  const n=artList(t).length; if(n<2) return;
+  const i=(artIndex(t)+d+n)%n;
+  S.artPick=S.artPick||{};
+  S.artPick[id]=i;
+  save();
+  openFatDetail(id);
+  syncDexCard(id);
+}
+function syncDexCard(id){
+  const t=typeById(id); if(!t) return;
+  const card=document.querySelector('.bcard[data-id="'+id+'"]');
+  if(!card) return;
+  const pic=card.querySelector('.pic'); if(!pic) return;
+  pic.innerHTML=`<span style="display:inline-block;transform:scale(${artURL(t)?1:(t.size||1)})">${fatSVG(t)}</span>${artBadgeHTML(t)}`;
+}
 function openShop(){
   pomoModalOpen=false;
   const items=ITEMS.map(it=>{
