@@ -8099,7 +8099,9 @@ function dexEventReward(){ return Math.round(dexGoldPerMin()*5*(0.5+Math.random(
 function dexSkim(t){ return !!t && (t.id==='m2_tanwu'||t.id==='m2_xianyi'); }
 function openDexEvent(){
   if(!_dexEv) return;
-  const {t,reward,tomato}=_dexEv;
+  const {reward,tomato}=_dexEv;
+  /* 月巴名取当前图鉴对象（已按当前语言本地化）；存档里的副本保留的是生成时的旧语种 */
+  const t=typeById(_dexEv.t.id)||_dexEv.t;
   /* 台词在打开时按当前语言重算：避免切语言/读档后仍显示生成时的旧语种 */
   let line=_dexEv.line;
   if(_dexEv.evIdx!=null && DEX_EVENTS[_dexEv.evIdx]) line=$t(DEX_EVENTS[_dexEv.evIdx]).replace(/\{name\}/g,t.name);
@@ -8122,7 +8124,7 @@ function claimDexEvent(){
   const {reward,tomato}=_dexEv;
   addCoins(reward);
   if(tomato>0) tvTomato(tomato);
-  toast($tf('🍅 {a} 送给你 {b} 金币！',{a:esc(_dexEv.t.name),b:fmt(reward)})+(tomato>0?$tf(' 还附赠 {n} 个番茄🍅',{n:tomato}):''));
+  toast($tf('🍅 {a} 送给你 {b} 金币！',{a:esc((typeById(_dexEv.t.id)||_dexEv.t).name),b:fmt(reward)})+(tomato>0?$tf(' 还附赠 {n} 个番茄🍅',{n:tomato}):''));
   if(sfx.dex) sfx.dex(); else sfx.coin();
   const b=$('dexBtn'); if(b) b.style.display='none';
   S.dexPending=null; S.dexNext=nextDexEventAt(); /* 领取时重新计时，避免隔太久领取后立刻连发 */ save();
