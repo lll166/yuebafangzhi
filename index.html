@@ -3256,6 +3256,7 @@
     <span class="tv-cur">🍅 <b id="tvTomato" class="tv-tom">0</b></span>
     <span id="tvState" class="tv-st">在家</span>
     <button class="iconbtn" onclick="tvOpenJournal()" title="旅行笔记" data-i18n-title="旅行笔记">📔</button>
+    <button class="iconbtn" onclick="tvHelp()" title="旅行说明" data-i18n-title="旅行说明">❓</button>
     <button class="iconbtn" onclick="closeTravel()">✕</button>
   </div>
   <div class="tv-scene" id="tvScene"></div>
@@ -3594,12 +3595,12 @@ const TYPES=[
   {id:'mb_dishui',  name:'阴湿月巴', r:3, v:50, t:400, cond:{t:'zone',z:2}, color:'#9575cd', shape:'round'},
   {id:'mb_wenshi',  name:'温室月巴',   r:3, v:55, t:420, cond:{t:'zone',z:3}, color:'#6fbe7a', shape:'cube'},
   {id:'mb_wuding',  name:'屋顶月巴',   r:3, v:60, t:450, cond:{t:'zone',z:4}, color:'#5f9ed1', shape:'tall'},
-  {id:'mb_senlin',  name:'森系月巴',   r:3, v:70, t:480, cond:{t:'zone',z:5}, color:'#5c8a64', shape:'spike'},
+  {id:'mb_senlin',  name:'森系月巴', img:'https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li6e93cacca933846d.th.png', r:3, v:70, t:480, cond:{t:'zone',z:5}, color:'#5c8a64', shape:'spike'},
   {id:'mb_bing',    name:'冰冷月巴',   r:4, v:80, t:540, cond:{t:'zone',z:6}, color:'#7cc4e8', shape:'star'},
   {id:'mb_yanjiang',name:'滚烫月巴',   r:4, v:90, t:600, cond:{t:'zone',z:7}, color:'#d15852', shape:'spike'},
   {id:'mb_yunduan', name:'会飞月巴',   r:4, v:110,t:720, cond:{t:'zone',z:8}, color:'#b39ddb', shape:'rainbow'},
 
-  {id:'mb_kafei', name:'咖啡月巴', r:4, v:80,  t:540,  cond:{t:'item',i:'coffee'},    color:'#b98a76', shape:'cube'},
+  {id:'mb_kafei', name:'咖啡月巴', img:'https://origin.picgo.net/2026/10/21/coffee-yue---KoTofu4bfeb46ff6179820.th.png', r:4, v:80,  t:540,  cond:{t:'item',i:'coffee'},    color:'#b98a76', shape:'cube'},
   {id:'mb_wanou', name:'玩偶月巴', img:'https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Lib2c078bd058ef48c.th.png', r:4, v:90,  t:600,  cond:{t:'item',i:'doll'},      color:'#e88aa8', shape:'heart'},
   {id:'mb_jin',   name:'金月巴',   r:4, v:200, t:1200, cond:{t:'item',i:'goldfert'},  color:'#e6c44c', shape:'star'},
   {id:'mb_xing',   name:'巴中月巴',   img:'https://origin.picgo.net/2026/09/03/127d7a0746c5de2434.th.png', r:4, v:150, t:900,  cond:{t:'item',i:'starlight'}, color:'#c9a8ea', shape:'star'},
@@ -3674,7 +3675,7 @@ const TYPES2=[
   {id:'m2_men',    name:'萌月巴',  r:1, v:9,  t:90,  cond:null, color:'#f8bbd0', shape:'squish'},
   {id:'m2_zhu',    name:'猪月巴',  r:1, v:10, t:100, cond:null, color:'#ffe0b2', shape:'wide'},
   {id:'m2_dundun', name:'墩墩月巴', r:1, v:12, t:110, cond:null, color:'#c9c9f0', shape:'round'},
-  {id:'m2_mao',    name:'猫月巴',  r:1, v:13, t:120, cond:null, color:'#b0bec5', shape:'heart'},
+  {id:'m2_mao',    name:'猫月巴',  img:'https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li578400427d700c6a.th.png', r:1, v:13, t:120, cond:null, color:'#b0bec5', shape:'heart'},
   {id:'m2_gou',    name:'狗月巴',  r:1, v:14, t:130, cond:null, color:'#d7ccc8', shape:'bean'},
   {id:'m2_tian',   name:'甜月巴',  r:2, v:16, t:160, cond:null, color:'#f8bbd0', shape:'round'},
   {id:'m2_xian',    name:'盐月巴',  r:2, v:17, t:170, cond:null, color:'#90a4ae', shape:'cube'},
@@ -3788,6 +3789,9 @@ const YB_PIC_AUTHOR={
   mb_jiu:'三重彩',
   mb_tangyuan:'三重彩',
   mb_wanou:'Nyaomi',
+  mb_kafei:'VVisteria',
+  mb_senlin:'Nyaomi',
+  m2_mao:'Nyaomi',
 };
 /* 每种月巴的「简介(文字)作者」by ID，图鉴详情弹窗简介末尾展示；未填则不显示文字作者 */
 const YB_TXT_AUTHOR={};
@@ -4660,6 +4664,8 @@ const I18N_UI={
   '📮 信箱 · 来信':{en:'📮 Mailbox · Letters',ja:'📮 郵便受け · 手紙',ko:'📮 우체통 · 편지'},
   '👋 门口有人敲门':{en:'👋 Someone\'s Knocking',ja:'👋 玄関をノックしている',ko:'👋 문을 두드리는 사람'},
   '📔 旅行笔记':{en:'📔 Travel Journal',ja:'📔 旅の記録',ko:'📔 여행 일지'},
+  '🧳 旅行说明':{en:'🧳 Trip Guide',ja:'🧳 旅の説明',ko:'🧳 여행 안내'},
+  '旅行说明':{en:'Trip guide',ja:'旅の説明',ko:'여행 안내'},
   '🛍 商店 · 用 🍅 购买':{en:'🛍 Shop · Buy with 🍅',ja:'🛍 ショップ · 🍅 で購入',ko:'🛍 상점 · 🍅로 구매'},
   '💼 仓库与行囊':{en:'💼 Storage & Bag',ja:'💼 倉庫と荷物',ko:'💼 창고와 짐'},
   '🎁 回礼':{en:'🎁 Thank-you Gift',ja:'🎁 お返し',ko:'🎁 답례'},
@@ -6833,6 +6839,19 @@ const I18N_MISC={    // 事件/台词/系统说明：键为语义 key（字段�
   help_rare:{d:{en:'Depends on <b>in-game time (season/day-night), weather, plot, items, and cumulative harvests</b>; the status bar and Codex both give hints. A few ultra-rare Bannies have no requirement but an extremely low chance.',ja:'<b>ゲーム内時間（季節・昼夜）、天気、区画、アイテム、累計収穫量</b>に左右されます。ステータスバーと図鑑にヒントがあります。ごく一部の超レアバニーは条件なしですが、出現確率はごくわずかです。',ko:'<b>게임 시간(계절·밤낮), 날씨, 구획, 아이템, 누적 수확량</b>에 좌우돼요. 상태 표시줄과 도감에 힌트가 있어요. 일부 초희귀 배니는 조건이 없지만 확률은 극히 낮아요.'}},
   help_travel_t:{d:{en:'🧳 Trips',ja:'🧳 旅',ko:'🧳 여행'}},
   help_travel:{d:{en:'<b>Unlocks after you complete the first Codex</b>. Your Banny sets out with a bento and returns with <b>letters, photos, and souvenirs</b> plus new second-Codex Bannies, and may randomly meet a <b>🚪 doorstep visitor</b>. Related features: the <b>🎰 Lucky Harvest</b> slot machine and the <b>📮 mailbox</b> for rereading letters.',ja:'<b>第一図鑑を完成させると解放</b>されます。バニーはお弁当を持って出かけ、<b>手紙・写真・特産品</b>と第二図鑑の新しいバニーを持ち帰ります。たまに<b>🚪 玄関先の来客</b>に出会うこともあります。関連: <b>🎰 ラッキー収穫</b>スロット、<b>📮 郵便受け</b>で手紙を見返せます。',ko:'<b>첫 도감을 완성하면 해금</b>돼요. 배니가 도시락을 들고 떠나서 <b>편지·사진·특산품</b>과 두 번째 도감의 새 배니를 가져와요. 가끔 <b>🚪 문 앞 손님</b>을 만나기도 해요. 관련 기능: <b>🎰 행운 수확</b> 슬롯머신, <b>📮 우체통</b>에서 편지 다시 보기.'}},
+  tv_help_lead:{d:{en:'Pick a Banny, pack a bento, and send it out. It will send letters along the way and bring souvenirs home.',ja:'バニーを一匹選び、お弁当を詰めて送り出しましょう。道中で手紙を寄こし、お土産を持って帰ってきます。',ko:'배니 한 마리를 골라 도시락을 챙겨 보내세요. 길에서 편지를 보내고, 특산품을 가지고 돌아와요.'}},
+  tv_help_start_t:{d:{en:'✈️ Getting started',ja:'✈️ はじめかた',ko:'✈️ 시작하기'}},
+  tv_help_start:{d:{en:'1. Open 💼 Bag and pick the Banny you want to send out.<br>2. Pack at least one bento; the bento decides which region it will most likely visit.<br>3. To bring back one more souvenir, add a Lucky Charm.<br>4. Tap "Set off" and wait for it to come home.',ja:'1. 💼 バッグで旅に出たいバニーを選びます。<br>2. お弁当を最低 1 つ詰めます。お弁当で行き先の地方がほぼ決まります。<br>3. お土産を 1 つ多く持ち帰りたいなら、幸運のお守りを入れます。<br>4. 「出発」を押して、帰りを待ちます。',ko:'1. 💼 가방에서 보내고 싶은 배니를 고르세요.<br>2. 도시락을 최소 1개 넣으세요. 도시락에 따라 갈 지역이 대부분 정해져요.<br>3. 특산품을 하나 더 가져오고 싶다면 행운의 부적을 넣으세요.<br>4. "출발"을 누르고 돌아오기를 기다리세요.'}},
+  tv_help_road_t:{d:{en:'✉️ On the road',ja:'✉️ 旅の途中',ko:'✉️ 여행 중'}},
+  tv_help_road:{d:{en:'Every trip sends back a travel letter; open it in the 📮 Mailbox. You can walk the same route again and again; duplicate letters add up, and once you have enough, your next trip is guaranteed to bring a new letter. Any message you leave before departure comes back with that letter.',ja:'旅ごとに旅の手紙が 1 通届きます。📮 郵便受けで開けられます。同じ道は何度でも歩け、重複した手紙は貯まっていきます。十分に貯まると、次の旅で新しい手紙が必ず届きます。出発前に書いたメッセージも、その手紙と一緒に届きます。',ko:'여행마다 여행 편지가 한 통 도착해요. 📮 우편함에서 열어 보세요. 같은 길을 여러 번 걸을 수 있고, 중복된 편지는 쌓여요. 충분히 쌓이면 다음 여행에서 새 편지가 반드시 와요. 출발 전에 남긴 메시지도 그 편지와 함께 돌아와요.'}},
+  tv_help_home_t:{d:{en:'🏠 Coming home',ja:'🏠 おかえり',ko:'🏠 집으로'}},
+  tv_help_home:{d:{en:'It comes home with souvenirs; a Lucky Charm lets it bring back more. Duplicate souvenirs are automatically converted into 🍅. Visit it in 🛋 Indoors to collect the 🍅 it saved up during the trip.',ja:'帰ってくると特産品を持ち帰ります。幸運のお守りを持たせると、より多く持ち帰れます。重複した特産品は自動で 🍅 に換算されます。🛋 室内で会いに行くと、旅の間に貯めた 🍅 を受け取れます。',ko:'돌아올 때 특산품을 가져와요. 행운의 부적을 챙기면 더 많이 가져올 수 있어요. 중복된 특산품은 자동으로 🍅로 환산돼요. 🛋 실내에서 만나면 여행 중 모아 둔 🍅를 받을 수 있어요.'}},
+  tv_help_book_t:{d:{en:'🏷 Codex',ja:'🏷 図鑑',ko:'🏷 도감'}},
+  tv_help_book:{d:{en:'The Codex records letters and souvenirs by region. Collect enough letters from the first few maps of a region to unlock its hidden map; you can only reach a hidden map when carrying the 🎫 Mini Charm.',ja:'図鑑は地方ごとに手紙と特産品を記録します。同じ地方の最初の数枚の地図の手紙をある程度集めると、その地方の隠し地図が解放されます。隠し地図へは 🎫 小さなお守りを持っているときだけ行けます。',ko:'도감은 지역별로 편지와 특산품을 기록해요. 같은 지역 앞쪽 지도들의 편지를 어느 정도 모으면 그 지역의 숨겨진 지도가 열려요. 숨겨진 지도는 🎫 작은 부적을 챙겼을 때만 갈 수 있어요.'}},
+  tv_help_yard_t:{d:{en:'🌿 Yard & visitors',ja:'🌿 庭と来客',ko:'🌿 마당과 손님'}},
+  tv_help_yard:{d:{en:'In the 🏠 Yard, Bannies play on their own; now and then one tries to steal tomatoes, and you can catch it. 🚪 A visitor may appear at the door; serving a souvenir earns 🍅 and may bring a rare letter. 🎰 When a surprise is ready, you can pull the slot machine in the yard.',ja:'🏠 庭ではバニーたちが自由に遊んでいます。ときどきトマトを盗もうとするバニーが現れ、捕まえることができます。🚪 玄関先に来客が現れることがあり、特産品でもてなすと 🍅 がもらえ、稀な手紙が届くこともあります。🎰 サプライズが貯まったら、庭でスロットを 1 回回せます。',ko:'🏠 마당에서 배니들이 자유롭게 놀아요. 가끔 토마토를 훔치려는 배니가 나타나면 잡을 수 있어요. 🚪 문가에 손님이 찾아오기도 하며, 특산품으로 대접하면 🍅를 받고 희귀 편지를 얻을 수도 있어요. 🎰 서프라이즈가 준비되면 마당에서 슬롯머신을 한 번 돌릴 수 있어요.'}},
+  tv_help_tip_t:{d:{en:'💡 Tips',ja:'💡 ヒント',ko:'💡 팁'}},
+  tv_help_tip:{d:{en:'Trips run on real time and continue even if you close the page. Only one Banny can be travelling at a time. A Lucky Charm loses durability every trip and disappears when used up.',ja:'旅は現実時間で進み、ページを閉じても続きます。同時に旅に出られるバニーは 1 匹だけです。幸運のお守りは旅ごとに耐久を消耗し、使い切ると消えます。',ko:'여행은 실제 시간으로 진행되며, 페이지를 닫아도 계속돼요. 한 번에 배니 한 마리만 여행할 수 있어요. 행운의 부적은 여행마다 내구도가 줄고, 다 쓰면 사라져요.'}},
   help_fly_t:{d:{en:'🪽 Flight Minigame',ja:'🪽 飛行ミニゲーム',ko:'🪽 비행 미니게임'}},
   help_fly:{d:{en:'<b>Unlocks after you collect the Hundred-Day Banny</b>. Pick a Banny, then tap the screen or press Space to make it fly upward and score by passing through the pillars. There are <b>stage</b> and <b>free</b> modes, and scores go to the 🏆 leaderboard.',ja:'<b>百日バニーを集めると解放</b>されます。バニーを 1 匹選び、画面をタップするかスペースキーで上昇させ、柱をくぐって得点します。<b>ステージ</b>と<b>フリー</b>の 2 モードがあり、成績は 🏆 ランキングに記録されます。',ko:'<b>백일 배니를 모으면 해금</b>돼요. 배니 한 마리를 고르고 화면을 톡 누르거나 스페이스를 누르면 위로 날아올라 기둥을 통과하며 점수를 얻어요. <b>스테이지</b>와 <b>프리</b> 두 모드가 있고, 점수는 🏆 리더보드에 기록돼요.'}},
   help_task_t:{d:{en:'✅ Tasks / To-dos',ja:'✅ タスク / やること',ko:'✅ 할 일 / 투두'}},
@@ -11828,6 +11847,20 @@ function tvJournalHTML(){
   return h;
 }
 function tvOpenJournal(){ openModal('📔 旅行笔记', tvJournalHTML(), ()=>tvOpenJournal()); }
+function tvHelp(){ openModal('🧳 旅行说明', tvHelpHTML(), ()=>tvHelp()); }
+function tvHelpHTML(){
+  const sec=(t,b)=>'<p style="margin:12px 0 3px;font-weight:800;color:var(--purple2)">'+t+'</p><p style="margin:0">'+b+'</p>';
+  return '<div style="font-size:13px;line-height:1.9;color:var(--dim)">'
+    +'<p style="margin:0;color:var(--text)">'+$tm('tv_help_lead','选一只月巴，装上便当，送它出门。它会在路上寄信，也会带着特产回家。')+'</p>'
+    +sec($tm('tv_help_start_t','✈️ 怎么开始'),$tm('tv_help_start','1. 在 💼 行囊里选一只想出门的月巴。<br>2. 至少装一份便当，便当决定它大概率去哪个地区。<br>3. 想多带一件特产，可以再放一个幸运护身符。<br>4. 点「出发」，然后等它回来。'))
+    +sec($tm('tv_help_road_t','✉️ 旅途中'),$tm('tv_help_road','每趟都会寄回一封旅行信，可以在 📮 信箱里拆开。同一条路可以反复走；重复的信会累计，攒得够多后，下一趟必得新信。出发前写下的留言，会跟着这封信一起寄回来。'))
+    +sec($tm('tv_help_home_t','🏠 回家'),$tm('tv_help_home','归来时会带回特产；带了幸运护身符，能带回更多。重复的特产会自动折算成 🍅。到 🛋 室内看看它，还能收到它旅途中攒下的 🍅。'))
+    +sec($tm('tv_help_book_t','🏷 图鉴'),$tm('tv_help_book','图鉴按地区收录信件和特产。把同一地区前几张图的信收集到一定程度，就会解锁该地区的隐藏地图；隐藏地图只有带上 🎫 小号护身符才有机会前往。'))
+    +sec($tm('tv_help_yard_t','🌿 庭院与访客'),$tm('tv_help_yard','🏠 庭院里月巴们会自己玩耍，偶尔会有月巴来偷番茄，可以把它捉住。🚪 门口偶尔会有访客，用特产招待可以换到 🍅，还可能带来稀有的信。🎰 攒够惊喜时，可以在庭院里拉一次老虎机。'))
+    +sec($tm('tv_help_tip_t','💡 小提示'),$tm('tv_help_tip','旅行按真实时间推进，关掉页面也会继续。同一时间只能有一只月巴在外旅行。幸运护身符每趟都会消耗耐久，用尽后会消失。'))
+    +'<p style="text-align:center;margin:16px 0 2px"><button class="btn" onclick="closeModal()">'+$t('知道了')+'</button></p>'
+    +'</div>';
+}
 function tvSettle(){ const t=tvFresh(); const kinds=tvDestKinds(t.bag); const d=tvDestOf(t.bag); const _jDepart=t.frog.depart,_jMood=t.frog.mood,_jFat=t.frog.fatId,_jCards=(t.frog.cardsGot||[]).slice(); const cc=t.bag.filter(function(x){return x&&x.k==='charm';}).length; let gain=1+cc; const got=[],dups=[]; const spool=d.specials.slice(); /* 从池中抽走已选中的，保证同一趟带回的特产两两不重复（与已拥有的重复仍照常兑换番茄） */ for(let i=0;i<gain&&spool.length;i++){ const s=spool.splice((Math.random()*spool.length)|0,1)[0]; if(t.specials.indexOf(s)<0){ t.specials.push(s); got.push(s); } else { dups.push(s); } } t.destCount[d.id]=(t.destCount[d.id]||0)+1; if(cc>0){ t.bag.forEach(function(x){ if(x&&x.k==='charm'){ const cur=Math.max(0,tvCharmDura(x)-1); if(cur>0){ t.wh.charm=(t.wh.charm||0)+1; t.charmDuras.push(cur); } } }); } t.frog={status:'home',depart:null,ret:null,mood:t.frog.mood||'',moodKey:t.frog.moodKey||'',fatId:t.frog.fatId||null}; if(t.frog.fatId){ t.lastHomeFatId=t.frog.fatId; t.homeId=t.frog.fatId; t.homeIdx=(Math.random()*3)|0; t.homeTxt=tvHomeDescs(t.frog.fatId)[t.homeIdx]; t.homeReward={n:5+(Math.random()*16|0)}; t.homeRewardReady=true; } t.bag=t.bag.filter(function(x){return x&&x.k==='pass';}); /* 小号护身符永久保留，不清空 */ t.eventT=0; save(); const dr=d.dupTomato||[10,10]; const dv=Math.round(rand(dr[0],dr[1])); if(dups.length)tvTomato(dv*dups.length); tvJournalPush({t:now(),depart:_jDepart,mood:_jMood||'',fatId:_jFat,dest:d.id,destN:d.n,rg:(tvRegionOf(d.id)||{}).n||'',visit:t.destCount[d.id],got:got.slice(),dups:dups.slice(),tomato:(dups.length?dv*dups.length:0),cards:_jCards}); let toastMsg=''; const fgot=got.map(function(s){return spEmo(s)+$sp(s);}); const fdups=dups.map(function(s){return spEmo(s)+$sp(s);}); if(got.length)toastMsg+=$tf('🌿 从「{a}」带回新特产：{b}！',{a:d.n,b:fgot.join('、')}); if(dups.length)toastMsg+=' '+$tf('♻️ 重复 {a} 兑换 {n} 🍅！',{a:fdups.join('、'),n:dv*dups.length}); if(toastMsg)toast(toastMsg); let h='<p style="text-align:center;color:var(--text)">'+$tf('月巴从<b>「{a}」</b>回来了！（第 {n} 次旅行）',{a:d.n,n:t.destCount[d.id]})+'</p>'; const all=fgot.concat(fdups); h+='<p style="text-align:center;font-weight:800;color:#e08a3c">'+$t('🎁 带回特产：')+(all.length?($tf('从「{a}」带回 {b}',{a:d.n,b:all.join('、')})+(dups.length?$tf(' · 已兑换 {n} 🍅',{n:dv*dups.length}):'')):$t('这次带回了温暖的问候'))+'</p>'; h+='<p style="text-align:center"><button class="btn cta" onclick="noticeRemove(\'tvReturn\')">'+$t('收下')+'</button></p>'; if(got.length)sfx.homeGain(); else if(dups.length)sfx.homeDup(); else sfx.homeEmpty(); openNotice('tvReturn','🎉 旅行归来',h,70); tvRenderScene(); tvUpdateBar(); if(tvView==='home')_afterClose=function(){ tvEnterHome(); }; }
 let _tvPages=[], _tvPageIdx=0, _tvPageTitle=''; /* 进入室内时的翻页弹窗：第 1 页「安慰」、后一页「月巴赠送的番茄」 */
 function tvEnterHome(){ const t=tvFresh(); let changed=false;
