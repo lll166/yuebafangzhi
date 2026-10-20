@@ -8097,6 +8097,27 @@ function dexGoldPerMin(){
 function dexEventReward(){ return Math.round(dexGoldPerMin()*5*(0.5+Math.random()*0.5)); }
 /* 会私藏番茄的月巴：嫌疑月巴 / 贪污月巴，天降事件的附赠番茄减半 */
 function dexSkim(t){ return !!t && (t.id==='m2_tanwu'||t.id==='m2_xianyi'); }
+/* 旧存档的天降事件只存了成稿台词：按 88 条模板 × 4 种语言反查序号（结果缓存） */
+const _dexLineIdxCache={};
+function dexEventIdxOf(txt,id){
+  if(!txt)return -1;
+  const ck=id+'|'+txt;
+  if(_dexLineIdxCache[ck]!=null)return _dexLineIdxCache[ck];
+  const tp=typeById(id)||{name:id};
+  const zhName=tp._zhN||tp.name;
+  const nm=I18N_BANNY[id]&&I18N_BANNY[id].n;
+  const nameOf=function(lg){ return (nm&&typeof nm==='object'&&nm[lg])||zhName; };
+  const names=[zhName,nameOf('en'),nameOf('ja'),nameOf('ko')];
+  for(let i=0;i<DEX_EVENTS.length;i++){
+    const key=DEX_EVENTS[i], tr=I18N_UI[key]||{};
+    const cands=[key,tr.en,tr.ja,tr.ko];
+    for(let j=0;j<4;j++){
+      if(!cands[j])continue;
+      if(cands[j].split('{name}').join(names[j])===txt)return _dexLineIdxCache[ck]=i;
+    }
+  }
+  return _dexLineIdxCache[ck]=-1;
+}
 function openDexEvent(){
   if(!_dexEv) return;
   const {reward,tomato}=_dexEv;
@@ -8104,8 +8125,12 @@ function openDexEvent(){
   const t=typeById(_dexEv.t.id)||_dexEv.t;
   /* 台词在打开时按当前语言重算：避免切语言/读档后仍显示生成时的旧语种 */
   let line=_dexEv.line;
-  if(_dexEv.evIdx!=null && DEX_EVENTS[_dexEv.evIdx]) line=$t(DEX_EVENTS[_dexEv.evIdx]).replace(/\{name\}/g,t.name);
-  else if(_dexEv.culpritId){ const c=typeById(_dexEv.culpritId); line=$tf('👮 警察巴捉拿了{a}，{a}缴纳了罚款，这是所有的番茄。',{a:(c&&c.name)||$t('嫌疑月巴')}); }
+  if(_dexEv.culpritId){ const c=typeById(_dexEv.culpritId); line=$tf('👮 警察巴捉拿了{a}，{a}缴纳了罚款，这是所有的番茄。',{a:(c&&c.name)||$t('嫌疑月巴')}); }
+  else{
+    let idx=_dexEv.evIdx;
+    if(idx==null || !DEX_EVENTS[idx]) idx=dexEventIdxOf(_dexEv.line,t.id);   // 旧存档没记序号：按原文反查
+    if(idx!=null && idx>=0 && DEX_EVENTS[idx]){ _dexEv.evIdx=idx; _dexEv.line=$t(DEX_EVENTS[idx]).replace(/\{name\}/g,t.name); line=_dexEv.line; }
+  }
   const extra=tomato>0?`<div style="font-size:12px;color:#e08a3c;font-weight:800;margin:-4px 0 6px">${$tf('+ 附赠 {n} 个 🍅 番茄（第二图鉴已开启）',{n:tomato})}</div>`:'';
   const skim=dexSkim(t)?`<div style="font-size:11px;color:#9aa0a6;margin:-2px 0 8px">${$t('啊哦，月巴好像藏了一些番茄，不愿意给你')}</div>`:'';
   openModal($t('🍅 天降事件'), `
@@ -8117,7 +8142,7 @@ function openDexEvent(){
       ${extra}
       ${skim}
       <button class="btn gold" onclick="claimDexEvent()">${$t('收下')} · +${fmt(reward)} 🪙${tomato>0?' +'+tomato+' 🍅':''}</button>
-    </div>`);
+    </div>`, ()=>openDexEvent());
 }
 function claimDexEvent(){
   if(!_dexEv) return;
