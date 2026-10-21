@@ -265,6 +265,7 @@
   .sub-form{display:flex;align-items:center;gap:10px;text-decoration:none;padding:10px 12px;border-radius:14px;
     background:linear-gradient(135deg,var(--purple2),var(--accent));color:#fff;box-shadow:0 6px 18px rgba(90,70,150,.22);transition:transform .15s;}
   .sub-form:hover{transform:translateY(-1px);}
+  .sub-form+.sub-form{margin-top:8px;}
   .sub-form .si{font-size:20px;line-height:1;}
   .sub-form .st{flex:1;min-width:0;text-align:left;}
   .sub-form .st b{display:block;font-size:13px;font-weight:900;}
@@ -327,6 +328,23 @@
   .lngrow.on{border-color:var(--purple);box-shadow:inset 0 0 0 1.5px var(--purple);}
   .lngrow .lngcode{margin-left:auto;font-size:10px;font-weight:700;color:var(--dim);letter-spacing:.04em;}
   .lngrow .lngck{color:var(--good);font-weight:900;}
+  /* 语言弹层顶部：翻译说明 + 反馈表单入口（谷歌表单地址在 LANG_FORM_URL 里配置） */
+  .lng-note{margin:0 0 12px;padding:11px 13px 12px;border-radius:14px;
+    background:linear-gradient(180deg,rgba(149,117,205,.14),rgba(149,117,205,.05));
+    border:1px solid rgba(149,117,205,.3);}
+  .lng-note .t{font-size:13px;font-weight:900;color:var(--purple2);margin-bottom:5px;}
+  .lng-note p{margin:0;font-size:12px;line-height:1.65;font-weight:600;color:var(--text);}
+  .lng-formbtn{display:block;margin-top:10px;text-align:center;text-decoration:none;
+    background:linear-gradient(180deg,#a586dd,var(--purple));color:#fff;border-radius:11px;
+    padding:9px 12px;font-size:13px;font-weight:900;box-shadow:0 4px 12px rgba(149,117,205,.28);
+    transition:transform .12s,filter .12s;}
+  .lng-formbtn:hover{filter:brightness(1.06);transform:translateY(-1px);}
+  .lng-formbtn:active{transform:scale(.985);}
+  /* 翻译致谢弹层 */
+  .lng-thanks p{margin:0;font-size:13px;line-height:1.75;font-weight:600;color:var(--text);}
+  .lng-names{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:7px;}
+  .lng-names li{padding:8px 12px;border-radius:11px;background:var(--panel2);
+    border:1px solid var(--line);font-size:13px;font-weight:800;color:var(--purple2);}
   .rg-head{display:flex;align-items:center;gap:6px;padding:9px 12px;margin:6px 0;border-radius:12px;font-weight:800;font-size:13px;color:#4a3d26;cursor:pointer;background:var(--eb,#f1ede2);border:1px solid rgba(0,0,0,.06);transition:transform .12s;}
   .rg-head:active{transform:scale(.985);}
   .rg-head.open{box-shadow:inset 0 0 0 2px var(--ec,#c9b98f);}
@@ -3837,7 +3855,7 @@ const TYPES2=[
   {id:'m2_chuqian',  name:'出千月巴',  img:'https://origin.picgo.net/2026/10/21/6f0a351bc37096a61e980e6e5d6da80446da29ffafa7a5b8.th.png', r:5, v:240, t:1400, cond:null, weight:0.01, color:'#2f8f72', shape:'cube'},
   /* —— 新增投稿月巴 —— */
   {id:'m2_tracker',  name:'追踪器月巴', img:'https://origin.picgo.net/2026/10/21/acf7a9ec0fbe767f840a205e24730017da0d83a3264ec36f.th.png', r:3, v:35, t:400, cond:null, color:'#8bc34a', shape:'cube'},
-  {id:'m2_baqi',     name:'巴岐大蛇',  img:'https://origin.picgo.net/2026/10/21/00ad700c36c3d7131ffe4fcfae4e5a0cee3d2f4e74eec9cd.th.png', r:4, v:85, t:760, cond:null, color:'#5f8f6f', shape:'spike'},
+  {id:'m2_baqi',     name:'巴岐大蛇',  img:'https://origin.picgo.net/2026/10/21/00ad700c36c3d7131ffe4fcfae4e5a0cee3d2f4e74eec9cd.th.png', r:4, v:85, t:760, cond:null, color:'#5f8f6f', shape:'spike',size:3.5},
 ];
 const RAR_NAME={1:'普通',2:'常见',3:'稀有',4:'史诗',5:'传说',6:'活动'};
 const R_H={1:[2,5],2:[4,8],3:[6,12],4:[10,20],5:[16,30],6:[22,40]};   // 身高 cm 范围
@@ -4466,6 +4484,12 @@ const I18N_UI={
   '投稿':{en:'Submit art',ja:'投稿',ko:'투고'},
   '低功耗模式(开启中)':{en:'Low-power mode (on)',ja:'低電力モード（オン）',ko:'저전력 모드 (켜짐)'},
   '语言 / Language':{en:'Language',ja:'言語 / Language',ko:'언어 / Language'},
+  '🌐 翻译说明':{en:'🌐 About translations',ja:'🌐 翻訳について',ko:'🌐 번역 안내'},
+  '所有语言都使用翻译机进行翻译，如果您想要帮忙修改翻译，请填写这个表单。':{en:'All languages are machine-translated. If you would like to help fix the translations, please fill in this form.',ja:'すべての言語は機械翻訳です。翻訳の修正にご協力いただける場合は、このフォームにご記入ください。',ko:'모든 언어는 기계 번역으로 제공됩니다. 번역 수정을 도와주시려면 이 양식을 작성해 주세요.'},
+  '📝 填写翻译反馈表单':{en:'📝 Translation feedback form',ja:'📝 翻訳フィードバックフォーム',ko:'📝 번역 피드백 양식'},
+  '翻译反馈表单还没做好，请稍后再来':{en:'The translation feedback form is not ready yet — please check back later.',ja:'翻訳フィードバックフォームはまだ準備中です。後ほどご確認ください。',ko:'번역 피드백 양식은 아직 준비 중이에요. 나중에 다시 확인해 주세요.'},
+  '💛 致谢':{en:'💛 Credits',ja:'💛 クレジット',ko:'💛 크레딧'},
+  '感谢所有帮助翻译的人。':{en:'Thanks to everyone who helped with the translations.',ja:'翻訳にご協力いただいた皆さんに感謝します。',ko:'번역을 도와주신 모든 분들께 감사드립니다.'},
   '中秋口令':{en:'Mid-Autumn Code',ja:'中秋の合言葉',ko:'추석 코드'},
   '国庆口令':{en:'National Day Code',ja:'国慶節の合言葉',ko:'국경일 코드'},
   '⚠️ 存档未保存，请点此立即导出备份！':{en:'⚠️ Save failed — tap here to export a backup now!',ja:'⚠️ セーブ未保存です。ここをタップして今すぐバックアップを書き出してください！',ko:'⚠️ 저장 실패! 여기를 눌러 지금 바로 백업을 내보내세요!'},
@@ -4887,6 +4911,10 @@ const I18N_UI={
   '✏️ 投稿 · {n} 只月巴还缺立绘':{en:'✏️ Submit · {n} Bannies still need art',ja:'✏️ 投稿 · 立ち絵待ちのバニー {n} 体',ko:'✏️ 투고 · 일러스트가 필요한 배니 {n}마리'},
   '打开投稿表单':{en:'Open submission form',ja:'投稿フォームを開く',ko:'투고 양식 열기'},
   'Google 表单 · 上传 PNG 立绘':{en:'Google Form · upload a PNG illustration',ja:'Google フォーム · PNG 立ち絵をアップロード',ko:'Google 설문지 · PNG 일러스트 업로드'},
+  '备用投稿表单':{en:'Backup submission form',ja:'予備の投稿フォーム',ko:'예비 투고 양식'},
+  '腾讯文档表单 · 上传 PNG 立绘（两个表单任选其一）':{en:'Tencent Docs form · upload a PNG illustration (either form works)',ja:'Tencent ドキュメントフォーム · PNG 立ち絵をアップロード（どちらか一方でOK）',ko:'Tencent 문서 양식 · PNG 일러스트 업로드 (둘 중 하나만)'},
+  '两个投稿表单内容一样，任选一个填写即可，不需要两个都投。':{en:'Both submission forms are identical — fill in either one, no need to submit twice.',ja:'2つの投稿フォームは同じ内容です。どちらか一方に記入すればOKで、両方に投稿する必要はありません。',ko:'두 투고 양식은 내용이 같아요. 하나만 작성하면 되고, 둘 다 제출할 필요는 없어요.'},
+  '备用投稿表单还没做好，请稍后再来':{en:'The backup submission form is not ready yet — please check back later.',ja:'予備の投稿フォームはまだ準備中です。後ほどご確認ください。',ko:'예비 투고 양식은 아직 준비 중이에요. 나중에 다시 확인해 주세요.'},
   '搜索月巴名字或简介…':{en:'Search by name or description…',ja:'名前や紹介文で検索…',ko:'이름이나 소개로 검색…'},
   '共 {n} 只还缺立绘':{en:'{n} Bannies still need art',ja:'立ち絵待ち {n} 体',ko:'일러스트가 필요한 배니 {n}마리'},
   '找到 {n} 只':{en:'{n} found',ja:'{n} 体見つかりました',ko:'{n}마리 찾음'},
@@ -7315,6 +7343,22 @@ function setLang(code){
   applyI18n();
   openLangModal();   // 重开弹层，让选中态立刻可见（P1 起同时刷新已打开的弹窗内容）
 }
+/* 翻译反馈（谷歌表单）：表单做好后把地址填进 LANG_FORM_URL 即可启用按钮；留空时点击只提示未开放 */
+const LANG_FORM_URL='https://docs.google.com/forms/d/e/1FAIpQLSf8_-dZtUSZq9i1oTWalw8Oz7Qu2CbXl3M5kr-0Wi6ctHPzJQ/viewform?usp=publish-editor';
+function lngFormOpen(){
+  if(!LANG_FORM_URL){ toast($t('翻译反馈表单还没做好，请稍后再来')); return; }
+  window.open(LANG_FORM_URL,'_blank','noopener');
+}
+/* 翻译致谢名单：把帮忙翻译的人名直接加进这个数组即可（顺序即展示顺序） */
+const LANG_THANKS=[];
+function openLangThanks(){
+  const names=LANG_THANKS.map(function(n){ return '<li>'+n+'</li>'; }).join('');
+  openModal('💛 致谢',
+    '<div class="lng-thanks">'
+    +'<p>'+$t('感谢所有帮助翻译的人。')+'</p>'
+    +(names?'<ul class="lng-names">'+names+'</ul>':'')
+    +'</div>');
+}
 function openLangModal(){
   const rows=I18N_LANGS.map(function(l){
     const on=curLang()===l.code;
@@ -7322,8 +7366,17 @@ function openLangModal(){
       +'<span>'+l.label+'</span>'
       +'<span class="lngcode">'+l.locale+'</span>'
       +(on?'<span class="lngck">✓</span>':'')+'</button>';
-  }).join('');
-  openModal('🌐 Language', '<div class="lng-list">'+rows+'</div>');
+  }).join('')
+    +'<button class="lngrow" onclick="openLangThanks()">'
+      +'<span>'+$t('💛 致谢')+'</span><span class="lngcode">♥</span></button>';
+  const note='<div class="lng-note">'
+    +'<div class="t">'+$t('🌐 翻译说明')+'</div>'
+    +'<p>'+$t('所有语言都使用翻译机进行翻译，如果您想要帮忙修改翻译，请填写这个表单。')+'</p>'
+    +'<a class="lng-formbtn" href="'+(LANG_FORM_URL||'#')+'"'
+    +(LANG_FORM_URL?' target="_blank" rel="noopener"':' onclick="lngFormOpen();return false;"')
+    +'>'+$t('📝 填写翻译反馈表单')+'</a>'
+    +'</div>';
+  openModal('🌐 Language', note+'<div class="lng-list">'+rows+'</div>');
 }
 
 /* ---------------- 全局状态 ---------------- */
@@ -7738,6 +7791,12 @@ function hScale(h){ return clamp(0.7+(h-2)/38,0.7,1.7); }
 const DEX1_MIN=85;
 /* 玩家投稿用的 Google 表单外链（投稿页顶部按钮 / 详情里的「为它投稿」都用它）。 */
 const SUBMIT_FORM_URL='https://docs.google.com/forms/d/e/1FAIpQLSfaNsYl7xQczLcorhHt9dlmneHYreDYkAUjH6TN_2hwQpFkkg/viewform';
+/* 第二个（备用）立绘投稿表单：链接到位后填这里；留空时点击只提示未开放。两个表单任选一个投即可。 */
+const SUBMIT_FORM_URL2='https://docs.qq.com/form/page/DYXN6eGJpS0t3RENH';
+function subForm2Open(){
+  if(!SUBMIT_FORM_URL2){ toast($t('备用投稿表单还没做好，请稍后再来')); return false; }
+  window.open(SUBMIT_FORM_URL2,'_blank','noopener'); return false;
+}
 function dex2Unlocked(){ return Object.keys(S.collection).length>=DEX1_MIN; }
 function isDex2(id){ return TYPES2.some(t=>t.id===id); }
 function typeById(id){ return TYPES.find(x=>x.id===id)||TYPES2.find(x=>x.id===id); }
@@ -8768,10 +8827,17 @@ function openSubmitPage(){
         <span class="st"><b>${$t('打开投稿表单')}</b><small>${$t('Google 表单 · 上传 PNG 立绘')}</small></span>
         <span class="sa">↗</span>
       </a>
+      <a class="sub-form" href="${SUBMIT_FORM_URL2||'#'}"
+         ${SUBMIT_FORM_URL2?'target="_blank" rel="noopener"':'onclick="return subForm2Open()"'}>
+        <span class="si">📮</span>
+        <span class="st"><b>${$t('备用投稿表单')}</b><small>${$t('腾讯文档表单 · 上传 PNG 立绘（两个表单任选其一）')}</small></span>
+        <span class="sa">↗</span>
+      </a>
     </div>
     <div class="sub-note">
       <span class="sn-t">${$t('投稿说明')}</span>
       <ul>
+        <li>${$t('两个投稿表单内容一样，任选一个填写即可，不需要两个都投。')}</li>
         <li>${$t('同一只月巴被画了多次时，通过的作品都会保留，可以在图鉴里自由切换。')}</li>
         <li>${$t('透明背景 PNG 优先（1024×1024，≤5MB）。JPG / WebP 会由开发者抠成透明底，边缘可能有瑕疵。')}</li>
       </ul>
