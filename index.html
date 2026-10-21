@@ -587,8 +587,14 @@
   @keyframes bairiGlow{0%,100%{box-shadow:0 0 14px rgba(255,255,255,.9),0 0 0 2px #ffffff;}50%{box-shadow:0 0 26px rgba(18,18,24,.8),0 0 0 2px #242429;}}
   @keyframes bairiFlow{0%{background-position:0% 50%;}100%{background-position:300% 50%;;}}
   .bcard:not(.locked){cursor:pointer;}
-  .bcard:not(.locked):hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(90,70,150,.18);}
-  .bcard{transition:transform .15s,box-shadow .15s;}
+  /* 悬停反馈只动立绘、不动卡片本体：
+     若卡片本身位移，指针停在边框上会出现「浮起→脱离→落下」的反复抖动。 */
+  @media (hover:hover){
+    .bcard:not(.locked):hover{box-shadow:0 4px 12px rgba(90,70,150,.18);border-color:var(--purple);}
+    .bcard:not(.locked):hover .pic{transform:translateY(-2px);}
+  }
+  .bcard{transition:box-shadow .15s,border-color .15s;}
+  .bcard .pic{transition:transform .15s;}
   /* 图鉴详情弹窗 */
   .fd{text-align:center;}
   .fd-pic{width:120px;height:120px;margin:2px auto 6px;display:flex;align-items:center;justify-content:center;
@@ -1988,7 +1994,7 @@
   /* cursed 按压反馈：像素硬跳 + 下沉 + active focus */
   html[data-skin="cursed"] .btn:active,html[data-skin="cursed"] .btab:active,html[data-skin="cursed"] .skin:active,
   html[data-skin="cursed"] .zcard:active,html[data-skin="cursed"] .dockbtn:active,html[data-skin="cursed"] .ach-card:active,
-  html[data-skin="cursed"] .bcard:active,html[data-skin="cursed"] .tv-btn:active,html[data-skin="cursed"] .chip:active,
+  html[data-skin="cursed"] .tv-btn:active,html[data-skin="cursed"] .chip:active,
   html[data-skin="cursed"] .iconbtn:active{transform:scale(.96) translateY(1px);transition:transform .08s steps(2,jump-end);}
   html[data-skin="cursed"] .btn:focus-visible,html[data-skin="cursed"] .btab:focus-visible,html[data-skin="cursed"] .skin:focus-visible,
   html[data-skin="cursed"] .dockbtn:focus-visible,html[data-skin="cursed"] .iconbtn:focus-visible{outline:2px solid #ffd75e;outline-offset:2px;transform:scale(1.04);}
@@ -2364,7 +2370,7 @@
   /* dreamink 按压反馈：墨线扭曲下沉 + active focus */
   html[data-skin="dreamink"] .btn:active,html[data-skin="dreamink"] .btab:active,html[data-skin="dreamink"] .skin:active,
   html[data-skin="dreamink"] .zcard:active,html[data-skin="dreamink"] .dockbtn:active,html[data-skin="dreamink"] .ach-card:active,
-  html[data-skin="dreamink"] .bcard:active,html[data-skin="dreamink"] .tv-btn:active,html[data-skin="dreamink"] .chip:active,
+  html[data-skin="dreamink"] .tv-btn:active,html[data-skin="dreamink"] .chip:active,
   html[data-skin="dreamink"] .iconbtn:active{transform:scale(.97) translateY(1px) rotate(-.5deg);transition:transform .1s cubic-bezier(.4,0,.6,1);}
   html[data-skin="dreamink"] .btn:focus-visible,html[data-skin="dreamink"] .btab:focus-visible,html[data-skin="dreamink"] .skin:focus-visible,
   html[data-skin="dreamink"] .dockbtn:focus-visible,html[data-skin="dreamink"] .iconbtn:focus-visible{outline:2px solid #c14d96;outline-offset:2px;transform:scale(1.04);}
@@ -2781,7 +2787,7 @@
   /* mermaidsea 按压反馈：水晶丝滑下沉 + active focus */
   html[data-skin="mermaidsea"] .btn:active,html[data-skin="mermaidsea"] .btab:active,html[data-skin="mermaidsea"] .skin:active,
   html[data-skin="mermaidsea"] .zcard:active,html[data-skin="mermaidsea"] .dockbtn:active,html[data-skin="mermaidsea"] .ach-card:active,
-  html[data-skin="mermaidsea"] .bcard:active,html[data-skin="mermaidsea"] .tv-btn:active,html[data-skin="mermaidsea"] .chip:active,
+  html[data-skin="mermaidsea"] .tv-btn:active,html[data-skin="mermaidsea"] .chip:active,
   html[data-skin="mermaidsea"] .iconbtn:active{transform:scale(.97) translateY(1px);transition:transform .12s cubic-bezier(.2,.8,.3,1);}
   html[data-skin="mermaidsea"] .btn:focus-visible,html[data-skin="mermaidsea"] .btab:focus-visible,html[data-skin="mermaidsea"] .skin:focus-visible,
   html[data-skin="mermaidsea"] .dockbtn:focus-visible,html[data-skin="mermaidsea"] .iconbtn:focus-visible{outline:2px solid #3fb8c8;outline-offset:2px;transform:scale(1.04);}
@@ -3174,7 +3180,7 @@
   /* court 按压反馈：王庭克制下沉 + active focus */
   html[data-skin="court"] .btn:active,html[data-skin="court"] .btab:active,html[data-skin="court"] .skin:active,
   html[data-skin="court"] .zcard:active,html[data-skin="court"] .dockbtn:active,html[data-skin="court"] .ach-card:active,
-  html[data-skin="court"] .bcard:active,html[data-skin="court"] .tv-btn:active,html[data-skin="court"] .chip:active,
+  html[data-skin="court"] .tv-btn:active,html[data-skin="court"] .chip:active,
   html[data-skin="court"] .iconbtn:active{transform:scale(.98) translateY(1px);transition:transform .14s cubic-bezier(.2,.8,.3,1);}
   html[data-skin="court"] .btn:focus-visible,html[data-skin="court"] .btab:focus-visible,html[data-skin="court"] .skin:focus-visible,
   html[data-skin="court"] .dockbtn:focus-visible,html[data-skin="court"] .iconbtn:focus-visible{outline:2px solid #3d8fd8;outline-offset:2px;transform:scale(1.04);}
@@ -3736,7 +3742,7 @@ const TYPES=[
   {id:'mb_zuanshi', name:'钻石月巴',  r:3, v:260, t:1250, cond:null, color:'#9be7ff', shape:'cube'},
   {id:'mb_huang',   name:'黄月月巴',    r:2, v:24, t:220, cond:null, color:'#ffd94a', shape:'round'},
   {id:'mb_qiezhi',  name:'茄汁月巴',  r:2, v:22, t:200, cond:null, img:'https://origin.picgo.net/2026/10/21/07de58ae22de5c368964182b7b78934969a8e2ed84c5ab60.th.png',
-    imgs:[{url:'https://origin.picgo.net/2026/10/21/203f69456c8693a8a.th.png'}], color:'#e5533d', shape:'squish'},
+    imgs:[{url:'、https://origin.picgo.net/2026/10/21/2deb811980dbbda80.th.png'}], color:'#e5533d', shape:'squish'},
   {id:'mb_gaoya',   name:'高雅月巴',    r:3, v:50, t:500, cond:null, color:'#6b5b95', shape:'tall'},
   {id:'mb_long',    name:'long～long～巴～', r:3, v:48, t:480, cond:null, color:'#f0a868', shape:'wide'},
   {id:'bairi', name:'百日月巴',  r:6, v:3000, t:3600, cond:{t:'dexfirst', n:99}, weight:0.1, color:'#ffd54f', shape:'big'},
@@ -7749,8 +7755,20 @@ function artBadgeHTML(t){
   const n=artList(t).length;
   return n>1?`<span class="artn" title="${esc($tf('共 {n} 张立绘',{n:n}))}">🎨${n}</span>`:'';
 }
-function fatSVG(type){
-  const u=artURL(type);
+/* 场景地图上的月巴：有多张立绘时随机挑一张显示。
+   种子取自槽位与种植时间，同一株每次重绘都是同一张，重新种下才换；
+   url 参数用于给 fatSVG 指定图片，不传则用图鉴里选中的那张。 */
+function artRandURL(t,seed){
+  const l=artList(t);
+  if(!l.length) return '';
+  if(l.length===1) return l[0].url;
+  const s=String(seed==null?'':seed);
+  let h=2166136261;
+  for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); }
+  return l[(h>>>0)%l.length].url;
+}
+function fatSVG(type,url){
+  const u=(url!=null)?url:artURL(type);
   if(u){ // 外链 PNG（玩家不可见，仅代码内配置），未配置则走默认 SVG
     return `<img class="fat ybimg" src="${esc(u)}" alt="" decoding="async">`;
   }
@@ -7920,7 +7938,7 @@ function doHarvest(z,w,i,cell,el,quiet){
     coinFly(x,y,coinTarget());
   }
   if(beats.length) toast($tf('📐 新纪录！「{a}」{b} {c}cm / {d}g',{a:type.name,b:beats.join('、'),c:cell.h,d:cell.w}));
-  if(isNew) unlockBanner(type,cell);
+  if(isNew) unlockBanner(type,cell,artRandURL(type,z+'-'+w+'-'+i+'-'+cell.start));
   if(!quiet) hvSfx(isNew); /* 收获音（含金币/新解锁音）：同一时刻多只月巴收获合并为一次 */
   cell.t=null; cell.delay=now()+rand(900,2600);
   updateHeader();
@@ -7928,8 +7946,8 @@ function doHarvest(z,w,i,cell,el,quiet){
   galSync();   // 画廊：满足条件的 CG 记录首次解锁时间（3 秒节流，GALLERY 为空时零开销）
   return {id:type.id,name:type.name,color:type.color,val};
 }
-function unlockBanner(type,cell){
-  $('bannerPic').innerHTML=fatSVG(type);
+function unlockBanner(type,cell,art){
+  $('bannerPic').innerHTML=fatSVG(type,art);
   $('bannerName').textContent=`${type.name} (${cell.h}cm · ${cell.w}g)`;
   $('bannerDesc').textContent=condText(type.cond);
   $('bannerReward').textContent=$t('首次收获 x3 · ')+fmt(type.v*3)+' 🪙';
@@ -8041,10 +8059,12 @@ function renderCell(z,w,i){
   const type=cellTypeOf(cell);   // 失效的月巴 id 会在此清空槽位，走下面的空槽分支
   if(type){
     const stage=cellStage(cell);
+    // 地图上多立绘随机展示：同一株固定同一张（种子含槽位与种植时间），重新种下才可能换
+    const art=artRandURL(type,z+'-'+w+'-'+i+'-'+cell.start);
     if(stage==='mature'){
       const s=hScale(cell.h)*(type.size||1)*SCENE_FAT_ZOOM;
       el.className='wcell mature';
-      el.innerHTML=`<span class="spr" style="transform:scale(${s})">${fatSVG(type)}</span>
+      el.innerHTML=`<span class="spr" style="transform:scale(${s})">${fatSVG(type,art)}</span>
         <span class="val">+${fmt(type.v)}</span>`;
       el.title=`${type.name} · ${cell.h}cm · ${cell.w}g`;
     }else if(stage==='near'){
@@ -8052,7 +8072,7 @@ function renderCell(z,w,i){
       const s=hScale(cell.h)*(type.size||1)*SCENE_FAT_ZOOM*0.85;
       const p=clamp((now()-cell.start)/(cell.dur/speedMult()),0,1);
       el.className='wcell near';
-      el.innerHTML=`<span class="spr" style="transform:scale(${s});opacity:.92">${fatSVG(type)}</span>
+      el.innerHTML=`<span class="spr" style="transform:scale(${s});opacity:.92">${fatSVG(type,art)}</span>
         <span class="pg"><i style="width:${p*100}%"></i></span>`;
       el.title=`${type.name} · 即将成熟…`;
     }else{
@@ -8197,7 +8217,13 @@ function bkMove(e){
   let dx=e.clientX-bkDrag.cx, dy=e.clientY-bkDrag.cy;
   const d=Math.hypot(dx,dy);
   if(d>30){ dx=dx/d*30; dy=dy/d*30; }
-  if(!bkDrag.moved && Math.hypot(dx,dy)>5) bkDrag.moved=true; // 超过阈值视为拖动
+  if(!bkDrag.moved){
+    // 点击死区：手指/鼠标轻点时的几像素抖动不产生任何位移，避免“点一下却抖一下”
+    if(d<=5) return;
+    bkDrag.moved=true;                 // 超过阈值才算拖动
+    bkDrag.x=dx; bkDrag.y=dy;          // 起步直接贴合，省去从 0 追位的多余摆动
+    bkDrag.lastX=dx; bkDrag.lastY=dy; bkDrag.lastEvtT=e.timeStamp||0;
+  }
   bkDrag.tx=dx; bkDrag.ty=dy;
   bkDrag.x+=(dx-bkDrag.x)*FOL_EMA; bkDrag.y+=(dy-bkDrag.y)*FOL_EMA;
   bkApply(bkDrag);
@@ -8211,6 +8237,13 @@ function bkMove(e){
 }
 function bkEnd(e){
   if(!bkDrag||bkDrag.ptr!==e.pointerId)return;
+  if(!bkDrag.moved && bkDrag.state==='drag'){
+    // 只是点了一下：立即归位，不走欠阻尼回弹（小位移回弹会被放大成抖动）
+    bkDrag.spr.style.transform=`translate(0,0) rotate(0deg) scale(${bkDrag.scale})`;
+    if(bkRaf) cancelAnimationFrame(bkRaf);
+    bkDrag=null; bkRaf=null;
+    return;
+  }
   bkDrag.state='release';
   sfx.spring();
 }
