@@ -787,6 +787,7 @@
   #ddgame .dd-top .dd-role{background:rgba(199,150,64,.16);color:var(--gold);border-radius:999px;padding:3px 10px;}
   #ddgame .dd-top .sp{flex:1;}
   #ddgame .iconbtn{width:30px;height:30px;font-size:15px;font-weight:900;}
+  #ddgame .iconbtn.dd-talkoff{opacity:.42;filter:grayscale(1);}
   #ddgame .dd-stage{position:relative;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;
     padding:10px;width:100%;max-width:620px;margin:0 auto;overflow:hidden;}
   /* 对手区 / 中央信息 / 我方出牌：矮屏内容超出时本区上下滚动，
@@ -3436,6 +3437,7 @@
     <span class="sp"></span>
     <button class="iconbtn dd-achbtn" id="ddAchBtn" onclick="ddOpenAch()" title="斗月巴成就" data-i18n-title="斗月巴成就">🏅<span class="dd-achdot" id="ddAchDot"></span></button>
     <button class="iconbtn" onclick="ddShowHistory()" title="战绩记录" data-i18n-title="战绩记录">📜</button>
+    <button class="iconbtn" id="ddTalkBtn" onclick="ddTalkToggle()" title="对局对话" data-i18n-title="对局对话">💬</button>
     <button class="iconbtn" id="ddRulesBtn" title="规则" data-i18n-title="规则">?</button>
     <button class="iconbtn" onclick="ddExit()" title="退出" data-i18n-title="退出">✕</button>
   </div>
@@ -3480,6 +3482,7 @@
         <p class="dd-note"><span data-i18n="当前余额">当前余额</span> <b id="ddBetBal">0</b> 🍅 <span data-i18n="· 押注在开局时扣除">· 押注在开局时扣除</span></p>
         <p class="dd-note" id="ddBetLimit"></p>
         <p class="dd-note" id="ddCheatHint"></p>
+        <p class="dd-note" id="ddBetTip"></p>
         <p class="dd-warn" data-i18n="⚠️ 开局后押注即刻扣除并记 1 次；中途刷新或离开会判为认输，押注不退、次数照扣。">⚠️ 开局后押注即刻扣除并记 1 次；中途刷新或离开会判为认输，押注不退、次数照扣。</p>
         <div class="dd-btns">
           <button class="btn gold" id="ddStartBtn" onclick="ddStart()" data-i18n="开始牌局">开始牌局</button>
@@ -3641,8 +3644,8 @@ const ZONES=[
 const WOOD_IMG='https://origin.picgo.net/2026/09/03/58512f7c468327988fd65ba259f261417096759aace686b4.jpg';
 
 /* ---------------- 数据：道具/装饰 ---------------- */
-const FAST_COST=200, WEATHER_COST=500, ACCEL_BASE=2000, ACCEL_MULT=2.2, ACCEL_MAX=15;
-function fastCost(){ const base=200, slots=totalSlots(), coin=Math.max(0,Math.log10(1+S.coins)); return Math.round(base*(1+0.1*Math.max(0,slots-1))*(1+coin/6)); }
+const FAST_COST=20, WEATHER_COST=500, ACCEL_BASE=2000, ACCEL_MULT=2.2, ACCEL_MAX=15;
+function fastCost(){ const base=FAST_COST, slots=totalSlots(), coin=Math.max(0,Math.log10(1+S.coins)); return Math.round(base*(1+0.1*Math.max(0,slots-1))*(1+coin/6)); }
 function totalSlots(){ let n=0; for(const z in S.zones){ const zs=S.zones[z]; for(const w of zs.woods||[]) n+=w.cells.length; } return n; }
 const ITEMS=[
   {id:'coffee',    name:'咖啡机',   icon:'☕', cost:4000,  desc:'解锁「咖啡月巴」的出现条件'},
@@ -3717,7 +3720,9 @@ const TYPES=[
   {id:'mb_guai',     name:'奇怪月巴',   r:4, v:90,  t:600,  cond:{t:'count',id:'mb_pang',n:15}, color:'#b89a55', shape:'bean'},
   {id:'mb_shizhe',   name:'归家月巴', img:'https://origin.picgo.net/2026/09/03/2b384c6d07a3d397b.th.png', r:5, v:130, t:840,  cond:{t:'count',id:'mb_ye',n:10},   color:'#5f44a6', shape:'moon'},
 
-  {id:'mb_zhoumo',   name:'双休月巴', r:4, v:120, t:720, cond:null,   color:'#8fc9c9', shape:'cube'},
+  {id:'mb_zhoumo',   name:'双休月巴', img:'https://origin.picgo.net/2026/10/22/---a60a7636bd80eb9e.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/22/---a60a7636bd80eb9e.th.png', note:'朝から掃除をする週末。48時間ベッドにいる週末もある。'}],
+    r:4, v:120, t:720, cond:null,   color:'#8fc9c9', shape:'cube'},
   {id:'mb_zhengdian',name:'整点月巴', r:4, v:300, t:900, cond:null,  color:'#e0d24e', shape:'star'},
   {id:'mb_xinnian',  name:'新年月巴', r:6, v:500, t:600, cond:null, weight:0.1, color:'#d94a6b', shape:'star'},
   {id:'mb_qingren',  name:'爱情月巴', r:6, v:500, t:600, cond:null, weight:0.1, color:'#e06b9c', shape:'heart'},
@@ -3748,7 +3753,7 @@ const TYPES=[
   {id:'dabus',     name:'大巴车',     img:'https://origin.picgo.net/2026/10/21/f696279cfe514001d304e826c68f44f3596857784003a73a.th.png', r:3, v:48, t:460,  cond:null, color:'#f2b639', shape:'big'},
   {id:'youling',   name:'幽灵月巴',     r:3, v:300, t:1200, cond:null, color:'#beb5e6', shape:'tall'},
   {id:'xinba',     name:'心巴',       r:2, v:20, t:180,  cond:null, img:'https://origin.picgo.net/2026/10/21/3f4dfef1286bc40c7002f3d2e220cb36f63b0332ebc9acd3.th.png',
-    imgs:[{url:'https://origin.picgo.net/2026/10/21/2c041a17d8e59a3cf.th.png', by:'軟管'}], color:'#ff6f91', shape:'squish'},
+    imgs:[{url:'https://origin.picgo.net/2026/10/21/2c041a17d8e59a3cf.th.png', by:'軟管', note:'巴啦巴巴巴。'}], color:'#ff6f91', shape:'squish'},
   {id:'yinxiang',  name:'音响月巴',   r:1, v:8, t:90,   cond:null, color:'#6b7280', shape:'tall'},
   {id:'jieba',     name:'戒巴',       r:3, v:55, t:520,  cond:null, color:'#4e9f8d', shape:'squish'},
   {id:'bazong',    name:'巴总',       img:'https://origin.picgo.net/2026/10/21/8ff3d46600bd7fcfb5dcab98f93cbd9bbeef26b25b073ec3.th.png', r:3, v:1800, t:4200, cond:null, color:'#c68a3a', shape:'big'},
@@ -3778,7 +3783,9 @@ const TYPES2=[
   {id:'m2_dou',    name:'豆月巴',  r:1, v:8,  t:80,  cond:null, color:'#aed581', shape:'round'},
   {id:'m2_men',    name:'萌月巴',  r:1, v:9,  t:90,  cond:null, color:'#f8bbd0', shape:'squish'},
   {id:'m2_zhu',    name:'猪月巴',  r:1, v:10, t:100, cond:null, color:'#ffe0b2', shape:'wide'},
-  {id:'m2_dundun', name:'墩墩月巴', img:'https://origin.picgo.net/2026/10/22/chubby-bannyb70ce7f942be59f2.th.png', r:1, v:12, t:110, cond:null, color:'#c9c9f0', shape:'round'},
+  {id:'m2_dundun', name:'墩墩月巴', img:'https://origin.picgo.net/2026/10/22/chubby-bannyb70ce7f942be59f2.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/22/chubby-bannyb70ce7f942be59f2.th.png', by:'hellomelody', note:'Why can eating so much tomato make it gain weight?'}],
+    r:1, v:12, t:110, cond:null, color:'#c9c9f0', shape:'round'},
   {id:'m2_mao',    name:'猫月巴',  img:'https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li578400427d700c6a.th.png', r:1, v:13, t:120, cond:null, color:'#b0bec5', shape:'heart'},
   {id:'m2_gou',    name:'狗月巴',  r:1, v:14, t:130, cond:null, color:'#d7ccc8', shape:'bean'},
   {id:'m2_zuoqi',  name:'坐骑月巴', img:'https://origin.picgo.net/2026/10/21/c78c4be6d1ad05b71428d20e99d80e43ef4bf36af33cc07a.th.png', r:1, v:15, t:140, cond:null, color:'#c8a165', shape:'big'},
@@ -3798,7 +3805,9 @@ const TYPES2=[
   {id:'m2_wo',     name:'蜗牛月巴',  r:3, v:34, t:360, cond:{t:'time',a:20,b:23},    color:'#b0bec5', shape:'squish'},
   {id:'m2_xiangjiao',name:'香蕉月巴',r:3, v:36, t:360, cond:{t:'weather',w:'sunny'}, color:'#ffe082', shape:'bean'},
   {id:'m2_hulu',   name:'葫芦月巴',  r:3, v:40, t:420, cond:{t:'season',s:'autumn'}, color:'#dce775', shape:'round'},
-  {id:'m2_bingqilin',name:'冰淇淋月巴',img:'https://origin.picgo.net/2026/10/21/756357abf125a8cd0c6f532836a233717fd3a810900d0252.th.png',r:3,v:42,t:420, cond:{t:'season',s:'winter'}, color:'#e1bee7', shape:'round'},
+  {id:'m2_bingqilin',name:'冰淇淋月巴',img:'https://origin.picgo.net/2026/10/21/756357abf125a8cd0c6f532836a233717fd3a810900d0252.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/21/756357abf125a8cd0c6f532836a233717fd3a810900d0252.th.png', note:'有草莓、葡萄、香草三种口味的美味冰淇淋，番茄很喜欢，但三个球的性格好像不太一样……'}],
+    r:3,v:42,t:420, cond:{t:'season',s:'winter'}, color:'#e1bee7', shape:'round'},
   {id:'m2_shamo',    name:'沙漠月巴',  r:4, v:60, t:600, cond:{t:'travel', d:'forest', n:5},  color:'#ffcc80', shape:'round'},
   {id:'m2_wenquan',name:'温泉月巴',  r:4, v:62, t:600, cond:{t:'travel', s:'暖石'},  color:'#ffab91', shape:'drop'},
   {id:'m2_huoshan',name:'火山月巴',  r:4, v:66, t:640, cond:{t:'travel', d:'sea', n:3},  color:'#d15852', shape:'spike'},
@@ -3917,18 +3926,11 @@ const YB_PIC_AUTHOR={
   xinba:'影子生物',
   m2_qingchun:'鲸弑',
   m2_baboyi:'ak',
-  m2_dundun:'hellomelody',
 };
 /* 每种月巴的「简介(文字)作者」by ID，图鉴详情弹窗简介末尾展示；未填则不显示文字作者 */
 const YB_TXT_AUTHOR={};
 
-/* 每种月巴的「画师的备注」by ID，图鉴详情里作者署名下方展示；未填则不显示 */
-const YB_PIC_NOTE={
-  m2_bingqilin:'有草莓、葡萄、香草三种口味的美味冰淇淋，番茄很喜欢，但三个球的性格好像不太一样……',
-  xinba:'巴啦巴巴巴。',
-  m2_dundun:'Why can eating so much tomato make it gain weight?',
-};
-/* 多立绘时备注跟图走：imgs 条目上写 note，如 {url:'…', by:'影子生物', note:'…'} */
+/* 画师的备注写在对应立绘上（imgs 条目），不需要备注的立绘不写 */
 
 /* 每种月巴的简介（图鉴详情弹窗展示） */
 const FAT_INTRO={
@@ -5806,19 +5808,33 @@ const I18N_UI={
   '好哦，那你当地主～':{en:'Okay, you be the landlord~',ja:'いいよ、じゃあ地主はあなたね～',ko:'좋아요, 그럼 지주는 네가 해요~'},
   '你当地主？那我多吃两口再打。':{en:"You're landlord? Let me eat two more bites first.",ja:'あなたが地主？もう二口食べてから打つ。',ko:'네가 지주? 두 입 더 먹고 할게요.'},
   '地主？行，我专门打地主。':{en:'Landlord? Fine. I specialize in beating them.',ja:'地主？いいよ、地主を叩くのが専門だ。',ko:'지주? 좋아, 난 지주 잡는 게 전문이야.'},
+  '你叫地主啊？行，我陪你。':{en:'You called landlord? Fine, I will play along.',ja:'あなたが地主？いいよ、付き合うよ。',ko:'네가 지주? 좋아, 같이 해줄게.'},
+  '地主归你，我随便打打。':{en:'The landlord seat is yours. I will just play casually.',ja:'地主はあなたに任せる、適当に打つよ。',ko:'지주는 너한테 맡길게, 난 대충 칠게.'},
   '我手牌好一点，这次我来吧，希望能赢一局。':{en:'My hand is a bit better. Let me try this time.',ja:'手札が少し良いから、今回は私が。一局勝てますように。',ko:'패가 좀 좋아서 이번엔 제가 할게요. 한 판 이겼으면 좋겠네요.'},
   '我就算了吧，让番茄来，它想当地主。':{en:'Not me — let Tomato have it. It wants to.',ja:'僕はいいよ、トマトに任せる。地主をやりたがってる。',ko:'난 됐어요. 토마토가 하고 싶대요.'},
   '番茄当地主？那我得认真打了。':{en:'Tomato as landlord? Then I must focus.',ja:'トマトが地主？なら本気で打たないと。',ko:'토마토가 지주? 그럼 진지하게 해야겠네요.'},
   '行，地主是你，我不客气了。':{en:'Fine, you are landlord. No holding back.',ja:'よし、地主はあなただ。手加減しないよ。',ko:'좋아, 지주는 너야. 봐주지 않을게.'},
+  '番茄当地主？那我可不客气。':{en:'Tomato as landlord? Then I will not hold back.',ja:'トマトが地主？なら手加減しないよ。',ko:'토마토가 지주? 그럼 봐주지 않을게.'},
+  '它当地主，我就更来劲了。':{en:'Tomato as landlord only fires me up.',ja:'トマトが地主なら、なおさら燃えるね。',ko:'토마토가 지주라니, 더 신나는데.'},
   '它当地主了，我们俩配合一下。':{en:'It is the landlord now. Let us team up.',ja:'あいつが地主だ。二人で連携しよう。',ko:'걔가 지주네요. 우리 둘이 맞춰요.'},
   '我都可以哦，那我叫啦～':{en:'I am fine either way — I will call~',ja:'どっちでもいいよ、じゃあ僕が叫ぶね～',ko:'난 다 괜찮아요, 그럼 부를게요~'},
   '我叫！赢了能吃番茄吗？':{en:'I will call! If I win, can I eat Tomato?',ja:'叫ぶ！勝ったらトマト食べていい？',ko:'내가 할래! 이기면 토마토 먹어도 돼요?'},
   '这把我当地主，你们都给我等着。':{en:'I am landlord this round. All of you, wait.',ja:'この局は俺が地主だ。覚悟しとけ。',ko:'이 판은 내가 지주다. 다들 각오해.'},
+  '我叫，牌好得很。':{en:'I will call — my cards are great.',ja:'俺が叫ぶ、手札は上々だ。',ko:'내가 부를게, 패가 아주 좋아.'},
+  '这局我来，稳的。':{en:'I will take this round. Solid.',ja:'この局は俺が行く、堅いよ。',ko:'이 판은 내가 간다, 확실해.'},
+  '让我当地主，你们随意。':{en:'Let me be landlord — play however you like.',ja:'俺に地主をやらせろ、好きに打て。',ko:'내가 지주 할 테니 너희는 마음대로 해.'},
   '都不叫……那只能辛苦你了。':{en:'No one called... then it is on you.',ja:'誰も叫ばないなら……あなたにお願いするね。',ko:'아무도 안 부르면... 너한테 맡길게요.'},
   '那辛苦你啦，我都可以哦。':{en:'Sorry to trouble you — I am easy.',ja:'じゃあよろしくね、僕はどれでもいいよ。',ko:'그럼 수고해요, 난 다 괜찮아요.'},
+  '都不叫？那你来，我正好多吃点。':{en:'No one called? Then you take it — I will eat a bit more.',ja:'誰も叫ばない？ならあなたが。ちょうど多く食べられる。',ko:'아무도 안 불렀어? 그럼 네가 해, 난 좀 더 먹을게.'},
+  '都没人叫？便宜你了。':{en:'Nobody called? Lucky you.',ja:'誰も叫ばないのか？お前は得だな。',ko:'아무도 안 불렀다고? 운 좋네.'},
   '它很厉害，我们要一起拦住它。':{en:'It is strong. We must stop it together.',ja:'あいつは強い。二人で止めよう。',ko:'걔는 강해요. 같이 막아야 해요.'},
+  '都不叫呀？那它当地主啦。':{en:'No one called? Then it gets to be landlord.',ja:'誰も叫ばないの？じゃああいつが地主だね。',ko:'아무도 안 불러? 그럼 걔가 지주네.'},
   '我当地主，是不是该让你们上贡番茄？':{en:'I am landlord — should you not offer tomatoes?',ja:'俺が地主だ、トマトを貢ぐべきじゃないか？',ko:'내가 지주인데, 토마토를 바쳐야 하지 않아?'},
   '没人敢叫？那我收下了。':{en:'No one dares? Then I will take it.',ja:'誰も叫ばないのか？じゃあ俺がもらう。',ko:'아무도 못 부르나? 그럼 내가 가져가지.'},
+  '都不叫？那辛苦你了。':{en:'Nobody called? Then it is on you.',ja:'誰も叫ばない？じゃあ頼んだよ。',ko:'아무도 안 불러? 그럼 수고해.'},
+  '没人叫，就只能你来了。':{en:'No one called, so it has to be you.',ja:'誰も叫ばないなら、あなたしかいないね。',ko:'아무도 안 부르면 너밖에 없지.'},
+  '都不叫？那我收下了。':{en:'No one called? I will take it then.',ja:'誰も叫ばない？じゃあ俺がもらう。',ko:'아무도 안 불러? 그럼 내가 가져가지.'},
+  '没人要，正好归我。':{en:'Nobody wants it — perfect for me.',ja:'誰もいらないなら、ちょうど俺のものだ。',ko:'아무도 안 원하면 딱 내 거네.'},
   /* —— 出牌 —— */
   '我先出张小牌，你别有压力。':{en:'I will start small — no pressure.',ja:'小さいのから出すね、気にしないで。',ko:'작은 패부터 낼게요, 부담 갖지 마요.'},
   '这张……还不错吧？':{en:'This one... not bad, right?',ja:'これ……なかなかでしょ？',ko:'이거... 괜찮죠?'},
@@ -5852,6 +5868,14 @@ const I18N_UI={
   '王炸……不用就输啦，抱歉。':{en:'Rocket... it is this or lose. Sorry.',ja:'ロケット……出さないと負ける、ごめんね。',ko:'로켓... 안 내면 지니까, 미안.'},
   '两颗最大的番茄一起炸！':{en:'The two biggest tomatoes blow up together!',ja:'一番大きいトマト二つ、一緒に爆発！',ko:'제일 큰 토마토 둘이 같이 터져요!'},
   '王炸。这局我说了算。':{en:'Rocket. This round is mine.',ja:'ロケット。この局は俺が決める。',ko:'로켓. 이 판은 내가 정한다.'},
+  '四张带两张，有点难打。':{en:'Four with two — that is hard to beat.',ja:'四枚に二枚、ちょっと厳しいね。',ko:'네 장에 두 장, 따라가기 힘드네요.'},
+  '一下出这么多，我得想想。':{en:'So many at once — let me think.',ja:'一度にそんなに？ちょっと考えるね。',ko:'한 번에 이렇게 많이? 생각 좀 해볼게요.'},
+  '哇，好厉害……':{en:'Wow, that is impressive...',ja:'わ、すごい……',ko:'와, 대단한데...'},
+  '四张番茄加两片叶子。':{en:'Four tomatoes plus two leaves.',ja:'トマト四つに葉っぱ二枚。',ko:'토마토 네 개에 잎 두 장.'},
+  '什么叫一口吃撑。':{en:'Now that is a mouthful.',ja:'これぞ一口で満腹ってやつ。',ko:'이게 바로 한입에 배부르다는 거지.'},
+  '四带二？挺会挑。':{en:'Four with two? Nice pick.',ja:'四帯二？いい選択だ。',ko:'네 장에 두 장? 제법 고르네.'},
+  '四张都出了，胆子不小。':{en:'All four out — bold.',ja:'四枚全部出すとは、度胸があるね。',ko:'네 장을 다 내다니, 배짱 좋네.'},
+  '这么整齐，我也想要。':{en:'So tidy — I want that too.',ja:'こんなに揃ってるなんて、俺も欲しいな。',ko:'이렇게 깔끔하다니, 나도 갖고 싶네.'},
   '哇，你留了这一手。':{en:'Wow, you saved that.',ja:'わあ、そんな手を残してたの。',ko:'와, 그걸 남겨뒀네요.'},
   '哇……好凶哦。':{en:'Wow... so fierce.',ja:'わあ……怖いなあ。',ko:'와... 무섭네요.'},
   '咕咕嘎嘎！':{en:'Cluck-cluck!',ja:'クワックワッ！',ko:'꽥꽥!'},
@@ -6310,6 +6334,110 @@ const I18N_UI={
   '看吧，番茄也会急。':{en:'See? Tomato can get fierce too.',ja:'ほら、トマトも怒るんだ。',ko:'봐요, 토마토도 화내네요.'},
   '炸得不错，轮到你了。':{en:'Nice bomb. Your turn.',ja:'いい爆発だ、次はお前だ。',ko:'잘 터뜨렸네, 이제 너 차례야.'},
   '炸一下而已，别慌。':{en:'Just a bomb — do not panic.',ja:'ただの爆発だ、慌てるな。',ko:'그냥 터뜨린 것뿐, 당황 마요.'},
+  /* ---- 斗月巴对局台词：11.3 玩家行为反馈（P2-A） ---- */
+  '一手就走完了？':{en:'Done in one hand?',ja:'一手で終わり？',ko:'한 번에 다 냈어?'},
+  '诶？没了？':{en:'Huh? All gone?',ja:'え？もう無いの？',ko:'어? 벌써 없어?'},
+  '一口吃完了？':{en:'Ate it all in one bite?',ja:'一口で食べ終わったの？',ko:'한 입에 다 먹었어?'},
+  '……算你狠。':{en:'...You got me this time.',ja:'……やるな。',ko:'...제법이네.'},
+  '走这么快，我都没反应过来。':{en:'So fast I did not even react.',ja:'速すぎて、反応できなかった。',ko:'너무 빨라서 반응도 못 했어.'},
+  '你也不要？那我也不急。':{en:'Passing too? Then no rush for me either.',ja:'あなたもパス？じゃあ私も急がない。',ko:'너도 안 내? 그럼 나도 서두르지 않아.'},
+  '又不要呀？那我出啦。':{en:'Passing again? Then here I go.',ja:'またパス？じゃあ出すね。',ko:'또 안 내? 그럼 낼게.'},
+  '连着不要，是和我一样留着胃口等番茄？':{en:'Passing twice — saving your appetite for tomatoes like me?',ja:'続けてパス、私みたいにトマトの余力？',ko:'연달아 안 내다니, 나처럼 토마토 먹을 배를 비워두는 거야?'},
+  '两次都不要，你在等什么？':{en:'Passing twice — what are you waiting for?',ja:'二回パス、何を待ってる？',ko:'두 번이나 안 내, 뭘 기다려?'},
+  '这么稳健？应该是要不起吧~':{en:'Playing it safe? Probably cannot beat it~',ja:'そんなに慎重？たぶん受けられないんだな～',ko:'이렇게 신중해? 아마 못 받는 거겠지~'},
+  '想都没想就出了？':{en:'Played without thinking?',ja:'考えもせずに出した？',ko:'생각도 없이 냈어?'},
+  '好快哦～':{en:'So quick~',ja:'速いね～',ko:'빠르네~'},
+  '这么急，赶着吃番茄？':{en:'In such a hurry — rushing to eat tomatoes?',ja:'そんなに急いで、トマトを食べに行くの？',ko:'그렇게 급하게, 토마토 먹으러 가?'},
+  '这么快，想清楚了？':{en:'So fast — did you think it through?',ja:'速いな、ちゃんと考えたのか？',ko:'이렇게 빨리, 제대로 생각한 거야?'},
+  '急什么，牌又不会跑。':{en:'What is the rush? The cards will not run away.',ja:'焦るな、牌は逃げない。',ko:'급하긴, 패가 도망가진 않아.'},
+  '还没想好吗？慢慢来。':{en:'Still not decided? Take your time.',ja:'まだ決まらない？ゆっくりでいい。',ko:'아직 못 정했어? 천천히 해.'},
+  '要不要我帮你选？':{en:'Want me to pick for you?',ja:'私が選ぼうか？',ko:'내가 골라줄까?'},
+  '再想我的番茄都要等不及了。':{en:'Think more and my tomatoes will not wait.',ja:'これ以上考えると、私のトマトが待てない。',ko:'더 생각하면 내 토마토가 못 기다려.'},
+  '提示点两次也没用。':{en:'Hitting hint twice will not help.',ja:'ヒントを二回押しても無駄だ。',ko:'힌트 두 번 눌러도 소용없어.'},
+  '提示可不会帮你赢。':{en:'Hints will not win it for you.',ja:'ヒントじゃ勝てないぞ。',ko:'힌트가 이겨주진 않아.'},
+  /* ---- 斗月巴对局台词：11.4 结算精细化（P2-B） ---- */
+  '这局打得真漂亮。':{en:'That was a beautiful game.',ja:'見事な一局だった。',ko:'정말 멋진 한 판이었어.'},
+  'S 诶……你有点厉害哦。':{en:'An S... you are pretty good.',ja:'S だって……ちょっとすごいね。',ko:'S 라니... 좀 대단한데.'},
+  '还挺厉害的。':{en:'Not bad at all.',ja:'なかなかやるな。',ko:'제법이네.'},
+  'S就以为自己很厉害吗。':{en:'An S and you think you are tough.',ja:'S ごときで調子に乗るな。',ko:'S 받았다고 잘난 척이야.'},
+  '就差一张，好险。':{en:'One card away — that was close.',ja:'あと一枚、危なかった。',ko:'한 장 차이, 아슬아슬했어.'},
+  '差点就翻车啦～':{en:'Almost flipped over~',ja:'もう少しで転ぶところだった～',ko:'하마터면 뒤집힐 뻔했네~'},
+  '最后一口差点没吃到。':{en:'Almost missed the last bite.',ja:'最後の一口が食べられなかったかも。',ko:'마지막 한 입을 놓칠 뻔했어.'},
+  '运气好而已。':{en:'Just luck.',ja:'運が良かっただけだ。',ko:'운이 좋았을 뿐이야.'},
+  '就差一点点，别灰心。':{en:'So close — do not be discouraged.',ja:'あと少し、落ち込まないで。',ko:'조금 차이였어, 낙심하지 마.'},
+  '差一张哦，下次就赢了。':{en:'One card short — next time you will win.',ja:'あと一枚だよ、次は勝てる。',ko:'한 장 모자랐어, 다음엔 이길 거야.'},
+  '吃白饭的……':{en:'A free meal, huh...',ja:'飯だけ食ってるのか……',ko:'밥만 축내는...'},
+  '差一张？差得远。':{en:'One card short? You are far off.',ja:'あと一枚？程遠いな。',ko:'한 장 차이? 한참 멀었어.'},
+  '这一把赚得真多。':{en:'Quite a profit this round.',ja:'今回けっこう稼いだね。',ko:'이번 판 많이 벌었네.'},
+  '赚翻啦～':{en:'Made a killing~',ja:'もうけまくり～',ko:'완전 대박~'},
+  '够买一筐番茄了！':{en:'Enough to buy a basket of tomatoes!',ja:'トマトひと籠買えるぞ！',ko:'토마토 한 바구니 살 수 있겠어!'},
+  '手气不错，下次未必。':{en:'Good luck this time — not necessarily next.',ja:'運が良かったな、次はわからないぞ。',ko:'운 좋았네, 다음엔 아닐 거야.'},
+  '押太多了，下次少一点。':{en:'You bet too much — bet less next time.',ja:'賭けすぎだよ、次は少なくね。',ko:'너무 많이 걸었어, 다음엔 줄여.'},
+  '别难过，番茄还会有的。':{en:'Do not be sad — there will be more tomatoes.',ja:'悲しまないで、トマトはまたあるよ。',ko:'슬퍼하지 마, 토마토는 또 있어.'},
+  '这一把够我吃好几天了。':{en:'This one will feed me for days.',ja:'これで何日か食べられるな。',ko:'이걸로 며칠은 먹겠네.'},
+  '押这么大，怪谁？':{en:'Betting that big — whose fault is it?',ja:'そんなに賭けて、誰のせいだ？',ko:'이렇게 크게 걸고, 누구 탓이야?'},
+  '恭喜，又解锁一个。':{en:'Congrats — another one unlocked.',ja:'おめでとう、また一つ解除だね。',ko:'축하해, 또 하나 해금했네.'},
+  '成就到手啦～':{en:'Achievement secured~',ja:'実績ゲット～',ko:'업적 획득~'},
+  '奖励的番茄够吃了！':{en:'The bonus tomatoes are enough to eat!',ja:'ご褒美のトマトで十分だ！',ko:'보상 토마토로 충분해!'},
+  '成就归你，牌归我。':{en:'The achievement is yours — the cards are mine.',ja:'実績はお前、札は俺だ。',ko:'업적은 네 거, 패는 내 거야.'},
+  /* ---- 斗月巴对局台词：11.6 长线记忆（P4） ---- */
+  '第一次来？坐下慢慢打。':{en:'First time? Sit down and take it easy.',ja:'初めて？座ってゆっくりどうぞ。',ko:'처음이야? 앉아서 천천히 해.'},
+  '新面孔哦，我都可以。':{en:'A new face — anything goes with me.',ja:'新しい顔だね、私はどれでもいいよ。',ko:'새 얼굴이네, 난 다 괜찮아.'},
+  '第一次？那我少吃两口。':{en:'First time? Then I will eat a little less.',ja:'初めて？じゃあ少し控えめに食べるね。',ko:'처음이야? 그럼 나는 조금 덜 먹을게.'},
+  '新手？那就别怪我了。':{en:'A rookie? Then do not blame me.',ja:'初心者？なら容赦しないぞ。',ko:'초보야? 그럼 나를 탓하지 마.'},
+  '好久没见，最近还好吗？':{en:'Long time no see — how have you been?',ja:'お久しぶり、最近どう？',ko:'오랜만이야, 잘 지냈어?'},
+  '你终于来啦～':{en:'You finally came~',ja:'やっと来たね～',ko:'드디어 왔네~'},
+  '这么久没来，不想让我吃番茄就直说。':{en:'Gone so long — if you did not want me eating tomatoes, just say so.',ja:'こんなに来ないなんて、トマトを食べてほしくないなら直に言ってよ。',ko:'이렇게 오래 안 오다니, 내가 토마토 먹는 게 싫으면 말을 해.'},
+  '这么久不来，手生了没？':{en:'Away so long — getting rusty?',ja:'そんなに来なかったな、腕は鈍ってないか？',ko:'이렇게 안 왔으니, 손이 굳었나?'},
+  '这么多局了，谢谢你还来。':{en:'So many games — thanks for still coming.',ja:'こんなにたくさん、来てくれてありがとう。',ko:'이렇게 많이 했는데, 와줘서 고마워.'},
+  '都这么多局啦，还没累吗？注意休息哦。':{en:'That many games and not tired? Take a break.',ja:'こんなにやって、疲れないの？休んでね。',ko:'이렇게 많이 했는데 안 피곤해? 쉬어.'},
+  '这么多局，有多少番茄给我。':{en:'So many games — how many tomatoes for me?',ja:'こんなにたくさん、トマトはいくつくれるの。',ko:'이렇게 많이, 토마토는 얼마나 줄 거야.'},
+  '这么多局？你还挺执着。':{en:'That many games? You are persistent.',ja:'こんなに？なかなか執念深いな。',ko:'이렇게 많이? 꽤 집착이 강하네.'},
+  '五连胜了，你手真稳。':{en:'Five in a row — steady hands.',ja:'五連勝、本当に安定してるね。',ko:'5연승, 손이 참 안정적이네.'},
+  '五场了，我服啦～':{en:'Five games — I give up~',ja:'五回か、参ったな～',ko:'다섯 판이라니, 인정할게~'},
+  '五连胜，该请客了吧？':{en:'Five straight wins — time to treat me, right?',ja:'五連勝、ごちそうしてくれるよね？',ko:'5연승이면 한턱 내야지?'},
+  '五场？我不信你能一直赢。':{en:'Five? I do not believe you can keep winning.',ja:'五回？ずっと勝てるとは思わないぞ。',ko:'다섯 번? 계속 이길 거라고는 안 믿어.'},
+  '十场了……你有点可怕。':{en:'Ten games... you are a little scary.',ja:'十回か……ちょっと怖いよ。',ko:'열 판이라니... 좀 무서운데.'},
+  '十连胜，我都不知道该说什么了。':{en:'Ten straight — I do not know what to say.',ja:'十連勝、何を言えばいいかわからない。',ko:'10연승, 무슨 말을 해야 할지 모르겠어.'},
+  '十场，能换多少番茄啊。':{en:'Ten games — how many tomatoes is that?',ja:'十回で、トマトいくつになるかな。',ko:'열 판이면 토마토 몇 개나 될까.'},
+  '十场而已，别得意。':{en:'Only ten — do not get cocky.',ja:'たった十回だ、調子に乗るな。',ko:'겨우 열 판, 우쭐대지 마.'},
+  '困难也赢了？行，我记住你了，给我等着。':{en:'Won on hard too? Fine — I will remember you. Just wait.',ja:'困難でも勝った？いいだろう、覚えておく。待ってろよ。',ko:'어려움에서도 이겼다고? 좋아, 기억해 둘게. 두고 봐.'},
+  /* ---- 斗月巴对局台词：11.5 下注层提示（P3） ---- */
+  '坐吧，押多少都行。':{en:'Have a seat — bet whatever you like.',ja:'座ってね、いくら賭けてもいいよ。',ko:'앉아요, 얼마든지 걸어도 돼요.'},
+  '我很好说话的，随便玩。':{en:'I am easygoing — play however you like.',ja:'私は話がわかるよ、気楽にどうぞ。',ko:'난 말 잘 듣는 편이야, 편하게 해.'},
+  '押多少？够我吃番茄就行。':{en:'How much? As long as I get tomatoes.',ja:'いくら賭ける？私がトマトを食べられるくらいでいい。',ko:'얼마 걸래? 내가 토마토 먹을 만큼이면 돼.'},
+  '押大点，别浪费时间。':{en:'Bet big — do not waste time.',ja:'大きく賭けろ、時間の無駄だ。',ko:'크게 걸어, 시간 낭비하지 말고.'},
+  '押这么大？有胆量。':{en:'Betting that big? Bold.',ja:'こんなに賭ける？度胸あるな。',ko:'이렇게 크게? 배짱 있네.'},
+  '押这么大，输了别哭。':{en:'Betting that big — do not cry if you lose.',ja:'こんなに賭けて、負けても泣くなよ。',ko:'이렇게 크게 걸고, 지면 울지 마.'},
+  '押这么大，够我吃很久了。':{en:'That big a bet — enough to feed me for a while.',ja:'こんなに賭けて、しばらく食べていけるな。',ko:'이렇게 크게 걸면, 한동안 먹을 수 있겠네.'},
+  '一颗番茄也是重要的心意。':{en:'One tomato is still a meaningful gesture.',ja:'トマト一つでも大事な気持ちだよ。',ko:'토마토 한 개도 소중한 마음이에요.'},
+  '今天次数用完了，随便玩玩吧。':{en:'Today\'s tries are used up — play for free.',ja:'今日の回数は使い切ったよ、気楽に遊ぼう。',ko:'오늘 횟수는 다 썼어, 그냥 즐겜하자.'},
+  '不押注？那就纯打牌。':{en:'No bet? Then just play cards.',ja:'賭けないの？なら純粋に札を打とう。',ko:'안 걸래? 그럼 그냥 카드만 치자.'},
+  '你赢太多了，它可能要来了，小心一点。':{en:'You have won too much — it might show up. Be careful.',ja:'勝ちすぎだよ、あいつが来るかも。気をつけて。',ko:'너무 많이 이겼어, 그 녀석이 올지도 몰라. 조심해.'},
+  /* ---- 斗月巴对局台词：11.7 座位对答扩容（P4） ---- */
+  '它剩一张了，你小心。':{en:'It has one card left — watch out.',ja:'あと一枚だよ、気をつけて。',ko:'한 장 남았어, 조심해.'},
+  '我帮你盯着它。':{en:'I will keep an eye on it for you.',ja:'私が見張っておくね。',ko:'내가 대신 지켜볼게.'},
+  '番茄要赢了，得拦着。':{en:'Tomato is about to win — we have to stop it.',ja:'トマトが勝ちそうだ、止めないと。',ko:'토마토가 이기려 해, 막아야 해.'},
+  '只剩一张了，你好好看着。':{en:'Only one card left — keep your eyes on it.',ja:'あと一枚、よく見ておけ。',ko:'한 장 남았어, 잘 보고 있어.'},
+  '嗯……真有意思。':{en:'Hmm... interesting.',ja:'ふむ……面白いな。',ko:'흠... 재밌네.'},
+  '清桌了，重新来吧。':{en:'Table cleared — let us start again.',ja:'流れたね、また始めよう。',ko:'테이블 정리됐어, 다시 시작하자.'},
+  '好，接着来。':{en:'Fine, let us continue.',ja:'よし、続けよう。',ko:'좋아, 이어서 하자.'},
+  '这轮我可不客气。':{en:'I will not hold back this round.',ja:'今回は容赦しないぞ。',ko:'이번엔 봐주지 않아.'},
+  /* ---- 斗月巴对局台词：11.8 出千月巴加料（P2-A） ---- */
+  '炸我？行啊。':{en:'Bombing me? Fine.',ja:'俺を爆発？いいぜ。',ko:'나를 터뜨려? 좋아.'},
+  '炸得挺准，可惜没用。':{en:'Good aim — but useless.',ja:'狙いは悪くない、だが無駄だ。',ko:'잘 맞혔지만, 소용없어.'},
+  '就剩一张了，别紧张。':{en:'Just one card left — do not panic.',ja:'あと一枚、緊張するな。',ko:'한 장 남았어, 긴장 마.'},
+  '最后一张，你拦得住吗？':{en:'The last one — can you stop it?',ja:'最後の一枚、止められるか？',ko:'마지막 한 장, 막을 수 있겠어?'},
+  '以为我换了牌还赢不了吗？只是给你个面子。':{en:'Think I would lose even after swapping? I was just being nice.',ja:'札を入れ替えても勝てないと思ったか？ただの手加減だ。',ko:'패를 바꿨는데도 못 이길 거라 생각했어? 그냥 봐준 거야.'},
+  /* ---- 斗月巴对局台词：11.9 玩家当地主时的番茄（P4） ---- */
+  '你当地主，我可要认真了。':{en:'You are the landlord — I will take this seriously.',ja:'あなたが地主なら、本気でいくよ。',ko:'네가 지주라면, 진심으로 할게.'},
+  '这局我可不让了。':{en:'I will not go easy this round.',ja:'今回は手加減しないよ。',ko:'이번엔 봐주지 않을 거야.'},
+  /* ---- 斗月巴：出千被压嘴硬追加 / 对局对话开关（11.9） ---- */
+  '这手算你的，下一手可不一定。':{en:'Fine, this one is yours — but not necessarily the next.',ja:'この一手はくれてやる、次はどうかな。',ko:'이번 판은 네 거야, 다음은 모르지.'},
+  '压一手而已，别太得意。':{en:'Just one beat — do not get cocky.',ja:'一手抑えただけだ、調子に乗るなよ。',ko:'한 번 눌렀을 뿐이야, 우쭐대지 마.'},
+  '对局对话':{en:'Table talk',ja:'対局の会話',ko:'대국 대화'},
+  '对局对话已关闭。':{en:'Table talk is off.',ja:'対局の会話をオフにしました。',ko:'대국 대화를 껐어.'},
+  '对局对话已开启。':{en:'Table talk is on.',ja:'対局の会話をオンにしました。',ko:'대국 대화를 켰어.'},
   /* __P7_END__ */
 };
 /* 内容条目表：条目 id -> 字段 -> {en,ja,ko}（P3~P7 分批填） */
@@ -7917,7 +8045,7 @@ function shapeBody(sh,c,dk,lt){
   }
 }
 /* ---------- 多立绘：同一只月巴可以有多张通过审核的立绘 ----------
-   img 为主图（兼容旧数据），imgs:[{url,by}] 存全部立绘；
+   img 为主图（兼容旧数据），imgs:[{url,by,note}] 存全部立绘；
    玩家在图鉴里选中的序号存于 S.artPick[id]，未选过则为 0（主图）。 */
 function artList(t){
   if(!t) return [];
@@ -7925,7 +8053,7 @@ function artList(t){
   for(const a of (Array.isArray(t.imgs)?t.imgs:[])){
     if(a&&a.url&&!out.some(x=>x.url===a.url)) out.push({url:a.url,by:a.by||$t('匿名'),note:a.note||''});
   }
-  if(t.img&&!out.some(x=>x.url===t.img)) out.unshift({url:t.img,by:(YB_PIC_AUTHOR[t.id]||$t('匿名')),note:YB_PIC_NOTE[t.id]||''});
+  if(t.img&&!out.some(x=>x.url===t.img)) out.unshift({url:t.img,by:(YB_PIC_AUTHOR[t.id]||$t('匿名')),note:''});
   return out;
 }
 function artIndex(t){
@@ -14217,6 +14345,10 @@ const DD_LINES={
     hard:['没人敢叫？那我收下了。'],
     cheat:['都不叫？那我收下了。','没人要，正好归我。']
   },
+  /* 11.9：玩家当地主、番茄当农民——番茄仍然温柔，但多一分认真 */
+  vsPlayerLandlord:{
+    tomato:['你当地主，我可要认真了。','这局我可不让了。']
+  },
   play:{
     single:{tomato:['我先出张小牌，你别有压力。'],easy:['这张……还不错吧？'],normal:['先来一口小的。'],hard:['一张，先试试水。'],
       cheat:['一张嘛，意思意思。','先垫一张，别紧张呀。','小牌先走，懂吧？']},
@@ -14234,7 +14366,7 @@ const DD_LINES={
       cheat:['炸一下，热闹热闹。','别皱眉呀，就炸一下。']},
     rocket:{tomato:['这对一起出，实在抱歉。'],easy:['王炸……不用就输啦，抱歉。'],normal:['两颗最大的番茄一起炸！'],hard:['王炸。这局我说了算。'],
       cheat:['王炸，我可没留后手。','两个王都在这儿了，你说巧不巧？']},
-    four2:{tomato:['四张带两张，有点重。','一下出这么多，我得想想。'],easy:['哇，这份量……'],normal:['四张番茄加两片叶子。','这一口有点撑。'],hard:['四带二？挺会挑。'],
+    four2:{tomato:['四张带两张，有点难打。','一下出这么多，我得想想。'],easy:['哇，好厉害……'],normal:['四张番茄加两片叶子。','什么叫一口吃撑。'],hard:['四带二？挺会挑。'],
       cheat:['四张都出了，胆子不小。','这么整齐，我也想要。']}
   },
   playerBomb:{
@@ -14289,6 +14421,35 @@ const DD_LINES={
   passYieldTomato:{
     easy:['番茄先吧，我都可以哦。']
   },
+  /* 11.3 玩家行为反馈：只看玩家的公开动作，不涉及手牌 */
+  playerFinishBig:{
+    tomato:['一手就走完了？'],
+    easy:['诶？没了？'],
+    normal:['一口吃完了？'],
+    hard:['……算你狠。'],
+    cheat:['走这么快，我都没反应过来。']
+  },
+  playerPassTwice:{
+    tomato:['你也不要？那我也不急。'],
+    easy:['又不要呀？那我出啦。'],
+    normal:['连着不要，是和我一样留着胃口等番茄？'],
+    hard:['两次都不要，你在等什么？'],
+    cheat:['这么稳健？应该是要不起吧~']
+  },
+  playerQuickPlay:{
+    tomato:['想都没想就出了？'],
+    easy:['好快哦～'],
+    normal:['这么急，赶着吃番茄？'],
+    hard:['这么快，想清楚了？'],
+    cheat:['急什么，牌又不会跑。']
+  },
+  playerHintTwice:{
+    tomato:['还没想好吗？慢慢来。'],
+    easy:['要不要我帮你选？'],
+    normal:['再想我的番茄都要等不及了。'],
+    hard:['提示点两次也没用。'],
+    cheat:['提示可不会帮你赢。']
+  },
   myLeft2:{
     tomato:['你就剩两张了，小心哦。'],
     easy:['你就剩两张啦，加油哦。'],
@@ -14329,9 +14490,115 @@ const DD_LINES={
   cheatOpen:{cheat:['嘿嘿，这牌不错。']},
   cheatHidden:{cheat:['嗯？我什么都没做啊。']},
   cheatExposed:{cheat:['你看见了？看见了也没用。','就换一张，别这么小气嘛。','眼力不错，可惜牌已经在我手里了。']},
-  cheatWin:{cheat:['要感谢我大发慈悲。','算你今天运气好。','赢一把，不代表下一把也能赢。']},
+  cheatWin:{cheat:['要感谢我大发慈悲。','算你今天运气好。','赢一把，不代表下一把也能赢。','以为我换了牌还赢不了吗？只是给你个面子。']},
   cheatLose:{cheat:['嘿嘿，牌好，没办法。','你看，我从不说自己牌差。','下次记得别跟我比牌。']},
-  cheatPressed:{cheat:['别急，牌桌上不差这一手。']},
+  cheatPressed:{cheat:['别急，牌桌上不差这一手。','这手算你的，下一手可不一定。','压一手而已，别太得意。']},
+  /* 11.4 结算精细化：按优先级插在普通胜负之前 */
+  settleGradeTop:{
+    tomato:['这局打得真漂亮。'],
+    easy:['S 诶……你有点厉害哦。'],
+    normal:['还挺厉害的。'],
+    hard:['S就以为自己很厉害吗。']
+  },
+  settleNarrowWin:{
+    tomato:['就差一张，好险。'],
+    easy:['差点就翻车啦～'],
+    normal:['最后一口差点没吃到。'],
+    hard:['运气好而已。']
+  },
+  settleNarrowLose:{
+    tomato:['就差一点点，别灰心。'],
+    easy:['差一张哦，下次就赢了。'],
+    normal:['吃白饭的……'],
+    hard:['差一张？差得远。']
+  },
+  settleBigWin:{
+    tomato:['这一把赚得真多。'],
+    easy:['赚翻啦～'],
+    normal:['够买一筐番茄了！'],
+    hard:['手气不错，下次未必。']
+  },
+  settleBigLoss:{
+    tomato:['押太多了，下次少一点。'],
+    easy:['别难过，番茄还会有的。'],
+    normal:['这一把够我吃好几天了。'],
+    hard:['押这么大，怪谁？']
+  },
+  settleAch:{
+    tomato:['恭喜，又解锁一个。'],
+    easy:['成就到手啦～'],
+    normal:['奖励的番茄够吃了！'],
+    hard:['成就归你，牌归我。']
+  },
+  /* 11.6 长线记忆：首局 / 回归 / 里程碑（发牌时说），连胜档位（结算引用） */
+  firstGame:{
+    tomato:['第一次来？坐下慢慢打。'],
+    easy:['新面孔哦，我都可以。'],
+    normal:['第一次？那我少吃两口。'],
+    hard:['新手？那就别怪我了。']
+  },
+  welcomeBack:{
+    tomato:['好久没见，最近还好吗？'],
+    easy:['你终于来啦～'],
+    normal:['这么久没来，不想让我吃番茄就直说。'],
+    hard:['这么久不来，手生了没？']
+  },
+  milestone:{
+    tomato:['这么多局了，谢谢你还来。'],
+    easy:['都这么多局啦，还没累吗？注意休息哦。'],
+    normal:['这么多局，有多少番茄给我。'],
+    hard:['这么多局？你还挺执着。']
+  },
+  winStreak5:{
+    tomato:['五连胜了，你手真稳。'],
+    easy:['五场了，我服啦～'],
+    normal:['五连胜，该请客了吧？'],
+    hard:['五场？我不信你能一直赢。']
+  },
+  winStreak10:{
+    tomato:['十场了……你有点可怕。'],
+    easy:['十连胜，我都不知道该说什么了。'],
+    normal:['十场，能换多少番茄啊。'],
+    hard:['十场而已，别得意。']
+  },
+  firstHardWin:{hard:['困难也赢了？行，我记住你了，给我等着。']},
+  /* 11.5 下注层提示：静态一句，不进对局句数预算 */
+  betWelcome:{
+    tomato:['坐吧，押多少都行。'],
+    easy:['我很好说话的，随便玩。'],
+    normal:['押多少？够我吃番茄就行。'],
+    hard:['押大点，别浪费时间。']
+  },
+  betBig:{
+    easy:['押这么大？有胆量。'],
+    normal:['押这么大，输了别哭。'],
+    hard:['押这么大，够我吃很久了。']
+  },
+  betMin:{tomato:['一颗番茄也是重要的心意。']},
+  betNoLeft:{tomato:['今天次数用完了，随便玩玩吧。']},
+  betFree:{
+    easy:['不押注？那就纯打牌。'],
+    normal:['不押注？那就纯打牌。'],
+    hard:['不押注？那就纯打牌。']
+  },
+  betCheatHigh:{tomato:['你赢太多了，它可能要来了，小心一点。']},
+  /* 11.7 座位对答扩容：只用公开信息（谁剩几张、谁和谁同阵营） */
+  crossTalkLeft1:{
+    tomato:['它剩一张了，你小心。','我帮你盯着它。'],
+    easy:['番茄要赢了，得拦着。','只剩一张了，你好好看着。'],
+    normal:['番茄要赢了，得拦着。','只剩一张了，你好好看着。'],
+    hard:['番茄要赢了，得拦着。','只剩一张了，你好好看着。'],
+    cheat:['嗯……真有意思。']
+  },
+  crossTalkClear:{
+    tomato:['清桌了，重新来吧。'],
+    easy:['好，接着来。','这轮我可不客气。'],
+    normal:['好，接着来。','这轮我可不客气。'],
+    hard:['好，接着来。','这轮我可不客气。']
+  },
+  /* 11.8 出千月巴加料：炸弹被压、只剩一张 */
+  cheatBombed:{cheat:['炸我？行啊。','炸得挺准，可惜没用。']},
+  cheatLastOne:{cheat:['就剩一张了，别紧张。','最后一张，你拦得住吗？']},
   settleWin:{
     tomato:['你打得真好，我学到了。','承让啦，下次我让你先手。'],
     easy:['诶嘿，你赢啦～都可以哦。'],
@@ -14406,6 +14673,7 @@ function ddSay(who, key, sub, opts){
   opts=opts||{};
   const g=ddG;
   if(!g||who===0) return false;
+  if(typeof S!=='undefined'&&S&&S.ddTalk===false) return false;   /* 设置：关闭对局对话后座位不说话 */
   if(opts.chance!=null && Math.random()>opts.chance) return false;
   const t=now();
   if(!opts.force){
@@ -14466,26 +14734,46 @@ function ddSayExchange(pair){
 /* 手牌张数变化时提示「你/它只剩一张」 */
 function ddSayDanger(){
   const g=ddG; if(!g||!g.hands) return;
-  const c0=g.hands[0].length, c1=(g.hands[1]||[]).length;
+  const c0=g.hands[0].length, c1=(g.hands[1]||[]).length, c2=(g.hands[2]||[]).length;
   if(g._lastC0!=null && c0!==g._lastC0){
     if(c0===1){ ddSay(2,'myLeft1',null,{chance:0.85,force:true}); ddSay(1,'myLeft1',null,{chance:0.5,force:true}); }
     else if(c0===2){ ddSay(2,'myLeft2',null,{chance:0.6,force:true}); ddSay(1,'myLeft2',null,{chance:0.4,force:true}); }
   }
-  if(g._lastC1!=null && c1!==g._lastC1 && c1===1 && g.role[1]!==g.role[2]){
-    ddSay(2,'foeLeft1',null,{chance:0.7,force:true});
+  /* 两个 AI 是否同阵营：同阵营走 11.7 对答，敌对走 foeLeft1，同一事件只说一句 */
+  const same=(g.role[1]===g.role[2]);
+  if(g._lastC1!=null && c1!==g._lastC1 && c1===1){
+    if(g.cheat) ddSay(1,'cheatLastOne',null,{chance:0.6,force:true});          /* 11.8：出千月巴自己剩一张 */
+    else if(!same) ddSay(2,'foeLeft1',null,{chance:0.7,force:true});
+    else ddSay(2,'crossTalkLeft1',null,{chance:0.3,force:true});               /* 11.7：同阵营，番茄提醒玩家 */
   }
-  g._lastC0=c0; g._lastC1=c1;
+  if(g._lastC2!=null && c2!==g._lastC2 && c2===1 && same){
+    ddSay(1,'crossTalkLeft1',null,{chance:0.3,force:true});                    /* 11.7：番茄剩一张，1 号位接话 */
+  }
+  g._lastC0=c0; g._lastC1=c1; g._lastC2=c2;
 }
-/* 结算页引用一句：优先连胜/连败，其次胜负，最后认输 */
+/* 结算页引用一句：认输 > 出千 > 新成就 > 评级 > 连胜连败 > 险胜险败 > 大额盈亏 > 普通胜负 */
 function ddSettleQuote(win, winner){
   const g=ddG; if(!g) return '';
+  if(typeof S!=='undefined'&&S&&S.ddTalk===false) return '';   /* 设置：关闭对局对话后结算页不引用台词 */
   const tr=tvFresh();
+  const rec=ddLastRec();
+  const grade=ddGrade(rec);
   let key='', who=1;
+  /* 11.4 优先级：认输 > 出千 > 新成就 > 评级 S+/S > 连胜连败 > 险胜险败 > 大额盈亏 > 普通胜负 */
   if(winner<0){ key='settleQuit'; who=g.cheat?1:(Math.random()<0.55?2:1); }
   else if(g.cheat && win){ key='cheatWin'; }
   else if(g.cheat && !win){ key='cheatLose'; }
+  else if((g._achGained|0)>0){ key='settleAch'; who=Math.random()<0.55?2:1; }
+  else if(win && g.diff==='hard' && !g._hardWinBefore){ key='firstHardWin'; who=1; }   /* 11.6：首次困难胜 */
+  else if(win && grade && (grade.g==='S+'||grade.g==='S')){ key='settleGradeTop'; who=Math.random()<0.55?2:1; }
+  else if(win && (tr.ddStreak|0)>=10){ key='winStreak10'; who=Math.random()<0.55?2:1; }   /* 11.6：连胜档位 10 > 5 > 3 */
+  else if(win && (tr.ddStreak|0)>=5){ key='winStreak5'; who=Math.random()<0.55?2:1; }
   else if(win && (tr.ddStreak|0)>=3){ key='winStreak'; }
   else if(!win && (tr.ddLossStreak|0)>=3){ key='loseStreak'; }
+  else if(win && rec && (rec.myLeft|0)===1){ key='settleNarrowWin'; who=Math.random()<0.55?2:1; }
+  else if(!win && winner>=0 && rec && (rec.foeLeft|0)===1){ key='settleNarrowLose'; who=Math.random()<0.7?1:2; }
+  else if(win && (g.stake|0)>0 && (rec?rec.net|0:0)>=(g.stake|0)*2){ key='settleBigWin'; who=Math.random()<0.55?2:1; }
+  else if(!win && (g.stake|0)>=50){ key='settleBigLoss'; who=Math.random()<0.7?1:2; }
   else if(win){ key='settleWin'; who=Math.random()<0.55?2:1; }
   else { key='settleLose'; who=Math.random()<0.7?1:2; }
   const text=ddSayPick(ddSayLines(key,who));
@@ -14548,6 +14836,7 @@ function ddRenderBetLimit(){
   if(el){ el.innerHTML=left>0
     ? $t('今日押注次数：剩余 <b>')+left+'/'+DD_BET_MAX+$t('</b> 次')
     : $t('今日押注次数已用完（')+DD_BET_MAX+'/'+DD_BET_MAX+$t('），只能「随便玩玩」'); }
+  if(left<=0) ddBetTip('betNoLeft',2);        /* 11.5：次数用完，番茄提示改玩不押注 */
   const btn=$('ddStartBtn'); if(btn){ btn.disabled=left<=0; btn.style.opacity=left<=0?'.45':''; }
   const inp=$('ddBetInput'); if(inp) inp.disabled=left<=0;
 }
@@ -14559,6 +14848,16 @@ function ddRenderCheatHint(){
   el.innerHTML=n>0
     ? $t('🃏 连胜 <b>')+n+$t('</b> 场：本局遇到出千月巴概率 <b>')+pct+$t('</b>（基础 3% + 连胜 ×2%）')
     : $t('🃏 本局遇到出千月巴概率 <b>')+pct+$t('</b>（每连胜一场 +2%）');
+  if(n>=3) ddBetTip('betCheatHigh',2);        /* 11.5：连胜 3 场以上，番茄提醒出千概率变高 */
+}
+
+/* 11.5 下注层没有座位气泡位：用面板底部一行显示一句静态提示，不占对局句数预算 */
+function ddBetTip(key,who){
+  const el=$('ddBetTip'); if(!el) return '';
+  const list=ddSayLines(key,(typeof who==='number')?who:1);
+  const text=list.length?list[Math.floor(Math.random()*list.length)]:'';
+  el.textContent=text?$t(text):'';
+  return text;
 }
 
 /* ---------- 入口 / 退出 ---------- */
@@ -14570,12 +14869,36 @@ function ddEnter(){
   ddSyncBal();
   ddRenderDiff();
   ddShowLayer('ddBet');
+  ddBetTip('betWelcome',Math.random()<0.5?2:1);   /* 11.5：进下注层先说一句；后面次数/出千提示会覆盖 */
   ddRenderBetQuick();
   ddRenderBetLimit();
   ddRenderCheatHint();
   const inp=$('ddBetInput');
   const bal=ddHost.getBalance();
   if(inp) inp.value=String(Math.min(100,Math.max(1,bal)));
+  /* 11.5：手动输入 1 时给颗番茄的反馈 */
+  if(inp) inp.oninput=function(){ if(Math.floor(Number(inp.value)||0)===1) ddBetTip('betMin',2); };
+  ddSyncTalkBtn();                             /* 设置：还原「对局对话」开关外观 */
+}
+/* 设置：对局对话开关。只影响座位气泡与结算引用，选句/去重逻辑照常走；默认开启 */
+function ddTalkToggle(){
+  if(typeof S==='undefined'||!S) return;
+  S.ddTalk=(S.ddTalk===false);                 /* 关闭 → 开启；开启/未设置 → 关闭 */
+  save();
+  ddSyncTalkBtn();
+  if(S.ddTalk===false){
+    [1,2].forEach(function(w){
+      const el=$('ddSay'+w);
+      if(el){ el.classList.remove('show','out'); el.textContent=''; }
+    });
+    toast($t('对局对话已关闭。'));
+  }else{
+    toast($t('对局对话已开启。'));
+  }
+}
+function ddSyncTalkBtn(){
+  const btn=$('ddTalkBtn');
+  if(btn) btn.classList.toggle('dd-talkoff', !!(typeof S!=='undefined'&&S&&S.ddTalk===false));
 }
 function ddClose(){
   ddSfx('out');                                /* 收手退出：把牌收拢的两声下行 */
@@ -14669,6 +14992,7 @@ function ddQuick(v){
   const inp=$('ddBetInput');
   if(!inp)return;
   ddSfx('bet');                                /* 押注金额快捷选择 */
+  if(v>=50) ddBetTip('betBig',1);              /* 11.5：快捷押注 50 以上，1 号位按难度表态 */
   const cap=Math.min(100,ddHost.getBalance());
   inp.value=String(Math.max(1,Math.min(cap,Math.floor(v)||1)));
 }
@@ -14691,6 +15015,8 @@ function ddStart(free){
     ddStampBet();                             /* 同刻记次并入档：刷新/关窗也照扣，杜绝看了手牌再重开 */
   }
   if(!free) ddSfx('bet');                     /* 押注入池：一记筹码触桌 */
+  /* 11.5：点「随便玩玩」——下注层马上关闭，这句改用 toast 送达，不进对局句数预算 */
+  if(free){ const ft=ddBetTip('betFree',1); if(ft) ddHost.toast($t(ft)); }
   ddDeal(stake);                              /* ddDeal→ddAskBid 进入出牌阶段（手牌直接渲染在下方） */
   ddShowLayer(null);                          /* 关闭下注层，露出牌桌 */
 }
@@ -14708,6 +15034,13 @@ function ddDeal(stake){
   const bottom=deck.slice(51);
   ddApplyHandicap(hands, (DD_DIFFS[ddDiff]||DD_DIFFS.normal).handicap);
   hands.forEach(function(h){ h.sort(ddSortCmp); });
+  /* 11.6 长线记忆：只读战绩记录，不新增存档字段 */
+  const memRecs=tvFresh().ddRecords||[];
+  let memKey='';
+  if(!memRecs.length) memKey='firstGame';
+  else if(now()-(Number(memRecs[0].t)||0)>=7*24*3600*1000) memKey='welcomeBack';
+  else if(memRecs.length===9||memRecs.length===49||memRecs.length===99) memKey='milestone';
+  const hardWinBefore=memRecs.some(function(r){ return r&&r.win&&!r.quit&&r.diff==='hard'; });
   ddG={
     stake:stake, diff:ddDiff, hands:hands, bottom:bottom,
     role:['','',''], landlord:-1,
@@ -14716,6 +15049,9 @@ function ddDeal(stake){
     startAt:now(),                             /* 本局开始时间：用于结算时算「时长」 */
     initScore:ddStrength(hands[0]),            /* 玩家初始 17 张手牌打分：写入战绩记录 */
     playCount:[0,0,0],                         /* 各座位出牌手数（过牌不计）：评级用 */
+    turnAt:0, _pPassRun:0, _hintRun:0,         /* 11.3：玩家本轮开始时间 / 连续让牌 / 本回合提示次数 */
+    _achGained:0,                              /* 11.4：本局新解锁成就数，供结算引用选句 */
+    _memKey:memKey, _hardWinBefore:hardWinBefore, /* 11.6：首局/回归/里程碑；本局前是否已在困难赢过 */
     cheat:(Math.random()<ddCheatChance()),     /* 本局 1 号位是不是出千月巴（基础 3% + 连胜 ×2%） */
     cheatInfo:null,                            /* 出千交换的牌：{give:它给的, take:换走的}，用于公示 */
     seen:[]                                    /* 算牌：全场已打出的牌（值），供困难 AI 推断对手剩余牌 */
@@ -14728,10 +15064,13 @@ function ddDeal(stake){
   setTimeout(function(){
     if(!ddG||ddG.phase!=='bid') return;
     if(ddG.cheat) ddSay(1,'cheatOpen',null,{chance:1,force:true});
+    else if(ddG._memKey) ddSay(1,ddG._memKey,null,{chance:1,force:true});   /* 11.6：首局/回归/里程碑优先于普通发牌台词 */
     else ddSay(1,'deal',null,{chance:0.75,force:true});
     setTimeout(function(){
       if(!ddG||ddG.phase!=='bid') return;
-      ddSay(2,'deal',null,{chance:0.55,force:true});
+      /* 11.6：出千局 1 号位已说 cheatOpen，长线记忆这句改由番茄说 */
+      if(ddG._memKey&&ddG.cheat) ddSay(2,ddG._memKey,null,{chance:1,force:true});
+      else ddSay(2,'deal',null,{chance:0.55,force:true});
     },900);
   },700);
 }
@@ -14837,6 +15176,8 @@ function ddFinishBid(){
   g.phase='play';
   g.turn=g.landlord;
   g.last=null; g.plays=[null,null,null];
+  g._pPassRun=0; g._hintRun=0;
+  g.turnAt=(g.landlord===0)?now():0;          /* 11.3：玩家首轮计时，用于「出牌很快」反馈 */
   ddSfx('landlord');                         /* 地主落定：延迟起音的暖上行 */
   ddShowLayer(null);
   ddRenderAll();
@@ -14855,8 +15196,15 @@ function ddFinishBid(){
     ddSay(1,bk,null,{chance:0.9,force:true});
     ddSay(2,bk,null,{chance:0.55,force:true});
   }
+  /* 11.9：玩家当地主时番茄补一句「要认真了」，发牌后 0.5 概率；延迟到叫地主台词之后再出，避免互相顶掉 */
+  if(g.landlord===0){
+    setTimeout(function(){
+      if(!ddG||ddG!==g||ddG.phase!=='play') return;
+      ddSay(2,'vsPlayerLandlord',null,{chance:0.5,force:true});
+    },3200);
+  }
   /* 记下三家初始张数：之后每次变化都能判断「刚变成 1/2 张」 */
-  g._lastC0=g.hands[0].length; g._lastC1=g.hands[1].length;
+  g._lastC0=g.hands[0].length; g._lastC1=g.hands[1].length; g._lastC2=g.hands[2].length;
   if(g.bidWhySub) ddHost.toast(g.bidWhy,g.bidWhySub);
   else ddHost.toast(g.bidWhy||(ddName(g.landlord)+$t('是地主，开始出牌')));
   if(g.cheatInfo){
@@ -14884,10 +15232,17 @@ function ddAfterRender(){
   /* 若上家就是自己（其余人都过了）→ 清桌重开，自由出牌 */
   if(g.last&&g.last.owner===g.turn){
     g.last=null; g.plays=[null,null,null];
+    g._pPassRun=0;                             /* 新一轮开始：连续让牌计数归零 */
     ddSfx('clean');                            /* 清桌重开：海浪退去 */
     ddRenderAll();
-    ddSay(2,'clearTable',null,{chance:0.4,force:true});
-    ddSay(1,'clearTable',null,{chance:0.35,force:true});
+    /* 11.7：非出千局偶尔改成番茄先说、1 号位接的两人对答（出千局保留原有谢幕台词） */
+    if(!g.cheat && Math.random()<0.35){
+      ddSayExchange([{who:2,key:'crossTalkClear',opts:{chance:1,force:true}},
+                     {who:1,key:'crossTalkClear',delay:1300}]);
+    }else{
+      ddSay(2,'clearTable',null,{chance:0.4,force:true});
+      ddSay(1,'clearTable',null,{chance:0.35,force:true});
+    }
   }
   if(g.turn===0) ddRenderActions();
   else {
@@ -14912,6 +15267,9 @@ function ddPlay(cards,who){
   /* 出牌台词：玩家出炸弹由两家对答；顺子/连对/飞机与大牌偶有反馈；
      AI 出牌按牌型概率说一句，出炸弹时另一座位补一句 */
   if(who===0){
+    g._pPassRun=0;                             /* 11.3：出了牌，连续让牌计数归零 */
+    /* 11.3：上家出牌后 2 秒内就出牌 —— 只看玩家的公开动作，不碰手牌 */
+    if(prev && g.turnAt && now()-g.turnAt<=2000) ddSay(Math.random()<0.55?2:1,'playerQuickPlay',null,{chance:0.35});
     if(p.type==='bomb'||p.type==='rocket'){
       ddSayExchange([{who:2,key:'playerBomb',opts:{chance:0.8,force:true}},
                      {who:1,key:'playerBomb',delay:1300}]);
@@ -14928,12 +15286,18 @@ function ddPlay(cards,who){
       ddSay(who===1?2:1,'crossTalkBomb',null,{chance:1});
     }
   }
-  /* 出千月巴上一手被压：偶尔嘴硬一句 */
-  if(g.cheat && prev && prev.owner===1 && who!==1) ddSay(1,'cheatPressed',null,{chance:0.35});
+  /* 出千月巴上一手被压：被玩家炸弹/王炸压住说 cheatBombed，其余被压说 cheatPressed */
+  if(g.cheat && prev && prev.owner===1 && who!==1){
+    if(who===0 && (p.type==='bomb'||p.type==='rocket')) ddSay(1,'cheatBombed',null,{chance:0.6});
+    else ddSay(1,'cheatPressed',null,{chance:0.35});
+  }
+  /* 11.3：玩家最后一手 ≥5 张且直接出完（结算弹窗前说一句） */
+  if(who===0 && cards.length>=5 && g.hands[0].length===0) ddSay(Math.random()<0.55?2:1,'playerFinishBig',null,{chance:0.9,force:true});
   /* 赢家出完最后一张：先渲染（让大家看到最后一手）再结算 */
   if(g.hands[who].length===0){ ddRenderAll(); ddSettle(who); return; }
   /* 先更新 turn 再渲染 — ddRenderCenter 读 g.turn 显示"轮到谁/谁思考中" */
   g.turn=(who+1)%3;
+  if(g.turn===0){ g.turnAt=now(); g._hintRun=0; }   /* 11.3：玩家回合开始，重新计时与计提示次数 */
   ddRenderAll();
   ddSayDanger();
   ddAfterRender();
@@ -14952,6 +15316,7 @@ function ddPass(who){
     else ddSay(who,'pass',null,{chance:0.4});
   }
   g.turn=next;
+  if(g.turn===0){ g.turnAt=now(); g._hintRun=0; }   /* 11.3：轮到玩家（经让牌到达），重新计时与计提示次数 */
   ddRenderAll();
   ddAfterRender();
   ddSaveGame();
@@ -14970,6 +15335,9 @@ function ddPlayerPlay(){
 function ddPlayerPass(){
   const g=ddG; if(!g||g.phase!=='play'||g.turn!==0)return;
   if(!g.last){ ddSfx('err'); ddHost.toast($t('你是本轮首家，必须出牌')); return; }
+  /* 11.3：同一轮连续第 2 次不要（先计数，再让牌——清桌会把计数归零） */
+  g._pPassRun=(g._pPassRun|0)+1;
+  if(g._pPassRun>=2) ddSay(Math.random()<0.55?2:1,'playerPassTwice',null,{chance:0.6});
   ddPass(0);
   /* 你被压过一手：两家可能各说一句（不判断你压不压得住，只看你过牌这个动作） */
   ddSay(2,'pressed',null,{chance:0.3});
@@ -14999,8 +15367,10 @@ function ddPlayerHint(){
   /* 精准 DOM 更新：先清所有 sel，再给 hint 选中的牌加 sel，避免全量重绘触发入场动画重播 */
   document.querySelectorAll('#ddHand .dd-card.sel').forEach(function(el){ el.classList.remove('sel'); });
   g.sel.forEach(function(id){ const el=document.querySelector('#ddHand .dd-card[data-id="'+id+'"]'); if(el) el.classList.add('sel'); });
-  /* 偶尔吐槽一句，纯反馈、不打断选牌 */
-  ddSay(Math.random()<0.55?2:1,'hint',null,{chance:0.12});
+  /* 偶尔吐槽一句，纯反馈、不打断选牌；同一回合第 2 次点提示改说「想这么久」 */
+  g._hintRun=(g._hintRun|0)+1;
+  if(g._hintRun>=2) ddSay(Math.random()<0.55?2:1,'playerHintTwice',null,{chance:0.5});
+  else ddSay(Math.random()<0.55?2:1,'hint',null,{chance:0.12});
 }
 function ddToggleCard(id){
   const g=ddG; if(!g||g.turn!==0||g.phase!=='play')return;
@@ -15265,8 +15635,9 @@ function ddPushRecord(win,net,winner){
   };
   t.ddRecords.unshift(rec);
   if(t.ddRecords.length>DD_REC_MAX) t.ddRecords.length=DD_REC_MAX;
-  /* 斗月巴成就：先累计总成就计数，再判定日/周/总三档（达成即自动发番茄） */
-  try{ ddAchAccum(rec); ddAchCheck(false); }catch(e){}
+  /* 斗月巴成就：先累计总成就计数，再判定日/周/总三档（达成即自动发番茄）；
+     记下本局新解锁数，结算引用据此优先进「达成成就」台词 */
+  try{ ddAchAccum(rec); g._achGained=ddAchCheck(false)|0; }catch(e){ g._achGained=0; }
   save();                                     /* 战绩与成就累计一起落库：别只在发奖时才保存 */
 }
 /* 刚写入的那条战绩（ddSettle 里先 ddPushRecord 再 ddShowResult，故首位就是本局）：
