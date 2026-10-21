@@ -757,8 +757,46 @@
     overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
   /* 月巴与番茄上下两行排布，各自的出牌有整行宽度，看得更清楚 */
   #ddgame .dd-seats{display:flex;flex-direction:column;gap:6px;padding:2px 4px;overflow:visible;}
-  #ddgame .dd-opp{flex:0 0 auto;min-width:0;border-radius:14px;padding:7px 10px;
+  #ddgame .dd-opp{position:relative;flex:0 0 auto;min-width:0;border-radius:14px;padding:7px 10px;
     background:var(--panel);border:1px solid var(--line);box-shadow:0 3px 10px rgba(120,100,160,.1);}
+  /* 对局对话气泡：浮在头像右侧（绝对定位，不占位、不撑高座位卡片），小尖指向头像。
+     电脑：max-width 限宽，短句基本一行；手机：按卡片宽度自动收窄、最多两行，不会顶出屏幕。
+     z-index 高于出牌区，文字变长时优先压住右侧角色标签（对局中不变），不挡「剩 N 张」与已打出的牌。 */
+  #ddgame .dd-say{position:absolute;left:48px;top:8px;z-index:3;
+    display:none;width:max-content;max-width:min(320px,calc(100% - 58px));padding:5px 9px 6px;
+    background:var(--say-bg,linear-gradient(180deg,#fff,#f6f2ff));
+    border:1px solid var(--say-line,rgba(149,117,205,.38));
+    border-radius:var(--say-radius,10px);font-size:12px;line-height:1.35;font-weight:700;
+    color:var(--say-text,#5b4a7d);box-shadow:0 3px 12px rgba(0,0,0,.14);pointer-events:none;
+    transform-origin:left center;}
+  #ddgame .dd-say.show{display:block;animation:ddSayInSide .24s cubic-bezier(.2,.8,.3,1) both;}
+  #ddgame .dd-say.out{display:block;animation:ddSayOut .16s ease both;}
+  /* 小尖改成朝左：贴住头像右边缘，竖直对准头像中心（top 13px ≈ 头像中线） */
+  #ddgame .dd-say::before{content:'';position:absolute;left:-5px;top:13px;width:8px;height:8px;
+    background:var(--say-tail,#fff);border-left:1px solid var(--say-line,rgba(149,117,205,.38));
+    border-bottom:1px solid var(--say-line,rgba(149,117,205,.38));transform:rotate(45deg);}
+  /* 说话者头像轻点一下，呼应气泡弹出（只做头像，不与座位卡的回合动画抢同一元素） */
+  #ddgame .dd-opp.talk .av{animation:ddAvNod .42s cubic-bezier(.2,.8,.3,1) both;}
+  @keyframes ddSayInSide{0%{opacity:0;transform:translateX(-9px) scale(.94);}70%{opacity:1;}100%{opacity:1;transform:none;}}
+  @keyframes ddSayOut{0%{opacity:1;transform:none;}100%{opacity:0;transform:translateX(-5px) scale(.98);}}
+  @keyframes ddAvNod{0%{transform:none;}35%{transform:translateY(-2px) rotate(-4deg);}100%{transform:none;}}
+  /* 气泡配色跟随皮肤：背景/描边/文字/小尖取自各皮肤的面板与主色 */
+  html[data-skin="forestedge"]{--say-bg:linear-gradient(180deg,#fcfffc,#eef7f0);--say-line:rgba(111,174,135,.45);--say-text:#2f6b4f;--say-tail:#fcfffc;--say-radius:12px;}
+  html[data-skin="fairy"]{--say-bg:linear-gradient(180deg,#fffaf0,#f7ecd6);--say-line:rgba(162,115,74,.5);--say-text:#5b3f2a;--say-tail:#fffaf0;}
+  html[data-skin="ancient"]{--say-bg:linear-gradient(180deg,#1b3a2c,#132a20);--say-line:rgba(110,240,176,.28);--say-text:#b9f0d3;--say-tail:#1b3a2c;}
+  html[data-skin="cursed"]{--say-bg:linear-gradient(180deg,#39406f,#2c3058);--say-line:#0e1024;--say-text:#e8ecff;--say-tail:#39406f;--say-radius:0;}
+  html[data-skin="townentry"]{--say-bg:linear-gradient(180deg,#fdf3e8,#f6dcc6);--say-line:rgba(138,90,59,.4);--say-text:#6b3f28;--say-tail:#fdf3e8;}
+  html[data-skin="moonmarket"]{--say-bg:linear-gradient(180deg,#2b3468,#1f2649);--say-line:rgba(255,207,107,.32);--say-text:#ffe8b8;--say-tail:#2b3468;}
+  html[data-skin="moonless"]{--say-bg:linear-gradient(180deg,#232b39,#171d28);--say-line:rgba(200,56,46,.32);--say-text:#e8ecf2;--say-tail:#232b39;}
+  html[data-skin="dreamink"]{--say-bg:linear-gradient(180deg,#331a5a,#1c0f33);--say-line:rgba(193,77,150,.45);--say-text:#f5dcef;--say-tail:#331a5a;}
+  html[data-skin="seaharbor"]{--say-bg:linear-gradient(180deg,#ffffff,#e6f4f9);--say-line:rgba(47,176,192,.42);--say-text:#176b80;--say-tail:#ffffff;}
+  html[data-skin="islandbay"]{--say-bg:linear-gradient(180deg,#fdfaf3,#f2e6ce);--say-line:rgba(138,162,134,.45);--say-text:#3e5544;--say-tail:#fdfaf3;}
+  html[data-skin="sunkcity"]{--say-bg:#f2ead9;--say-line:#2a231b;--say-text:#3a2f22;--say-tail:#f2ead9;--say-radius:0;}
+  html[data-skin="mermaidsea"]{--say-bg:linear-gradient(180deg,#ffffff,#e8fbfc);--say-line:rgba(111,216,220,.55);--say-text:#1d5f70;--say-tail:#ffffff;}
+  html[data-skin="aurora"]{--say-bg:linear-gradient(180deg,#f7f8fa,#e3e6ea);--say-line:rgba(26,28,34,.7);--say-text:#2a2d34;--say-tail:#f7f8fa;--say-radius:4px;}
+  html[data-skin="relic"]{--say-bg:linear-gradient(180deg,#ecebe5,#d9d3c4);--say-line:#7a6e4e;--say-text:#433d2c;--say-tail:#ecebe5;--say-radius:3px;}
+  html[data-skin="icelake"]{--say-bg:linear-gradient(180deg,#f4f7fa,#e0e9f0);--say-line:#9fb6d0;--say-text:#2a3a4a;--say-tail:#f4f7fa;}
+  html[data-skin="court"]{--say-bg:linear-gradient(180deg,#161924,#0e1018);--say-line:rgba(184,192,204,.5);--say-text:#dfe4ec;--say-tail:#161924;}
   #ddgame .dd-opp.turn{border-color:var(--purple);box-shadow:0 0 0 2px rgba(149,117,205,.35),0 3px 10px rgba(120,100,160,.16);}
   #ddgame .dd-opphead{display:flex;align-items:center;gap:6px;font-weight:800;font-size:12px;color:var(--purple2);}
   /* 座位头像：1 号位放月巴立绘（按难度/出千切换），2 号位仍是番茄 emoji，统一用同尺寸方框居中 */
@@ -842,10 +880,13 @@
     #ddgame .dd-layer.show .dd-box,
     #ddgame .dd-hand.dealing>.dd-hrow,
     #ddgame .dd-center .big,
-    #ddgame .dd-center .sub{animation:skDdGFadeIn .28s ease-out both!important;animation-delay:0ms!important;}
+    #ddgame .dd-center .sub,
+    #ddgame .dd-say.show{animation:skDdGFadeIn .28s ease-out both!important;animation-delay:0ms!important;}
     #ddgame :is(.dd-played,.dd-myplay)>.dd-card,
     #ddgame .dd-opp.turn,
-    #ddgame .dd-opp.cheat{animation:none!important;}
+    #ddgame .dd-opp.cheat,
+    #ddgame .dd-say.out,
+    #ddgame .dd-opp.talk .av{animation:none!important;}
   }
   /* ==== 斗月巴结算弹窗入场 ==== */
   #ddgame .dd-layer.show{animation:skDdGFadeIn .3s ease-out both;}
@@ -3183,6 +3224,11 @@
   .ach-bar{height:5px;border-radius:99px;background:rgba(120,120,140,.16);overflow:hidden;margin-top:5px;}
   .ach-bar i{display:block;height:100%;background:linear-gradient(90deg,#b39ddb,#7e57c2);}
   .ach-pg{font-size:10px;color:var(--dim);font-weight:700;margin-top:2px;}
+  /* 斗月巴成就：顶栏入口小红点（有未查看的新达成时点亮） */
+  .dd-achbtn{position:relative;}
+  .dd-achdot{display:none;position:absolute;top:3px;right:3px;width:7px;height:7px;border-radius:50%;
+    background:#e2574c;box-shadow:0 0 0 1.5px rgba(255,255,255,.9);}
+  .dd-achbtn.new .dd-achdot{display:block;}
 </style>
 </head>
 <body>
@@ -3340,6 +3386,7 @@
     <span class="dd-bal"><span data-i18n="余额">余额</span> <b id="ddBal">0</b> 🍅</span>
     <span class="dd-role" id="ddRoleTag" data-i18n="未开局">未开局</span>
     <span class="sp"></span>
+    <button class="iconbtn dd-achbtn" id="ddAchBtn" onclick="ddOpenAch()" title="斗月巴成就" data-i18n-title="斗月巴成就">🏅<span class="dd-achdot" id="ddAchDot"></span></button>
     <button class="iconbtn" onclick="ddShowHistory()" title="战绩记录" data-i18n-title="战绩记录">📜</button>
     <button class="iconbtn" id="ddRulesBtn" title="规则" data-i18n-title="规则">?</button>
     <button class="iconbtn" onclick="ddExit()" title="退出" data-i18n-title="退出">✕</button>
@@ -3353,12 +3400,14 @@
             <span class="role" id="ddRole1">—</span></div>
           <div class="dd-cnt" id="ddSeatCnt1"></div>
           <div class="dd-played" id="ddPlay1"></div>
+          <div class="dd-say" id="ddSay1"></div>
         </div>
         <div class="dd-opp" id="ddOpp2">
           <div class="dd-opphead"><span class="av">🍅</span><span data-i18n="番茄">番茄</span>
             <span class="role" id="ddRole2">—</span></div>
           <div class="dd-cnt" id="ddSeatCnt2"></div>
           <div class="dd-played" id="ddPlay2"></div>
+          <div class="dd-say" id="ddSay2"></div>
         </div>
       </div>
 
@@ -3406,6 +3455,11 @@
     <!-- 战绩记录层 -->
     <div class="dd-layer" id="ddHistoryLayer">
       <div class="dd-box" id="ddHistoryBox"></div>
+    </div>
+
+    <!-- 成就层 -->
+    <div class="dd-layer" id="ddAchLayer">
+      <div class="dd-box" id="ddAchBox"></div>
     </div>
   </div>
 
@@ -3569,7 +3623,7 @@ const TYPES=[
   {id:'mb_gao',    name:'高月巴', img:'https://origin.picgo.net/2026/09/29/849e3c845e52aac2178af913058025cdd214e98968e45101.gif', r:2, v:16, t:180, cond:null, color:'#b8a9e0', shape:'tall', size:2},
   {id:'mb_ku',     name:'背头月巴', img:'https://origin.picgo.net/2026/09/29/19daf98c7a185e7e0c3d529a5f921058d74092d7a8ab4c37.gif', r:2, v:18, t:200, cond:null, color:'#a9c7ea', shape:'cube'},
   {id:'mb_lan',    name:'休闲月巴', img:'https://origin.picgo.net/2026/09/03/10a99395fea8f81ac7.th.png', r:2, v:12, t:140, cond:null, color:'#c3a7c9', shape:'squish'},
-  {id:'mb_tan',    name:'一坨月巴', r:2, v:20, t:240, cond:null, color:'#a5c3e8', shape:'wide'},
+  {id:'mb_tan',    name:'一坨月巴', img:'https://origin.picgo.net/2026/10/21/41befbe6b2be042271d7ae7805b64f598d5d887397481fdf.th.png', r:2, v:20, t:240, cond:null, color:'#a5c3e8', shape:'wide'},
   {id:'mb_jian',   name:'健身月巴', img:'https://origin.picgo.net/2026/09/03/9935aafd50857466b.th.png', r:3, v:30, t:300, cond:{t:'day'}, color:'#9ec48f', shape:'tall'},
 
   {id:'mb_zao',  name:'晨月巴', r:3, v:25, t:300, cond:{t:'time',a:6,b:10},  color:'#e8c39e', shape:'round'},
@@ -3710,7 +3764,7 @@ const TYPES2=[
   {id:'m2_buman', name:'不满月巴',  r:4, v:70, t:700, cond:{t:'travel', d:'town', n:4}, color:'#9e9e9e', shape:'round'},
   {id:'m2_tanwu', name:'贪污月巴',  r:5, v:240, t:1400, cond:{t:'travel', d:'town', n:8}, weight:0.01, color:'#6d4c41', shape:'round'},
   {id:'m2_zhangyu',name:'章鱼月巴',  r:4, v:80, t:720, cond:{t:'travel', s:'海藻'}, color:'#7e57c2', shape:'spike'},
-  {id:'m2_xianyi',name:'嫌疑月巴',  r:4, v:85, t:760, cond:{t:'travel', c:'A7'}, color:'#546e7a', shape:'ghost'},
+  {id:'m2_xianyi',name:'嫌疑月巴',  img:'https://origin.picgo.net/2026/10/21/71e32b7a3e54e6bba0d145f9b63d36bc6b5a368bce3d301e.th.png', r:4, v:85, t:760, cond:{t:'travel', c:'A7'}, color:'#546e7a', shape:'ghost'},
   {id:'m2_teatime',name:'下午茶月巴', img:'https://origin.picgo.net/2026/10/21/teatime-buny---Felimika490cd7af24e32b96.th.png', r:4, v:72, t:720, cond:null, color:'#c9a77c', shape:'round'},
   {id:'m2_fanqie',name:'番茄月巴',  r:3, v:45, t:450, cond:null, color:'#e57373', shape:'round'},
   {id:'m2_jinshu',name:'金属月巴',  r:4, v:90, t:800, cond:{t:'travel', s:'漂流木'}, color:'#b0bec5', shape:'cube'},
@@ -3780,7 +3834,10 @@ const TYPES2=[
   {id:'m2_paomo',    name:'泡沫月巴',  r:4, v:84,  t:790,  cond:{t:'travel', s:'人鱼泡沫'}, color:'#4fb0a8', shape:'squish'},
   {id:'m2_damofa',   name:'大魔法师月巴', r:5, v:258, t:1500, cond:{t:'travel', d:'merfolk', n:5}, weight:0.01, color:'#8f6fd8', shape:'rainbow'},
   /* —— 彩蛋：斗月巴牌桌上的不速之客 —— */
-  {id:'m2_chuqian',  name:'出千月巴',  r:5, v:240, t:1400, cond:null, weight:0.01, color:'#2f8f72', shape:'cube'},
+  {id:'m2_chuqian',  name:'出千月巴',  img:'https://origin.picgo.net/2026/10/21/6f0a351bc37096a61e980e6e5d6da80446da29ffafa7a5b8.th.png', r:5, v:240, t:1400, cond:null, weight:0.01, color:'#2f8f72', shape:'cube'},
+  /* —— 新增投稿月巴 —— */
+  {id:'m2_tracker',  name:'追踪器月巴', img:'https://origin.picgo.net/2026/10/21/acf7a9ec0fbe767f840a205e24730017da0d83a3264ec36f.th.png', r:3, v:35, t:400, cond:null, color:'#8bc34a', shape:'cube'},
+  {id:'m2_baqi',     name:'巴岐大蛇',  img:'https://origin.picgo.net/2026/10/21/00ad700c36c3d7131ffe4fcfae4e5a0cee3d2f4e74eec9cd.th.png', r:4, v:85, t:760, cond:null, color:'#5f8f6f', shape:'spike'},
 ];
 const RAR_NAME={1:'普通',2:'常见',3:'稀有',4:'史诗',5:'传说',6:'活动'};
 const R_H={1:[2,5],2:[4,8],3:[6,12],4:[10,20],5:[16,30],6:[22,40]};   // 身高 cm 范围
@@ -3794,6 +3851,7 @@ const YB_PIC_AUTHOR={
   mb_wen:'Nyaomi',
   mb_kafei:'VVisteria',
   mb_senlin:'Nyaomi',
+  mb_tan:'影子生物',
   m2_mao:'Nyaomi',
   dabus:'影子生物',
   m2_zuoqi:'影子生物',
@@ -3998,11 +4056,13 @@ const FAT_INTRO={
   m2_seal:'带着秘术卷轴的月巴，懂得让陆上的人在水中短暂变成人鱼。它说，这是离开沉城唯一的办法。',
   m2_seaking:'海底王城的旧主。不是海底捞王哦。',
   m2_guihai:'从沉海遗城一路游回海面的月巴，见过围着它打转的人鱼。它说，海和陆地之间的距离，其实没有想象中那么远。',
-  m2_geyin:'会唱歌的月巴，嗓音清亮。它唱的是人鱼之间传唱最广的那支歌，会互送番茄平安抵达岸上。',
+  m2_geyin:'会唱歌的月巴，嗓音清亮。它唱的是人鱼之间传唱最广的那支歌，会护送番茄平安抵达岸上。',
   m2_fazhen:'身上纹着法阵的月巴，一圈圈光纹里藏着让人维持人鱼姿态的秘术。它说，这个法阵不是为了困住任何人。',
   m2_paomo:'在海面上成串冒起的月巴。它说，死去的人鱼真的会变成泡沫。',
   m2_damofa:'把秘术改成法阵的月巴，是那片海里所有传说的源头。它究竟是怀着怎样的心思做这些事的呢？',
   m2_chuqian:'只在牌桌上现身的月巴，对它来说没有赢不了的赌局。如果有，一定是它刻意为之。',
+  m2_tracker:'很显然，贪心的立体月巴太贪心了，凡是看见茄屁股会立刻gps锁定。',
+  m2_baqi:'月巴已经生根发芽。',
 };
 
 /* ---------------- 界面皮肤（图鉴解锁） ---------------- */
@@ -5542,6 +5602,232 @@ const I18N_UI={
   'B 良好':{en:'B — Good',ja:'B 良好',ko:'B 양호'},
   'C 及格':{en:'C — Pass',ja:'C 合格',ko:'C 합격'},
   'D 差劲':{en:'D — Poor',ja:'D 不振',ko:'D 미흡'},
+  /* —— 斗月巴成就：界面 —— */
+  '斗月巴成就':{en:'Banny Duel achievements',ja:'バニー対決の実績',ko:'배니 맞짱 업적'},
+  '<h3>🏅 斗月巴成就</h3>':{en:'<h3>🏅 Banny Duel Achievements</h3>',ja:'<h3>🏅 バニー対決の実績</h3>',ko:'<h3>🏅 배니 맞짱 업적</h3>'},
+  '总成就':{en:'All-Time',ja:'通算',ko:'누적'},
+  '今日已达成':{en:'Unlocked today',ja:'本日達成',ko:'오늘 달성'},
+  '本周已达成':{en:'Unlocked this week',ja:'今週達成',ko:'이번 주 달성'},
+  '🏅 斗月巴成就 +{v} 🍅':{en:'🏅 Banny Duel achievement +{v} 🍅',ja:'🏅 バニー対決の実績 +{v} 🍅',ko:'🏅 배니 맞짱 업적 +{v} 🍅'},
+  '达成 {n} 项':{en:'{n} unlocked',ja:'{n} 件達成',ko:'{n}개 달성'},
+  '今日成就 {a}/{b} · 本周 {c}/{d}':{en:'Today {a}/{b} · This week {c}/{d}',ja:'本日 {a}/{b} · 今週 {c}/{d}',ko:'오늘 {a}/{b} · 이번 주 {c}/{d}'},
+  '<p class="dd-note" style="margin-top:10px">每日 0 点刷新 · 每周一 0 点刷新 · 达成即自动发放</p>':{en:'<p class="dd-note" style="margin-top:10px">Resets daily at 0:00 · Resets Monday 0:00 · Rewards granted automatically</p>',ja:'<p class="dd-note" style="margin-top:10px">毎日 0 時リセット · 毎週月曜 0 時リセット · 達成で自動付与</p>',ko:'<p class="dd-note" style="margin-top:10px">매일 0시 초기화 · 매주 월요일 0시 초기화 · 달성 시 자동 지급</p>'},
+  '<div class="dd-btns"><button class="btn" onclick="ddHideAch()">返回</button></div>':{en:'<div class="dd-btns"><button class="btn" onclick="ddHideAch()">Back</button></div>',ja:'<div class="dd-btns"><button class="btn" onclick="ddHideAch()">戻る</button></div>',ko:'<div class="dd-btns"><button class="btn" onclick="ddHideAch()">돌아가기</button></div>'},
+  /* —— 斗月巴成就：每日 —— */
+  '今日开局':{en:'First Game Today',ja:'今日の初対局',ko:'오늘 첫 대국'},
+  '今天正常打完 1 局（认输不算）':{en:'Finish 1 game today (forfeits excluded)',ja:'今日 1 局を最後まで（降参は不可）',ko:'오늘 1판을 끝까지 (기권 제외)'},
+  '今日硬仗':{en:'Hard Win Today',ja:'今日の難関',ko:'오늘의 난전'},
+  '今天在困难难度赢 1 局':{en:'Win 1 game on Hard today',ja:'今日「難しい」で 1 勝',ko:'오늘 어려움 난이도에서 1승'},
+  '今日好局':{en:'Good Game Today',ja:'今日の好局',ko:'오늘의 명국'},
+  '今天有 1 局评级达到 A 或以上':{en:'Get an A or higher grade in 1 game today',ja:'今日 A 以上の評価を 1 回',ko:'오늘 A 이상 평가 1회'},
+  '今日三胜':{en:'Three Wins Today',ja:'今日の3勝',ko:'오늘 3승'},
+  '今天累计赢 3 局':{en:'Win 3 games today',ja:'今日 3 勝',ko:'오늘 3승'},
+  '今日神局':{en:'Divine Game Today',ja:'今日の神局',ko:'오늘의 신국'},
+  '今天打出 1 次 S+ 评级':{en:'Get one S+ grade today',ja:'今日 S+ 評価を 1 回',ko:'오늘 S+ 평가 1회'},
+  /* —— 斗月巴成就：每周 —— */
+  '本周十胜':{en:'Ten Wins This Week',ja:'今週の10勝',ko:'이번 주 10승'},
+  '本周累计赢 10 局':{en:'Win 10 games this week',ja:'今週 10 勝',ko:'이번 주 10승'},
+  '本周五连胜':{en:'Five-Win Streak This Week',ja:'今週の5連勝',ko:'이번 주 5연승'},
+  '本周打出一次 5 连胜（出千局不计）':{en:'Reach a 5-win streak this week (cheat games excluded)',ja:'今週 5 連勝を達成（イカサマ局は除外）',ko:'이번 주 5연승 달성 (치팅 판 제외)'},
+  '本周硬仗':{en:'Hard Battles This Week',ja:'今週の難関',ko:'이번 주 난전'},
+  '本周在困难难度赢 5 局':{en:'Win 5 games on Hard this week',ja:'今週「難しい」で 5 勝',ko:'이번 주 어려움 난이도에서 5승'},
+  '本周神局':{en:'Divine Game This Week',ja:'今週の神局',ko:'이번 주 신국'},
+  '本周打出 1 次 S+ 评级':{en:'Get one S+ grade this week',ja:'今週 S+ 評価を 1 回',ko:'이번 주 S+ 평가 1회'},
+  '农民翻身':{en:'Farmer Rising',ja:'農民の逆襲',ko:'농민의 반격'},
+  '本周以农民身份赢 5 局':{en:'Win 5 games as a farmer this week',ja:'今週 農民で 5 勝',ko:'이번 주 농민으로 5승'},
+  '本周大赚':{en:'Big Profit This Week',ja:'今週の大儲け',ko:'이번 주 큰 수익'},
+  '本周斗月巴净赚合计 ≥ 2,000 🍅':{en:'Earn a net 2,000 🍅 in Banny Duel this week',ja:'今週のバニー対決で純利益 2,000 🍅 以上',ko:'이번 주 배니 맞짱 순이익 2,000 🍅 이상'},
+  '本周全勤':{en:'Weekly Attendance',ja:'今週皆勤',ko:'이번 주 개근'},
+  '本周有 5 天各至少打完 1 局':{en:'Finish at least 1 game on 5 days this week',ja:'今週 5 日以上プレイ（各日 1 局以上）',ko:'이번 주 5일 이상 플레이 (매일 1판 이상)'},
+  /* —— 斗月巴成就：总成就 —— */
+  '初次胜利':{en:'First Victory',ja:'初勝利',ko:'첫 승리'},
+  '斗月巴累计赢 1 局':{en:'Win 1 Banny Duel game in total',ja:'バニー対決で通算 1 勝',ko:'배니 맞짱 통산 1승'},
+  '十胜':{en:'Ten Wins',ja:'10勝',ko:'10승'},
+  '斗月巴累计赢 10 局':{en:'Win 10 Banny Duel games in total',ja:'バニー対決で通算 10 勝',ko:'배니 맞짱 통산 10승'},
+  '百战':{en:'Hundred Battles',ja:'百戦',ko:'백전'},
+  '斗月巴累计打完 100 局（认输不算）':{en:'Finish 100 Banny Duel games (forfeits excluded)',ja:'バニー対決で通算 100 局を最後まで（降参は不可）',ko:'배니 맞짱 통산 100판 완료 (기권 제외)'},
+  '硬骨头':{en:'Tough Bone',ja:'硬骨',ko:'강골'},
+  '困难难度累计赢 10 局':{en:'Win 10 games on Hard in total',ja:'「難しい」で通算 10 勝',ko:'어려움 난이도 통산 10승'},
+  '完美牌局':{en:'Perfect Hand',ja:'完璧な一局',ko:'완벽한 한 판'},
+  '累计打出 3 次 S+ 评级':{en:'Get three S+ grades in total',ja:'S+ 評価を通算 3 回',ko:'S+ 평가 통산 3회'},
+  '抓住出千':{en:'Cheat Caught',ja:'イカサマ捕獲',ko:'치팅 적발'},
+  '撞上出千月巴并赢下 1 局':{en:'Beat a cheating Banny once',ja:'イカサマバニーに 1 勝',ko:'치팅 배니를 상대로 1승'},
+  '番茄大亨':{en:'Tomato Tycoon',ja:'トマト成金',ko:'토마토 재벌'},
+  '斗月巴累计净赚 10,000 🍅':{en:'Earn a net 10,000 🍅 in Banny Duel',ja:'バニー対決で純利益 10,000 🍅',ko:'배니 맞짱 순이익 10,000 🍅'},
+  '全难度制霸':{en:'All-Difficulty Master',ja:'全難易度制覇',ko:'전 난이도 제패'},
+  '三种难度各赢至少 5 局':{en:'Win at least 5 games on each difficulty',ja:'各難易度で 5 勝以上',ko:'각 난이도에서 5승 이상'},
+  '百胜':{en:'Hundred Wins',ja:'百勝',ko:'100승'},
+  '斗月巴累计赢 100 局':{en:'Win 100 Banny Duel games in total',ja:'バニー対決で通算 100 勝',ko:'배니 맞짱 통산 100승'},
+  '千战':{en:'Thousand Battles',ja:'千戦',ko:'천전'},
+  '斗月巴累计打完 1,000 局（认输不算）':{en:'Finish 1,000 Banny Duel games (forfeits excluded)',ja:'バニー対決で通算 1,000 局を最後まで（降参は不可）',ko:'배니 맞짱 통산 1,000판 완료 (기권 제외)'},
+  '困难百胜':{en:'Hundred Hard Wins',ja:'難関百勝',ko:'어려움 100승'},
+  '困难难度累计赢 100 局':{en:'Win 100 games on Hard in total',ja:'「難しい」で通算 100 勝',ko:'어려움 난이도 통산 100승'},
+  'S+ 大师':{en:'S+ Master',ja:'S+ マスター',ko:'S+ 마스터'},
+  '累计打出 30 次 S+ 评级':{en:'Get thirty S+ grades in total',ja:'S+ 評価を通算 30 回',ko:'S+ 평가 통산 30회'},
+  '出千终结者':{en:'Cheat Ender',ja:'イカサマ終止符',ko:'치팅 종결자'},
+  '赢下出千月巴的局累计 10 次':{en:'Beat cheating Bannies 10 times in total',ja:'イカサマバニーに通算 10 勝',ko:'치팅 배니 상대 통산 10승'},
+  '番茄巨富':{en:'Tomato Magnate',ja:'トマト大富豪',ko:'토마토 부호'},
+  '斗月巴累计净赚 100,000 🍅':{en:'Earn a net 100,000 🍅 in Banny Duel',ja:'バニー対決で純利益 100,000 🍅',ko:'배니 맞짱 순이익 100,000 🍅'},
+  '二十连胜':{en:'Twenty-Win Streak',ja:'20連勝',ko:'20연승'},
+  '历史最高连胜达到 20 场（出千局不计）':{en:'Reach a 20-game win streak (cheat games excluded)',ja:'最高 20 連勝を達成（イカサマ局は除外）',ko:'최고 20연승 달성 (치팅 판 제외)'},
+  '地主之王':{en:'Landlord King',ja:'地主の王',ko:'지주왕'},
+  '以地主身份累计赢 200 局':{en:'Win 200 games as a landlord',ja:'地主で通算 200 勝',ko:'지주로 통산 200승'},
+  '农民英雄':{en:'Farmer Hero',ja:'農民の英雄',ko:'농민 영웅'},
+  '以农民身份累计赢 300 局':{en:'Win 300 games as a farmer',ja:'農民で通算 300 勝',ko:'농민으로 통산 300승'},
+  '全难度精通':{en:'All-Difficulty Expert',ja:'全難易度マスター',ko:'전 난이도 달인'},
+  '三种难度各赢至少 50 局':{en:'Win at least 50 games on each difficulty',ja:'各難易度で 50 勝以上',ko:'각 난이도에서 50승 이상'},
+  '千胜':{en:'Thousand Wins',ja:'千勝',ko:'1,000승'},
+  '斗月巴累计赢 1,000 局':{en:'Win 1,000 Banny Duel games in total',ja:'バニー対決で通算 1,000 勝',ko:'배니 맞짱 통산 1,000승'},
+  '五千战':{en:'Five Thousand Battles',ja:'五千戦',ko:'5,000판'},
+  '斗月巴累计打完 5,000 局（认输不算）':{en:'Finish 5,000 Banny Duel games (forfeits excluded)',ja:'バニー対決で通算 5,000 局を最後まで（降参は不可）',ko:'배니 맞짱 통산 5,000판 완료 (기권 제외)'},
+  '困难五百胜':{en:'Five Hundred Hard Wins',ja:'難関五百勝',ko:'어려움 500승'},
+  '困难难度累计赢 500 局':{en:'Win 500 games on Hard in total',ja:'「難しい」で通算 500 勝',ko:'어려움 난이도 통산 500승'},
+  'S+ 传说':{en:'S+ Legend',ja:'S+ 伝説',ko:'S+ 전설'},
+  '累计打出 100 次 S+ 评级':{en:'Get one hundred S+ grades in total',ja:'S+ 評価を通算 100 回',ko:'S+ 평가 통산 100회'},
+  '出千克星':{en:'Cheat Bane',ja:'イカサマ天敵',ko:'치팅 천적'},
+  '赢下出千月巴的局累计 50 次':{en:'Beat cheating Bannies 50 times in total',ja:'イカサマバニーに通算 50 勝',ko:'치팅 배니 상대 통산 50승'},
+  '番茄富可敌国':{en:'Tomato Fortune',ja:'トマト長者',ko:'토마토 거부'},
+  '斗月巴累计净赚 500,000 🍅':{en:'Earn a net 500,000 🍅 in Banny Duel',ja:'バニー対決で純利益 500,000 🍅',ko:'배니 맞짱 순이익 500,000 🍅'},
+  '五十连胜':{en:'Fifty-Win Streak',ja:'50連勝',ko:'50연승'},
+  '历史最高连胜达到 50 场（出千局不计）':{en:'Reach a 50-game win streak (cheat games excluded)',ja:'最高 50 連勝を達成（イカサマ局は除外）',ko:'최고 50연승 달성 (치팅 판 제외)'},
+  '地主传说':{en:'Landlord Legend',ja:'地主の伝説',ko:'지주 전설'},
+  '以地主身份累计赢 500 局':{en:'Win 500 games as a landlord',ja:'地主で通算 500 勝',ko:'지주로 통산 500승'},
+  '农民神话':{en:'Farmer Myth',ja:'農民の神話',ko:'농민 신화'},
+  '以农民身份累计赢 800 局':{en:'Win 800 games as a farmer',ja:'農民で通算 800 勝',ko:'농민으로 통산 800승'},
+  '全难度宗师':{en:'All-Difficulty Grandmaster',ja:'全難易度グランドマスター',ko:'전 난이도 그랜드마스터'},
+  '三种难度各赢至少 100 局':{en:'Win at least 100 games on each difficulty',ja:'各難易度で 100 勝以上',ko:'각 난이도에서 100승 이상'},
+  /* ===== P7.7 斗月巴：对局台词（座位气泡 / 结算引用）=====
+     键为 DD_LINES 里的中文原文，改台词时两处要一起改 */
+  /* —— 发牌 / 叫地主 —— */
+  '牌发下来了，希望这把大家都打得开心。':{en:"Cards dealt — let's all have a good game.",ja:'配り終えたよ、みんな楽しく打てますように。',ko:'카드 다 돌렸어요. 다들 즐겁게 해요.'},
+  '都可以哦，慢慢发～':{en:'I am easy — take your time~',ja:'どれでもいいよ、ゆっくりで～',ko:'난 다 좋아요, 천천히~'},
+  '这手牌有番茄的气息。':{en:'This hand smells of tomato.',ja:'この手札、トマトの香りがする。',ko:'이 패에서는 토마토 냄새가 나요.'},
+  '别磨蹭，开始吧。':{en:'Enough dawdling. Start.',ja:'ぐずぐずするな、始めよう。',ko:'꾸물대지 말고 시작해.'},
+  '你当地主呀，那我认真一点陪你打。':{en:"You're the landlord? Then I'll play seriously.",ja:'あなたが地主なら、本気で付き合うよ。',ko:'네가 지주라면, 나도 진지하게 할게요.'},
+  '好哦，那你当地主～':{en:'Okay, you be the landlord~',ja:'いいよ、じゃあ地主はあなたね～',ko:'좋아요, 그럼 지주는 네가 해요~'},
+  '你当地主？那我多吃两口再打。':{en:"You're landlord? Let me eat two more bites first.",ja:'あなたが地主？もう二口食べてから打つ。',ko:'네가 지주? 두 입 더 먹고 할게요.'},
+  '地主？行，我专门打地主。':{en:'Landlord? Fine. I specialize in beating them.',ja:'地主？いいよ、地主を叩くのが専門だ。',ko:'지주? 좋아, 난 지주 잡는 게 전문이야.'},
+  '我手牌好一点，这次我来吧，希望能赢一局。':{en:'My hand is a bit better. Let me try this time.',ja:'手札が少し良いから、今回は私が。一局勝てますように。',ko:'패가 좀 좋아서 이번엔 제가 할게요. 한 판 이겼으면 좋겠네요.'},
+  '我就算了吧，让番茄来，它想当地主。':{en:'Not me — let Tomato have it. It wants to.',ja:'僕はいいよ、トマトに任せる。地主をやりたがってる。',ko:'난 됐어요. 토마토가 하고 싶대요.'},
+  '番茄当地主？那我得认真打了。':{en:'Tomato as landlord? Then I must focus.',ja:'トマトが地主？なら本気で打たないと。',ko:'토마토가 지주? 그럼 진지하게 해야겠네요.'},
+  '行，地主是你，我不客气了。':{en:'Fine, you are landlord. No holding back.',ja:'よし、地主はあなただ。手加減しないよ。',ko:'좋아, 지주는 너야. 봐주지 않을게.'},
+  '它当地主了，我们俩配合一下。':{en:'It is the landlord now. Let us team up.',ja:'あいつが地主だ。二人で連携しよう。',ko:'걔가 지주네요. 우리 둘이 맞춰요.'},
+  '我都可以哦，那我叫啦～':{en:'I am fine either way — I will call~',ja:'どっちでもいいよ、じゃあ僕が叫ぶね～',ko:'난 다 괜찮아요, 그럼 부를게요~'},
+  '我叫！赢了能吃番茄吗？':{en:'I will call! If I win, can I eat Tomato?',ja:'叫ぶ！勝ったらトマト食べていい？',ko:'내가 할래! 이기면 토마토 먹어도 돼요?'},
+  '这把我当地主，你们都给我等着。':{en:'I am landlord this round. All of you, wait.',ja:'この局は俺が地主だ。覚悟しとけ。',ko:'이 판은 내가 지주다. 다들 각오해.'},
+  '都不叫……那只能辛苦你了。':{en:'No one called... then it is on you.',ja:'誰も叫ばないなら……あなたにお願いするね。',ko:'아무도 안 부르면... 너한테 맡길게요.'},
+  '那辛苦你啦，我都可以哦。':{en:'Sorry to trouble you — I am easy.',ja:'じゃあよろしくね、僕はどれでもいいよ。',ko:'그럼 수고해요, 난 다 괜찮아요.'},
+  '它很厉害，我们要一起拦住它。':{en:'It is strong. We must stop it together.',ja:'あいつは強い。二人で止めよう。',ko:'걔는 강해요. 같이 막아야 해요.'},
+  '我当地主，是不是该让你们上贡番茄？':{en:'I am landlord — should you not offer tomatoes?',ja:'俺が地主だ、トマトを貢ぐべきじゃないか？',ko:'내가 지주인데, 토마토를 바쳐야 하지 않아?'},
+  '没人敢叫？那我收下了。':{en:'No one dares? Then I will take it.',ja:'誰も叫ばないのか？じゃあ俺がもらう。',ko:'아무도 못 부르나? 그럼 내가 가져가지.'},
+  /* —— 出牌 —— */
+  '我先出张小牌，你别有压力。':{en:'I will start small — no pressure.',ja:'小さいのから出すね、気にしないで。',ko:'작은 패부터 낼게요, 부담 갖지 마요.'},
+  '这张……还不错吧？':{en:'This one... not bad, right?',ja:'これ……なかなかでしょ？',ko:'이거... 괜찮죠?'},
+  '先来一口小的。':{en:'One small bite to start.',ja:'まずは小さい一口から。',ko:'우선 작은 한 입부터.'},
+  '一张，先试试水。':{en:'One card. Testing the water.',ja:'一枚、まず様子見だ。',ko:'한 장. 물부터 보자.'},
+  '一对小的，你们别嫌小。':{en:'A small pair — do not sneer.',ja:'小さいペアだよ、嫌がらないで。',ko:'작은 페어예요, 작다고 흘기지 마요.'},
+  '一对哦，凑一起刚好。':{en:'A pair~ fits together nicely.',ja:'ペアだよ、ちょうど揃った～',ko:'페어예요~ 딱 맞네요.'},
+  '一对，像两颗番茄。':{en:'A pair — like two tomatoes.',ja:'ペア、トマト二つみたい。',ko:'페어, 토마토 두 개 같아요.'},
+  '一对，跟不跟？':{en:'A pair. Going to follow?',ja:'ペアだ。付き合う？',ko:'페어다. 따라와?'},
+  '三张一起，我尽量出小的。':{en:'Three together — keeping it small.',ja:'三枚一緒、なるべく小さく出すね。',ko:'세 장 같이, 되도록 작게 낼게요.'},
+  '三张哦，可以吗？':{en:'Three cards~ okay?',ja:'三枚だよ、いい？',ko:'세 장인데, 괜찮죠?'},
+  '三张，像三颗番茄。':{en:'Three cards — like three tomatoes.',ja:'三枚、トマト三つみたい。',ko:'세 장, 토마토 세 개 같네요.'},
+  '三张，跟得上吗？':{en:'Three. Can you keep up?',ja:'三枚だ。ついてこれるか？',ko:'세 장. 따라올 수 있어?'},
+  '顺着出，牌面好看一点。':{en:'I will go in order — nicer to look at.',ja:'順番に出すよ、見栄えがいいでしょ。',ko:'순서대로 낼게요, 보기 좋죠.'},
+  '顺着来，好看吧～':{en:'In sequence~ looks good, right?',ja:'順番にね、きれいでしょ～',ko:'순서대로~ 예쁘죠?'},
+  '一条番茄串。':{en:'A tomato skewer.',ja:'トマトの串だ。',ko:'토마토 꼬치예요.'},
+  '一条龙，接得住就接。':{en:'A straight. Follow it if you can.',ja:'階段だ。受けられるなら受けろ。',ko:'스트레이트다. 받을 수 있으면 받아.'},
+  '连着出，希望你们接得上。':{en:'Playing pairs — hope you can follow.',ja:'連続で出すよ、ついてこれますように。',ko:'연속으로 낼게요, 따라오길 바라요.'},
+  '连着的哦，别嫌多。':{en:'Chained pairs~ do not mind the count.',ja:'連続ペアだよ、多いなんて言わないで。',ko:'연속 페어예요, 많다고 하지 마요.'},
+  '要是连对，我就会吃口番茄。吃了。':{en:'Consecutive pairs means a tomato bite. Done.',ja:'連続ペアなら、トマトを一口。食べた。',ko:'연속 페어면 토마토 한 입. 먹었어요.'},
+  '连对。你手里还剩几张？':{en:'Consecutive pairs. How many left in hand?',ja:'連続ペアだ。手札はあと何枚？',ko:'연속 페어. 손에 몇 장 남았어?'},
+  '是不是很帅的牌型！':{en:'Pretty cool combo, is it not!',ja:'かっこいい形でしょ！',ko:'멋진 조합이죠!'},
+  '飞机哦……我也不太会打。':{en:'A plane... I am not great at those either.',ja:'飛行機か……僕もあまり得意じゃない。',ko:'비행기라... 나도 잘 몰라요.'},
+  '这个有点大，番茄你忍一下。':{en:'This is a bit big — hang in there, Tomato.',ja:'これはちょっと大きい、トマト我慢して。',ko:'이건 좀 큰데, 토마토 참아줘.'},
+  '飞机。看你怎么接。':{en:'A plane. Let us see you answer it.',ja:'飛行機だ。どう受ける？',ko:'비행기다. 어떻게 받을 건데?'},
+  '不好意思，这个我不得不用了。':{en:'Sorry — I have to use this one.',ja:'ごめん、これを使うしかない。',ko:'미안해요, 이건 써야겠어요.'},
+  '哎呀，只能用这个啦。':{en:'Oops, this is all I have got.',ja:'あら、これしかないんだ。',ko:'아이고, 이거밖에 없네요.'},
+  '炸一下，番茄汁都出来了！':{en:'Boom — tomato juice everywhere!',ja:'ドカン、トマトの汁が飛んだ！',ko:'펑, 토마토 즙이 터졌어요!'},
+  '炸了。别以为你稳了。':{en:'Boom. Do not think you are safe.',ja:'爆発だ。勝ったつもりか。',ko:'터졌다. 네가 이겼다고 생각 마.'},
+  '这对一起出，实在抱歉。':{en:'These two go together. Truly sorry.',ja:'この二枚一緒に出す、本当にごめん。',ko:'이 두 장 같이 낼게요. 정말 미안해요.'},
+  '王炸……不用就输啦，抱歉。':{en:'Rocket... it is this or lose. Sorry.',ja:'ロケット……出さないと負ける、ごめんね。',ko:'로켓... 안 내면 지니까, 미안.'},
+  '两颗最大的番茄一起炸！':{en:'The two biggest tomatoes blow up together!',ja:'一番大きいトマト二つ、一緒に爆発！',ko:'제일 큰 토마토 둘이 같이 터져요!'},
+  '王炸。这局我说了算。':{en:'Rocket. This round is mine.',ja:'ロケット。この局は俺が決める。',ko:'로켓. 이 판은 내가 정한다.'},
+  '哇，你留了这一手。':{en:'Wow, you saved that.',ja:'わあ、そんな手を残してたの。',ko:'와, 그걸 남겨뒀네요.'},
+  '哇……好凶哦。':{en:'Wow... so fierce.',ja:'わあ……怖いなあ。',ko:'와... 무섭네요.'},
+  '咕咕嘎嘎！':{en:'Cluck-cluck!',ja:'クワックワッ！',ko:'꽥꽥!'},
+  '……行，你还真敢炸。':{en:'...Fine. You dare to bomb.',ja:'……よし、よくも爆発させたな。',ko:'...좋아, 정말 터뜨렸네.'},
+  /* —— 让牌（通用池，不区分能否压住）—— */
+  '这手我让给你，你牌不多啦。':{en:'I will let you have this — you are low.',ja:'これは譲るよ、手札少ないでしょ。',ko:'이건 양보할게요, 패가 얼마 없죠.'},
+  '你先走一步吧，我不着急。':{en:'You go ahead. I am in no rush.',ja:'先にどうぞ、僕は急がない。',ko:'먼저 가세요. 안 급해요.'},
+  '我这儿还有牌，你先。':{en:'I still have cards. You first.',ja:'まだ手札はあるよ、先にどうぞ。',ko:'난 아직 패가 있어요. 먼저 하세요.'},
+  '这个我接不住，你来。':{en:'I cannot beat that. You go.',ja:'これは受けられない、任せる。',ko:'이건 못 받겠어요, 네가 해.'},
+  '不要啦，我的牌太小了。':{en:'Pass — my cards are too small.',ja:'パス、うちの手札小さすぎ。',ko:'패스, 내 패가 너무 작아요.'},
+  '还是你来吧～':{en:'You take it~',ja:'やっぱりあなたに任せるね～',ko:'역시 네가 해요~'},
+  '我打不过啦，你出吧。':{en:'I cannot beat it. Your turn.',ja:'勝てないよ、出して。',ko:'못 이기겠어요, 내세요.'},
+  '这口先留着，等会儿吃番茄。':{en:'Saving this bite for later tomatoes.',ja:'これは取っておく、あとでトマトを食べる。',ko:'이건 아껴둘게요, 나중에 토마토 먹게요.'},
+  '吃不下了，嗝。你出。':{en:'Cannot eat more. Burp. You go.',ja:'もう食べられない、ゲップ。出して。',ko:'더 못 먹겠어요, 꺼억. 내세요.'},
+  '哼，让你一手。':{en:'Hmph. Take this one.',ja:'ふん、一手譲ってやる。',ko:'흥, 한 수 봐줄게.'},
+  '这手我放过你，下把别想。':{en:'I let this pass. Not next time.',ja:'この手は見逃すが、次はない。',ko:'이번엔 넘어가지만, 다음엔 없다.'},
+  '我这手不太行，你请。':{en:'My hand is weak. After you.',ja:'この手は弱い、お先にどうぞ。',ko:'내 패가 약하네요. 먼저 하세요.'},
+  /* —— 身份相关让牌 —— */
+  '你出吧，我在后面帮你兜着。':{en:'Go ahead — I will cover you from behind.',ja:'出して、後ろで支えてるから。',ko:'내세요, 뒤에서 받쳐줄게요.'},
+  '别急，我留着力气压地主。':{en:'No rush — I am saving power for the landlord.',ja:'焦らないで、地主に備えて力は残してる。',ko:'급하지 마요, 지주 잡을 힘은 남겨뒀어요.'},
+  '番茄先吧，我都可以哦。':{en:'Tomato first — I am easy.',ja:'トマトからどうぞ、僕はどれでもいい。',ko:'토마토 먼저 하세요, 난 다 괜찮아요.'},
+  /* —— 局势提示 —— */
+  '你就剩两张了，小心哦。':{en:'Two left. Be careful.',ja:'あと二枚だね、気をつけて。',ko:'두 장 남았네요, 조심해요.'},
+  '你就剩两张啦，加油哦。':{en:'Only two left~ do your best.',ja:'あと二枚だよ、頑張って～',ko:'두 장 남았어요~ 힘내요.'},
+  '两张……够吃吗？':{en:'Two cards... enough to eat?',ja:'二枚……足りる？',ko:'두 장... 먹기에 충분할까?'},
+  '两张。我数着呢。':{en:'Two. I am counting.',ja:'二枚。数えてる。',ko:'두 장. 세고 있어.'},
+  '最后一张……好紧张。':{en:'One last card... so tense.',ja:'最後の一枚……ドキドキする。',ko:'마지막 한 장... 떨리네요.'},
+  '你就剩一张啦？那我不拦你了。':{en:'Only one left? Then I will not block you.',ja:'あと一枚？じゃあ止めないよ。',ko:'한 장 남았어요? 그럼 막지 않을게요.'},
+  '赶紧赢下来，我要去吃番茄了。':{en:'Hurry and win — I want tomatoes.',ja:'早く勝って、トマトを食べに行きたい。',ko:'빨리 이겨줘요, 토마토 먹으러 가야 해요.'},
+  '一张而已，我盯死你。':{en:'Just one card. I am watching you.',ja:'一枚だけだ。がっちり見てる。',ko:'한 장일 뿐. 놓치지 않고 볼게.'},
+  '它只剩一张了，得想想办法。':{en:'It is down to one. We need a plan.',ja:'あと一枚だ、何か考えないと。',ko:'한 장 남았어요, 방법을 생각해야 해요.'},
+  '它剩一张了，我能拦住吗？':{en:'One card left — can I stop it?',ja:'あと一枚、止められるかな？',ko:'한 장 남았는데, 내가 막을 수 있을까?'},
+  '它只剩一颗番茄……哦一张牌了！':{en:'Just one tomato left... I mean, one card!',ja:'残りトマト一個……あ、一枚！',ko:'토마토 하나만... 아, 한 장 남았어요!'},
+  '可恶。':{en:'Damn.',ja:'くそ。',ko:'젠장.'},
+  '没关系，下次再来。':{en:'It is okay. Next time.',ja:'大丈夫、次があるよ。',ko:'괜찮아요, 다음에 또 해요.'},
+  '再来找我们玩吧。':{en:'Come play with us again.',ja:'また遊びに来てね。',ko:'또 놀러 와요.'},
+  '被压住了，吃口番茄压压惊。':{en:'Pressured — a tomato bite to calm down.',ja:'押さえられた、トマトを一口で落ち着こう。',ko:'눌렸네요, 토마토 한 입 먹고 진정해요.'},
+  '啧。继续。':{en:'Tch. Continue.',ja:'ちっ。続けるぞ。',ko:'쳇. 계속.'},
+  '这一轮清完了，重新开始吧。':{en:'Round cleared. Let us start again.',ja:'このラウンド終わり、また始めよう。',ko:'이번 라운드 끝, 다시 시작해요.'},
+  '好啦，重新来～':{en:'All clear~ again.',ja:'よし、もう一回～',ko:'좋아요, 다시 해요~'},
+  '清桌，重新开吃！':{en:'Table cleared — eat again!',ja:'台を片付けた、また食べよう！',ko:'테이블 정리, 다시 먹자!'},
+  '再来。':{en:'Again.',ja:'もう一回。',ko:'다시.'},
+  /* —— 出千月巴 —— */
+  '嘿嘿，这牌不错。':{en:'Heh, nice cards.',ja:'へへ、いい手札だ。',ko:'헤헤, 좋은 패네.'},
+  '嗯？我什么都没做啊。':{en:'Hm? I did not do anything.',ja:'ん？何もしてないよ。',ko:'응? 아무것도 안 했는데.'},
+  '你看见了？看见了也没用。':{en:'You saw? Seeing does not help.',ja:'見た？見ても無駄だよ。',ko:'봤어? 봐도 소용없어.'},
+  '就换一张，别这么小气嘛。':{en:'Just one swap. Do not be stingy.',ja:'一枚替えただけ、ケチらないで。',ko:'한 장만 바꿨는데, 인색하게 굴지 마.'},
+  '眼力不错，可惜牌已经在我手里了。':{en:'Good eyes — but the cards are mine now.',ja:'目はいいね、でももう俺の手だ。',ko:'눈썰미 좋네, 하지만 이미 내 손에 있어.'},
+  '要感谢我大发慈悲。':{en:'Thank me for my mercy.',ja:'俺の慈悲に感謝しろ。',ko:'내 자비에 감사해.'},
+  '嘿嘿，牌好，没办法。':{en:'Heh, good cards — nothing to do.',ja:'へへ、手が良かった、仕方ない。',ko:'헤헤, 패가 좋았어. 어쩔 수 없지.'},
+  '别急，牌桌上不差这一手。':{en:'Relax — one hand will not decide the table.',ja:'焦るな、この一手で決まるわけじゃない。',ko:'급해 말아, 이 한 수로 끝나는 거 아니야.'},
+  /* —— 结算 —— */
+  '你打得真好，我学到了。':{en:'You played well. I learned something.',ja:'上手だったね、勉強になったよ。',ko:'정말 잘했어요. 배웠어요.'},
+  '承让啦，下次我让你先手。':{en:'Good game — I will let you start next time.',ja:'ありがとう、次は先手を譲るね。',ko:'잘했어요, 다음엔 먼저 하게 해줄게요.'},
+  '诶嘿，你赢啦～都可以哦。':{en:'Heh, you won~ all good.',ja:'へへ、あなたの勝ち～どれでもいいよ。',ko:'헤헤, 네가 이겼네~ 다 괜찮아.'},
+  '输了……今天没番茄吃了。':{en:'Lost... no tomatoes for me today.',ja:'負けた……今日はトマトなしだ。',ko:'졌다... 오늘 토마토 못 먹네요.'},
+  '不可能……再来一局！':{en:'Impossible... one more game!',ja:'ありえない……もう一局！',ko:'말도 안 돼... 한 판 더!'},
+  '刚才那把不算，我手气差。':{en:'That one does not count — bad luck.',ja:'今のは無しだ、運が悪かった。',ko:'방금 건 없던 걸로, 운이 나빴어.'},
+  '别灰心，你已经很稳了。':{en:'Do not be down — you were steady.',ja:'落ち込まないで、安定してたよ。',ko:'낙심하지 마요, 안정적이었어요.'},
+  '我赢啦～下次我让你先哦。':{en:'I won~ I will let you start next time.',ja:'勝った～次は先手を譲るね。',ko:'이겼어요~ 다음엔 먼저 하게 해줄게요.'},
+  '赢啦！今晚番茄管饱！':{en:'I won! All-you-can-eat tomatoes tonight!',ja:'勝った！今夜はトマト食べ放題！',ko:'이겼다! 오늘 밤은 토마토 배부르게!'},
+  '就这水平，也敢跟我打？':{en:'This level, and you challenge me?',ja:'その程度で俺に挑むのか？',ko:'이 실력으로 나한테 덤벼?'},
+  '练练再来吧。':{en:'Practice, then come back.',ja:'練習してから来い。',ko:'연습하고 다시 와.'},
+  '不想打了就休息吧，不勉强。':{en:'If you are done, rest. No pressure.',ja:'やめたくなったら休んで、無理しないで。',ko:'그만하고 싶으면 쉬어요, 무리하지 말아요.'},
+  '不玩啦？那下次再来哦～':{en:'Not playing? Come again next time~',ja:'やめるの？じゃあまた今度ね～',ko:'안 할 거예요? 그럼 다음에 또 와요~'},
+  '不打了？那番茄归我了。':{en:'Quitting? Then the tomatoes are mine.',ja:'やめるの？じゃあトマトは俺のものだ。',ko:'안 해? 그럼 토마토는 내 거야.'},
+  '跑得倒挺快。':{en:'Quite the fast runner.',ja:'逃げ足は速いな。',ko:'도망은 빠르네.'},
+  '你最近手感真好，我都跟不上。':{en:'You are on fire lately — I cannot keep up.',ja:'最近すごく好調だね、ついていけない。',ko:'요즘 감이 좋네요, 따라갈 수가 없어요.'},
+  '你赢这么多，我有点服气啦。':{en:'Winning this much — I am impressed.',ja:'こんなに勝たれて、ちょっと感心した。',ko:'이렇게 많이 이기다니, 좀 인정할게요.'},
+  '赢这么多，该请我吃番茄了吧？':{en:'Winning so much — treat me to tomatoes?',ja:'こんなに勝ったら、トマトをご馳走してよ。',ko:'이렇게 이겼으니 토마토 좀 사줘요.'},
+  '你最近手气不错啊……我不服。':{en:'Good luck lately... I do not accept it.',ja:'最近運がいいな……納得いかない。',ko:'요즘 운 좋네... 인정 못 해.'},
+  '要不要换个难度？轻松一点也好。':{en:'Try another difficulty? Easier might help.',ja:'難易度を変えてみる？楽な方がいいかも。',ko:'난이도 바꿔볼래요? 쉬운 게 나을지도.'},
+  '要不要我让你？':{en:'Want me to go easy on you?',ja:'手加減しようか？',ko:'내가 봐줄까?'},
+  '别难过，吃点番茄会好的。':{en:'Do not be sad — tomatoes will help.',ja:'悲しまないで、トマトを食べれば元気になるよ。',ko:'슬퍼하지 마요, 토마토 먹으면 괜찮아질 거예요.'},
+  '连输三把？我就知道你水平差。':{en:'Three losses in a row? Knew you were weak.',ja:'三連敗？やっぱり実力不足だな。',ko:'삼연패? 역시 실력이 부족하네.'},
   ' 个 🍅！</p>':{en:' Tomatoes!</p>',ja:' 個の 🍅！</p>',ko:' 🍅!</p>'},
   ' 个番茄</p>':{en:' Tomatoes</p>',ja:' 個のトマト</p>',ko:' 토마토</p>'},
   ' 留下的对局，结算后会占用今天的次数</p>':{en:' left over from an unfinished game — once settled it will count toward today’s limit</p>',ja:' で残った対局です。精算すると本日の回数を使います</p>',ko:' 로 남은 판이에요. 정산되면 오늘 횟수를 사용합니다</p>'},
@@ -6067,6 +6353,8 @@ const I18N_BANNY={
   m2_paomo:{n:{en:'Foam Banny',ja:'泡バニー',ko:'물거품배니'}},
   m2_damofa:{n:{en:'Archmage Banny',ja:'大魔法使いバニー',ko:'대마법사배니'}},
   m2_chuqian:{n:{en:'Cheater Banny',ja:'イカサマバニー',ko:'사기꾼배니'}},
+  m2_tracker:{n:{en:'Tracker Banny',ja:'トラッカーバニー',ko:'추적기 배니'}},
+  m2_baqi:{n:{en:'Baqi Orochi',ja:'バ岐大蛇',ko:'바치 오로치'}},
 
   dest_forest:{n:{en:'Forest Edge',ja:'森のほとり',ko:'숲의 가장자리'}},
   dest_fairy:{n:{en:'Fairy Hideaway',ja:'桃源郷',ko:'무릉도원'}},
@@ -6530,6 +6818,8 @@ const I18N_BANNY={
   m2_paomo_intro:{d:{en:'A Banny that rises from the sea surface in clusters of bubbles. It says that merfolk who die really do turn into foam.',ja:'海面に次々と泡のように浮かび上がるバニー。死んだ人魚は本当に泡になる、とそれは言う。',ko:'수면 위로 줄지어 떠오르는 배니. 죽은 인어는 정말로 물거품이 된다고 그것은 말한다.'}},
   m2_damofa_intro:{d:{en:'The Banny who turned the arcane arts into magic circles, and the source of every legend in that sea. Just what is on its mind when it does these things?',ja:'秘術を魔法陣に変えたバニーで、あの海のすべての伝説の源。いったいどんな心持ちでこんなことをしているのか。',ko:'비술을 마법진으로 바꾼 배니로, 그 바다의 모든 전설의 근원이다. 도대체 어떤 마음으로 이런 일을 하는 것일까?'}},
   m2_chuqian_intro:{d:{en:'A Banny that appears only at the card table; for it there is no wager it cannot win. If one exists, it must have let it happen on purpose.',ja:'賭けの卓にだけ姿を現すバニーで、それにとって勝てない賭局はない。もしあるなら、わざと負けたに違いない。',ko:'도박판에만 모습을 드러내는 배니로, 그것에게는 이길 수 없는 승부가 없다. 만약 있다면, 일부러 그런 것이 틀림없다.'}},
+  m2_tracker_intro:{d:{en:'Apparently the greedy 3D Banny was far too greedy: the moment it spots a tomato bottom, it instantly GPS-locks on.',ja:'どうやら欲張りな立体バニーは欲張りすぎてしまったらしい。トマトのお尻を見つけたら、すぐさま GPS でロックオンする。',ko:'아무래도 욕심 많은 입체 배니가 너무 욕심을 부린 모양이다. 토마토 엉덩이만 보면 곧바로 GPS로 록온한다.'}},
+  m2_baqi_intro:{d:{en:'The Banny has already taken root and sprouted.',ja:'バニーはすでに根を張り、芽を出した。',ko:'배니는 이미 뿌리를 내리고 싹을 틔웠다.'}},
   /* ---------- P5：成就描述 ach_<id>_desc（字段 d） ---------- */
   ach_h1_desc:{d:{en:'Harvest your first Banny',ja:'初めてバニーを収穫する',ko:'첫 배니를 수확하기'}},
   ach_d1_desc:{d:{en:'Unlock 10 Banny species in the Codex',ja:'図鑑で 10 種のバニーを解放する',ko:'도감에서 배니 10종 해금하기'}},
@@ -7054,6 +7344,11 @@ function defaultState(){
     skins:{unlocked:[], active:null},
     galFirst:{},
     ach:{got:{}, seen:0},
+    /* 斗月巴成就：每日 / 每周 / 总成就。dayDone/weekDone 随日/周 key 重置，total 为累计计数 */
+    ddAch:{seeded:false, day:'', dayDone:{}, week:'', weekDone:{}, totalDone:{}, seen:{day:'',week:'',n:0},
+      total:{games:0, wins:0, net:0, hardWins:0, diffWins:{easy:0,normal:0,hard:0},
+             splus:0, cheatWins:0, landlordWins:0, farmerWins:0, maxStreak:0}},
+    ddSayRecent:[],   // 斗月巴对局台词：跨局去重，保留最近说过的 20 条
     tasks:[],
     gameStart:now(), gameEpoch:now(),
     clock:{base:0, perf:0, wallMax:0, lastReal:0},
@@ -10726,6 +11021,7 @@ function tvFresh(){
   if(t.ddBetDay==null)t.ddBetDay='';        // 斗月巴：上次押注的自然日
   if(t.ddBetUsed==null)t.ddBetUsed=0;       // 斗月巴：当天已用掉的押注次数
   if(t.ddStreak==null)t.ddStreak=0;         // 斗月巴：玩家连胜场数（每场 +2% 遇出千月巴的概率，它现身后清零）
+  if(t.ddLossStreak==null)t.ddLossStreak=0; // 斗月巴：玩家连败场数（认输不计入，用于结算时的安慰台词）
   t.ddRecords=t.ddRecords||[];              // 斗月巴：战绩记录（新的在前，最多保留 DD_REC_MAX 条）
   t.journal=t.journal||[];                  // 旅行笔记：每次旅行的记录（新的在前，最多保留 TV_JOURNAL_MAX 条）
   return t;
@@ -12050,7 +12346,7 @@ function tick(){
       }
     }
   }
-  if(now()-_achT>1500){ _achT=now(); checkAch(); }   // 成就判定节流（约 1.5 秒一次，只算未达成的）
+  if(now()-_achT>1500){ _achT=now(); checkAch(); ddAchTick(); }   // 成就判定节流（约 1.5 秒一次，只算未达成的）
   updateStatus();
   updateWeatherHold();
   updateFlyIcon();
@@ -12978,6 +13274,8 @@ function init(){
   setTimeout(function(){ try{ ddRestore(); }catch(e){} },0);
 }
 init();
+/* 斗月巴成就：等脚本全部执行完（DD_ACH_* / DD_GRADE_BANDS 常量已初始化）再补算一次 */
+setTimeout(function(){ try{ ddAchSeed(); ddAchCheck(true); ddAchBtnUpdate(); }catch(e){} },0);
 /* ================= 斗月巴（旅行页小游戏） ================= */
 /* 三方：玩家🧑 / 月巴🐰 / 番茄🍅。押注从旅行番茄余额扣除，赢家按斗地主规则结算。*/
 /* ============================================================
@@ -13345,7 +13643,7 @@ function ddStreak(){ const t=tvFresh(); return Math.max(0, t.ddStreak|0); }
 /* 本局遇到出千月巴的概率：3% + 连胜 ×2%，封顶 95% */
 function ddCheatChance(){ return Math.min(DD_CHEAT_MAX, DD_CHEAT_BASE + DD_CHEAT_STEP*ddStreak()); }
 /* 座位显示名：本局若被出千月巴顶替，1 号位改叫「出千月巴」 */
-function ddName(i){ const g=ddG; return (g&&g.cheat&&i===1)?$t('出千月巴'):DD_NAMES[i]; }
+function ddName(i){ const g=ddG; return (g&&g.cheat&&i===1)?$t('出千月巴'):$t(DD_NAMES[i]); }
 /* 1 号位此刻该挂哪张立绘：出千月巴顶替时用图鉴里「出千月巴」（m2_chuqian）那张，
    否则按本局（未开局则按当前所选）难度的月巴立绘。返回 {key,html}，key 用于判断是否需要重建节点 */
 function ddFoeArt(){
@@ -13373,6 +13671,260 @@ const DD_DIFFS={
 let ddDiff='normal';        /* 当前选中的难度 */
 let ddG=null;               /* 当前对局（内存，不持久化） */
 let ddTimer=null;           /* AI 延时句柄 */
+
+/* ============================================================
+ * 对局对话（台词表见 specs/dd-dialogue/dialogue.md）
+ * 座位 1 = 月巴（按难度取 easy/normal/hard，出千时取 cheat），座位 2 = 番茄
+ * 规则：每局最多 9 句；同一角色两句间隔 ≥6 秒；同局不重复；跨局排除最近 20 条
+ * ============================================================ */
+const DD_LINES={
+  deal:{
+    tomato:['牌发下来了，希望这把大家都打得开心。'],
+    easy:['都可以哦，慢慢发～'],
+    normal:['这手牌有番茄的气息。'],
+    hard:['别磨蹭，开始吧。']
+  },
+  bidPlayer:{
+    tomato:['你当地主呀，那我认真一点陪你打。'],
+    easy:['好哦，那你当地主～'],
+    normal:['你当地主？那我多吃两口再打。'],
+    hard:['地主？行，我专门打地主。']
+  },
+  bidTomato:{
+    tomato:['我手牌好一点，这次我来吧，希望能赢一局。'],
+    easy:['我就算了吧，让番茄来，它想当地主。'],
+    normal:['番茄当地主？那我得认真打了。'],
+    hard:['行，地主是你，我不客气了。']
+  },
+  bidLandlord:{
+    tomato:['它当地主了，我们俩配合一下。'],
+    easy:['我都可以哦，那我叫啦～'],
+    normal:['我叫！赢了能吃番茄吗？'],
+    hard:['这把我当地主，你们都给我等着。']
+  },
+  bidNonePlayer:{
+    tomato:['都不叫……那只能辛苦你了。'],
+    easy:['那辛苦你啦，我都可以哦。']
+  },
+  bidNoneLandlord:{
+    tomato:['它很厉害，我们要一起拦住它。'],
+    normal:['我当地主，是不是该让你们上贡番茄？'],
+    hard:['没人敢叫？那我收下了。']
+  },
+  play:{
+    single:{tomato:['我先出张小牌，你别有压力。'],easy:['这张……还不错吧？'],normal:['先来一口小的。'],hard:['一张，先试试水。']},
+    pair:{tomato:['一对小的，你们别嫌小。'],easy:['一对哦，凑一起刚好。'],normal:['一对，像两颗番茄。'],hard:['一对，跟不跟？']},
+    triple:{tomato:['三张一起，我尽量出小的。'],easy:['三张哦，可以吗？'],normal:['三张，像三颗番茄。'],hard:['三张，跟得上吗？']},
+    straight:{tomato:['顺着出，牌面好看一点。'],easy:['顺着来，好看吧～'],normal:['一条番茄串。'],hard:['一条龙，接得住就接。']},
+    pairs:{tomato:['连着出，希望你们接得上。'],easy:['连着的哦，别嫌多。'],normal:['要是连对，我就会吃口番茄。吃了。'],hard:['连对。你手里还剩几张？']},
+    plane:{tomato:['是不是很帅的牌型！'],easy:['飞机哦……我也不太会打。'],normal:['这个有点大，番茄你忍一下。'],hard:['飞机。看你怎么接。']},
+    bomb:{tomato:['不好意思，这个我不得不用了。'],easy:['哎呀，只能用这个啦。'],normal:['炸一下，番茄汁都出来了！'],hard:['炸了。别以为你稳了。']},
+    rocket:{tomato:['这对一起出，实在抱歉。'],easy:['王炸……不用就输啦，抱歉。'],normal:['两颗最大的番茄一起炸！'],hard:['王炸。这局我说了算。']}
+  },
+  playerBomb:{
+    tomato:['哇，你留了这一手。'],
+    easy:['哇……好凶哦。'],
+    normal:['咕咕嘎嘎！'],
+    hard:['……行，你还真敢炸。']
+  },
+  pass:{
+    tomato:['这手我让给你，你牌不多啦。','你先走一步吧，我不着急。','我这儿还有牌，你先。','这个我接不住，你来。','不要啦，我的牌太小了。'],
+    easy:['还是你来吧～','我打不过啦，你出吧。'],
+    normal:['这口先留着，等会儿吃番茄。','吃不下了，嗝。你出。'],
+    hard:['哼，让你一手。','这手我放过你，下把别想。'],
+    cheat:['我这手不太行，你请。']
+  },
+  passTeammate:{
+    tomato:['你出吧，我在后面帮你兜着。','别急，我留着力气压地主。']
+  },
+  passYieldTomato:{
+    easy:['番茄先吧，我都可以哦。']
+  },
+  myLeft2:{
+    tomato:['你就剩两张了，小心哦。'],
+    easy:['你就剩两张啦，加油哦。'],
+    normal:['两张……够吃吗？'],
+    hard:['两张。我数着呢。']
+  },
+  myLeft1:{
+    tomato:['最后一张……好紧张。'],
+    easy:['你就剩一张啦？那我不拦你了。'],
+    normal:['赶紧赢下来，我要去吃番茄了。'],
+    hard:['一张而已，我盯死你。']
+  },
+  foeLeft1:{
+    tomato:['它只剩一张了，得想想办法。'],
+    easy:['它剩一张了，我能拦住吗？'],
+    normal:['它只剩一颗番茄……哦一张牌了！'],
+    hard:['可恶。']
+  },
+  pressed:{
+    tomato:['没关系，下次再来。'],
+    easy:['再来找我们玩吧。'],
+    normal:['被压住了，吃口番茄压压惊。'],
+    hard:['啧。继续。']
+  },
+  clearTable:{
+    tomato:['这一轮清完了，重新开始吧。'],
+    easy:['好啦，重新来～'],
+    normal:['清桌，重新开吃！'],
+    hard:['再来。']
+  },
+  cheatOpen:['嘿嘿，这牌不错。'],
+  cheatHidden:['嗯？我什么都没做啊。'],
+  cheatExposed:['你看见了？看见了也没用。','就换一张，别这么小气嘛。','眼力不错，可惜牌已经在我手里了。'],
+  cheatWin:['要感谢我大发慈悲。'],
+  cheatLose:['嘿嘿，牌好，没办法。'],
+  cheatPressed:['别急，牌桌上不差这一手。'],
+  settleWin:{
+    tomato:['你打得真好，我学到了。','承让啦，下次我让你先手。'],
+    easy:['诶嘿，你赢啦～都可以哦。'],
+    normal:['输了……今天没番茄吃了。'],
+    hard:['不可能……再来一局！','刚才那把不算，我手气差。']
+  },
+  settleLose:{
+    tomato:['别灰心，你已经很稳了。'],
+    easy:['我赢啦～下次我让你先哦。'],
+    normal:['赢啦！今晚番茄管饱！'],
+    hard:['就这水平，也敢跟我打？','练练再来吧。']
+  },
+  settleQuit:{
+    tomato:['不想打了就休息吧，不勉强。'],
+    easy:['不玩啦？那下次再来哦～'],
+    normal:['不打了？那番茄归我了。'],
+    hard:['跑得倒挺快。']
+  },
+  winStreak:{
+    tomato:['你最近手感真好，我都跟不上。'],
+    easy:['你赢这么多，我有点服气啦。'],
+    normal:['赢这么多，该请我吃番茄了吧？'],
+    hard:['你最近手气不错啊……我不服。']
+  },
+  loseStreak:{
+    tomato:['要不要换个难度？轻松一点也好。'],
+    easy:['要不要我让你？'],
+    normal:['别难过，吃点番茄会好的。'],
+    hard:['连输三把？我就知道你水平差。']
+  }
+};
+const DD_SAY_MAX=9;         /* 每局最多说几句，避免刷屏 */
+const DD_SAY_GAP=6000;      /* 同一角色两句之间至少隔多久（毫秒） */
+const DD_SAY_REC=20;        /* 跨局排除最近说过的条数 */
+
+/* 座位 1 用哪套台词：出千月巴顶替时整局都用 cheat，否则按本局难度 */
+function ddSayRole(who){
+  if(who===2) return 'tomato';
+  const g=ddG;
+  if(g&&g.cheat) return 'cheat';
+  const k=(g&&g.diff)||ddDiff;
+  return k==='easy'?'easy':(k==='hard'?'hard':'normal');
+}
+/* 牌型 → 台词键：三带一/二归到 triple，飞机带牌归到 plane，四带二没有对应台词 */
+function ddSayKind(type){
+  if(type==='triple1'||type==='triple2') return 'triple';
+  if(type==='plane1'||type==='plane2') return 'plane';
+  if(type==='four2'||type==='four2p') return '';
+  return type;
+}
+function ddSayLines(key, who, sub){
+  const node=DD_LINES[key];
+  if(!node) return [];
+  const leaf=(sub&&node[sub])?node[sub]:node;
+  const v=leaf[ddSayRole(who)];
+  return Array.isArray(v)?v:[];
+}
+/* 从候选里挑一句：先去掉本局说过的与最近 20 条，都没有就放宽到本局未说 */
+function ddSayPick(list){
+  if(!list||!list.length) return '';
+  const g=ddG;
+  const used=(g&&g.sayUsed)||{};
+  const recent=(S&&S.ddSayRecent)||[];
+  let pool=list.filter(function(s){ return !used[s] && recent.indexOf(s)<0; });
+  if(!pool.length) pool=list.filter(function(s){ return !used[s]; });
+  if(!pool.length) pool=list.slice();
+  return pool[Math.floor(Math.random()*pool.length)]||'';
+}
+/* 显示气泡并记账。opts: {chance, force} —— force 只跳过频率/间隔限制，仍受概率约束 */
+function ddSay(who, key, sub, opts){
+  opts=opts||{};
+  const g=ddG;
+  if(!g||who===0) return false;
+  if(opts.chance!=null && Math.random()>opts.chance) return false;
+  const t=now();
+  if(!opts.force){
+    if((g.sayCount|0)>=DD_SAY_MAX) return false;
+    if(t-((g.sayAt&&g.sayAt[who])||0)<DD_SAY_GAP) return false;
+  }
+  const text=ddSayPick(ddSayLines(key,who,sub));
+  if(!text) return false;
+  const el=$('ddSay'+who);
+  if(el){
+    el.textContent=$t(text);
+    el.classList.remove('out');          /* 上一句还在淡出时直接顶掉 */
+    el.classList.add('show');
+    /* 说话者头像轻点：先摘掉再挂回，连续说话时也能重新触发 */
+    const seat=$('ddOpp'+who);
+    if(seat){ seat.classList.remove('talk'); void seat.offsetWidth; seat.classList.add('talk'); }
+    g.sayT=g.sayT||{};
+    if(g.sayT[who]) clearTimeout(g.sayT[who]);
+    g.sayT[who]=setTimeout(function(){
+      const e2=$('ddSay'+who);
+      if(e2){ e2.classList.remove('show'); e2.classList.add('out'); }   /* 淡出后再隐藏，避免硬切 */
+      g.sayT[who]=setTimeout(function(){
+        const e3=$('ddSay'+who); if(e3) e3.classList.remove('show','out');
+        const s2=$('ddOpp'+who); if(s2) s2.classList.remove('talk');
+      },180);
+    },2800);
+  }
+  g.sayUsed=g.sayUsed||{};
+  g.sayUsed[text]=1;
+  g.sayCount=(g.sayCount|0)+1;
+  g.sayAt=g.sayAt||{};
+  g.sayAt[who]=t;
+  if(S){
+    S.ddSayRecent=S.ddSayRecent||[];
+    S.ddSayRecent.push(text);
+    while(S.ddSayRecent.length>DD_SAY_REC) S.ddSayRecent.shift();
+    save();
+  }
+  return true;
+}
+/* 手牌张数变化时提示「你/它只剩一张」 */
+function ddSayDanger(){
+  const g=ddG; if(!g||!g.hands) return;
+  const c0=g.hands[0].length, c1=(g.hands[1]||[]).length;
+  if(g._lastC0!=null && c0!==g._lastC0){
+    if(c0===1){ ddSay(2,'myLeft1',null,{chance:0.85,force:true}); ddSay(1,'myLeft1',null,{chance:0.5,force:true}); }
+    else if(c0===2){ ddSay(2,'myLeft2',null,{chance:0.6,force:true}); ddSay(1,'myLeft2',null,{chance:0.4,force:true}); }
+  }
+  if(g._lastC1!=null && c1!==g._lastC1 && c1===1 && g.role[1]!==g.role[2]){
+    ddSay(2,'foeLeft1',null,{chance:0.7,force:true});
+  }
+  g._lastC0=c0; g._lastC1=c1;
+}
+/* 结算页引用一句：优先连胜/连败，其次胜负，最后认输 */
+function ddSettleQuote(win, winner){
+  const g=ddG; if(!g) return '';
+  const tr=tvFresh();
+  let key='', who=1;
+  if(winner<0){ key='settleQuit'; who=Math.random()<0.55?2:1; }
+  else if(g.cheat && win){ key='cheatWin'; }
+  else if(g.cheat && !win){ key='cheatLose'; }
+  else if(win && (tr.ddStreak|0)>=3){ key='winStreak'; }
+  else if(!win && (tr.ddLossStreak|0)>=3){ key='loseStreak'; }
+  else if(win){ key='settleWin'; who=Math.random()<0.55?2:1; }
+  else { key='settleLose'; who=Math.random()<0.7?1:2; }
+  const text=ddSayPick(ddSayLines(key,who));
+  if(!text) return '';
+  if(S){
+    S.ddSayRecent=S.ddSayRecent||[];
+    S.ddSayRecent.push(text);
+    while(S.ddSayRecent.length>DD_SAY_REC) S.ddSayRecent.shift();
+  }
+  const sep=(curLang()==='en'||curLang()==='ko')?': ':'：';
+  return DD_AVS[who]+' '+ddName(who)+sep+$t(text);
+}
+
 
 /* ---------- 宿主适配层：番茄余额接旅行系统 ---------- */
 const ddHost={
@@ -13594,8 +14146,19 @@ function ddDeal(stake){
     cheatInfo:null,                            /* 出千交换的牌：{give:它给的, take:换走的}，用于公示 */
     seen:[]                                    /* 算牌：全场已打出的牌（值），供困难 AI 推断对手剩余牌 */
   };
+  /* 对局对话：本局计数/去重/间隔全部重置；timers 只存在内存，不参与存档 */
+  ddG.sayUsed={}; ddG.sayCount=0; ddG.sayAt={}; ddG.sayT={};
   ddAskBid();
   ddSaveGame();                                /* 开局即入档：刷新后可恢复这一局 */
+  /* 发牌台词：等发牌动画起势后再出，避免和音效抢拍 */
+  setTimeout(function(){
+    if(!ddG||ddG.phase!=='bid') return;
+    ddSay(1,'deal',null,{chance:0.75,force:true});
+    setTimeout(function(){
+      if(!ddG||ddG.phase!=='bid') return;
+      ddSay(2,'deal',null,{chance:0.55,force:true});
+    },900);
+  },700);
 }
 /* 难度让牌：悄悄把玩家几张「偏大」的牌，与 AI 手里「偏小」的牌对调。
    只动 10~A 这些不扎眼的中高牌，且随机挑（不是固定取最大的几张），
@@ -13663,7 +14226,11 @@ function ddBid(call){
   const g=ddG; if(!g||g.phase!=='bid')return;
   ddSfx(call?'bidYes':'bidNo');
   g.bidDone[0]=true;
-  if(call){ g.bidder=0; g.bidWhy=$t('你叫了地主'); g.bidWhySub=''; ddFinishBid(); return; }
+  g._playerCalled=!!call;
+  if(call){ g.bidder=0; g.bidWhy=$t('你叫了地主'); g.bidWhySub='';
+    ddSay(2,'bidPlayer',null,{chance:0.7,force:true});
+    ddSay(1,'bidPlayer',null,{chance:0.65,force:true});
+    ddFinishBid(); return; }
   /* 玩家不叫：让两个 AI 依次决定 */
   const s0=ddStrength(g.hands[0]), s1=ddStrength(g.hands[1]), s2=ddStrength(g.hands[2]);
   const c1=s1>=9, c2=s2>=9;                 /* 手牌够强才叫 */
@@ -13697,14 +14264,35 @@ function ddFinishBid(){
   ddSfx('landlord');                         /* 地主落定：延迟起音的暖上行 */
   ddShowLayer(null);
   ddRenderAll();
+  /* 对局对话：按地主归属挑一组台词——玩家叫 / 番茄叫 / 月巴叫 / 都不叫 */
+  if(g.landlord===0){
+    if(!g._playerCalled){
+      ddSay(2,'bidNonePlayer',null,{chance:0.85,force:true});
+      ddSay(1,'bidNonePlayer',null,{chance:0.6,force:true});
+    }
+  }else if(g.landlord===2){
+    ddSay(2,'bidTomato',null,{chance:0.9,force:true});
+    ddSay(1,'bidTomato',null,{chance:0.8,force:true});
+  }else{
+    ddSay(1,'bidLandlord',null,{chance:0.9,force:true});
+    ddSay(2,'bidLandlord',null,{chance:0.55,force:true});
+  }
+  /* 记下三家初始张数：之后每次变化都能判断「刚变成 1/2 张」 */
+  g._lastC0=g.hands[0].length; g._lastC1=g.hands[1].length;
   if(g.bidWhySub) ddHost.toast(g.bidWhy,g.bidWhySub);
   else ddHost.toast(g.bidWhy||(ddName(g.landlord)+$t('是地主，开始出牌')));
   if(g.cheatInfo){
+    /* 出千月巴露面前先嘴硬一句，再报出千的事 */
+    setTimeout(function(){
+      if(!ddG||!ddG.cheatInfo||ddG.phase==='over') return;
+      ddSay(1,'cheatHidden',null,{chance:0.9,force:true});
+    },1100);
     /* 叫地主的提示先出，隔一会儿再报出千的事，免得两条提示互相顶掉 */
     setTimeout(function(){
       if(!ddG||!ddG.cheatInfo||ddG.phase==='over') return;   /* 这局已经散了就别再提示 */
       ddSfx('cheat');                                        /* 出千露馅：半音下滑的捣鬼音 */
       ddHost.toast($t('🃏 出千月巴出千了！'),$t('它用 ')+ddCardName(ddG.cheatInfo.give)+$t(' 换走了你的 ')+ddCardName(ddG.cheatInfo.take));
+      ddSay(1,'cheatExposed',null,{chance:1,force:true});
     },2300);
   }
   ddAfterRender();
@@ -13720,6 +14308,8 @@ function ddAfterRender(){
     g.last=null; g.plays=[null,null,null];
     ddSfx('clean');                            /* 清桌重开：海浪退去 */
     ddRenderAll();
+    ddSay(2,'clearTable',null,{chance:0.4,force:true});
+    ddSay(1,'clearTable',null,{chance:0.35,force:true});
   }
   if(g.turn===0) ddRenderActions();
   else {
@@ -13740,11 +14330,22 @@ function ddPlay(cards,who){
   if(g.playCount) g.playCount[who]=(g.playCount[who]|0)+1;   /* 出牌手数 +1（过牌不计） */
   g.last={cards:cards.slice(),type:p.type,len:p.len,rank:p.rank,owner:who};
   g.sel=[]; g.hintIdx=0;
+  /* 出牌台词：玩家出炸弹由两家评价；AI 出牌则按牌型 25% 概率说一句 */
+  if(who===0){
+    if(p.type==='bomb'||p.type==='rocket'){
+      ddSay(2,'playerBomb',null,{chance:0.8,force:true});
+      ddSay(1,'playerBomb',null,{chance:0.65,force:true});
+    }
+  }else{
+    const kind=ddSayKind(p.type);
+    if(kind) ddSay(who,'play',kind,{chance:p.type==='bomb'||p.type==='rocket'?0.6:0.25});
+  }
   /* 赢家出完最后一张：先渲染（让大家看到最后一手）再结算 */
   if(g.hands[who].length===0){ ddRenderAll(); ddSettle(who); return; }
   /* 先更新 turn 再渲染 — ddRenderCenter 读 g.turn 显示"轮到谁/谁思考中" */
   g.turn=(who+1)%3;
   ddRenderAll();
+  ddSayDanger();
   ddAfterRender();
   ddSaveGame();                                /* 每出一手都入档，刷新可原地续打 */
 }
@@ -13752,7 +14353,15 @@ function ddPass(who){
   const g=ddG;
   ddSfx('pass');
   g.plays[who]='pass';
-  g.turn=(who+1)%3;
+  const next=(who+1)%3;
+  /* 让牌台词：不区分压不压得住，统一从通用池随机取（避免剧透手牌）；
+     身份相关的两句（番茄帮玩家兜底 / 墨镜让番茄）单独判断 */
+  if(who!==0){
+    if(who===2 && ddSameSide(2,0)) ddSay(2,'passTeammate',null,{chance:0.5});
+    else if(who===1 && ddSayRole(1)==='easy' && next===2 && ddSameSide(1,2)) ddSay(1,'passYieldTomato',null,{chance:0.5});
+    else ddSay(who,'pass',null,{chance:0.4});
+  }
+  g.turn=next;
   ddRenderAll();
   ddAfterRender();
   ddSaveGame();
@@ -13772,6 +14381,9 @@ function ddPlayerPass(){
   const g=ddG; if(!g||g.phase!=='play'||g.turn!==0)return;
   if(!g.last){ ddSfx('err'); ddHost.toast($t('你是本轮首家，必须出牌')); return; }
   ddPass(0);
+  /* 你被压过一手：两家可能各说一句（不判断你压不压得住，只看你过牌这个动作） */
+  ddSay(2,'pressed',null,{chance:0.3});
+  ddSay(1,'pressed',null,{chance:0.3});
 }
 function ddPlayerHint(){
   const g=ddG; if(!g||g.phase!=='play'||g.turn!==0)return;
@@ -14017,6 +14629,9 @@ function ddSettle(winner){
      紧接着的 ddPushRecord 里有 save()，这条改动随之一并入档 */
   const tr=tvFresh();
   if(g.cheat||!win) tr.ddStreak=0; else tr.ddStreak=(tr.ddStreak|0)+1;
+  /* 连败计数：认输不算连败（避免误伤），只统计真正打完的败局 */
+  if(win) tr.ddLossStreak=0;
+  else if(winner>=0) tr.ddLossStreak=(tr.ddLossStreak|0)+1;
   ddPushRecord(win,net,winner);                /* 写入战绩记录（时间/胜负/地主/时长/番茄/初始牌分） */
   ddRenderAll();
   ddSfx(win?'win':'lose');
@@ -14037,7 +14652,7 @@ function ddPushRecord(win,net,winner){
   const myLeft=(h[0]||[]).length|0;                      /* 玩家结算剩余张数 */
   const foeLeft=isLd?((h[1]||[]).length+(h[2]||[]).length)   /* 敌方阵营剩余总张数 */
                    :((h[g.landlord]||[]).length);
-  t.ddRecords.unshift({
+  const rec={
     t:now(),                                   /* 时间 */
     win:!!win,                                 /* 玩家是否获胜 */
     quit:(winner<0),                           /* 是否认输退出 */
@@ -14055,13 +14670,338 @@ function ddPushRecord(win,net,winner){
     foeLeft:foeLeft|0,                         /* 敌方阵营结算剩余张数（评级用） */
     myTotal:myTotal,                           /* 玩家总牌数（评级归一用） */
     foeTotal:foeTotal                          /* 敌方阵营总牌数（评级归一用） */
-  });
+  };
+  t.ddRecords.unshift(rec);
   if(t.ddRecords.length>DD_REC_MAX) t.ddRecords.length=DD_REC_MAX;
   save();
+  /* 斗月巴成就：先累计总成就计数，再判定日/周/总三档（达成即自动发番茄） */
+  try{ ddAchAccum(rec); ddAchCheck(false); }catch(e){}
 }
 /* 刚写入的那条战绩（ddSettle 里先 ddPushRecord 再 ddShowResult，故首位就是本局）：
    结算页直接拿它算评级，不再重复推导一遍 */
 function ddLastRec(){ return (tvFresh().ddRecords||[])[0]||null; }
+
+/* ============================================================
+ * 斗月巴成就（每日 5 / 每周 7 / 总成就 18）
+ *  - 日 / 周成就直接按当日、当周的战绩实时计算；总成就用 ddAch.total 累计计数
+ *  - 达成即自动发放番茄：日 5 🍅、周 10 🍅、总 50 🍅
+ *  - 日期跟随 dayKey（北京时间），周以周一 0 点为界；认输不计局数与胜场
+ * ============================================================ */
+let _ddAchNeed=false;
+let ddAchTab='day';
+/* 老存档补齐 ddAch 结构（缺字段就补默认值，不改已有数据） */
+function ddAchState(){
+  if(!S.ddAch) S.ddAch={};
+  const a=S.ddAch;
+  if(!a.dayDone) a.dayDone={};
+  if(!a.weekDone) a.weekDone={};
+  if(!a.totalDone) a.totalDone={};
+  if(a.day==null) a.day='';
+  if(a.week==null) a.week='';
+  if(!a.seen) a.seen={day:'',week:'',n:0};
+  if(!a.total) a.total={};
+  const d=a.total;
+  ['games','wins','net','hardWins','splus','cheatWins','landlordWins','farmerWins','maxStreak'].forEach(function(k){
+    if(typeof d[k]!=='number'||!isFinite(d[k])) d[k]=0;
+  });
+  if(!d.diffWins) d.diffWins={};
+  ['easy','normal','hard'].forEach(function(k){ if(typeof d.diffWins[k]!=='number') d.diffWins[k]=0; });
+  return a;
+}
+/* 周的 key 用「本周一」的日期串，跨周自动区分 */
+function ddAchWeekKey(ts){ return dayKey(startOfWeek(ts)); }
+/* 跨天 / 跨周：清空对应已完成列表；返回是否有变化 */
+function ddAchRoll(){
+  const a=ddAchState();
+  const dk=dayKey(now()), wk=ddAchWeekKey(now());
+  let ch=false;
+  if(a.day!==dk){ a.day=dk; a.dayDone={}; ch=true; }
+  if(a.week!==wk){ a.week=wk; a.weekDone={}; ch=true; }
+  if(ch){ _ddAchNeed=true; save(); }
+  return ch;
+}
+/* 评级判定：min='A' 表示 A 或以上（含 S 系）；min='S+' 表示仅 S+ */
+function ddAchGradeIs(r,min){
+  const g=ddGrade(r); if(!g) return false;
+  if(min==='S+') return g.g==='S+';
+  return g.g.charAt(0)==='S'||g.g.charAt(0)==='A';
+}
+function ddAchDiffKey(r){ return (r.diff==='easy'||r.diff==='hard')?r.diff:'normal'; }
+/* 当周最长连胜（出千月巴的局不计，并打断连胜，与 ddStreak 同口径） */
+function ddAchWeekStreak(list){
+  const arr=list.slice().reverse();       /* 战绩是新→旧，反转成旧→新 */
+  let best=0, cur=0;
+  for(let i=0;i<arr.length;i++){
+    const r=arr[i];
+    if(r.cheat){ cur=0; continue; }
+    if(!r.quit&&r.win){ cur++; if(cur>best) best=cur; }
+    else cur=0;
+  }
+  return best;
+}
+/* 日 / 周成就的进度函数：只读对应时间范围内的战绩 */
+const DD_ACH_DAY=[
+  {id:'d1', ic:'🃏', n:'今日开局', d:'今天正常打完 1 局（认输不算）', tgt:1, rw:5,
+   p:function(l){ return l.filter(function(r){ return !r.quit; }).length; }},
+  {id:'d2', ic:'👑', n:'今日硬仗', d:'今天在困难难度赢 1 局', tgt:1, rw:5,
+   p:function(l){ return l.filter(function(r){ return !r.quit&&r.win&&r.diff==='hard'; }).length; }},
+  {id:'d3', ic:'🎯', n:'今日好局', d:'今天有 1 局评级达到 A 或以上', tgt:1, rw:5,
+   p:function(l){ return l.filter(function(r){ return ddAchGradeIs(r,'A'); }).length; }},
+  {id:'d4', ic:'🔥', n:'今日三胜', d:'今天累计赢 3 局', tgt:3, rw:5,
+   p:function(l){ return l.filter(function(r){ return !r.quit&&r.win; }).length; }},
+  {id:'d5', ic:'⭐', n:'今日神局', d:'今天打出 1 次 S+ 评级', tgt:1, rw:5,
+   p:function(l){ return l.filter(function(r){ return ddAchGradeIs(r,'S+'); }).length; }}
+];
+const DD_ACH_WEEK=[
+  {id:'w1', ic:'🏅', n:'本周十胜', d:'本周累计赢 10 局', tgt:10, rw:10,
+   p:function(l){ return l.filter(function(r){ return !r.quit&&r.win; }).length; }},
+  {id:'w2', ic:'🔥', n:'本周五连胜', d:'本周打出一次 5 连胜（出千局不计）', tgt:5, rw:10,
+   p:function(l){ return ddAchWeekStreak(l); }},
+  {id:'w3', ic:'👑', n:'本周硬仗', d:'本周在困难难度赢 5 局', tgt:5, rw:10,
+   p:function(l){ return l.filter(function(r){ return !r.quit&&r.win&&r.diff==='hard'; }).length; }},
+  {id:'w4', ic:'⭐', n:'本周神局', d:'本周打出 1 次 S+ 评级', tgt:1, rw:10,
+   p:function(l){ return l.filter(function(r){ return ddAchGradeIs(r,'S+'); }).length; }},
+  {id:'w5', ic:'🌾', n:'农民翻身', d:'本周以农民身份赢 5 局', tgt:5, rw:10,
+   p:function(l){ return l.filter(function(r){ return !r.quit&&r.win&&r.role!=='landlord'; }).length; }},
+  {id:'w6', ic:'💰', n:'本周大赚', d:'本周斗月巴净赚合计 ≥ 2,000 🍅', tgt:2000, rw:10,
+   p:function(l){ let s=0; l.forEach(function(r){ s+=(r.net|0); }); return s; }},
+  {id:'w7', ic:'📅', n:'本周全勤', d:'本周有 5 天各至少打完 1 局', tgt:5, rw:10,
+   p:function(l){
+     const seen={}; l.forEach(function(r){ if(!r.quit) seen[dayKey(r.t)]=1; });
+     return Object.keys(seen).length;
+   }}
+];
+/* 总成就：只读 ddAch.total 累计计数，不依赖战绩条数 */
+function ddAchMinDiff(t){ return Math.min(t.diffWins.easy|0, t.diffWins.normal|0, t.diffWins.hard|0); }
+const DD_ACH_TOTAL=[
+  {id:'t1', ic:'🥇', n:'初次胜利', d:'斗月巴累计赢 1 局', tgt:1, rw:50,
+   p:function(t){ return t.wins; }},
+  {id:'t2', ic:'🎖️', n:'十胜', d:'斗月巴累计赢 10 局', tgt:10, rw:50,
+   p:function(t){ return t.wins; }},
+  {id:'t3', ic:'🏆', n:'百战', d:'斗月巴累计打完 100 局（认输不算）', tgt:100, rw:50,
+   p:function(t){ return t.games; }},
+  {id:'t4', ic:'⚔️', n:'硬骨头', d:'困难难度累计赢 10 局', tgt:10, rw:50,
+   p:function(t){ return t.hardWins; }},
+  {id:'t5', ic:'⭐', n:'完美牌局', d:'累计打出 3 次 S+ 评级', tgt:3, rw:50,
+   p:function(t){ return t.splus; }},
+  {id:'t6', ic:'🃏', n:'抓住出千', d:'撞上出千月巴并赢下 1 局', tgt:1, rw:50,
+   p:function(t){ return t.cheatWins; }},
+  {id:'t7', ic:'💰', n:'番茄大亨', d:'斗月巴累计净赚 10,000 🍅', tgt:10000, rw:50,
+   p:function(t){ return t.net; }},
+  {id:'t8', ic:'🧠', n:'全难度制霸', d:'三种难度各赢至少 5 局', tgt:5, rw:50,
+   p:function(t){ return ddAchMinDiff(t); }},
+  {id:'t9', ic:'🥈', n:'百胜', d:'斗月巴累计赢 100 局', tgt:100, rw:50,
+   p:function(t){ return t.wins; }},
+  {id:'t10', ic:'🏯', n:'千战', d:'斗月巴累计打完 1,000 局（认输不算）', tgt:1000, rw:50,
+   p:function(t){ return t.games; }},
+  {id:'t11', ic:'🗡️', n:'困难百胜', d:'困难难度累计赢 100 局', tgt:100, rw:50,
+   p:function(t){ return t.hardWins; }},
+  {id:'t12', ic:'🌟', n:'S+ 大师', d:'累计打出 30 次 S+ 评级', tgt:30, rw:50,
+   p:function(t){ return t.splus; }},
+  {id:'t13', ic:'🕵️', n:'出千终结者', d:'赢下出千月巴的局累计 10 次', tgt:10, rw:50,
+   p:function(t){ return t.cheatWins; }},
+  {id:'t14', ic:'💎', n:'番茄巨富', d:'斗月巴累计净赚 100,000 🍅', tgt:100000, rw:50,
+   p:function(t){ return t.net; }},
+  {id:'t15', ic:'🔥', n:'二十连胜', d:'历史最高连胜达到 20 场（出千局不计）', tgt:20, rw:50,
+   p:function(t){ return t.maxStreak; }},
+  {id:'t16', ic:'👑', n:'地主之王', d:'以地主身份累计赢 200 局', tgt:200, rw:50,
+   p:function(t){ return t.landlordWins; }},
+  {id:'t17', ic:'🌾', n:'农民英雄', d:'以农民身份累计赢 300 局', tgt:300, rw:50,
+   p:function(t){ return t.farmerWins; }},
+  {id:'t18', ic:'🎓', n:'全难度精通', d:'三种难度各赢至少 50 局', tgt:50, rw:50,
+   p:function(t){ return ddAchMinDiff(t); }},
+  {id:'t19', ic:'🏛️', n:'千胜', d:'斗月巴累计赢 1,000 局', tgt:1000, rw:50,
+   p:function(t){ return t.wins; }},
+  {id:'t20', ic:'🏰', n:'五千战', d:'斗月巴累计打完 5,000 局（认输不算）', tgt:5000, rw:50,
+   p:function(t){ return t.games; }},
+  {id:'t21', ic:'🛡️', n:'困难五百胜', d:'困难难度累计赢 500 局', tgt:500, rw:50,
+   p:function(t){ return t.hardWins; }},
+  {id:'t22', ic:'🌠', n:'S+ 传说', d:'累计打出 100 次 S+ 评级', tgt:100, rw:50,
+   p:function(t){ return t.splus; }},
+  {id:'t23', ic:'🕶️', n:'出千克星', d:'赢下出千月巴的局累计 50 次', tgt:50, rw:50,
+   p:function(t){ return t.cheatWins; }},
+  {id:'t24', ic:'🏦', n:'番茄富可敌国', d:'斗月巴累计净赚 500,000 🍅', tgt:500000, rw:50,
+   p:function(t){ return t.net; }},
+  {id:'t25', ic:'💥', n:'五十连胜', d:'历史最高连胜达到 50 场（出千局不计）', tgt:50, rw:50,
+   p:function(t){ return t.maxStreak; }},
+  {id:'t26', ic:'🤴', n:'地主传说', d:'以地主身份累计赢 500 局', tgt:500, rw:50,
+   p:function(t){ return t.landlordWins; }},
+  {id:'t27', ic:'🧑‍🌾', n:'农民神话', d:'以农民身份累计赢 800 局', tgt:800, rw:50,
+   p:function(t){ return t.farmerWins; }},
+  {id:'t28', ic:'🏵️', n:'全难度宗师', d:'三种难度各赢至少 100 局', tgt:100, rw:50,
+   p:function(t){ return ddAchMinDiff(t); }}
+];
+/* 按日 / 周筛选战绩（北京时间） */
+function ddAchFilter(recs,scope){
+  if(scope==='day'){
+    const k=dayKey(now());
+    return recs.filter(function(r){ return dayKey(r.t)===k; });
+  }
+  const ws=startOfWeek(now());
+  return recs.filter(function(r){ return (r.t||0)>=ws; });
+}
+/* 结算时累加总成就计数（记录已写入 ddRecords，直接吃这一条） */
+function ddAchAccum(rec){
+  if(!rec) return;
+  const a=ddAchState(), d=a.total;
+  if(!rec.quit){
+    d.games++;
+    if(rec.win){
+      d.wins++;
+      const k=ddAchDiffKey(rec);
+      d.diffWins[k]=(d.diffWins[k]|0)+1;
+      if(k==='hard') d.hardWins++;
+      if(rec.role==='landlord') d.landlordWins++; else d.farmerWins++;
+      if(rec.cheat) d.cheatWins++;
+    }
+    if(ddAchGradeIs(rec,'S+')) d.splus++;
+  }
+  d.net=(d.net|0)+(rec.net|0);
+  const cur=Math.max(0, (tvFresh().ddStreak|0));
+  if(cur>d.maxStreak) d.maxStreak=cur;
+}
+/* 老存档首次接入：用现有战绩补算一次累计计数（只补一次，之后靠 ddAchAccum） */
+function ddAchSeed(){
+  const a=ddAchState();
+  if(a.seeded) return;
+  a.seeded=true;
+  const recs=((S.travel&&S.travel.ddRecords)||[]).slice().reverse();   /* 旧→新 */
+  let streak=0;
+  for(let i=0;i<recs.length;i++){
+    const r=recs[i];
+    if(!r.quit){
+      a.total.games++;
+      if(r.win){
+        a.total.wins++;
+        const k=ddAchDiffKey(r);
+        a.total.diffWins[k]=(a.total.diffWins[k]|0)+1;
+        if(k==='hard') a.total.hardWins++;
+        if(r.role==='landlord') a.total.landlordWins++; else a.total.farmerWins++;
+        if(r.cheat) a.total.cheatWins++;
+      }
+      if(ddAchGradeIs(r,'S+')) a.total.splus++;
+    }
+    a.total.net=(a.total.net|0)+(r.net|0);
+    if(r.cheat) streak=0;
+    else if(!r.quit&&r.win) streak++;
+    else streak=0;
+    if(streak>a.total.maxStreak) a.total.maxStreak=streak;
+  }
+  save();
+}
+/* 判定三档成就并自动发奖；silent=读档/跨天补判（不弹提示） */
+function ddAchCheck(silent){
+  ddAchRoll();
+  const a=ddAchState();
+  const recs=(tvFresh().ddRecords||[]);
+  const dayRecs=ddAchFilter(recs,'day');
+  const weekRecs=ddAchFilter(recs,'week');
+  let gained=0, tomato=0;
+  function award(ach,store){
+    if(store[ach.id]) return;
+    store[ach.id]=now();
+    gained++; tomato+=ach.rw;
+  }
+  DD_ACH_DAY.forEach(function(ach){
+    if(a.dayDone[ach.id]) return;
+    let cur=0; try{ cur=ach.p(dayRecs)|0; }catch(e){ cur=0; }
+    if(cur>=ach.tgt) award(ach,a.dayDone);
+  });
+  DD_ACH_WEEK.forEach(function(ach){
+    if(a.weekDone[ach.id]) return;
+    let cur=0; try{ cur=ach.p(weekRecs)|0; }catch(e){ cur=0; }
+    if(cur>=ach.tgt) award(ach,a.weekDone);
+  });
+  DD_ACH_TOTAL.forEach(function(ach){
+    if(a.totalDone[ach.id]) return;
+    let cur=0; try{ cur=ach.p(a.total)|0; }catch(e){ cur=0; }
+    if(cur>=ach.tgt) award(ach,a.totalDone);
+  });
+  if(gained){
+    tvTomato(tomato);        /* 内部会 save() 并刷新顶栏番茄 */
+    if(!silent){
+      sfx.unlock();
+      toast($tf('🏅 斗月巴成就 +{v} 🍅',{v:tomato}), $tf('达成 {n} 项',{n:gained}));
+    }
+    ddAchBtnUpdate();
+  }
+  _ddAchNeed=false;
+  return gained;
+}
+function ddAchDone(a,scope){
+  const store=scope==='day'?a.dayDone:(scope==='week'?a.weekDone:a.totalDone);
+  return Object.keys(store||{}).length;
+}
+function ddAchList(scope){ return scope==='day'?DD_ACH_DAY:(scope==='week'?DD_ACH_WEEK:DD_ACH_TOTAL); }
+/* 顶栏 🏅 小红点：有「今天/本周新达成但还没看过」的成就时点亮 */
+function ddAchBtnUpdate(){
+  const btn=$('ddAchBtn'); if(!btn) return;
+  const a=ddAchState();
+  const n=ddAchDone(a,'day')+ddAchDone(a,'week');
+  const seen=(a.seen&&a.seen.day===a.day&&a.seen.week===a.week)?(a.seen.n|0):0;
+  btn.classList.toggle('new', n>seen);
+}
+function ddAchTabsHTML(a){
+  function tab(scope,label){
+    return '<button class="dd-rec-tab'+(ddAchTab===scope?' on':'')+'" onclick="ddAchTabSet(\''+scope+'\')">'
+      +$t(label)+' '+ddAchDone(a,scope)+'/'+ddAchList(scope).length+'</button>';
+  }
+  return '<div class="dd-rec-tabs">'+tab('day','今日')+tab('week','本周')+tab('total','总成就')+'</div>';
+}
+function ddAchCardsHTML(scope,a){
+  const recs=(tvFresh().ddRecords||[]);
+  const list=(scope==='total')?null:ddAchFilter(recs,scope);
+  const store=scope==='day'?a.dayDone:(scope==='week'?a.weekDone:a.totalDone);
+  return ddAchList(scope).map(function(ach,i){
+    const done=!!store[ach.id];
+    let sub;
+    if(done){
+      const when=(scope==='day')?$t('今日已达成'):(scope==='week'?$t('本周已达成'):$tf('🏆 {t} 达成',{t:fmtDT(store[ach.id])}));
+      sub='<div class="ach-t">'+when+'</div>';
+    }else{
+      let cur=0;
+      try{ cur=(scope==='total'?ach.p(a.total):ach.p(list))|0; }catch(e){ cur=0; }
+      cur=Math.max(0,Math.min(cur,ach.tgt));
+      const pct=ach.tgt>0?Math.round(cur/ach.tgt*100):100;
+      sub='<div class="ach-bar"><i style="width:'+pct+'%"></i></div><div class="ach-pg">'+fmt(cur)+' / '+fmt(ach.tgt)+'</div>';
+    }
+    return '<div class="ach-card anim-in'+(done?' on':'')+'" style="--stagger:'+(i*32)+'ms"><div class="ach-ic">'+(done?ach.ic:'🔒')+'</div><div class="ach-main">'
+      +'<div class="ach-n">'+esc($t(ach.n))+'<span style="font-size:10px;color:#8a6a00;margin-left:6px;">'+$tf('+{n} 🍅',{n:ach.rw})+'</span></div>'
+      +'<div class="ach-d">'+esc($t(ach.d))+'</div>'+sub+'</div></div>';
+  }).join('');
+}
+function ddAchHTML(){
+  const a=ddAchState();
+  return $t('<h3>🏅 斗月巴成就</h3>')+ddAchTabsHTML(a)
+    +'<div class="ach-grid">'+ddAchCardsHTML(ddAchTab,a)+'</div>'
+    +$t('<p class="dd-note" style="margin-top:10px">每日 0 点刷新 · 每周一 0 点刷新 · 达成即自动发放</p>')
+    +$t('<div class="dd-btns"><button class="btn" onclick="ddHideAch()">返回</button></div>');
+}
+function ddOpenAch(scope){
+  ddAchRoll();
+  if(scope) ddAchTab=(scope==='week'||scope==='total')?scope:'day';
+  const box=$('ddAchBox'); if(!box) return;
+  const a=ddAchState();
+  box.innerHTML=ddAchHTML();
+  ddShowLayer('ddAchLayer');
+  try{ ddSfx('panel'); }catch(e){}
+  /* 打开即视为已查看：熄掉小红点 */
+  a.seen={day:a.day, week:a.week, n:ddAchDone(a,'day')+ddAchDone(a,'week')};
+  save(); ddAchBtnUpdate();
+}
+function ddHideAch(){ ddShowLayer(!ddG?'ddBet':(ddG.phase==='over'?'ddResult':null)); }
+function ddAchTabSet(scope){
+  ddAchTab=(scope==='week'||scope==='total')?scope:'day';
+  try{ ddSfx('panel'); }catch(e){}
+  const box=$('ddAchBox'); if(box) box.innerHTML=ddAchHTML();
+}
+/* tick 兜底：跨天/跨周重置 + 补判（读档后停留在旧状态时也能自己纠正） */
+function ddAchTick(){
+  const rolled=ddAchRoll();
+  if(rolled||_ddAchNeed){ _ddAchNeed=false; ddAchCheck(true); }
+  ddAchBtnUpdate();
+}
+
 function ddShowResult(win,net,payout,winner){
   const g=ddG;
   const cfg=DD_DIFFS[g.diff]||DD_DIFFS.normal;
@@ -14088,7 +15028,14 @@ function ddShowResult(win,net,payout,winner){
     h+=$t('<div class="dd-result"><span>押注</span><b>随便玩玩（不押注）</b></div>');
   }
   h+=$t('<p class="dd-note">当前余额 ')+ddHost.getBalance()+' 🍅</p>';
+  /* 今日/本周成就进度：点一下直接看成就 */
+  const _aa=ddAchState();
+  h+='<p class="dd-note"><a href="javascript:void(0)" onclick="ddOpenAch()" style="color:inherit;text-decoration:underline;">'
+    +$tf('今日成就 {a}/{b} · 本周 {c}/{d}',{a:ddAchDone(_aa,'day'),b:DD_ACH_DAY.length,c:ddAchDone(_aa,'week'),d:DD_ACH_WEEK.length})
+    +'</a></p>';
   if(g.cheat) h+=$t('<p class="dd-note">🃏 这局出千月巴露过面：连胜清零，下次遇到它的概率回到 3%</p>');
+  const quote=ddSettleQuote(win,winner);
+  if(quote) h+='<p class="dd-note">'+esc(quote)+'</p>';
   h+=ddRevealHTML();
   h+=$t('<div class="dd-btns"><button class="btn cta" onclick="ddAgain()">再来一局</button>')
     +$t('<button class="btn" onclick="ddQuit()">收手退出</button></div>');
@@ -14143,7 +15090,7 @@ function ddSyncTopSpace(){
 }
 function ddShowLayer(id){
   if(id) ddSyncTopSpace();
-  ['ddBet','ddResult','ddRuleLayer','ddHistoryLayer'].forEach(function(k){
+  ['ddBet','ddResult','ddRuleLayer','ddHistoryLayer','ddAchLayer'].forEach(function(k){
     const e=$(k); if(e) e.classList.toggle('show',k===id);
   });
 }
