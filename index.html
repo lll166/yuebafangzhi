@@ -3900,6 +3900,7 @@ const TYPES2=[
   {id:'m2_qingchun', name:'青春败犬立体巴', img:'https://origin.picgo.net/2026/10/21/cfbed82590fddf492012ef5aa1349f983ae998abddf56193.th.png', r:2, v:24, t:220, cond:null, color:'#aea8ae', shape:'cube'},
   {id:'m2_yinan',    name:'阴暗巴',    img:'https://origin.picgo.net/2026/10/21/7b935eb5528f9cc67c194fe5d47c4a367229b91b95e86400.th.png', r:2, v:19, t:190, cond:null, color:'#b7b0cc', shape:'squish'},
   {id:'m2_baboyi',   name:'巴巴博弈',  img:'https://origin.picgo.net/2026/10/22/67415055497e212216f64fbf52efd52849aeb4517d115733.th.png', r:4, v:82, t:760, cond:null, color:'#c9c4dc', shape:'tall'},
+  {id:'m2_rainy',    name:'雨伞月巴',  img:'https://origin.picgo.net/2026/10/22/umbrella-bunny0f0ec74e10bac4fc.th.png', r:2, v:20, t:200, cond:null, color:'#a9c7e8', shape:'drop'},
 ];
 const RAR_NAME={1:'普通',2:'常见',3:'稀有',4:'史诗',5:'传说',6:'活动'};
 const R_H={1:[2,5],2:[4,8],3:[6,12],4:[10,20],5:[16,30],6:[22,40]};   // 身高 cm 范围
@@ -3926,6 +3927,7 @@ const YB_PIC_AUTHOR={
   xinba:'影子生物',
   m2_qingchun:'鲸弑',
   m2_baboyi:'ak',
+  m2_rainy:'Feyy',
 };
 /* 每种月巴的「简介(文字)作者」by ID，图鉴详情弹窗简介末尾展示；未填则不显示文字作者 */
 const YB_TXT_AUTHOR={};
@@ -4138,6 +4140,7 @@ const FAT_INTRO={
   m2_qingchun:'咦，你脖子怎么歪歪的？',
   m2_yinan:'很害羞，喜欢阴暗潮湿的地方。',
   m2_baboyi:'对其他月巴抱有很大敌意，最常说的一句话是：“我可不是什么好好先生。”',
+  m2_rainy:'月巴伞会保护拓海的番茄园不受雨淋！',
 };
 
 /* ---------------- 界面皮肤（图鉴解锁） ---------------- */
@@ -6650,6 +6653,7 @@ const I18N_BANNY={
   m2_qingchun:{n:{en:'Youth Underdog 3D Banny',ja:'青春負け犬立体バニー',ko:'청춘 패배견 입체 배니'}},
   m2_yinan:{n:{en:'Gloomy Banny',ja:'陰気バニー',ko:'음침배니'}},
   m2_baboyi:{n:{en:'Babo Gambit',ja:'ババゲーム',ko:'바바 겜블'}},
+  m2_rainy:{n:{en:'Rainy Bunny',ja:'雨傘バニー',ko:'우산배니'}},
 
   dest_forest:{n:{en:'Forest Edge',ja:'森のほとり',ko:'숲의 가장자리'}},
   dest_fairy:{n:{en:'Fairy Hideaway',ja:'桃源郷',ko:'무릉도원'}},
@@ -7124,6 +7128,7 @@ const I18N_BANNY={
   m2_qingchun_intro:{d:{en:'Huh? Why is your neck all crooked?',ja:'あれ、首が曲がってるよ？',ko:'어라, 목이 왜 삐뚤어져 있어?'}},
   m2_yinan_intro:{d:{en:'Very shy; it loves dark, damp places.',ja:'とても恥ずかしがり屋で、暗く湿った場所が好き。',ko:'몹시 수줍음이 많고, 어둡고 습한 곳을 좋아한다.'}},
   m2_baboyi_intro:{d:{en:'Deeply hostile toward other Bannies. Its favourite line: "I am no nice guy."',ja:'他のバニーに強い敵意を抱いている。口癖は「俺はお人好しじゃないんだよ」。',ko:'다른 배니들에게 큰 적의를 품고 있다. 가장 자주 하는 말은 "난 좋은 사람이 아니야."'}},
+  m2_rainy_intro:{d:{en:'The Banny umbrella keeps Takumi\'s tomato garden safe from the rain!',ja:'バニーの傘が拓海のトマト農園を雨から守ってくれる！',ko:'배니 우산이 타쿠미의 토마토 농장을 비로부터 지켜 줘요!'}},
   /* ---------- P5：成就描述 ach_<id>_desc（字段 d） ---------- */
   ach_h1_desc:{d:{en:'Harvest your first Banny',ja:'初めてバニーを収穫する',ko:'첫 배니를 수확하기'}},
   ach_d1_desc:{d:{en:'Unlock 10 Banny species in the Codex',ja:'図鑑で 10 種のバニーを解放する',ko:'도감에서 배니 10종 해금하기'}},
@@ -11648,6 +11653,7 @@ function tvTomato(d){ const t=tvFresh(); const dd=(typeof d==='number'&&isFinite
 function updateTravelIcon(){ const el=$('btnTravel'); if(!el)return; const ready=!!S.travel&&tvSlotReady(); const door=!!S.travel&&!!S.travel.pendingVisit; const home=!!S.travel&&!!S.travel.homeRewardReady; const on=dex2Unlocked(); const key=(on?1:0)+'|'+(ready?1:0)+'|'+(door?1:0)+'|'+(home?1:0); const first=(el._tvIcon===undefined); const wasReady=!!el._tvReady; el._tvReady=ready; if(el._tvIcon===key)return; el._tvIcon=key; /* 好运收获攒够、🎰 徽标亮起时给一次轻提示音（仅「未就绪→就绪」的跃迁，且跳过首次渲染） */ if(!first&&ready&&!wasReady&&sfx.slotReady)sfx.slotReady(); if(el.classList)el.classList.toggle('hasbadge',ready||door||home); el.innerHTML=(on?'<b>🧳</b><small>'+$t('旅行')+'</small>':'<b>❓</b><small>'+$t('旅行')+'</small>')+(door?'<span class="dock-badge">🚪</span>':(home?'<span class="dock-badge">🍅</span>':(ready?'<span class="dock-badge">🎰</span>':''))); }
 function travelEntry(){ if(!dex2Unlocked()){ toast($tf('🔒 第一图鉴集齐{n}个月巴后可解锁旅行！',{n:DEX1_MIN})); return; } openTravel(); }
 let DR_DEBUG=false; // #debugall 调试开关（旅行加速、无限资源等调试功能使用）
+let DR_SV_UNLOCK=false; // #debugall-1：只解锁番茄幸存者，不开启无限资源（金币等与新账号一致）
 let tvView='yard';
 function openTravel(){ if(!dex2Unlocked())return; tvFresh(); const settled=travelSettleIf(); updateTravelIcon(); tvRenderAll(); $('travel').style.display='flex'; tvUpdateHarvest(); tvUpdateDoor(); if(tvView==='home'&&!settled)tvEnterHome(); galSync(true); }
 function closeTravel(){ $('travel').style.display='none'; }
@@ -13183,7 +13189,7 @@ function flyExit(){
    游戏本体在 survivor.html，index 只保留入口与存档/成就字段。
    SV_PUBLIC=false：调试期只有 #debugall 能看到入口；上线时改为 true。 */
 const SV_PUBLIC=false;
-function svVisible(){ return SV_PUBLIC || DR_DEBUG; }
+function svVisible(){ return SV_PUBLIC || DR_DEBUG || DR_SV_UNLOCK; }
 function updateSurvivorIcon(){
   const el=$('btnSurvivor'); if(!el)return;
   el.style.display=svVisible()?'':'none';
@@ -13193,7 +13199,7 @@ function survivorEntry(){
   if(!svVisible())return;
   sfx.click();
   try{ save(); }catch(e){}   // 先落盘，避免游戏读到旧存档
-  location.href='survivor.html'+(DR_DEBUG?'#debugall':'');
+  location.href='survivor.html'+(DR_DEBUG?'#debugall':(DR_SV_UNLOCK?'#debugall-1':''));
 }
 function fgLayer(id){
   ['fgPick','fgLv','fgCount','fgOver'].forEach(k=>{ const e=$(k); if(e) e.classList.toggle('show',k===id); });
@@ -13826,15 +13832,21 @@ function init(){
   updateTravelIcon(); updateFlyIcon(); updateCodeIcon(); updateCodeIcon2(); updateSurvivorIcon();
   checkAch(true); updateAchBtn();   // 读档后静默结算一次已满足的成就（只登记、不弹提示）
   // 调试后门：任意网址加 #debugall 均可解锁全图鉴（与旧版行为一致）
+  // #debugall-1：只解锁番茄幸存者，金币等资源保持新账号状态（不开启无限资源）
   if(typeof location!=='undefined' && location.hash && location.hash.indexOf('#debugall')>=0){
-    DR_DEBUG=true; setTimeout(debugUnlockAll,300);
-    updateSurvivorIcon();   // DR_DEBUG 在 init 后段才置位，这里补一次入口刷新
-    // 调试模式：金币与旅行番茄数量始终为无限
-    setInterval(function(){
-      S.coins=999999999;
-      if(S.travel){ S.travel.tomato=999999999; }
-      tvUpdateBar();
-    },500);
+    if(/#debugall-1\b/.test(location.hash)){
+      DR_SV_UNLOCK=true;
+      updateSurvivorIcon();   // DR_SV_UNLOCK 在 init 后段才置位，这里补一次入口刷新
+    } else {
+      DR_DEBUG=true; setTimeout(debugUnlockAll,300);
+      updateSurvivorIcon();   // DR_DEBUG 在 init 后段才置位，这里补一次入口刷新
+      // 调试模式：金币与旅行番茄数量始终为无限
+      setInterval(function(){
+        S.coins=999999999;
+        if(S.travel){ S.travel.tomato=999999999; }
+        tvUpdateBar();
+      },500);
+    }
   }
   setInterval(tick,250);
   // 未成熟月巴：按住跟随手指、松开弹回（事件委托到场地层）
