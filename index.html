@@ -610,6 +610,14 @@
   .fd-meta{display:flex;align-items:center;justify-content:center;gap:8px;margin:4px 0 8px;}
   .fd-author{font-size:11px;color:var(--dim);font-weight:700;margin:-2px 0 6px;}
   .fd-intro .fd-author{font-size:11px;color:var(--dim);text-align:right;margin:6px 0 0;}
+  /* 画师的话：作者署名 + 备注合成一条轻量引文（无备注时回落到 .fd-author 单行） */
+  .fd-note{position:relative;text-align:left;margin:-2px 2px 8px;padding:7px 9px 7px 11px;overflow:hidden;
+    background:linear-gradient(90deg,rgba(149,117,205,.10),rgba(149,117,205,0) 78%);
+    border-left:2px solid var(--accent);border-radius:0 10px 10px 0;}
+  .fd-note-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;
+    font-size:10px;font-weight:800;color:var(--purple2);margin-bottom:3px;letter-spacing:.2px;}
+  .fd-note-h .by{color:var(--dim);font-weight:700;}
+  .fd-note p{font-size:11.5px;line-height:1.65;color:var(--text);margin:0;}
   .fd-cnt{font-size:12px;color:var(--dim);font-weight:700;}
   .fd-stats{font-size:12px;color:var(--dim);line-height:1.7;text-align:left;background:rgba(149,117,205,.08);
     border-radius:10px;padding:8px 10px;margin-bottom:8px;}
@@ -659,6 +667,9 @@
   #banner .bd{font-size:12px;color:var(--dim);margin-top:4px;}
   #banner .bn{font-size:13px;font-weight:800;color:var(--gold);margin-top:6px;}
   #toast{position:fixed;left:50%;bottom:106px;transform:translateX(-50%);z-index:90;
+    /* width:max-content：固定定位 + left:50% 时默认可用宽度只有半屏，英/日/韩长句会被压成很多行；
+       交给 max-width 限宽，各语言都能用满 80vw */
+    width:max-content;
     background:rgba(65,60,91,.92);color:#fff;padding:8px 16px;border-radius:18px;font-size:13px;font-weight:700;max-width:80vw;text-align:center;
     opacity:0;pointer-events:none;transition:opacity .3s;box-shadow:0 8px 24px rgba(0,0,0,.25);}
   #toast .tsub{display:block;margin-top:2px;font-size:11px;font-weight:600;opacity:.8;}
@@ -925,7 +936,9 @@
   /* 叫地主按钮区域入场 — 去掉 base opacity:0，省电模式下也能看见 */
   #ddgame .dd-center .big{animation:skDdGDealCard .42s cubic-bezier(.2,.8,.3,1) both;animation-delay:.08s;}
   #ddgame .dd-center .sub{animation:skDdGDealCard .38s cubic-bezier(.2,.8,.3,1) both;animation-delay:.18s;}
-  #ddgame .dd-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  /* flex-basis:auto + 不收缩：空间够时仍纵向居中；矮屏加出公示条时保持内容高度，
+     交给 .dd-scroll 滚动，避免 justify-content:center 造成向上溢出被裁 */
+  #ddgame .dd-center{flex:1 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
     font-size:13px;color:var(--dim);font-weight:700;text-align:center;padding:6px;}
   #ddgame .dd-center .big{font-size:20px;color:var(--purple2);font-weight:900;}
   #ddgame .dd-center .sub{font-size:11px;color:var(--dim);}
@@ -949,8 +962,10 @@
     background:linear-gradient(180deg,rgba(224,90,90,.16),rgba(224,90,90,.05));
     box-shadow:inset 0 0 0 1px rgba(200,70,70,.32);}
   #ddgame .dd-cheat-t{font-size:10px;font-weight:900;color:var(--danger);letter-spacing:.5px;}
-  #ddgame .dd-cheat-row{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--dim);font-weight:800;}
-  #ddgame .dd-cheat-cards{display:flex;gap:4px;align-items:center;}
+  /* 窄屏放不下时整段换行，保证「它用 / 牌 / 换走了你的 / 牌」的阅读顺序不乱 */
+  #ddgame .dd-cheat-row{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
+    gap:5px;row-gap:4px;max-width:100%;font-size:10px;color:var(--dim);font-weight:800;text-align:center;}
+  #ddgame .dd-cheat-cards{display:flex;gap:4px;align-items:center;flex:0 0 auto;}
   #ddgame .dd-cheat-row .mid{color:#c07a2e;}
   #ddgame .dd-myplay{display:flex;flex-wrap:wrap;gap:1px;justify-content:center;min-height:38px;align-items:center;padding:2px 6px;}
   #ddgame .dd-hand{flex:0 0 auto;display:flex;justify-content:center;align-items:flex-end;padding:20px 4px 6px;
@@ -1132,6 +1147,12 @@
     #ddgame .dd-myplay{min-height:30px;}
     #ddgame .dd-actions{gap:6px;}
     #ddgame .dd-actions .btn{padding:9px 15px;font-size:13px;}
+    /* 手机端手牌折成两行（约 150px 高），全局 toast 的 bottom:106px 会压在手牌上：
+       斗月巴打开时把它挪到顶栏位置，既不挡手牌/按钮，也不盖住中央的底牌与出千公示 */
+    #ddgame.show~#toast{bottom:auto;top:calc(env(safe-area-inset-top,0px) + 6px);}
+    /* 手机矮屏中央区放不下「底牌 + 出千公示」两条时，把公示排到底牌前面：
+       优先完整露出刚发生的换牌结果，底牌是被动信息、可以往下滚着看 */
+    #ddgame .dd-cheat{order:-1;}
   }
   @media (max-width:380px){
     #ddgame .dd-card{width:34px;height:48px;}
@@ -3642,7 +3663,7 @@ const TYPES=[
   {id:'mb_chi',    name:'进食月巴', img:'https://origin.picgo.net/2026/09/03/15b077f9364349ae92.th.png', r:1, v:7,  t:80,  cond:null, color:'#e8c39e', shape:'wide'},
   {id:'mb_shui',   name:'睡觉月巴', img:'https://origin.picgo.net/2026/09/29/4d2c34425dd356082928e5e796a603fcd01d1cbc5324c06f.gif', r:1, v:8,  t:90,  cond:null, color:'#e3b8c9', shape:'squish'},
   {id:'mb_wan',    name:'微笑月巴',img:'https://origin.picgo.net/2026/09/03/1512e4bde4713ba02.th.png', r:1, v:10, t:110, cond:null, color:'#c9b2e8', shape:'round'},
-  {id:'mb_pang',   name:'胖月巴', r:2, v:14, t:150, cond:null, color:'#e7a3b8', shape:'squish'},
+  {id:'mb_pang',   name:'胖月巴',img:'https://origin.picgo.net/2026/10/21/62bc9b437f18c5e1f6f712a8e7a58ecbb2356f889dde89eb.th.png', r:2, v:14, t:150, cond:null, color:'#e7a3b8', shape:'squish'},
   {id:'mb_xin',    name:'wink月巴',img:'https://origin.picgo.net/2026/09/03/37e1be2540efa2177.th.png', r:2, v:15, t:160, cond:null, color:'#f0a8c0', shape:'heart'},
   {id:'mb_gao',    name:'高月巴', img:'https://origin.picgo.net/2026/09/29/849e3c845e52aac2178af913058025cdd214e98968e45101.gif', r:2, v:16, t:180, cond:null, color:'#b8a9e0', shape:'tall', size:2},
   {id:'mb_ku',     name:'背头月巴', img:'https://origin.picgo.net/2026/09/29/19daf98c7a185e7e0c3d529a5f921058d74092d7a8ab4c37.gif', r:2, v:18, t:200, cond:null, color:'#a9c7ea', shape:'cube'},
@@ -3659,11 +3680,11 @@ const TYPES=[
   {id:'mb_wuye', name:'午夜月巴',r:4,v:60,t:600, cond:{t:'time',a:23,b:2},  color:'#7e57c2', shape:'moon'},
 
   {id:'mb_qing', name:'晴月巴', r:3, v:30, t:300, cond:{t:'weather',w:'sunny'},  color:'#f2c46a', shape:'round'},
-  {id:'mb_yun',  name:'云月巴', r:3, v:32, t:320, cond:{t:'weather',w:'cloudy'}, color:'#b9b2c9', shape:'cube'},
+  {id:'mb_yun',  name:'云月巴', img:'https://origin.picgo.net/2026/10/21/087c43501b9bd20deb354672a8a79e4ae6b8b7c2a0cfba2c.th.png', r:3, v:32, t:320, cond:{t:'weather',w:'cloudy'}, color:'#b9b2c9', shape:'cube'},
   {id:'mb_yu',   name:'雨月巴', r:3, v:40, t:360, cond:{t:'weather',w:'rain'},   color:'#8fc9e8', shape:'drop'},
   {id:'mb_bao',  name:'暴雨月巴',r:4,v:70, t:600, cond:{t:'weather',w:'storm'},  color:'#5f9ed1', shape:'spike'},
   {id:'mb_xue',  name:'雪月巴', r:4, v:55, t:480, cond:{t:'weather',w:'snow'},   color:'#eef1f7', shape:'star'},
-  {id:'mb_caihong',name:'彩虹月巴',r:4,v:120,t:720, cond:{t:'rainbow'},          color:'#e06b9c', shape:'rainbow'},
+  {id:'mb_caihong',name:'彩虹月巴',img:'https://origin.picgo.net/2026/10/21/9895b41be4c58da373fcc95f6d8cc5ba0883411035f2a8d7.th.png',r:4,v:120,t:720, cond:{t:'rainbow'}, color:'#e06b9c', shape:'rainbow'},
 
   {id:'mb_chun', name:'春月巴', r:3, v:35, t:360, cond:{t:'season',s:'spring'}, color:'#8fc48a', shape:'round'},
   {id:'mb_xia',  name:'夏月巴', r:3, v:35, t:360, cond:{t:'season',s:'summer'}, color:'#f0857f', shape:'wide'},
@@ -3709,7 +3730,7 @@ const TYPES=[
   {id:'mb_chaos',name:'混沌月巴', r:5, v:1000,t:5400, cond:null,  color:'#5a5470', shape:'chaos'},
   {id:'mb_gungun',  name:'滚滚巴',    r:3, v:40, t:420,  cond:null, color:'#f0b27a', shape:'round', size:1.35},
   {id:'mb_jiu',     name:'酒巴',      r:3, v:45, t:480,  cond:{t:'night'}, img:'https://origin.picgo.net/2026/09/20/jiuba7578b776f8c4c528.th.png', color:'#b08a6a', shape:'squish'},
-  {id:'mb_shilaimu',name:'史莱姆巴',  r:3, v:50, t:520,  cond:null, color:'#8fce7f', shape:'squish'},
+  {id:'mb_shilaimu',name:'史莱姆巴',  img:'https://origin.picgo.net/2026/10/21/75dd505aa51f9864c2dc215b349253592891b6d6ef024a79.th.png', r:3, v:50, t:520, cond:null, color:'#8fce7f', shape:'squish'},
   {id:'mb_fengkuang',name:'疯狂月巴', r:4, v:120, t:800, cond:{t:'festival'}, color:'#e74c3c', shape:'spike'},
   {id:'mb_liti',    name:'立体月巴',  r:4, v:250, t:1100, cond:null,  img:'https://origin.picgo.net/2026/09/19/litiyueba0f6fd2bd28b7cc83.th.png', color:'#8e9baf', shape:'tall', size:1.5},
   {id:'mb_xiaoma',  name:'小马月巴',  r:3, v:48, t:460,  cond:null, img:'https://origin.picgo.net/2026/09/19/xiaoma59a91dd50534ac93.th.png', color:'#e6c9f0', shape:'tall'},
@@ -3723,10 +3744,11 @@ const TYPES=[
   {id:'huaba',     name:'花巴',       r:3, v:1500, t:3600, cond:null, color:'#f8a8c8', shape:'big'},
   {id:'dabus',     name:'大巴车',     img:'https://origin.picgo.net/2026/10/21/f696279cfe514001d304e826c68f44f3596857784003a73a.th.png', r:3, v:48, t:460,  cond:null, color:'#f2b639', shape:'big'},
   {id:'youling',   name:'幽灵月巴',     r:3, v:300, t:1200, cond:null, color:'#beb5e6', shape:'tall'},
-  {id:'xinba',     name:'心巴',       r:2, v:20, t:180,  cond:null, color:'#ff6f91', shape:'squish'},
+  {id:'xinba',     name:'心巴',       r:2, v:20, t:180,  cond:null, img:'https://origin.picgo.net/2026/10/21/3f4dfef1286bc40c7002f3d2e220cb36f63b0332ebc9acd3.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/21/2c041a17d8e59a3cf.th.png', by:'軟管'}], color:'#ff6f91', shape:'squish'},
   {id:'yinxiang',  name:'音响月巴',   r:1, v:8, t:90,   cond:null, color:'#6b7280', shape:'tall'},
   {id:'jieba',     name:'戒巴',       r:3, v:55, t:520,  cond:null, color:'#4e9f8d', shape:'squish'},
-  {id:'bazong',    name:'巴总',       r:3, v:1800, t:4200, cond:null, color:'#c68a3a', shape:'big'},
+  {id:'bazong',    name:'巴总',       img:'https://origin.picgo.net/2026/10/21/8ff3d46600bd7fcfb5dcab98f93cbd9bbeef26b25b073ec3.th.png', r:3, v:1800, t:4200, cond:null, color:'#c68a3a', shape:'big'},
   {id:'mojing',    name:'墨镜笑巴',   r:2, v:22, t:220,  cond:null, img:'https://origin.picgo.net/2026/09/27/4d64284ab6f23425f9dda44f0fc540bef12552ef47074e5e.th.png', color:'#8a97a8', shape:'round'},
   {id:'bukeming',  name:'不可名状巴', r:4, v:200,t:1100, cond:null, img:'https://origin.picgo.net/2026/09/27/20c78b17ef4b3fa235abaad68362f4b3e9cd9e87eb7bc133.th.png', color:'#5d4a7a', shape:'big', size:3.5},
   {id:'canglong',  name:'苍龙月巴',   r:4, v:220,t:1150, cond:null, img:'https://origin.picgo.net/2026/09/29/cfdcb713bec9bd6b5307fd8a9edfc1fb421e9a1529506bb0.th.png', color:'#8e9aa8', shape:'big', size:2.5},
@@ -3773,7 +3795,7 @@ const TYPES2=[
   {id:'m2_wo',     name:'蜗牛月巴',  r:3, v:34, t:360, cond:{t:'time',a:20,b:23},    color:'#b0bec5', shape:'squish'},
   {id:'m2_xiangjiao',name:'香蕉月巴',r:3, v:36, t:360, cond:{t:'weather',w:'sunny'}, color:'#ffe082', shape:'bean'},
   {id:'m2_hulu',   name:'葫芦月巴',  r:3, v:40, t:420, cond:{t:'season',s:'autumn'}, color:'#dce775', shape:'round'},
-  {id:'m2_bingqilin',name:'冰淇淋月巴',r:3,v:42,t:420, cond:{t:'season',s:'winter'}, color:'#e1bee7', shape:'round'},
+  {id:'m2_bingqilin',name:'冰淇淋月巴',img:'https://origin.picgo.net/2026/10/21/756357abf125a8cd0c6f532836a233717fd3a810900d0252.th.png',r:3,v:42,t:420, cond:{t:'season',s:'winter'}, color:'#e1bee7', shape:'round'},
   {id:'m2_shamo',    name:'沙漠月巴',  r:4, v:60, t:600, cond:{t:'travel', d:'forest', n:5},  color:'#ffcc80', shape:'round'},
   {id:'m2_wenquan',name:'温泉月巴',  r:4, v:62, t:600, cond:{t:'travel', s:'暖石'},  color:'#ffab91', shape:'drop'},
   {id:'m2_huoshan',name:'火山月巴',  r:4, v:66, t:640, cond:{t:'travel', d:'sea', n:3},  color:'#d15852', shape:'spike'},
@@ -3806,8 +3828,8 @@ const TYPES2=[
   {id:'m2_bingling',name:'冰灵月巴',  r:5, v:220, t:1250, cond:{t:'travel', d:'ice', n:8}, weight:0.01, color:'#bfe8f2', shape:'rainbow'},
   /* —— 失落王庭（雪地第四图）主题月巴 —— */
   {id:'m2_wangting', name:'王庭月巴',  r:4, v:75,  t:740,  cond:{t:'travel', d:'empire', n:3}, color:'#8f7bb5', shape:'cube'},
-  {id:'m2_guowang',  name:'执政王月巴',  r:5, v:260, t:1500, cond:{t:'travel', d:'empire', n:5}, weight:0.01, color:'#c9a227', shape:'big'},
-  {id:'m2_zuochen',  name:'佐臣月巴',  r:4, v:82,  t:780,  cond:{t:'travel', s:'帝国印玺'}, color:'#7e6a9e', shape:'tall'},
+  {id:'m2_guowang',  name:'执政王月巴',  img:'https://origin.picgo.net/2026/10/21/e878f7fde5e72bfa6bad2f681dca742eef9b8997548df54a.th.png', r:5, v:260, t:1500, cond:{t:'travel', d:'empire', n:5}, weight:0.01, color:'#c9a227', shape:'big'},
+  {id:'m2_zuochen',  name:'佐臣月巴',  img:'https://origin.picgo.net/2026/10/21/8b6b66f067f39adb13298d8927fbd7eae7f9ab72fac6c4c6.th.png', r:4, v:82,  t:780,  cond:{t:'travel', s:'帝国印玺'}, color:'#7e6a9e', shape:'tall'},
   {id:'m2_shizhe',   name:'誓约月巴',  r:3, v:48,  t:480,  cond:null, color:'#d8c7e8', shape:'squish'},
   {id:'m2_shouling', name:'守陵月巴',  r:4, v:88,  t:820,  cond:{t:'travel', s:'无字诗碑'}, color:'#9aa0a6', shape:'ghost'},
   {id:'m2_bingzang', name:'冰葬月巴',  r:4, v:80,  t:780,  cond:{t:'travel', s:'冰封玫瑰'}, color:'#a7d8e8', shape:'drop'},
@@ -3863,6 +3885,8 @@ const TYPES2=[
   /* —— 新增投稿月巴 —— */
   {id:'m2_tracker',  name:'追踪器月巴', img:'https://origin.picgo.net/2026/10/21/acf7a9ec0fbe767f840a205e24730017da0d83a3264ec36f.th.png', r:3, v:35, t:400, cond:null, color:'#8bc34a', shape:'cube'},
   {id:'m2_baqi',     name:'巴岐大蛇',  img:'https://origin.picgo.net/2026/10/21/00ad700c36c3d7131ffe4fcfae4e5a0cee3d2f4e74eec9cd.th.png', r:4, v:85, t:760, cond:null, color:'#5f8f6f', shape:'spike',size:3.5},
+  {id:'m2_qingchun', name:'青春败犬立体巴', img:'https://origin.picgo.net/2026/10/21/cfbed82590fddf492012ef5aa1349f983ae998abddf56193.th.png', r:2, v:24, t:220, cond:null, color:'#aea8ae', shape:'cube'},
+  {id:'m2_yinan',    name:'阴暗巴',    img:'https://origin.picgo.net/2026/10/21/7b935eb5528f9cc67c194fe5d47c4a367229b91b95e86400.th.png', r:2, v:19, t:190, cond:null, color:'#b7b0cc', shape:'squish'},
 ];
 const RAR_NAME={1:'普通',2:'常见',3:'稀有',4:'史诗',5:'传说',6:'活动'};
 const R_H={1:[2,5],2:[4,8],3:[6,12],4:[10,20],5:[16,30],6:[22,40]};   // 身高 cm 范围
@@ -3883,9 +3907,21 @@ const YB_PIC_AUTHOR={
   m2_teatime:'Feyy',
   mb_qiezhi:'影子生物',
   mb_jinju:'ak',
+  mb_pang:'影子生物',
+  mb_yun:'影子生物',
+  mb_shilaimu:'紫凌（むらさき）',
+  xinba:'影子生物',
+  m2_qingchun:'鲸弑',
 };
 /* 每种月巴的「简介(文字)作者」by ID，图鉴详情弹窗简介末尾展示；未填则不显示文字作者 */
 const YB_TXT_AUTHOR={};
+
+/* 每种月巴的「画师的备注」by ID，图鉴详情里作者署名下方展示；未填则不显示 */
+const YB_PIC_NOTE={
+  m2_bingqilin:'有草莓、葡萄、香草三种口味的美味冰淇淋，番茄很喜欢，但三个球的性格好像不太一样……',
+  xinba:'巴啦巴巴巴。',
+};
+/* 多立绘时备注跟图走：imgs 条目上写 note，如 {url:'…', by:'影子生物', note:'…'} */
 
 /* 每种月巴的简介（图鉴详情弹窗展示） */
 const FAT_INTRO={
@@ -4090,6 +4126,8 @@ const FAT_INTRO={
   m2_chuqian:'只在牌桌上现身的月巴，对它来说没有赢不了的赌局。如果有，一定是它刻意为之。',
   m2_tracker:'很显然，贪心的立体月巴太贪心了，凡是看见茄屁股会立刻gps锁定。',
   m2_baqi:'月巴已经生根发芽。',
+  m2_qingchun:'咦，你脖子怎么歪歪的？',
+  m2_yinan:'很害羞，喜欢阴暗潮湿的地方。',
 };
 
 /* ---------------- 界面皮肤（图鉴解锁） ---------------- */
@@ -4667,6 +4705,18 @@ const I18N_UI={
   '❌ 文件不是有效的存档内容':{en:'❌ The file is not a valid save',ja:'❌ ファイルは有効なセーブデータではありません',ko:'❌ 파일이 올바른 세이브가 아니에요'},
   '⚠️ 请先粘贴存档内容':{en:'⚠️ Paste the save content first',ja:'⚠️ 先にセーブ内容を貼り付けてください',ko:'⚠️ 먼저 세이브 내용을 붙여넣어 주세요'},
   '❌ 存档格式无效，导入失败':{en:'❌ Invalid save format — import failed',ja:'❌ セーブ形式が無効です。インポートに失敗しました',ko:'❌ 세이브 형식이 올바르지 않아 가져오기에 실패했어요'},
+  /* H5b. 本地存档文件 */
+  '未绑定：存档只存在浏览器里，清缓存/网站数据会丢失':{en:'Not bound: the save only lives in the browser — clearing cache or site data will erase it',ja:'未連携：セーブはブラウザ内のみ。キャッシュやサイトデータを消すと失われます',ko:'연결 안 됨: 세이브가 브라우저에만 있어 캐시나 사이트 데이터를 지우면 사라져요'},
+  '✅ 已绑定：{a}':{en:'✅ Bound: {a}',ja:'✅ 連携済み：{a}',ko:'✅ 연결됨: {a}'},
+  '⚠️ 已绑定：{a}，点一下页面任意处恢复写入':{en:'⚠️ Bound: {a} — click anywhere on the page to restore writing',ja:'⚠️ 連携済み：{a}。ページのどこかをタップすると書き込みを再開します',ko:'⚠️ 연결됨: {a} — 페이지 아무 곳이나 눌러 쓰기를 복구해요'},
+  '当前浏览器不支持本地存档文件（需桌面 Chrome / Edge，或 Android Chrome 132+）':{en:'This browser does not support local save files (desktop Chrome / Edge, or Android Chrome 132+)',ja:'このブラウザはローカルセーブファイルに対応していません（デスクトップ版 Chrome / Edge、または Android Chrome 132+ が必要）',ko:'이 브라우저는 로컬 세이브 파일을 지원하지 않아요 (데스크톱 Chrome / Edge 또는 Android Chrome 132+ 필요)'},
+  '✅ 已绑定本地存档文件，之后会自动写入':{en:'✅ Local save file bound — saves will be written automatically',ja:'✅ ローカルセーブファイルを連携しました。以後は自動で書き込みます',ko:'✅ 로컬 세이브 파일을 연결했어요 — 이후 자동으로 기록해요'},
+  '⚠️ 本地存档文件写入失败，请重新绑定':{en:'⚠️ Writing to the local save file failed — please bind it again',ja:'⚠️ ローカルセーブファイルへの書き込みに失敗しました。再連携してください',ko:'⚠️ 로컬 세이브 파일 쓰기에 실패했어요 — 다시 연결해 주세요'},
+  '❌ 本地存档文件绑定失败':{en:'❌ Failed to bind the local save file',ja:'❌ ローカルセーブファイルの連携に失敗しました',ko:'❌ 로컬 세이브 파일 연결에 실패했어요'},
+  '⚠️ 已解除本地存档文件绑定':{en:'⚠️ Local save file unbound',ja:'⚠️ ローカルセーブファイルの連携を解除しました',ko:'⚠️ 로컬 세이브 파일 연결을 해제했어요'},
+  '✅ 已从本地存档文件恢复，正在刷新…':{en:'✅ Restored from the local save file — refreshing…',ja:'✅ ローカルセーブファイルから復元しました。更新します…',ko:'✅ 로컬 세이브 파일에서 복구했어요 — 새로고침할게요…'},
+  '❌ 当前浏览器不支持本地存档文件，请用「💾 导出文件」或「📤 分享备份」保存':{en:'❌ This browser does not support local save files — use "💾 Export File" or "📤 Share Backup" instead',ja:'❌ このブラウザはローカルセーブファイルに対応していません。「💾 ファイルを書き出す」か「📤 バックアップを共有」をご利用ください',ko:'❌ 이 브라우저는 로컬 세이브 파일을 지원하지 않아요. "💾 파일 내보내기" 또는 "📤 백업 공유"를 이용해 주세요'},
+  '⚠️ 分享不可用，已改为直接下载文件':{en:'⚠️ Sharing is unavailable — downloading the file instead',ja:'⚠️ 共有できませんでした。代わりにファイルをダウンロードします',ko:'⚠️ 공유를 사용할 수 없어 파일을 바로 내려받아요'},
   /* H6. 番茄钟 */
   '🍅 番茄开始：「{n}」专注中，月巴生长 x2':{en:'🍅 Started: focusing on "{n}", Banny growth x2',ja:'🍅 開始：「{n}」に集中中。バニーの成長 x2',ko:'🍅 시작: "{n}" 집중 중, 배니 성장 x2'},
   '⏹ 已停止：「{n}」记录已专注 {a}':{en:'⏹ Stopped: "{n}" recorded {a} focused',ja:'⏹ 停止：「{n}」の集中時間 {a} を記録しました',ko:'⏹ 중지: "{n}" 집중 시간 {a} 기록했어요'},
@@ -4863,6 +4913,7 @@ const I18N_UI={
   '条件：{n}':{en:'Condition: {n}',ja:'条件：{n}',ko:'조건: {n}'},
   '✨ 概率极低 · 永久可遇':{en:'✨ Extremely rare · always obtainable',ja:'✨ 確率極低 · いつでも出会える',ko:'✨ 확률 극히 낮음 · 언제든 획득 가능'},
   '📜 简介':{en:'📜 Profile',ja:'📜 プロフィール',ko:'📜 소개'},
+  '🖌 画师的话':{en:'🖌 Artist’s note',ja:'🖌 絵師より',ko:'🖌 작가의 한마디'},
   '关于它的来历仍是个谜…':{en:'Its origin remains a mystery…',ja:'その由来は謎のまま…',ko:'그 유래는 여전히 수수께끼…'},
   /* 图鉴条件文案 · 解锁 / 收获 / 旅行（condText 用） */
   '需要「{n}」':{en:'Requires "{n}"',ja:'「{n}」が必要',ko:'"{n}" 필요'},
@@ -5522,13 +5573,14 @@ const I18N_UI={
   '<h3>📜 斗月巴战绩</h3>':{en:'<h3>📜 Banny Duel Record</h3>',ja:'<h3>📜 バニー対決の戦績</h3>',ko:'<h3>📜 배니 맞짱 전적</h3>'},
   '<p class="dd-note">当前余额 ':{en:'<p class="dd-note">Current balance ',ja:'<p class="dd-note">現在の残高 ',ko:'<p class="dd-note">현재 잔액 '},
   '<p class="dd-note">🃏 这局出千月巴露过面：连胜清零，下次遇到它的概率回到 3%</p>':{en:'<p class="dd-note">🃏 Cheat Banny showed up: win streak reset, its chance returns to 3% next time</p>',ja:'<p class="dd-note">🃏 今局イカサマバニーが現れました：連勝リセット、次に会う確率は 3% に戻ります</p>',ko:'<p class="dd-note">🃏 이번 판 치팅 배니가 나타났어요: 연승 초기화, 다음 확률은 3%로 돌아갑니다</p>'},
+  '<p class="dd-note">🃏 这局出千月巴露过面：赢下出千局，连胜 +1</p>':{en:'<p class="dd-note">🃏 Cheat Banny showed up: you beat it — win streak +1</p>',ja:'<p class="dd-note">🃏 今局イカサマバニーが現れました：イカサマ局に勝利、連勝 +1</p>',ko:'<p class="dd-note">🃏 이번 판 치팅 배니가 나타났어요: 치팅 판 승리, 연승 +1</p>'},
   '<p style="color:var(--dim);font-weight:800;text-align:center;margin:18px 0;">还没有战绩，去打一局吧～</p>':{en:'<p style="color:var(--dim);font-weight:800;text-align:center;margin:18px 0;">No records yet — go play a round!</p>',ja:'<p style="color:var(--dim);font-weight:800;text-align:center;margin:18px 0;">まだ戦績がありません。一局打ってみましょう～</p>',ko:'<p style="color:var(--dim);font-weight:800;text-align:center;margin:18px 0;">아직 전적이 없어요. 한 판 해 볼까요~</p>'},
   '<p style="color:var(--dim);font-weight:800;text-align:center;margin:18px 0;">还没有战绩，去打一局就有统计啦～</p>':{en:'<p style="color:var(--dim);font-weight:800;text-align:center;margin:18px 0;">No records yet — play a round to see stats!</p>',ja:'<p style="color:var(--dim);font-weight:800;text-align:center;margin:18px 0;">まだ戦績がありません。一局打てば統計が出ます～</p>',ko:'<p style="color:var(--dim);font-weight:800;text-align:center;margin:18px 0;">아직 전적이 없어요. 한 판 하면 통계가 나와요~</p>'},
   '<p style="font-size:12px;color:var(--dim);font-weight:800;line-height:1.6;">共 <b>':{en:'<p style="font-size:12px;color:var(--dim);font-weight:800;line-height:1.6;">Total <b>',ja:'<p style="font-size:12px;color:var(--dim);font-weight:800;line-height:1.6;">全 <b>',ko:'<p style="font-size:12px;color:var(--dim);font-weight:800;line-height:1.6;">총 <b>'},
   '<p style="font-size:12px;color:var(--dim);font-weight:800;text-align:center;margin:10px 0;">再打几局就有走势图了～（当前累计 ':{en:'<p style="font-size:12px;color:var(--dim);font-weight:800;text-align:center;margin:10px 0;">Play a few more games for a trend chart — (current total ',ja:'<p style="font-size:12px;color:var(--dim);font-weight:800;text-align:center;margin:10px 0;">あと数局で推移グラフが出ます～（現在の累計 ',ko:'<p style="font-size:12px;color:var(--dim);font-weight:800;text-align:center;margin:10px 0;">몇 판 더 하면 추이 그래프가 나와요~ (현재 누적 '},
   '<span class="chq" title="本局 1 号位是出千月巴：它用手里最小的单牌换走了你最大的一张">🃏 出千</span>':{en:'<span class="chq" title="Seat 1 this game was Cheat Banny: it swapped its smallest single for your highest card">🃏 Cheat</span>',ja:'<span class="chq" title="今局 1 番席はイカサマバニー：手持ちで一番小さい単枚を、あなたの一番大きい札と入れ替えました">🃏 イカサマ</span>',ko:'<span class="chq" title="이번 판 1번 자리가 치팅 배니: 손패에서 가장 작은 단일패를 네 가장 큰 패와 바꿔치기했다">🃏 치팅</span>'},
   '<span class="l">😿 负</span>':{en:'<span class="l">😿 Loss</span>',ja:'<span class="l">😿 負け</span>',ko:'<span class="l">😿 패</span>'},
-  '<span class="mid">换走了你的</span>':{en:'<span class="mid"> to swap away your ',ja:'<span class="mid">と入れ替えて、あなたの',ko:'<span class="mid">와 바꿔치기해 너의 '},
+  '<span class="mid">换走了你的</span>':{en:'<span class="mid"> to swap away your</span>',ja:'<span class="mid">と入れ替えて、あなたの</span>',ko:'<span class="mid">와 바꿔치기해 너의 </span>'},
   '<span class="pass">不要</span>':{en:'<span class="pass">Pass</span>',ja:'<span class="pass">パス</span>',ko:'<span class="pass">패스</span>'},
   '<span class="pass">已出完</span>':{en:'<span class="pass">All played</span>',ja:'<span class="pass">出し終わり</span>',ko:'<span class="pass">다 냄</span>'},
   '<span class="q">随便玩玩（不押注）</span>':{en:'<span class="q">Just for fun (no bet)</span>',ja:'<span class="q">気軽に遊ぶ（賭けなし）</span>',ko:'<span class="q">가볍게 즐기기(베팅 없음)</span>'},
@@ -5665,7 +5717,7 @@ const I18N_UI={
   '本周十胜':{en:'Ten Wins This Week',ja:'今週の10勝',ko:'이번 주 10승'},
   '本周累计赢 10 局':{en:'Win 10 games this week',ja:'今週 10 勝',ko:'이번 주 10승'},
   '本周五连胜':{en:'Five-Win Streak This Week',ja:'今週の5連勝',ko:'이번 주 5연승'},
-  '本周打出一次 5 连胜（出千局不计）':{en:'Reach a 5-win streak this week (cheat games excluded)',ja:'今週 5 連勝を達成（イカサマ局は除外）',ko:'이번 주 5연승 달성 (치팅 판 제외)'},
+  '本周打出一次 5 连胜':{en:'Reach a 5-win streak this week',ja:'今週 5 連勝を達成',ko:'이번 주 5연승 달성'},
   '本周硬仗':{en:'Hard Battles This Week',ja:'今週の難関',ko:'이번 주 난전'},
   '本周在困难难度赢 5 局':{en:'Win 5 games on Hard this week',ja:'今週「難しい」で 5 勝',ko:'이번 주 어려움 난이도에서 5승'},
   '本周神局':{en:'Divine Game This Week',ja:'今週の神局',ko:'이번 주 신국'},
@@ -5706,7 +5758,7 @@ const I18N_UI={
   '番茄巨富':{en:'Tomato Magnate',ja:'トマト大富豪',ko:'토마토 부호'},
   '斗月巴累计净赚 100,000 🍅':{en:'Earn a net 100,000 🍅 in Banny Duel',ja:'バニー対決で純利益 100,000 🍅',ko:'배니 맞짱 순이익 100,000 🍅'},
   '二十连胜':{en:'Twenty-Win Streak',ja:'20連勝',ko:'20연승'},
-  '历史最高连胜达到 20 场（出千局不计）':{en:'Reach a 20-game win streak (cheat games excluded)',ja:'最高 20 連勝を達成（イカサマ局は除外）',ko:'최고 20연승 달성 (치팅 판 제외)'},
+  '历史最高连胜达到 20 场':{en:'Reach a 20-game win streak',ja:'最高 20 連勝を達成',ko:'최고 20연승 달성'},
   '地主之王':{en:'Landlord King',ja:'地主の王',ko:'지주왕'},
   '以地主身份累计赢 200 局':{en:'Win 200 games as a landlord',ja:'地主で通算 200 勝',ko:'지주로 통산 200승'},
   '农民英雄':{en:'Farmer Hero',ja:'農民の英雄',ko:'농민 영웅'},
@@ -5726,7 +5778,7 @@ const I18N_UI={
   '番茄富可敌国':{en:'Tomato Fortune',ja:'トマト長者',ko:'토마토 거부'},
   '斗月巴累计净赚 500,000 🍅':{en:'Earn a net 500,000 🍅 in Banny Duel',ja:'バニー対決で純利益 500,000 🍅',ko:'배니 맞짱 순이익 500,000 🍅'},
   '五十连胜':{en:'Fifty-Win Streak',ja:'50連勝',ko:'50연승'},
-  '历史最高连胜达到 50 场（出千局不计）':{en:'Reach a 50-game win streak (cheat games excluded)',ja:'最高 50 連勝を達成（イカサマ局は除外）',ko:'최고 50연승 달성 (치팅 판 제외)'},
+  '历史最高连胜达到 50 场':{en:'Reach a 50-game win streak',ja:'最高 50 連勝を達成',ko:'최고 50연승 달성'},
   '地主传说':{en:'Landlord Legend',ja:'地主の伝説',ko:'지주 전설'},
   '以地主身份累计赢 500 局':{en:'Win 500 games as a landlord',ja:'地主で通算 500 勝',ko:'지주로 통산 500승'},
   '农民神话':{en:'Farmer Myth',ja:'農民の神話',ko:'농민 신화'},
@@ -6183,6 +6235,71 @@ const I18N_UI={
   '（页/次/天…）可不填。':{en:' (pages/times/days…) is optional.',ja:'（ページ／回／日…）は任意です。',ko:'(페이지/회/일…)는 비워도 돼요.'},
   '✉️ 信件':{en:'✉️ Letters',ja:'✉️ 手紙',ko:'✉️ 편지'},
   '🌿 特产':{en:'🌿 Souvenirs',ja:'🌿 特産品',ko:'🌿 특산품'},
+  /* ---- 斗月巴对局台词：出千月巴补全（P0） ---- */
+  '一张嘛，意思意思。':{en:'Just one card — a token gesture.',ja:'一枚だけ、ご挨拶ってことで。',ko:'한 장이에요, 인사치레로.'},
+  '先垫一张，别紧张呀。':{en:'One small one first — relax.',ja:'まず一枚、緊張しないで。',ko:'먼저 한 장, 긴장하지 마요.'},
+  '小牌先走，懂吧？':{en:'Small cards first. You know how it is.',ja:'小さいのから出す。わかるだろ？',ko:'작은 패부터 내는 거, 알죠?'},
+  '一对，凑合看吧。':{en:'A pair — it will do.',ja:'ペアだ、まあ見てて。',ko:'페어예요, 그럭저럭 봐줘요.'},
+  '对子嘛，刚好成双。':{en:'A pair — things come in twos.',ja:'ペアって、ちょうど二つで一人前。',ko:'페어는 원래 둘이 한 쌍이죠.'},
+  '三张一起，省事。':{en:'Three at once — simpler.',ja:'三枚まとめて、楽だろ。',ko:'세 장 한꺼번에, 간단하죠.'},
+  '这样出，你也没意见吧？':{en:'This way — you do not mind, right?',ja:'この出し方、文句ないよな？',ko:'이렇게 내도, 이의 없죠?'},
+  '顺一下，牌面好看嘛。':{en:'A little run — looks nice, right?',ja:'ちょっと流れで、見栄えいいだろ。',ko:'순서대로 내면 보기 좋죠.'},
+  '顺着走，别卡我呀。':{en:'Following along — do not block me.',ja:'流れで行くよ、邪魔しないで。',ko:'순서대로 갈게요, 막지 마요.'},
+  '连着出，省得你等。':{en:'Chained out — saves you the wait.',ja:'続けて出すよ、待たせないように。',ko:'이어서 낼게요, 기다리지 않게.'},
+  '两对一起，热热闹闹。':{en:'Two pairs together — lively.',ja:'二組まとめて、にぎやかだろ。',ko:'두 쌍 같이, 활기차죠.'},
+  '飞机嘛，直接飞过去。':{en:'A plane — I will just fly past.',ja:'飛行機だ、そのまま飛ばす。',ko:'비행기네요, 그냥 날아갈게요.'},
+  '这么大的牌，我也没办法。':{en:'Such big cards — nothing I can do.',ja:'こんな大きい牌、仕方ないだろ。',ko:'이렇게 큰 패, 어쩔 수 없네요.'},
+  '炸一下，热闹热闹。':{en:'A little boom — liven it up.',ja:'ちょっと爆発、盛り上げよう。',ko:'한 번 터뜨려서 분위기 내죠.'},
+  '别皱眉呀，就炸一下。':{en:'Do not frown — just one boom.',ja:'眉をひそめないで、一回だけ。',ko:'눈살 찌푸리지 마요, 한 번뿐이에요.'},
+  '王炸，我可没留后手。':{en:'Rocket — I am holding nothing back.',ja:'ロケット、後には引かない。',ko:'로켓, 뒤는 없어요.'},
+  '两个王都在这儿了，你说巧不巧？':{en:'Both jokers right here — what a coincidence, huh?',ja:'王が二枚そろってる、奇遇だな？',ko:'왕이 둘 다 여기 있네, 우연치고는 묘하죠?'},
+  '你还真敢炸。':{en:'You really dare to bomb.',ja:'よくも本当に爆発させたな。',ko:'정말 용감하게 터뜨리네.'},
+  '以为自己赢定了吗？':{en:'Think you have already won?',ja:'勝ったつもりか？',ko:'이겼다고 생각해?'},
+  '这手让给你，别客气呀。':{en:'This one is yours — do not be shy.',ja:'これ譲るよ、遠慮しないで。',ko:'이건 양보할게요, 사양 마요.'},
+  '这可不是真的打不过。':{en:'Not that I actually cannot beat it.',ja:'本当に勝てないわけじゃない。',ko:'진짜 못 이기는 게 아니에요.'},
+  '两张？我数得清。':{en:'Two? I can count.',ja:'二枚？数えられるさ。',ko:'두 장? 셀 줄 알아요.'},
+  '就两张了，稳住打。':{en:'Only two left — play steady.',ja:'あと二枚、落ち着いて打て。',ko:'두 장 남았어요, 침착하게 해요.'},
+  '你该不会手抖了吧。':{en:'Your hand is not shaking, is it?',ja:'手が震えてるんじゃないか？',ko:'손 떨리는 거 아니죠?'},
+  '就剩一张？那我得想想。':{en:'Just one left? Then let me think.',ja:'あと一枚？なら少し考えるか。',ko:'한 장 남았다고? 그럼 생각해 볼게요.'},
+  '它只剩一张，我盯着的。':{en:'One card left — I am watching.',ja:'あと一枚、ちゃんと見てる。',ko:'한 장 남았어요, 보고 있어요.'},
+  '一张而已，也不一定赢不了。':{en:'Only one card — not necessarily a loss.',ja:'一枚だけ、負けるとは限らない。',ko:'한 장뿐, 진다고 단정할 수 없죠.'},
+  '感觉如何？':{en:'How does that feel?',ja:'どうだ、気分は？',ko:'기분이 어때요?'},
+  '果然还是很好玩吧。':{en:'Still fun, is it not?',ja:'やっぱり面白いだろ。',ko:'역시 재밌죠?'},
+  '再来一把我也不一定会出现了。':{en:'I might not show up next round.',ja:'次の一局も来るとは限らないよ。',ko:'다음 판에도 나올진 몰라요.'},
+  '散会吧~':{en:'Let us wrap it up~',ja:'お開きにしよう～',ko:'이제 해산~'},
+  '算你今天运气好。':{en:'Lucky day for you.',ja:'今日は運が良かったな。',ko:'오늘은 운이 좋았네.'},
+  '赢一把，不代表下一把也能赢。':{en:'One win does not mean the next.',ja:'一勝しても、次も勝てるとは限らない。',ko:'한 판 이겼다고 다음도 이기는 건 아니에요.'},
+  '你看，我从不说自己牌差。':{en:'See? I never said my cards were bad.',ja:'ほら、手札が悪いなんて言ってないだろ。',ko:'봐요, 내 패가 나쁘다고 한 적 없잖아요.'},
+  '下次记得别跟我比牌。':{en:'Next time, do not compare cards with me.',ja:'次は俺と札比べしないことだ。',ko:'다음엔 나랑 패 싸움 하지 마요.'},
+  '这就走啦？我还想看看下一把你最大的牌是什么呢。':{en:'Leaving already? I wanted to see your biggest card next round.',ja:'もう行くの？次の一局で一番大きい牌を見たかったのに。',ko:'벌써 가요? 다음 판에 네 제일 큰 패를 보고 싶었는데.'},
+  '不打了？那我这手白换了。':{en:'Not playing? Then my swap was wasted.',ja:'やめるの？じゃあこの交換は無駄だったな。',ko:'안 해요? 그럼 내 교환은 헛수고였네.'},
+  '走得挺快，省我时间。':{en:'Quick exit — saves me time.',ja:'逃げ足が速いな、時間が省けた。',ko:'빠르네요, 시간 아꼈어.'},
+  /* ---- 斗月巴对局台词：玩家行为反馈 + 座位间对答（P1） ---- */
+  '这牌型，好看。':{en:'That combo looks good.',ja:'その形、きれいだね。',ko:'그 조합, 예쁘네요.'},
+  '我接接看……':{en:'Let me try to follow...',ja:'受けてみるね……',ko:'받아볼게요...'},
+  '哇，好整齐！':{en:'Wow, so tidy!',ja:'わあ、きれい！',ko:'와, 가지런하네요!'},
+  '这串番茄看着真不错。':{en:'That tomato skewer looks great.',ja:'このトマトの串、いいね。',ko:'이 토마토 꼬치, 좋네요.'},
+  '花架子，看我怎么接。':{en:'Flashy. Watch me answer.',ja:'見かけだけだ。受けてみせろ。',ko:'겉멋이네. 내가 받아주지.'},
+  '这牌型，有点意思。':{en:'That combo is interesting.',ja:'その形、ちょっと面白いな。',ko:'그 조합, 좀 재밌네요.'},
+  '整齐是整齐，可惜不够大。':{en:'Tidy, yes — but not big enough.',ja:'きれいだけど、大きさが足りないな。',ko:'가지런하긴 한데, 너무 작네요.'},
+  '这么大的牌，你舍得呀？':{en:'Such a big card — you dare to use it?',ja:'そんな大きい牌、惜しくないの？',ko:'그런 큰 패, 아깝지 않아요?'},
+  '哎，这就动大的了？':{en:'Oh, going big already?',ja:'あれ、もう大きいの出すの？',ko:'어, 벌써 큰 걸 내요?'},
+  '这张牌，闻着就贵。':{en:'That card smells expensive.',ja:'その牌、高そうな匂いがする。',ko:'그 패, 비싼 냄새가 나네요.'},
+  '急什么，牌还没打完。':{en:'What is the rush? The game is not over.',ja:'焦るな、まだ終わってない。',ko:'급하긴, 아직 안 끝났어.'},
+  '舍得动大牌，胆子不小。':{en:'Using big cards — quite bold.',ja:'大きい牌を出すとは、度胸があるな。',ko:'큰 패를 내다니, 배짱 좋네요.'},
+  '大牌出得挺急嘛。':{en:'In a hurry with those big cards, huh?',ja:'大きい牌を出すのが早いな。',ko:'큰 패를 꽤 급하게 내네요.'},
+  '慢慢想，不着急。':{en:'Take your time — no rush.',ja:'ゆっくり考えて、急がないで。',ko:'천천히 생각해요, 급하지 않아요.'},
+  '要我帮你想吗？':{en:'Want me to think for you?',ja:'一緒に考えようか？',ko:'내가 생각해줄까요?'},
+  '想好了再吃，别噎着。':{en:'Think it through before eating — do not choke.',ja:'よく考えてから食べて、詰まらせないで。',ko:'먹기 전에 잘 생각해요, 체하지 말고.'},
+  '想这么久？我可不等你。':{en:'Taking this long? I will not wait.',ja:'そんなに悩むのか？待たないぞ。',ko:'이렇게 오래 생각해? 난 안 기다려.'},
+  '慢慢想，我不催你。':{en:'Take your time. I am not rushing you.',ja:'ゆっくり考えろ、急かさない。',ko:'천천히 생각해요, 재촉 안 해요.'},
+  '想这么久，是怕我换牌吗？':{en:'Thinking that long — afraid I swapped cards?',ja:'そんなに悩むとは、俺が入れ替えたのが怖いのか？',ko:'그렇게 오래 생각해? 내가 패 바꾼 게 무서워?'},
+  '它炸了，小心点。':{en:'It bombed — careful.',ja:'爆発した、気をつけて。',ko:'터졌어요, 조심해요.'},
+  '这一下有点狠……':{en:'That one stings a bit...',ja:'これはちょっときつい……',ko:'이건 좀 아프네요...'},
+  '番茄炸了，你别慌。':{en:'Tomato bombed — do not panic.',ja:'トマトが爆発した、慌てないで。',ko:'토마토가 터뜨렸어요, 당황하지 마요.'},
+  '看吧，番茄也会急。':{en:'See? Tomato can get fierce too.',ja:'ほら、トマトも怒るんだ。',ko:'봐요, 토마토도 화내네요.'},
+  '炸得不错，轮到你了。':{en:'Nice bomb. Your turn.',ja:'いい爆発だ、次はお前だ。',ko:'잘 터뜨렸네, 이제 너 차례야.'},
+  '炸一下而已，别慌。':{en:'Just a bomb — do not panic.',ja:'ただの爆発だ、慌てるな。',ko:'그냥 터뜨린 것뿐, 당황 마요.'},
   /* __P7_END__ */
 };
 /* 内容条目表：条目 id -> 字段 -> {en,ja,ko}（P3~P7 分批填） */
@@ -6392,6 +6509,8 @@ const I18N_BANNY={
   m2_chuqian:{n:{en:'Cheater Banny',ja:'イカサマバニー',ko:'사기꾼배니'}},
   m2_tracker:{n:{en:'Tracker Banny',ja:'トラッカーバニー',ko:'추적기 배니'}},
   m2_baqi:{n:{en:'Baqi Orochi',ja:'バ岐大蛇',ko:'바치 오로치'}},
+  m2_qingchun:{n:{en:'Youth Underdog 3D Banny',ja:'青春負け犬立体バニー',ko:'청춘 패배견 입체 배니'}},
+  m2_yinan:{n:{en:'Gloomy Banny',ja:'陰気バニー',ko:'음침배니'}},
 
   dest_forest:{n:{en:'Forest Edge',ja:'森のほとり',ko:'숲의 가장자리'}},
   dest_fairy:{n:{en:'Fairy Hideaway',ja:'桃源郷',ko:'무릉도원'}},
@@ -6627,6 +6746,12 @@ const I18N_BANNY={
   ach_sv2:{n:{en:'Hundred-Day Guardian',ja:'百日の守り手',ko:'백일의 수호자'}},
   ach_sv3:{n:{en:'Past Three Stages',ja:'三つの関門',ko:'세 관문 통과'}},
   ach_sv4:{n:{en:'The Road Home',ja:'帰郷の道',ko:'귀향의 길'}},
+  ach_sv5:{n:{en:'First Treasure',ja:'最初の宝物',ko:'첫 번째 보물'}},
+  ach_sv6:{n:{en:'Collector',ja:'コレクター',ko:'컬렉터'}},
+  ach_sv7:{n:{en:'Journey\'s End',ja:'帰郷の終点',ko:'귀향의 종점'}},
+  ach_sv8:{n:{en:'Echoes of the Forest',ja:'森のこだま',ko:'숲의 메아리'}},
+  ach_sv9:{n:{en:'Full Codex',ja:'宝物図鑑コンプ',ko:'보물 도감 완성'}},
+  ach_sv10:{n:{en:'Endless Night',ja:'終わらない夜',ko:'끝없는 밤'}},
 
   food_food1:{n:{en:'Rice Ball Bento',ja:'おにぎり弁当',ko:'주먹밥 도시락'}},
   food_food2:{n:{en:'Seasonal Vegetable Bento',ja:'旬の野菜弁当',ko:'제철 채소 도시락'}},
@@ -6857,6 +6982,8 @@ const I18N_BANNY={
   m2_chuqian_intro:{d:{en:'A Banny that appears only at the card table; for it there is no wager it cannot win. If one exists, it must have let it happen on purpose.',ja:'賭けの卓にだけ姿を現すバニーで、それにとって勝てない賭局はない。もしあるなら、わざと負けたに違いない。',ko:'도박판에만 모습을 드러내는 배니로, 그것에게는 이길 수 없는 승부가 없다. 만약 있다면, 일부러 그런 것이 틀림없다.'}},
   m2_tracker_intro:{d:{en:'Apparently the greedy 3D Banny was far too greedy: the moment it spots a tomato bottom, it instantly GPS-locks on.',ja:'どうやら欲張りな立体バニーは欲張りすぎてしまったらしい。トマトのお尻を見つけたら、すぐさま GPS でロックオンする。',ko:'아무래도 욕심 많은 입체 배니가 너무 욕심을 부린 모양이다. 토마토 엉덩이만 보면 곧바로 GPS로 록온한다.'}},
   m2_baqi_intro:{d:{en:'The Banny has already taken root and sprouted.',ja:'バニーはすでに根を張り、芽を出した。',ko:'배니는 이미 뿌리를 내리고 싹을 틔웠다.'}},
+  m2_qingchun_intro:{d:{en:'Huh? Why is your neck all crooked?',ja:'あれ、首が曲がってるよ？',ko:'어라, 목이 왜 삐뚤어져 있어?'}},
+  m2_yinan_intro:{d:{en:'Very shy; it loves dark, damp places.',ja:'とても恥ずかしがり屋で、暗く湿った場所が好き。',ko:'몹시 수줍음이 많고, 어둡고 습한 곳을 좋아한다.'}},
   /* ---------- P5：成就描述 ach_<id>_desc（字段 d） ---------- */
   ach_h1_desc:{d:{en:'Harvest your first Banny',ja:'初めてバニーを収穫する',ko:'첫 배니를 수확하기'}},
   ach_d1_desc:{d:{en:'Unlock 10 Banny species in the Codex',ja:'図鑑で 10 種のバニーを解放する',ko:'도감에서 배니 10종 해금하기'}},
@@ -6901,7 +7028,13 @@ const I18N_BANNY={
   ach_sv1_desc:{d:{en:'Win for the first time in Tomato Survivors',ja:'「トマトサバイバー」で初勝利する',ko:'토마토 서바이버에서 첫 승리하기'}},
   ach_sv2_desc:{d:{en:'Win 3 times in Tomato Survivors',ja:'「トマトサバイバー」で通算 3 回勝利する',ko:'토마토 서바이버에서 통산 3회 승리하기'}},
   ach_sv3_desc:{d:{en:'Clear 3 stages in Tomato Survivors',ja:'「トマトサバイバー」で 3 ステージをクリアする',ko:'토마토 서바이버에서 3개 스테이지를 클리어하기'}},
-  ach_sv4_desc:{d:{en:'Clear all 6 stages in Tomato Survivors',ja:'「トマトサバイバー」の全 6 ステージをクリアする',ko:'토마토 서바이버의 6개 스테이지를 모두 클리어하기'}},
+  ach_sv4_desc:{d:{en:'Clear the first 6 stages in Tomato Survivors',ja:'「トマトサバイバー」の最初の 6 ステージをクリアする',ko:'토마토 서바이버의 처음 6개 스테이지를 클리어하기'}},
+  ach_sv5_desc:{d:{en:'Obtain your first treasure in Tomato Survivors',ja:'「トマトサバイバー」で最初の宝物を手に入れる',ko:'토마토 서바이버에서 첫 번째 보물 획득하기'}},
+  ach_sv6_desc:{d:{en:'Collect 10 kinds of treasure in Tomato Survivors',ja:'「トマトサバイバー」で 10 種の宝物を集める',ko:'토마토 서바이버에서 10종의 보물 모으기'}},
+  ach_sv7_desc:{d:{en:'Clear all 10 stages in Tomato Survivors',ja:'「トマトサバイバー」の全 10 ステージをクリアする',ko:'토마토 서바이버의 모든 10개 스테이지를 클리어하기'}},
+  ach_sv8_desc:{d:{en:'Clear stage 11.1 Forest Edge in Tomato Survivors',ja:'「トマトサバイバー」の 11.1 森のほとりをクリアする',ko:'토마토 서바이버의 11.1 숲의 가장자리를 클리어하기'}},
+  ach_sv9_desc:{d:{en:'Collect all 24 kinds of treasure in Tomato Survivors',ja:'「トマトサバイバー」で 24 種の宝物をすべて集める',ko:'토마토 서바이버에서 24종의 보물을 모두 모으기'}},
+  ach_sv10_desc:{d:{en:'Survive 10 minutes in Endless mode',ja:'エンドレスモードで 10 分間生き残る',ko:'엔드리스 모드에서 10분 버티기'}},
   /* ---------- P5：旅行地图描述 dest_<id>_desc（字段 d，叙事体） ---------- */
   dest_fairy_desc:{d:{en:'Through the breathing vine gate at the far end of the Forest Edge lies a hidden realm that time seems to have forgotten — they say fairies live here.',ja:'森のほとりの突き当たりにある、息づくような蔦の門をくぐると、時間に忘れられたかのような秘境が広がっている——ここには精霊が住むという。',ko:'숲의 가장자리 끝, 숨 쉬는 듯한 덩굴 문을 지나면 시간에게 잊힌 듯한 비경이 펼쳐져 있다——이곳에는 정령이 산다고 한다.'}},
   dest_ancient_desc:{d:{en:'Through the half-open stone gate at the end of Fairy Hideaway lies an old land time does not remember — they say ancient creatures and mythical beings live here.',ja:'桃源郷の突き当たりにある半開きの石門をくぐると、時間に記憶されない古き地が広がっている——ここには古き生き物と神話の存在が住むという。',ko:'무릉도원 끝, 반쯤 열린 돌문을 지나면 시간이 기억하지 않는 옛 땅이 펼쳐져 있다——이곳에는 고대의 생물과 신화 속 존재가 산다고 한다.'}},
@@ -7203,12 +7336,17 @@ const I18N_MISC={    // 事件/台词/系统说明：键为语义 key（字段�
   help_other:{d:{en:'The top bar lets you toggle <b>🔊 Mute</b> and <b>⚡ Low Power</b>; there are 40 <b>🏆 Achievements</b> that unlock automatically as you progress — tap 🏆 in the top bar to check them. On rare days a limited-time passcode entry appears.',ja:'トップバーで<b>🔊 ミュート</b>と<b>⚡ 低電力</b>を切り替えられます。<b>🏆 実績</b>は全 40 個で、進捗に応じて自動達成され、トップバーの 🏆 で確認できます。ごくまれに期間限定の合言葉入口が現れます。',ko:'상단 바에서 <b>🔊 음소거</b>와 <b>⚡ 저전력</b>을 켤 수 있어요. <b>🏆 업적</b>은 총 40개로 진척에 따라 자동 달성되며, 상단 바의 🏆를 눌러 확인해요. 아주 드물게 기간 한정 암호 입구가 나타나요.'}},
   help_backup_t:{d:{en:'💾 Save Backup',ja:'💾 セーブのバックアップ',ko:'💾 세이브 백업'}},
   help_save_count:{d:{en:'📦 Backup contents: {dex} Codex species · plots {zon}/{ztot} · 🍅 check-ins {pomo} · tasks {task} · Pomodoro settings',ja:'📦 バックアップ内容：図鑑 {dex} 種 ・ 区画 {zon}/{ztot} ・ 🍅 チェックイン {pomo} 件 ・ タスク {task} 件 ・ ポモドーロ設定',ko:'📦 백업 내용: 도감 {dex}종 · 구획 {zon}/{ztot} · 🍅 체크인 {pomo}건 · 할 일 {task}건 · 뽀모도로 설정'}},
-  help_mobile:{d:{en:'📱 <b>Mobile users: please back up with "💾 Export File", not "📋 Copy Save".</b> Copying has a size limit, and a long save can be truncated or copied incompletely — exporting to a file is complete and reliable.',ja:'📱 <b>スマホの方へ：バックアップは「📋 セーブをコピー」ではなく「💾 ファイルを書き出す」をご利用ください。</b>コピーには文字数上限があり、セーブが長いと途中で切れて不完全になりがちです。ファイルに書き出せば完全で確実です。',ko:'📱 <b>모바일 사용자 안내: 백업은 "📋 세이브 복사"가 아니라 "💾 파일 내보내기"를 이용해 주세요.</b> 복사에는 길이 제한이 있어 세이브가 길면 잘리거나 불완전해질 수 있어요. 파일로 내보내야 완전하고 확실해요.'}},
+  help_mobile:{d:{en:'📱 <b>On phone:</b> Android Chrome 132+ can use "📎 Bind Local Save File" directly. On iPhone / iPad, use "📤 Share Backup" → "Save to Files", and "Add to Home Screen" if you play long-term. Avoid "📋 Copy Save" for backups — it has a length limit and long saves get truncated.',ja:'📱 <b>スマホの場合：</b>Android Chrome 132+ なら「📎 ローカルセーブファイルを連携」がそのまま使えます。iPhone / iPad では「📤 バックアップを共有」→「ファイルに保存」で保存し、長く遊ぶなら「ホーム画面に追加」もおすすめです。バックアップに「📋 セーブをコピー」は使わないでください（文字数上限があり、長いセーブは途中で切れます）。',ko:'📱 <b>휴대폰 안내:</b> Android Chrome 132+에서는 "📎 로컬 세이브 파일 연결"을 그대로 쓸 수 있어요. iPhone / iPad에서는 "📤 백업 공유" → "파일에 저장"으로 보관하고, 오래 즐길 거라면 "홈 화면에 추가"도 해 두세요. 백업에 "📋 세이브 복사"는 쓰지 마세요 — 길이 제한이 있어 긴 세이브는 잘릴 수 있어요.'}},
   help_reset_t:{d:{en:'⚠️ Reset Save',ja:'⚠️ セーブのリセット',ko:'⚠️ 세이브 초기화'}},
   ui_btn_copy:{d:{en:'📋 Copy Save',ja:'📋 セーブをコピー',ko:'📋 세이브 복사'}},
   ui_btn_export:{d:{en:'💾 Export File',ja:'💾 ファイルを書き出す',ko:'💾 파일 내보내기'}},
   ui_btn_paste:{d:{en:'📥 Paste & Import',ja:'📥 貼り付けて取り込む',ko:'📥 붙여넣기 가져오기'}},
   ui_btn_importf:{d:{en:'📂 Import File',ja:'📂 ファイルを取り込む',ko:'📂 파일 가져오기'}},
+  help_localfile_t:{d:{en:'💾 Local Save File (survives cache clearing)',ja:'💾 ローカルセーブファイル（キャッシュ削除でも消えない）',ko:'💾 로컬 세이브 파일 (캐시 삭제에도 유지)'}},
+  help_localfile:{d:{en:'After binding, every autosave is written straight into the file you pick (e.g. yueba-save.json), so clearing browser cache or site data will not delete it. Binding immediately overwrites the chosen file with the current save — to restore an old file instead, use "📂 Import File" above first, then bind again. Works on desktop Chrome / Edge and Android Chrome 132+. iPhone / iPad does not support it — use "📤 Share Backup" and save to the Files app.',ja:'連携すると、オートセーブのたびに選んだファイル（例：yueba-save.json）へ直接書き込みます。ブラウザのキャッシュやサイトデータを消してもこのファイルは消えません。連携した時点で現在のセーブが選んだファイルに上書きされます（古いファイルを復元したい場合は、先に上の「📂 ファイルを取り込む」を使ってから再連携してください）。デスクトップ版 Chrome / Edge と Android Chrome 132+ に対応。iPhone / iPad は非対応なので「📤 バックアップを共有」から「ファイル」アプリに保存してください。',ko:'연결하면 자동 저장할 때마다 선택한 파일(예: yueba-save.json)에 바로 기록해요. 브라우저 캐시나 사이트 데이터를 지워도 이 파일은 삭제되지 않아요. 연결하는 순간 현재 세이브가 선택한 파일에 덮어써지므로, 예전 파일을 복구하려면 먼저 위의 "📂 파일 가져오기"를 사용한 뒤 다시 연결해 주세요. 데스크톱 Chrome / Edge 및 Android Chrome 132+에서 지원하며, iPhone / iPad는 지원하지 않으니 "📤 백업 공유"로 파일 앱에 저장해 주세요.'}},
+  ui_btn_bindfile:{d:{en:'📎 Bind Local Save File',ja:'📎 ローカルセーブファイルを連携',ko:'📎 로컬 세이브 파일 연결'}},
+  ui_btn_share:{d:{en:'📤 Share Backup',ja:'📤 バックアップを共有',ko:'📤 백업 공유'}},
+  ui_btn_unbindfile:{d:{en:'Unbind',ja:'連携を解除',ko:'연결 해제'}},
   ui_btn_confirm_import:{d:{en:'✅ Confirm import (overwrite current save)',ja:'✅ 取り込みを確定（現在のセーブを上書き）',ko:'✅ 가져오기 확인 (현재 세이브 덮어쓰기)'}},
   ui_btn_reset:{d:{en:'🗑️ Reset All Save Data',ja:'🗑️ すべてのセーブをリセット',ko:'🗑️ 전체 세이브 초기화'}},
   ui_placeholder_import:{d:{en:'Paste save JSON here…',ja:'セーブの JSON をここに貼り付け…',ko:'세이브 JSON을 여기에 붙여넣기…'}},
@@ -7397,8 +7535,14 @@ function defaultState(){
     coins:0, totalCoins:null, accelLv:0, boughtItems:[], collection:{}, collection2:{}, dex2Celebrated:false, totalHarvest:0, lastFast:0, lowPower:false,
     artPick:{},   // 多立绘：{月巴id: 选中的立绘序号}，同一只月巴被画了多次时用
     flyTop:[], flyPick:null, flySel:1, flyClear:0, flyLvBest:{}, flyLvTime:{},
-    survivor:{v:1, clears:0, bestTime:0, bestKills:0, unlocked:{}, read:{}, lastReward:null,
-      stageClear:0, stageSel:1, stageBest:{}},
+    survivor:{v:3, clears:0, bestTime:0, bestKills:0, unlocked:{}, read:{}, lastReward:null,
+      stageClear:0, stageSel:1, stageBest:{}, relics:{}, relicSeen:{}, chests:0,
+      chars:{unlocked:{tomato:true}, sel:'tomato'},
+      diff:'normal', mode:'campaign', endlessBest:0, endlessKills:0,
+      daily:{day:'', best:0}, sanctuary:{hp:0, dmg:0, luck:0, reroll:0},
+      gear:{owned:{}, equipped:[], bonus:{time:0, card:0, spec:0}},
+      settings:{dmgNum:true, shake:true, parts:true},
+      runs:0, totalKills:0},
     weather:'sunny', lastRainAt:-1e12, weatherHoldEnd:0,
     nextWeatherAt:now()+rand(2,4)*60000, muted:false, lastSave:now(),
     lang:null,   // 界面语言：null=尚未选择（首次进入按浏览器语言判定），之后以手动选择为准
@@ -7425,6 +7569,8 @@ function defaultState(){
 }
 /* 存档写入失败时置 true：驱动顶栏常驻警告 */
 let _saveFail=false;
+/* load() 时浏览器里是否已有存档：供 lfsRestoreIfMissing 判断是否该从本地文件回档 */
+let _lfsBootHadSave=null;
 function updateSaveWarn(){ const el=$('saveWarn'); if(el) el.style.display=_saveFail?'block':'none'; }
 function save(){
   S.lastSave=now();
@@ -7434,6 +7580,7 @@ function save(){
   }catch(e){
     if(!_saveFail){ _saveFail=true; updateSaveWarn(); }  // 写入失败：显示常驻警告，引导导出备份
   }
+  lfsQueue();   // 已绑定本地存档文件时同步写盘（内部节流）
 }
 function load(){
   try{
@@ -7457,11 +7604,29 @@ function load(){
       S.survivor.unlocked=Object.assign({}, (d.survivor&&d.survivor.unlocked)||{});
       S.survivor.read=Object.assign({}, (d.survivor&&d.survivor.read)||{});
       S.survivor.stageBest=Object.assign({}, (d.survivor&&d.survivor.stageBest)||{});
+      S.survivor.relics=Object.assign({}, (d.survivor&&d.survivor.relics)||{});
+      S.survivor.relicSeen=Object.assign({}, (d.survivor&&d.survivor.relicSeen)||{});
+      S.survivor.chars=Object.assign({unlocked:{tomato:true}, sel:'tomato'}, (d.survivor&&d.survivor.chars)||{});
+      S.survivor.chars.unlocked=Object.assign({tomato:true}, (d.survivor&&d.survivor.chars&&d.survivor.chars.unlocked)||{});
+      if(['tomato','cherry','beef','gold'].indexOf(S.survivor.chars.sel)<0) S.survivor.chars.sel='tomato';
+      S.survivor.daily=Object.assign({day:'', best:0}, (d.survivor&&d.survivor.daily)||{});
+      S.survivor.sanctuary=Object.assign({hp:0, dmg:0, luck:0, reroll:0}, (d.survivor&&d.survivor.sanctuary)||{});
+      S.survivor.settings=Object.assign({dmgNum:true, shake:true, parts:true}, (d.survivor&&d.survivor.settings)||{});
+      if(S.survivor.diff!=='hard' && S.survivor.diff!=='nightmare') S.survivor.diff='normal';
+      if(S.survivor.mode!=='endless') S.survivor.mode='campaign';
+      S.survivor.chests=(S.survivor.chests||0);
+      S.survivor.endlessBest=Math.max(0, +S.survivor.endlessBest||0);
+      S.survivor.endlessKills=Math.max(0, +S.survivor.endlessKills||0);
+      S.survivor.runs=Math.max(0, S.survivor.runs|0);
+      S.survivor.totalKills=Math.max(0, S.survivor.totalKills|0);
+      S.survivor.v=3;
       galInitLegacy();   // 画廊：本次上线前就已达成条件的条目记为「时间未知」
+      _lfsBootHadSave=true;
       return true;
     }
   }catch(e){}
   S=defaultState();
+  _lfsBootHadSave=false;
   return false;
 }
 function speedMult(){ return (1+S.accelLv*0.1) * (S.pomo && S.pomo.running && S.pomo.mode==='focus' ? 2 : 1); }
@@ -7737,9 +7902,9 @@ function artList(t){
   if(!t) return [];
   const out=[];
   for(const a of (Array.isArray(t.imgs)?t.imgs:[])){
-    if(a&&a.url&&!out.some(x=>x.url===a.url)) out.push({url:a.url,by:a.by||$t('匿名')});
+    if(a&&a.url&&!out.some(x=>x.url===a.url)) out.push({url:a.url,by:a.by||$t('匿名'),note:a.note||''});
   }
-  if(t.img&&!out.some(x=>x.url===t.img)) out.unshift({url:t.img,by:(YB_PIC_AUTHOR[t.id]||$t('匿名'))});
+  if(t.img&&!out.some(x=>x.url===t.img)) out.unshift({url:t.img,by:(YB_PIC_AUTHOR[t.id]||$t('匿名')),note:YB_PIC_NOTE[t.id]||''});
   return out;
 }
 function artIndex(t){
@@ -7750,6 +7915,7 @@ function artIndex(t){
 }
 function artURL(t){ const l=artList(t); return l.length?l[artIndex(t)].url:''; }
 function artBy(t){ const l=artList(t); return l.length?l[artIndex(t)].by:''; }
+function artNote(t){ const l=artList(t); return l.length?(l[artIndex(t)].note||''):''; }
 /* 图鉴卡片右上角的「🎨n」角标：这只月巴有几张立绘 */
 function artBadgeHTML(t){
   const n=artList(t).length;
@@ -8196,6 +8362,26 @@ function folSpring(){ // 每帧：拖拽期继续 EMA 贴合；松开后弹簧�
 /* 图鉴月巴可拖拽：按住跟随手指、松开弹回；拖动时不触发详情弹窗 */
 let bkDrag=null, bkRaf=null;
 function bkApply(f){ f.spr.style.transform=`translate(${f.x.toFixed(2)}px,${f.y.toFixed(2)}px) rotate(${clamp(f.x*0.8,-16,16).toFixed(2)}deg) scale(${f.scale})`; }
+const BK_EDGE_PAD=10; // 超出图鉴边缘的容差：贴边拖不误判，真正拖出面板才取消跟随
+function bkOutOfBox(f,x,y){
+  const r=f.rect;
+  return x<r.left-BK_EDGE_PAD || x>r.right+BK_EDGE_PAD || y<r.top-BK_EDGE_PAD || y>r.bottom+BK_EDGE_PAD;
+}
+/* 结束拖拽并回弹：鼠标移出图鉴范围、pointerup/cancel 都走这里。
+   不主动释放指针捕获：捕获在 pointerup 时自动解除，这样 click 仍落在图片上，
+   由 bkClickGuard 吃掉，不会误触「返回遮罩」关闭详情。 */
+function bkRelease(){
+  const f=bkDrag; if(!f||f.state!=='drag')return;
+  if(!f.moved){
+    // 只是点了一下：立即归位，不走欠阻尼回弹（小位移回弹会被放大成抖动）
+    f.spr.style.transform=`translate(0,0) rotate(0deg) scale(${f.scale})`;
+    if(bkRaf){ cancelAnimationFrame(bkRaf); bkRaf=null; }
+    bkDrag=null;
+    return;
+  }
+  f.state='release';
+  sfx.spring();
+}
 function bkStart(e){
   const pic=e.target.closest&&e.target.closest('.bcard:not(.locked) .pic, .fd-pic');
   if(!pic)return;
@@ -8203,7 +8389,10 @@ function bkStart(e){
   if(!spr)return;
   const r=pic.getBoundingClientRect();
   const m=spr.style.transform.match(/scale\(([\d.]+)\)/);
+  // 跟随范围：卡片所在的书页 / 详情弹层；指针离开这个范围就取消跟随
+  const box=pic.closest('.fd-card')||pic.closest('.book')||pic;
   bkDrag={pic,spr,scale:m?+m[1]:1,ptr:e.pointerId,cx:r.left+r.width/2,cy:r.top+r.height/2,
+          rect:box.getBoundingClientRect(),
           x:0,y:0,tx:0,ty:0,vx:0,vy:0,moved:false,state:'drag',lastT:performance.now(),
           lastEvtT:e.timeStamp||0,lastX:0,lastY:0,lastSnd:0,lastDX:0,lastDY:0};
   spr.style.transition='none';
@@ -8213,7 +8402,8 @@ function bkStart(e){
   e.preventDefault();
 }
 function bkMove(e){
-  if(!bkDrag||bkDrag.ptr!==e.pointerId)return;
+  if(!bkDrag||bkDrag.ptr!==e.pointerId||bkDrag.state!=='drag')return;
+  if(bkOutOfBox(bkDrag,e.clientX,e.clientY)){ bkRelease(); return; }
   let dx=e.clientX-bkDrag.cx, dy=e.clientY-bkDrag.cy;
   const d=Math.hypot(dx,dy);
   if(d>30){ dx=dx/d*30; dy=dy/d*30; }
@@ -8236,16 +8426,8 @@ function bkMove(e){
   }
 }
 function bkEnd(e){
-  if(!bkDrag||bkDrag.ptr!==e.pointerId)return;
-  if(!bkDrag.moved && bkDrag.state==='drag'){
-    // 只是点了一下：立即归位，不走欠阻尼回弹（小位移回弹会被放大成抖动）
-    bkDrag.spr.style.transform=`translate(0,0) rotate(0deg) scale(${bkDrag.scale})`;
-    if(bkRaf) cancelAnimationFrame(bkRaf);
-    bkDrag=null; bkRaf=null;
-    return;
-  }
-  bkDrag.state='release';
-  sfx.spring();
+  if(!bkDrag||bkDrag.ptr!==e.pointerId||bkDrag.state!=='drag')return;
+  bkRelease();
 }
 function bkSpring(){
   const f=bkDrag;
@@ -8930,7 +9112,10 @@ function openFatDetail(id){ // 图鉴点开某月巴：悬浮层放大图 + 记�
           <span>🎨 ${artIndex(t)+1} / ${artList(t).length}</span>
           <button class="iconbtn" title="${esc($t('切换立绘'))}" onclick="switchArt('${t.id}',1)">›</button>
         </div>`:''}
-        ${artBy(t)?`<div class="fd-author">🎨 by ${esc(artBy(t))}</div>`:''}
+        ${artNote(t)?`<div class="fd-note">
+          <div class="fd-note-h"><span>${$t('🖌 画师的话')}</span><span class="by">${esc(artBy(t)||$t('匿名'))}</span></div>
+          <p>${esc(artNote(t))}</p>
+        </div>`:(artBy(t)?`<div class="fd-author">🎨 by ${esc(artBy(t))}</div>`:'')}
         <div class="fd-meta">
           <span class="rar-tag ${rcl}">${$t(RAR_NAME[t.r])}</span>
           <span class="fd-cnt">${$tf('收获 x{n}',{n:rec.count})}</span>
@@ -9038,11 +9223,12 @@ function openHelp(){
       <div class="sec">${$tm('help_backup_t','💾 存档备份')}</div>
       <div style="font-size:11px;color:var(--dim);margin:4px 0 2px">${$tm('help_save_count','📦 备份内容：图鉴 {dex} 种 · 场地 {zon}/{ztot} · 🍅 打卡 {pomo} 条 · 任务 {task} 条 · 番茄钟设置',{dex:Object.keys(S.collection).length,zon:S.zones.filter(z=>z.bought).length,ztot:ZONES.length,pomo:S.pomo.history.length,task:(S.tasks||[]).length})}</div>
       <div style="margin:6px 0 2px;padding:7px 10px;border-radius:10px;background:rgba(66,165,245,.14);border:1px solid rgba(66,165,245,.45);font-size:11px;line-height:1.6;color:var(--text)">
-        ${$tm('help_mobile','📱 <b>手机用户注意：请点「💾 导出文件」备份，不要用「📋 复制存档」。</b>复制有数量上限，存档过长时容易被截断、复制不全，导出成文件才完整可靠。')}
+        ${$tm('help_mobile','📱 <b>手机用户：</b>安卓 Chrome 132+ 可直接「📎 绑定本地存档文件」；iPhone / iPad 请用「📤 分享备份」→「存储到文件」保存，长期玩建议再「添加到主屏幕」。备份别用「📋 复制存档」，复制有长度上限，存档长了会被截断。')}
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
         <button class="btn" onclick="exportSave()">${$tm('ui_btn_copy','📋 复制存档')}</button>
         <button class="btn" onclick="exportSaveFile()">${$tm('ui_btn_export','💾 导出文件')}</button>
+        <button class="btn" onclick="shareSaveFile()">${$tm('ui_btn_share','📤 分享备份')}</button>
         <button class="btn" onclick="toggleImport()">${$tm('ui_btn_paste','📥 粘贴导入')}</button>
         <button class="btn" onclick="document.getElementById('importFile').click()">${$tm('ui_btn_importf','📂 导入文件')}</button>
         <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importSaveFile()">
@@ -9051,12 +9237,20 @@ function openHelp(){
         <textarea id="importBox" rows="4" style="width:100%;box-sizing:border-box;font-size:11px;font-family:monospace;border-radius:8px;border:1px solid var(--line);background:rgba(255,255,255,.7);color:var(--text);padding:8px;outline:none" placeholder="${$tm('ui_placeholder_import','粘贴存档 JSON 到此处…')}"></textarea>
         <button class="btn" style="margin-top:6px;color:var(--danger)" onclick="importSave()">${$tm('ui_btn_confirm_import','✅ 确认导入（覆盖当前存档）')}</button>
       </div>
+      <div class="sec">${$tm('help_localfile_t','💾 本地存档文件（清缓存不丢档）')}</div>
+      <div style="font-size:11px;color:var(--dim);line-height:1.6;margin:4px 0 6px">${$tm('help_localfile','绑定后，每次自动存档都会直接写进你选的电脑文件（如 yueba-save.json），清除浏览器缓存 / 网站数据不会删掉它。绑定会立即用当前存档覆盖所选文件；想恢复旧文件，请先用上面的「📂 导入文件」读回来再绑定。支持桌面 Chrome / Edge 与安卓 Chrome 132+；iPhone / iPad 不支持，请用「📤 分享备份」把文件存到「文件」App。')}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" onclick="lfsBind()">${$tm('ui_btn_bindfile','📎 绑定本地存档文件')}</button>
+        <button class="btn" onclick="lfsUnbind()">${$tm('ui_btn_unbindfile','解除绑定')}</button>
+      </div>
+      <div id="lfsNote" style="font-size:11px;color:var(--dim);line-height:1.5;margin-top:6px">${lfsStatusText()}</div>
       <div class="sec" style="color:var(--danger)">${$tm('help_reset_t','⚠️ 重置存档')}</div>
       <button class="btn" style="color:var(--danger)" onclick="resetSave()">${$tm('ui_btn_reset','🗑️ 重置全部存档')}</button>
     </div>`, ()=>openHelp());
 }
 function resetSave(){
   if(confirm($t('确定重置全部存档吗？此操作不可撤销！'))){
+    try{ sessionStorage.setItem('_lfsNoRestore','1'); }catch(e){}   // 重置后不要又从本地文件把旧档读回来
     localStorage.removeItem(SAVE_KEY); localStorage.removeItem('idle-yueba-save-v1'); location.reload();
   }
 }
@@ -9076,15 +9270,35 @@ function exportSave(){
   if(typeof navigator!=='undefined' && navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(json).then(ok).catch(fallback); }
   else fallback();
 }
+function saveFileName(){
+  const _bp=bjParts(now());
+  return 'yueba-save-'+_bp.y+'-'+pad(_bp.mo+1)+'-'+pad(_bp.d)+'.json';
+}
 function exportSaveFile(){
   save(); const json=JSON.stringify(S,null,2);
   const blob=new Blob([json],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url; const _bp=bjParts(now()); a.download='yueba-save-'+_bp.y+'-'+pad(_bp.mo+1)+'-'+pad(_bp.d)+'.json';
+  a.href=url; a.download=saveFileName();
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(function(){ URL.revokeObjectURL(url); },1000);
   toast($t('✅ 存档已导出为文件'));
+}
+/* 手机端（尤其 iOS）：走系统分享面板，可「存储到文件」/ 存网盘 / 发给自己 */
+function shareSaveFile(){
+  save();
+  const json=JSON.stringify(S,null,2), name=saveFileName();
+  let file=null;
+  try{ file=new File([json],name,{type:'application/json'}); }catch(e){}
+  if(file && navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+    navigator.share({files:[file],title:name}).catch(function(e){
+      if(e&&e.name==='AbortError') return;
+      toast($t('⚠️ 分享不可用，已改为直接下载文件'));
+      exportSaveFile();
+    });
+    return;
+  }
+  exportSaveFile();
 }
 // 旧版存档迁移 + 默认值合并（与 load() 一致），供粘贴导入 / 文件导入共用
 // 兼容旧存档：只要求是对象且含至少一个已知字段，缺失字段由 defaultState() 补齐
@@ -9133,6 +9347,155 @@ function importSave(){
     toast(`✅ 导入成功（🍅 打卡 ${(d.pomo&&d.pomo.history||[]).length} 条 · 任务 ${(d.tasks||[]).length} 条），正在刷新…`);
     setTimeout(()=>location.reload(),600);
   }catch(e){ toast($t('❌ 存档格式无效，导入失败')); }
+}
+
+/* ---------------- 本地存档文件（File System Access API） ---------------- */
+/* 把存档直接写进用户选定的电脑文件：浏览器缓存 / 网站数据被清掉也不会删到这个文件。
+   文件句柄无法存进 localStorage，只能放 IndexedDB；句柄即使丢了，磁盘上的文件还在，
+   用「📂 导入文件」读回来后重新绑定即可继续自动写入。 */
+const LFS_DB='yueba-fs', LFS_STORE='kv', LFS_HANDLE='save';
+let lfsHandle=null, lfsPerm=false, lfsTimer=0, lfsWriting=false, lfsAgain=false, lfsRestoring=false, lfsLastAt=0;
+function lfsSupported(){ return !!(window.showSaveFilePicker && window.indexedDB); }
+function lfsIdbOpen(){
+  return new Promise(function(res,rej){
+    const r=indexedDB.open(LFS_DB,1);
+    r.onupgradeneeded=function(){ if(!r.result.objectStoreNames.contains(LFS_STORE)) r.result.createObjectStore(LFS_STORE); };
+    r.onsuccess=function(){ res(r.result); };
+    r.onerror=function(){ rej(r.error); };
+  });
+}
+function lfsIdbGet(k){
+  return lfsIdbOpen().then(function(db){
+    return new Promise(function(res,rej){
+      const q=db.transaction(LFS_STORE,'readonly').objectStore(LFS_STORE).get(k);
+      q.onsuccess=function(){ res(q.result); }; q.onerror=function(){ rej(q.error); };
+    });
+  });
+}
+function lfsIdbSet(k,v){
+  return lfsIdbOpen().then(function(db){
+    return new Promise(function(res,rej){
+      const tx=db.transaction(LFS_STORE,'readwrite'); tx.objectStore(LFS_STORE).put(v,k);
+      tx.oncomplete=function(){ res(true); }; tx.onerror=function(){ rej(tx.error); };
+    });
+  });
+}
+function lfsIdbDel(k){
+  return lfsIdbOpen().then(function(db){
+    return new Promise(function(res,rej){
+      const tx=db.transaction(LFS_STORE,'readwrite'); tx.objectStore(LFS_STORE).delete(k);
+      tx.oncomplete=function(){ res(true); }; tx.onerror=function(){ rej(tx.error); };
+    });
+  });
+}
+function lfsStatusText(){
+  if(!lfsSupported()) return $t('当前浏览器不支持本地存档文件（需桌面 Chrome / Edge，或 Android Chrome 132+）');
+  if(!lfsHandle) return $t('未绑定：存档只存在浏览器里，清缓存/网站数据会丢失');
+  const n=(lfsHandle&&lfsHandle.name)||'yueba-save.json';
+  return lfsPerm ? $tf('✅ 已绑定：{a}',{a:n}) : $tf('⚠️ 已绑定：{a}，点一下页面任意处恢复写入',{a:n});
+}
+function lfsUpdateUI(){
+  const el=document.getElementById('lfsNote'); if(!el) return;
+  el.textContent=lfsStatusText();
+  el.style.color=(lfsHandle&&lfsPerm)?'#2e7d32':'var(--dim)';
+}
+/* 写入节流：save() 可能在一秒内被连点触发多次，合并成一次写盘 */
+function lfsQueue(){
+  if(!lfsHandle||!lfsPerm||lfsRestoring) return;   // 回档刷新前不写盘，避免用默认新档覆盖旧文件
+  /* 浏览器存档每 5 秒一次；落盘限到最多 10 秒一次，兼顾安全与磁盘写入量 */
+  const wait=Math.max(900, 10000-(Date.now()-lfsLastAt));
+  clearTimeout(lfsTimer);
+  lfsTimer=setTimeout(lfsFlush,wait);
+}
+async function lfsFlush(){
+  if(!lfsHandle||!lfsPerm||lfsRestoring) return false;
+  if(lfsWriting){ lfsAgain=true; return false; }
+  lfsWriting=true;
+  try{
+    const w=await lfsHandle.createWritable();
+    await w.write(JSON.stringify(S));
+    await w.close();
+    lfsLastAt=Date.now();
+    if(lfsAgain){ lfsAgain=false; lfsQueue(); }
+    return true;
+  }catch(e){
+    lfsPerm=false; lfsArmPermission(); lfsUpdateUI();   // 权限被收回：下次点击页面再申请
+    return false;
+  }finally{ lfsWriting=false; }
+}
+/* 句柄每次新会话多半需要重新授权；requestPermission 必须有用户手势，故挂一次性 pointerdown */
+function lfsArmPermission(){
+  const once=function(){
+    document.removeEventListener('pointerdown',once,true);
+    if(!lfsHandle) return;
+    lfsHandle.requestPermission({mode:'readwrite'}).then(function(r){
+      if(r==='granted'){
+        lfsPerm=true; lfsUpdateUI();
+        // 先判断要不要从文件回档；确定不回档才把当前存档写过去，避免覆盖旧档
+        lfsRestoreIfMissing().then(function(restoring){ if(!restoring) lfsQueue(); });
+      }
+      else if(r==='prompt') lfsArmPermission();   // 用户没拒绝，下次点击再试
+    }).catch(function(){});
+  };
+  document.addEventListener('pointerdown',once,true);
+}
+/* 浏览器侧存档被清空时，从绑定文件读回并刷新页面（只补空档，不覆盖现有存档） */
+async function lfsRestoreIfMissing(){
+  if(!lfsHandle||!lfsPerm) return false;
+  if(_lfsBootHadSave!==false) return false;   // 启动时浏览器里已有存档，或还没读档：不覆盖
+  try{
+    if(sessionStorage.getItem('_lfsNoRestore')){ sessionStorage.removeItem('_lfsNoRestore'); return false; }  // 刚重置过存档
+    if(sessionStorage.getItem('_lfsRestored')==='1') return false;
+  }catch(e){}
+  lfsRestoring=true;
+  try{
+    const f=await lfsHandle.getFile();
+    const d=JSON.parse(await f.text());
+    if(!looksLikeSave(d)){ lfsRestoring=false; return false; }
+    try{ sessionStorage.setItem('_lfsRestored','1'); }catch(e){}
+    localStorage.setItem(SAVE_KEY, JSON.stringify(d));
+    toast($t('✅ 已从本地存档文件恢复，正在刷新…'));
+    setTimeout(function(){ location.reload(); },300);
+    return true;
+  }catch(e){ lfsRestoring=false; return false; }
+}
+async function lfsBind(){
+  if(!lfsSupported()){ toast($t('❌ 当前浏览器不支持本地存档文件，请用「💾 导出文件」或「📤 分享备份」保存')); return; }
+  save();
+  let h=null;
+  try{
+    h=await window.showSaveFilePicker({
+      suggestedName:'yueba-save.json',
+      types:[{description:'JSON',accept:{'application/json':['.json']}}]
+    });
+  }catch(e){ if(e&&e.name==='AbortError') return; toast($t('❌ 本地存档文件绑定失败')); return; }
+  lfsHandle=h; lfsPerm=true;
+  try{ await lfsIdbSet(LFS_HANDLE,h); }catch(e){}
+  const ok=await lfsFlush();
+  lfsUpdateUI();
+  toast($t(ok?'✅ 已绑定本地存档文件，之后会自动写入':'⚠️ 本地存档文件写入失败，请重新绑定'));
+}
+async function lfsUnbind(){
+  clearTimeout(lfsTimer);
+  lfsHandle=null; lfsPerm=false;
+  try{ await lfsIdbDel(LFS_HANDLE); }catch(e){}
+  lfsUpdateUI();
+  toast($t('⚠️ 已解除本地存档文件绑定'));
+}
+function lfsInit(){
+  if(!lfsSupported()){ lfsUpdateUI(); return; }
+  lfsIdbGet(LFS_HANDLE).then(function(h){
+    if(!h){ lfsUpdateUI(); return; }
+    lfsHandle=h;
+    return h.queryPermission({mode:'readwrite'}).then(function(p){
+      if(p==='granted'){ lfsPerm=true; lfsUpdateUI(); lfsRestoreIfMissing(); }
+      else if(p==='prompt'){ lfsUpdateUI(); lfsArmPermission(); }
+      else lfsUpdateUI();
+    });
+  }).catch(function(){ lfsUpdateUI(); });
+  /* 关页/切后台时补一次落盘（节流计时器可能还压着没写） */
+  window.addEventListener('pagehide',function(){ if(lfsHandle&&lfsPerm){ clearTimeout(lfsTimer); lfsFlush(); } });
+  document.addEventListener('visibilitychange',function(){ if(document.hidden&&lfsHandle&&lfsPerm){ clearTimeout(lfsTimer); lfsFlush(); } });
 }
 
 /* ---------------- 番茄钟 ---------------- */
@@ -11122,7 +11485,7 @@ function tvFresh(){
   if(t.stealWant==null)t.stealWant=false;   // 本次庭院刷新是否刷出「偷番茄的月巴」（10% 概率）
   if(t.ddBetDay==null)t.ddBetDay='';        // 斗月巴：上次押注的自然日
   if(t.ddBetUsed==null)t.ddBetUsed=0;       // 斗月巴：当天已用掉的押注次数
-  if(t.ddStreak==null)t.ddStreak=0;         // 斗月巴：玩家连胜场数（每场 +2% 遇出千月巴的概率，它现身后清零）
+  if(t.ddStreak==null)t.ddStreak=0;         // 斗月巴：玩家连胜场数（每场 +2% 遇出千月巴的概率；赢出千局同样 +1，输了清零）
   if(t.ddLossStreak==null)t.ddLossStreak=0; // 斗月巴：玩家连败场数（认输不计入，用于结算时的安慰台词）
   t.ddRecords=t.ddRecords||[];              // 斗月巴：战绩记录（新的在前，最多保留 DD_REC_MAX 条）
   t.journal=t.journal||[];                  // 旅行笔记：每次旅行的记录（新的在前，最多保留 TV_JOURNAL_MAX 条）
@@ -12222,7 +12585,8 @@ function tvChoosePermDest(id){
 function tvClearPermDest(){ const t=tvFresh(); if(t.permPick){ t.permPick=null; save(); } tvBag(); }
 function tvLockedTip(id){ const p=tvFourthProgress(id||'empire'); toast($tf('🔒 该地图尚未解锁：需该地区前 3 张图各集齐 {n} 封信件（3/4）',{n:p.need})); }
 function tvDestOf(bag){ const t=tvFresh(); if(t.frog&&t.frog.status==='away'&&t.frog.dest){ const fd=tvDestById(t.frog.dest); if(fd)return fd; } bag=bag||t.bag; const ks=bag.map(function(x){return x&&x.k||x;}); const has=function(k){return ks.indexOf(k)>=0;}; const pd=t.pickDest?tvDestById(t.pickDest):null; if(pd&&((pd.need&&has(pd.need))||(!pd.need&&(has('food1')||has('food2')||has('food4')||has('food3'))))){ if(!tvDestLocked(pd.id))return pd; } const perm=tvPermDest(); if(perm)return perm; if(has('charm')&&has('food3'))return tvPickRegion('snow','snow',bag); if(has('lamp'))return tvPickRegion('sea','sea',bag); if(has('bell'))return tvPickRegion('town','town',bag); const foodK=ks.find(function(k){return k==='food1'||k==='food2'||k==='food4'||k==='food3';}); return tvPickRegion(tvRollFoodRegion(foodK),'forest',bag); }
-function tvGo(mood){ const t=tvFresh(); const up=(mood||'').trim().toUpperCase(); const m=up.match(/^TOMATO(\d{1,7})$/); if(m){ const amt=Math.min(parseInt(m[1],10),9999999); tvTomato(amt); sfx.codeOk(); toast($tf('✨ 收到 {n} 🍅！',{n:((''+amt).replace(/\B(?=(\d{3})+(?!\d))/g,','))})); mood=''; } else if(up==='YUEFEI500'){ if(!t.codeUsed){ t.codeUsed=true; tvTomato(500); sfx.codeOk(); toast($t('✨ 口令生效，获得 500 🍅！')); } else { toast($t('此口令已使用过啦')); } mood=''; } if(t.frog.status==='away'){ toast($t('✈️ 已有月巴在旅行中，等它回来再出发吧')); return; } if(!t.frog.fatId){ toast($t('🐰 先在图鉴里选择一位月巴出发')); return; } const kinds=tvDestKinds(t.bag); const food=t.bag.find(function(x){return x.k==='food1'||x.k==='food2'||x.k==='food4'||x.k==='food3';}); if(!food){ toast($t('🍙 至少带上 1 个便当才能出发！')); return; } const pdd=tvPermDest(); if(pdd&&!t.permConfirmOk){ if(!confirm($tf('🎫 本次将使用小号护身符，指定前往「{n}」并消耗本周机会。\n（仅需饭团即可，确定出发吗？）',{n:pdd.n})))return; t.permConfirmOk=true; save(); } t.permConfirmOk=false; let _autoR=0; /* 出发前兜底发放：玩家不打开室内就直接开始下一轮旅行时，把上一趟的归家奖励自动补给玩家，避免奖励被下一趟回归覆盖而丢失 */ if(t.homeRewardReady&&t.homeReward&&t.homeReward.n>0){ _autoR=t.homeReward.n; t.tomato=(t.tomato||0)+_autoR; t.homeRewardReady=false; t.homeReward=null; } t.frog.status='away'; t.frog.depart=now(); t.frog.dest=tvDestOf(t.bag).id; if(t.permPass&&t.permPick&&t.frog.dest===t.permPick){ t.permUsedWeek=tvWeekKey(); t.permPick=null; } if((mood||'').trim()){ t.frog.mood=mood.trim(); t.frog.moodKey=''; } else { t.frog.moodKey=pick(TV_MOODS); t.frog.mood=$t(t.frog.moodKey); } const _dObj=tvDestById(t.frog.dest); const _base=(_dObj&&_dObj.dur)||30; const _dms=Math.round(rand(_base-10,_base+10)*60000); t.frog.ret=now()+(DR_DEBUG?2*60*1000:_dms); t.bag=t.bag.filter(function(x){return !(x.k==='food1'||x.k==='food2'||x.k==='food4'||x.k==='food3'||x.k==='lamp'||x.k==='bell'||x.k==='compass');}); t.pickDest=null; t.cardT=Math.max(now()+60000,Math.min(now()+rand(8,14)*60000,t.frog.ret-60000)); t.frog.cardsSent=0; t.frog.cardQuota=1; t.frog.cardsGot=[]; t.eventT=0; save(); sfx.depart(); closeModal(); toast($t('✈️ 出发去旅行啦！')+(_autoR>0?$tf('　🐰 上一趟归家奖励 +{n} 🍅 已自动发放',{n:_autoR}):'')); tvRenderScene(); tvUpdateBar(); }
+function svGearBonus(){ let b=null; try{ const raw=JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); const g=raw&&raw.survivor&&raw.survivor.gear; if(g&&g.bonus) b=g.bonus; }catch(e){} if(!b&&S&&S.survivor&&S.survivor.gear) b=S.survivor.gear.bonus; b=b||{}; return {time:Math.max(-0.5,Math.min(0.5,+b.time||0)), card:Math.max(0,Math.min(1,+b.card||0)), spec:Math.max(0,Math.min(1,+b.spec||0))}; }
+function tvGo(mood){ const t=tvFresh(); const up=(mood||'').trim().toUpperCase(); const m=up.match(/^TOMATO(\d{1,7})$/); if(m){ const amt=Math.min(parseInt(m[1],10),9999999); tvTomato(amt); sfx.codeOk(); toast($tf('✨ 收到 {n} 🍅！',{n:((''+amt).replace(/\B(?=(\d{3})+(?!\d))/g,','))})); mood=''; } else if(up==='YUEFEI500'){ if(!t.codeUsed){ t.codeUsed=true; tvTomato(500); sfx.codeOk(); toast($t('✨ 口令生效，获得 500 🍅！')); } else { toast($t('此口令已使用过啦')); } mood=''; } if(t.frog.status==='away'){ toast($t('✈️ 已有月巴在旅行中，等它回来再出发吧')); return; } if(!t.frog.fatId){ toast($t('🐰 先在图鉴里选择一位月巴出发')); return; } const kinds=tvDestKinds(t.bag); const food=t.bag.find(function(x){return x.k==='food1'||x.k==='food2'||x.k==='food4'||x.k==='food3';}); if(!food){ toast($t('🍙 至少带上 1 个便当才能出发！')); return; } const pdd=tvPermDest(); if(pdd&&!t.permConfirmOk){ if(!confirm($tf('🎫 本次将使用小号护身符，指定前往「{n}」并消耗本周机会。\n（仅需饭团即可，确定出发吗？）',{n:pdd.n})))return; t.permConfirmOk=true; save(); } t.permConfirmOk=false; let _autoR=0; /* 出发前兜底发放：玩家不打开室内就直接开始下一轮旅行时，把上一趟的归家奖励自动补给玩家，避免奖励被下一趟回归覆盖而丢失 */ if(t.homeRewardReady&&t.homeReward&&t.homeReward.n>0){ _autoR=t.homeReward.n; t.tomato=(t.tomato||0)+_autoR; t.homeRewardReady=false; t.homeReward=null; } t.frog.status='away'; t.frog.depart=now(); t.frog.dest=tvDestOf(t.bag).id; if(t.permPass&&t.permPick&&t.frog.dest===t.permPick){ t.permUsedWeek=tvWeekKey(); t.permPick=null; } if((mood||'').trim()){ t.frog.mood=mood.trim(); t.frog.moodKey=''; } else { t.frog.moodKey=pick(TV_MOODS); t.frog.mood=$t(t.frog.moodKey); } const _dObj=tvDestById(t.frog.dest); const _base=(_dObj&&_dObj.dur)||30; const _gb=svGearBonus(); const _dms=Math.round(rand(_base-10,_base+10)*60000*Math.max(0.5,1+_gb.time)); t.frog.ret=now()+(DR_DEBUG?2*60*1000:_dms); t.bag=t.bag.filter(function(x){return !(x.k==='food1'||x.k==='food2'||x.k==='food4'||x.k==='food3'||x.k==='lamp'||x.k==='bell'||x.k==='compass');}); t.pickDest=null; t.cardT=Math.max(now()+60000,Math.min(now()+rand(8,14)*60000,t.frog.ret-60000)); t.frog.cardsSent=0; t.frog.cardQuota=1+(Math.random()<_gb.card?1:0); t.frog.cardsGot=[]; t.eventT=0; save(); sfx.depart(); closeModal(); toast($t('✈️ 出发去旅行啦！')+(_autoR>0?$tf('　🐰 上一趟归家奖励 +{n} 🍅 已自动发放',{n:_autoR}):'')); tvRenderScene(); tvUpdateBar(); }
 function tvDepart(){ const e=$('tvMood'); tvGo(e?e.value.trim():''); }
 function tvDestKinds(bag){ return bag.map(function(x){return x.k;}); }
 /* ============================================================
@@ -12271,7 +12635,7 @@ function tvHelpHTML(){
     +'<p style="text-align:center;margin:16px 0 2px"><button class="btn" onclick="closeModal()">'+$t('知道了')+'</button></p>'
     +'</div>';
 }
-function tvSettle(){ const t=tvFresh(); const kinds=tvDestKinds(t.bag); const d=tvDestOf(t.bag); const _jDepart=t.frog.depart,_jMood=t.frog.mood,_jFat=t.frog.fatId,_jCards=(t.frog.cardsGot||[]).slice(); const cc=t.bag.filter(function(x){return x&&x.k==='charm';}).length; let gain=1+cc; const got=[],dups=[]; const spool=d.specials.slice(); /* 从池中抽走已选中的，保证同一趟带回的特产两两不重复（与已拥有的重复仍照常兑换番茄） */ for(let i=0;i<gain&&spool.length;i++){ const s=spool.splice((Math.random()*spool.length)|0,1)[0]; if(t.specials.indexOf(s)<0){ t.specials.push(s); got.push(s); } else { dups.push(s); } } t.destCount[d.id]=(t.destCount[d.id]||0)+1; if(cc>0){ t.bag.forEach(function(x){ if(x&&x.k==='charm'){ const cur=Math.max(0,tvCharmDura(x)-1); if(cur>0){ t.wh.charm=(t.wh.charm||0)+1; t.charmDuras.push(cur); } } }); } t.frog={status:'home',depart:null,ret:null,mood:t.frog.mood||'',moodKey:t.frog.moodKey||'',fatId:t.frog.fatId||null}; if(t.frog.fatId){ t.lastHomeFatId=t.frog.fatId; t.homeId=t.frog.fatId; t.homeIdx=(Math.random()*3)|0; t.homeTxt=tvHomeDescs(t.frog.fatId)[t.homeIdx]; t.homeReward={n:5+(Math.random()*16|0)}; t.homeRewardReady=true; } t.bag=t.bag.filter(function(x){return x&&x.k==='pass';}); /* 小号护身符永久保留，不清空 */ t.eventT=0; save(); const dr=d.dupTomato||[10,10]; const dv=Math.round(rand(dr[0],dr[1])); if(dups.length)tvTomato(dv*dups.length); tvJournalPush({t:now(),depart:_jDepart,mood:_jMood||'',fatId:_jFat,dest:d.id,destN:d.n,rg:(tvRegionOf(d.id)||{}).n||'',visit:t.destCount[d.id],got:got.slice(),dups:dups.slice(),tomato:(dups.length?dv*dups.length:0),cards:_jCards}); let toastMsg=''; const fgot=got.map(function(s){return spEmo(s)+$sp(s);}); const fdups=dups.map(function(s){return spEmo(s)+$sp(s);}); if(got.length)toastMsg+=$tf('🌿 从「{a}」带回新特产：{b}！',{a:d.n,b:fgot.join('、')}); if(dups.length)toastMsg+=' '+$tf('♻️ 重复 {a} 兑换 {n} 🍅！',{a:fdups.join('、'),n:dv*dups.length}); if(toastMsg)toast(toastMsg); let h='<p style="text-align:center;color:var(--text)">'+$tf('月巴从<b>「{a}」</b>回来了！（第 {n} 次旅行）',{a:d.n,n:t.destCount[d.id]})+'</p>'; const all=fgot.concat(fdups); h+='<p style="text-align:center;font-weight:800;color:#e08a3c">'+$t('🎁 带回特产：')+(all.length?($tf('从「{a}」带回 {b}',{a:d.n,b:all.join('、')})+(dups.length?$tf(' · 已兑换 {n} 🍅',{n:dv*dups.length}):'')):$t('这次带回了温暖的问候'))+'</p>'; h+='<p style="text-align:center"><button class="btn cta" onclick="noticeRemove(\'tvReturn\')">'+$t('收下')+'</button></p>'; if(got.length)sfx.homeGain(); else if(dups.length)sfx.homeDup(); else sfx.homeEmpty(); openNotice('tvReturn','🎉 旅行归来',h,70); tvRenderScene(); tvUpdateBar(); if(tvView==='home')_afterClose=function(){ tvEnterHome(); }; }
+function tvSettle(){ const t=tvFresh(); const kinds=tvDestKinds(t.bag); const d=tvDestOf(t.bag); const _jDepart=t.frog.depart,_jMood=t.frog.mood,_jFat=t.frog.fatId,_jCards=(t.frog.cardsGot||[]).slice(); const cc=t.bag.filter(function(x){return x&&x.k==='charm';}).length; const _gb=svGearBonus(); let gain=1+cc+(Math.random()<_gb.spec?1:0); const got=[],dups=[]; const spool=d.specials.slice(); /* 从池中抽走已选中的，保证同一趟带回的特产两两不重复（与已拥有的重复仍照常兑换番茄） */ for(let i=0;i<gain&&spool.length;i++){ const s=spool.splice((Math.random()*spool.length)|0,1)[0]; if(t.specials.indexOf(s)<0){ t.specials.push(s); got.push(s); } else { dups.push(s); } } t.destCount[d.id]=(t.destCount[d.id]||0)+1; if(cc>0){ t.bag.forEach(function(x){ if(x&&x.k==='charm'){ const cur=Math.max(0,tvCharmDura(x)-1); if(cur>0){ t.wh.charm=(t.wh.charm||0)+1; t.charmDuras.push(cur); } } }); } t.frog={status:'home',depart:null,ret:null,mood:t.frog.mood||'',moodKey:t.frog.moodKey||'',fatId:t.frog.fatId||null}; if(t.frog.fatId){ t.lastHomeFatId=t.frog.fatId; t.homeId=t.frog.fatId; t.homeIdx=(Math.random()*3)|0; t.homeTxt=tvHomeDescs(t.frog.fatId)[t.homeIdx]; t.homeReward={n:5+(Math.random()*16|0)}; t.homeRewardReady=true; } t.bag=t.bag.filter(function(x){return x&&x.k==='pass';}); /* 小号护身符永久保留，不清空 */ t.eventT=0; save(); const dr=d.dupTomato||[10,10]; const dv=Math.round(rand(dr[0],dr[1])); if(dups.length)tvTomato(dv*dups.length); tvJournalPush({t:now(),depart:_jDepart,mood:_jMood||'',fatId:_jFat,dest:d.id,destN:d.n,rg:(tvRegionOf(d.id)||{}).n||'',visit:t.destCount[d.id],got:got.slice(),dups:dups.slice(),tomato:(dups.length?dv*dups.length:0),cards:_jCards}); let toastMsg=''; const fgot=got.map(function(s){return spEmo(s)+$sp(s);}); const fdups=dups.map(function(s){return spEmo(s)+$sp(s);}); if(got.length)toastMsg+=$tf('🌿 从「{a}」带回新特产：{b}！',{a:d.n,b:fgot.join('、')}); if(dups.length)toastMsg+=' '+$tf('♻️ 重复 {a} 兑换 {n} 🍅！',{a:fdups.join('、'),n:dv*dups.length}); if(toastMsg)toast(toastMsg); let h='<p style="text-align:center;color:var(--text)">'+$tf('月巴从<b>「{a}」</b>回来了！（第 {n} 次旅行）',{a:d.n,n:t.destCount[d.id]})+'</p>'; const all=fgot.concat(fdups); h+='<p style="text-align:center;font-weight:800;color:#e08a3c">'+$t('🎁 带回特产：')+(all.length?($tf('从「{a}」带回 {b}',{a:d.n,b:all.join('、')})+(dups.length?$tf(' · 已兑换 {n} 🍅',{n:dv*dups.length}):'')):$t('这次带回了温暖的问候'))+'</p>'; h+='<p style="text-align:center"><button class="btn cta" onclick="noticeRemove(\'tvReturn\')">'+$t('收下')+'</button></p>'; if(got.length)sfx.homeGain(); else if(dups.length)sfx.homeDup(); else sfx.homeEmpty(); openNotice('tvReturn','🎉 旅行归来',h,70); tvRenderScene(); tvUpdateBar(); if(tvView==='home')_afterClose=function(){ tvEnterHome(); }; }
 let _tvPages=[], _tvPageIdx=0, _tvPageTitle=''; /* 进入室内时的翻页弹窗：第 1 页「安慰」、后一页「月巴赠送的番茄」 */
 function tvEnterHome(){ const t=tvFresh(); let changed=false;
   /* 重复累计条只在「打开室内」时结算，旅行途中不更新，避免信件未拆就提前亮起剧透 */
@@ -13160,6 +13524,8 @@ function achMaxSlots(){ let n=0; for(const z of S.zones) for(const w of z.woods)
 function achTasks(){ let n=0; for(const t of (S.tasks||[])) if(t.doneAt)n++; return n; }
 function achPomoMs(){ let s=0; for(const r of S.pomo.history) s+=(r.d||0); return s; }
 function achDestVisited(){ const dc=(S.travel&&S.travel.destCount)||{}; let n=0; for(const k in dc) if(dc[k]>0)n++; return n; }
+/* 番茄幸存者：已获得的宝物种类数（来自独立页写回的 S.survivor.relics） */
+function achRelicKinds(){ const r=(S.survivor&&S.survivor.relics)||{}; let n=0; for(const k in r) if(r[k]&&(r[k].count||0)>0)n++; return n; }
 /* 四项极值都达到区间边界（图鉴金框）的月巴数量 */
 function achGoldIn(coll){
   let n=0;
@@ -13230,7 +13596,13 @@ const ACHS=[
   {id:'sv1', ic:'🍅⚔️', n:'番茄幸存者', d:'在「番茄幸存者」中首次获胜',        c:()=>((S.survivor&&S.survivor.clears)||0)>=1, p:()=>[((S.survivor&&S.survivor.clears)||0),1]},
   {id:'sv2', ic:'👑', n:'百日守卫',    d:'累计在「番茄幸存者」中获胜 3 次',    c:()=>((S.survivor&&S.survivor.clears)||0)>=3, p:()=>[((S.survivor&&S.survivor.clears)||0),3]},
   {id:'sv3', ic:'🌫️', n:'跨越三关',    d:'在「番茄幸存者」中通关 3 个关卡',    c:()=>((S.survivor&&S.survivor.stageClear)||0)>=3, p:()=>[Math.min(3,((S.survivor&&S.survivor.stageClear)||0)),3]},
-  {id:'sv4', ic:'🏡', n:'归家之路',    d:'通关「番茄幸存者」全部 6 个关卡',    c:()=>((S.survivor&&S.survivor.stageClear)||0)>=6, p:()=>[Math.min(6,((S.survivor&&S.survivor.stageClear)||0)),6]},
+  {id:'sv4', ic:'🏡', n:'归家之路',    d:'通关「番茄幸存者」前 6 个关卡',    c:()=>((S.survivor&&S.survivor.stageClear)||0)>=6, p:()=>[Math.min(6,((S.survivor&&S.survivor.stageClear)||0)),6]},
+  {id:'sv5', ic:'🎁', n:'第一件宝物',  d:'在「番茄幸存者」中获得第一件宝物',    c:()=>achRelicKinds()>=1, p:()=>[Math.min(1,achRelicKinds()),1]},
+  {id:'sv6', ic:'📦', n:'收藏家',      d:'在「番茄幸存者」中收集 10 种宝物',    c:()=>achRelicKinds()>=10, p:()=>[Math.min(10,achRelicKinds()),10]},
+  {id:'sv7', ic:'🌅', n:'归家终点',    d:'通关「番茄幸存者」全部 10 个关卡',    c:()=>((S.survivor&&S.survivor.stageClear)||0)>=10, p:()=>[Math.min(10,((S.survivor&&S.survivor.stageClear)||0)),10]},
+  {id:'sv8', ic:'🌲', n:'森林回响',    d:'通关「番茄幸存者」11.1 森林边缘',     c:()=>((S.survivor&&S.survivor.stageClear)||0)>=11, p:()=>[Math.min(11,((S.survivor&&S.survivor.stageClear)||0)),11]},
+  {id:'sv9', ic:'📖', n:'宝物全见',    d:'在「番茄幸存者」中收集 24 种宝物',    c:()=>achRelicKinds()>=24, p:()=>[Math.min(24,achRelicKinds()),24]},
+  {id:'sv10',ic:'⏳', n:'无尽长夜',    d:'在无尽模式坚持 10 分钟',           c:()=>((S.survivor&&S.survivor.endlessBest)||0)>=600, p:()=>[Math.floor(((S.survivor&&S.survivor.endlessBest)||0)/60),10]},
 ];
 let _achT=0;
 function achGot(){ return Object.keys((S.ach&&S.ach.got)||{}).length; }
@@ -13376,6 +13748,8 @@ function init(){
   setTimeout(function(){ try{ ddRestore(); }catch(e){} },0);
 }
 init();
+/* 本地存档文件：恢复上次绑定的文件句柄（异步，不阻塞启动） */
+lfsInit();
 /* 斗月巴成就：等脚本全部执行完（DD_ACH_* / DD_GRADE_BANDS 常量已初始化）再补算一次 */
 setTimeout(function(){ try{ ddAchSeed(); ddAchCheck(true); ddAchBtnUpdate(); }catch(e){} },0);
 /* ================= 斗月巴（旅行页小游戏） ================= */
@@ -13736,7 +14110,8 @@ const DD_NAMES=['你','月巴','番茄'];
 const DD_AVS=['🧑','🐰','🍅'];
 /* 出千月巴：斗月巴里的彩蛋对手。开局发牌时按概率顶掉 1 号位的月巴，
    出牌前先手用它手里最小的单牌，换走玩家最大的一张（一次性），并把换了什么公示给玩家。
-   出现概率基础 3%，玩家每连胜一场 +2%（上限 95%），直到它真的现身；它一露面，连胜清零、概率回落 3% */
+   出现概率基础 3%，玩家每连胜一场 +2%（上限 95%）。它现身时：玩家赢了它，连胜同样 +1；
+   玩家输了，才照常清零、概率回落 3% */
 const DD_CHEAT_BASE=0.03;                  /* 基础概率：3% */
 const DD_CHEAT_STEP=0.02;                  /* 玩家每连胜一场的加成：+2% */
 const DD_CHEAT_MAX=0.95;                   /* 概率上限，免得连胜太多变成必出 */
@@ -13790,51 +14165,102 @@ const DD_LINES={
     tomato:['你当地主呀，那我认真一点陪你打。'],
     easy:['好哦，那你当地主～'],
     normal:['你当地主？那我多吃两口再打。'],
-    hard:['地主？行，我专门打地主。']
+    hard:['地主？行，我专门打地主。'],
+    cheat:['你叫地主啊？行，我陪你。','地主归你，我随便打打。']
   },
   bidTomato:{
     tomato:['我手牌好一点，这次我来吧，希望能赢一局。'],
     easy:['我就算了吧，让番茄来，它想当地主。'],
     normal:['番茄当地主？那我得认真打了。'],
-    hard:['行，地主是你，我不客气了。']
+    hard:['行，地主是你，我不客气了。'],
+    cheat:['番茄当地主？那我可不客气。','它当地主，我就更来劲了。']
   },
   bidLandlord:{
     tomato:['它当地主了，我们俩配合一下。'],
     easy:['我都可以哦，那我叫啦～'],
     normal:['我叫！赢了能吃番茄吗？'],
-    hard:['这把我当地主，你们都给我等着。']
+    hard:['这把我当地主，你们都给我等着。'],
+    cheat:['我叫，牌好得很。','这局我来，稳的。','让我当地主，你们随意。']
   },
   bidNonePlayer:{
     tomato:['都不叫……那只能辛苦你了。'],
-    easy:['那辛苦你啦，我都可以哦。']
+    easy:['那辛苦你啦，我都可以哦。'],
+    normal:['都不叫？那你来，我正好多吃点。'],
+    hard:['都没人叫？便宜你了。'],
+    cheat:['都不叫？那辛苦你了。','没人叫，就只能你来了。']
   },
   bidNoneLandlord:{
     tomato:['它很厉害，我们要一起拦住它。'],
+    easy:['都不叫呀？那它当地主啦。'],
     normal:['我当地主，是不是该让你们上贡番茄？'],
-    hard:['没人敢叫？那我收下了。']
+    hard:['没人敢叫？那我收下了。'],
+    cheat:['都不叫？那我收下了。','没人要，正好归我。']
   },
   play:{
-    single:{tomato:['我先出张小牌，你别有压力。'],easy:['这张……还不错吧？'],normal:['先来一口小的。'],hard:['一张，先试试水。']},
-    pair:{tomato:['一对小的，你们别嫌小。'],easy:['一对哦，凑一起刚好。'],normal:['一对，像两颗番茄。'],hard:['一对，跟不跟？']},
-    triple:{tomato:['三张一起，我尽量出小的。'],easy:['三张哦，可以吗？'],normal:['三张，像三颗番茄。'],hard:['三张，跟得上吗？']},
-    straight:{tomato:['顺着出，牌面好看一点。'],easy:['顺着来，好看吧～'],normal:['一条番茄串。'],hard:['一条龙，接得住就接。']},
-    pairs:{tomato:['连着出，希望你们接得上。'],easy:['连着的哦，别嫌多。'],normal:['要是连对，我就会吃口番茄。吃了。'],hard:['连对。你手里还剩几张？']},
-    plane:{tomato:['是不是很帅的牌型！'],easy:['飞机哦……我也不太会打。'],normal:['这个有点大，番茄你忍一下。'],hard:['飞机。看你怎么接。']},
-    bomb:{tomato:['不好意思，这个我不得不用了。'],easy:['哎呀，只能用这个啦。'],normal:['炸一下，番茄汁都出来了！'],hard:['炸了。别以为你稳了。']},
-    rocket:{tomato:['这对一起出，实在抱歉。'],easy:['王炸……不用就输啦，抱歉。'],normal:['两颗最大的番茄一起炸！'],hard:['王炸。这局我说了算。']}
+    single:{tomato:['我先出张小牌，你别有压力。'],easy:['这张……还不错吧？'],normal:['先来一口小的。'],hard:['一张，先试试水。'],
+      cheat:['一张嘛，意思意思。','先垫一张，别紧张呀。','小牌先走，懂吧？']},
+    pair:{tomato:['一对小的，你们别嫌小。'],easy:['一对哦，凑一起刚好。'],normal:['一对，像两颗番茄。'],hard:['一对，跟不跟？'],
+      cheat:['一对，凑合看吧。','对子嘛，刚好成双。']},
+    triple:{tomato:['三张一起，我尽量出小的。'],easy:['三张哦，可以吗？'],normal:['三张，像三颗番茄。'],hard:['三张，跟得上吗？'],
+      cheat:['三张一起，省事。','这样出，你也没意见吧？']},
+    straight:{tomato:['顺着出，牌面好看一点。'],easy:['顺着来，好看吧～'],normal:['一条番茄串。'],hard:['一条龙，接得住就接。'],
+      cheat:['顺一下，牌面好看嘛。','顺着走，别卡我呀。']},
+    pairs:{tomato:['连着出，希望你们接得上。'],easy:['连着的哦，别嫌多。'],normal:['要是连对，我就会吃口番茄。吃了。'],hard:['连对。你手里还剩几张？'],
+      cheat:['连着出，省得你等。','两对一起，热热闹闹。']},
+    plane:{tomato:['是不是很帅的牌型！'],easy:['飞机哦……我也不太会打。'],normal:['这个有点大，番茄你忍一下。'],hard:['飞机。看你怎么接。'],
+      cheat:['飞机嘛，直接飞过去。','这么大的牌，我也没办法。']},
+    bomb:{tomato:['不好意思，这个我不得不用了。'],easy:['哎呀，只能用这个啦。'],normal:['炸一下，番茄汁都出来了！'],hard:['炸了。别以为你稳了。'],
+      cheat:['炸一下，热闹热闹。','别皱眉呀，就炸一下。']},
+    rocket:{tomato:['这对一起出，实在抱歉。'],easy:['王炸……不用就输啦，抱歉。'],normal:['两颗最大的番茄一起炸！'],hard:['王炸。这局我说了算。'],
+      cheat:['王炸，我可没留后手。','两个王都在这儿了，你说巧不巧？']},
+    four2:{tomato:['四张带两张，有点重。','一下出这么多，我得想想。'],easy:['哇，这份量……'],normal:['四张番茄加两片叶子。','这一口有点撑。'],hard:['四带二？挺会挑。'],
+      cheat:['四张都出了，胆子不小。','这么整齐，我也想要。']}
   },
   playerBomb:{
     tomato:['哇，你留了这一手。'],
     easy:['哇……好凶哦。'],
     normal:['咕咕嘎嘎！'],
-    hard:['……行，你还真敢炸。']
+    hard:['……行，你还真敢炸。'],
+    cheat:['你还真敢炸。','以为自己赢定了吗？']
+  },
+  /* 玩家出顺子/连对/飞机时的一句反馈，带概率，避免每手都说 */
+  playerCombo:{
+    tomato:['这牌型，好看。','我接接看……'],
+    easy:['哇，好整齐！'],
+    normal:['这串番茄看着真不错。'],
+    hard:['花架子，看我怎么接。'],
+    cheat:['这牌型，有点意思。','整齐是整齐，可惜不够大。']
+  },
+  /* 玩家动 2/王 这类大牌时的反应 */
+  playerBig:{
+    tomato:['这么大的牌，你舍得呀？'],
+    easy:['哎，这就动大的了？'],
+    normal:['这张牌，闻着就贵。'],
+    hard:['急什么，牌还没打完。'],
+    cheat:['舍得动大牌，胆子不小。','大牌出得挺急嘛。']
+  },
+  /* 玩家点“提示”时偶尔吐槽，不打断操作 */
+  hint:{
+    tomato:['慢慢想，不着急。'],
+    easy:['要我帮你想吗？'],
+    normal:['想好了再吃，别噎着。'],
+    hard:['想这么久？我可不等你。'],
+    cheat:['慢慢想，我不催你。','想这么久，是怕我换牌吗？']
+  },
+  /* AI 出炸弹/王炸时，另一个座位接一句，让牌桌有来回 */
+  crossTalkBomb:{
+    tomato:['它炸了，小心点。','这一下有点狠……'],
+    easy:['番茄炸了，你别慌。'],
+    normal:['看吧，番茄也会急。'],
+    hard:['炸得不错，轮到你了。'],
+    cheat:['炸一下而已，别慌。']
   },
   pass:{
     tomato:['这手我让给你，你牌不多啦。','你先走一步吧，我不着急。','我这儿还有牌，你先。','这个我接不住，你来。','不要啦，我的牌太小了。'],
     easy:['还是你来吧～','我打不过啦，你出吧。'],
     normal:['这口先留着，等会儿吃番茄。','吃不下了，嗝。你出。'],
     hard:['哼，让你一手。','这手我放过你，下把别想。'],
-    cheat:['我这手不太行，你请。']
+    cheat:['我这手不太行，你请。','这手让给你，别客气呀。','这可不是真的打不过。']
   },
   passTeammate:{
     tomato:['你出吧，我在后面帮你兜着。','别急，我留着力气压地主。']
@@ -13846,38 +14272,45 @@ const DD_LINES={
     tomato:['你就剩两张了，小心哦。'],
     easy:['你就剩两张啦，加油哦。'],
     normal:['两张……够吃吗？'],
-    hard:['两张。我数着呢。']
+    hard:['两张。我数着呢。'],
+    cheat:['两张？我数得清。','就两张了，稳住打。']
   },
   myLeft1:{
     tomato:['最后一张……好紧张。'],
     easy:['你就剩一张啦？那我不拦你了。'],
     normal:['赶紧赢下来，我要去吃番茄了。'],
-    hard:['一张而已，我盯死你。']
+    hard:['一张而已，我盯死你。'],
+    cheat:['你该不会手抖了吧。','就剩一张？那我得想想。']
   },
   foeLeft1:{
     tomato:['它只剩一张了，得想想办法。'],
     easy:['它剩一张了，我能拦住吗？'],
     normal:['它只剩一颗番茄……哦一张牌了！'],
-    hard:['可恶。']
+    hard:['可恶。'],
+    cheat:['它只剩一张，我盯着的。','一张而已，也不一定赢不了。']
   },
   pressed:{
     tomato:['没关系，下次再来。'],
     easy:['再来找我们玩吧。'],
     normal:['被压住了，吃口番茄压压惊。'],
-    hard:['啧。继续。']
+    hard:['啧。继续。'],
+    cheat:['感觉如何？','果然还是很好玩吧。']
   },
   clearTable:{
     tomato:['这一轮清完了，重新开始吧。'],
     easy:['好啦，重新来～'],
     normal:['清桌，重新开吃！'],
-    hard:['再来。']
+    hard:['再来。'],
+    cheat:['再来一把我也不一定会出现了。','散会吧~']
   },
-  cheatOpen:['嘿嘿，这牌不错。'],
-  cheatHidden:['嗯？我什么都没做啊。'],
-  cheatExposed:['你看见了？看见了也没用。','就换一张，别这么小气嘛。','眼力不错，可惜牌已经在我手里了。'],
-  cheatWin:['要感谢我大发慈悲。'],
-  cheatLose:['嘿嘿，牌好，没办法。'],
-  cheatPressed:['别急，牌桌上不差这一手。'],
+  /* 出千月巴：必须是 {cheat:[…]} 结构，ddSayLines 会按角色取句；
+     之前写成裸数组，取句永远为空，导致这些台词实际从未显示过 */
+  cheatOpen:{cheat:['嘿嘿，这牌不错。']},
+  cheatHidden:{cheat:['嗯？我什么都没做啊。']},
+  cheatExposed:{cheat:['你看见了？看见了也没用。','就换一张，别这么小气嘛。','眼力不错，可惜牌已经在我手里了。']},
+  cheatWin:{cheat:['要感谢我大发慈悲。','算你今天运气好。','赢一把，不代表下一把也能赢。']},
+  cheatLose:{cheat:['嘿嘿，牌好，没办法。','你看，我从不说自己牌差。','下次记得别跟我比牌。']},
+  cheatPressed:{cheat:['别急，牌桌上不差这一手。']},
   settleWin:{
     tomato:['你打得真好，我学到了。','承让啦，下次我让你先手。'],
     easy:['诶嘿，你赢啦～都可以哦。'],
@@ -13894,7 +14327,8 @@ const DD_LINES={
     tomato:['不想打了就休息吧，不勉强。'],
     easy:['不玩啦？那下次再来哦～'],
     normal:['不打了？那番茄归我了。'],
-    hard:['跑得倒挺快。']
+    hard:['跑得倒挺快。'],
+    cheat:['这就走啦？我还想看看下一把你最大的牌是什么呢。','不打了？那我这手白换了。','走得挺快，省我时间。']
   },
   winStreak:{
     tomato:['你最近手感真好，我都跟不上。'],
@@ -13921,11 +14355,11 @@ function ddSayRole(who){
   const k=(g&&g.diff)||ddDiff;
   return k==='easy'?'easy':(k==='hard'?'hard':'normal');
 }
-/* 牌型 → 台词键：三带一/二归到 triple，飞机带牌归到 plane，四带二没有对应台词 */
+/* 牌型 → 台词键：三带一/二归到 triple，飞机带牌归到 plane，四带二/四带两对归到 four2 */
 function ddSayKind(type){
   if(type==='triple1'||type==='triple2') return 'triple';
   if(type==='plane1'||type==='plane2') return 'plane';
-  if(type==='four2'||type==='four2p') return '';
+  if(type==='four2'||type==='four2p') return 'four2';
   return type;
 }
 function ddSayLines(key, who, sub){
@@ -13991,6 +14425,23 @@ function ddSay(who, key, sub, opts){
   }
   return true;
 }
+/* 双人对答：第一句照常走 ddSay，第二句延迟接上，形成「一人一句」而不是各说各的。
+   pair:[{who,key,sub,opts}, {who,key,sub,delay}] —— 两句都计入本局句数预算 */
+function ddSayExchange(pair){
+  const a=pair&&pair[0], b=pair&&pair[1];
+  if(!a) return false;
+  if(!ddSay(a.who,a.key,a.sub,a.opts||{})) return false;
+  if(!b) return true;
+  const g=ddG; if(!g) return true;
+  g.sayT2=g.sayT2||{};
+  if(g.sayT2.t) clearTimeout(g.sayT2.t);
+  g.sayT2.t=setTimeout(function(){
+    const gg=ddG;
+    if(!gg||gg!==g) return;
+    ddSay(b.who,b.key,b.sub,{chance:1,force:true});
+  }, b.delay||1300);
+  return true;
+}
 /* 手牌张数变化时提示「你/它只剩一张」 */
 function ddSayDanger(){
   const g=ddG; if(!g||!g.hands) return;
@@ -14009,7 +14460,7 @@ function ddSettleQuote(win, winner){
   const g=ddG; if(!g) return '';
   const tr=tvFresh();
   let key='', who=1;
-  if(winner<0){ key='settleQuit'; who=Math.random()<0.55?2:1; }
+  if(winner<0){ key='settleQuit'; who=g.cheat?1:(Math.random()<0.55?2:1); }
   else if(g.cheat && win){ key='cheatWin'; }
   else if(g.cheat && !win){ key='cheatLose'; }
   else if(win && (tr.ddStreak|0)>=3){ key='winStreak'; }
@@ -14249,13 +14700,14 @@ function ddDeal(stake){
     seen:[]                                    /* 算牌：全场已打出的牌（值），供困难 AI 推断对手剩余牌 */
   };
   /* 对局对话：本局计数/去重/间隔全部重置；timers 只存在内存，不参与存档 */
-  ddG.sayUsed={}; ddG.sayCount=0; ddG.sayAt={}; ddG.sayT={};
+  ddG.sayUsed={}; ddG.sayCount=0; ddG.sayAt={}; ddG.sayT={}; ddG.sayT2={};
   ddAskBid();
   ddSaveGame();                                /* 开局即入档：刷新后可恢复这一局 */
   /* 发牌台词：等发牌动画起势后再出，避免和音效抢拍 */
   setTimeout(function(){
     if(!ddG||ddG.phase!=='bid') return;
-    ddSay(1,'deal',null,{chance:0.75,force:true});
+    if(ddG.cheat) ddSay(1,'cheatOpen',null,{chance:1,force:true});
+    else ddSay(1,'deal',null,{chance:0.75,force:true});
     setTimeout(function(){
       if(!ddG||ddG.phase!=='bid') return;
       ddSay(2,'deal',null,{chance:0.55,force:true});
@@ -14340,6 +14792,7 @@ function ddBid(call){
   if(c1){ ld=1; why=ddName(1)+$t('叫了地主'); }
   else if(c2){ ld=2; why=ddName(2)+$t('叫了地主'); }
   else{                                     /* 都不叫：手牌最强者当地主（并列时玩家优先） */
+    g._noneCalled=true;                     /* 标记：之后叫地主台词要走 bidNoneLandlord */
     let best=0, bs=s0;
     if(s1>bs){ best=1; bs=s1; }
     if(s2>bs){ best=2; bs=s2; }
@@ -14376,8 +14829,10 @@ function ddFinishBid(){
     ddSay(2,'bidTomato',null,{chance:0.9,force:true});
     ddSay(1,'bidTomato',null,{chance:0.8,force:true});
   }else{
-    ddSay(1,'bidLandlord',null,{chance:0.9,force:true});
-    ddSay(2,'bidLandlord',null,{chance:0.55,force:true});
+    /* 都不叫时月巴靠手牌当地主，与「主动叫地主」分开说，免得 bidNoneLandlord 一直是死键 */
+    const bk=g._noneCalled?'bidNoneLandlord':'bidLandlord';
+    ddSay(1,bk,null,{chance:0.9,force:true});
+    ddSay(2,bk,null,{chance:0.55,force:true});
   }
   /* 记下三家初始张数：之后每次变化都能判断「刚变成 1/2 张」 */
   g._lastC0=g.hands[0].length; g._lastC1=g.hands[1].length;
@@ -14422,6 +14877,7 @@ function ddAfterRender(){
 function ddPlay(cards,who){
   const g=ddG;
   const p=ddParse(cards);
+  const prev=g.last;                           /* 上一手：判断出千月巴是否被压 */
   ddSfx('play',p&&p.type,who);                /* 出牌音：按牌型区分，敌方更收敛 */
   g.plays[who]=cards.slice();
   /* 算牌：把这一手打出的牌记进全场历史，供困难 AI 推断对手剩余牌 */
@@ -14432,16 +14888,27 @@ function ddPlay(cards,who){
   if(g.playCount) g.playCount[who]=(g.playCount[who]|0)+1;   /* 出牌手数 +1（过牌不计） */
   g.last={cards:cards.slice(),type:p.type,len:p.len,rank:p.rank,owner:who};
   g.sel=[]; g.hintIdx=0;
-  /* 出牌台词：玩家出炸弹由两家评价；AI 出牌则按牌型 25% 概率说一句 */
+  /* 出牌台词：玩家出炸弹由两家对答；顺子/连对/飞机与大牌偶有反馈；
+     AI 出牌按牌型概率说一句，出炸弹时另一座位补一句 */
   if(who===0){
     if(p.type==='bomb'||p.type==='rocket'){
-      ddSay(2,'playerBomb',null,{chance:0.8,force:true});
-      ddSay(1,'playerBomb',null,{chance:0.65,force:true});
+      ddSayExchange([{who:2,key:'playerBomb',opts:{chance:0.8,force:true}},
+                     {who:1,key:'playerBomb',delay:1300}]);
+    }else if(p.type==='straight'||p.type==='pairs'||p.type==='plane'||p.type==='plane1'||p.type==='plane2'){
+      ddSay(Math.random()<0.6?2:1,'playerCombo',null,{chance:0.16});
+    }else if((p.type==='single'&&cards[0]&&cards[0].v>=15)||(p.type==='pair'&&p.rank>=15)){
+      ddSay(Math.random()<0.6?2:1,'playerBig',null,{chance:0.22});
     }
   }else{
     const kind=ddSayKind(p.type);
     if(kind) ddSay(who,'play',kind,{chance:p.type==='bomb'||p.type==='rocket'?0.6:0.25});
+    /* AI 出炸弹/王炸：另一个座位点评一句，让牌桌有来回 */
+    if((p.type==='bomb'||p.type==='rocket') && Math.random()<0.35){
+      ddSay(who===1?2:1,'crossTalkBomb',null,{chance:1});
+    }
   }
+  /* 出千月巴上一手被压：偶尔嘴硬一句 */
+  if(g.cheat && prev && prev.owner===1 && who!==1) ddSay(1,'cheatPressed',null,{chance:0.35});
   /* 赢家出完最后一张：先渲染（让大家看到最后一手）再结算 */
   if(g.hands[who].length===0){ ddRenderAll(); ddSettle(who); return; }
   /* 先更新 turn 再渲染 — ddRenderCenter 读 g.turn 显示"轮到谁/谁思考中" */
@@ -14511,6 +14978,8 @@ function ddPlayerHint(){
   /* 精准 DOM 更新：先清所有 sel，再给 hint 选中的牌加 sel，避免全量重绘触发入场动画重播 */
   document.querySelectorAll('#ddHand .dd-card.sel').forEach(function(el){ el.classList.remove('sel'); });
   g.sel.forEach(function(id){ const el=document.querySelector('#ddHand .dd-card[data-id="'+id+'"]'); if(el) el.classList.add('sel'); });
+  /* 偶尔吐槽一句，纯反馈、不打断选牌 */
+  ddSay(Math.random()<0.55?2:1,'hint',null,{chance:0.12});
 }
 function ddToggleCard(id){
   const g=ddG; if(!g||g.turn!==0||g.phase!=='play')return;
@@ -14727,10 +15196,10 @@ function ddSettle(winner){
     }else { payout=0; net=-g.stake; }
     if(payout) ddHost.addTomato(payout);
   }
-  /* 连胜结算：出千月巴露过面就清零（概率回落 3%）；普通局赢一场连胜 +1（下次更容易再遇到它）。
-     紧接着的 ddPushRecord 里有 save()，这条改动随之一并入档 */
+  /* 连胜结算：赢了就 +1（出千局也算，赢了它同样该记连胜）；输了清零 */
   const tr=tvFresh();
-  if(g.cheat||!win) tr.ddStreak=0; else tr.ddStreak=(tr.ddStreak|0)+1;
+  if(!win) tr.ddStreak=0;
+  else tr.ddStreak=(tr.ddStreak|0)+1;
   /* 连败计数：认输不算连败（避免误伤），只统计真正打完的败局 */
   if(win) tr.ddLossStreak=0;
   else if(winner>=0) tr.ddLossStreak=(tr.ddLossStreak|0)+1;
@@ -14775,9 +15244,9 @@ function ddPushRecord(win,net,winner){
   };
   t.ddRecords.unshift(rec);
   if(t.ddRecords.length>DD_REC_MAX) t.ddRecords.length=DD_REC_MAX;
-  save();
   /* 斗月巴成就：先累计总成就计数，再判定日/周/总三档（达成即自动发番茄） */
   try{ ddAchAccum(rec); ddAchCheck(false); }catch(e){}
+  save();                                     /* 战绩与成就累计一起落库：别只在发奖时才保存 */
 }
 /* 刚写入的那条战绩（ddSettle 里先 ddPushRecord 再 ddShowResult，故首位就是本局）：
    结算页直接拿它算评级，不再重复推导一遍 */
@@ -14829,13 +15298,12 @@ function ddAchGradeIs(r,min){
   return g.g.charAt(0)==='S'||g.g.charAt(0)==='A';
 }
 function ddAchDiffKey(r){ return (r.diff==='easy'||r.diff==='hard')?r.diff:'normal'; }
-/* 当周最长连胜（出千月巴的局不计，并打断连胜，与 ddStreak 同口径） */
+/* 当周最长连胜（与 ddStreak 同口径：出千局赢了同样计入） */
 function ddAchWeekStreak(list){
   const arr=list.slice().reverse();       /* 战绩是新→旧，反转成旧→新 */
   let best=0, cur=0;
   for(let i=0;i<arr.length;i++){
     const r=arr[i];
-    if(r.cheat){ cur=0; continue; }
     if(!r.quit&&r.win){ cur++; if(cur>best) best=cur; }
     else cur=0;
   }
@@ -14857,7 +15325,7 @@ const DD_ACH_DAY=[
 const DD_ACH_WEEK=[
   {id:'w1', ic:'🏅', n:'本周十胜', d:'本周累计赢 10 局', tgt:10, rw:10,
    p:function(l){ return l.filter(function(r){ return !r.quit&&r.win; }).length; }},
-  {id:'w2', ic:'🔥', n:'本周五连胜', d:'本周打出一次 5 连胜（出千局不计）', tgt:5, rw:10,
+  {id:'w2', ic:'🔥', n:'本周五连胜', d:'本周打出一次 5 连胜', tgt:5, rw:10,
    p:function(l){ return ddAchWeekStreak(l); }},
   {id:'w3', ic:'👑', n:'本周硬仗', d:'本周在困难难度赢 5 局', tgt:5, rw:10,
    p:function(l){ return l.filter(function(r){ return !r.quit&&r.win&&r.diff==='hard'; }).length; }},
@@ -14904,7 +15372,7 @@ const DD_ACH_TOTAL=[
    p:function(t){ return t.cheatWins; }},
   {id:'t14', ic:'💎', n:'番茄巨富', d:'斗月巴累计净赚 100,000 🍅', tgt:100000, rw:50,
    p:function(t){ return t.net; }},
-  {id:'t15', ic:'🔥', n:'二十连胜', d:'历史最高连胜达到 20 场（出千局不计）', tgt:20, rw:50,
+  {id:'t15', ic:'🔥', n:'二十连胜', d:'历史最高连胜达到 20 场', tgt:20, rw:50,
    p:function(t){ return t.maxStreak; }},
   {id:'t16', ic:'👑', n:'地主之王', d:'以地主身份累计赢 200 局', tgt:200, rw:50,
    p:function(t){ return t.landlordWins; }},
@@ -14924,7 +15392,7 @@ const DD_ACH_TOTAL=[
    p:function(t){ return t.cheatWins; }},
   {id:'t24', ic:'🏦', n:'番茄富可敌国', d:'斗月巴累计净赚 500,000 🍅', tgt:500000, rw:50,
    p:function(t){ return t.net; }},
-  {id:'t25', ic:'💥', n:'五十连胜', d:'历史最高连胜达到 50 场（出千局不计）', tgt:50, rw:50,
+  {id:'t25', ic:'💥', n:'五十连胜', d:'历史最高连胜达到 50 场', tgt:50, rw:50,
    p:function(t){ return t.maxStreak; }},
   {id:'t26', ic:'🤴', n:'地主传说', d:'以地主身份累计赢 500 局', tgt:500, rw:50,
    p:function(t){ return t.landlordWins; }},
@@ -14939,13 +15407,16 @@ function ddAchFilter(recs,scope){
     const k=dayKey(now());
     return recs.filter(function(r){ return dayKey(r.t)===k; });
   }
-  const ws=startOfWeek(now());
-  return recs.filter(function(r){ return (r.t||0)>=ws; });
+  const ws=startOfWeek(now()), tn=now();
+  return recs.filter(function(r){ const t=r.t||0; return t>=ws && t<=tn; });
 }
 /* 结算时累加总成就计数（记录已写入 ddRecords，直接吃这一条） */
 function ddAchAccum(rec){
   if(!rec) return;
   const a=ddAchState(), d=a.total;
+  /* 历史最高连胜先行更新：放到最前面，后面任何一项统计出错都不会漏记连胜 */
+  const cur=Math.max(0, (tvFresh().ddStreak|0));
+  if(cur>d.maxStreak) d.maxStreak=cur;
   if(!rec.quit){
     d.games++;
     if(rec.win){
@@ -14959,8 +15430,6 @@ function ddAchAccum(rec){
     if(ddAchGradeIs(rec,'S+')) d.splus++;
   }
   d.net=(d.net|0)+(rec.net|0);
-  const cur=Math.max(0, (tvFresh().ddStreak|0));
-  if(cur>d.maxStreak) d.maxStreak=cur;
 }
 /* 老存档首次接入：用现有战绩补算一次累计计数（只补一次，之后靠 ddAchAccum） */
 function ddAchSeed(){
@@ -14984,8 +15453,8 @@ function ddAchSeed(){
       if(ddAchGradeIs(r,'S+')) a.total.splus++;
     }
     a.total.net=(a.total.net|0)+(r.net|0);
-    if(r.cheat) streak=0;
-    else if(!r.quit&&r.win) streak++;
+    /* 连胜按战绩重算：出千局赢了同样计入（与 ddStreak 同口径） */
+    if(!r.quit&&r.win) streak++;
     else streak=0;
     if(streak>a.total.maxStreak) a.total.maxStreak=streak;
   }
@@ -14998,6 +15467,12 @@ function ddAchCheck(silent){
   const recs=(tvFresh().ddRecords||[]);
   const dayRecs=ddAchFilter(recs,'day');
   const weekRecs=ddAchFilter(recs,'week');
+  /* 历史最高连胜自愈：旧存档的累计值可能漏记（更早版本没算这项/中途统计异常），
+     每次判定前用「完整战绩的最长连胜」与「当前连胜」补齐，避免到了 50 连胜仍然不判成就 */
+  try{
+    const best=Math.max(ddStreak(), ddAchWeekStreak(recs));
+    if(best>(a.total.maxStreak|0)) a.total.maxStreak=best;
+  }catch(e){}
   let gained=0, tomato=0;
   function award(ach,store){
     if(store[ach.id]) return;
@@ -15135,13 +15610,16 @@ function ddShowResult(win,net,payout,winner){
   h+='<p class="dd-note"><a href="javascript:void(0)" onclick="ddOpenAch()" style="color:inherit;text-decoration:underline;">'
     +$tf('今日成就 {a}/{b} · 本周 {c}/{d}',{a:ddAchDone(_aa,'day'),b:DD_ACH_DAY.length,c:ddAchDone(_aa,'week'),d:DD_ACH_WEEK.length})
     +'</a></p>';
-  if(g.cheat) h+=$t('<p class="dd-note">🃏 这局出千月巴露过面：连胜清零，下次遇到它的概率回到 3%</p>');
+  if(g.cheat&&!win) h+=$t('<p class="dd-note">🃏 这局出千月巴露过面：连胜清零，下次遇到它的概率回到 3%</p>');
+  else if(g.cheat) h+=$t('<p class="dd-note">🃏 这局出千月巴露过面：赢下出千局，连胜 +1</p>');
   const quote=ddSettleQuote(win,winner);
   if(quote) h+='<p class="dd-note">'+esc(quote)+'</p>';
   h+=ddRevealHTML();
   h+=$t('<div class="dd-btns"><button class="btn cta" onclick="ddAgain()">再来一局</button>')
     +$t('<button class="btn" onclick="ddQuit()">收手退出</button></div>');
   box.innerHTML=h;
+  /* 手机上结算内容会超出可滚动：每次结算都从头开始读，不沿用上一局残留的滚动位置 */
+  box.scrollTop=0;
   /* 强制 reflow，让结算弹窗每次显示都重放入场动画 */
   const layer=document.getElementById('ddResult');
   if(layer){ layer.style.animation='none'; const bb=layer.querySelector('.dd-box'); if(bb) bb.style.animation='none'; }
