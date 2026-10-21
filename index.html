@@ -340,6 +340,9 @@
     transition:transform .12s,filter .12s;}
   .lng-formbtn:hover{filter:brightness(1.06);transform:translateY(-1px);}
   .lng-formbtn:active{transform:scale(.985);}
+  /* 第二个（备用）翻译反馈表单：弱化样式，避免抢主按钮 */
+  .lng-formbtn.alt{margin-top:7px;background:rgba(149,117,205,.12);color:var(--purple2);
+    border:1px solid rgba(149,117,205,.38);box-shadow:none;}
   /* 翻译致谢弹层 */
   .lng-thanks p{margin:0;font-size:13px;line-height:1.75;font-weight:600;color:var(--text);}
   .lng-names{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:7px;}
@@ -4534,7 +4537,9 @@ const I18N_UI={
   '🌐 翻译说明':{en:'🌐 About translations',ja:'🌐 翻訳について',ko:'🌐 번역 안내'},
   '所有语言都使用翻译机进行翻译，如果您想要帮忙修改翻译，请填写这个表单。':{en:'All languages are machine-translated. If you would like to help fix the translations, please fill in this form.',ja:'すべての言語は機械翻訳です。翻訳の修正にご協力いただける場合は、このフォームにご記入ください。',ko:'모든 언어는 기계 번역으로 제공됩니다. 번역 수정을 도와주시려면 이 양식을 작성해 주세요.'},
   '📝 填写翻译反馈表单':{en:'📝 Translation feedback form',ja:'📝 翻訳フィードバックフォーム',ko:'📝 번역 피드백 양식'},
+  '📝 备用翻译反馈表单':{en:'📝 Backup translation feedback form',ja:'📝 予備の翻訳フィードバックフォーム',ko:'📝 예비 번역 피드백 양식'},
   '翻译反馈表单还没做好，请稍后再来':{en:'The translation feedback form is not ready yet — please check back later.',ja:'翻訳フィードバックフォームはまだ準備中です。後ほどご確認ください。',ko:'번역 피드백 양식은 아직 준비 중이에요. 나중에 다시 확인해 주세요.'},
+  '备用翻译反馈表单还没做好，请稍后再来':{en:'The backup translation feedback form is not ready yet — please check back later.',ja:'予備の翻訳フィードバックフォームはまだ準備中です。後ほどご確認ください。',ko:'예비 번역 피드백 양식은 아직 준비 중이에요. 나중에 다시 확인해 주세요.'},
   '💛 致谢':{en:'💛 Credits',ja:'💛 クレジット',ko:'💛 크레딧'},
   '感谢所有帮助翻译的人。':{en:'Thanks to everyone who helped with the translations.',ja:'翻訳にご協力いただいた皆さんに感謝します。',ko:'번역을 도와주신 모든 분들께 감사드립니다.'},
   '中秋口令':{en:'Mid-Autumn Code',ja:'中秋の合言葉',ko:'추석 코드'},
@@ -7496,6 +7501,12 @@ function lngFormOpen(){
   if(!LANG_FORM_URL){ toast($t('翻译反馈表单还没做好，请稍后再来')); return; }
   window.open(LANG_FORM_URL,'_blank','noopener');
 }
+/* 第二个（备用）翻译反馈表单：链接到位后填这里；留空时点击只提示未开放。两个表单任选一个填即可 */
+const LANG_FORM_URL2='https://docs.qq.com/form/page/DYXN6eFptZktFQkJN';
+function lngForm2Open(){
+  if(!LANG_FORM_URL2){ toast($t('备用翻译反馈表单还没做好，请稍后再来')); return; }
+  window.open(LANG_FORM_URL2,'_blank','noopener');
+}
 /* 翻译致谢名单：把帮忙翻译的人名直接加进这个数组即可（顺序即展示顺序） */
 const LANG_THANKS=[];
 function openLangThanks(){
@@ -7522,6 +7533,9 @@ function openLangModal(){
     +'<a class="lng-formbtn" href="'+(LANG_FORM_URL||'#')+'"'
     +(LANG_FORM_URL?' target="_blank" rel="noopener"':' onclick="lngFormOpen();return false;"')
     +'>'+$t('📝 填写翻译反馈表单')+'</a>'
+    +'<a class="lng-formbtn alt" href="'+(LANG_FORM_URL2||'#')+'"'
+    +(LANG_FORM_URL2?' target="_blank" rel="noopener"':' onclick="lngForm2Open();return false;"')
+    +'>'+$t('📝 备用翻译反馈表单')+'</a>'
     +'</div>';
   openModal('🌐 Language', note+'<div class="lng-list">'+rows+'</div>');
 }
