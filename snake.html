@@ -452,8 +452,9 @@
     const c = document.createElement('canvas'); c.width = CELL; c.height = CELL;
     const g = c.getContext('2d');
     px(g,3,0,4,6,'#eaf8ff');   px(g,13,0,4,6,'#eaf8ff');
-    px(g,4,1,2,3,'#ffb0c4');   px(g,14,1,2,3,'#ffb0c4');
-    px(g,3,5,4,1,'#cfe6f2');   px(g,14,5,4,1,'#cfe6f2');
+    // 耳尖黑色小帽，替代原本的粉色内耳
+    px(g,4,0,2,1,'#0b2b3a');   px(g,14,0,2,1,'#0b2b3a');
+    px(g,3,5,4,1,'#cfe6f2');   px(g,13,5,4,1,'#cfe6f2');
     return c;
   })();
   const earSprites = {
@@ -485,13 +486,13 @@
     px(g,9,9,2,1,frame);
     px(g,4,9,4,3,lens);    px(g,12,9,4,3,lens);
     px(g,4,9,2,1,glare);   px(g,12,9,2,1,glare);
-    // 嘴：戴墨镜时换成兔嘴微笑
+    // 嘴：戴墨镜时换成猫嘴「w」，整体上移一行并居中
     if(sun){
-      px(g,8,16,1,1,'#0b2b3a');
-      px(g,9,17,1,1,'#0b2b3a');
-      px(g,10,16,1,1,'#0b2b3a');
-      px(g,11,17,1,1,'#0b2b3a');
-      px(g,12,16,1,1,'#0b2b3a');
+      px(g,7,15,1,1,'#0b2b3a');
+      px(g,8,16,2,1,'#0b2b3a');
+      px(g,10,15,1,1,'#0b2b3a');
+      px(g,11,16,2,1,'#0b2b3a');
+      px(g,13,15,1,1,'#0b2b3a');
     } else {
       px(g,9,16,2,1,'#0b2b3a');
     }
