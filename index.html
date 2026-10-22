@@ -3342,6 +3342,16 @@
   #svClose:active{transform:scale(.95);}
   #svFrame{flex:1 1 auto;width:100%;min-height:0;border:0;display:block;background:#04060a;}
   body.sv-lock{overflow:hidden;}
+  /* ===== （贪吃）蛇月巴：独立页内嵌窗口（外壳与幸存者一致） ===== */
+  #snOverlay{position:fixed;inset:0;z-index:9998;display:none;background:#04060a;}
+  #snOverlay.show{display:flex;flex-direction:column;}
+  #snBar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:calc(6px + env(safe-area-inset-top)) 10px 6px;background:#08111a;
+    border-bottom:1px solid rgba(70,230,242,.18);color:#bfe9f2;font-size:12px;font-weight:700;}
+  #snClose{appearance:none;border:1px solid rgba(70,230,242,.32);background:rgba(70,230,242,.08);
+    color:#bfe9f2;border-radius:99px;padding:5px 11px;font-size:12px;font-weight:800;cursor:pointer;}
+  #snClose:active{transform:scale(.95);}
+  #snFrame{flex:1 1 auto;width:100%;min-height:0;border:0;display:block;background:#04060a;}
   /* ===== 百巴箱：小游戏合集（图鉴月巴图标 + 页内/内嵌打开；配色随皮肤） ===== */
   #gbBox{position:fixed;inset:0;z-index:9997;display:none;align-items:center;justify-content:center;
     padding:16px;background:rgba(44,35,70,.42);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);}
@@ -3684,9 +3694,18 @@
 <div id="svOverlay">
   <div id="svBar">
     <span id="svTitle">🍅 番茄幸存者</span>
-    <button id="svClose" onclick="svClose()" data-i18n="✕ 返回月巴">✕ 返回月巴</button>
+    <button id="svClose" onclick="svClose()" data-i18n="✕ 返回放置月巴">✕ 返回放置月巴</button>
   </div>
   <iframe id="svFrame" title="番茄幸存者"></iframe>
+</div>
+
+<!-- （贪吃）蛇月巴：独立页 snake.html，同样内嵌在首页之上，游玩不跳出原网页 -->
+<div id="snOverlay">
+  <div id="snBar">
+    <span id="snTitle">🐍 <span data-i18n="（贪吃）蛇月巴">（贪吃）蛇月巴</span></span>
+    <button id="snClose" onclick="snClose()" data-i18n="✕ 返回放置月巴">✕ 返回放置月巴</button>
+  </div>
+  <iframe id="snFrame" title="（贪吃）蛇月巴" data-i18n-title="（贪吃）蛇月巴"></iframe>
 </div>
 
 <!-- 百巴箱：小游戏合集。卡片图标取自图鉴月巴，点击直接进游戏；
@@ -4793,6 +4812,10 @@ const I18N_UI={
   '箱子还空着，新的月巴游戏正在装箱…':{en:'The box is empty — new Banny games are being packed…',ja:'箱はまだ空っぽ。新しいバニーゲームを詰めています…',ko:'상자가 아직 비어 있어요. 새로운 배니 게임을 담는 중…'},
   '更多小游戏陆续装箱中…':{en:'More mini-games are being packed…',ja:'さらにミニゲームを追加予定…',ko:'더 많은 미니게임을 준비 중…'},
   '✕ 返回百巴箱':{en:'✕ Back to Box',ja:'✕ 箱に戻る',ko:'✕ 박스로 돌아가기'},
+  '✕ 返回放置月巴':{en:'✕ Back to Idle Banny',ja:'✕ 放置バニーへ',ko:'✕ 방치 배니로'},
+  '（贪吃）蛇月巴':{en:'(Greedy) Snake Banny',ja:'（食いしん坊）ヘビバニー',ko:'（먹보）뱀 배니'},
+  '🐍 蛇月巴':{en:'🐍 Snake Banny',ja:'🐍 ヘビバニー',ko:'🐍 뱀 배니'},
+  '🐍 进入蛇月巴':{en:'🐍 Enter Snake Banny',ja:'🐍 ヘビバニーへ',ko:'🐍 뱀 배니 입장'},
   /* C. 场地工具条 */
   '← 返回':{en:'← Back',ja:'← 戻る',ko:'← 뒤로'},
   '🪵 新木头':{en:'🪵 New Log',ja:'🪵 新しい木材',ko:'🪵 새 나무'},
@@ -9272,6 +9295,7 @@ const DEX_GAME={
   mb_yunduan:{icon:'🪽', label:'🪽 飞行小游戏', game:'fly'},
   jieba:{icon:'🎲', label:'🎲 对赌', game:'gamble', lock:true},
   m2_chuqian:{icon:'🃏', label:'🃏 斗月巴', game:'dd', lock:true},
+  m2_she:{icon:'🐍', label:'🐍 蛇月巴', enter:'🐍 进入蛇月巴', game:'snake'},
 };
 function dexGameOf(id){ return DEX_GAME[id]||null; }
 /* 第二图鉴解锁条件文案（对赌 / 斗月巴 共用） */
@@ -9285,6 +9309,7 @@ function dexGameEntry(id){
   if(g.game==='fly'){ openFlyFromDex(id); return; }
   if(g.game==='gamble'){ gambleEntry(); return; }
   if(g.game==='dd'){ ddEnter(); return; }
+  if(g.game==='snake'){ snakeEntry(); return; }
 }
 function bookRowsHTML(list,quiet){
   let rows=''; let i=0;
@@ -9656,7 +9681,7 @@ function openFatDetail(id){ // 图鉴点开某月巴：悬浮层放大图 + 记�
         </div>
         <div class="fd-cond">${cd}</div>
         <div class="fd-intro"><b>${$t('📜 简介')}</b><p>${$fi(t.id)}</p>${YB_TXT_AUTHOR[t.id]?`<div class="fd-author">✍️ by ${esc(YB_TXT_AUTHOR[t.id])}</div>`:''}</div>
-        ${dexGameOf(t.id)?`<button class="btn" style="width:100%;margin-top:10px" onclick="dexGameEntry('${t.id}')">${$t('🪽 进入飞行小游戏')}</button>`:''}
+        ${dexGameOf(t.id)?`<button class="btn" style="width:100%;margin-top:10px" onclick="dexGameEntry('${t.id}')">${$t(dexGameOf(t.id).enter||'🪽 进入飞行小游戏')}</button>`:''}
       </div>
     </div>`;
   ov.classList.add('show');
@@ -13711,6 +13736,7 @@ function openFlyFromDex(id){
    game:'fly' -> 复用页内飞行浮层；html:'xxx.html' -> 内嵌 iframe（同幸存者）。 */
 const GB_GAMES=[
   {id:'fly', codex:'mb_yunduan', name:'飞行小游戏', game:'fly'},
+  {id:'snake', codex:'m2_she', name:'（贪吃）蛇月巴', game:'snake'},
   {id:'gamble', codex:'jieba', name:'🎲 对赌', game:'gamble', lock:true},
   {id:'dd', codex:'m2_chuqian', name:'🃏 斗月巴', game:'dd', lock:true},
 ];
@@ -13761,6 +13787,7 @@ function gbPlay(id){
   if(g.game==='fly'){ try{ dexGameEntry(g.codex||'mb_yunduan'); }catch(e){} return; }
   if(g.game==='gamble'){ gambleEntry(); return; }
   if(g.game==='dd'){ ddEnter(); return; }
+  if(g.game==='snake'){ snakeEntry(); return; }
 }
 function gbFrameOpen(g){
   gbFrameId=g.id;
@@ -13834,6 +13861,28 @@ function svClose(){
   }
   updateSurvivorIcon();
   try{ svBuffRender(true); }catch(e){}     // 装备可能刚在独立页改过
+}
+/* ================= （贪吃）蛇月巴（独立页入口） =================
+   游戏本体在 snake.html；图鉴「蛇月巴」与百巴箱都从这里进。
+   用 iframe 内嵌在首页之上：游玩不跳出原网页，关掉即卸载（停掉计时与音效）。 */
+let snOpenFlag=false;
+function snakeEntry(){
+  if(snOpenFlag) return;
+  snOpenFlag=true;
+  sfx.click();
+  const ov=$('snOverlay'), fr=$('snFrame');
+  if(fr) fr.src='snake.html?lang='+curLang();
+  if(ov) ov.classList.add('show');
+  document.body.classList.add('sv-lock');
+  setTimeout(function(){ try{ fr.focus(); }catch(e){} },300);
+}
+function snClose(){
+  if(!snOpenFlag) return;
+  snOpenFlag=false;
+  const ov=$('snOverlay'), fr=$('snFrame');
+  try{ if(fr) fr.src='about:blank'; }catch(e){}
+  if(ov) ov.classList.remove('show');
+  document.body.classList.remove('sv-lock');
 }
 /* 内嵌页通过 postMessage 请求关闭，替代 iframe 内的「返回首页」跳转 */
 window.addEventListener('message',function(e){

@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#031019">
+<title>（贪吃）蛇月巴 · 像素蛇</title>
+<style>
+  :root{
+    --bg:#031019; --bg2:#061c26;
+    --line:rgba(90,222,238,.22); --line2:rgba(99,234,247,.48);
+    --text:#ddf6fb; --dim:#7fa7b7;
+    --accent:#46e6f2; --accent2:#b0f9ff;
+    --red:#ff5468; --green:#4fd8a8;
+    --sq:320px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;}
+  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);}
+  body{font-family:"SF Mono","Cascadia Mono",Consolas,system-ui,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    touch-action:none;overscroll-behavior:none;}
+  body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:radial-gradient(120% 82% at 50% 6%,transparent 46%,rgba(0,9,15,.62) 100%);}
+  #stage{position:fixed;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;
+    padding:calc(10px + env(safe-area-inset-top)) 12px calc(10px + env(safe-area-inset-bottom));
+    background:radial-gradient(72% 58% at 50% 42%,rgba(9,46,60,.55),rgba(2,9,14,0) 72%);}
+  #wrap{display:flex;flex-direction:column;gap:8px;width:var(--sq);}
+
+  /* ---------- 顶部 HUD ---------- */
+  #topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;height:34px;padding:0 2px;}
+  .brand{font-size:13px;font-weight:900;letter-spacing:3px;white-space:nowrap;}
+  .brand span{color:var(--accent2);text-shadow:0 0 14px rgba(70,230,242,.6);}
+  .stats{display:flex;align-items:center;gap:6px;margin-left:auto;}
+  .stat{display:flex;align-items:baseline;gap:5px;padding:4px 7px;
+    border:1px solid var(--line);border-left:2px solid var(--line2);
+    background:linear-gradient(180deg,rgba(8,34,46,.85),rgba(4,18,26,.92));
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%);}
+  .stat span{font-size:8px;font-weight:800;letter-spacing:1.2px;color:var(--dim);}
+  .stat b{display:inline-block;min-width:20px;font-size:13px;text-align:right;color:var(--accent2);
+    font-variant-numeric:tabular-nums;}
+  @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.4)}100%{transform:scale(1)}}
+  .stat b.pop{animation:pop .26s ease-out;}
+  #btnPause{width:32px;height:32px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+    font-size:11px;line-height:1;color:var(--accent2);cursor:pointer;
+    border:1px solid var(--line);background:linear-gradient(180deg,rgba(8,34,46,.9),rgba(4,18,26,.94));
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%);}
+  #btnPause:active{transform:scale(.94);}
+  #btnAch{height:32px;flex:0 0 auto;display:flex;align-items:center;gap:4px;padding:0 6px;cursor:pointer;
+    font-size:12px;line-height:1;color:var(--accent2);
+    border:1px solid var(--line);background:linear-gradient(180deg,rgba(8,34,46,.9),rgba(4,18,26,.94));
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%);}
+  #btnAch b{font-size:8px;font-weight:800;letter-spacing:.5px;color:var(--dim);font-variant-numeric:tabular-nums;}
+  #btnAch:active{transform:scale(.94);}
+
+  /* ---------- 正方形游戏窗口 ---------- */
+  #frame{position:relative;width:var(--sq);height:var(--sq);overflow:hidden;background:#04141d;
+    border:1px solid var(--line2);
+    box-shadow:0 0 28px rgba(70,230,242,.12),0 20px 54px rgba(0,0,0,.62),inset 0 0 40px rgba(70,230,242,.05);}
+  #cv{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;}
+  #frame .scan{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:.45;
+    background:repeating-linear-gradient(0deg,rgba(120,232,255,.05) 0 1px,transparent 1px 3px);}
+  #frame::before{content:'';position:absolute;inset:5px;z-index:3;pointer-events:none;opacity:.55;
+    background:
+      linear-gradient(var(--accent),var(--accent)) left top/14px 2px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) left top/2px 14px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) right top/14px 2px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) right top/2px 14px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) left bottom/14px 2px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) left bottom/2px 14px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) right bottom/14px 2px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) right bottom/2px 14px no-repeat;}
+
+  /* ---------- 弹层 ---------- */
+  #overlay{position:absolute;inset:0;z-index:4;display:none;align-items:center;justify-content:center;
+    padding:16px;background:radial-gradient(90% 70% at 50% 42%,rgba(6,42,56,.55),rgba(2,9,14,.82));
+    -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);}
+  #overlay.show{display:flex;}
+  #overlay .panel{position:relative;width:min(88%,340px);padding:18px 16px 15px;text-align:center;
+    background:linear-gradient(180deg,rgba(8,36,48,.96),rgba(3,14,21,.98));
+    border:1px solid var(--line2);border-radius:3px;
+    box-shadow:0 18px 50px rgba(0,0,0,.6),inset 0 0 30px rgba(70,230,242,.06);}
+  #overlay .panel::before{content:'';position:absolute;inset:6px;pointer-events:none;opacity:.5;
+    background:
+      linear-gradient(var(--accent),var(--accent)) left top/12px 2px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) left top/2px 12px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) right top/12px 2px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) right top/2px 12px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) left bottom/12px 2px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) left bottom/2px 12px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) right bottom/12px 2px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) right bottom/2px 12px no-repeat;}
+  #ovKicker{font-size:9px;font-weight:900;letter-spacing:4px;color:var(--accent);opacity:.9;}
+  #ovTitle{font-size:26px;font-weight:900;letter-spacing:6px;margin:7px 0 3px;color:var(--accent2);
+    text-shadow:0 0 18px rgba(70,230,242,.55),0 0 46px rgba(70,230,242,.22);}
+  #ovSub{font-size:11px;line-height:1.7;color:var(--dim);margin:4px 0 10px;}
+  #ovStats{display:none;align-items:center;justify-content:center;gap:22px;margin:2px 0 12px;}
+  #ovStats div{display:flex;flex-direction:column;gap:2px;}
+  #ovStats span{font-size:8px;font-weight:800;letter-spacing:2px;color:var(--dim);}
+  #ovStats b{font-size:20px;color:var(--accent2);font-variant-numeric:tabular-nums;
+    text-shadow:0 0 14px rgba(70,230,242,.4);}
+  #ovBtn{width:100%;padding:11px 0;border:0;cursor:pointer;font-family:inherit;
+    font-size:12px;font-weight:900;letter-spacing:3px;color:#02141b;
+    background:linear-gradient(180deg,var(--accent2),var(--accent));
+    box-shadow:0 0 18px rgba(70,230,242,.35);
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%);}
+  #ovBtn:active{transform:translateY(1px);filter:brightness(.94);}
+  #ovHint{margin-top:9px;font-size:9px;letter-spacing:1px;color:rgba(127,167,183,.85);}
+
+  /* ---------- 成就弹层 ---------- */
+  #achModal{position:absolute;inset:0;z-index:6;display:none;align-items:center;justify-content:center;padding:10px;
+    background:radial-gradient(90% 70% at 50% 42%,rgba(6,42,56,.72),rgba(2,9,14,.9));
+    -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);}
+  #achModal.show{display:flex;}
+  .achPanel{width:min(94%,360px);max-height:100%;display:flex;flex-direction:column;
+    background:linear-gradient(180deg,rgba(8,36,48,.97),rgba(3,14,21,.985));
+    border:1px solid var(--line2);border-radius:3px;
+    box-shadow:0 18px 50px rgba(0,0,0,.6),inset 0 0 30px rgba(70,230,242,.06);}
+  .achTop{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;
+    padding:11px 12px 9px;border-bottom:1px solid var(--line);}
+  .achKicker{font-size:8px;font-weight:900;letter-spacing:3px;color:var(--accent);opacity:.9;}
+  .achTitle{font-size:14px;font-weight:900;letter-spacing:3px;color:var(--accent2);margin-top:4px;}
+  .achTitle b{font-size:10px;font-weight:800;letter-spacing:1px;color:var(--dim);margin-left:4px;}
+  #achClose{width:26px;height:26px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+    font-size:11px;color:var(--accent2);cursor:pointer;border:1px solid var(--line);
+    background:linear-gradient(180deg,rgba(8,34,46,.9),rgba(4,18,26,.94));}
+  #achClose:active{transform:scale(.94);}
+  .achList{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+    padding:9px 11px 12px;display:flex;flex-direction:column;gap:5px;}
+  .achTier{display:flex;align-items:center;justify-content:space-between;gap:6px;
+    font-size:8px;font-weight:900;letter-spacing:2px;color:var(--dim);margin:5px 0 1px;}
+  .achShade{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;cursor:pointer;
+    font-family:inherit;font-size:11px;font-weight:900;line-height:1;letter-spacing:0;
+    color:var(--dim);border:1px solid var(--line);background:rgba(4,20,28,.7);}
+  .achShade i{font-style:normal;font-size:8px;letter-spacing:1px;color:inherit;white-space:nowrap;}
+  .achShade .dot{width:5px;height:5px;flex:0 0 auto;background:currentColor;opacity:.35;}
+  .achShade.on .dot{opacity:1;box-shadow:0 0 6px currentColor;}
+  .achShade.on{color:var(--accent2);border-color:rgba(70,230,242,.55);
+    background:linear-gradient(180deg,rgba(10,52,66,.9),rgba(5,24,33,.95));
+    box-shadow:0 0 10px rgba(70,230,242,.18);}
+  .achShade.locked{cursor:default;color:var(--dim);opacity:.8;}
+  .achShade:active:not(.locked){transform:scale(.94);}
+  .achRow{display:flex;align-items:center;gap:8px;padding:6px 7px;
+    border:1px solid var(--line);background:rgba(8,30,40,.55);}
+  .achRow.done{border-color:rgba(70,230,242,.5);
+    background:linear-gradient(180deg,rgba(10,52,66,.85),rgba(5,24,33,.9));}
+  .achIcon{width:22px;height:22px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+    font-size:12px;border:1px solid var(--line);background:rgba(4,20,28,.7);}
+  .achTxt{min-width:0;}
+  .achName{font-size:11px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .achDesc{font-size:9px;line-height:1.5;color:var(--dim);margin-top:1px;}
+  .achState{margin-left:auto;flex:0 0 auto;font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--dim);
+    font-variant-numeric:tabular-nums;}
+  .achRow.done .achState{color:var(--accent2);}
+  .achFoot{padding:7px 12px;border-top:1px solid var(--line);text-align:center;
+    font-size:8px;line-height:1.6;color:rgba(127,167,183,.85);}
+
+  /* ---------- 解锁横幅 ---------- */
+  #achToast{position:absolute;left:50%;top:8px;z-index:5;transform:translate(-50%,-160%);
+    padding:6px 12px;font-size:10px;font-weight:900;letter-spacing:1.5px;color:#02141b;
+    background:linear-gradient(180deg,var(--accent2),var(--accent));
+    box-shadow:0 0 16px rgba(70,230,242,.45);white-space:nowrap;pointer-events:none;opacity:0;
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%);
+    transition:transform .22s ease,opacity .22s ease;}
+  #achToast.show{transform:translate(-50%,0);opacity:1;}
+
+  #tips{height:14px;font-size:9px;line-height:14px;letter-spacing:1.2px;text-align:center;
+    color:rgba(127,167,183,.8);white-space:nowrap;overflow:hidden;}
+  @media (prefers-reduced-motion: reduce){
+    #frame .scan{opacity:.25;}
+    .stat b.pop{animation:none;}
+    #achToast{transition:none;}
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="wrap">
+    <div id="topbar">
+      <div class="brand">（贪吃）蛇<span>月巴</span></div>
+      <div class="stats">
+        <div class="stat"><span>SCORE</span><b id="scoreEl">0</b></div>
+        <div class="stat"><span>BEST</span><b id="bestEl">0</b></div>
+      </div>
+      <button id="btnAch" aria-label="成就">🏆<b id="achCount">0/15</b></button>
+      <button id="btnPause" aria-label="暂停">❚❚</button>
+    </div>
+
+    <div id="frame">
+      <canvas id="cv" width="320" height="320"></canvas>
+      <div class="scan"></div>
+      <div id="overlay" class="show">
+        <div class="panel">
+          <div id="ovKicker">// READY //</div>
+          <h1 id="ovTitle">（贪吃）蛇月巴</h1>
+          <p id="ovSub">吃番茄变长，别撞墙，别咬到自己</p>
+          <div id="ovStats">
+            <div><span>SCORE</span><b id="ovScore">0</b></div>
+            <div><span>BEST</span><b id="ovBest">0</b></div>
+          </div>
+          <button id="ovBtn">开始</button>
+          <div id="ovHint">方向键 / WASD · 手机滑动</div>
+        </div>
+      </div>
+
+      <div id="achToast" aria-live="polite"></div>
+
+      <div id="achModal">
+        <div class="achPanel">
+          <div class="achTop">
+            <div>
+              <div class="achKicker">// ACHIEVEMENTS //</div>
+              <div class="achTitle"><span id="achTitleTxt">成就</span><b id="achTotal">0/15</b></div>
+            </div>
+            <button id="achClose" aria-label="关闭">✕</button>
+          </div>
+          <div class="achList" id="achList"></div>
+          <div class="achFoot" id="achFoot">普通成就全部达成后解锁墨镜 · 隐藏成就不计入 · 解锁后可在隐藏分组切换</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tips">方向键 / WASD 转向 · 空格暂停 · 手机滑动</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ================= 基础常量 ================= */
+  const GRID = 16;            // 16×16 格
+  const CELL = 20;            // 每格 20 逻辑像素
+  const SIZE = GRID * CELL;   // 320×320 逻辑画布
+  const BEST_KEY = 'mb_snake_best';
+  const S = { READY:'ready', PLAY:'play', PAUSE:'pause', OVER:'over' };
+
+  /* ================= 语言 =================
+     与首页保持一致：优先 URL 参数 ?lang=（首页内嵌时带上），
+     其次读首页存档里的 lang，最后跟随浏览器语言 */
+  const LANG = (function(){
+    let q = '';
+    try{ q = (new URLSearchParams(location.search).get('lang')||'').toLowerCase(); }catch(e){}
+    if(q==='zh'||q==='en'||q==='ja'||q==='ko') return q;
+    try{
+      const raw = JSON.parse(localStorage.getItem('idle-yueba-save-v2') || 'null');
+      const l = raw && raw.lang;
+      if(l==='zh'||l==='en'||l==='ja'||l==='ko') return l;
+    }catch(e){}
+    const n = String((navigator && navigator.language) || '').toLowerCase();
+    if(n.indexOf('ja')===0) return 'ja';
+    if(n.indexOf('ko')===0) return 'ko';
+    if(n.indexOf('en')===0) return 'en';
+    return 'zh';
+  })();
+  const TXT = {
+    zh:{
+      docTitle:'（贪吃）蛇月巴 · 像素蛇',
+      brand:'（贪吃）蛇<span>月巴</span>',
+      acAch:'成就', acPause:'暂停', acClose:'关闭',
+      readySub:'吃番茄变长，别撞墙，别咬到自己', start:'开始',
+      readyHint:'方向键 / WASD · 手机滑动',
+      pauseTitle:'已暂停', pauseSub:'喘口气，月巴还在等你', resumeBtn:'继续',
+      pauseHint:'空格 / 点击继续',
+      winTitle:'满屏通关', newTitle:'新纪录', endTitle:'结束',
+      winSub:'整块屏幕都是月巴了', eatSub:'这一局吃掉 {n} 个番茄',
+      again:'再来一局', overHint:'回车 / 点击重新开始',
+      achTitle:'成就',
+      achFoot:'普通成就全部达成后解锁墨镜 · 隐藏成就不计入 · 解锁后可在隐藏分组切换',
+      tips:'方向键 / WASD 转向 · 空格暂停 · 手机滑动',
+      hiddenName:'？？？', hiddenDesc:'达成后揭晓', doneTag:'✅ 已达成',
+      toast:'🏆 成就达成 · {name}',
+      lockAria:'墨镜未解锁', lockTitle:'普通成就全部达成后解锁',
+      shadeTitle:'切换月巴的墨镜外观', shadesOn:'墨镜 开', shadesOff:'墨镜 关',
+      tier_intro:'入门', tier_advanced:'进阶', tier_long:'长线', tier_hidden:'隐藏',
+      ach_sn_first_bite:'第一口',      ach_sn_first_bite_d:'累计吃 1 个番茄',
+      ach_sn_ten_bites:'十口',        ach_sn_ten_bites_d:'累计吃 10 个番茄',
+      ach_sn_first_run:'初次上路',     ach_sn_first_run_d:'完成 1 局（撞墙或自食）',
+      ach_sn_score_10:'小有成就',      ach_sn_score_10_d:'单局得分 ≥ 10',
+      ach_sn_score_25:'（贪吃）蛇月巴', ach_sn_score_25_d:'单局得分 ≥ 25',
+      ach_sn_long_40:'月巴长龙',       ach_sn_long_40_d:'单局蛇身长度 ≥ 40 节',
+      ach_sn_wall_turn_20:'贴墙漂移',  ach_sn_wall_turn_20_d:'累计贴墙转向 20 次',
+      ach_sn_wall_eat_5:'毫厘之间',    ach_sn_wall_eat_5_d:'累计贴墙吃番茄 5 次',
+      ach_sn_quiet_15:'静默猎手',      ach_sn_quiet_15_d:'单局 ≥15 分且未手动暂停',
+      ach_sn_turn_30:'指尖微操',       ach_sn_turn_30_d:'单局有效转向 ≥ 30 次',
+      ach_sn_self_bite:'自食其果',     ach_sn_self_bite_d:'首次咬到自己',
+      ach_sn_eat_100:'满分！',         ach_sn_eat_100_d:'累计吃 100 个番茄',
+      ach_sn_games_30:'常客',          ach_sn_games_30_d:'累计完成 30 局',
+      ach_sn_games_100:'老手',         ach_sn_games_100_d:'累计完成 100 局',
+      ach_sn_full_board:'满屏月巴',    ach_sn_full_board_d:'单局占满 256 格'
+    },
+    en:{
+      docTitle:'(Greedy) Snake Banny · Pixel Snake',
+      brand:'(Greedy) Snake <span>Banny</span>',
+      acAch:'Achievements', acPause:'Pause', acClose:'Close',
+      readySub:'Eat Tomatoes to grow — dodge walls and your own tail', start:'Start',
+      readyHint:'Arrow keys / WASD · Swipe on mobile',
+      pauseTitle:'Paused', pauseSub:'Take a breath — Banny is waiting', resumeBtn:'Resume',
+      pauseHint:'Space / tap to resume',
+      winTitle:'Perfect Clear', newTitle:'New Record', endTitle:'Game Over',
+      winSub:'The whole screen is Banny now', eatSub:'Ate {n} Tomatoes this run',
+      again:'Play again', overHint:'Enter / tap to restart',
+      achTitle:'Achievements',
+      achFoot:'Earn every regular achievement to unlock sunglasses · hidden ones don\u2019t count · switch them in the hidden group once unlocked',
+      tips:'Arrow keys / WASD to turn · Space to pause · Swipe on mobile',
+      hiddenName:'???', hiddenDesc:'Revealed once unlocked', doneTag:'✅ Unlocked',
+      toast:'🏆 Achievement unlocked · {name}',
+      lockAria:'Sunglasses locked', lockTitle:'Unlock by earning every regular achievement',
+      shadeTitle:'Toggle Banny\u2019s sunglasses', shadesOn:'Sunglasses ON', shadesOff:'Sunglasses OFF',
+      tier_intro:'Beginner', tier_advanced:'Advanced', tier_long:'Long-term', tier_hidden:'Secret',
+      ach_sn_first_bite:'First Bite',       ach_sn_first_bite_d:'Eat 1 Tomato in total',
+      ach_sn_ten_bites:'Ten Bites',         ach_sn_ten_bites_d:'Eat 10 Tomatoes in total',
+      ach_sn_first_run:'First Run',         ach_sn_first_run_d:'Finish 1 game (wall or self-bite)',
+      ach_sn_score_10:'Getting Somewhere',  ach_sn_score_10_d:'Score ≥ 10 in one run',
+      ach_sn_score_25:'(Greedy) Snake Banny', ach_sn_score_25_d:'Score ≥ 25 in one run',
+      ach_sn_long_40:'Banny Long Dragon',   ach_sn_long_40_d:'Reach 40 segments in one run',
+      ach_sn_wall_turn_20:'Wall Drift',     ach_sn_wall_turn_20_d:'Turn next to a wall 20 times in total',
+      ach_sn_wall_eat_5:'By a Hair',        ach_sn_wall_eat_5_d:'Eat 5 Tomatoes next to a wall in total',
+      ach_sn_quiet_15:'Silent Hunter',      ach_sn_quiet_15_d:'Score ≥ 15 in a run without manual pause',
+      ach_sn_turn_30:'Fingertip Precision', ach_sn_turn_30_d:'30+ valid turns in one run',
+      ach_sn_self_bite:'Bit Your Own Tail', ach_sn_self_bite_d:'Bite yourself for the first time',
+      ach_sn_eat_100:'Full Marks!',         ach_sn_eat_100_d:'Eat 100 Tomatoes in total',
+      ach_sn_games_30:'Regular',            ach_sn_games_30_d:'Finish 30 games in total',
+      ach_sn_games_100:'Veteran',           ach_sn_games_100_d:'Finish 100 games in total',
+      ach_sn_full_board:'Screen-Full Banny', ach_sn_full_board_d:'Fill all 256 cells in one run'
+    },
+    ja:{
+      docTitle:'（食いしん坊）ヘビバニー · ピクセルスネーク',
+      brand:'（食いしん坊）ヘビ<span>バニー</span>',
+      acAch:'実績', acPause:'一時停止', acClose:'閉じる',
+      readySub:'トマトを食べて伸びよう。壁と自分のしっぽに注意', start:'スタート',
+      readyHint:'方向キー / WASD · スマホはスワイプ',
+      pauseTitle:'一時停止', pauseSub:'ひと息ついて。バニーが待ってるよ', resumeBtn:'再開',
+      pauseHint:'スペース / タップで再開',
+      winTitle:'画面コンプリート', newTitle:'新記録', endTitle:'ゲームオーバー',
+      winSub:'画面ぜんぶバニーになった', eatSub:'このゲームでトマト {n} 個',
+      again:'もう一局', overHint:'Enter / タップでやり直し',
+      achTitle:'実績',
+      achFoot:'通常実績をすべて達成するとサングラス解放 · 隠し実績はカウント外 · 解放後は隠しグループで切り替え',
+      tips:'方向キー / WASD で曲がる · スペースで一時停止 · スマホはスワイプ',
+      hiddenName:'？？？', hiddenDesc:'達成すると明かされる', doneTag:'✅ 達成済み',
+      toast:'🏆 実績達成 · {name}',
+      lockAria:'サングラス未解放', lockTitle:'通常実績をすべて達成すると解放',
+      shadeTitle:'バニーのサングラスを切り替え', shadesOn:'サングラス オン', shadesOff:'サングラス オフ',
+      tier_intro:'初級', tier_advanced:'上級', tier_long:'長期', tier_hidden:'隠し',
+      ach_sn_first_bite:'ひと口目',       ach_sn_first_bite_d:'通算でトマトを 1 個食べる',
+      ach_sn_ten_bites:'十口',             ach_sn_ten_bites_d:'通算でトマトを 10 個食べる',
+      ach_sn_first_run:'初めての道',       ach_sn_first_run_d:'1 ゲームを終える（壁か自噛み）',
+      ach_sn_score_10:'ちょっとした成果', ach_sn_score_10_d:'1 ゲームで 10 点以上',
+      ach_sn_score_25:'（食いしん坊）ヘビバニー', ach_sn_score_25_d:'1 ゲームで 25 点以上',
+      ach_sn_long_40:'バニーの長い列',     ach_sn_long_40_d:'1 ゲームで体長 40 節以上',
+      ach_sn_wall_turn_20:'壁際ドリフト',  ach_sn_wall_turn_20_d:'通算で壁際ターン 20 回',
+      ach_sn_wall_eat_5:'紙一重',          ach_sn_wall_eat_5_d:'通算で壁際トマト 5 個',
+      ach_sn_quiet_15:'静かな狩人',        ach_sn_quiet_15_d:'1 ゲームで 15 点以上、手動一時停止なし',
+      ach_sn_turn_30:'指先の微操作',       ach_sn_turn_30_d:'1 ゲームで有効ターン 30 回以上',
+      ach_sn_self_bite:'自業自得',         ach_sn_self_bite_d:'初めて自分を噛む',
+      ach_sn_eat_100:'満点！',             ach_sn_eat_100_d:'通算でトマトを 100 個食べる',
+      ach_sn_games_30:'常連',              ach_sn_games_30_d:'通算 30 ゲーム完了',
+      ach_sn_games_100:'ベテラン',         ach_sn_games_100_d:'通算 100 ゲーム完了',
+      ach_sn_full_board:'画面いっぱいのバニー', ach_sn_full_board_d:'1 ゲームで 256 マスを埋める'
+    },
+    ko:{
+      docTitle:'（먹보）뱀 배니 · 픽셀 스네이크',
+      brand:'（먹보）뱀 <span>배니</span>',
+      acAch:'업적', acPause:'일시정지', acClose:'닫기',
+      readySub:'토마토를 먹고 길어져요. 벽과 내 꼬리를 조심해요', start:'시작',
+      readyHint:'방향키 / WASD · 모바일은 스와이프',
+      pauseTitle:'일시정지', pauseSub:'잠깐 숨을 고르세요. 배니가 기다려요', resumeBtn:'계속',
+      pauseHint:'스페이스 / 탭하여 계속',
+      winTitle:'화면 클리어', newTitle:'신기록', endTitle:'게임 오버',
+      winSub:'화면 가득 배니가 되었어요', eatSub:'이번 판에서 토마토 {n}개',
+      again:'한 판 더', overHint:'Enter / 탭하여 다시 시작',
+      achTitle:'업적',
+      achFoot:'일반 업적을 모두 달성하면 선글라스 해금 · 숨김 업적은 제외 · 해금 후 숨김 그룹에서 전환',
+      tips:'방향키 / WASD로 회전 · 스페이스로 일시정지 · 모바일은 스와이프',
+      hiddenName:'???', hiddenDesc:'달성하면 공개', doneTag:'✅ 달성',
+      toast:'🏆 업적 달성 · {name}',
+      lockAria:'선글라스 잠김', lockTitle:'일반 업적을 모두 달성하면 해금',
+      shadeTitle:'배니 선글라스 전환', shadesOn:'선글라스 켜짐', shadesOff:'선글라스 꺼짐',
+      tier_intro:'입문', tier_advanced:'심화', tier_long:'장기', tier_hidden:'숨김',
+      ach_sn_first_bite:'첫 한 입',       ach_sn_first_bite_d:'누적 토마토 1개 먹기',
+      ach_sn_ten_bites:'열 입',             ach_sn_ten_bites_d:'누적 토마토 10개 먹기',
+      ach_sn_first_run:'첫 출발',          ach_sn_first_run_d:'1판 완료(벽 충돌 또는 자기 물기)',
+      ach_sn_score_10:'소소한 성과',       ach_sn_score_10_d:'한 판 점수 10 이상',
+      ach_sn_score_25:'（먹보）뱀 배니',    ach_sn_score_25_d:'한 판 점수 25 이상',
+      ach_sn_long_40:'배니 롱 드래곤',     ach_sn_long_40_d:'한 판 몸길이 40칸 이상',
+      ach_sn_wall_turn_20:'벽 드리프트',   ach_sn_wall_turn_20_d:'누적 벽 붙은 회전 20회',
+      ach_sn_wall_eat_5:'종이 한 장 차이', ach_sn_wall_eat_5_d:'누적 벽 붙어 토마토 5개 먹기',
+      ach_sn_quiet_15:'조용한 사냥꾼',      ach_sn_quiet_15_d:'한 판 15점 이상, 수동 일시정지 없이',
+      ach_sn_turn_30:'손끝 미세 조작',     ach_sn_turn_30_d:'한 판 유효 회전 30회 이상',
+      ach_sn_self_bite:'자업자득',         ach_sn_self_bite_d:'처음으로 자기 몸을 물기',
+      ach_sn_eat_100:'만점!',               ach_sn_eat_100_d:'누적 토마토 100개 먹기',
+      ach_sn_games_30:'단골',               ach_sn_games_30_d:'누적 30판 완료',
+      ach_sn_games_100:'베테랑',            ach_sn_games_100_d:'누적 100판 완료',
+      ach_sn_full_board:'화면 가득 배니',  ach_sn_full_board_d:'한 판 256칸 모두 채우기'
+    }
+  };
+  function t(k){ const d = TXT[LANG] || TXT.zh; const v = d[k]; return v == null ? (TXT.zh[k] || k) : v; }
+
+  const canvas = document.getElementById('cv');
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+
+  const $ = id => document.getElementById(id);
+  const scoreEl = $('scoreEl'), bestEl = $('bestEl');
+  const frame = $('frame'), overlay = $('overlay');
+  const ovKicker = $('ovKicker'), ovTitle = $('ovTitle'), ovSub = $('ovSub');
+  const ovStats = $('ovStats'), ovScore = $('ovScore'), ovBest = $('ovBest');
+  const ovBtn = $('ovBtn'), ovHint = $('ovHint');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ================= 游戏状态 ================= */
+  let state = S.READY;
+  let snake = [];
+  let dir = { x:0, y:-1 };
+  let queue = [];
+  let food = { x:0, y:0 };
+  let eaten = 0;
+  let best = 0;
+  let tickMs = 150;
+  let acc = 0;
+  let lastT = 0;
+  let particles = [];
+  let shake = 0;
+  let overAt = 0;
+  let overShown = false;
+  let newRecord = false;
+  let winFlag = false;
+  let shadesOn = false;   // 当前是否戴着墨镜（解锁 + 玩家开关都满足）
+  let shadesUnlocked = false; // 普通成就全达成后解锁墨镜外观
+  let runTurns = 0;       // 本局有效转向次数
+  let runPaused = false;  // 本局是否手动暂停过
+
+  try { best = parseInt(localStorage.getItem(BEST_KEY), 10) || 0; } catch(e) { best = 0; }
+  bestEl.textContent = best;
+
+  /* ================= 像素精灵（预渲染） ================= */
+  const px = (g,x,y,w,h,col) => { g.fillStyle = col; g.fillRect(x,y,w,h); };
+
+  // 把 20×20 精灵按 90° 整数旋转，保证像素不糊
+  function rotSprite(src, angle){
+    const c = document.createElement('canvas'); c.width = CELL; c.height = CELL;
+    const g = c.getContext('2d');
+    g.imageSmoothingEnabled = false;
+    g.translate(CELL/2, CELL/2);
+    g.rotate(angle);
+    g.translate(-CELL/2, -CELL/2);
+    g.drawImage(src, 0, 0);
+    return c;
+  }
+
+  // 兔耳：朝上绘制，跟着脸一起转，转向后耳朵始终长在脑后
+  const earSpr = (function(){
+    const c = document.createElement('canvas'); c.width = CELL; c.height = CELL;
+    const g = c.getContext('2d');
+    px(g,3,0,4,6,'#eaf8ff');   px(g,13,0,4,6,'#eaf8ff');
+    px(g,4,1,2,3,'#ffb0c4');   px(g,14,1,2,3,'#ffb0c4');
+    px(g,3,5,4,1,'#cfe6f2');   px(g,14,5,4,1,'#cfe6f2');
+    return c;
+  })();
+  const earSprites = {
+    up: earSpr,
+    right: rotSprite(earSpr, -Math.PI/2),
+    down: rotSprite(earSpr, Math.PI),
+    left: rotSprite(earSpr, Math.PI/2)
+  };
+
+  // 脸：普通眼镜 / 墨镜两套，镜片都不透出眼睛
+  function makeFace(sun){
+    const c = document.createElement('canvas'); c.width = CELL; c.height = CELL;
+    const g = c.getContext('2d');
+    // 脸型（圆角块）
+    px(g,6,3,8,1,'#eaf8ff');
+    px(g,4,4,12,1,'#eaf8ff');
+    px(g,3,5,14,1,'#eaf8ff');
+    px(g,2,6,16,11,'#eaf8ff');
+    px(g,3,17,14,1,'#eaf8ff');
+    px(g,4,18,12,1,'#eaf8ff');
+    // 下颚阴影
+    px(g,3,15,14,3,'#d7eef8');
+    px(g,4,18,12,1,'#c3e2ef');
+    // 方框眼镜
+    const frame = sun ? '#0b2b3a' : '#356274';
+    const lens  = sun ? '#123a4a' : '#a9d8e8';
+    const glare = sun ? '#b0f9ff' : '#e8fbff';
+    px(g,3,8,6,5,frame);   px(g,11,8,6,5,frame);
+    px(g,9,9,2,1,frame);
+    px(g,4,9,4,3,lens);    px(g,12,9,4,3,lens);
+    px(g,4,9,2,1,glare);   px(g,12,9,2,1,glare);
+    // 嘴：戴墨镜时换成兔嘴微笑
+    if(sun){
+      px(g,8,16,1,1,'#0b2b3a');
+      px(g,9,17,1,1,'#0b2b3a');
+      px(g,10,16,1,1,'#0b2b3a');
+      px(g,11,17,1,1,'#0b2b3a');
+      px(g,12,16,1,1,'#0b2b3a');
+    } else {
+      px(g,9,16,2,1,'#0b2b3a');
+    }
+    return {
+      up: c,
+      right: rotSprite(c, -Math.PI/2),
+      down: rotSprite(c, Math.PI),
+      left: rotSprite(c, Math.PI/2)
+    };
+  }
+  const faces = { normal: makeFace(false), sun: makeFace(true) };
+
+  // 番茄（食物）：红卷叶 + 深色果蒂 + 蓝色圆点眼睛
+  const foodSprite = (function(){
+    const c = document.createElement('canvas'); c.width = CELL; c.height = CELL;
+    const g = c.getContext('2d');
+    // 果身
+    px(g,6,7,8,1,'#e02234');
+    px(g,4,8,12,1,'#e02234');
+    px(g,3,9,14,1,'#e02234');
+    px(g,2,10,16,6,'#e02234');
+    px(g,3,16,14,1,'#e02234');
+    px(g,4,17,12,1,'#e02234');
+    px(g,6,18,8,1,'#e02234');
+    // 底部暗部
+    px(g,2,15,16,1,'#d01c2d');
+    px(g,3,16,14,1,'#b81627');
+    px(g,4,17,12,1,'#8d0f1d');
+    px(g,6,18,8,1,'#8d0f1d');
+    // 左上高光
+    px(g,3,10,2,1,'#f24b5d');
+    px(g,3,11,1,1,'#f24b5d');
+    // 蓝色圆点眼睛
+    px(g,6,11,2,1,'#1b2eff'); px(g,12,11,2,1,'#1b2eff');
+    px(g,5,12,4,1,'#1b2eff'); px(g,11,12,4,1,'#1b2eff');
+    px(g,5,13,4,1,'#1b2eff'); px(g,11,13,4,1,'#1b2eff');
+    px(g,6,14,2,1,'#1b2eff'); px(g,12,14,2,1,'#1b2eff');
+    px(g,5,12,1,1,'#ff6fa8'); px(g,11,12,1,1,'#ff6fa8');
+    // 三瓣红叶（与果身同色，小一号）
+    // 左瓣
+    px(g,7,6,2,1,'#e02234');
+    px(g,5,5,3,1,'#e02234');
+    px(g,4,4,2,1,'#e02234');
+    // 右瓣
+    px(g,11,6,2,1,'#e02234');
+    px(g,12,5,3,1,'#e02234');
+    px(g,14,4,2,1,'#e02234');
+    // 中瓣
+    px(g,9,5,2,1,'#e02234');
+    px(g,9,4,2,1,'#e02234');
+    // 叶面高光
+    px(g,5,5,1,1,'#f24b5d');
+    px(g,13,5,1,1,'#f24b5d');
+    px(g,9,4,1,1,'#f24b5d');
+    // 果蒂（压在叶子中间）
+    px(g,9,5,2,2,'#3a1018');
+    // 额前深色卷须
+    px(g,9,8,3,1,'#3a1018');
+    px(g,10,9,2,1,'#3a1018');
+    px(g,11,10,1,1,'#3a1018');
+    return c;
+  })();
+
+  // 静态背景：冷色网格 + 点心 + 暗角
+  const bgCanvas = (function(){
+    const c = document.createElement('canvas'); c.width = SIZE; c.height = SIZE;
+    const g = c.getContext('2d');
+    px(g,0,0,SIZE,SIZE,'#04141d');
+    g.strokeStyle = 'rgba(70,230,242,.07)';
+    g.lineWidth = 1;
+    for(let i=1;i<GRID;i++){
+      g.beginPath(); g.moveTo(i*CELL+.5,0); g.lineTo(i*CELL+.5,SIZE); g.stroke();
+      g.beginPath(); g.moveTo(0,i*CELL+.5); g.lineTo(SIZE,i*CELL+.5); g.stroke();
+    }
+    g.fillStyle = 'rgba(120,232,255,.10)';
+    for(let y=0;y<GRID;y++){
+      for(let x=0;x<GRID;x++){
+        g.fillRect(x*CELL+CELL/2-1, y*CELL+CELL/2-1, 2, 2);
+      }
+    }
+    const vg = g.createRadialGradient(SIZE/2,SIZE/2,SIZE*0.34,SIZE/2,SIZE/2,SIZE*0.76);
+    vg.addColorStop(0,'rgba(0,0,0,0)');
+    vg.addColorStop(1,'rgba(0,9,15,.55)');
+    g.fillStyle = vg;
+    g.fillRect(0,0,SIZE,SIZE);
+    return c;
+  })();
+
+  /* ================= 逻辑 ================= */
+  function reset(){
+    snake = [{x:8,y:10},{x:8,y:11},{x:8,y:12}];
+    dir = {x:0,y:-1};
+    queue = [];
+    eaten = 0;
+    runTurns = 0;
+    runPaused = false;
+    tickMs = 150;
+    acc = 0;
+    particles = [];
+    shake = 0;
+    overAt = 0;
+    overShown = false;
+    newRecord = false;
+    winFlag = false;
+    spawnFood();
+    scoreEl.textContent = '0';
+    scoreEl.classList.remove('pop');
+    bestEl.textContent = best;
+  }
+
+  function spawnFood(){
+    const free = [];
+    for(let y=0;y<GRID;y++){
+      for(let x=0;x<GRID;x++){
+        if(!snake.some(s=>s.x===x && s.y===y)) free.push({x,y});
+      }
+    }
+    if(!free.length){ food = {x:-1,y:-1}; return false; }
+    food = free[(Math.random()*free.length)|0];
+    return true;
+  }
+
+  function step(){
+    if(queue.length){
+      const nd = queue.shift();
+      if(!(nd.x === -dir.x && nd.y === -dir.y)){
+        const h = snake[0];
+        // 贴墙转向：头距最近墙 ≤1 格
+        if(Math.min(h.x, h.y, GRID-1-h.x, GRID-1-h.y) <= 1) statInc('wallTurns');
+        runTurns++;
+        statMax('maxTurns', runTurns);
+        dir = nd;
+        checkAch(false);
+        achSaveSoon();
+      }
+    }
+
+    const hx = snake[0].x + dir.x;
+    const hy = snake[0].y + dir.y;
+
+    // 撞墙
+    if(hx < 0 || hy < 0 || hx >= GRID || hy >= GRID){ return die('wall'); }
+
+    const eating = (hx === food.x && hy === food.y);
+    // 不吃番茄时尾巴会让位，最后一节可以踩
+    const limit = eating ? snake.length : snake.length - 1;
+    for(let i=0;i<limit;i++){
+      if(snake[i].x === hx && snake[i].y === hy){ return die('self'); }
+    }
+
+    snake.unshift({x:hx,y:hy});
+
+    if(eating){
+      const fx = hx, fy = hy;
+      eaten++;
+      statInc('eatenAll');
+      statMax('bestScore', eaten);
+      statMax('maxLen', snake.length);
+      // 贴墙吃番茄：新头距最近墙 ≤1 格
+      if(Math.min(hx, hy, GRID-1-hx, GRID-1-hy) <= 1) statInc('nearWallEats');
+      if(!runPaused) statMax('quietBest', eaten);
+      if(eaten > best){
+        best = eaten;
+        newRecord = true;
+        try { localStorage.setItem(BEST_KEY, String(best)); } catch(e) {}
+      }
+      tickMs = Math.max(70, 150 - eaten * 3);
+      scoreEl.textContent = eaten;
+      scoreEl.classList.remove('pop');
+      void scoreEl.offsetWidth;
+      scoreEl.classList.add('pop');
+      bestEl.textContent = best;
+      shake = Math.min(7, shake + 4);
+      if(!reduce) burst(fx, fy, 10);
+      checkAch(false);
+      achSaveSoon();
+      if(!spawnFood()) die('win');
+    } else {
+      snake.pop();
+    }
+  }
+
+  // kind: 'wall' 撞墙 / 'self' 自食 / 'win' 满屏
+  function die(kind){
+    winFlag = kind === 'win';
+    if(winFlag) statInc('wins');
+    statInc('games');
+    if(kind === 'self') statInc('selfBites');
+    state = S.OVER;
+    overAt = performance.now();
+    overShown = false;
+    shake = 8;
+    if(!reduce) burst(snake[0].x, snake[0].y, 8);
+    checkAch(false);
+    achSave();
+  }
+
+  function start(){
+    reset();
+    state = S.PLAY;
+    overlay.classList.remove('show');
+    lastT = performance.now();
+    acc = 0;
+  }
+
+  // auto=true 为切后台等被动暂停，不计入手动暂停
+  function togglePause(auto){
+    if(state === S.PLAY){
+      if(!auto) runPaused = true;
+      state = S.PAUSE;
+      showOver('pause');
+    } else if(state === S.PAUSE){
+      state = S.PLAY;
+      overlay.classList.remove('show');
+      lastT = performance.now();
+      acc = 0;
+    }
+  }
+
+  function pushDir(x, y){
+    if(state !== S.PLAY) return;
+    const last = queue.length ? queue[queue.length-1] : dir;
+    if(last.x === -x && last.y === -y) return; // 禁止 180° 反向
+    if(last.x === x && last.y === y) return;
+    if(queue.length >= 2) return;
+    queue.push({x,y});
+  }
+
+  /* ================= 反馈特效 ================= */
+  function burst(gx, gy, n){
+    const cx = gx*CELL + CELL/2;
+    const cy = gy*CELL + CELL/2;
+    const cols = ['#ff5468','#ff8b98','#ffc9d2','#4fd8a8'];
+    for(let i=0;i<n;i++){
+      const a = Math.random()*Math.PI*2;
+      const sp = 0.03 + Math.random()*0.1;
+      particles.push({
+        x:cx, y:cy,
+        vx:Math.cos(a)*sp, vy:Math.sin(a)*sp - 0.02,
+        life:1,
+        decay:0.0024 + Math.random()*0.0012,
+        size:2 + ((Math.random()*2)|0),
+        col:cols[(Math.random()*cols.length)|0]
+      });
+    }
+    if(particles.length > 80) particles.splice(0, particles.length - 80);
+  }
+
+  function updateFx(dt){
+    if(shake > 0) shake = Math.max(0, shake - dt*0.022);
+    for(let i=particles.length-1;i>=0;i--){
+      const p = particles[i];
+      p.x += p.vx*dt;
+      p.y += p.vy*dt;
+      p.vy += 0.00012*dt;
+      p.life -= p.decay*dt;
+      if(p.life <= 0) particles.splice(i,1);
+    }
+  }
+
+  /* ================= 绘制 ================= */
+  function dirKey(d){
+    if(d.x > 0) return 'right';
+    if(d.x < 0) return 'left';
+    if(d.y > 0) return 'down';
+    return 'up';
+  }
+
+  function drawBody(s, a){
+    const x = s.x*CELL, y = s.y*CELL;
+    ctx.globalAlpha = a;
+    ctx.fillStyle = 'rgba(70,230,242,.08)';
+    ctx.fillRect(x+1,y+1,18,18);
+    ctx.fillStyle = '#d7eef8';
+    ctx.fillRect(x+2,y+2,16,16);
+    ctx.fillStyle = '#eaf8ff';
+    ctx.fillRect(x+3,y+3,14,5);
+    ctx.fillStyle = '#b6d9e6';
+    ctx.fillRect(x+2,y+14,16,4);
+    ctx.fillStyle = 'rgba(70,230,242,.45)';
+    ctx.fillRect(x+2,y+2,1,16);
+    ctx.fillRect(x+2,y+2,16,1);
+    ctx.globalAlpha = 1;
+  }
+
+  function drawTail(s, a){
+    const x = s.x*CELL, y = s.y*CELL;
+    ctx.globalAlpha = a;
+    ctx.fillStyle = '#d7eef8';
+    ctx.fillRect(x+4,y+4,12,12);
+    ctx.fillStyle = '#eaf8ff';
+    ctx.fillRect(x+5,y+5,10,4);
+    ctx.fillStyle = '#b6d9e6';
+    ctx.fillRect(x+4,y+13,12,3);
+    ctx.globalAlpha = 1;
+  }
+
+  function drawHead(s, a){
+    const x = s.x*CELL, y = s.y*CELL;
+    const k = dirKey(dir);
+    ctx.globalAlpha = a;
+    ctx.drawImage(faces[shadesOn ? 'sun' : 'normal'][k], x, y);
+    ctx.drawImage(earSprites[k], x, y);
+    ctx.globalAlpha = 1;
+  }
+
+  function drawFood(t){
+    if(food.x < 0) return;
+    const bob = reduce ? 0 : Math.round(Math.sin(t/300));
+    ctx.drawImage(foodSprite, food.x*CELL, food.y*CELL + bob);
+  }
+
+  function draw(t){
+    let ox = 0, oy = 0;
+    if(shake > 0.2 && !reduce){
+      ox = Math.round((Math.random()*2 - 1) * shake);
+      oy = Math.round((Math.random()*2 - 1) * shake);
+    }
+
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.drawImage(bgCanvas, 0, 0);
+
+    ctx.setTransform(1,0,0,1,ox,oy);
+
+    drawFood(t);
+
+    const deathT = (state === S.OVER && !winFlag) ? (performance.now() - overAt)/1000 : 0;
+    for(let i=snake.length-1;i>=0;i--){
+      const s = snake[i];
+      let a = 1;
+      if(deathT > 0){
+        const delay = (snake.length-1-i) * 0.03; // 尾巴先熄
+        a = Math.max(0, Math.min(1, 1 - (deathT - delay)*2.4));
+      }
+      if(a <= 0) continue;
+      if(i === 0) drawHead(s, a);
+      else if(i === snake.length-1) drawTail(s, a);
+      else drawBody(s, a);
+    }
+
+    for(let i=0;i<particles.length;i++){
+      const p = particles[i];
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.fillStyle = p.col;
+      ctx.fillRect(Math.round(p.x), Math.round(p.y), p.size, p.size);
+    }
+    ctx.globalAlpha = 1;
+
+    ctx.setTransform(1,0,0,1,0,0);
+  }
+
+  /* ================= 主循环 ================= */
+  function loop(t){
+    const dt = lastT ? Math.min(60, t - lastT) : 16;
+    lastT = t;
+
+    if(state === S.PLAY){
+      acc += dt;
+      let guard = 0;
+      while(acc >= tickMs && state === S.PLAY && guard++ < 4){
+        acc -= tickMs;
+        step();
+      }
+      if(state !== S.PLAY) acc = 0;
+    }
+
+    if(state === S.OVER && !overShown && performance.now() - overAt > 620){
+      overShown = true;
+      showOver('over');
+    }
+
+    updateFx(dt);
+    draw(t);
+    requestAnimationFrame(loop);
+  }
+
+  /* ================= 弹层与 HUD ================= */
+  function showOver(kind){
+    overlay.classList.add('show');
+    if(kind === 'ready'){
+      ovKicker.textContent = '// READY //';
+      ovTitle.textContent = t('brand').replace(/<\/?span>/g, '');
+      ovSub.textContent = t('readySub');
+      ovStats.style.display = 'none';
+      ovBtn.textContent = t('start');
+      ovHint.textContent = t('readyHint');
+    } else if(kind === 'pause'){
+      ovKicker.textContent = '// PAUSE //';
+      ovTitle.textContent = t('pauseTitle');
+      ovSub.textContent = t('pauseSub');
+      ovStats.style.display = 'none';
+      ovBtn.textContent = t('resumeBtn');
+      ovHint.textContent = t('pauseHint');
+    } else {
+      ovKicker.textContent = winFlag ? '// PERFECT //' : '// GAME OVER //';
+      ovTitle.textContent = winFlag ? t('winTitle') : (newRecord ? t('newTitle') : t('endTitle'));
+      ovSub.textContent = winFlag ? t('winSub') : t('eatSub').replace('{n}', eaten);
+      ovStats.style.display = 'flex';
+      ovScore.textContent = eaten;
+      ovBest.textContent = best;
+      ovBtn.textContent = t('again');
+      ovHint.textContent = t('overHint');
+    }
+  }
+
+  /* 静态文案与页面语言：按当前语言一次性写入 */
+  function applyLangUI(){
+    document.documentElement.lang = (LANG === 'zh') ? 'zh-CN' : LANG;
+    document.title = t('docTitle');
+    const brand = document.querySelector('.brand');
+    if(brand) brand.innerHTML = t('brand');
+    const at = $('achTitleTxt'); if(at) at.textContent = t('achTitle');
+    const af = $('achFoot'); if(af) af.textContent = t('achFoot');
+    const tp = $('tips'); if(tp) tp.textContent = t('tips');
+    const ba = $('btnAch'); if(ba) ba.setAttribute('aria-label', t('acAch'));
+    const bp = $('btnPause'); if(bp) bp.setAttribute('aria-label', t('acPause'));
+    const ac = $('achClose'); if(ac) ac.setAttribute('aria-label', t('acClose'));
+  }
+
+  /* ================= 成就（界面 + 存档） ================= */
+  const ACH_KEY = 'mb_snake_ach_v1';
+  // key = 读取哪个累计统计；goal = 达成阈值；tier = 分组 id（文案见 TXT 的 tier_*）
+  const ACH = [
+    {id:'sn_first_bite',   tier:'intro',    icon:'🍅', key:'eatenAll',     goal:1},
+    {id:'sn_ten_bites',    tier:'intro',    icon:'🍅', key:'eatenAll',     goal:10},
+    {id:'sn_first_run',    tier:'intro',    icon:'🐍', key:'games',        goal:1},
+    {id:'sn_score_10',     tier:'intro',    icon:'⭐', key:'bestScore',    goal:10},
+    {id:'sn_score_25',     tier:'intro',    icon:'🔥', key:'bestScore',    goal:25},
+    {id:'sn_long_40',      tier:'advanced', icon:'🎏', key:'maxLen',       goal:40},
+    {id:'sn_wall_turn_20', tier:'advanced', icon:'🧤', key:'wallTurns',    goal:20},
+    {id:'sn_wall_eat_5',   tier:'advanced', icon:'🎯', key:'nearWallEats', goal:5},
+    {id:'sn_quiet_15',     tier:'advanced', icon:'🤫', key:'quietBest',    goal:15},
+    {id:'sn_turn_30',      tier:'advanced', icon:'🌀', key:'maxTurns',     goal:30},
+    {id:'sn_self_bite',    tier:'advanced', icon:'🥢', key:'selfBites',    goal:1},
+    {id:'sn_eat_100',      tier:'long',     icon:'💯', key:'eatenAll',     goal:100},
+    {id:'sn_games_30',     tier:'long',     icon:'📅', key:'games',        goal:30},
+    {id:'sn_games_100',    tier:'long',     icon:'🏅', key:'games',        goal:100},
+    {id:'sn_full_board',   tier:'hidden',   icon:'🧱', key:'wins',         goal:1, hidden:true}
+  ];
+  const ACH_NORMAL = ACH.filter(a => !a.hidden);
+
+  let achData = { v:1, done:{}, stat:{}, look:'sun' };
+  try{
+    const raw = localStorage.getItem(ACH_KEY);
+    if(raw){
+      const o = JSON.parse(raw);
+      if(o && typeof o === 'object'){
+        achData.done = (o.done && typeof o.done === 'object') ? o.done : {};
+        achData.stat = (o.stat && typeof o.stat === 'object') ? o.stat : {};
+        // 墨镜开关偏好：默认戴，只有明确选过「不戴」才记 normal
+        achData.look = (o.look === 'normal') ? 'normal' : 'sun';
+      }
+    }
+  }catch(e){}
+
+  function achSave(){
+    try { localStorage.setItem(ACH_KEY, JSON.stringify(achData)); } catch(e){}
+  }
+
+  // 统计累计写盘节流，避免每次转向 / 吃番茄都落盘
+  let achSaveTimer = 0;
+  function achSaveSoon(){
+    if(achSaveTimer) return;
+    achSaveTimer = setTimeout(() => { achSaveTimer = 0; achSave(); }, 400);
+  }
+  const achStat = k => achData.stat[k] || 0;
+  function statInc(k){
+    achData.stat[k] = (achData.stat[k] || 0) + 1;
+  }
+  function statMax(k, v){
+    if((achData.stat[k] || 0) < v) achData.stat[k] = v;
+  }
+
+  // 解锁横幅：1.4s 一条，多条排队
+  const toastQ = [];
+  let toastBusy = false;
+  function queueToast(a){
+    toastQ.push(a);
+    if(!toastBusy) showToast();
+  }
+  function showToast(){
+    const a = toastQ.shift();
+    if(!a){ toastBusy = false; return; }
+    toastBusy = true;
+    const el = $('achToast');
+    el.textContent = t('toast').replace('{name}', t('ach_' + a.id));
+    el.classList.add('show');
+    setTimeout(() => {
+      el.classList.remove('show');
+      setTimeout(showToast, 240);
+    }, 1400);
+  }
+
+  function checkAch(silent){
+    let changed = false;
+    for(const a of ACH){
+      if(achData.done[a.id]) continue;
+      if(achStat(a.key) >= a.goal){
+        achData.done[a.id] = Date.now();
+        changed = true;
+        if(!silent) queueToast(a);
+      }
+    }
+    if(changed){
+      achSave();
+      updateAchBadge();
+      refreshLook();
+      if(achOpen()) renderAch();
+    }
+    return changed;
+  }
+  const achDoneCount = () => ACH.reduce((n,a) => n + (achData.done[a.id] ? 1 : 0), 0);
+  const achNormalDoneCount = () => ACH_NORMAL.reduce((n,a) => n + (achData.done[a.id] ? 1 : 0), 0);
+
+  // 普通成就全达成 → 解锁墨镜；解锁后由长线 / 隐藏分组里的按钮切换戴与不戴
+  function refreshLook(){
+    shadesUnlocked = achNormalDoneCount() >= ACH_NORMAL.length;
+    shadesOn = shadesUnlocked && achData.look !== 'normal';
+  }
+
+  // 墨镜切换按钮：解锁前固定显示问号，解锁后变成可点的开关
+  function shadeBtnHTML(){
+    if(!shadesUnlocked){
+      return '<button class="achShade locked" type="button" disabled'
+        + ' aria-label="' + t('lockAria') + '" title="' + t('lockTitle') + '">？</button>';
+    }
+    const on = achData.look !== 'normal';
+    return '<button class="achShade' + (on ? ' on' : '') + '" type="button"'
+      + ' aria-pressed="' + on + '" title="' + t('shadeTitle') + '">'
+      + '<span class="dot"></span><i>' + (on ? t('shadesOn') : t('shadesOff')) + '</i></button>';
+  }
+
+  function toggleShades(){
+    if(!shadesUnlocked) return;
+    achData.look = (achData.look === 'normal') ? 'sun' : 'normal';
+    achSave();
+    refreshLook();
+    renderAch();
+  }
+
+  function updateAchBadge(){
+    const txt = achDoneCount() + '/' + ACH.length;
+    $('achCount').textContent = txt;
+    $('achTotal').textContent = txt;
+  }
+
+  function renderAch(){
+    let html = '', tier = '';
+    for(const a of ACH){
+      if(a.tier !== tier){
+        tier = a.tier;
+        // 切换按钮放在「隐藏」分组标题右侧
+        const btn = (tier === 'hidden') ? shadeBtnHTML() : '';
+        html += '<div class="achTier"><span>' + t('tier_' + tier) + '</span>' + btn + '</div>';
+      }
+      const done = !!achData.done[a.id];
+      const hidden = a.hidden && !done;
+      const cur = Math.min(a.goal, achStat(a.key));
+      html += '<div class="achRow' + (done ? ' done' : '') + '">'
+        + '<div class="achIcon">' + (hidden ? '❓' : a.icon) + '</div>'
+        + '<div class="achTxt">'
+        +   '<div class="achName">' + (hidden ? t('hiddenName') : t('ach_' + a.id)) + '</div>'
+        +   '<div class="achDesc">' + (hidden ? t('hiddenDesc') : t('ach_' + a.id + '_d')) + '</div>'
+        + '</div>'
+        + '<div class="achState">' + (done ? t('doneTag') : cur + '/' + a.goal) + '</div>'
+        + '</div>';
+    }
+    $('achList').innerHTML = html;
+  }
+
+  let achPaused = false;
+  const achOpen = () => $('achModal').classList.contains('show');
+
+  function openAch(){
+    if(state === S.PLAY){ state = S.PAUSE; achPaused = true; }
+    refreshLook();
+    updateAchBadge();
+    renderAch();
+    $('achModal').classList.add('show');
+  }
+
+  function closeAch(){
+    $('achModal').classList.remove('show');
+    if(achPaused){
+      achPaused = false;
+      state = S.PLAY;
+      lastT = performance.now();
+      acc = 0;
+    }
+  }
+
+  /* ================= 自适应：电脑与手机同为正方形 ================= */
+  function fit(){
+    const vw = window.innerWidth;
+    const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+    const reserve = 104; // 顶栏 + 提示 + 间距 + 安全边距
+    const sq = Math.max(200, Math.min(vw - 24, vh - reserve, 620));
+    document.documentElement.style.setProperty('--sq', Math.round(sq) + 'px');
+  }
+
+  /* ================= 输入 ================= */
+  const KEYMAP = {
+    arrowup:[0,-1], w:[0,-1],
+    arrowdown:[0,1], s:[0,1],
+    arrowleft:[-1,0], a:[-1,0],
+    arrowright:[1,0], d:[1,0]
+  };
+
+  window.addEventListener('keydown', e => {
+    const k = e.key.toLowerCase();
+    if(achOpen()){
+      e.preventDefault();
+      if(k === 'escape') closeAch();
+      return;
+    }
+    if(KEYMAP[k]){
+      e.preventDefault();
+      if(state === S.READY || state === S.OVER){ start(); }
+      pushDir(KEYMAP[k][0], KEYMAP[k][1]);
+      return;
+    }
+    if(k === ' ' || k === 'enter' || k === 'p'){
+      e.preventDefault();
+      if(state === S.READY || state === S.OVER) start();
+      else togglePause();
+    }
+  }, { passive:false });
+
+  $('btnPause').addEventListener('click', () => {
+    if(achOpen()) return;
+    if(state === S.PLAY || state === S.PAUSE) togglePause();
+  });
+
+  $('btnAch').addEventListener('click', () => {
+    if(achOpen()) closeAch(); else openAch();
+  });
+  $('achClose').addEventListener('click', closeAch);
+  $('achList').addEventListener('click', e => {
+    if(e.target.closest('.achShade')) toggleShades();
+  });
+  $('achModal').addEventListener('pointerdown', e => {
+    if(e.target === $('achModal')) closeAch();
+  });
+
+  ovBtn.addEventListener('click', () => {
+    if(state === S.PAUSE) togglePause();
+    else start();
+  });
+
+  // 滑动转向：手机与鼠标拖动一致
+  let pd = null;
+  frame.addEventListener('pointerdown', e => {
+    if(state !== S.PLAY) return;
+    pd = { x:e.clientX, y:e.clientY, id:e.pointerId };
+  });
+  frame.addEventListener('pointermove', e => {
+    if(!pd || e.pointerId !== pd.id || state !== S.PLAY) return;
+    const dx = e.clientX - pd.x;
+    const dy = e.clientY - pd.y;
+    if(Math.abs(dx) < 18 && Math.abs(dy) < 18) return;
+    if(Math.abs(dx) > Math.abs(dy)) pushDir(dx > 0 ? 1 : -1, 0);
+    else pushDir(0, dy > 0 ? 1 : -1);
+    pd = { x:e.clientX, y:e.clientY, id:e.pointerId };
+  });
+  frame.addEventListener('pointerup', () => { pd = null; });
+  frame.addEventListener('pointercancel', () => { pd = null; });
+
+  document.addEventListener('visibilitychange', () => {
+    if(document.hidden && state === S.PLAY) togglePause(true);
+  });
+
+  window.addEventListener('resize', fit);
+  if(window.visualViewport) window.visualViewport.addEventListener('resize', fit);
+
+  /* ================= 启动 ================= */
+  applyLangUI();
+  checkAch(true);   // 读档静默结算，补齐旧统计
+  refreshLook();
+  updateAchBadge();
+  fit();
+  reset();
+  showOver('ready');
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
