@@ -192,6 +192,7 @@
   .gi .ic{grid-row:1/3;font-size:19px;text-align:center;}
   .gi .nm{font-size:11px;font-weight:900;}
   .gi .ds{font-size:9px;color:var(--dim);line-height:1.35;}
+  .gi .fl{grid-column:2/4;grid-row:3;font-size:9px;color:var(--accent);line-height:1.45;margin-top:1px;}
   .gi .st{grid-column:3;grid-row:1/3;font-size:8px;letter-spacing:1px;color:var(--accent);white-space:nowrap;}
   .gearEmptyState{grid-column:1/-1;text-align:center;font-size:12px;color:var(--dim);
     border:1px dashed var(--line);padding:22px 12px;line-height:1.7;}
@@ -486,6 +487,7 @@
   .rewardline:last-child{border-bottom:0;}
   .rewardline span{color:var(--dim);flex:0 0 auto;white-space:nowrap;}
   .rewardline b{color:var(--accent2);text-align:right;min-width:0;}
+  .rewardline b .fl{display:block;font-style:normal;font-weight:400;font-size:11px;color:var(--dim);line-height:1.5;margin-top:2px;}
   .novelbox{background:rgba(70,230,242,.05);border:1px solid var(--line2);
     padding:12px 14px;margin-top:12px;font-size:13px;line-height:1.75;color:#cdeef4;}
   .novelbox b{display:block;color:var(--accent);font-size:11px;letter-spacing:2px;margin-bottom:5px;}
@@ -1327,7 +1329,7 @@ const T = {
     achHint:'成就「番茄幸存者」将在返回首页后结算', achHint3:'成就「百日守卫」也将在返回首页后结算',
     locked:'暂未开放', lockedSub:'这是调试中的小游戏。请从首页 #debugall 入口进入。',
     best:'最佳记录', noRecord:'尚无通关记录', mute:'静音', unmute:'取消静音',
-    stageProgress:'关卡进度', stageBest:'最快', stageLocked:'🔒 未解锁', stageLockedHint:'通关上一关后解锁',
+    stageProgress:'关卡进度', stageBest:'最快', newRecord:'新纪录', stageLocked:'🔒 未解锁', stageLockedHint:'通关上一关后解锁',
     stageFirstClear:'本关首通加成', stageNext:'下一关', stageUnlock:'已解锁',
     stageReplay:'已解锁（可刷记录）', stageAllClear:'全部关卡已通关', rewardLineStage:'关卡',
     stageReserved:'敬请期待', stageReservedHint:'后续版本开放',
@@ -1450,7 +1452,7 @@ const T = {
     codexTabWeapon:'武器', codexTabRelic:'宝物', codexSubWeapon:'共 {a} 件武器', codexGrpUnion:'联合进化',
     statsBtn:'📊 统计', statsTitle:'统计', statsSub:'数据来自首页存档',
     statRuns:'总局数', statWins:'胜利次数', statKillsTotal:'累计击杀', statChests:'累计开箱',
-    statRelicKinds:'宝物种类', statEndless:'无尽最佳', statsBestTitle:'各关最快（普通）',
+    statRelicKinds:'宝物种类', statEndless:'无尽最佳', statsBestTitle:'各关最快',
     sanctBtn:'🛏️ 床', sanctTitle:'床', sanctSub:'温暖的被窝才是最好的归宿。', sanctCoins:'可用金币：{a}', sanctMax:'已满级',
     sanctEntrySub:'永久强化与信物，随时来睡一觉', sanctEntryGo:'进入',
     sanctPoor:'金币不足', sanctBought:'升级成功 · Lv.{a}',
@@ -1501,7 +1503,7 @@ const T = {
     achHint:'The Tomato Survivor achievement will settle when you return home', achHint3:'The Hundred-Day Guardian achievement will also settle when you return home',
     locked:'Not open yet', lockedSub:'This minigame is in debug. Enter through #debugall on the home page.',
     best:'Best', noRecord:'No clears yet', mute:'Mute', unmute:'Unmute',
-    stageProgress:'Stage progress', stageBest:'Best', stageLocked:'🔒 Locked', stageLockedHint:'Clear the previous stage to unlock',
+    stageProgress:'Stage progress', stageBest:'Best', newRecord:'New record', stageLocked:'🔒 Locked', stageLockedHint:'Clear the previous stage to unlock',
     stageFirstClear:'First-clear bonus (this stage)', stageNext:'Next stage', stageUnlock:'Unlocked',
     stageReplay:'Unlocked (record run)', stageAllClear:'All stages cleared', rewardLineStage:'Stage',
     stageReserved:'Coming soon', stageReservedHint:'Coming in a later version',
@@ -1613,7 +1615,7 @@ const T = {
     codexTabWeapon:'Weapons', codexTabRelic:'Relics', codexSubWeapon:'{a} weapons', codexGrpUnion:'Unions',
     statsBtn:'📊 Stats', statsTitle:'Stats', statsSub:'Data comes from the home-page save',
     statRuns:'Runs', statWins:'Wins', statKillsTotal:'Total kills', statChests:'Chests opened',
-    statRelicKinds:'Relic kinds', statEndless:'Endless best', statsBestTitle:'Best time per stage (Normal)',
+    statRelicKinds:'Relic kinds', statEndless:'Endless best', statsBestTitle:'Best time per stage',
     sanctBtn:'🛏️ Bed', sanctTitle:'Bed', sanctSub:'A warm blanket is the best place to be.', sanctCoins:'Coins available: {a}', sanctMax:'Maxed',
     sanctEntrySub:'Permanent upgrades and charms — drop by anytime', sanctEntryGo:'Enter',
     sanctPoor:'Not enough coins', sanctBought:'Upgraded · Lv.{a}',
@@ -1664,7 +1666,7 @@ const T = {
     achHint:'実績「トマトサバイバー」はホームに戻ると確定します', achHint3:'実績「百日の守り手」もホームに戻ると確定します',
     locked:'未公開', lockedSub:'デバッグ中のミニゲームです。ホームの #debugall から入ってください。',
     best:'ベスト', noRecord:'クリア記録なし', mute:'ミュート', unmute:'ミュート解除',
-    stageProgress:'ステージ進行', stageBest:'最速', stageLocked:'🔒 未解放', stageLockedHint:'前のステージをクリアすると解放',
+    stageProgress:'ステージ進行', stageBest:'最速', newRecord:'新記録', stageLocked:'🔒 未解放', stageLockedHint:'前のステージをクリアすると解放',
     stageFirstClear:'初クリアボーナス（このステージ）', stageNext:'次のステージ', stageUnlock:'解放済み',
     stageReplay:'解放済み（記録更新可）', stageAllClear:'全ステージクリア', rewardLineStage:'ステージ',
     stageReserved:'近日公開', stageReservedHint:'後のバージョンで解放',
@@ -1776,7 +1778,7 @@ const T = {
     codexTabWeapon:'武器', codexTabRelic:'宝物', codexSubWeapon:'武器 {a} 種', codexGrpUnion:'連合進化',
     statsBtn:'📊 統計', statsTitle:'統計', statsSub:'データはホームのセーブから取得',
     statRuns:'総プレイ数', statWins:'勝利数', statKillsTotal:'累計撃破', statChests:'累計宝箱',
-    statRelicKinds:'宝物の種類', statEndless:'エンドレス最長', statsBestTitle:'各ステージ最速（ノーマル）',
+    statRelicKinds:'宝物の種類', statEndless:'エンドレス最長', statsBestTitle:'各ステージ最速',
     sanctBtn:'🛏️ ベッド', sanctTitle:'ベッド', sanctSub:'暖かい布団こそ最高の帰る場所。', sanctCoins:'所持コイン：{a}', sanctMax:'最大',
     sanctEntrySub:'永久強化と信物、いつでもどうぞ', sanctEntryGo:'入る',
     sanctPoor:'コイン不足', sanctBought:'強化成功 · Lv.{a}',
@@ -1827,7 +1829,7 @@ const T = {
     achHint:'업적 「토마토 서바이버」는 홈으로 돌아가면 확정됩니다', achHint3:'업적 「백일의 수호자」도 홈으로 돌아가면 확정됩니다',
     locked:'아직 공개되지 않음', lockedSub:'디버그 중인 미니게임입니다. 홈의 #debugall로 입장하세요.',
     best:'최고 기록', noRecord:'클리어 기록 없음', mute:'음소거', unmute:'음소거 해제',
-    stageProgress:'스테이지 진행', stageBest:'최단', stageLocked:'🔒 잠김', stageLockedHint:'이전 스테이지를 클리어하면 잠금 해제',
+    stageProgress:'스테이지 진행', stageBest:'최단', newRecord:'신기록', stageLocked:'🔒 잠김', stageLockedHint:'이전 스테이지를 클리어하면 잠금 해제',
     stageFirstClear:'첫 클리어 보너스(이 스테이지)', stageNext:'다음 스테이지', stageUnlock:'해금됨',
     stageReplay:'해금됨(기록 갱신 가능)', stageAllClear:'모든 스테이지 클리어', rewardLineStage:'스테이지',
     stageReserved:'공개 예정', stageReservedHint:'이후 버전에서 공개',
@@ -1939,7 +1941,7 @@ const T = {
     codexTabWeapon:'무기', codexTabRelic:'유물', codexSubWeapon:'무기 {a}종', codexGrpUnion:'연합 진화',
     statsBtn:'📊 통계', statsTitle:'통계', statsSub:'데이터는 홈 저장에서 가져옵니다',
     statRuns:'총 플레이', statWins:'승리', statKillsTotal:'누적 처치', statChests:'누적 상자',
-    statRelicKinds:'보물 종류', statEndless:'엔드리스 최고', statsBestTitle:'스테이지별 최단 기록 (노멀)',
+    statRelicKinds:'보물 종류', statEndless:'엔드리스 최고', statsBestTitle:'스테이지별 최단 기록',
     sanctBtn:'🛏️ 침대', sanctTitle:'침대', sanctSub:'따뜻한 이불 속이 최고의 안식처.', sanctCoins:'보유 코인: {a}', sanctMax:'최대',
     sanctEntrySub:'영구 강화와 신물, 언제든지 들러요', sanctEntryGo:'입장',
     sanctPoor:'코인 부족', sanctBought:'강화 완료 · Lv.{a}',
@@ -2081,6 +2083,29 @@ const GEAR = [
   {id:'amulet', icon:'🧿', rarity:2, stats:{steal:-0.35, gamble:0.06},
     name:{zh:'平安符'}, desc:{zh:'偷番茄 -35% · 对赌胜率 +6%'}}
 ];
+/* 装备实际作用：旅行信件的口吻。文案以《幸存者装备表.md》第四节为准；暂只有中文，确认后补四语。 */
+const GEAR_FLAVOR = {
+  compass:'指针歪歪的，却总能在岔路口替我们选正确的方向。回家的路好像短了一点点。',
+  badge:'别在胸口，邮差路过时会多看我们一眼。偶尔，它会帮忙免费寄一封信。',
+  pack:'背起来轻轻的，走多远都不累。侧袋也刚好能再塞下一件小特产。',
+  boots:'鞋底磨得亮亮的，走起路来沙沙响。路还是那条路，只是因为熟悉，月巴走得更快些。',
+  umbrella:'晴天替我们遮太阳，雨天替我们挡雨。收伞的时候，伞骨上常常还挂着一件小东西。',
+  lantern:'灯一亮，门口就有影子晃过来。看来今晚，又有客人想来坐坐了。',
+  jar:'特产装进玻璃罐，看上去更可爱了。',
+  sketch:'边走边画，画着画着，包里就多出一件没见过的特产。大概是它们自己钻进来了。',
+  bell:'铃铛一响，信箱会多一点动静，背包也会多一点分量。',
+  basket:'篮子编得松松的，蘑菇好像长得更快。庭院里的收获，也比平时早一点。',
+  pillow:'回来往枕头上一倒，梦里的番茄就变多了。睡醒的时候，口袋也是鼓鼓的。',
+  doormat:'门垫上多了几串脚印。看来我们出门的时候，家门口一直很热闹。',
+  tin:'把重复的特产收进铁盒，摇一摇，倒出来的不是饼干，是更多番茄。',
+  ticket:'走累了就坐坐车吧。',
+  watch:'表针走得很急，滴答滴答催我回家。明明才出门，归期却已经近在眼前。',
+  map:'地图边角画着小小的箭头，走着走着，就到了没去过的地方。',
+  bentobox:'便当还热着，香味一路飘在前面。',
+  telescope:'举起来看远处，信箱那边也亮了一下。等我回去，里面大概又多了一封信。',
+  clover:'夹在信纸里，是幸运的象征。回来的时候，也许能多带一件好东西。',
+  amulet:'挂在包上，偷番茄的月巴会犹豫一下。老虎机也愿意多给我一点面子。'
+};
 /* 装备掉落表：困难 1-10 关对应 GEAR 前 10 件，噩梦 1-10 关对应后 10 件 */
 function gearDropFor(stageN, diff){
   const n = stageN | 0;
@@ -2095,6 +2120,7 @@ function gearDef(id){
 }
 function gearName(g){ return (g && g.name && (g.name[LANG] || g.name.zh)) || (g && g.id) || ''; }
 function gearDesc(g){ return (g && g.desc && (g.desc[LANG] || g.desc.zh)) || ''; }
+function gearFlavor(g){ return (g && GEAR_FLAVOR[g.id]) || ''; }
 function gearBonusZero(){
   const b = {};
   for(const k in GEAR_BONUS_KEYS) b[k] = 0;
@@ -2199,7 +2225,7 @@ const RUN_COIN_LOSS_RATE = 0.4;
 function applyRewards(victory, stats, stage){
   const st = stage || stageDef(1);
   let save = readSave();
-  const out = { ok:false, coins:0, gifts:[], first:false, clears:0, total:0, stage:st.n, firstStage:false, unlockedNext:false, stageClear:0, gearDrop:null, gearCoins:0, novel:null };
+  const out = { ok:false, coins:0, gifts:[], first:false, clears:0, total:0, stage:st.n, firstStage:false, unlockedNext:false, stageClear:0, stageBest:null, gearDrop:null, gearCoins:0, novel:null };
   /* 读不到首页存档时（直接打开本页、存储被清理等）不再静默返回 0 金币，
      而是就地补一份最小存档，保证结算的金币照常计算并写入 */
   const newSave = !save;
@@ -2276,6 +2302,11 @@ function applyRewards(victory, stats, stage){
     if(!prevBest || stats.time < prevBest.time){
       sv.stageBest[bestKeyNow] = { time:+stats.time.toFixed(1), kills:stats.kills, at:Date.now(), diff:diff };
     }
+    const bestNow = sv.stageBest[bestKeyNow];
+    if(bestNow){
+      out.stageBest = { time: bestNow.time, kills: bestNow.kills || 0, diff: bestNow.diff || diff,
+                        isNew: !prevBest || stats.time < prevBest.time };
+    }
     sv.stageSel = st.n;
   }
   // 角色解锁：只增不减
@@ -2338,6 +2369,23 @@ function stageBestOfIn(sv, n, diff){
   if(sv.stageBest[k]) return true;
   // 困难/噩梦没有记录时回退普通难度，用于判断「该关是否已解锁」
   return !!(sv.stageBest[stageKeyOf(n)]);
+}
+/* 按「当前难度 → 普通 → 困难 → 噩梦」顺序取最快记录，任意难度通关过都能显示，
+   避免切难度后记录看似消失 */
+function bestRecordOf(sv, n, diff){
+  if(!sv || !sv.stageBest) return null;
+  const order = [diff || 'normal', 'normal', 'hard', 'nightmare'];
+  const tried = {};
+  for(let i=0;i<order.length;i++){
+    const d = order[i];
+    if(tried[d]) continue;
+    tried[d] = true;
+    const rec = sv.stageBest[bestKey(n, d)];
+    if(rec && typeof rec === 'object' && rec.time > 0){
+      return { time: rec.time, kills: rec.kills || 0, at: rec.at || 0, diff: rec.diff || d };
+    }
+  }
+  return null;
 }
 
 /* ============================================================
@@ -2627,9 +2675,12 @@ function playableCount(){ return playableStages().length; }
 function nextPlayable(n){ for(let i=0;i<STAGES.length;i++){ const s=STAGES[i]; if(s.n > n && !s.reserved) return s; } return null; }
 function clampSel(n){ const list = playableStages(); let out = list.length ? list[0].n : 1; for(let i=0;i<list.length;i++){ if(list[i].n <= n) out = list[i].n; } return out; }
 function stageDef(n){ return STAGES[clamp((n|0)||1, 1, STAGES.length) - 1]; }
-function stageName(st){
+function stageBaseName(st){
   const nm = st && st.name;
-  const base = (nm && (nm[LANG] || nm.zh)) || ('STAGE ' + (st ? st.n : 1));
+  return (nm && (nm[LANG] || nm.zh)) || ('STAGE ' + (st ? st.n : 1));
+}
+function stageName(st){
+  const base = stageBaseName(st);
   return (st && st.key) ? (st.key + ' ' + base) : base;
 }
 function bossTitle(st){
@@ -2639,11 +2690,6 @@ function bossTitle(st){
 function svData(){ return (IDX && IDX.survivor) || null; }
 function stageClearN(){ const sv = svData(); return clamp(parseInt(sv && sv.stageClear, 10) || 0, 0, playableCount()); }
 function stageUnlocked(n){ const st = stageDef(n); return !!st && !st.reserved && n >= 1 && n <= stageClearN() + 1; }
-function stageBestOf(n){
-  const sv = svData();
-  const b = sv && sv.stageBest && sv.stageBest[bestKey(n, (sv && sv.diff) || 'normal')];
-  return (b && typeof b === 'object') ? b : null;
-}
 
 /* ============================================================
  * 角色 / 难度 / 圣所（Plan 3D）
@@ -2723,6 +2769,8 @@ const G = {
   last:0, raf:0
 };
 const keys = {};
+/* 供首页查询对局状态：首页据此决定「对局中不自动刷新，菜单/结算页才刷新」 */
+try{ window.__svState=function(){ return G.state; }; }catch(e){}
 
 function newPlayer(){
   const c = charDef(G.char);
@@ -8710,7 +8758,8 @@ function renderResult(){
   lines.push('<div class="rewardline"><span>' + esc(t('rewardLineCoin')) + '</span><b>+' + r.reward.coins + '</b></div>');
   if(r.reward.gearDrop){
     lines.push('<div class="rewardline"><span>' + esc(t('gearDrop')) + '</span><b>'
-      + esc(gearName(r.reward.gearDrop)) + ' · ' + esc(gearDesc(r.reward.gearDrop)) + '</b></div>');
+      + esc(gearName(r.reward.gearDrop)) + ' · ' + esc(gearDesc(r.reward.gearDrop))
+      + '<i class="fl">' + esc(gearFlavor(r.reward.gearDrop)) + '</i></b></div>');
   } else if(win && r.reward.gearCoins){
     lines.push('<div class="rewardline"><span>' + esc(t('gearDropCoins')) + '</span><b>+' + r.reward.gearCoins + '</b></div>');
   }
@@ -8720,6 +8769,14 @@ function renderResult(){
     lines.push('<div class="rewardline"><span>' + esc(t('endlessKills')) + '</span><b>' + (sv.endlessKills || r.stats.kills) + '</b></div>');
   }
   if(win){
+    if(r.reward.stageBest){
+      const sb = r.reward.stageBest;
+      lines.push('<div class="rewardline"><span>' + esc(t('stageBest')) + '</span><b>'
+        + fmtTime(sb.time)
+        + (sb.diff !== 'normal' ? ' · ' + esc(t('diff_' + sb.diff)) : '')
+        + (sb.isNew ? ' · ' + esc(t('newRecord')) : '')
+        + '</b></div>');
+    }
     lines.push('<div class="rewardline"><span>' + esc(t('rewardLineAch')) + '</span><b>' + esc(r.reward.clears >= 3 ? t('achHint3') : t('achHint')) + '</b></div>');
     if(nextPlayable(r.stage.n)){
       lines.push('<div class="rewardline"><span>' + esc(t('stageNext')) + '</span><b>' + (r.reward.unlockedNext ? esc(t('stageUnlock')) : esc(t('stageReplay'))) + '</b></div>');
@@ -8810,13 +8867,16 @@ function renderStageList(){
       continue;
     }
     const open = stageUnlocked(st.n);
-    const best = stageBestOf(st.n);
-    const mt = open ? (best ? (t('stageBest') + ' ' + fmtTime(best.time)) : fmtTime(st.dur))
+    const sv = svData();
+    const best = bestRecordOf(sv, st.n, (sv && sv.diff) || 'normal');
+    const bestTag = (best && best.diff !== 'normal') ? (' · ' + t('diff_' + best.diff)) : '';
+    const mt = open ? (best ? (t('stageBest') + ' ' + fmtTime(best.time) + bestTag)
+                             : fmtTime(st.dur))
                     : t('stageLocked');
     html.push('<button class="stage' + (G.sel === st.n ? ' on' : '') + (open ? '' : ' lock') + '" data-n="' + st.n + '">'
       + '<span class="no">' + esc(st.key || ('STAGE ' + st.n)) + '</span>'
       + (cleared >= st.n ? '<span class="cl">✦</span>' : '')
-      + '<span class="nm">' + esc(stageName(st)) + '</span>'
+      + '<span class="nm">' + esc(stageBaseName(st)) + '</span>'
       + '<span class="mt">' + esc(mt) + '</span>'
       + '</button>');
   }
@@ -9078,7 +9138,7 @@ function renderLoadout(){
   function slotHTML(i){
     const g = gearDef(equipped[i]);
     if(g){
-      return '<button class="lo-slot" data-slot="' + i + '" title="' + esc(gearDesc(g)) + '">'
+      return '<button class="lo-slot" data-slot="' + i + '" title="' + esc(gearDesc(g) + '\n' + gearFlavor(g)) + '">'
         + '<span class="ic">' + g.icon + '</span>'
         + '<span class="tx"><span class="nm">' + esc(gearName(g)) + '</span>'
         + '<span class="ds">' + esc(gearDesc(g)) + '</span></span></button>';
@@ -9130,6 +9190,7 @@ function renderGearPicker(){
       + '<span class="ic">' + g.icon + '</span>'
       + '<span class="nm">' + esc(gearName(g)) + '</span>'
       + '<span class="ds">' + esc(gearDesc(g)) + '</span>'
+      + '<span class="fl">' + esc(gearFlavor(g)) + '</span>'
       + (at >= 0 ? '<span class="st">' + esc(on ? t('gearUnequip') : t('gearSlotNo', at + 1)) + '</span>' : '')
       + '</button>';
   }).join('');
@@ -9245,9 +9306,10 @@ function renderStats(){
   }).join('');
   $('statsSub').textContent = t('statsSub');
   $('statsBest').innerHTML = playableStages().map(function(st){
-    const b = sv.stageBest && sv.stageBest['' + st.n];
+    const b = bestRecordOf(sv, st.n, 'normal');
+    const tag = (b && b.diff !== 'normal') ? (' · ' + t('diff_' + b.diff)) : '';
     return '<div class="bestrow"><span>' + esc(stageName(st)) + '</span>'
-      + '<b>' + (b && b.time ? fmtTime(b.time) : '—') + '</b></div>';
+      + '<b>' + (b ? (fmtTime(b.time) + tag) : '—') + '</b></div>';
   }).join('');
 }
 /* ---------- 圣所 ---------- */
