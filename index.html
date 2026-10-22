@@ -279,10 +279,32 @@
 
   /* 图鉴 */
   .book{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;}
-  .booktabs{display:flex;gap:6px;margin-bottom:10px;}
-  .btab{flex:1;padding:7px 0;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.6);color:var(--dim);font-weight:800;font-size:12px;cursor:pointer;}
+  /* 图鉴顶栏：四个页签（第一/第二/第三图鉴 + 画廊）窄屏改为两行两列，不挤压文字、不截断；
+     搜索只保留一个小放大镜，点开后才展开输入框 */
+  .bookbar{display:flex;align-items:center;gap:6px;margin-bottom:10px;}
+  .booktabs{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;}
+  .booktabs::-webkit-scrollbar{display:none;}
+  .btab{flex:1 1 auto;min-width:max-content;padding:7px 10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.6);color:var(--dim);font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap;}
   .btab.on{background:var(--purple2);color:#fff;border-color:var(--purple2);}
   .btab.lock{opacity:.55;cursor:not-allowed;}
+  .bsearchbtn{flex:0 0 auto;width:32px;height:32px;padding:0;border-radius:10px;border:1px solid var(--line);
+    background:rgba(255,255,255,.6);color:var(--dim);font-size:14px;line-height:1;cursor:pointer;}
+  .bsearchbtn.on{background:var(--purple2);color:#fff;border-color:var(--purple2);}
+  .bsearchrow{margin:-3px 0 10px;}
+  .bsearchin{width:100%;box-sizing:border-box;padding:9px 12px;border-radius:11px;border:1px solid var(--line);
+    background:var(--panel2);color:var(--text);font-size:13px;outline:none;}
+  .bsearchin:focus{border-color:var(--purple2);}
+  .bsearchcnt{font-size:11px;color:var(--dim);margin:6px 2px 0;}
+  /* 全图鉴搜索结果：按图鉴分组的小标题（跨整行） */
+  .dex-grp{grid-column:1/-1;display:flex;align-items:center;gap:6px;margin:2px 2px -2px;
+    font-size:11px;font-weight:800;color:var(--dim);letter-spacing:.02em;}
+  @media (max-width:640px){
+    /* 窄屏：四个页签改为两行两列，放大镜竖排在右侧，避免任一页签被截断 */
+    .bookbar{align-items:stretch;gap:6px;}
+    .booktabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;overflow:visible;}
+    .btab{min-width:0;padding:8px 4px;font-size:11px;}
+    .bsearchbtn{width:34px;height:auto;font-size:13px;}
+  }
   /* ---------- 投稿页：还没有立绘的月巴 ---------- */
   /* 顶部外链/搜索条吸顶：用透明背景 + 模糊，不写死底色，深浅皮肤都不会出现突兀色块 */
   .subtop{position:sticky;top:-14px;z-index:3;margin:-14px 0 8px;padding:14px 0 0;
@@ -599,6 +621,12 @@
   .bcard .stats b{color:var(--purple2);}
   .bcard .stats .gold{color:var(--gold);font-weight:900;}
   .bcard .cd{font-size:10px;color:var(--dim);margin-top:3px;line-height:1.3;}
+  /* 特殊月巴专属游戏入口：未收集也显示（锁定卡片同样可点） */
+  .bcard .bc-game{display:block;width:100%;margin-top:5px;padding:4px 6px;border-radius:9px;
+    border:1px solid var(--purple2);background:var(--panel2);color:var(--purple2);
+    font:800 10px/1.25 inherit;cursor:pointer;transition:filter .15s,transform .15s;}
+  .bcard .bc-game:hover{filter:brightness(1.06);transform:translateY(-1px);}
+  .bcard.locked .bc-game{cursor:pointer;}
   .bcard.allgold{background:linear-gradient(180deg,rgba(255,239,181,.75),rgba(255,224,130,.7));
     border-color:#e6b84c;animation:goldbox 1.8s ease-in-out infinite;}
   .bcard.allgold.anim-in{animation:skStaggerIn .35s var(--stagger,0ms) cubic-bezier(.2,.8,.3,1) both, goldbox 1.8s ease-in-out .35s infinite;}
@@ -3314,6 +3342,82 @@
   #svClose:active{transform:scale(.95);}
   #svFrame{flex:1 1 auto;width:100%;min-height:0;border:0;display:block;background:#04060a;}
   body.sv-lock{overflow:hidden;}
+  /* ===== 百巴箱：小游戏合集（图鉴月巴图标 + 页内/内嵌打开；配色随皮肤） ===== */
+  #gbBox{position:fixed;inset:0;z-index:9997;display:none;align-items:center;justify-content:center;
+    padding:16px;background:rgba(44,35,70,.42);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);}
+  #gbBox.show{display:flex;}
+  #gbPanel{width:min(660px,100%);max-height:min(86vh,740px);display:flex;flex-direction:column;
+    animation:gbpop .26s cubic-bezier(.34,1.56,.64,1);}
+  /* 圆角/边框交给 .frost，皮肤可自行覆盖 */
+  .gb-panel{border-radius:20px;overflow:hidden;}
+  @keyframes gbpop{0%{transform:translateY(12px) scale(.96);opacity:0;}100%{transform:none;opacity:1;}}
+  #gbHead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:14px 16px 8px;}
+  #gbHead .gbt{font-size:17px;font-weight:800;color:var(--gbtxt,var(--purple2));}
+  #gbHead .gbs{font-size:11px;font-weight:700;color:var(--dim);}
+  /* 关闭键复用 .btn，皮肤按钮样式直接生效；这里只压小尺寸 */
+  #gbClose{margin-left:auto;padding:5px 12px;font-size:12px;font-weight:800;}
+  #gbGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:12px;
+    padding:6px 16px 8px;overflow-y:auto;}
+  /* 卡片同时挂 .bcard：表面/描边/圆角沿用图鉴卡片，16 套皮肤自动适配 */
+  .gbcard{position:relative;appearance:none;border:1px solid var(--line);background:var(--panel2);
+    border-radius:18px;padding:13px 8px 11px;cursor:pointer;font-family:inherit;color:var(--text);
+    display:flex;flex-direction:column;align-items:center;gap:5px;
+    transition:transform .16s,border-color .16s,box-shadow .16s;
+    animation:gbcardin .3s both;animation-delay:var(--stagger,0ms);}
+  @keyframes gbcardin{from{transform:translateY(8px);opacity:0;}to{transform:none;opacity:1;}}
+  .gbcard:hover{transform:translateY(-3px);border-color:var(--gbtxt,var(--purple));
+    box-shadow:0 8px 20px rgba(0,0,0,.12);}
+  .gbcard:active{transform:scale(.96);}
+  .gbcard .gbico{width:66px;height:66px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    overflow:hidden;background:rgba(149,117,205,.12);border:1px solid rgba(149,117,205,.22);}
+  .gbcard .gbico svg,.gbcard .gbico img{width:80%;height:80%;object-fit:contain;display:block;}
+  .gbcard .gbnm{font-size:12px;font-weight:800;color:var(--gbtxt,var(--purple2));text-align:center;line-height:1.35;}
+  .gbcard .gbsub{font-size:10px;font-weight:700;color:var(--dim);}
+  /* 需解锁的小游戏：图标角上挂锁，卡片整体压暗，点开在箱内显示解锁条件 */
+  .gbcard .gbico{position:relative;}
+  .gbcard .gblock{position:absolute;right:1px;bottom:1px;width:20px;height:20px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1;
+    background:var(--panel);border:1px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.18);}
+  .gbcard.locked{opacity:.7;filter:saturate(.5);}
+  #gbLockTip{margin:0 16px 8px;padding:9px 12px;border-radius:12px;border:1px dashed var(--line);
+    background:var(--panel2);color:var(--text);font-size:12px;font-weight:800;line-height:1.6;
+    text-align:center;animation:gbpop .2s ease both;}
+  #gbEmpty{padding:24px 16px 10px;text-align:center;font-size:12px;color:var(--dim);line-height:1.9;}
+  #gbFoot{padding:4px 16px calc(12px + env(safe-area-inset-bottom));font-size:11px;color:var(--dim);text-align:center;}
+  @media (max-width:420px){
+    #gbGrid{grid-template-columns:repeat(3,1fr);gap:9px;padding:4px 12px 6px;}
+    .gbcard .gbico{width:56px;height:56px;}
+    #gbPanel{max-height:82vh;}
+  }
+  /* ===== 百巴箱 · 皮肤配色对齐：遮罩取各皮肤 #overlay，标题/卡片文字取该皮肤主文字色 ===== */
+  html[data-skin="forestedge"] #gbBox{background:rgba(34,64,47,.34);--gbtxt:#2f6b4f;}
+  html[data-skin="fairy"]      #gbBox{background:rgba(74,53,36,.42);--gbtxt:#5b3f2a;}
+  html[data-skin="ancient"]    #gbBox{background:rgba(3,12,9,.66);  --gbtxt:#b9f0d3;}
+  html[data-skin="cursed"]     #gbBox{background:rgba(9,11,24,.72); --gbtxt:#e8ecff;}
+  html[data-skin="townentry"]  #gbBox{background:rgba(60,26,16,.44);--gbtxt:#6b3f28;}
+  html[data-skin="moonmarket"] #gbBox{background:rgba(6,9,24,.66);  --gbtxt:#ffe8b8;}
+  html[data-skin="moonless"]   #gbBox{background:rgba(2,3,6,.78);   --gbtxt:#e8ecf2;}
+  html[data-skin="dreamink"]   #gbBox{background:rgba(6,2,14,.74);  --gbtxt:#f5dcef;}
+  html[data-skin="seaharbor"]  #gbBox{background:rgba(16,58,74,.36);--gbtxt:#176b80;}
+  html[data-skin="islandbay"]  #gbBox{background:rgba(52,66,55,.34);--gbtxt:#3e5544;}
+  html[data-skin="sunkcity"]   #gbBox{background:rgba(30,23,14,.52);--gbtxt:#3a2f22;}
+  html[data-skin="mermaidsea"] #gbBox{background:rgba(30,54,76,.36);--gbtxt:#1d5f70;}
+  html[data-skin="aurora"]     #gbBox{background:rgba(26,28,34,.55);--gbtxt:#2a2d34;}
+  html[data-skin="relic"]      #gbBox{background:rgba(42,40,32,.52);--gbtxt:#433d2c;}
+  html[data-skin="icelake"]    #gbBox{background:rgba(42,58,74,.42);--gbtxt:#2a3a4a;}
+  html[data-skin="court"]      #gbBox{background:rgba(7,8,13,.72);  --gbtxt:#dfe4ec;
+    backdrop-filter:none;-webkit-backdrop-filter:none;}
+  /* 百巴箱：独立 html 游戏内嵌窗口（与幸存者同款） */
+  #gbGameOverlay{position:fixed;inset:0;z-index:9998;display:none;background:#04060a;}
+  #gbGameOverlay.show{display:flex;flex-direction:column;}
+  #gbGameBar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:calc(6px + env(safe-area-inset-top)) 10px 6px;background:#08111a;
+    border-bottom:1px solid rgba(70,230,242,.18);color:#bfe9f2;font-size:12px;font-weight:700;}
+  #gbGameClose{appearance:none;border:1px solid rgba(70,230,242,.32);background:rgba(70,230,242,.08);
+    color:#bfe9f2;border-radius:99px;padding:5px 11px;font-size:12px;font-weight:800;cursor:pointer;}
+  #gbGameClose:active{transform:scale(.95);}
+  #gbGameFrame{flex:1 1 auto;width:100%;min-height:0;border:0;display:block;background:#04060a;}
+  body.gb-lock{overflow:hidden;}
 </style>
 </head>
 <body>
@@ -3364,7 +3468,7 @@
   <button class="dockbtn" id="btnStats"><b>📊</b><small data-i18n="统计">统计</small></button>
   <button class="dockbtn" id="btnShop"><b>🛒</b><small data-i18n="商店">商店</small></button>
   <button class="dockbtn" id="btnTravel" onclick="travelEntry()"><b>🧳</b><small data-i18n="旅行">旅行</small></button>
-  <button class="dockbtn" id="btnDress"><b>❓</b></button>
+  <button class="dockbtn" id="btnGameBox" onclick="gbBoxEntry()" title="百巴箱"><b>🎁</b><small data-i18n="百巴箱">百巴箱</small></button>
   <button class="dockbtn" id="btnSurvivor" style="display:none" onclick="survivorEntry()" title="番茄幸存者"><b>🍅⚔️</b><small data-i18n="幸存者">幸存者</small></button>
 </div>
 
@@ -3399,8 +3503,6 @@
     <button class="tv-btn" onclick="tvShop()" data-i18n="🛍 商店">🛍 商店</button>
     <button class="tv-btn" onclick="tvBag()" data-i18n="💼 行囊">💼 行囊</button>
     <button class="tv-btn" onclick="tvOpenBook()" data-i18n="🏷 图鉴">🏷 图鉴</button>
-    <button class="tv-btn" id="tvGambleBtn" onclick="gambleEntry()" data-i18n="🎲 对赌">🎲 对赌</button>
-    <button class="tv-btn" id="tvDdBtn" onclick="ddEnter()" data-i18n="🃏 斗月巴">🃏 斗月巴</button>
     <button class="tv-btn" id="tvHarvestBtn" onclick="tvSlotOpen()" style="display:none" data-i18n="🎰 惊喜">🎰 惊喜</button>
     <!-- 信箱/门口浮标放在导航栏内，随导航栏折行自动上移，避免与第二行按钮重叠 -->
     <button class="tv-mail" id="tvMail" onclick="tvOpenMail()" title="信箱" data-i18n-title="信箱">📮<span id="tvMailDot" style="display:none"></span></button>
@@ -3587,6 +3689,29 @@
   <iframe id="svFrame" title="番茄幸存者"></iframe>
 </div>
 
+<!-- 百巴箱：小游戏合集。卡片图标取自图鉴月巴，点击直接进游戏；
+     独立 html 游戏用 iframe 内嵌（同幸存者），首页的番茄钟与月巴生长照常运行 -->
+<div id="gbBox" onclick="gbOutside(event)">
+  <div id="gbPanel" class="frost gb-panel">
+    <div id="gbHead">
+      <span class="gbt">🎁 <span data-i18n="百巴箱">百巴箱</span></span>
+      <span class="gbs" data-i18n="小游戏合集">小游戏合集</span>
+      <button id="gbClose" class="btn" onclick="gbBoxClose()" data-i18n="✕ 收起">✕ 收起</button>
+    </div>
+    <div id="gbGrid"></div>
+    <div id="gbLockTip" style="display:none"></div>
+    <div id="gbEmpty" style="display:none" data-i18n="箱子还空着，新的月巴游戏正在装箱…">箱子还空着，新的月巴游戏正在装箱…</div>
+    <div id="gbFoot" data-i18n="更多小游戏陆续装箱中…">更多小游戏陆续装箱中…</div>
+  </div>
+</div>
+<div id="gbGameOverlay">
+  <div id="gbGameBar">
+    <span id="gbGameTitle">🎁 百巴箱</span>
+    <button id="gbGameClose" onclick="gbFrameClose()" data-i18n="✕ 返回百巴箱">✕ 返回百巴箱</button>
+  </div>
+  <iframe id="gbGameFrame" title="百巴箱小游戏"></iframe>
+</div>
+
 <script>
 'use strict';
 /* ============================================================
@@ -3743,7 +3868,7 @@ const TYPES=[
   {id:'mb_chun', name:'春月巴', r:3, v:35, t:360, cond:{t:'season',s:'spring'}, img:'https://origin.picgo.net/2026/10/22/d7b3e18460b8e44f1964d75b983ef69ac589f56a2b9a3392.th.webp', color:'#8fc48a', shape:'round'},
   {id:'mb_xia',  name:'夏月巴', r:3, v:35, t:360, cond:{t:'season',s:'summer'}, img:'https://origin.picgo.net/2026/10/22/---Yidi-Nyaomi-Lia67b10aba5615cbe.th.png', color:'#f0857f', shape:'wide'},
   {id:'mb_qiu',  name:'秋月巴', r:3, v:35, t:360, cond:{t:'season',s:'autumn'}, color:'#e89b52', shape:'round'},
-  {id:'mb_dong', name:'冬月巴', r:3, v:35, t:360, cond:{t:'season',s:'winter'}, color:'#7fa0b8', shape:'cube'},
+  {id:'mb_dong', name:'冬月巴', img:'https://origin.picgo.net/2026/10/23/720cc39489c1fe7d040a16a0a74e5492adb703c20326203b.th.png', r:3, v:35, t:360, cond:{t:'season',s:'winter'}, color:'#7fa0b8', shape:'cube'},
 
   {id:'mb_dishui',  name:'阴湿月巴', r:3, v:50, t:400, cond:{t:'zone',z:2}, color:'#9575cd', shape:'round'},
   {id:'mb_wenshi',  name:'温室月巴',   r:3, v:55, t:420, cond:{t:'zone',z:3}, color:'#6fbe7a', shape:'cube'},
@@ -3763,7 +3888,7 @@ const TYPES=[
   {id:'mb_chao',     name:'超巨月巴', img:'https://origin.picgo.net/2026/10/22/6e242d94aa9b07b9117479ec78fd53985fd887bb68d8fa62.th.png', r:4, v:300, t:1500, cond:{t:'harvest',n:500}, color:'#e0a34e', shape:'big', size:3},
   {id:'mb_lian',     name:'幸运月巴', r:4, v:60,  t:480,  cond:null, weight:0.05, color:'#e8a8c4', shape:'round'},
   {id:'mb_kuanglian',name:'极运月巴', r:4, v:130, t:840,  cond:null, weight:0.03, color:'#d9799f', shape:'spike'},
-  {id:'mb_shenlian', name:'神运月巴', r:5, v:400, t:2400, cond:null, weight:0.015, color:'#b54b7e', shape:'rainbow'},
+  {id:'mb_shenlian', name:'神运月巴', img:'https://origin.picgo.net/2026/10/23/75cb6c3c872e0ab0ae24ad2a1d4d16217560c98278e9c3c2.th.png', r:5, v:400, t:2400, cond:null, weight:0.015, color:'#b54b7e', shape:'rainbow'},
   {id:'mb_fanben',   name:'墨镜月巴', img:'https://origin.picgo.net/2026/09/03/1115555fb4ab3b2731.th.png', r:4, v:70,  t:540,  cond:{t:'count',id:'mb_xian',n:20}, color:'#d9b45a', shape:'round'},
   {id:'mb_guai',     name:'奇怪月巴',   r:4, v:90,  t:600,  cond:{t:'count',id:'mb_pang',n:15}, color:'#b89a55', shape:'bean'},
   {id:'mb_shizhe',   name:'归家月巴', img:'https://origin.picgo.net/2026/09/03/2b384c6d07a3d397b.th.png', r:5, v:130, t:840,  cond:{t:'count',id:'mb_ye',n:10},   color:'#5f44a6', shape:'moon'},
@@ -3840,7 +3965,6 @@ const TYPES2=[
     r:1, v:12, t:110, cond:null, color:'#c9c9f0', shape:'round'},
   {id:'m2_mao',    name:'猫月巴',  img:'https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li578400427d700c6a.th.png', r:1, v:13, t:120, cond:null, color:'#b0bec5', shape:'heart'},
   {id:'m2_gou',    name:'狗月巴',  r:1, v:14, t:130, cond:null, color:'#d7ccc8', shape:'bean'},
-  {id:'m2_zuoqi',  name:'坐骑月巴', img:'https://origin.picgo.net/2026/10/21/c78c4be6d1ad05b71428d20e99d80e43ef4bf36af33cc07a.th.png', r:1, v:15, t:140, cond:null, color:'#c8a165', shape:'big'},
   {id:'m2_tian',   name:'甜月巴',  r:2, v:16, t:160, cond:null, color:'#f8bbd0', shape:'round'},
   {id:'m2_xian',    name:'盐月巴',  r:2, v:17, t:170, cond:null, color:'#90a4ae', shape:'cube'},
   {id:'m2_bai',    name:'白月巴',  r:2, v:18, t:180, cond:null, color:'#eceff1', shape:'round'},
@@ -3876,7 +4000,6 @@ const TYPES2=[
   {id:'m2_tanwu', name:'贪污月巴',  img:'https://origin.picgo.net/2026/10/22/ab151905162c9192567261cab1173c3d9475509a44cc77a9.th.png', r:5, v:240, t:1400, cond:{t:'travel', d:'town', n:8}, weight:0.01, color:'#6d4c41', shape:'round'},
   {id:'m2_zhangyu',name:'章鱼月巴',  r:4, v:80, t:720, cond:{t:'travel', s:'海藻'}, color:'#7e57c2', shape:'spike'},
   {id:'m2_xianyi',name:'嫌疑月巴',  img:'https://origin.picgo.net/2026/10/21/71e32b7a3e54e6bba0d145f9b63d36bc6b5a368bce3d301e.th.png', r:4, v:85, t:760, cond:{t:'travel', c:'A7'}, color:'#546e7a', shape:'ghost'},
-  {id:'m2_teatime',name:'下午茶月巴', img:'https://origin.picgo.net/2026/10/21/teatime-buny---Felimika490cd7af24e32b96.th.png', r:4, v:72, t:720, cond:null, color:'#c9a77c', shape:'round'},
   {id:'m2_fanqie',name:'番茄月巴',  r:3, v:45, t:450, cond:null, color:'#e57373', shape:'round'},
   {id:'m2_jinshu',name:'金属月巴',  r:4, v:90, t:800, cond:{t:'travel', s:'漂流木'}, color:'#b0bec5', shape:'cube'},
   {id:'m2_shanliang',name:'闪亮月巴',  r:5, v:180, t:1200, cond:{t:'travel', c:'B10'}, weight:0.01, color:'#ffe082', shape:'star'},
@@ -3951,8 +4074,16 @@ const TYPES2=[
   {id:'m2_baqi',     name:'巴岐大蛇',  img:'https://origin.picgo.net/2026/10/21/00ad700c36c3d7131ffe4fcfae4e5a0cee3d2f4e74eec9cd.th.png', r:4, v:85, t:760, cond:null, color:'#5f8f6f', shape:'spike',size:3.5},
   {id:'m2_qingchun', name:'青春败犬立体巴', img:'https://origin.picgo.net/2026/10/21/cfbed82590fddf492012ef5aa1349f983ae998abddf56193.th.png', r:2, v:24, t:220, cond:null, color:'#aea8ae', shape:'cube'},
   {id:'m2_yinan',    name:'阴暗巴',    img:'https://origin.picgo.net/2026/10/21/7b935eb5528f9cc67c194fe5d47c4a367229b91b95e86400.th.png', r:2, v:19, t:190, cond:null, color:'#b7b0cc', shape:'squish'},
+];
+/* 第三图鉴：无解锁限制，功能与第一图鉴完全一致（收集 / 极值 / 详情 / 掉落池）。
+   之后新增的月巴直接追加到这里即可，id 前缀 m3_。 */
+const TYPES3=[
+  /* 由第二图鉴移入的四只：id 沿用 m2_*（存档与作者/简介表均按原 id 索引），不按 m3_ 前缀改名 */
+  {id:'m2_zuoqi',  name:'坐骑月巴', img:'https://origin.picgo.net/2026/10/21/c78c4be6d1ad05b71428d20e99d80e43ef4bf36af33cc07a.th.png', r:1, v:15, t:140, cond:null, color:'#c8a165', shape:'big'},
+  {id:'m2_teatime',name:'下午茶月巴', img:'https://origin.picgo.net/2026/10/21/teatime-buny---Felimika490cd7af24e32b96.th.png', r:4, v:72, t:720, cond:null, color:'#c9a77c', shape:'round'},
   {id:'m2_baboyi',   name:'巴巴博弈',  img:'https://origin.picgo.net/2026/10/22/67415055497e212216f64fbf52efd52849aeb4517d115733.th.png', r:4, v:82, t:760, cond:null, color:'#c9c4dc', shape:'tall'},
   {id:'m2_rainy',    name:'雨伞月巴',  img:'https://origin.picgo.net/2026/10/22/umbrella-bunny0f0ec74e10bac4fc.th.png', r:2, v:20, t:200, cond:null, color:'#a9c7e8', shape:'drop'},
+  {id:'m3_cangshu',  name:'仓鼠月巴',  img:'https://origin.picgo.net/2026/10/23/22cdbf9144b586bf272c4cb61f533bc853372133deea585a.th.png', r:3, v:35, t:400, cond:null, color:'#d8b17a', shape:'round'},
 ];
 const RAR_NAME={1:'普通',2:'常见',3:'稀有',4:'史诗',5:'传说',6:'活动'};
 const R_H={1:[2,5],2:[4,8],3:[6,12],4:[10,20],5:[16,30],6:[22,40]};   // 身高 cm 范围
@@ -3982,6 +4113,9 @@ const YB_PIC_AUTHOR={
   m2_qingchun:'鲸弑',
   m2_baboyi:'ak',
   m2_rainy:'Feyy',
+  m3_cangshu:'番凩-FFANMER',
+  mb_dong:'mari',
+  mb_shenlian:'mari',
   bairixuan:'影子生物',
   m2_she:'hellomelody',
   mb_chao:'影子生物',
@@ -4207,6 +4341,7 @@ const FAT_INTRO={
   m2_yinan:'很害羞，喜欢阴暗潮湿的地方。',
   m2_baboyi:'对其他月巴抱有很大敌意，最常说的一句话是：“我可不是什么好好先生。”',
   m2_rainy:'月巴伞会保护拓海的番茄园不受雨淋！',
+  m3_cangshu:'仓鼠月巴偷吃掉了你的番茄！',
 };
 
 /* ---------------- 界面皮肤（图鉴解锁） ---------------- */
@@ -4649,6 +4784,15 @@ const I18N_UI={
   '商店':{en:'Shop',ja:'ショップ',ko:'상점'},
   '旅行':{en:'Trip',ja:'旅',ko:'여행'},
   '飞行':{en:'Fly',ja:'飛行',ko:'비행'},
+  '百巴箱':{en:'Banny Box',ja:'バニーボックス',ko:'배니 박스'},
+  '🔒 {a} 解锁条件：集齐第一图鉴 {n} 个月巴开启第二图鉴（当前 {c}/{n}）':{en:'🔒 {a} unlock: collect {n} Bannies in Codex I to open Codex II ({c}/{n})',ja:'🔒 {a} の解放条件：第一図鑑のバニーを {n} 匹集めて第二図鑑を解放（現在 {c}/{n}）',ko:'🔒 {a} 해금 조건: 첫 번째 도감에서 배니 {n}마리를 모아 두 번째 도감 해금 (현재 {c}/{n})'},
+  '🔒 需集齐第一图鉴 {n} 个月巴开启第二图鉴':{en:'🔒 Requires {n} Bannies in Codex I to open Codex II',ja:'🔒 第一図鑑のバニー {n} 匹で第二図鑑を解放',ko:'🔒 첫 번째 도감 배니 {n}마리로 두 번째 도감 해금'},
+  '小游戏合集':{en:'Mini-game Collection',ja:'ミニゲーム集',ko:'미니게임 모음'},
+  '飞行小游戏':{en:'Flight Mini-game',ja:'フライトミニゲーム',ko:'비행 미니게임'},
+  '✕ 收起':{en:'✕ Close',ja:'✕ 閉じる',ko:'✕ 닫기'},
+  '箱子还空着，新的月巴游戏正在装箱…':{en:'The box is empty — new Banny games are being packed…',ja:'箱はまだ空っぽ。新しいバニーゲームを詰めています…',ko:'상자가 아직 비어 있어요. 새로운 배니 게임을 담는 중…'},
+  '更多小游戏陆续装箱中…':{en:'More mini-games are being packed…',ja:'さらにミニゲームを追加予定…',ko:'더 많은 미니게임을 준비 중…'},
+  '✕ 返回百巴箱':{en:'✕ Back to Box',ja:'✕ 箱に戻る',ko:'✕ 박스로 돌아가기'},
   /* C. 场地工具条 */
   '← 返回':{en:'← Back',ja:'← 戻る',ko:'← 뒤로'},
   '🪵 新木头':{en:'🪵 New Log',ja:'🪵 新しい木材',ko:'🪵 새 나무'},
@@ -5056,6 +5200,9 @@ const I18N_UI={
   '📕 查看第二图鉴':{en:'📕 View Codex II',ja:'📕 第二図鑑を見る',ko:'📕 두 번째 도감 보기'},
   '📕 第一图鉴':{en:'📕 Codex I',ja:'📕 第一図鑑',ko:'📕 도감 1'},
   '📕 第二图鉴':{en:'📕 Codex II',ja:'📕 第二図鑑',ko:'📕 도감 2'},
+  '📕 第三图鉴':{en:'📕 Codex III',ja:'📕 第三図鑑',ko:'📕 도감 3'},
+  '搜索月巴':{en:'Search Bannies',ja:'バニーを検索',ko:'배니 검색'},
+  '🔍 全图鉴搜索 · {n} 只':{en:'🔍 All codexes · {n} found',ja:'🔍 全図鑑検索 · {n} 体',ko:'🔍 전체 도감 검색 · {n}마리'},
   '🖼 画廊':{en:'🖼 Gallery',ja:'🖼 ギャラリー',ko:'🖼 갤러리'},
   '第一图鉴集齐 {n} 个月巴后开启':{en:'Unlocks after collecting {n} Bannies in Codex I',ja:'第一図鑑でバニーを{n}体集めると解放',ko:'도감 1에서 배니 {n}마리를 모으면 해금'},
   '收集旅途中的画面':{en:'Scenes collected on your trips',ja:'旅先で集めた情景',ko:'여행 중 모은 장면'},
@@ -5076,6 +5223,9 @@ const I18N_UI={
   '为它投稿':{en:'Submit art for this one',ja:'この子に投稿する',ko:'이 배니에 투고하기'},
   '切换立绘':{en:'Switch artwork',ja:'立ち絵を切り替え',ko:'일러스트 전환'},
   '共 {n} 张立绘':{en:'{n} artworks',ja:'立ち絵 {n} 枚',ko:'일러스트 {n}장'},
+  '🪽 飞行小游戏':{en:'🪽 Fly Mini-game',ja:'🪽 飛行ミニゲーム',ko:'🪽 비행 미니게임'},
+  '🪽 进入飞行小游戏':{en:'🪽 Enter Fly Mini-game',ja:'🪽 飛行ミニゲームへ',ko:'🪽 비행 미니게임 입장'},
+  '即使还没收集到这只月巴，也可以先玩这个游戏':{en:'You can play this mini-game even before collecting this Banny.',ja:'このバニーをまだ集めていなくても、このミニゲームを遊べます。',ko:'이 배니를 아직 모으지 않았어도 이 미니게임을 먼저 즐길 수 있어요.'},
   '匿名':{en:'Anonymous',ja:'匿名',ko:'익명'},
   '投稿说明':{en:'How submission works',ja:'投稿について',ko:'투고 안내'},
   '同一只月巴被画了多次时，通过的作品都会保留，可以在图鉴里自由切换。':{en:'If the same Banny gets several approved artworks, all of them are kept — you can switch freely in the Codex.',ja:'同じバニーに複数の作品が届いた場合、採用された絵はすべて保存され、図鑑で自由に切り替えられます。',ko:'같은 배니에 여러 작품이 모이면 승인된 그림을 모두 보관하고, 도감에서 자유롭게 전환할 수 있어요.'},
@@ -6732,6 +6882,7 @@ const I18N_BANNY={
   m2_yinan:{n:{en:'Gloomy Banny',ja:'陰気バニー',ko:'음침배니'}},
   m2_baboyi:{n:{en:'Babo Gambit',ja:'ババゲーム',ko:'바바 겜블'}},
   m2_rainy:{n:{en:'Rainy Bunny',ja:'雨傘バニー',ko:'우산배니'}},
+  m3_cangshu:{n:{en:'Hamster Bunny',ja:'ハムスターバニー',ko:'햄스터배니'}},
 
   dest_forest:{n:{en:'Forest Edge',ja:'森のほとり',ko:'숲의 가장자리'}},
   dest_fairy:{n:{en:'Fairy Hideaway',ja:'桃源郷',ko:'무릉도원'}},
@@ -7207,6 +7358,7 @@ const I18N_BANNY={
   m2_yinan_intro:{d:{en:'Very shy; it loves dark, damp places.',ja:'とても恥ずかしがり屋で、暗く湿った場所が好き。',ko:'몹시 수줍음이 많고, 어둡고 습한 곳을 좋아한다.'}},
   m2_baboyi_intro:{d:{en:'Deeply hostile toward other Bannies. Its favourite line: "I am no nice guy."',ja:'他のバニーに強い敵意を抱いている。口癖は「俺はお人好しじゃないんだよ」。',ko:'다른 배니들에게 큰 적의를 품고 있다. 가장 자주 하는 말은 "난 좋은 사람이 아니야."'}},
   m2_rainy_intro:{d:{en:'The Banny umbrella keeps Takumi\'s tomato garden safe from the rain!',ja:'バニーの傘が拓海のトマト農園を雨から守ってくれる！',ko:'배니 우산이 타쿠미의 토마토 농장을 비로부터 지켜 줘요!'}},
+  m3_cangshu_intro:{d:{en:'The Hamster Bunny sneaked in and ate your tomatoes!',ja:'ハムスターバニーがあなたのトマトをこっそり食べちゃった！',ko:'햄스터배니가 네 토마토를 몰래 훔쳐 먹었어!'}},
   /* ---------- P5：成就描述 ach_<id>_desc（字段 d） ---------- */
   ach_h1_desc:{d:{en:'Harvest your first Banny',ja:'初めてバニーを収穫する',ko:'첫 배니를 수확하기'}},
   ach_d1_desc:{d:{en:'Unlock 10 Banny species in the Codex',ja:'図鑑で 10 種のバニーを解放する',ko:'도감에서 배니 10종 해금하기'}},
@@ -7643,6 +7795,7 @@ function localizeData(){
   const heal=(o,zk,f,key,tf)=>{ if(o[zk]==null) o[zk]=o[f]; o[f]=$tn(I18N_BANNY,key,tf||'n',o[zk]); };
   for(const x of TYPES)  heal(x,'_zhN','name',x.id,'n');
   for(const x of TYPES2) heal(x,'_zhN','name',x.id,'n');
+  for(const x of TYPES3) heal(x,'_zhN','name',x.id,'n');
   for(const x of SKINS){ heal(x,'_zhN','name','skin_'+x.id,'n'); if(x.theme!=null) heal(x,'_zhTheme','theme','skin_'+x.id+'_theme','d'); }
   for(const x of SKIN_GROUPS) heal(x,'_zhN','n','grp_'+x.id,'n');
   for(const x of TV_DESTS) heal(x,'_zhN','n','dest_'+x.id,'n');
@@ -7678,8 +7831,6 @@ function updateLangBtn(){ const b=$('btnLang'); if(b) b.title=$t('语言 / Langu
 function i18nRelabel(){
   const tv=$('btnTravel'); if(tv) tv._tvIcon=undefined;
   updateTravelIcon();
-  const fd=$('btnDress'); if(fd) fd._flyOn=undefined;
-  updateFlyIcon();
   updateAchBtn(); updateLowBtn(); updatePipoButton();
   if(currentZone>=0){ const sn=$('sceneName'); if(sn) sn.textContent=ZONES[currentZone].icon+' '+ZONES[currentZone].name; }
   if($('travel') && $('travel').style.display==='flex') tvRenderAll();
@@ -7765,7 +7916,7 @@ const OFFLINE_CAP=12*3600*1000;
 let S;
 function defaultState(){
   return {
-    coins:0, totalCoins:null, accelLv:0, boughtItems:[], collection:{}, collection2:{}, dex2Celebrated:false, totalHarvest:0, lastFast:0, lowPower:false,
+    coins:0, totalCoins:null, accelLv:0, boughtItems:[], collection:{}, collection2:{}, collection3:{}, dex2Celebrated:false, totalHarvest:0, lastFast:0, lowPower:false,
     artPick:{},   // 多立绘：{月巴id: 选中的立绘序号}，同一只月巴被画了多次时用
     flyTop:[], flyPick:null, flySel:1, flyClear:0, flyLvBest:{}, flyLvTime:{},
     survivor:{v:3, clears:0, bestTime:0, bestKills:0, unlocked:{}, read:{}, lastReward:null,
@@ -7816,6 +7967,20 @@ function save(){
   }
   lfsQueue();   // 已绑定本地存档文件时同步写盘（内部节流）
 }
+/* 旧存档兼容：飞行小游戏字段缺失或类型异常时补齐。
+   图鉴特殊月巴入口、百巴箱与首页飞行入口都依赖这些字段，旧档（含 v1 / 手动导入）不能因此报错。 */
+function normFlySave(st){
+  const s=st||S;
+  s.flyTop=Array.isArray(s.flyTop)?s.flyTop.filter(function(r){ return r&&typeof r==='object'; }):[];
+  s.flyPick=(typeof s.flyPick==='string'&&typeById(s.flyPick))?s.flyPick:null;
+  const sel=parseInt(s.flySel,10);
+  s.flySel=(sel>=0&&sel<=10)?sel:1;          // 0 = 自由模式，必须保留
+  const cl=parseInt(s.flyClear,10);
+  s.flyClear=(cl>=0&&cl<=10)?cl:0;
+  s.flyLvBest=(s.flyLvBest&&typeof s.flyLvBest==='object'&&!Array.isArray(s.flyLvBest))?s.flyLvBest:{};
+  s.flyLvTime=(s.flyLvTime&&typeof s.flyLvTime==='object'&&!Array.isArray(s.flyLvTime))?s.flyLvTime:{};
+  return s;
+}
 function load(){
   try{
     const raw=localStorage.getItem(SAVE_KEY)||localStorage.getItem('idle-yueba-save-v1');
@@ -7830,6 +7995,14 @@ function load(){
         if(c && c.t && c.dur && c.dur<10000) c.dur=c.dur*(1000/BASE_SPEED);
       }
       S=Object.assign(defaultState(),d);
+      // 第三图鉴：旧档没有该字段时补默认值，并把数字型收集数升级为 {count}
+      if(!S.collection3||typeof S.collection3!=='object'||Array.isArray(S.collection3)) S.collection3={};
+      for(const k in S.collection3){ if(typeof S.collection3[k]==='number') S.collection3[k]={count:S.collection3[k]}; }
+      // 迁移：已划入第三图鉴的月巴（id 仍为 m2_*）若旧档记在第二图鉴，转移到 collection3，避免收集记录丢失
+      for(const t of TYPES3){ if(t.id.indexOf('m2_')!==0) continue;
+        const c=S.collection2&&S.collection2[t.id];
+        if(c!=null){ if(!S.collection3[t.id]) S.collection3[t.id]=c; delete S.collection2[t.id]; } }
+      normFlySave(S);
       // 深合并番茄钟字段，旧存档缺少 presets/mode/breakMin/focusTotal 时补默认值
       S.pomo=Object.assign(defaultState().pomo, d.pomo||{});
       // 番茄幸存者：独立页会直接写回该字段，这里补齐旧档缺失的子对象
@@ -8220,7 +8393,8 @@ function subForm2Open(){
 }
 function dex2Unlocked(){ return Object.keys(S.collection).length>=DEX1_MIN; }
 function isDex2(id){ return TYPES2.some(t=>t.id===id); }
-function typeById(id){ return TYPES.find(x=>x.id===id)||TYPES2.find(x=>x.id===id); }
+function isDex3(id){ return TYPES3.some(t=>t.id===id); }
+function typeById(id){ return TYPES.find(x=>x.id===id)||TYPES2.find(x=>x.id===id)||TYPES3.find(x=>x.id===id); }
 /* 取槽位里的月巴类型；遇到已失效的 id（旧存档中被改名/移除的月巴）就地清空该槽位等待重播，
    避免 typeById 返回 undefined 后在上层抛错（tick 里抛错会中断整轮更新） */
 function cellTypeOf(cell){
@@ -8229,15 +8403,20 @@ function cellTypeOf(cell){
   if(!t){ cell.t=null; cell.delay=now()+rand(900,2600); }
   return t;
 }
+function collOf(id){
+  if(isDex2(id)) return S.collection2;
+  if(isDex3(id)) return S.collection3;
+  return S.collection;
+}
 function colGet(id){
-  const c=isDex2(id)?S.collection2:S.collection;
+  const c=collOf(id);
   if(!c[id]) c[id]={count:0};
   return c[id];
 }
-function colCount(id){ const c=isDex2(id)?S.collection2:S.collection; return (c[id]&&c[id].count)||0; }
-function colRec(id){ return isDex2(id)?S.collection2[id]:S.collection[id]; }
+function colCount(id){ const c=collOf(id); return (c[id]&&c[id].count)||0; }
+function colRec(id){ return collOf(id)[id]; }
 /* ===== 调试预留（不向玩家展示）：在控制台调用 debugUnlockAll()，或在 URL 后加 #debugall 自动执行 ===== */
-function debugUnlockAll(){ for(const t of TYPES){ const c=colGet(t.id); if(!c.count)c.count=1; if(!c.last)c.last={h:50,w:50,t:now()}; } for(const t of TYPES2){ const c=colGet(t.id); if(!c.count)c.count=1; if(!c.last)c.last={h:50,w:50,t:now()}; } if(!S.dex2Celebrated)S.dex2Celebrated=true; let skN=0; for(const sk of SKINS){ if(S.skins.unlocked.indexOf(sk.id)<0){ S.skins.unlocked.push(sk.id); skN++; } } save(); updateTravelIcon(); updateFlyIcon(); return $t('🧪 已解锁全部图鉴：第一页 ')+Object.keys(S.collection).length+'/'+TYPES.length+$t('，第二页 ')+Object.keys(S.collection2).length+'/'+TYPES2.length+$t('；皮肤 ')+S.skins.unlocked.length+'/'+SKINS.length+$t('（本次新增 ')+skN+'）'; }
+function debugUnlockAll(){ for(const t of TYPES){ const c=colGet(t.id); if(!c.count)c.count=1; if(!c.last)c.last={h:50,w:50,t:now()}; } for(const t of TYPES2){ const c=colGet(t.id); if(!c.count)c.count=1; if(!c.last)c.last={h:50,w:50,t:now()}; } for(const t of TYPES3){ const c=colGet(t.id); if(!c.count)c.count=1; if(!c.last)c.last={h:50,w:50,t:now()}; } if(!S.dex2Celebrated)S.dex2Celebrated=true; let skN=0; for(const sk of SKINS){ if(S.skins.unlocked.indexOf(sk.id)<0){ S.skins.unlocked.push(sk.id); skN++; } } save(); updateTravelIcon(); return $t('🧪 已解锁全部图鉴：第一页 ')+Object.keys(S.collection).length+'/'+TYPES.length+$t('，第二页 ')+Object.keys(S.collection2).length+'/'+TYPES2.length+$t('；皮肤 ')+S.skins.unlocked.length+'/'+SKINS.length+$t('（本次新增 ')+skN+'）'; }
 /* 取值向中段集中：越接近上下极值概率越低（极值低频化，非时间冷却）。
    但纯「两次取平均」会让上下极值几乎不可达（图鉴的「最高/最矮/最重/最轻」金框要求正好达到区间边界），
    故留 ROLL_TAIL 比例的样本直接取均匀值：整体仍向中段集中（中段密度约为两端的 5 倍），
@@ -8263,8 +8442,9 @@ function recordExtremes(id,h,w){
 /* ---------------- 核心逻辑：生长 / 收获 ---------------- */
 const SCENE_FAT_ZOOM=1.5; // 栽种场景中成熟月巴的显示倍率（图鉴不受影响），可手动调整
 function availableTypes(){
-  // 第二图鉴解锁后，其月巴并入掉落池；未解锁前保持原掉落
-  const pool=dex2Unlocked()?TYPES.concat(TYPES2):TYPES;
+  // 第三图鉴无解锁限制，始终并入掉落池；第二图鉴解锁后其月巴也并入
+  let pool=TYPES.concat(TYPES3);
+  if(dex2Unlocked()) pool=pool.concat(TYPES2);
   return pool.filter(t=>condOk(t.cond));
 }
 function weightOf(t){ let w=t.weight!=null?t.weight:({1:100,2:45,3:14,4:4,5:1.2,6:0.9}[t.r]||1); if(isDex2(t.id)) w/=10; return w; }
@@ -8695,9 +8875,9 @@ function bkClickGuard(e){ // 拖动后的 click 不触发卡片详情（捕获�
 /* ---------------- 头部 / 状态 ---------------- */
 function updateHeader(){
   $('coinTxt').textContent=fmt(S.coins);
-  // 第二图鉴解锁后，收集进度合并两图鉴
-  const got=Object.keys(S.collection).length+(dex2Unlocked()?Object.keys(S.collection2||{}).length:0);
-  const total=TYPES.length+(dex2Unlocked()?TYPES2.length:0);
+  // 第二图鉴解锁后合并两图鉴；第三图鉴始终计入
+  const got=Object.keys(S.collection).length+(dex2Unlocked()?Object.keys(S.collection2||{}).length:0)+Object.keys(S.collection3||{}).length;
+  const total=TYPES.length+(dex2Unlocked()?TYPES2.length:0)+TYPES3.length;
   $('collTxt').textContent=`${got}/${total} (${Math.round(got/total*100)}%)`;
   $('collBar').style.width=(got/total*100)+'%';
   const mut=$('btnMute'); mut.textContent=S.muted?'🔇':'🔊';
@@ -8992,7 +9172,7 @@ function noticeRemove(key){
   return true;
 }
 let _afterClose=null;
-let dexPage=1; // 图鉴页码：1=第一图鉴 2=第二图鉴 3=画廊（CG 收藏）
+let dexPage=1; // 图鉴页码：1=第一图鉴 2=第二图鉴 3=第三图鉴 4=画廊（CG 收藏）
 let tvBookPage='letter'; // 旅行图鉴页：letter=信件页 special=特产页
 let tvBookRegion=null; // 旅行图鉴-信件页当前展开的区域（null=未展开）
 /* 第一图鉴随机「事件」：随机月巴与番茄的互动文案（含 {name} 占位月巴名） */
@@ -9086,11 +9266,33 @@ const DEX_EVENTS=[
   '🍒 {name}把番茄举到耳边，尾音低低：「这样我们就永远永远在一起了哦？」',
   '🥂 {name}轻轻抵着番茄微笑：「是等着被谁一口吃掉吗……还是让我来吃掉讨厌的番茄吧。」',
 ];
-function bookRowsHTML(list){
+/* 特殊月巴的专属游戏入口：新增一条配置即可扩展（icon/label 为四语言文案 key 或同形文案）。
+   lock:true 表示该游戏需先开启第二图鉴，未达成时点开只显示解锁条件。 */
+const DEX_GAME={
+  mb_yunduan:{icon:'🪽', label:'🪽 飞行小游戏', game:'fly'},
+  jieba:{icon:'🎲', label:'🎲 对赌', game:'gamble', lock:true},
+  m2_chuqian:{icon:'🃏', label:'🃏 斗月巴', game:'dd', lock:true},
+};
+function dexGameOf(id){ return DEX_GAME[id]||null; }
+/* 第二图鉴解锁条件文案（对赌 / 斗月巴 共用） */
+function dex2LockText(name){
+  const got=Math.min(Object.keys(S.collection||{}).length,DEX1_MIN);
+  return $tf('🔒 {a} 解锁条件：集齐第一图鉴 {n} 个月巴开启第二图鉴（当前 {c}/{n}）',{a:name,n:DEX1_MIN,c:got});
+}
+function dexGameEntry(id){
+  const g=dexGameOf(id); if(!g) return;
+  if(g.lock && !dex2Unlocked()){ sfx.error(); toast(dex2LockText($t(g.label))); return; }
+  if(g.game==='fly'){ openFlyFromDex(id); return; }
+  if(g.game==='gamble'){ gambleEntry(); return; }
+  if(g.game==='dd'){ ddEnter(); return; }
+}
+function bookRowsHTML(list,quiet){
   let rows=''; let i=0;
   for(const t of list){
     const c=colCount(t.id);
     const rec=colRec(t.id);
+    const gm=dexGameOf(t.id);
+    const gmLk=!!(gm&&gm.lock&&!dex2Unlocked());
     const rcl={1:'rr1',2:'rr2',3:'rr3',4:'rr4',5:'rr5',6:'rr6'}[t.r];
     let stats='';
     let allGold=false;
@@ -9110,12 +9312,13 @@ function bookRowsHTML(list){
         ${$tf('⚖️ 最轻 {a}',{a:ss(rec.lightest, gL,'g')})} · ${rec.lightest?fmtTS(rec.lightest.t):''}
       </div>`;
     }
-    const rowM=false; rows+=`<div class="bcard anim-in ${c?'':'locked'} ${t.r>=4?'epic':''} ${t.r===5?'legend':''}${t.id==='bairi'&&c?' bairi':''}${allGold?' allgold':''}" data-id="${t.id}" style="--stagger:${i*36}ms" ${c?`onclick="openFatDetail('${t.id}')"`:''}>
+    const rowM=false; rows+=`<div class="bcard${quiet?'':' anim-in'} ${c?'':'locked'} ${t.r>=4?'epic':''} ${t.r===5?'legend':''}${t.id==='bairi'&&c?' bairi':''}${allGold?' allgold':''}" data-id="${t.id}"${quiet?'':` style="--stagger:${i*36}ms"`} ${c?`onclick="openFatDetail('${t.id}')"`:''}>
       <div class="pic">${c?`<span style="display:inline-block;transform:scale(${artURL(t)?1:(t.size||1)})">${fatSVG(t)}</span>${artBadgeHTML(t)}`:lockedSVG()}</div>
       <div class="nm">${c?t.name:'???'}</div>
       <div class="cnt">${c?$tf('收获 x{n}',{n:c}):$t('未发现')} <span class="rar-tag ${rcl}">${$t(RAR_NAME[t.r])}</span></div>
       ${stats}
       <div class="cd">${t.id==='bairi'||(t.weight==null||t.weight>=1)?$tf('条件：{n}',{n:condText(t.cond)}):$t('✨ 概率极低 · 永久可遇')}</div>
+      ${gm?`<button class="bc-game" title="${esc(gmLk?$tf('🔒 需集齐第一图鉴 {n} 个月巴开启第二图鉴',{n:DEX1_MIN}):$t('即使还没收集到这只月巴，也可以先玩这个游戏'))}" onclick="event.stopPropagation();dexGameEntry('${t.id}')">${esc($t(gm.label))}${gmLk?' 🔒':''}</button>`:''}
     </div>`; i++;
   }
   return rows;
@@ -9198,47 +9401,137 @@ function claimDexEvent(){
   _dexEv=null; closeModal();
 }
 function dexBookOpenSlots(){ let n=0; for(const z of S.zones)for(const w of z.woods)n+=w.cells.filter(c=>c&&c.t).length; return n; }
+/* ---------------- 图鉴分页 / 搜索 ----------------
+   dexPage：1=第一图鉴 2=第二图鉴 3=第三图鉴（无解锁限制） 4=画廊（CG 收藏）
+   搜索只显示一个小放大镜按钮，点开后才出现输入框；输入即时过滤，不重建弹窗（保持焦点） */
+let _dexQ='';        // 当前搜索词（按页切换时清空）
+let _dexOpen=false;  // 搜索框是否展开
+function dexCatOf(name){
+  const m={春:$t('A季'),夏:$t('A季'),秋:$t('A季'),冬:$t('A季'),晨:$t('B时'),午:$t('B时'),昏:$t('B时'),夜:$t('B时'),凌晨:$t('B时'),午夜:$t('B时'),晴:$t('C气'),云:$t('C气'),雨:$t('C气'),暴雨:$t('C气'),雪:$t('C气'),彩虹:$t('C气')};
+  for(const k in m){ if(name.indexOf(k)>=0) return m[k]; }
+  return 'Z'+name;
+}
+function dexTypesOf(page){ return page===2?TYPES2:(page===3?TYPES3:TYPES); }
+function dexCollOf(page){ return page===2?S.collection2:(page===3?S.collection3:S.collection); }
+function dexListOf(page){
+  // 稀有度 1-5 升序；同稀有度内按“名称相似组”聚类（同主题排一起），未命中的按名称/字数兜底
+  return dexTypesOf(page).slice().sort((a,b)=>{
+    if(a.id==='bairi'||b.id==='bairi') return a.id==='bairi'?1:0;
+    return (a.r-b.r)||
+    (dexCatOf(a._zhN||a.name).localeCompare(dexCatOf(b._zhN||b.name)))||
+    (a.name.length-b.name.length)||
+    a.name.localeCompare(b.name);
+  });
+}
+/* 搜索命中判断：名称 / 原名 / id / 本地化 id 任一包含关键词即可 */
+function dexMatchQ(t,q){
+  return [t.name,t._zhN||'',t.id,$fi(t.id)].join(' ').toLowerCase().indexOf(q)>=0;
+}
+/* 搜索范围是「全部图鉴」：第一 + 第三，第二图鉴若已解锁也一并搜索
+   （未解锁时不参与，避免剧透尚未开放的月巴）。结果按图鉴分组、组内沿用图鉴排序。 */
+function dexSearchGroups(){
+  const q=_dexQ.trim().toLowerCase();
+  if(!q) return [];
+  const pages=[1];
+  if(dex2Unlocked()) pages.push(2);
+  pages.push(3);
+  const out=[];
+  for(const p of pages){
+    const hit=dexListOf(p).filter(t=>dexMatchQ(t,q));
+    if(hit.length) out.push({p,list:hit});
+  }
+  return out;
+}
+function dexHitCount(){ return dexSearchGroups().reduce((n,g)=>n+g.list.length,0); }
+function dexEmptyHTML(){
+  return `<div class="gal-empty">${_dexQ.trim()?$t('没有找到匹配的月巴'):$t('图鉴里还没有月巴，先去收集一些吧')}</div>`;
+}
+function dexGridHTML(list,quiet){
+  if(_dexQ.trim()){
+    const gs=dexSearchGroups();
+    if(!gs.length) return dexEmptyHTML();
+    const key={1:'📕 第一图鉴',2:'📕 第二图鉴',3:'📕 第三图鉴'};
+    return gs.map(g=>`<div class="dex-grp">${$t(key[g.p])} · ${g.list.length}</div>`+bookRowsHTML(g.list,quiet)).join('');
+  }
+  return list.length?bookRowsHTML(list,quiet):dexEmptyHTML();
+}
+function dexFoundText(){
+  return _dexQ.trim()?$tf('找到 {n} 只',{n:dexHitCount()}):'';
+}
+/* 标题：搜索时显示全图鉴命中数，否则显示当前页进度 */
+function dexTitleOf(page,list){
+  if(_dexQ.trim()) return $tf('🔍 全图鉴搜索 · {n} 只',{n:dexHitCount()});
+  const got=Object.keys(dexCollOf(page)).length, total=list.length;
+  return $tf('📗 图鉴 · 第{a}页 {b}/{c} ({d}%)',{a:page,b:got,c:total,d:total?Math.round(got/total*100):0});
+}
+function dexSearchToggle(){
+  _dexOpen=!_dexOpen;
+  if(!_dexOpen) _dexQ='';
+  openBook();
+  if(_dexOpen){
+    const el=$('dexSearchIn');
+    if(el){ el.focus(); el.setSelectionRange(el.value.length,el.value.length); }
+  }
+}
+/* 窄屏页签横向滚动时，把当前页签滚进可视区，避免打开时看不到选中项 */
+function dexScrollActiveTab(){
+  const on=document.querySelector('.booktabs .btab.on');
+  if(on&&on.scrollIntoView) on.scrollIntoView({block:'nearest',inline:'nearest'});
+}
+function dexSearchInput(v){
+  _dexQ=v;
+  const list=dexListOf(dexPage);
+  const grid=$('dexGrid'); if(grid) grid.innerHTML=dexGridHTML(list,true);
+  const cnt=$('dexFound'); if(cnt) cnt.textContent=dexFoundText();
+  const tt=$('modalTitle'); if(tt) tt.textContent=dexTitleOf(dexPage,list);
+}
 function openBook(){
   pomoModalOpen=false;
   closeGalDetail();   // 切页/重开图鉴时清掉画廊详情悬浮层的残留
   const unlocked=dex2Unlocked();
   if(dexPage===2 && !unlocked) dexPage=1;
-  // 稀有度 1-5 升序；同稀有度内按“名称相似组”聚类（同主题排一起），未命中的按名称/字数兜底
-  const dexCat=name=>{
-    const m={春:$t('A季'),夏:$t('A季'),秋:$t('A季'),冬:$t('A季'),晨:$t('B时'),午:$t('B时'),昏:$t('B时'),夜:$t('B时'),凌晨:$t('B时'),午夜:$t('B时'),晴:$t('C气'),云:$t('C气'),雨:$t('C气'),暴雨:$t('C气'),雪:$t('C气'),彩虹:$t('C气')};
-    for(const k in m){ if(name.indexOf(k)>=0) return m[k]; }
-    return 'Z'+name;
-  };
-  const tabs=`<div class="booktabs">
-    <button class="btab ${dexPage===1?'on':''}" onclick="switchDexPage(1)">${$t('📕 第一图鉴')}</button>
-    <button class="btab ${dexPage===2?'on':''} ${unlocked?'':'lock'}" onclick="${unlocked?'switchDexPage(2)':''}" title="${unlocked?'':$tf('第一图鉴集齐 {n} 个月巴后开启',{n:DEX1_MIN})}">${$t('📕 第二图鉴')} ${unlocked?'':'🔒'}</button>
-    <button class="btab ${dexPage===3?'on':''}" onclick="switchDexPage(3)" title="${$t('收集旅途中的画面')}">${$t('🖼 画廊')}</button>
+  const searchable=dexPage!==4;
+  const searchHTML=searchable
+    ?`<button class="bsearchbtn ${_dexOpen?'on':''}" title="${esc($t('搜索月巴'))}" onclick="dexSearchToggle()">🔍</button>`
+    :'';
+  const tabs=`<div class="bookbar">
+    <div class="booktabs">
+      <button class="btab ${dexPage===1?'on':''}" onclick="switchDexPage(1)">${$t('📕 第一图鉴')}</button>
+      <button class="btab ${dexPage===2?'on':''} ${unlocked?'':'lock'}" onclick="${unlocked?'switchDexPage(2)':''}" title="${unlocked?'':$tf('第一图鉴集齐 {n} 个月巴后开启',{n:DEX1_MIN})}">${$t('📕 第二图鉴')} ${unlocked?'':'🔒'}</button>
+      <button class="btab ${dexPage===3?'on':''}" onclick="switchDexPage(3)">${$t('📕 第三图鉴')}</button>
+      <button class="btab ${dexPage===4?'on':''}" onclick="switchDexPage(4)" title="${$t('收集旅途中的画面')}">${$t('🖼 画廊')}</button>
+    </div>
+    ${searchHTML}
   </div>`;
-  if(dexPage===3){
+  if(dexPage===4){
     galSync(true);
     const gg=GALLERY.filter(e=>galUnlocked(e.id)).length;
     openModal($tf('🖼 画廊 {a}/{b}',{a:gg,b:GALLERY.length}),
       `${tabs}<div class="book">${galGridHTML()}</div>`, openBook);
+    dexScrollActiveTab();
     return;
   }
-  const list=(dexPage===2?TYPES2:TYPES).slice().sort((a,b)=>{
-    if(a.id==='bairi'||b.id==='bairi') return a.id==='bairi'?1:0;
-    return (a.r-b.r)||
-    (dexCat(a._zhN||a.name).localeCompare(dexCat(b._zhN||b.name)))||
-    (a.name.length-b.name.length)||
-    a.name.localeCompare(b.name);
-  });
-  const got=Object.keys(dexPage===2?S.collection2:S.collection).length, total=list.length;
-  const skinHTML=skinBarHTML(dexPage);
-  openModal($tf('📗 图鉴 · 第{a}页 {b}/{c} ({d}%)',{a:dexPage,b:got,c:total,d:Math.round(got/total*100)}),
-    `${tabs}${skinHTML}<div class="book">${bookRowsHTML(list)}</div>`, openBook);
+  const list=dexListOf(dexPage);
+  const searchRow=_dexOpen?`<div class="bsearchrow">
+    <input class="bsearchin" id="dexSearchIn" placeholder="${esc($t('搜索月巴名字或简介…'))}" value="${esc(_dexQ)}"
+      oninput="dexSearchInput(this.value)" onkeydown="if(event.key==='Enter')this.blur()">
+    <div class="bsearchcnt" id="dexFound">${esc(dexFoundText())}</div>
+  </div>`:'';
+  const skinHTML=(dexPage===1||dexPage===2)&&!_dexQ.trim()?skinBarHTML(dexPage):'';
+  openModal(dexTitleOf(dexPage,list),
+    `${tabs}${searchRow}${skinHTML}<div class="book" id="dexGrid">${dexGridHTML(list)}</div>`, openBook);
+  dexScrollActiveTab();
+  if(_dexOpen){
+    const el=$('dexSearchIn');
+    if(el){ el.focus(); el.setSelectionRange(el.value.length,el.value.length); }
+  }
 }
-function switchDexPage(p){ dexPage=p; openBook(); }
+function switchDexPage(p){ if(p!==dexPage) _dexQ=''; dexPage=p; openBook(); }
 /* ---------------- 投稿页：还没有立绘的月巴 ----------------
    只列出 TYPES/TYPES2 中一张立绘都没有的月巴（已有立绘的不再需要投稿）。
    顶部固定 Google 表单外链；卡片沿用图鉴样式，保留名字 + 简介；支持名字/ID/简介搜索。 */
 let _subQ='';
-function subMissing(){ return TYPES.concat(TYPES2).filter(t=>!artList(t).length); }
+function subMissing(){ return TYPES.concat(TYPES2,TYPES3).filter(t=>!artList(t).length); }
 function subFiltered(){
   const all=subMissing();
   const q=_subQ.trim().toLowerCase();
@@ -9319,7 +9612,7 @@ function openDex2Celebrate(){
     <div style="text-align:center;padding:6px 0 2px">
       <div style="font-size:52px;line-height:1.1">🎊</div>
       <div class="pomo-note" style="text-align:center;margin-top:4px">${$tf('你已收集齐第一图鉴 <b>{n}</b> 个月巴！<br>📕 第二图鉴已开启 —— 全新 <b>{a}</b> 种月巴加入掉落，等你来集齐！',{n:DEX1_MIN,a:TYPES2.length})}</div>
-      <button class="btn" style="width:100%;margin-top:10px" onclick="openBook()">${$t('📕 查看第二图鉴')}</button>
+      <button class="btn" style="width:100%;margin-top:10px" onclick="switchDexPage(2)">${$t('📕 查看第二图鉴')}</button>
       <button class="btn" style="width:100%;margin-top:6px" onclick="closeModal()">${$t('关闭')}</button>
     </div>`);
 }
@@ -9363,6 +9656,7 @@ function openFatDetail(id){ // 图鉴点开某月巴：悬浮层放大图 + 记�
         </div>
         <div class="fd-cond">${cd}</div>
         <div class="fd-intro"><b>${$t('📜 简介')}</b><p>${$fi(t.id)}</p>${YB_TXT_AUTHOR[t.id]?`<div class="fd-author">✍️ by ${esc(YB_TXT_AUTHOR[t.id])}</div>`:''}</div>
+        ${dexGameOf(t.id)?`<button class="btn" style="width:100%;margin-top:10px" onclick="dexGameEntry('${t.id}')">${$t('🪽 进入飞行小游戏')}</button>`:''}
       </div>
     </div>`;
   ov.classList.add('show');
@@ -9544,11 +9838,20 @@ function mergeImportedSave(d){
   if(d.collection) for(const k in d.collection){
     if(typeof d.collection[k]==='number') d.collection[k]={count:d.collection[k]};
   }
+  if(d.collection3) for(const k in d.collection3){
+    if(typeof d.collection3[k]==='number') d.collection3[k]={count:d.collection3[k]};
+  }
   if(d.zones) for(const z of d.zones) for(const w of (z.woods||[])) for(const c of w.cells){
     if(c&&c.t&&c.dur&&c.dur<10000) c.dur=c.dur*(1000/BASE_SPEED);
   }
   const merged=Object.assign(defaultState(),d);
+  if(!merged.collection3||typeof merged.collection3!=='object'||Array.isArray(merged.collection3)) merged.collection3={};
+  // 迁移：已划入第三图鉴的月巴若记在第二图鉴，转移到 collection3
+  for(const t of TYPES3){ if(t.id.indexOf('m2_')!==0) continue;
+    const c=merged.collection2&&merged.collection2[t.id];
+    if(c!=null){ if(!merged.collection3[t.id]) merged.collection3[t.id]=c; delete merged.collection2[t.id]; } }
   merged.pomo=Object.assign(defaultState().pomo,d.pomo||{});
+  normFlySave(merged);
   return merged;
 }
 function importSaveFile(){
@@ -12295,7 +12598,7 @@ function tvHomeHTML(t){
   h+='</div>';
   return h;
 }
-function tvOwnedFats(){ const out=[]; const add=function(coll){ for(const id in coll){ const c=coll[id]; if(c&&c.count>0){ const tp=typeById(id); if(tp)out.push({id:id,t:tp}); } } }; add(S.collection); if(dex2Unlocked())add(S.collection2||{}); out.sort(function(a,b){ return (a.t.r||0)-(b.t.r||0) || (a.t.name<b.t.name?-1:a.t.name>b.t.name?1:0); }); return out; }
+function tvOwnedFats(){ const out=[]; const add=function(coll){ for(const id in coll){ const c=coll[id]; if(c&&c.count>0){ const tp=typeById(id); if(tp)out.push({id:id,t:tp}); } } }; add(S.collection); if(dex2Unlocked())add(S.collection2||{}); add(S.collection3||{}); out.sort(function(a,b){ return (a.t.r||0)-(b.t.r||0) || (a.t.name<b.t.name?-1:a.t.name>b.t.name?1:0); }); return out; }
 function tvPickFat(id){ const t=tvFresh(); t.frog.fatId=(id&&id===t.frog.fatId)?null:(id||null); save(); tvBag(); }
 function tvRenderScene(){ const sc=$('tvScene'); if(!sc)return; const t=tvFresh(); tvEventRoll(); sc.innerHTML=tvView==='yard'?tvYardHTML(t):tvHomeHTML(t); if(tvView==='yard')tvStealMaybe(); }
 const TV_SLOTS=['🍅','🌶️','🍑','🍒','🍓','🥫','🌻','⭐'];
@@ -12325,7 +12628,7 @@ function tvSpin(){ const btn=$('tvSpinBtn'); if(!tvSlotReady()){ /* 冷却中：
   const step=function(t){ const p=Math.min(1,(t-t0)/dur); for(let i=0;i<3;i++){ const e=els[i]; if(!e)continue; const sp=e.firstChild; if(!sp||!sp.style)continue; const pt=Math.min(1,p*dur/stops[i]); sp.style.transform='translateY('+(-pt*MAX).toFixed(1)+'px)'; if(pt>=1&&!e.classList.contains('land'))e.classList.add('land'); } if(p<1)requestAnimationFrame(step); else { /* 落定后清空长条 DOM，仅保留结果图标并移除 will-change，降低常驻内存/合成层 */ for(let i=0;i<3;i++){ const e=els[i]; if(!e)continue; e.innerHTML='<div class="tvg-strip"><div>'+cols[i]+'</div></div>'; } tvSlotResult(cols,roll.gain,roll.tier); if(btn){ btn.disabled=true; btn.textContent=$t('🕹 已收获 · 月巴们去攒番茄啦'); } } };
   requestAnimationFrame(step); }
 function tvSlotResult(cols,gain,tier){ const t=tvFresh(); if(typeof gain!=='number'){ gain=randi(1,10); tier='low'; } t.tomato+=gain; t.harvestT=now()+tvHarvestGap(); const stolen=(tier==='low')&&gain<=6; const best=cols.indexOf('🍅')>=0?'🍅':(cols.indexOf('🥫')>=0?'🥫':''); save(); const r=$('tvSlotResult'); if(r){ if(tier==='high')r.innerHTML=(best==='🍅'?$t('🎉🎉 三连番茄大奖！'):best==='🥫'?$t('🎉🎉 三连罐头大奖！'):$t('🎉🎉 三连大奖！'))+$t('收获 ')+gain+$t(' 个 🍅'); else if(stolen)r.innerHTML=$t('😳 好像番茄被月巴偷偷拿走了……（+')+gain+' 🍅）'; else if(tier==='mid'&&best)r.innerHTML=(best==='🍅'?$t('🍅 番茄成对加成！'):$t('🥫 罐头成对加成！'))+$t('收获 ')+gain+$t(' 个 🍅'); else r.innerHTML=$t('🎉 收获 ')+gain+$t(' 个 🍅'); } if(tier==='high')sfx.slotHigh(); else if(stolen)sfx.slotStolen(); else if(tier==='mid')sfx.slotMid(); else sfx.slotLow(); updateTravelIcon(); }
-function tvUpdateHarvest(){ const b=$('tvHarvestBtn'); if(b)b.style.display=tvSlotReady()?'':'none'; const h=$('tvHomeTab'); if(h){ const t=tvFresh(); h.classList.toggle('lit',!!(t.homeRewardReady&&t.homeReward&&t.homeReward.n>0)); } const gb=$('tvGambleBtn'); if(gb)gb.textContent=gambleFresh().playing?$t('🎲 对赌中'):$t('🎲 对赌'); }
+function tvUpdateHarvest(){ const b=$('tvHarvestBtn'); if(b)b.style.display=tvSlotReady()?'':'none'; const h=$('tvHomeTab'); if(h){ const t=tvFresh(); h.classList.toggle('lit',!!(t.homeRewardReady&&t.homeReward&&t.homeReward.n>0)); } }
 /* ---------------- 受保护单调时钟（防调系统时间作弊） ----------------
    原理：页内时间用 performance.now() 的「流逝」推进 S.clock.base，玩家在页内改系统时间不会让 base 跳变；
    读档时用 Date.now()-S.lastSave 补齐离线流逝（只补正值，回拨不前进）；若检测到回拨（real 明显小于历史最大）
@@ -13085,6 +13388,7 @@ function tvPack(k){ const t=tvFresh(); if(t.bag.length>=4){ toast($t('行囊已�
 function tvUnpack(k){ const t=tvFresh(); if((k==='charm'||k==='pass') && t.frog.status==='away'){ toast($t('旅途中的护身符不能取出')); return; } const i=t.bag.findIndex(function(x){return x.k===k;}); if(i<0)return; const x=t.bag[i]; t.bag.splice(i,1); t.wh[k]=(t.wh[k]||0)+1; if(k==='charm') t.charmDuras.push(tvCharmDura(x)); save(); tvBag(); }
 
 function nextDexEventAt(){ return now()+rand(15,40)*60000; } // 下次天降事件：15~40 分钟后随机出现
+const DEX_EV_RECENT=5; // 天降事件近期去重：最近 5 次的月巴与台词不再重复
 let _dexEv=null; // 待领取的天降事件缓存：{t,line,reward}
 function checkDexEvent(){
   if(!S.dexNext) S.dexNext=nextDexEventAt();
@@ -13092,9 +13396,15 @@ function checkDexEvent(){
   if(_dexEv) return; // 已有待领取事件，保持按钮显示
   if(now()<S.dexNext) return;
   // 生成事件并亮起红色按钮 + 可爱音效
-  const pool=dex2Unlocked()?TYPES.concat(TYPES2):TYPES; // 开启第二图鉴后事件月巴也纳入
-  const t=pool[Math.floor(Math.random()*pool.length)];
-  const evIdx=Math.floor(Math.random()*DEX_EVENTS.length);
+  const pool=dex2Unlocked()?TYPES.concat(TYPES3,TYPES2):TYPES.concat(TYPES3); // 开启第二图鉴后事件月巴也纳入；第三图鉴始终纳入
+  const recentT=S.dexRecentT||[], recentEv=S.dexRecentEv||[];
+  let cand=pool.filter(function(x){ return recentT.indexOf(x.id)<0; }); // 近期出现过的月巴先排除
+  if(!cand.length) cand=pool;
+  const t=cand[Math.floor(Math.random()*cand.length)];
+  let evCand=[]; // 近期出现过的台词先排除
+  for(let i=0;i<DEX_EVENTS.length;i++){ if(recentEv.indexOf(i)<0) evCand.push(i); }
+  if(!evCand.length){ for(let i=0;i<DEX_EVENTS.length;i++) evCand.push(i); }
+  const evIdx=evCand[Math.floor(Math.random()*evCand.length)];
   let line=($t(DEX_EVENTS[evIdx]||'')).replace(/\{name\}/g,t.name);
   let tomato=dex2Unlocked()?randi(1,10):0;
   let culpritId=null;
@@ -13106,6 +13416,9 @@ function checkDexEvent(){
     const cn=(culprit&&culprit.name)||$t('嫌疑月巴');
     line=$tf('👮 警察巴捉拿了{a}，{a}缴纳了罚款，这是所有的番茄。',{a:cn});
   }
+  /* 记录近期用过的月巴与台词（警察事件用的是专属台词，不占用模板序号） */
+  S.dexRecentT=(recentT.concat(t.id)).slice(-DEX_EV_RECENT);
+  if(!culpritId) S.dexRecentEv=(recentEv.concat(evIdx)).slice(-DEX_EV_RECENT);
   _dexEv={t,line,evIdx:culpritId?null:evIdx,culpritId,reward:dexEventReward(), tomato:tomato};
   S.dexPending=_dexEv;
   S.dexNext=nextDexEventAt();
@@ -13167,7 +13480,6 @@ function tick(){
   if(now()-_achT>1500){ _achT=now(); checkAch(); ddAchTick(); }   // 成就判定节流（约 1.5 秒一次，只算未达成的）
   updateStatus();
   updateWeatherHold();
-  updateFlyIcon();
   if(now()-S.lastSave>5000) save();
 }
 
@@ -13331,7 +13643,11 @@ function fgHitRect(hx,hy,rx,ry,x0,x1,y0,y1){
   return dx*dx+dy*dy<=1;
 }
 let fg=null;
-function fgAllTypes(){ return TYPES.concat(TYPES2); }
+function fgAllTypes(){ return TYPES.concat(TYPES2,TYPES3); }
+/* 飞行小游戏可选月巴：已收集（图鉴解锁）的月巴 + 会飞月巴本体，其余月巴不出现在选月巴列表 */
+function fgPickTypes(){
+  return fgAllTypes().filter(function(t){ return t.id==='mb_yunduan' || colCount(t.id)>0; });
+}
 function fgFreeTop(){ return (S.flyTop||[]).filter(r=>(r.lv|0)===0); }
 function fgBest(){ const l=fgFreeTop(); return l.length?l[0].s:0; }
 function fgBestRefresh(){ const e=$('fgBest'); if(e) e.textContent=fgBest(); }
@@ -13339,11 +13655,17 @@ function fgFmtT(s){ return $tf('{n}秒',{n:(s>0?s:0).toFixed(2)}); }
 /* 排行榜分类：'free' 自由模式（按分数） / 'lv' 关卡（按最短用时） */
 let fgLbTab='free', fgLastRes=null;
 function fgLbTabSet(m){ fgLbTab=(m==='lv')?'lv':'free'; fgRenderLb(fgLastRes); }
-function fgPickId(){ return (S.flyPick&&typeById(S.flyPick))?S.flyPick:(TYPES[0]&&TYPES[0].id); }
+function fgPickId(){
+  const list=fgPickTypes();
+  const has=function(id){ return list.some(function(t){ return t.id===id; }); };
+  if(S.flyPick&&has(S.flyPick)) return S.flyPick;
+  const d=TYPES[0]&&TYPES[0].id;
+  return (d&&has(d))?d:(list[0]?list[0].id:(TYPES[0]&&TYPES[0].id));
+}
 /* ---- 关卡 / 自由模式 ---- */
 function fgLvDef(n){ return (n>=1&&n<=FG_LEVELS.length)?FG_LEVELS[n-1]:null; }
 function fgClearN(){ const v=parseInt(S.flyClear,10)||0; return clamp(v,0,FG_LEVELS.length); }
-function fgLvUnlocked(n){ return n>=1 && n<=FG_LEVELS.length && n<=fgClearN()+1; }
+function fgLvUnlocked(n){ return n>=1 && n<=FG_LEVELS.length; }
 // 当前选择：0 = 自由模式，1~10 = 关卡
 function fgSel(){ const v=parseInt(S.flySel,10); return (v>=0&&v<=FG_LEVELS.length)?v:1; }
 function fgModeLabel(){
@@ -13353,19 +13675,8 @@ function fgModeLabel(){
   return $tf('第 {n} 关 · {a}/{b}',{n:lv,a:((fg&&fg.score)|0),b:goal});
 }
 function fgModeRefresh(){ const el=$('fgMode'); if(el) el.textContent=fgModeLabel(); }
-function flyUnlocked(){
-  // 收集到百日月巴后解锁飞行小游戏
-  return !!(S.collection && S.collection['bairi']);
-}
-function updateFlyIcon(){
-  const el=$('btnDress'); if(!el)return;
-  const on=flyUnlocked();
-  if(el._flyOn===on)return;
-  el._flyOn=on;
-  el.innerHTML=on?'<b>🪽</b><small>'+$t('飞行')+'</small>':'<b>❓</b>';
-}
+function flyUnlocked(){ return true; }
 function flyEntry(){
-  if(!flyUnlocked()){ toast($t('🍅 它还不会飞。等到「月巴们的百日战纪」集齐，才能带你去天上。'), $t('请收集到百日月巴再来哦~')); return; }
   if(!fg) fg={raf:null,cdT:null,run:false,alive:false,pipes:[],score:0,y:0,vy:0,last:0,cdN:3,sel:null};
   fg.sel=fgPickId();
   fg.lv=fgSel(); fg.score=0; fg.goal=0;
@@ -13382,6 +13693,94 @@ function flyExit(){
   fgLayer(null);
   fgClearPipes();
 }
+/* 图鉴入口：绕过「百日月巴」解锁限制，直达关卡选择层；图鉴弹窗保持打开，退出游戏即回到图鉴 */
+function openFlyFromDex(id){
+  const tid=id||'mb_yunduan';
+  if(!typeById(tid)) return;
+  if(!fg) fg={raf:null,cdT:null,run:false,alive:false,pipes:[],score:0,y:0,vy:0,last:0,cdN:3,sel:null};
+  fg.sel=tid;
+  fg.lv=fgSel(); fg.score=0; fg.goal=0;
+  $('flygame').classList.add('show');
+  document.body.classList.add('fg-lock');
+  fgBestRefresh();
+  fgModeRefresh();
+  fgLvOpen();
+}
+/* ================= 百巴箱：小游戏合集 =================
+   卡片图标取图鉴月巴（有外链立绘则用外链，否则用 SVG）。
+   game:'fly' -> 复用页内飞行浮层；html:'xxx.html' -> 内嵌 iframe（同幸存者）。 */
+const GB_GAMES=[
+  {id:'fly', codex:'mb_yunduan', name:'飞行小游戏', game:'fly'},
+  {id:'gamble', codex:'jieba', name:'🎲 对赌', game:'gamble', lock:true},
+  {id:'dd', codex:'m2_chuqian', name:'🃏 斗月巴', game:'dd', lock:true},
+];
+let gbFrameId=null;
+function gbRender(){
+  const grid=$('gbGrid'); if(!grid) return;
+  let out='';
+  for(let i=0;i<GB_GAMES.length;i++){
+    const g=GB_GAMES[i];
+    const t=typeById(g.codex);
+    if(!t) continue;
+    const lk=!!(g.lock&&!dex2Unlocked());
+    out+='<button class="gbcard bcard'+(lk?' locked':'')+'" style="--stagger:'+(i*40)+'ms" onclick="gbPlay(\''+g.id+'\')">'
+      +'<span class="gbico">'+fatSVG(t)+(lk?'<span class="gblock">🔒</span>':'')+'</span>'
+      +'<span class="gbnm">'+escHTML($t(g.name))+'</span>'
+      +'<span class="gbsub">🐰 '+escHTML(t.name)+'</span>'
+      +'</button>';
+  }
+  grid.innerHTML=out;
+  const em=$('gbEmpty'); if(em) em.style.display=out?'none':'block';
+}
+let _gbLockTipT=null;
+function gbLockTipShow(name){
+  const el=$('gbLockTip'); if(!el) return;
+  el.textContent=dex2LockText(name);
+  el.style.display='block';
+  if(_gbLockTipT) clearTimeout(_gbLockTipT);
+  _gbLockTipT=setTimeout(function(){ el.style.display='none'; },5000);
+}
+function gbBoxEntry(){
+  if(gbFrameId) return;
+  sfx.click(); gbRender();
+  const tip=$('gbLockTip'); if(tip) tip.style.display='none';
+  const b=$('gbBox'); if(b) b.classList.add('show');
+  document.body.classList.add('gb-lock');
+}
+function gbBoxClose(){
+  const b=$('gbBox'); if(b) b.classList.remove('show');
+  if(!gbFrameId) document.body.classList.remove('gb-lock');
+}
+function gbOutside(e){ if(e&&e.target===$('gbBox')) gbBoxClose(); }
+function gbPlay(id){
+  const g=GB_GAMES.filter(function(x){ return x.id===id; })[0];
+  if(!g) return;
+  if(g.lock && !dex2Unlocked()){ sfx.error(); gbLockTipShow($t(g.name)); return; }
+  gbBoxClose(); sfx.click();
+  if(g.html){ gbFrameOpen(g); return; }
+  if(g.game==='fly'){ try{ dexGameEntry(g.codex||'mb_yunduan'); }catch(e){} return; }
+  if(g.game==='gamble'){ gambleEntry(); return; }
+  if(g.game==='dd'){ ddEnter(); return; }
+}
+function gbFrameOpen(g){
+  gbFrameId=g.id;
+  const ov=$('gbGameOverlay'), fr=$('gbGameFrame'), ttl=$('gbGameTitle');
+  if(ttl) ttl.textContent='🎁 '+$t(g.name);
+  if(fr) fr.src=g.html;
+  if(ov) ov.classList.add('show');
+  document.body.classList.add('gb-lock');
+  setTimeout(function(){ try{ fr.focus(); }catch(e){} },300);
+}
+function gbFrameClose(){
+  if(!gbFrameId) return;
+  gbFrameId=null;
+  const ov=$('gbGameOverlay'), fr=$('gbGameFrame');
+  try{ if(fr) fr.src='about:blank'; }catch(e){}
+  if(ov) ov.classList.remove('show');
+  document.body.classList.remove('gb-lock');
+  gbBoxEntry();
+}
+_i18nRepaint.push(function(){ if($('gbBox')&&$('gbBox').classList.contains('show')) gbRender(); });
 /* ================= 番茄幸存者（独立页入口） =================
    游戏本体在 survivor.html，index 只保留入口与存档/成就字段。
    入口改为内嵌 iframe：首页保持可见，番茄钟/月巴生长继续运行。
@@ -13487,13 +13886,12 @@ function fgRenderLv(){
   const cur=fgSel();
   const best=S.flyLvBest||{}, times=S.flyLvTime||{};
   let html=FG_LEVELS.map(L=>{
-    const on=fgLvUnlocked(L.n);
     const b=best[L.n]|0, rec=times[L.n];
     const pass=fgClearN()>=L.n;
-    const btxt=!on?'':(pass?(rec?($t('✅ 最快 ')+fgFmtT(rec.t)):$t('✅ 已通关')):(b?($t('最佳 ')+b):($t('目标 ')+L.goal)));
-    return '<div class="fg-lv'+(on?'':' lock')+(cur===L.n?' sel':'')+'" data-n="'+L.n+'">'
-      +'<div class="t">'+(on?($t('第 ')+L.n+$t(' 关')):'🔒')+'</div>'
-      +'<div class="s">'+escHTML(on?L.name:$t('未解锁'))+'</div>'
+    const btxt=pass?(rec?($t('✅ 最快 ')+fgFmtT(rec.t)):$t('✅ 已通关')):(b?($t('最佳 ')+b):($t('目标 ')+L.goal));
+    return '<div class="fg-lv'+(cur===L.n?' sel':'')+'" data-n="'+L.n+'">'
+      +'<div class="t">'+$t('第 ')+L.n+$t(' 关')+'</div>'
+      +'<div class="s">'+escHTML(L.name)+'</div>'
       +'<div class="b">'+btxt+'</div></div>';
   }).join('');
   html+='<div class="fg-lv'+(cur===0?' sel':'')+'" data-n="0">'
@@ -13506,7 +13904,6 @@ function fgRenderLv(){
       const c=e.target.closest?e.target.closest('.fg-lv'):null;
       if(!c)return;
       const n=parseInt(c.getAttribute('data-n'),10);
-      if(!(n===0||fgLvUnlocked(n))){ toast($t('🔒 通过前一关才能解锁哦')); return; }
       S.flySel=n; save(); sfx.click();
       fgRenderLv();
     });
@@ -13533,15 +13930,20 @@ function fgLvInfo(){
 }
 function fgRenderPick(){
   const grid=$('fgPickGrid'); if(!grid)return;
-  if(!grid._built){
-    grid.innerHTML=fgAllTypes().map(t=>`<div class="fg-pick" data-id="${t.id}" data-name="${escHTML(t.name)}"><div class="pic">${fatSVG(t)}</div><div class="nm">${escHTML(t.name)}</div></div>`).join('');
-    grid._built=1;
-    grid.addEventListener('click',e=>{
-      const c=e.target.closest?e.target.closest('.fg-pick'):null;
-      if(!c)return;
-      fg.sel=c.getAttribute('data-id');
-      sfx.click(); fgMarkPick();
-    });
+  const list=fgPickTypes();
+  const sig=list.map(t=>t.id).join(',');
+  if(!grid._built||grid._sig!==sig){
+    grid.innerHTML=list.map(t=>`<div class="fg-pick" data-id="${t.id}" data-name="${escHTML(t.name)}"><div class="pic">${fatSVG(t)}</div><div class="nm">${escHTML(t.name)}</div></div>`).join('');
+    grid._built=1; grid._sig=sig;
+    if(!grid._bound){
+      grid._bound=1;
+      grid.addEventListener('click',e=>{
+        const c=e.target.closest?e.target.closest('.fg-pick'):null;
+        if(!c)return;
+        fg.sel=c.getAttribute('data-id');
+        sfx.click(); fgMarkPick();
+      });
+    }
   }
   fgPickSearch(_fgPickQ);
   fgMarkPick();
@@ -13746,12 +14148,11 @@ function fgPass(){
   const old=S.flyLvTime[lv];
   const newRec=!old || tm<old.t;
   if(newRec) S.flyLvTime[lv]={t:tm, id:(fg&&fg.sel)||fgPickId()};
-  let newUnlock=false;
-  if(lv>fgClearN()){ S.flyClear=lv; newUnlock=lv<FG_LEVELS.length; }
+  if(lv>fgClearN()) S.flyClear=lv;
   fgPushTop(sc,lv);
   save();
   fgBestRefresh();
-  fgShowOver({pass:true, lv:lv, sc:sc, tm:tm, newRec:newRec, best:(S.flyLvTime[lv]||{}).t, newUnlock:newUnlock});
+  fgShowOver({pass:true, lv:lv, sc:sc, tm:tm, newRec:newRec, best:(S.flyLvTime[lv]||{}).t});
 }
 function fgDie(){
   if(!fg||!fg.alive)return;
@@ -13762,7 +14163,7 @@ function fgDie(){
   fgPushTop(sc,lv);
   if(sc>0) save();
   fgBestRefresh();
-  fgShowOver({pass:false, lv:lv, sc:sc, newUnlock:false});
+  fgShowOver({pass:false, lv:lv, sc:sc});
 }
 function fgShowOver(res){
   fgLastRes=res;
@@ -13779,8 +14180,7 @@ function fgShowOver(res){
         rs.className='fg-result pass';
         rs.innerHTML=$t('第 ')+res.lv+$t(' 关「')+escHTML(L.name)+$t('」通关！')
           +$t('<br>用时 <b>')+fgFmtT(res.tm)+'</b>'
-          +(res.newRec?($t('　🏅 新纪录！')):($t('　最快 <b>')+fgFmtT(res.best)+'</b>'))
-          +(res.newUnlock?($t('　🔓 解锁第 ')+(res.lv+1)+$t(' 关')):$t('　🏆 全部关卡已通关'));
+          +(res.newRec?($t('　🏅 新纪录！')):($t('　最快 <b>')+fgFmtT(res.best)+'</b>'));
       }else{
         rs.className='fg-result fail';
         rs.innerHTML=$t('穿过 <b>')+res.sc+'/'+L.goal+$t('</b> 根柱子，还差 <b>')+(L.goal-res.sc)+$t('</b> 根就通关了');
@@ -13826,10 +14226,8 @@ function fgRenderLbLv(box,res){
   const times=S.flyLvTime||{};
   const curLv=res?(res.lv|0):-1;
   box.innerHTML=FG_LEVELS.map(L=>{
-    const on=fgLvUnlocked(L.n), rec=times[L.n], me=(L.n===curLv);
+    const rec=times[L.n], me=(L.n===curLv);
     const pass=fgClearN()>=L.n;
-    if(!on) return '<div class="fg-lbrow"><span class="rk">'+L.n+'</span><span class="pic"></span>'
-      +$t('<span class="nm">🔒 未解锁</span><span class="sc">—</span></div>');
     const val=rec?fgFmtT(rec.t):(pass?$t('已通关 · 无计时'):$t('未通关'));
     return '<div class="fg-lbrow'+(me?' me':'')+'"><span class="rk">'+L.n+'</span><span class="pic">'+fgLbPic(rec?rec.id:null)+'</span>'
       +'<span class="nm">'+escHTML(L.name)+'</span><span class="sc'+(rec?' tm':'')+'">'+val+'</span></div>';
@@ -14096,7 +14494,7 @@ function init(){
   applySkin(S.skins.active);
   renderOverview(); updateHeader(); updateStatus(); updatePomoUI(); updateSceneBar(); updateWeatherHold();
   applyI18n();   // 静态文案/顶栏语言按钮按当前语言刷新（P0 无译文时显示中文原文）
-  updateTravelIcon(); updateFlyIcon(); updateCodeIcon(); updateCodeIcon2(); updateSurvivorIcon();
+  updateTravelIcon(); updateCodeIcon(); updateCodeIcon2(); updateSurvivorIcon();
   svBuffRender();   // 幸存者装备增幅胶囊（无装备时自动隐藏）
   checkAch(true); updateAchBtn();   // 读档后静默结算一次已满足的成就（只登记、不弹提示）
   /* 正式版上线后：测试入口下线，测试存档整键清空（以后不会再产生） */
@@ -14151,7 +14549,6 @@ function init(){
   $('btnTask').onclick=()=>{ sfx.click(); openTasks(); };
   $('btnStats').onclick=()=>{ sfx.click(); openStats(); };
   $('btnHelp').onclick=()=>{ sfx.click(); openHelp(); };
-  $('btnDress').onclick=()=>{ sfx.click(); flyEntry(); };
   // 月巴飞行：鼠标/触屏点击舞台，或按空格键让月巴往上飞
   const fgStage=$('fgStage');
   if(fgStage){
