@@ -58,20 +58,20 @@
     animation:shieldPulse 1.2s ease-in-out infinite;}
   @keyframes shieldPulse{0%,100%{opacity:.62}50%{opacity:1}}
   .timerbox{position:absolute;left:50%;top:calc(10px + env(safe-area-inset-top));
-    transform:translateX(-50%);padding:0;margin:0;text-align:center;pointer-events:none;}
+    transform:translateX(-50%);padding:0;margin:0;text-align:center;pointer-events:none;
+    display:flex;align-items:baseline;justify-content:center;gap:9px;}
   .timerbox b{display:block;font-size:26px;line-height:1.05;font-variant-numeric:tabular-nums;
     letter-spacing:2px;color:var(--accent2);
     text-shadow:0 2px 8px rgba(0,0,0,.6),0 0 16px rgba(70,230,242,.5);}
-  .statbox{flex:0 1 auto;display:flex;gap:6px;}
-  .stat{padding:6px 10px;text-align:center;min-width:56px;
-    background:linear-gradient(180deg,rgba(8,34,46,.88),rgba(4,18,26,.94));
-    clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);}
-  .stat small{display:block;font-size:9px;line-height:1;color:var(--dim);}
-  .stat small.emo{font-size:9px;letter-spacing:0;font-weight:400;line-height:1;}
-  .stat b{font-size:16px;color:var(--accent2);letter-spacing:1px;}
-  .hud-actions{position:absolute;top:calc(10px + env(safe-area-inset-top));right:12px;
-    display:flex;gap:6px;pointer-events:auto;}
-  #mini{position:absolute;right:12px;top:calc(56px + env(safe-area-inset-top));
+  /* 金币：与计时器同样的纯文字样式，字号更小 */
+  .coinline{display:inline-flex;align-items:center;gap:3px;white-space:nowrap;}
+  .coinline small{font-size:9px;line-height:1;opacity:.8;}
+  .coinline b{font-size:12px;font-weight:800;letter-spacing:.5px;font-variant-numeric:tabular-nums;
+    color:rgba(176,249,255,.72);text-shadow:0 1px 6px rgba(0,0,0,.55);}
+  /* 暂停放右下、血条上方：外层保留 44px 手指热区，图标本身画小 */
+  .hud-actions{position:absolute;left:auto;right:14px;bottom:calc(86px + env(safe-area-inset-bottom));
+    display:flex;align-items:center;gap:6px;pointer-events:auto;}
+  #mini{position:absolute;right:12px;top:calc(10px + env(safe-area-inset-top));
     width:96px;height:96px;border-radius:50%;pointer-events:none;
     border:1px solid rgba(70,230,242,.34);
     background:radial-gradient(circle at 50% 45%,rgba(8,34,46,.82),rgba(3,14,20,.9));
@@ -81,6 +81,14 @@
     color:var(--accent2);font-size:15px;cursor:pointer;
     display:flex;align-items:center;justify-content:center;
     clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);}
+  #btnPause{position:relative;width:44px;height:44px;background:none;border:0;clip-path:none;
+    font-size:0;line-height:1;-webkit-tap-highlight-color:transparent;}
+  #btnPause::before{content:'';position:absolute;left:50%;top:50%;width:27px;height:27px;
+    transform:translate(-50%,-50%);border-radius:50%;
+    background:linear-gradient(180deg,rgba(8,34,46,.9),rgba(4,18,26,.95));
+    border:1px solid var(--line);box-shadow:0 0 12px rgba(70,230,242,.14);}
+  #btnPause::after{content:'⏸';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    font-size:13px;line-height:1;color:var(--accent2);}
   .iconbtn:active{transform:scale(.94);}
   .ecoTag{display:inline-flex;align-items:center;justify-content:center;height:38px;padding:0 9px;
     font-size:9px;font-weight:900;letter-spacing:2px;color:#02141b;background:var(--accent);
@@ -90,14 +98,15 @@
   .xpbox .bar{flex:1;height:8px;margin-top:0;}
   #xpFill{background:linear-gradient(90deg,#19c8dc,#7df6ff);box-shadow:0 0 12px rgba(70,230,242,.45);}
   .xpbox .lv{font-size:10px;font-weight:900;color:var(--dim);letter-spacing:1.6px;white-space:nowrap;}
+  /* Boss 血条：收窄居中，与计时器同一条中轴，只占顶部一小段 */
   .bossbar{position:absolute;left:50%;top:calc(74px + env(safe-area-inset-top));transform:translateX(-50%);
-    width:min(520px,calc(100% - 24px));background:linear-gradient(180deg,rgba(8,34,46,.9),rgba(4,18,26,.95));
+    width:min(320px,calc(100% - 112px));background:linear-gradient(180deg,rgba(8,34,46,.9),rgba(4,18,26,.95));
     border:1px solid rgba(255,84,104,.35);
-    clip-path:polygon(0 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%);
-    padding:6px 10px;}
-  .bossbar .lb{display:flex;justify-content:space-between;font-size:10px;font-weight:900;
-    letter-spacing:1.6px;color:var(--red2);margin-bottom:4px;}
-  .bossbar .bar{height:7px;margin-top:0;}
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);
+    padding:4px 8px;}
+  .bossbar .lb{display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+    font-size:9px;font-weight:900;letter-spacing:1px;color:var(--red2);margin-bottom:3px;line-height:1;}
+  .bossbar .bar{height:5px;margin-top:0;}
   #bossFill{background:linear-gradient(90deg,#ff5468,#b06bff);box-shadow:0 0 12px rgba(255,84,104,.35);}
 
   /* ---------- 通用层 ---------- */
@@ -323,6 +332,13 @@
     font-weight:900;letter-spacing:.5px;color:#04141b;background:var(--red);
     box-shadow:0 0 10px rgba(255,84,104,.55);}
 
+  /* ---------- 开始页：反馈入口 ---------- */
+  .feedbackRow{display:flex;justify-content:center;margin-top:9px;}
+  .feedbackLink{appearance:none;border:0;background:none;color:var(--dim);font-family:inherit;
+    font-size:12px;letter-spacing:1px;padding:5px 10px;cursor:pointer;
+    border-bottom:1px dashed rgba(127,167,183,.34);transition:color .12s,border-color .12s;}
+  .feedbackLink:hover{color:var(--accent2);border-color:var(--line2);}
+
   /* ---------- 碎片：笔记本 ---------- */
   .novelLayer{background:rgba(2,10,16,.88);}
   .notebook{position:relative;width:min(520px,100%);height:min(640px,94vh);
@@ -492,6 +508,36 @@
     display:flex;flex-direction:column;align-items:flex-start;gap:4px;
     max-width:calc(100vw - 28px);pointer-events:none;}
   .botbar .hpbox{width:min(250px,calc(100vw - 28px));}
+  /* ---------- 左下角番茄助手：头像 + 偶尔弹出的提示气泡 ---------- */
+  .pet{position:absolute;left:12px;bottom:calc(94px + env(safe-area-inset-bottom));
+    display:flex;align-items:flex-end;gap:7px;z-index:4;pointer-events:none;
+    max-width:calc(100vw - 24px);}
+  .petAv{position:relative;flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;
+    border-radius:50%;overflow:hidden;background:radial-gradient(circle at 50% 38%,rgba(8,34,46,.96),rgba(3,14,20,.98));
+    border:1px solid rgba(70,230,242,.42);
+    box-shadow:0 0 14px rgba(70,230,242,.2),inset 0 0 12px rgba(70,230,242,.09);
+    animation:petBob 3.6s ease-in-out infinite;}
+  .petAv svg{display:block;width:33px;height:33px;filter:drop-shadow(0 0 5px rgba(255,80,70,.35));}
+  /* 直接使用对局里的番茄外链，放大裁到面部 */
+  .petImg{position:absolute;left:0;top:0;width:100%;height:100%;display:none;
+    object-fit:cover;object-position:50% 50%;transform:scale(2.05);transform-origin:52% 49%;}
+  .petAv.hasArt .petImg{display:block;}
+  .petAv.hasArt .petSvg{display:none;}
+  .petDot{position:absolute;right:5px;bottom:6px;width:7px;height:7px;border-radius:50%;
+    background:var(--accent);box-shadow:0 0 7px rgba(70,230,242,.9);border:1px solid rgba(3,14,20,.9);}
+  .pet .petEyes{transform-box:fill-box;transform-origin:center;animation:petBlink 5.6s ease-in-out infinite;}
+  .petSay{max-width:min(232px,calc(100vw - 78px));margin-bottom:7px;padding:7px 10px;
+    font-size:11px;line-height:1.55;color:var(--text);text-align:left;
+    background:linear-gradient(180deg,rgba(8,34,46,.96),rgba(4,18,26,.98));
+    border:1px solid rgba(70,230,242,.42);border-left:2px solid var(--accent);
+    box-shadow:0 4px 16px rgba(0,0,0,.45),inset 0 0 16px rgba(70,230,242,.06);
+    opacity:0;transform:translate(-4px,3px);transition:opacity .18s ease,transform .18s ease;position:relative;}
+  .petSay.show{opacity:1;transform:none;}
+  .petSay::after{content:'';position:absolute;left:-5px;bottom:9px;width:7px;height:7px;
+    background:rgba(8,34,46,.96);border-left:1px solid rgba(70,230,242,.42);
+    border-bottom:1px solid rgba(70,230,242,.42);transform:rotate(45deg);}
+  @keyframes petBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+  @keyframes petBlink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.12)}}
   .relicbar{display:flex;gap:3px;flex-wrap:wrap;max-width:100%;pointer-events:none;}
   .relicbar .rl{width:28px;height:33px;border-radius:2px;display:flex;flex-direction:column;
     align-items:center;justify-content:center;gap:2px;
@@ -525,16 +571,17 @@
     margin:7px 0 3px;padding-top:7px;border-top:1px dashed rgba(70,230,242,.16);}
   .buildbox .relhd span{font-size:10px;color:var(--dim);letter-spacing:.5px;white-space:nowrap;}
   /* 暂停/结算构筑：副武器与宝物左右各占一半，卡片样式一致 */
-  .buildcols{display:grid;grid-template-columns:1fr 1fr;gap:8px;position:relative;}
+  .buildcols{display:grid;grid-template-columns:1fr 1fr;gap:clamp(12px, 4.6vw, 24px);position:relative;}
   /* 武器↔宝物的可融合连线：金色实线=条件已满足，虚线=还差等级/层数 */
   svg.buildlinks{position:absolute;left:0;top:0;pointer-events:none;overflow:visible;z-index:2;}
-  svg.buildlinks path{fill:none;stroke-linecap:round;}
+  svg.buildlinks path{fill:none;stroke-linecap:round;stroke-linejoin:round;}
   svg.buildlinks path.ready{stroke:#ffd36b;stroke-width:1.6;filter:drop-shadow(0 0 3px rgba(255,211,107,.6));}
   svg.buildlinks path.wait{stroke:rgba(255,211,107,.38);stroke-width:1.1;stroke-dasharray:3 3;}
   svg.buildlinks circle{stroke:none;}
   svg.buildlinks circle.ready{fill:#ffd36b;filter:drop-shadow(0 0 3px rgba(255,211,107,.8));}
   svg.buildlinks circle.wait{fill:rgba(255,211,107,.5);}
   .relitem .mtag.fuse{color:#ffd77a;border-color:rgba(255,200,90,.55);background:rgba(255,200,90,.12);}
+  .relitem .mtag.fuse.wait{opacity:.6;border-color:rgba(255,200,90,.28);background:rgba(255,200,90,.05);}
   .buildcol{min-width:0;}
   .buildcol .relhd{margin:6px 0 4px;padding-top:0;border-top:0;}
   .buildcol .relitem{padding:3px 5px;gap:4px;}
@@ -551,6 +598,12 @@
   .upgrid .relitem .info b{font-size:10.5px;}
   .upgrid .relitem .pips{gap:1px;}
   .upgrid .relitem .pips i{width:3px;height:3px;}
+  /* 极窄屏：列间距收紧；连线会挤成一条，改用金色「可融合」角标和金色小图标提示 */
+  @media (max-width:360px){
+    .buildcols{gap:10px;}
+    .buildcol .relitem .info b{white-space:normal;overflow:visible;text-overflow:clip;}
+    svg.buildlinks{display:none;}
+  }
   .relgrid{display:flex;flex-direction:column;gap:5px;}
   .relitem{display:flex;align-items:center;gap:8px;padding:5px 7px;
     border:1px solid rgba(70,230,242,.14);background:rgba(70,230,242,.04);}
@@ -634,6 +687,7 @@
   body.low-power .panel,body.low-power .card,body.low-power .btn,
   body.low-power .chestPanel,body.low-power #toast{box-shadow:none !important;}
   body.low-power #toast{transition:none !important;}
+  body.low-power .petAv,body.low-power .pet .petEyes{animation:none !important;}
 
   @media (max-width:720px){
     .panel{padding:20px 16px 18px;border-radius:3px;}
@@ -677,6 +731,11 @@
   body.compactHud .botbar .hpbox .row b{font-size:11px;letter-spacing:.5px;}
   body.compactHud .botbar .hpbox .bar{flex:1;height:8px;margin-top:0;}
   body.compactHud .botbar .hpbox .shieldchip{margin-top:0;flex:0 0 auto;}
+  body.compactHud .pet{left:10px;bottom:calc(62px + env(safe-area-inset-bottom));gap:6px;}
+  body.compactHud .petAv{width:38px;height:38px;}
+  body.compactHud .petAv svg{width:28px;height:28px;}
+  body.compactHud .petSay{font-size:10.5px;padding:6px 8px;margin-bottom:6px;
+    max-width:min(208px,calc(100vw - 66px));}
   body.compactHud .timerbox{padding:0;}
   body.compactHud .timerbox b{font-size:19px;letter-spacing:1px;}
   /* 压缩方块尺寸，保证 6 个武器/宝物槽位单行放下 */
@@ -686,17 +745,13 @@
   body.compactHud .relicbar .rl .pips,body.compactHud .wpnbar .wr .lvp{height:3px;gap:1px;}
   body.compactHud .relicbar .rl .pips i,body.compactHud .wpnbar .wr .lvp i{width:3px;height:3px;}
   body.compactHud .relicbar .rl.empty,body.compactHud .wpnbar .wr.empty{width:18px;}
-  /* 击杀/金币改为右侧竖排小格，避开计时器；固定定位需跟随游戏窗口 */
-  body.compactHud .statbox{position:fixed;right:var(--pf-right,10px);
-    top:calc(var(--pfy,0px) + 140px + env(safe-area-inset-top));
-    flex-direction:column;gap:4px;align-items:stretch;}
-  body.compactHud .stat{padding:3px 7px;min-width:52px;}
-  body.compactHud .stat small{font-size:8px;letter-spacing:0;}
-  body.compactHud .stat b{font-size:13px;letter-spacing:.5px;}
-  body.compactHud .hud-actions{top:auto;bottom:auto;}
-  body.compactHud #mini{width:76px;height:76px;top:calc(54px + env(safe-area-inset-top));right:10px;}
-  body.compactHud .bossbar{top:calc(212px + env(safe-area-inset-top));}
-  body.compactHud #eventWarn{top:calc(256px + env(safe-area-inset-top));}
+  /* 击杀已移除，金币并入计时器；右上角留给地图 */
+  body.compactHud .hud-actions{top:auto;right:12px;bottom:calc(58px + env(safe-area-inset-bottom));}
+  body.compactHud #mini{width:76px;height:76px;top:calc(10px + env(safe-area-inset-top));right:10px;}
+  body.compactHud .bossbar{top:calc(94px + env(safe-area-inset-top));width:min(260px,52vw);}
+  body.compactHud #eventWarn{top:calc(146px + env(safe-area-inset-top));}
+  body.compactHud .coinline b{font-size:10.5px;letter-spacing:0;}
+  body.compactHud .coinline small{font-size:8px;}
   @media (max-width:400px){
     body.compactHud .relicbar .rl,body.compactHud .wpnbar .wr{width:20px;height:25px;font-size:10px;}
     body.compactHud .relicbar,body.compactHud .wpnbar{gap:1px;}
@@ -704,13 +759,14 @@
     body.compactHud .relicbar .rl .pips i,body.compactHud .wpnbar .wr .lvp i{width:2px;height:2px;}
     body.compactHud .relicbar .rl.empty,body.compactHud .wpnbar .wr.empty{width:17px;}
     body.compactHud .timerbox b{font-size:16px;letter-spacing:.5px;}
-    body.compactHud .stat{min-width:48px;padding:3px 6px;}
+    body.compactHud .coinline b{font-size:10px;}
     .hpbox{min-width:0;}
   }
   @media (max-width:340px){
     body.compactHud .relicbar .rl,body.compactHud .wpnbar .wr{width:16px;height:22px;}
     body.compactHud .relicbar .rl.empty,body.compactHud .wpnbar .wr.empty{width:13px;}
     body.compactHud .timerbox b{font-size:14px;}
+    body.compactHud .coinline b{font-size:9.5px;}
   }
   @media (orientation:portrait) and (max-width:720px){
     .chestPanel{width:min(420px,100%);}
@@ -756,15 +812,14 @@
 <canvas id="cv"></canvas>
 
 <div id="hud" class="hidden">
-  <div class="timerbox"><b id="timer">00:00</b></div>
+  <div class="timerbox">
+    <b id="timer">00:00</b>
+    <span class="coinline"><small>🪙</small><b id="coinText">0</b></span>
+  </div>
   <div class="hud-top">
     <div class="topbars">
       <div class="wpnbar hidden" id="wpnBar"></div>
       <div class="relicbar hidden" id="relicBar"></div>
-    </div>
-    <div class="statbox">
-      <div class="stat"><small class="emo">💀</small><b id="killText">0</b></div>
-      <div class="stat"><small class="emo">🪙</small><b id="coinText">0</b></div>
     </div>
   </div>
   <div class="hud-actions">
@@ -777,6 +832,34 @@
     <div class="bar"><i id="bossFill"></i></div>
   </div>
   <div id="eventWarn"></div>
+  <div class="pet hidden" id="pet" aria-live="polite">
+    <div class="petAv">
+      <img class="petImg" alt="" aria-hidden="true">
+      <svg class="petSvg" viewBox="0 0 64 64" aria-hidden="true">
+        <defs>
+          <radialGradient id="petTomG" cx="38%" cy="30%" r="75%">
+            <stop offset="0" stop-color="#ff8a72"/>
+            <stop offset=".55" stop-color="#ff5468"/>
+            <stop offset="1" stop-color="#c9243c"/>
+          </radialGradient>
+        </defs>
+        <path d="M32 12c10 0 18 8 18 19 0 12-8 21-18 21S14 43 14 31c0-11 8-19 18-19z"
+          fill="url(#petTomG)" stroke="#ff9b8e" stroke-width="1.6"/>
+        <path d="M32 14c-2-5-7-7-11-7 1 4 3 7 6 8-4 1-6 3-7 6 4 0 7-1 9-3 1 3 2 5 3 6 1-1 2-3 3-6 2 2 5 3 9 3-1-3-3-5-7-6 3-1 5-4 6-8-4 0-9 2-11 7z"
+          fill="#4fd08a" stroke="#2a9a62" stroke-width="1"/>
+        <g class="petEyes" fill="#15181c">
+          <ellipse cx="25" cy="31" rx="2.6" ry="3.4"/>
+          <ellipse cx="39" cy="31" rx="2.6" ry="3.4"/>
+        </g>
+        <path d="M27 39c1.6 2 3.2 3 5 3s3.4-1 5-3" fill="none" stroke="#57121f"
+          stroke-width="2" stroke-linecap="round"/>
+        <circle cx="20" cy="37" r="2.4" fill="#ff8b98" opacity=".5"/>
+        <circle cx="44" cy="37" r="2.4" fill="#ff8b98" opacity=".5"/>
+      </svg>
+      <span class="petDot"></span>
+    </div>
+    <div class="petSay" id="petSay"></div>
+  </div>
   <div class="botbar">
     <div class="hpbox">
       <div class="row"><span data-t="hp">生命</span><b id="hpText">100 / 100</b></div>
@@ -862,6 +945,9 @@
       <button class="btn primary" id="btnStart" data-t="start">开始游戏</button>
       <a class="btn ghost homeLink" id="btnHomeStart" data-t="home" href="index.html">返回首页</a>
     </div>
+    <div class="feedbackRow">
+      <button class="feedbackLink" id="btnFeedback" type="button" data-t="feedbackBtn">💬 反馈建议</button>
+    </div>
   </div>
 </div>
 
@@ -941,7 +1027,7 @@
 <div class="layer novelLayer" id="lyNovel">
   <div class="notebook">
     <div class="nb-top">
-      <span class="nb-ttl" data-t="novelBook">月巴笔记</span>
+      <span class="nb-ttl" data-t="novelBook">番茄笔记</span>
       <div class="nb-tabs" id="novelTabs"></div>
       <button class="nb-close" id="btnNovelClose" aria-label="关闭">✕</button>
     </div>
@@ -968,6 +1054,19 @@
     <div class="statgrid" id="statsGrid"></div>
     <div class="rewardbox"><b data-t="statsBestTitle">各关最快</b><div id="statsBest"></div></div>
     <div class="btnrow"><button class="btn primary" id="btnStatsClose" data-t="close">关闭</button></div>
+  </div>
+</div>
+
+<!-- 反馈 -->
+<div class="layer" id="lyFeedback">
+  <div class="panel" style="width:min(460px,100%);text-align:center">
+    <h2 data-t="feedbackTitle">反馈建议</h2>
+    <p class="sub" data-t="feedbackSub">遇到问题、发现错字或翻译生硬，或者有任何想让游戏变好的想法，都可以写进反馈表单。</p>
+    <p class="sub" style="font-size:12px;opacity:.75" data-t="feedbackHint">一次写一条就够了，不用面面俱到。</p>
+    <div class="btnrow">
+      <a class="btn primary" id="feedbackOpen" href="#" target="_blank" rel="noopener" data-t="feedbackOpen">打开反馈表单</a>
+      <button class="btn ghost" id="btnFeedbackClose" data-t="close">关闭</button>
+    </div>
   </div>
 </div>
 
@@ -1037,6 +1136,8 @@ const SAVE_KEY = TEST ? TEST_SAVE_KEY : PROD_SAVE_KEY;
 const PUBLIC = false;                         // 上线开关：与 index.html 的 SV_PUBLIC 保持一致
 const DEBUG = (location.hash + location.search).indexOf('debugall') >= 0;
 const DEBUG_SV_ONLY = (location.hash + location.search).indexOf('debugall-1') >= 0; // 只解锁入口，不显示调试工具栏
+/* 反馈表单链接：留空时入口提示「准备中」；填入表单地址后自动生效 */
+const FEEDBACK_URL = 'https://docs.qq.com/form/page/DYVhKQ0NLZkFmZG5i';
 
 const $ = function(id){ return document.getElementById(id); };
 const clamp = function(v,a,b){ return v<a?a:(v>b?b:v); };
@@ -1205,7 +1306,7 @@ const T = {
     win:'胜利！', lose:'被月巴淹没了…',
     winSub:'番茄活着走出了月巴海。', loseSub:'再试一次，下一次你会站得更久。',
     statCoins:'金币', statDex:'图鉴记录',
-    novelTitle:'碎片解锁位', novelPending:'碎片内容尚未录入。笔记本已经留好这一页，内容补上后会自动显示。', novelDropHint:'本局掉落碎片，回首页的「碎片」笔记本里翻阅。', novelBtn:'📓 碎片', novelBook:'月巴笔记', novelChapterNo:'第 {a} 章', novelNewChapter:'新章节已解锁：{a}', novelReadHint:'回首页点「碎片」，在笔记本里翻开这一页。', novelLocked:'通关胜利后解锁这一章。', novelPageHint:'点击 ‹ › 或左右滑动翻页',
+    novelTitle:'碎片解锁位', novelPending:'碎片内容尚未录入。笔记本已经留好这一页，内容补上后会自动显示。', novelDropHint:'本局掉落碎片，回首页的「碎片」笔记本里翻阅。', novelBtn:'📓 碎片', novelBook:'番茄笔记', novelChapterNo:'第 {a} 章', novelNewChapter:'新章节已解锁：{a}', novelReadHint:'回首页点「碎片」，在笔记本里翻开这一页。', novelLocked:'通关胜利后解锁这一章。', novelPageHint:'点击 ‹ › 或左右滑动翻页',
     rewardLineCoin:'获得金币', rewardLineDex:'图鉴记录', rewardLineAch:'成就进度',
     firstClear:'首次通关加成', noSave:'没有找到首页存档，奖励未写入。请从首页入口进入。',
     saved:'奖励已写入首页存档', bossWarn:'月巴王出现了！', eliteWarn:'精英月巴出现了！', bossName:'归家月巴',
@@ -1289,9 +1390,37 @@ const T = {
     cardCatWeapon:'武器', cardCatRelic:'宝物', cardCatBasic:'基础', cardWeaponNewShort:'新', cardWeaponLvShort:'Lv.{a}→{b}',
     reroll:'重抽（剩余 {a}）', rerollNone:'没有重抽次数了', abandon:'放弃（什么都不选）',
     buildTitle:'本局构筑', buildMain:'主武器', buildSub:'副武器', buildWeapon:'武器', buildHint:'点击卡片看说明', mainTag:'主', buildEvo:'进化', buildRelic:'宝物', buildUp:'基础强化', buildRelicSum:'共 {a} 件 · 总 Lv {b}', buildNone:'无',
+    petTipLowHp:'血量不多了……先绕开敌人跑一圈，缓一口再捡经验。',
+    petTipBoss:'Boss月巴来了！别停下，绕着它走，我们不会输的。',
+    petTipFuseReady:'条件齐了：{a} + {b} 现在就能进化，下次升级别错过。',
+    petTipFuseNear:'{a} 和 {b} 有进化潜力，把武器等级和宝物层数堆够就能融合。',
+    petTipUnion:'{a} 和 {b} 都到 Lv.5 了，升级时会出现联合进化。',
+    petTipNoCombo:'现在的武器和宝物还没凑出组合，多开宝箱，先凑齐能进化的那一对。',
+    petTipFragment:'这层通关后，碎片「{a}」就会解锁。',
+    petTipChest:'场上有宝箱在闪，过去开一下，里面可能有宝物。',
+    petTipIdle1:'别贪经验，被围住的时候先往外跑。',
+    petTipIdle2:'武器槽满了的话，升级时优先强化已有的武器。',
+    petTipIdle3:'地图上的武器掉落也能升级，别只盯着经验。',
+    petTipIdle4:'宝物和武器配对，才更容易进化。',
+    petTipIdle5:'绕圈打，比正面硬冲活得更久。',
+    petTipIdle6:'这里……好像有点眼熟。我是不是忘了什么？',
+    petTipIdle7:'这条路我好像走过，可怎么也想不起来是什么时候。',
+    petTipIdle8:'奇怪，总觉得有件事该记着，却被我落在什么地方了。',
+    petTipIdle9:'刚才那一下，我好像见过同样的画面……算了，想不起来。',
+    petTipIdle10:'这里的气氛有点阴森……要不要走慢一点。',
+    petTipIdle11:'风里有一股凉意，不太对劲。别走太远。',
+    petTipIdle12:'这么安静，反而让人心里发毛。',
+    petTipIdle13:'别怕，我们做得很好。',
+    petTipIdle14:'再来一波也没关系，我们撑得住。',
+    petTipIdle15:'比刚才强多了，就这样，慢慢来。',
+    petTipIdle16:'运气时好时坏，很正常。',
     setForest:'森林套装 · 伤害 +10%',
     lvTag:'等级 {a}/{b}', maxTag:'已满级',
     close:'关闭',
+    feedbackBtn:'💬 反馈建议', feedbackTitle:'反馈建议',
+    feedbackSub:'遇到问题、发现错字或翻译生硬，或者有任何想让游戏变好的想法，都可以写进反馈表单。',
+    feedbackHint:'一次写一条就够了，不用面面俱到。',
+    feedbackOpen:'打开反馈表单', feedbackSoon:'反馈表单还在准备中，稍后开放。',
     modeCampaign:'战役', modeEndless:'无尽', endlessLocked:'通关第 6 关后解锁无尽模式', endlessWave:'下一轮月巴王来袭！',
     char_tomato:'普通番茄', char_tomato_d:'平衡，无额外修正',
     char_cherry:'入学番茄', char_cherry_d:'拾取 +15%，体型更小，起始转圈圈',
@@ -1435,9 +1564,26 @@ const T = {
     cardCatWeapon:'Weapon', cardCatRelic:'Relic', cardCatBasic:'Basic', cardWeaponNewShort:'New', cardWeaponLvShort:'Lv.{a}→{b}',
     reroll:'Reroll ({a} left)', rerollNone:'No rerolls left', abandon:'Skip (take nothing)',
     buildTitle:'Run build', buildMain:'Main weapon', buildSub:'Sub weapons', buildWeapon:'Weapons', buildHint:'Tap a card for details', mainTag:'Main', buildEvo:'Evolutions', buildRelic:'Relics', buildUp:'Basic upgrades', buildRelicSum:'{a} relics · total Lv {b}', buildNone:'None',
+    petTipLowHp:'HP is low... circle around, shake them off, then grab XP.',
+    petTipBoss:'The Banny King is here! Keep moving and dodge its charges.',
+    petTipFuseReady:'Conditions met: {a} + {b} can evolve now. Grab it on the next level-up.',
+    petTipFuseNear:'{a} and {b} have evolution potential — raise weapon level and relic stacks.',
+    petTipUnion:'{a} and {b} are both Lv.5 — a union will show up on level-up.',
+    petTipNoCombo:'Your weapons and relics do not form a combo yet. Open more chests and complete a pair.',
+    petTipFragment:'Clear this stage and the fragment "{a}" unlocks.',
+    petTipChest:'A chest is glowing out there — go open it, it may hold a relic.',
+    petTipIdle1:'Do not get greedy for XP; break out first when surrounded.',
+    petTipIdle2:'If weapon slots are full, upgrade what you already have.',
+    petTipIdle3:'Weapon drops on the map level you up too — do not only chase XP.',
+    petTipIdle4:'Relics and weapons need to pair up before they can evolve.',
+    petTipIdle5:'Keep circling; it outlives charging straight in.',
     setForest:'Forest set · Damage +10%',
     lvTag:'Lv.{a}/{b}', maxTag:'Maxed',
     close:'Close',
+    feedbackBtn:'💬 Feedback', feedbackTitle:'Feedback',
+    feedbackSub:'Found a bug, a typo, an awkward translation, or have an idea to make the game better? Send it through the feedback form.',
+    feedbackHint:'One note per submission is plenty.',
+    feedbackOpen:'Open feedback form', feedbackSoon:'The feedback form is being set up. Check back soon.',
     modeCampaign:'Campaign', modeEndless:'Endless', endlessLocked:'Clear stage 6 to unlock Endless', endlessWave:'Another Banny King approaches!',
     char_tomato:'Tomato', char_tomato_d:'Balanced, no modifiers',
     char_cherry:'Cherry Tomato', char_cherry_d:'Pickup +15%, smaller, starts with Orbit',
@@ -1581,9 +1727,26 @@ const T = {
     cardCatWeapon:'武器', cardCatRelic:'レリック', cardCatBasic:'基本', cardWeaponNewShort:'新', cardWeaponLvShort:'Lv.{a}→{b}',
     reroll:'引き直し（残り {a}）', rerollNone:'引き直し回数がありません', abandon:'スキップ（何も選ばない）',
     buildTitle:'今回の構成', buildMain:'メイン武器', buildSub:'サブ武器', buildWeapon:'武器', buildHint:'カードをタップで説明', mainTag:'メイン', buildEvo:'進化', buildRelic:'レリック', buildUp:'基本強化', buildRelicSum:'{a} 個 · 合計 Lv {b}', buildNone:'なし',
+    petTipLowHp:'HP が少ない……まず敵をかわして体勢を立て直そう。',
+    petTipBoss:'月バ王が来た！止まらずに回り込んで突進を避けて。',
+    petTipFuseReady:'条件達成：{a}＋{b} は今すぐ進化できる。次のレベルアップで忘れずに。',
+    petTipFuseNear:'{a} と {b} は進化の可能性あり。武器レベルとレリックを積もう。',
+    petTipUnion:'{a} と {b} がどちらも Lv.5。レベルアップで連合進化が出る。',
+    petTipNoCombo:'武器とレリックがまだ組み合わせになっていない。宝箱を開けて揃えよう。',
+    petTipFragment:'このステージをクリアすると断片「{a}」が解放される。',
+    petTipChest:'宝箱が光っている。開けに行こう、レリックが入っているかも。',
+    petTipIdle1:'経験値を欲張らず、囲まれたらまず外へ。',
+    petTipIdle2:'武器枠が埋まったら、既存の武器を優先して強化しよう。',
+    petTipIdle3:'マップの武器ドロップでもレベルが上がる。経験値だけ追わないで。',
+    petTipIdle4:'レリックと武器を揃えると進化しやすい。',
+    petTipIdle5:'回りながら戦う方が、正面から突っ込むより長く生きられる。',
     setForest:'森のセット · ダメージ +10%',
     lvTag:'Lv.{a}/{b}', maxTag:'最大',
     close:'閉じる',
+    feedbackBtn:'💬 ご意見', feedbackTitle:'ご意見・ご要望',
+    feedbackSub:'不具合や誤字、翻訳の不自然な箇所、ゲームを良くするアイデアがあれば、フィードバックフォームからお送りください。',
+    feedbackHint:'一度に1件で大丈夫です。',
+    feedbackOpen:'フィードバックフォームを開く', feedbackSoon:'フィードバックフォームは準備中です。',
     modeCampaign:'キャンペーン', modeEndless:'エンドレス', endlessLocked:'ステージ 6 クリアでエンドレス解放', endlessWave:'次のバニーキングが来た！',
     char_tomato:'普通のトマト', char_tomato_d:'バランス型、補正なし',
     char_cherry:'チェリートマト', char_cherry_d:'回収 +15%、小柄、周回種で開始',
@@ -1727,9 +1890,26 @@ const T = {
     cardCatWeapon:'무기', cardCatRelic:'유물', cardCatBasic:'기본', cardWeaponNewShort:'신규', cardWeaponLvShort:'Lv.{a}→{b}',
     reroll:'다시 뽑기(남은 {a})', rerollNone:'다시 뽑을 횟수가 없습니다', abandon:'포기 (아무것도 선택 안 함)',
     buildTitle:'이번 판 구성', buildMain:'주 무기', buildSub:'보조 무기', buildWeapon:'무기', buildHint:'카드를 눌러 설명 보기', mainTag:'주', buildEvo:'진화', buildRelic:'유물', buildUp:'기본 강화', buildRelicSum:'{a}개 · 총 Lv {b}', buildNone:'없음',
+    petTipLowHp:'체력이 얼마 없어요…… 먼저 적을 피해 한 바퀴 돌고 회복하세요.',
+    petTipBoss:'월바 왕이 왔어요! 멈추지 말고 돌면서 돌진을 피하세요.',
+    petTipFuseReady:'조건 충족: {a} + {b} 지금 진화할 수 있어요. 다음 레벨업을 놓치지 마세요.',
+    petTipFuseNear:'{a}와 {b}는 진화 가능성이 있어요. 무기 레벨과 유물을 더 쌓으세요.',
+    petTipUnion:'{a}와 {b} 모두 Lv.5예요. 레벨업 때 연합 진화가 나와요.',
+    petTipNoCombo:'무기와 유물이 아직 조합을 이루지 못했어요. 상자를 열어 한 쌍을 맞추세요.',
+    petTipFragment:'이 스테이지를 클리어하면 조각 「{a}」가 해금돼요.',
+    petTipChest:'필드에 상자가 빛나고 있어요. 가서 열면 유물이 나올지도 몰라요.',
+    petTipIdle1:'경험치에 욕심내지 말고, 둘러싸이면 먼저 빠져나오세요.',
+    petTipIdle2:'무기 슬롯이 꽉 찼다면 이미 가진 무기를 먼저 강화하세요.',
+    petTipIdle3:'맵의 무기 드롭도 레벨업돼요. 경험치만 쫓지 마세요.',
+    petTipIdle4:'유물과 무기를 짝지어야 진화가 쉬워요.',
+    petTipIdle5:'빙글빙글 돌며 싸우는 게 정면 돌격보다 오래 살아요.',
     setForest:'숲 세트 · 피해 +10%',
     lvTag:'Lv.{a}/{b}', maxTag:'최대',
     close:'닫기',
+    feedbackBtn:'💬 의견 보내기', feedbackTitle:'의견 보내기',
+    feedbackSub:'버그나 오타, 어색한 번역, 게임을 더 좋게 만들 아이디어가 있다면 피드백 양식으로 보내 주세요.',
+    feedbackHint:'한 번에 한 건이면 충분합니다.',
+    feedbackOpen:'피드백 양식 열기', feedbackSoon:'피드백 양식은 준비 중입니다.',
     modeCampaign:'캠페인', modeEndless:'엔드리스', endlessLocked:'스테이지 6 클리어 시 엔드리스 해금', endlessWave:'다음 배니 킹이 나타났다!',
     char_tomato:'평범한 토마토', char_tomato_d:'균형형, 추가 보정 없음',
     char_cherry:'체리 토마토', char_cherry_d:'획득 +15%, 소형, 궤도 씨앗으로 시작',
@@ -2591,6 +2771,7 @@ function resetRun(){
   G.rings = []; G.turrets = []; G.wells = []; G.peels = [];
   G.player = newPlayer();
   G.rerollLeft = G.player.reroll;
+  petReset();
   initTerrain();
   spawnWeaponDrops(3);
   G.nextChestNoLegend = false;
@@ -3871,6 +4052,9 @@ window.addEventListener('keydown', function(e){
     if(k === 'arrowleft'){ novelFlip(-1); return; }
     if(k === 'arrowright'){ novelFlip(1); return; }
   }
+  if($('lyFeedback').classList.contains('show')){
+    if(k === 'escape'){ $('lyFeedback').classList.remove('show'); return; }
+  }
   if(k === 'escape' || k === 'p'){ togglePause(); return; }
   if(G.chestOpen && (k === '1' || k === '2' || k === '3')){
     chooseChest(parseInt(k,10) - 1);
@@ -4097,6 +4281,24 @@ function preloadPlayerArt(){
   img.onload = function(){ PLAYER_ART.img = img; PLAYER_ART.ready = true; buildCharArt(); };
   img.onerror = function(){ PLAYER_ART.img = null; PLAYER_ART.ready = false; };
   img.src = PLAYER_ART_SRC;
+  bindPetArt();
+}
+/* 左下角头像：复用对局番茄外链，放大裁到面部；加载失败保留程序化 SVG */
+function bindPetArt(){
+  const av = document.querySelector('#pet .petAv');
+  const im = document.querySelector('#pet .petImg');
+  if(!av || !im || im.getAttribute('src')) return;
+  im.onload = function(){ av.classList.add('hasArt'); };
+  im.onerror = function(){ im.onload = null; im.style.display = 'none'; };
+  im.src = PLAYER_ART_SRC;
+}
+let _petChar = '';
+function petSyncArt(){
+  const im = document.querySelector('#pet .petImg');
+  if(!im) return;
+  if(_petChar === G.char) return;
+  _petChar = G.char;
+  im.style.filter = CHAR_FILTER[G.char] || '';
 }
 /* 噩梦遮罩：立绘加载时把深色纱烘进离屏画布，运行时零额外绘制开销。
    GIF 立绘预烘会冻结动画，改为绘制时叠一层椭圆暗纱（每帧 1 次 fill）。 */
@@ -8000,7 +8202,6 @@ function updateHUD(){
     }
   }
   $('timer').textContent = fmtTime(G.time);
-  $('killText').textContent = G.kills;
   $('coinText').textContent = (G.state === 'result' && G.result) ? (G.result.reward.coins || 0) : liveRunCoins();
   $('xpText').textContent = 'Lv.' + G.level + ' · ' + Math.floor(G.xp) + ' / ' + G.xpNeed;
   $('xpFill').style.width = clamp(G.xp / G.xpNeed * 100, 0, 100) + '%';
@@ -8013,9 +8214,24 @@ function updateHUD(){
     const hudEl = $('hud');
     if(tb && hudEl && hudEl.clientHeight){
       const hr = hudEl.getBoundingClientRect();
-      const relBottom = tb.getBoundingClientRect().bottom - hr.top;
-      const cap = Math.max(70, hudEl.clientHeight * 0.30);
-      bb.style.top = Math.max(70, Math.min(relBottom + 6, cap)) + 'px';
+      const bw = bb.getBoundingClientRect().width;
+      const bl = hr.left + (hr.width - bw) / 2;
+      const br = bl + bw;
+      /* 与计时器同一条中轴，默认紧贴其下方 */
+      const tmEl = $('timer');
+      let top = (tmEl ? tmEl.getBoundingClientRect().bottom - hr.top : 30) + 10;
+      /* 只有水平方向真会压到左侧槽位 / 右上地图时，才继续往下让 */
+      const collide = el => {
+        if(!el || el.classList.contains('hidden')) return false;
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.left < br && r.right > bl;
+      };
+      if(collide(tb)) top = Math.max(top, tb.getBoundingClientRect().bottom - hr.top + 6);
+      const mc = $('mini');
+      if(collide(mc)) top = Math.max(top, mc.getBoundingClientRect().bottom - hr.top + 6);
+      /* 血条只留在顶部一条窄带内，绝不往画面中间跑 */
+      const cap = Math.max(84, Math.min(120, hudEl.clientHeight * 0.18));
+      bb.style.top = Math.min(top, cap) + 'px';
     }
     const nmEl = $('bossName');
     const title = bossTitle(stageDef(G.stage));
@@ -8026,26 +8242,166 @@ function updateHUD(){
   } else {
     $('bossbar').classList.add('hidden');
   }
+  updatePet();
+}
+
+/* ============================================================
+ * 左下角番茄助手：按场上局势偶尔说一句提示
+ * ============================================================ */
+const PET_SAY_SEC = 6.5;
+let _petAt = 0;
+function petReset(){
+  G.petNext = 6; G.petSeen = {}; G.petText = ''; G.petUntil = 0;
+  G.petHpAt = -99; G.petLastIdle = ''; G.petChestAt = -99; G.petBossRef = null;
+  _petAt = 0;
+  const say = $('petSay');
+  if(say){ say.classList.remove('show'); say.textContent = ''; }
+}
+function petHideSay(){
+  if(!G.petUntil) return;
+  G.petUntil = 0; G.petText = '';
+  const say = $('petSay');
+  if(say) say.classList.remove('show');
+}
+function petSpeak(id, text){
+  const say = $('petSay');
+  if(!say || !text) return;
+  if(id) G.petSeen[id] = true;
+  G.petText = text;
+  G.petUntil = G.time + PET_SAY_SEC;
+  if(say.textContent !== text) say.textContent = text;
+  say.classList.add('show');
+  G.petNext = G.time + 16 + Math.random() * 8;
+}
+/* 当前是否已有任何“能凑成组合”的苗头（进化、联合、已完成） */
+function petHasAnyCombo(){
+  const p = G.player;
+  if(!p) return false;
+  for(const k in p.evo) if(p.evo[k]) return true;
+  for(let i=0;i<EVOLVES.length;i++){
+    const e = EVOLVES[i];
+    if((e.w === 'main' || hasWeapon(e.w)) && relLv(e.relic) > 0) return true;
+  }
+  for(let i=0;i<UNIONS.length;i++){
+    const u = UNIONS[i];
+    if(hasWeapon(u.id)) return true;
+    if(hasWeapon(u.a) && hasWeapon(u.b)) return true;
+  }
+  return false;
+}
+function petWeaponName(id){
+  const d = wpDisplay(id);
+  return d ? d.name : '';
+}
+/* 按优先级挑一条要说的：返回 {id,text} 或 null */
+function petPickTip(){
+  const p = G.player;
+  if(!p) return null;
+  const seen = G.petSeen;
+  /* 低血量：30 秒内不重复 */
+  if(p.hp / p.maxHp <= 0.32 && G.time - G.petHpAt > 30){
+    G.petHpAt = G.time;
+    return {id:'hp', text:t('petTipLowHp')};
+  }
+  /* Boss 登场：每只 Boss 只说一次 */
+  if(G.boss && !G.boss.dead && G.petBossRef !== G.boss){
+    G.petBossRef = G.boss;
+    return {id:'boss', text:t('petTipBoss')};
+  }
+  /* 已经可以进化：每个组合说一次 */
+  for(let i=0;i<EVOLVES.length;i++){
+    const ev = EVOLVES[i];
+    if(seen['evo' + ev.id] || !canEvolve(ev)) continue;
+    return {id:'evo' + ev.id, text:t('petTipFuseReady', petWeaponName(ev.w), evoName(ev.id))};
+  }
+  /* 已经可以联合进化：每个组合说一次 */
+  for(let i=0;i<UNIONS.length;i++){
+    const u = UNIONS[i];
+    if(seen['uni' + u.id] || !canUnion(u)) continue;
+    return {id:'uni' + u.id, text:t('petTipUnion', petWeaponName(u.a), petWeaponName(u.b))};
+  }
+  /* 以下为不紧急的闲聊式提示，按节奏放行 */
+  if(G.time < G.petNext) return null;
+  /* 差一点的进化组合：每组提醒一次 */
+  for(let i=0;i<EVOLVES.length;i++){
+    const ev = EVOLVES[i];
+    if(seen['near' + ev.id] || p.evo[ev.id]) continue;
+    if((ev.w === 'main' || hasWeapon(ev.w)) && relLv(ev.relic) > 0){
+      return {id:'near' + ev.id, text:t('petTipFuseNear', petWeaponName(ev.w), evoName(ev.id))};
+    }
+  }
+  /* 完全没组合 */
+  if(!petHasAnyCombo() && G.petLastIdle !== 'nocombo'){
+    G.petLastIdle = 'nocombo';
+    return {id:'', text:t('petTipNoCombo')};
+  }
+  /* 通关能拿到的碎片 */
+  if(G.mode !== 'endless' && novelUnlockedCount() < NOVEL.length && !seen.fragment){
+    G.petLastIdle = 'fragment';
+    return {id:'fragment', text:t('petTipFragment', novelTitle(novelUnlockedCount() + 1))};
+  }
+  /* 场上宝箱 */
+  if(G.chests && G.chests.length && G.time - G.petChestAt > 40 && G.petLastIdle !== 'chest'){
+    G.petChestAt = G.time;
+    G.petLastIdle = 'chest';
+    return {id:'', text:t('petTipChest')};
+  }
+  /* 随机闲聊 */
+  const lines = [
+    t('petTipIdle1'), t('petTipIdle2'), t('petTipIdle3'), t('petTipIdle4'),
+    t('petTipIdle5'), t('petTipIdle6'), t('petTipIdle7'), t('petTipIdle8'),
+    t('petTipIdle9'), t('petTipIdle10'), t('petTipIdle11'), t('petTipIdle12'),
+    t('petTipIdle13'), t('petTipIdle14'), t('petTipIdle15'), t('petTipIdle16')
+  ];
+  let idx = (Math.random() * lines.length) | 0;
+  if(lines[idx] === G.petLastIdle) idx = (idx + 1) % lines.length;
+  G.petLastIdle = lines[idx];
+  return {id:'', text:lines[idx]};
+}
+function updatePet(){
+  const box = $('pet');
+  if(!box) return;
+  const playing = G.state === 'playing' && !!G.player;
+  box.classList.toggle('hidden', !playing);
+  if(!playing){ petHideSay(); return; }
+  petSyncArt();
+  const say = $('petSay');
+  if(G.petUntil && G.time >= G.petUntil){
+    G.petUntil = 0;
+    if(say) say.classList.remove('show');
+  }
+  const now = performance.now();
+  if(now - _petAt < 600) return;
+  _petAt = now;
+  if(G.petUntil > G.time) return;
+  const tip = petPickTip();
+  if(tip) petSpeak(tip.id, tip.text);
 }
 
 /* 本局构筑摘要：暂停页与结算页共用 */
-const FUSE_TAG = {zh:'可融合',en:'Can fuse',ja:'融合可',ko:'융합 가능'};
+const FUSE_TAG = {zh:'可融合',en:'Can fuse',ja:'融合可能',ko:'융합 가능'};
 function fuseTagText(){ return FUSE_TAG[LANG] || FUSE_TAG.en; }
-/* 这把武器已拥有的可融合宝物（用于卡面角标与连线） */
+/* 这把武器还没完成的可融合宝物（用于卡面角标与连线） */
 function fuseEvolvesForWeapon(wid){
+  const p = G.player;
+  const done = (p && p.evo) || {};
   const out = [];
   for(let i=0;i<EVOLVES.length;i++){
     const e = EVOLVES[i];
-    if(e.w === wid && relLv(e.relic) > 0) out.push(e);
+    if(e.w !== wid || done[e.id] || relLv(e.relic) <= 0) continue;
+    out.push(e);
   }
   return out;
 }
-/* 这件宝物已拥有的可融合武器（主武器始终在场） */
+/* 这件宝物对应的、还没进化的已拥有武器（主武器始终在场） */
 function fuseEvolvesForRelic(rid){
+  const p = G.player;
+  const done = (p && p.evo) || {};
   const out = [];
   for(let i=0;i<EVOLVES.length;i++){
     const e = EVOLVES[i];
-    if(e.relic === rid && (e.w === 'main' || hasWeapon(e.w))) out.push(e);
+    if(e.relic !== rid || done[e.id]) continue;
+    if(e.w === 'main' || hasWeapon(e.w)) out.push(e);
   }
   return out;
 }
@@ -8053,6 +8409,11 @@ function fuseTitle(list){
   const names = [];
   for(let i=0;i<list.length;i++) names.push(evoName(list[i].id));
   return names.join(' / ');
+}
+/* 列表中是否已有可立即进化的组合 */
+function fuseReady(list){
+  for(let i=0;i<list.length;i++) if(canEvolve(list[i])) return true;
+  return false;
 }
 function buildSummaryHTML(){
   const p = G.player;
@@ -8063,13 +8424,13 @@ function buildSummaryHTML(){
   if(evos.length) rows.push('<div><b>' + esc(t('buildEvo')) + '</b> ' + esc(evos.join(' · ')) + '</div>');
 
   /* 卡片：图标 + 名称 + 等级圆点（点击名称展开说明，避免默认拥挤） */
-  function card(ic, name, desc, lv, max, tag, extra, fuse, attr){
+  function card(ic, name, desc, lv, max, tag, extra, fuse, attr, fuseWait){
     let pips = '';
     for(let j=0;j<(max | 0);j++) pips += '<i' + (j < lv ? ' class="on"' : '') + '></i>';
     return '<div class="relitem"' + (attr || '') + '>' +
       '<span class="ic">' + ic + '</span>' +
       '<span class="info"><b>' + esc(name) + (tag ? '<span class="mtag">' + esc(tag) + '</span>' : '') +
-      (fuse ? '<span class="mtag fuse" title="' + esc(fuse) + '">' + esc(fuseTagText()) + '</span>' : '') + '</b>' +
+      (fuse ? '<span class="mtag fuse' + (fuseWait ? ' wait' : '') + '" title="' + esc(fuse) + '">' + esc(fuseTagText()) + '</span>' : '') + '</b>' +
       (pips ? '<span class="pips">' + pips + '</span>' : '') +
       (extra || '') +
       (desc ? '<span class="desc">' + esc(desc) + '</span>' : '') +
@@ -8081,7 +8442,7 @@ function buildSummaryHTML(){
   const weaponCards = [card('🍅', t('wp_main'),
     p.evo.cannon ? evoName('cannon') + ' · ' + evoDesc('cannon') : t('wp_main_d'),
     0, 0, t('mainTag'), weaponRelicIcons('main', true),
-    mainFz.length ? fuseTitle(mainFz) : '', ' data-w="main"')];
+    mainFz.length ? fuseTitle(mainFz) : '', ' data-w="main"', !fuseReady(mainFz))];
   for(let i=0;i<WEAPONS.length;i++){
     const w = WEAPONS[i], lv = wpLv(w.id);
     if(!lv) continue;
@@ -8090,7 +8451,8 @@ function buildSummaryHTML(){
     if(evoId && p.evo[evoId]) desc = evoName(evoId) + ' · ' + desc;
     const fz = fuseEvolvesForWeapon(w.id);
     weaponCards.push(card(w.ic, wpName(w), desc, w.union ? 1 : lv, Math.max(1, w.max | 0), '',
-      weaponRelicIcons(w.id, true), fz.length ? fuseTitle(fz) : '', ' data-w="' + w.id + '"'));
+      weaponRelicIcons(w.id, true), fz.length ? fuseTitle(fz) : '', ' data-w="' + w.id + '"',
+      !fuseReady(fz)));
   }
   const relicCards = [];
   const ids = Object.keys(G.runRelics || {});
@@ -8100,7 +8462,8 @@ function buildSummaryHTML(){
     const lv = Math.max(0, Math.min(G.runRelics[id] | 0, max));
     const fz = fuseEvolvesForRelic(id);
     relicCards.push(card(d ? d.ic : '◆', d ? relName(d) : id, d ? relDesc(d) : '', lv, max, '',
-      d ? relicWpIcons(d, true, true) : '', fz.length ? fuseTitle(fz) : '', ' data-r="' + id + '"'));
+      d ? relicWpIcons(d, true, true) : '', fz.length ? fuseTitle(fz) : '', ' data-r="' + id + '"',
+      !fuseReady(fz)));
   }
   rows.push('<div class="buildcols">' +
     '<div class="buildcol"><div class="relhd"><b>' + esc(t('buildWeapon')) + '</b><span>' + esc(t('buildHint')) + '</span></div>' +
@@ -8152,9 +8515,10 @@ function drawBuildLinks(box){
   if(!p) return;
   const owned = {main:true};
   for(const k in (p.weapons || {})) if(p.weapons[k] > 0) owned[k] = true;
+  const links = [];
   for(let i=0;i<EVOLVES.length;i++){
     const ev = EVOLVES[i];
-    if(!owned[ev.w] || relLv(ev.relic) <= 0) continue;
+    if(p.evo[ev.id] || !owned[ev.w] || relLv(ev.relic) <= 0) continue;
     const we = wrap.querySelector('.relitem[data-w="' + ev.w + '"]');
     const re = wrap.querySelector('.relitem[data-r="' + ev.relic + '"]');
     if(!we || !re) continue;
@@ -8163,21 +8527,27 @@ function drawBuildLinks(box){
     const x2 = b.left - wr.left, y2 = b.top + b.height / 2 - wr.top;
     /* 两列没有并排（极端窄屏）时无线可画，靠卡面「可融合」角标提示 */
     if(x2 <= x1 + 4) continue;
-    const mx = (x1 + x2) / 2;
-    const cls = canEvolve(ev) ? 'ready' : 'wait';
+    links.push({x1:x1, y1:y1, x2:x2, y2:y2, cls: canEvolve(ev) ? 'ready' : 'wait'});
+  }
+  /* 按起点上下排序后分配中间走线通道，避免连线挤成一团 */
+  links.sort(function(a, b){ return a.y1 - b.y1; });
+  for(let i=0;i<links.length;i++){
+    const l = links[i];
+    const lane = l.x1 + (l.x2 - l.x1) * (i + 1) / (links.length + 1);
     const path = document.createElementNS(SVGNS, 'path');
-    path.setAttribute('d', 'M' + x1.toFixed(1) + ' ' + y1.toFixed(1) +
-      ' C' + mx.toFixed(1) + ' ' + y1.toFixed(1) + ',' + mx.toFixed(1) + ' ' + y2.toFixed(1) +
-      ',' + x2.toFixed(1) + ' ' + y2.toFixed(1));
-    path.setAttribute('class', cls);
+    path.setAttribute('d', 'M' + l.x1.toFixed(1) + ' ' + l.y1.toFixed(1) +
+      ' L' + lane.toFixed(1) + ' ' + l.y1.toFixed(1) +
+      ' L' + lane.toFixed(1) + ' ' + l.y2.toFixed(1) +
+      ' L' + l.x2.toFixed(1) + ' ' + l.y2.toFixed(1));
+    path.setAttribute('class', l.cls);
     svg.appendChild(path);
     /* 两端小圆点，明确线头接在哪张卡上 */
-    [[x1, y1], [x2, y2]].forEach(function(pt){
+    [[l.x1, l.y1], [l.x2, l.y2]].forEach(function(pt){
       const dot = document.createElementNS(SVGNS, 'circle');
       dot.setAttribute('cx', pt[0].toFixed(1));
       dot.setAttribute('cy', pt[1].toFixed(1));
-      dot.setAttribute('r', cls === 'ready' ? '2' : '1.5');
-      dot.setAttribute('class', cls);
+      dot.setAttribute('r', l.cls === 'ready' ? '2' : '1.5');
+      dot.setAttribute('class', l.cls);
       svg.appendChild(dot);
     });
   }
@@ -8280,7 +8650,7 @@ function renderResult(){
  * 暂停 / 层 / 提示
  * ============================================================ */
 function hideLayers(){
-  ['lyStart','lyLevel','lyPause','lyResult','lyChest','lyCodex','lyStats','lySanct','lyGear','lyNovel'].forEach(function(id){ $(id).classList.remove('show'); });
+  ['lyStart','lyLevel','lyPause','lyResult','lyChest','lyCodex','lyStats','lySanct','lyGear','lyNovel','lyFeedback'].forEach(function(id){ $(id).classList.remove('show'); });
 }
 function pauseGame(){
   if(G.state !== 'playing') return;
@@ -8885,6 +9255,14 @@ $('btnStatsClose').addEventListener('click', function(){ $('lyStats').classList.
 $('btnSanctClose').addEventListener('click', function(){ $('lySanct').classList.remove('show'); });
 $('btnGearClose').addEventListener('click', function(){ $('lyGear').classList.remove('show'); });
 
+/* 反馈 */
+if(FEEDBACK_URL) $('feedbackOpen').href = FEEDBACK_URL;
+$('btnFeedback').addEventListener('click', function(){ $('lyFeedback').classList.add('show'); });
+$('btnFeedbackClose').addEventListener('click', function(){ $('lyFeedback').classList.remove('show'); });
+$('feedbackOpen').addEventListener('click', function(e){
+  if(!FEEDBACK_URL){ e.preventDefault(); toast(t('feedbackSoon')); }
+});
+
 /* 碎片笔记本 */
 $('btnNovel').addEventListener('click', openNovel);
 $('btnNovelClose').addEventListener('click', function(){ $('lyNovel').classList.remove('show'); });
@@ -9184,5 +9562,7 @@ function loop(ts){
 </html>
 </script>
 </body>
+</html>
+</html>
 </html>
 </html>
