@@ -7194,12 +7194,14 @@ function update(dt){
         e.y = clamp(ny, 40, H - 40);
       }
     }
-    if(d < e.r + p.r - 2 && p.iframe <= 0){
+    /* 接触判定必须用「敌人到玩家」的真实距离；d 是到移动目标的距离（守卫回防时目标是宝箱） */
+    const pDist = Math.hypot(p.x - e.x, p.y - e.y) || 1;
+    if(pDist < e.r + p.r - 2 && p.iframe <= 0){
       damagePlayer(e.dmg);
       if(G.state !== 'playing') return;
       // 重装巴：接触后把玩家撞开 40px
       if(e.trait === 'brute'){
-        const kx = dx / d, ky = dy / d;
+        const kx = (p.x - e.x) / pDist, ky = (p.y - e.y) / pDist;
         p.x = clamp(p.x + kx * 40, p.r, W - p.r);
         p.y = clamp(p.y + ky * 40, p.r, H - p.r);
       }
