@@ -598,6 +598,20 @@
   .upgrid .relitem .info b{font-size:10.5px;}
   .upgrid .relitem .pips{gap:1px;}
   .upgrid .relitem .pips i{width:3px;height:3px;}
+  /* 融合：条件达标时在暂停页直接合成 */
+  .fusebox{margin-top:6px;}
+  .fuseitem{display:flex;align-items:center;gap:6px;padding:4px 6px;
+    border:1px solid rgba(255,200,90,.18);background:rgba(255,200,90,.04);}
+  .fuseitem + .fuseitem{margin-top:4px;}
+  .fuseitem .fic{flex:0 0 auto;font-size:13px;line-height:1;color:#ffd77a;}
+  .fuseitem .fnm{flex:1;min-width:0;font-size:10.5px;font-weight:800;color:#ffd77a;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .fuseitem .freq{flex:0 0 auto;font-size:9.5px;color:var(--dim);white-space:nowrap;}
+  .fuseitem .freq.ok{color:#ffd77a;}
+  .fuseitem .fbtn{flex:0 0 auto;padding:2px 8px;font-size:10px;font-weight:900;
+    color:#241a06;background:#ffd77a;border:0;border-radius:2px;cursor:pointer;
+    font-family:inherit;-webkit-tap-highlight-color:transparent;}
+  .fuseitem .fbtn:active{transform:scale(.94);}
   /* 极窄屏：列间距收紧；连线会挤成一条，改用金色「可融合」角标和金色小图标提示 */
   @media (max-width:360px){
     .buildcols{gap:10px;}
@@ -1389,12 +1403,12 @@ const T = {
     cardWeaponNew:'新武器', cardWeaponLv:'武器 Lv.{a}→{b}', cardEvo:'进化', cardUnion:'联合进化',
     cardCatWeapon:'武器', cardCatRelic:'宝物', cardCatBasic:'基础', cardWeaponNewShort:'新', cardWeaponLvShort:'Lv.{a}→{b}',
     reroll:'重抽（剩余 {a}）', rerollNone:'没有重抽次数了', abandon:'放弃（什么都不选）',
-    buildTitle:'本局构筑', buildMain:'主武器', buildSub:'副武器', buildWeapon:'武器', buildHint:'点击卡片看说明', mainTag:'主', buildEvo:'进化', buildRelic:'宝物', buildUp:'基础强化', buildRelicSum:'共 {a} 件 · 总 Lv {b}', buildNone:'无',
+    buildTitle:'本局构筑', buildMain:'主武器', buildSub:'副武器', buildWeapon:'武器', buildHint:'点击卡片看说明', mainTag:'主', buildEvo:'进化', buildRelic:'宝物', buildUp:'基础强化', buildRelicSum:'共 {a} 件 · 总 Lv {b}', buildNone:'无', fuseBox:'融合', fuseHint:'条件达标后可直接融合', fuseBtn:'融合',
     petTipLowHp:'血量不多了……先绕开敌人跑一圈，缓一口再捡经验。',
     petTipBoss:'Boss月巴来了！别停下，绕着它走，我们不会输的。',
-    petTipFuseReady:'条件齐了：{a} + {b} 现在就能进化，下次升级别错过。',
+    petTipFuseReady:'条件齐了：{a} + {b} 现在就能进化，打开暂停页即可融合。',
     petTipFuseNear:'{a} 和 {b} 有进化潜力，把武器等级和宝物层数堆够就能融合。',
-    petTipUnion:'{a} 和 {b} 都到 Lv.5 了，升级时会出现联合进化。',
+    petTipUnion:'{a} 和 {b} 都到 Lv.5 了，暂停页可直接联合进化。',
     petTipNoCombo:'现在的武器和宝物还没凑出组合，多开宝箱，先凑齐能进化的那一对。',
     petTipFragment:'这层通关后，碎片「{a}」就会解锁。',
     petTipChest:'场上有宝箱在闪，过去开一下，里面可能有宝物。',
@@ -1563,12 +1577,12 @@ const T = {
     cardWeaponNew:'New weapon', cardWeaponLv:'Weapon Lv.{a}→{b}', cardEvo:'Evolve', cardUnion:'Union',
     cardCatWeapon:'Weapon', cardCatRelic:'Relic', cardCatBasic:'Basic', cardWeaponNewShort:'New', cardWeaponLvShort:'Lv.{a}→{b}',
     reroll:'Reroll ({a} left)', rerollNone:'No rerolls left', abandon:'Skip (take nothing)',
-    buildTitle:'Run build', buildMain:'Main weapon', buildSub:'Sub weapons', buildWeapon:'Weapons', buildHint:'Tap a card for details', mainTag:'Main', buildEvo:'Evolutions', buildRelic:'Relics', buildUp:'Basic upgrades', buildRelicSum:'{a} relics · total Lv {b}', buildNone:'None',
+    buildTitle:'Run build', buildMain:'Main weapon', buildSub:'Sub weapons', buildWeapon:'Weapons', buildHint:'Tap a card for details', mainTag:'Main', buildEvo:'Evolutions', buildRelic:'Relics', buildUp:'Basic upgrades', buildRelicSum:'{a} relics · total Lv {b}', buildNone:'None', fuseBox:'Fusion', fuseHint:'Fuse here once conditions are met', fuseBtn:'Fuse',
     petTipLowHp:'HP is low... circle around, shake them off, then grab XP.',
     petTipBoss:'The Banny King is here! Keep moving and dodge its charges.',
-    petTipFuseReady:'Conditions met: {a} + {b} can evolve now. Grab it on the next level-up.',
+    petTipFuseReady:'Conditions met: {a} + {b} can evolve now — fuse it from the pause menu.',
     petTipFuseNear:'{a} and {b} have evolution potential — raise weapon level and relic stacks.',
-    petTipUnion:'{a} and {b} are both Lv.5 — a union will show up on level-up.',
+    petTipUnion:'{a} and {b} are both Lv.5 — fuse them from the pause menu.',
     petTipNoCombo:'Your weapons and relics do not form a combo yet. Open more chests and complete a pair.',
     petTipFragment:'Clear this stage and the fragment "{a}" unlocks.',
     petTipChest:'A chest is glowing out there — go open it, it may hold a relic.',
@@ -1726,12 +1740,12 @@ const T = {
     cardWeaponNew:'新武器', cardWeaponLv:'武器 Lv.{a}→{b}', cardEvo:'進化', cardUnion:'連合進化',
     cardCatWeapon:'武器', cardCatRelic:'レリック', cardCatBasic:'基本', cardWeaponNewShort:'新', cardWeaponLvShort:'Lv.{a}→{b}',
     reroll:'引き直し（残り {a}）', rerollNone:'引き直し回数がありません', abandon:'スキップ（何も選ばない）',
-    buildTitle:'今回の構成', buildMain:'メイン武器', buildSub:'サブ武器', buildWeapon:'武器', buildHint:'カードをタップで説明', mainTag:'メイン', buildEvo:'進化', buildRelic:'レリック', buildUp:'基本強化', buildRelicSum:'{a} 個 · 合計 Lv {b}', buildNone:'なし',
+    buildTitle:'今回の構成', buildMain:'メイン武器', buildSub:'サブ武器', buildWeapon:'武器', buildHint:'カードをタップで説明', mainTag:'メイン', buildEvo:'進化', buildRelic:'レリック', buildUp:'基本強化', buildRelicSum:'{a} 個 · 合計 Lv {b}', buildNone:'なし', fuseBox:'融合', fuseHint:'条件達成後ここで融合可能', fuseBtn:'融合',
     petTipLowHp:'HP が少ない……まず敵をかわして体勢を立て直そう。',
     petTipBoss:'月バ王が来た！止まらずに回り込んで突進を避けて。',
-    petTipFuseReady:'条件達成：{a}＋{b} は今すぐ進化できる。次のレベルアップで忘れずに。',
+    petTipFuseReady:'条件達成：{a}＋{b} は今すぐ進化できる。ポーズ画面で融合できます。',
     petTipFuseNear:'{a} と {b} は進化の可能性あり。武器レベルとレリックを積もう。',
-    petTipUnion:'{a} と {b} がどちらも Lv.5。レベルアップで連合進化が出る。',
+    petTipUnion:'{a} と {b} がどちらも Lv.5。ポーズ画面で連合進化できる。',
     petTipNoCombo:'武器とレリックがまだ組み合わせになっていない。宝箱を開けて揃えよう。',
     petTipFragment:'このステージをクリアすると断片「{a}」が解放される。',
     petTipChest:'宝箱が光っている。開けに行こう、レリックが入っているかも。',
@@ -1889,12 +1903,12 @@ const T = {
     cardWeaponNew:'새 무기', cardWeaponLv:'무기 Lv.{a}→{b}', cardEvo:'진화', cardUnion:'연합 진화',
     cardCatWeapon:'무기', cardCatRelic:'유물', cardCatBasic:'기본', cardWeaponNewShort:'신규', cardWeaponLvShort:'Lv.{a}→{b}',
     reroll:'다시 뽑기(남은 {a})', rerollNone:'다시 뽑을 횟수가 없습니다', abandon:'포기 (아무것도 선택 안 함)',
-    buildTitle:'이번 판 구성', buildMain:'주 무기', buildSub:'보조 무기', buildWeapon:'무기', buildHint:'카드를 눌러 설명 보기', mainTag:'주', buildEvo:'진화', buildRelic:'유물', buildUp:'기본 강화', buildRelicSum:'{a}개 · 총 Lv {b}', buildNone:'없음',
+    buildTitle:'이번 판 구성', buildMain:'주 무기', buildSub:'보조 무기', buildWeapon:'무기', buildHint:'카드를 눌러 설명 보기', mainTag:'주', buildEvo:'진화', buildRelic:'유물', buildUp:'기본 강화', buildRelicSum:'{a}개 · 총 Lv {b}', buildNone:'없음', fuseBox:'융합', fuseHint:'조건 달성 시 여기서 융합', fuseBtn:'융합',
     petTipLowHp:'체력이 얼마 없어요…… 먼저 적을 피해 한 바퀴 돌고 회복하세요.',
     petTipBoss:'월바 왕이 왔어요! 멈추지 말고 돌면서 돌진을 피하세요.',
-    petTipFuseReady:'조건 충족: {a} + {b} 지금 진화할 수 있어요. 다음 레벨업을 놓치지 마세요.',
+    petTipFuseReady:'조건 충족: {a} + {b} 지금 진화할 수 있어요. 일시정지 화면에서 융합하세요.',
     petTipFuseNear:'{a}와 {b}는 진화 가능성이 있어요. 무기 레벨과 유물을 더 쌓으세요.',
-    petTipUnion:'{a}와 {b} 모두 Lv.5예요. 레벨업 때 연합 진화가 나와요.',
+    petTipUnion:'{a}와 {b} 모두 Lv.5예요. 일시정지 화면에서 연합 진화할 수 있어요.',
     petTipNoCombo:'무기와 유물이 아직 조합을 이루지 못했어요. 상자를 열어 한 쌍을 맞추세요.',
     petTipFragment:'이 스테이지를 클리어하면 조각 「{a}」가 해금돼요.',
     petTipChest:'필드에 상자가 빛나고 있어요. 가서 열면 유물이 나올지도 몰라요.',
@@ -2705,7 +2719,7 @@ const G = {
   zaps:[], melons:[], mines:[], pineapples:[], beams:[],
   rings:[], turrets:[], wells:[], peels:[],
   char:'tomato', diff:'normal', mode:'campaign', bossWave:0, endlessNextBoss:0,
-  charm:'', nextChestNoLegend:false, dur:0,
+  charm:'', nextChestNoLegend:false, dur:0, bossArtMap:null,
   last:0, raf:0
 };
 const keys = {};
@@ -2758,6 +2772,8 @@ function resetRun(){
   G.spawnT = 0.4; G.nextElite = Math.round(Math.max(40, Math.round(60 / st.spawnMul)) * (G.charm === 'elite' ? 0.7 : 1));
   G.dur = durEff(st);
   G.bossSpawned = false; G.bossKilled = false; G.boss = null;
+  /* 1–10 关 Boss 外观：每局重抽，10 关互不重复 */
+  G.bossArtMap = rollBossArtMap();
   G.bossWave = 0; G.endlessNextBoss = 0;
   G.upLv = {}; G.choices = []; G.shake = 0; G.result = null;
   G.events = (STAGE_EVENTS[st.n] || []).map(function(ev){ return Object.assign({}, ev, {_warn:false}); });
@@ -4247,6 +4263,18 @@ const ART_POOL = {
   statue:['mb_liti','mb_gao','xitong','m2_zuochen','m2_qingchun'],
   husk:  ['mb_tan','mb_shilaimu','m2_yinan','m2_qingchun','mb_jinju']
 };
+/* 1–10 关 Boss 立绘池：所有带外链立绘的月巴，每局随机抽 10 张不重复的 */
+const BOSS_ART_POOL = Object.keys(ART_SRC);
+function rollBossArtMap(){
+  const pool = BOSS_ART_POOL.slice();
+  for(let i=pool.length-1;i>0;i--){
+    const j = (Math.random() * (i + 1)) | 0;
+    const t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+  }
+  const map = {};
+  for(let n=1;n<=10;n++) map[n] = pool[(n - 1) % pool.length];
+  return map;
+}
 const ART = {};
 /* 玩家番茄立绘（外链）；加载失败时回退到 drawTomato 的程序化绘制 */
 const PLAYER_ART_SRC = 'https://origin.picgo.net/2026/10/22/8972a81ecea59da5668b010802d3bfcb1c75cde7c34bfa6e.th.png';
@@ -4321,6 +4349,7 @@ function veilBake(img){
 }
 function preloadArt(){
   const ids = {};
+  for(const id in ART_SRC) ids[id] = 1;
   for(const k in ART_POOL) for(const id of ART_POOL[k]) ids[id] = 1;
   for(const id in ids){
     const src = ART_SRC[id];
@@ -4401,11 +4430,13 @@ function spawnEnemy(kind, opt){
     ? st.bossHp * endlessHp * (1 + (BOSS_HP_BOOST - 1) * taper)
     : d.hp * scale * st.hpMul * (1 + (ENEMY_HP_BOOST - 1) * taper) * hpRamp(G.time, paceDur(st), st)) * df.hp * (G.charm === 'elite' ? 1.1 : 1);
   const pool = ART_POOL[kind] || [];
+  /* 1–10 关 Boss 用本局随机立绘；其余关卡沿用关卡固定立绘 */
+  const bossArtId = (d.boss && G.bossArtMap && G.bossArtMap[st.n]) ? G.bossArtMap[st.n] : '';
   const e = {
     kind:kind, x:clamp(x, -80, W + 80), y:clamp(y, -120, H + 80), r:d.r, hp:hp, maxHp:hp,
     spd:d.spd * st.spdMul, dmg:d.dmg * df.dmg * (1 + (ENEMY_DMG_BOOST - 1) * taper) * dmgRamp(G.time, paceDur(st)), xp:d.xp,
     color: (d.boss && st.bossColor) ? st.bossColor : d.color, shape:d.shape,
-    art: (d.boss && st.bossArt) ? st.bossArt : (pool.length ? pool[Math.floor(Math.random() * pool.length)] : ''),
+    art: bossArtId || ((d.boss && st.bossArt) ? st.bossArt : (pool.length ? pool[Math.floor(Math.random() * pool.length)] : '')),
     elite:!!d.elite, boss:!!d.boss, trait:d.trait || '',
     guard:!!opt.guard,
     hitFlash:0, phase:Math.random()*Math.PI*2, sumT:7, dead:false,
@@ -8415,6 +8446,78 @@ function fuseReady(list){
   for(let i=0;i<list.length;i++) if(canEvolve(list[i])) return true;
   return false;
 }
+/* 暂停页融合面板：列出已拥有零件、还没合成的进化/联合组合 */
+function fuseCandidates(){
+  const p = G.player;
+  const out = [];
+  if(!p) return out;
+  for(let i=0;i<EVOLVES.length;i++){
+    const e = EVOLVES[i];
+    if(p.evo[e.id]) continue;
+    if(e.w !== 'main' && !hasWeapon(e.w)) continue;
+    if(relLv(e.relic) <= 0) continue;
+    out.push({kind:'evo', id:e.id, evo:e, ready:canEvolve(e),
+      lv:Math.min(e.w === 'main' ? (p.multi | 0) : wpLv(e.w), e.w === 'main' ? e.needUp : e.lv),
+      need:e.w === 'main' ? e.needUp : e.lv,
+      rlv:Math.min(relLv(e.relic), e.needRelic), rneed:e.needRelic});
+  }
+  for(let i=0;i<UNIONS.length;i++){
+    const u = UNIONS[i];
+    if(hasWeapon(u.id)) continue;
+    const a = wpLv(u.a), b = wpLv(u.b);
+    if(!a && !b) continue;
+    out.push({kind:'union', id:u.id, union:u, ready:canUnion(u), a:a, b:b});
+  }
+  /* 可立即合成的排在最前面 */
+  out.sort(function(x, y){ return (y.ready ? 1 : 0) - (x.ready ? 1 : 0); });
+  return out;
+}
+function fusePanelHTML(){
+  if(G.state === 'result') return '';
+  const list = fuseCandidates();
+  if(!list.length) return '';
+  const rows = [];
+  for(let i=0;i<list.length;i++){
+    const c = list[i];
+    let ic = '', nm = '', req = '';
+    if(c.kind === 'evo'){
+      const w = c.evo.w === 'main' ? {ic:'🍅'} : (wpDef(c.evo.w) || {ic:'◆'});
+      const r = relDef(c.evo.relic);
+      ic = w.ic + (r ? r.ic : '◆') + ' → ★';
+      nm = evoName(c.evo.id);
+      req = 'Lv ' + c.lv + '/' + c.need + ' · ×' + c.rlv + '/' + c.rneed;
+    }else{
+      const a = wpDef(c.union.a) || {ic:'◆'}, b = wpDef(c.union.b) || {ic:'◆'};
+      const u = wpDef(c.union.id) || {ic:'★'};
+      ic = a.ic + b.ic + ' → ' + u.ic;
+      nm = wpName(u);
+      req = 'Lv ' + c.a + '/5 · Lv ' + c.b + '/5';
+    }
+    rows.push('<div class="fuseitem" data-fuse="' + (c.kind === 'evo' ? 'e:' : 'u:') + esc(c.id) + '">' +
+      '<span class="fic">' + esc(ic) + '</span>' +
+      '<span class="fnm">' + esc(nm) + '</span>' +
+      '<span class="freq' + (c.ready ? ' ok' : '') + '">' + esc(req) + '</span>' +
+      (c.ready ? '<button class="fbtn" type="button">' + esc(t('fuseBtn')) + '</button>' : '') +
+      '</div>');
+  }
+  return '<div class="fusebox"><div class="relhd"><b>' + esc(t('fuseBox')) + '</b><span>' +
+    esc(t('fuseHint')) + '</span></div>' + rows.join('') + '</div>';
+}
+/* 点击融合：直接合成，不占用升级三选一 */
+function bindFuseActions(box){
+  if(!box || box._fuseBound) return;
+  box._fuseBound = true;
+  box.addEventListener('click', function(ev){
+    const node = ev.target;
+    const item = node && node.closest ? node.closest('[data-fuse]') : null;
+    if(!item || !box.contains(item)) return;
+    const v = item.getAttribute('data-fuse') || '';
+    let ok = false;
+    if(v.indexOf('e:') === 0) ok = evolveWeapon(v.slice(2));
+    else if(v.indexOf('u:') === 0) ok = doUnion(unionDef(v.slice(2)));
+    if(ok) renderPauseBuild();
+  });
+}
 function buildSummaryHTML(){
   const p = G.player;
   if(!p) return '';
@@ -8422,6 +8525,7 @@ function buildSummaryHTML(){
   const evos = [];
   for(let i=0;i<EVOLVES.length;i++) if(p.evo[EVOLVES[i].id]) evos.push(evoName(EVOLVES[i].id));
   if(evos.length) rows.push('<div><b>' + esc(t('buildEvo')) + '</b> ' + esc(evos.join(' · ')) + '</div>');
+  rows.push(fusePanelHTML());
 
   /* 卡片：图标 + 名称 + 等级圆点（点击名称展开说明，避免默认拥挤） */
   function card(ic, name, desc, lv, max, tag, extra, fuse, attr, fuseWait){
@@ -8490,6 +8594,7 @@ function renderPauseBuild(){
   if(!box) return;
   box.innerHTML = (G.state === 'playing' || G.state === 'paused') ? buildSummaryHTML() : '';
   bindBuildLinks(box);
+  bindFuseActions(box);
 }
 /* 暂停页构筑：给已拥有的「武器 × 可融合宝物」画金色连线。
    实线=进化条件已满足；虚线=还差武器等级/宝物层数。 */
