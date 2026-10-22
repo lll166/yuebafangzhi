@@ -3278,6 +3278,17 @@
   .dd-achdot{display:none;position:absolute;top:3px;right:3px;width:7px;height:7px;border-radius:50%;
     background:#e2574c;box-shadow:0 0 0 1.5px rgba(255,255,255,.9);}
   .dd-achbtn.new .dd-achdot{display:block;}
+  /* ===== 番茄幸存者：独立页内嵌窗口 ===== */
+  #svOverlay{position:fixed;inset:0;z-index:9998;display:none;background:#04060a;}
+  #svOverlay.show{display:flex;flex-direction:column;}
+  #svBar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:calc(6px + env(safe-area-inset-top)) 10px 6px;background:#08111a;
+    border-bottom:1px solid rgba(70,230,242,.18);color:#bfe9f2;font-size:12px;font-weight:700;}
+  #svClose{appearance:none;border:1px solid rgba(70,230,242,.32);background:rgba(70,230,242,.08);
+    color:#bfe9f2;border-radius:99px;padding:5px 11px;font-size:12px;font-weight:800;cursor:pointer;}
+  #svClose:active{transform:scale(.95);}
+  #svFrame{flex:1 1 auto;width:100%;min-height:0;border:0;display:block;background:#04060a;}
+  body.sv-lock{overflow:hidden;}
 </style>
 </head>
 <body>
@@ -3539,6 +3550,16 @@
   </div>
 </div>
 
+<!-- 番茄幸存者：独立页内嵌窗口。iframe 独立加载/刷新，首页保持可见，
+     番茄钟与月巴生长在后台照常运行；关闭时直接卸载 iframe -->
+<div id="svOverlay">
+  <div id="svBar">
+    <span id="svTitle">🍅 番茄幸存者</span>
+    <button id="svClose" onclick="svClose()" data-i18n="✕ 返回月巴">✕ 返回月巴</button>
+  </div>
+  <iframe id="svFrame" title="番茄幸存者"></iframe>
+</div>
+
 <script>
 'use strict';
 /* ============================================================
@@ -3760,7 +3781,7 @@ const TYPES=[
   {id:'mojing',    name:'墨镜笑巴',   r:2, v:22, t:220,  cond:null, img:'https://origin.picgo.net/2026/09/27/4d64284ab6f23425f9dda44f0fc540bef12552ef47074e5e.th.png', color:'#8a97a8', shape:'round'},
   {id:'bukeming',  name:'不可名状巴', r:4, v:200,t:1100, cond:null, img:'https://origin.picgo.net/2026/09/27/20c78b17ef4b3fa235abaad68362f4b3e9cd9e87eb7bc133.th.png', color:'#5d4a7a', shape:'big', size:3.5},
   {id:'canglong',  name:'苍龙月巴',   r:4, v:220,t:1150, cond:null, img:'https://origin.picgo.net/2026/09/29/cfdcb713bec9bd6b5307fd8a9edfc1fb421e9a1529506bb0.th.png', color:'#8e9aa8', shape:'big', size:2.5},
-  {id:'bairixuan', name:'白日宣巴',   r:1, v:9,  t:100,  cond:null, color:'#f2c14e', shape:'round'},
+  {id:'bairixuan', name:'白日宣巴',   img:'https://origin.picgo.net/2026/10/22/1aaddaa947c51b53b8f61b776ecf86e331d724a72b40ec07.th.png', r:1, v:9,  t:100,  cond:null, color:'#f2c14e', shape:'round'},
   {id:'niaoba',    name:'鸟巴',       r:2, v:20, t:200,  cond:null, img:'https://origin.picgo.net/2026/09/29/5333d8fdca76c3b083802650fd853975e1e6162696fd5812.th.png', color:'#7fa8c8', shape:'round'},
   {id:'mb_fanzhuan',name:'反转月巴',  r:3, v:45, t:460, cond:null, img:'https://origin.picgo.net/2026/10/11/c81c459acde3c23c8697414890a13e0ca4b5043931a9a27e.th.png', color:'#8f8fce', shape:'squish'},
   {id:'mb_zhongyi', name:'中意月巴',  r:3, v:45, t:460, cond:null, img:'https://origin.picgo.net/2026/10/11/b8ab7bdd789538f043b260d47e4181c4c7feca6cf8eb591c.th.png', color:'#e88aa8', shape:'round'},
@@ -3930,6 +3951,7 @@ const YB_PIC_AUTHOR={
   m2_qingchun:'鲸弑',
   m2_baboyi:'ak',
   m2_rainy:'Feyy',
+  bairixuan:'影子生物',
 };
 /* 每种月巴的「简介(文字)作者」by ID，图鉴详情弹窗简介末尾展示；未填则不显示文字作者 */
 const YB_TXT_AUTHOR={};
@@ -7729,6 +7751,7 @@ let _saveFail=false;
 let _lfsBootHadSave=null;
 function updateSaveWarn(){ const el=$('saveWarn'); if(el) el.style.display=_saveFail?'block':'none'; }
 function save(){
+  if(typeof svMode!=='undefined' && svMode==='prod') svMergeFromDisk();
   S.lastSave=now();
   try{
     localStorage.setItem(SAVE_KEY, JSON.stringify(S));
@@ -13196,20 +13219,89 @@ function flyExit(){
 }
 /* ================= 番茄幸存者（独立页入口） =================
    游戏本体在 survivor.html，index 只保留入口与存档/成就字段。
-   SV_PUBLIC=false：调试期只有 #debugall 能看到入口；上线时改为 true。 */
+   入口改为内嵌 iframe：首页保持可见，番茄钟/月巴生长继续运行。
+   #test：测试入口。测试使用独立存档 idle-yueba-svtest-v1，
+          正式版上线（SV_PUBLIC=true）后由首页自动清空。
+   SV_PUBLIC=false：调试期只有 #debugall / #debugall-1 / #test 能看到入口；上线时改为 true。 */
 const SV_PUBLIC=false;
-function svVisible(){ return SV_PUBLIC || DR_DEBUG || DR_SV_UNLOCK; }
+const SV_TEST_KEY='idle-yueba-svtest-v1';
+let SV_TEST=/(^|[#&?])test\b/.test(location.hash+location.search);
+let svMode=null;   // null=未打开；'prod'=正式版；'test'=测试版
+function svVisible(){ return SV_PUBLIC || DR_DEBUG || DR_SV_UNLOCK || (SV_TEST && !SV_PUBLIC); }
 function updateSurvivorIcon(){
   const el=$('btnSurvivor'); if(!el)return;
+  const test=SV_TEST && !SV_PUBLIC;
   el.style.display=svVisible()?'':'none';
-  el.title=$t('番茄幸存者');
+  el.title=test?'番茄幸存者（测试）':$t('番茄幸存者');
+  const sm=el.querySelector('small');
+  if(sm) sm.textContent=test?'幸存者·测试':$t('幸存者');
 }
 function survivorEntry(){
   if(!svVisible())return;
   sfx.click();
-  try{ save(); }catch(e){}   // 先落盘，避免游戏读到旧存档
-  location.href='survivor.html'+(DR_DEBUG?'#debugall':(DR_SV_UNLOCK?'#debugall-1':''));
+  svOpen((SV_TEST && !SV_PUBLIC)?'test':'prod');
 }
+function svOpen(mode){
+  if(svMode)return;
+  try{ save(); }catch(e){}   // 先落盘，避免独立页读到旧存档
+  svMode=(mode==='test')?'test':'prod';
+  const ov=$('svOverlay'), fr=$('svFrame');
+  const test=svMode==='test';
+  const ttl=$('svTitle'); if(ttl) ttl.textContent=test?'🍅 番茄幸存者 · 测试':'🍅 番茄幸存者';
+  let hash='';
+  if(test) hash='#test';
+  else if(DR_DEBUG) hash=DR_SV_UNLOCK?'#debugall-1':'#debugall';
+  else if(DR_SV_UNLOCK) hash='#debugall-1';
+  fr.src='survivor.html'+hash;
+  ov.classList.add('show');
+  document.body.classList.add('sv-lock');
+  setTimeout(function(){ try{ fr.focus(); }catch(e){} },300);
+}
+function svClose(){
+  if(!svMode)return;
+  const mode=svMode; svMode=null;
+  const fr=$('svFrame'), ov=$('svOverlay');
+  try{ fr.src='about:blank'; }catch(e){}   // 卸载 iframe：停掉幸存者的计时与音效
+  if(ov) ov.classList.remove('show');
+  document.body.classList.remove('sv-lock');
+  if(mode==='prod'){
+    svMergeFromDisk();                     // 正式版：把独立页写回的金币/图鉴合并进内存
+    try{ checkAch(true); updateAchBtn(); }catch(e){}
+  }
+  updateSurvivorIcon();
+}
+/* 内嵌页通过 postMessage 请求关闭，替代 iframe 内的「返回首页」跳转 */
+window.addEventListener('message',function(e){
+  if(!e||!e.data||e.data.type!=='yueba-sv-close')return;
+  try{ if(e.origin && e.origin!=='null' && e.origin!==location.origin) return; }catch(err){}
+  svClose();
+});
+/* 正式版独立页直接改磁盘上的 survivor / svCoins / collection；
+   首页每 5 秒自动存档，写盘前先合并这些字段，避免覆盖独立页的结果。
+   测试版写的是独立键，完全不参与合并。 */
+function svMergeFromDisk(){
+  let raw=null;
+  try{ raw=JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); }catch(e){}
+  if(!raw)return;
+  if(raw.survivor) S.survivor=raw.survivor;
+  if(typeof raw.svCoins==='number') S.svCoins=raw.svCoins;
+  if(raw.collection){
+    S.collection=S.collection||{};
+    for(const k in raw.collection){
+      const src=raw.collection[k], cur=S.collection[k];
+      if(!src)continue;
+      if(!cur){ S.collection[k]=src; continue; }
+      const a=+src.count||0, b=+cur.count||0;
+      if(a>b) S.collection[k]=src;
+      else if(src.last && (!cur.last || (+src.last.t||0)>(+cur.last.t||0))) cur.last=src.last;
+    }
+  }
+}
+/* #test 是在地址栏后面手打的，切走再切回时会重新判定入口 */
+window.addEventListener('hashchange',function(){
+  SV_TEST=/(^|[#&?])test\b/.test(location.hash+location.search);
+  updateSurvivorIcon();
+});
 function fgLayer(id){
   ['fgPick','fgLv','fgCount','fgOver'].forEach(k=>{ const e=$(k); if(e) e.classList.toggle('show',k===id); });
 }
@@ -13840,6 +13932,8 @@ function init(){
   applyI18n();   // 静态文案/顶栏语言按钮按当前语言刷新（P0 无译文时显示中文原文）
   updateTravelIcon(); updateFlyIcon(); updateCodeIcon(); updateCodeIcon2(); updateSurvivorIcon();
   checkAch(true); updateAchBtn();   // 读档后静默结算一次已满足的成就（只登记、不弹提示）
+  /* 正式版上线后：测试入口下线，测试存档整键清空（以后不会再产生） */
+  if(SV_PUBLIC){ try{ localStorage.removeItem(SV_TEST_KEY); }catch(e){} }
   // 调试后门：任意网址加 #debugall 均可解锁全图鉴（与旧版行为一致）
   // #debugall-1：只解锁番茄幸存者，金币等资源保持新账号状态（不开启无限资源）
   if(typeof location!=='undefined' && location.hash && location.hash.indexOf('#debugall')>=0){
@@ -16500,9 +16594,16 @@ function ddStatsHTML(recs){
     if(r.win) rs.w++; else rs.l++;
   });
 
-  /* 累计番茄：老→新再取累计 */
+  /* 累计番茄走势：只取最近 21 次有波动的记录（净收益为 0 的局不记录），值仍为逐局累计 */
+  const TREND_N=21;
   const cum=[]; let acc=0;
-  recs.slice().reverse().forEach(function(r){ acc+=(r.net|0); cum.push(acc); });
+  recs.forEach(function(r){ acc+=(r.net|0); });   // 先算出最后一点的累计
+  for(let i=0;i<recs.length&&cum.length<TREND_N;i++){   // recs 为「新→老」
+    const v=(recs[i].net|0);
+    if(!v) continue;                                    // 没有波动不记录
+    cum.unshift(acc);                                   // 该局结束时的累计
+    acc-=v;                                             // 退回上一局结束时的累计
+  }
 
   let html='<div class="dd-st-cards">'
     +'<div class="dd-st-card"><span class="n">'+total+$t('</span><span class="lb">总局数</span></div>')
@@ -16661,6 +16762,7 @@ function ddSparkHTML(cum){
   }
   function check(){
     if(reloading) return;
+    if(typeof svMode!=='undefined' && svMode) return;   // 幸存者窗口打开期间，不刷新首页
     fetch(location.href,{method:'HEAD',cache:'no-store'}).then(sig).then(function(s){
       if(!s) return;                          // 该环境不返回版本标识时静默跳过
       if(base===null){ base=s; return; }       // 首次：记录基线
