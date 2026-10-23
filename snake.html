@@ -790,9 +790,12 @@
     ctx.globalAlpha = 1;
   }
 
+  // 上下走动时头部朝向互换：向上走时头朝下，向下走时头朝上
+  const FLIP_V = { up:'down', down:'up', left:'left', right:'right' };
+
   function drawHead(s, a){
     const x = s.x*CELL, y = s.y*CELL;
-    const k = dirKey(dir);
+    const k = FLIP_V[dirKey(dir)];
     ctx.globalAlpha = a;
     ctx.drawImage(faces[shadesOn ? 'sun' : 'normal'][k], x, y);
     ctx.drawImage(earSprites[k], x, y);
