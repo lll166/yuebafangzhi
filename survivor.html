@@ -9027,7 +9027,7 @@ function fusePanelHTML(){
       const u = wpDef(c.union.id) || {ic:'★'};
       ic = a.ic + b.ic + ' → ' + u.ic;
       nm = wpName(u);
-      req = 'Lv ' + c.a + '/5 · Lv ' + c.b + '/5';
+      req = 'Lv ' + c.a + '/' + WP_LV_MAX + ' · Lv ' + c.b + '/' + WP_LV_MAX;
     }
     rows.push('<div class="fuseitem" data-fuse="' + (c.kind === 'evo' ? 'e:' : 'u:') + esc(c.id) + '">' +
       '<span class="fic">' + esc(ic) + '</span>' +
