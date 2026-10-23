@@ -8120,27 +8120,36 @@ function load(){
 /* 读档时的时间戳归一化：电脑时间/时区被改动、或联网校时换过时间基准后，存档里的
    「开始 / 到点」时间戳可能被写在很远的将来。生长（now()-start）、天降事件与天气
    （now()>=到点时刻）都只会一直等待，表现为月巴不生长、事件和天气不再出现。
-   这里把超过现在 10 分钟以上的「未来时间点」纠正回现在：
-   - 生长槽 start：从现在重新开始长（不跳过进度，也不白送成熟）；
-   - 天降事件：按正常 15~40 分钟间隔重新计时；
+   这里按各系统的「正常时间上限」判断是否异常，超过上限才纠正回正常节奏：
+   - 生长槽 start / delay：从现在重新开始长（不跳过进度，也不白送成熟）；
+   - 天降事件：正常 15~40 分钟，超过 45 分钟才按正常间隔重新计时；
+   - 天气 / 天气瓶：自然轮换 8~18 分钟，天气瓶锁定可达 2 小时，超过 2 小时上限才视为异常；
+   - 旅行计时：番茄机收获 / 门口访客 / 庭院事件正常在 10~30 分钟后，按 40 分钟上限判断；
    - 其余到点时刻：一律认为「现在就该发生」，让对应系统自己继续推进。
-   10 分钟以内的偏差属于正常校时抖动，不做处理，避免每次读档都重置进度。 */
+   注意：不能用统一的「10 分钟」容差——访客、番茄机、天降、天气瓶的正常计时都超过 10 分钟，
+   套用小容差会导致每次刷新读档都被拉回「现在」（表现为一刷新就冒访客、番茄机亮起、天气瞬间改变）。 */
 const FUTURE_SKEW_TOL=10*60000;
 function normalizeFutureTimes(){
   if(!S) return;
   const t=now(), lim=t+FUTURE_SKEW_TOL;
-  for(const z of (S.zones||[])) for(const w of ((z&&z.woods)||[])) for(const c of ((w&&w.cells)||[])){
+  /* 类型守卫：异常存档（字段被写成非数组/非对象）不能让这里抛错，
+     否则 load() 的 try/catch 会把整份存档退回默认值 */
+  const zones=Array.isArray(S.zones)?S.zones:[];
+  for(const z of zones) for(const w of (Array.isArray(z&&z.woods)?z.woods:[])) for(const c of (Array.isArray(w&&w.cells)?w.cells:[])){
     if(!c) continue;
     if(c.start>lim) c.start=t;   // 播种时间在未来：进度永远是 0，只能重新计时
     if(c.delay>lim) c.delay=t;   // 槽位等待时间在未来：立刻参与补种
   }
-  if(S.dexNext>lim) S.dexNext=nextDexEventAt();
-  if(S.nextWeatherAt>lim) S.nextWeatherAt=t;
-  if(S.weatherHoldEnd>lim) S.weatherHoldEnd=t;
+  if(S.dexNext>t+45*60000) S.dexNext=nextDexEventAt();   // 正常上限 15~40 分钟，与 checkDexEvent 的 45 分钟口径一致
+  /* 天气瓶会把 nextWeatherAt / weatherHoldEnd 推到 2 小时后，必须用 WEATHER_HOLD 作上限，
+     否则刷新一次就会立刻换天气、并让刚买的天气瓶提前失效 */
+  const wLim=t+WEATHER_HOLD+FUTURE_SKEW_TOL;
+  if(S.nextWeatherAt>wLim) S.nextWeatherAt=t;
+  if(S.weatherHoldEnd>wLim) S.weatherHoldEnd=0;
   if(S.lastRainAt>lim) S.lastRainAt=t;
   if(S.lastFast>lim) S.lastFast=t;
   if(S.lastExtreme>lim) S.lastExtreme=t;
-  const tr=S.travel;
+  const tr=(S.travel&&typeof S.travel==='object'&&!Array.isArray(S.travel))?S.travel:null;
   if(tr){
     /* 旅行计时（番茄机收获 / 门口访客 / 庭院事件）的正常到点时刻本来就在 10~30 分钟之后，
        不能套用上面 10 分钟的容差：否则每次刷新读档都会被拉回「现在」，表现为一刷新就冒访客、番茄机立刻可拉。
@@ -8150,7 +8159,7 @@ function normalizeFutureTimes(){
     if(tr.nextVisit>trLim) tr.nextVisit=t+tvVisitGap();
     if(tr.eventT>trLim) tr.eventT=t+rand(10,30)*60000;
     if(tr.frog && tr.frog.syncAt>trLim) tr.frog.syncAt=t;
-    (tr.journal||[]).forEach(function(e){ if(!e)return; if(e.t>lim)e.t=t; if(e.depart>lim)e.depart=t; });
+    if(Array.isArray(tr.journal)) tr.journal.forEach(function(e){ if(!e)return; if(e.t>lim)e.t=t; if(e.depart>lim)e.depart=t; });
   }
 }
 function speedMult(){ return (1+S.accelLv*0.1) * (S.pomo && S.pomo.running && S.pomo.mode==='focus' ? 2 : 1); }
@@ -12144,7 +12153,7 @@ function tvShiftTimes(delta){
   if(t.cardMoodT) for(const c in t.cardMoodT)mv(t.cardMoodT,c);
 }
 function tvFresh(){
-  if(!S.travel)S.travel={tomato:300,wh:{food1:0,food2:0,food4:0,food3:0,lamp:0,charm:0,bell:0},bag:[],frog:{status:'home',depart:null,ret:null,mood:''},cards:[],specials:[],destCount:{},friends:[],harvestT:now()+tvHarvestGap()} ;
+  if(!S.travel||typeof S.travel!=='object'||Array.isArray(S.travel))S.travel={tomato:300,wh:{food1:0,food2:0,food4:0,food3:0,lamp:0,charm:0,bell:0},bag:[],frog:{status:'home',depart:null,ret:null,mood:''},cards:[],specials:[],destCount:{},friends:[],harvestT:now()+tvHarvestGap()} ;
   const t=S.travel;
   t.wh=t.wh||{food1:0,food2:0,food4:0,food3:0,lamp:0,charm:0,bell:0,compass:0};
   if(t.wh.food4==null)t.wh.food4=0;      // 老存档补齐海味便当字段
