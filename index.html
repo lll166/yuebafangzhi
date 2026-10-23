@@ -7207,6 +7207,7 @@ const I18N_BANNY={
   tvi_bell:{n:{en:'Bell',ja:'鈴',ko:'방울'}},
   tvi_compass:{n:{en:'Compass',ja:'方位磁針',ko:'나침반'}},
   tvi_pass:{n:{en:'Small Charm',ja:'小さなお守り',ko:'작은 부적'}},
+  tvi_goldletter:{n:{en:'Tunnel Pass',ja:'トンネル通行証',ko:'터널 통행증'}},
   shop_coffee:{n:{en:'Coffee Machine',ja:'コーヒーマシン',ko:'커피 머신'}},
   shop_coffee_desc:{d:{en:'Unlocks the "Coffee Banny" appearance condition',ja:'「コーヒーバニー」の出現条件を解放します',ko:'"커피 배니" 등장 조건을 해금해요'}},
   shop_doll:{n:{en:'Doll Rack',ja:'ぬいぐるみ棚',ko:'인형 선반'}},
@@ -8141,10 +8142,14 @@ function normalizeFutureTimes(){
   if(S.lastExtreme>lim) S.lastExtreme=t;
   const tr=S.travel;
   if(tr){
-    if(tr.harvestT>lim) tr.harvestT=t;   // 旅途收获到点时间在未来：现在就可收
-    if(tr.nextVisit>lim) tr.nextVisit=t;
-    if(tr.eventT>lim) tr.eventT=t;
-    if(tr.frog && tr.frog.syncAt>lim) tr.frog.syncAt=t;
+    /* 旅行计时（番茄机收获 / 门口访客 / 庭院事件）的正常到点时刻本来就在 10~30 分钟之后，
+       不能套用上面 10 分钟的容差：否则每次刷新读档都会被拉回「现在」，表现为一刷新就冒访客、番茄机立刻可拉。
+       这里只把超出正常上限的异常时间按正常间隔重新计时，绝不提前触发。 */
+    const trLim=t+40*60000;
+    if(tr.harvestT>trLim) tr.harvestT=t+tvHarvestGap();
+    if(tr.nextVisit>trLim) tr.nextVisit=t+tvVisitGap();
+    if(tr.eventT>trLim) tr.eventT=t+rand(10,30)*60000;
+    if(tr.frog && tr.frog.syncAt>trLim) tr.frog.syncAt=t;
     (tr.journal||[]).forEach(function(e){ if(!e)return; if(e.t>lim)e.t=t; if(e.depart>lim)e.depart=t; });
   }
 }
@@ -8433,6 +8438,9 @@ function artIndex(t){
   return (typeof p==='number'&&p>=0&&p<n)?p:0;
 }
 function artURL(t){ const l=artList(t); return l.length?l[artIndex(t)].url:''; }
+/* 「有图鉴」判定：已配置外链立绘（img 或 imgs 任一）。
+   由数据自动推导，新增外链图片后无需改代码即可生效。 */
+function hasArt(t){ return artList(t).length>0; }
 /* 立绘微调：部分投稿 PNG 画布留白偏多，显示时显得比别的月巴小，
    用 artScale 单独放大（只作用于立绘 PNG；无立绘的 SVG 仍用 size）。 */
 function picScale(t){ return artURL(t)?((t&&t.artScale)||1):((t&&t.size)||1); }
@@ -9650,7 +9658,7 @@ function switchDexPage(p){ if(p!==dexPage) _dexQ=''; dexPage=p; openBook(); }
    只列出 TYPES/TYPES2 中一张立绘都没有的月巴（已有立绘的不再需要投稿）。
    顶部固定 Google 表单外链；卡片沿用图鉴样式，保留名字 + 简介；支持名字/ID/简介搜索。 */
 let _subQ='';
-function subMissing(){ return TYPES.concat(TYPES2,TYPES3).filter(t=>!artList(t).length); }
+function subMissing(){ return TYPES.concat(TYPES2,TYPES3).filter(t=>!hasArt(t)); }
 function subFiltered(){
   const all=subMissing();
   const q=_subQ.trim().toLowerCase();
@@ -13852,9 +13860,13 @@ function fgHitRect(hx,hy,rx,ry,x0,x1,y0,y1){
 }
 let fg=null;
 function fgAllTypes(){ return TYPES.concat(TYPES2,TYPES3); }
-/* 飞行小游戏可选月巴：已收集（图鉴解锁）的月巴 + 会飞月巴本体，其余月巴不出现在选月巴列表 */
+/* 飞行小游戏可选月巴：已收集（图鉴解锁）且「有图鉴」（有外链立绘）的月巴；
+   会飞月巴本体作为飞行小游戏专属例外保留。
+   是否有图由 artList 自动判定，上传新外链图片后列表自动变化。 */
 function fgPickTypes(){
-  return fgAllTypes().filter(function(t){ return t.id==='mb_yunduan' || colCount(t.id)>0; });
+  return fgAllTypes().filter(function(t){
+    return t.id==='mb_yunduan' || (colCount(t.id)>0 && hasArt(t));
+  });
 }
 function fgFreeTop(){ return (S.flyTop||[]).filter(r=>(r.lv|0)===0); }
 function fgBest(){ const l=fgFreeTop(); return l.length?l[0].s:0; }
@@ -17612,9 +17624,22 @@ function ddSparkHTML(cum){
       return st!=='menu' && st!=='result';
     }catch(e){ return true; }
   }
+  /* 黄金矿工是否一局进行中：只有开始/结算面板才允许刷新首页；
+     进行中（含暂停、过关过渡）跳过，等这局打完再刷；读不到状态时按进行中处理。 */
+  function gbBusy(){
+    if(typeof gbFrameId==='undefined'||gbFrameId!=='gold') return false;
+    try{
+      var fr=document.getElementById('gbGameFrame');
+      var w=fr&&fr.contentWindow;
+      if(!w) return true;
+      var st=(typeof w.__gmState==='function')?w.__gmState():'';
+      return st!=='start' && st!=='over';
+    }catch(e){ return true; }
+  }
   function check(){
     if(reloading) return;
     if(svBusy()) return;
+    if(gbBusy()) return;                        // 黄金矿工一局进行中不打断
     fetch(location.href,{method:'HEAD',cache:'no-store'}).then(sig).then(function(s){
       if(!s) return;                          // 该环境不返回版本标识时静默跳过
       if(base===null){ base=s; return; }       // 首次：记录基线
