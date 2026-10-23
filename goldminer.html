@@ -2339,6 +2339,8 @@ window.addEventListener('pagehide',function(){
 });
 
 /* ================= 启动 ================= */
+/* 供首页「新版本自动刷新」判断：一局进行中（含暂停、过关过渡）不刷新，避免半途打断 */
+window.__gmState=function(){ return gm.phase; };
 function applyLangStatic(){
   document.title=t('docTitle');
   hintEl.textContent=t('hint');
