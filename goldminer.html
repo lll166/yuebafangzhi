@@ -1,0 +1,2357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#031019">
+<title>黄金矿工 · 矿工月巴</title>
+<style>
+  :root{
+    --bg:#031019; --bg2:#061c26; --panel:#071f2a; --panel2:#082430;
+    --line:rgba(90,222,238,.22); --line2:rgba(99,234,247,.48);
+    --text:#ddf6fb; --dim:#7fa7b7;
+    --red:#ff5468; --accent:#46e6f2; --accent2:#b0f9ff; --green:#4fd8a8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;}
+  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);}
+  body{font-family:"SF Mono","Cascadia Mono",Consolas,system-ui,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    touch-action:none;overscroll-behavior:none;}
+  /* 全屏扫描线 + 暗角：静态单层，低功耗下关闭 */
+  body::before{content:'';position:fixed;inset:0;z-index:9990;pointer-events:none;opacity:.5;
+    background:repeating-linear-gradient(0deg,rgba(120,232,255,.028) 0 1px,transparent 1px 3px);}
+  body::after{content:'';position:fixed;inset:0;z-index:9989;pointer-events:none;
+    background:radial-gradient(120% 82% at 50% 4%,transparent 46%,rgba(0,9,15,.55) 100%);}
+  body.lp::before,body.lp::after{display:none;}
+  #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    padding:calc(8px + env(safe-area-inset-top)) 10px calc(8px + env(safe-area-inset-bottom));
+    background:radial-gradient(74% 58% at 50% 36%,#082430,#020a10 78%);}
+  #app{display:flex;flex-direction:column;align-items:center;gap:6px;}
+
+  /* ---------- 顶部 HUD ---------- */
+  #hud{display:flex;flex-direction:column;gap:4px;width:100%;}
+  #hud .cells{display:flex;gap:6px;width:100%;}
+  #hud .cell{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:5px 4px 6px;color:var(--text);
+    background:linear-gradient(180deg,rgba(8,34,46,.88),rgba(4,18,26,.94));
+    border:1px solid var(--line);border-left:2px solid var(--line2);
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);
+    box-shadow:inset 0 0 18px rgba(70,230,242,.06);}
+  #hud .lb{font-size:9px;font-weight:800;letter-spacing:1.4px;color:var(--dim);white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+  #hud .num{font-size:15px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.2;
+    letter-spacing:1px;color:var(--accent2);text-shadow:0 0 12px rgba(70,230,242,.42);}
+  #hud .cell.time .num{font-size:19px;}
+  #hud .cell.time .num.warn{color:var(--red);text-shadow:0 0 14px rgba(255,84,104,.7);
+    animation:warnPulse .9s ease-in-out infinite;}
+  @keyframes warnPulse{0%,100%{opacity:1}50%{opacity:.42}}
+  #hud .cell.time .num.flash{animation:flash .5s ease-out;}
+  @keyframes flash{0%{transform:scale(1);color:var(--green)}45%{transform:scale(1.22);color:var(--green)}100%{transform:scale(1)}}
+  .tbar{height:3px;background:rgba(70,230,242,.1);box-shadow:inset 0 0 0 1px rgba(70,230,242,.16);}
+  .tbar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#19c8dc,#7df6ff);
+    box-shadow:0 0 10px rgba(70,230,242,.45);transition:width .12s linear;}
+  .tbar.warn i{background:linear-gradient(90deg,#ff5468,#ff8b98);box-shadow:0 0 10px rgba(255,84,104,.5);}
+
+  /* ---------- 矿区 ---------- */
+  #frame{position:relative;overflow:hidden;border-radius:3px;background:#04141b;
+    box-shadow:0 0 0 1px rgba(70,230,242,.26),0 0 46px rgba(70,230,242,.07),0 22px 60px rgba(0,0,0,.7);}
+  #cv{display:block;width:100%;height:100%;}
+  #domLayer{position:absolute;left:0;top:0;width:480px;height:720px;transform-origin:top left;pointer-events:none;}
+
+  #minerBox{position:absolute;left:208px;top:40px;width:64px;height:64px;}
+  #minerTilt{width:100%;height:100%;position:relative;transform-origin:50% 100%;will-change:transform;}
+  #minerTilt .av{width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center;
+    filter:drop-shadow(0 3px 8px rgba(0,0,0,.5));}
+  #minerTilt .av img,#minerTilt .av svg{width:100%;height:100%;object-fit:contain;}
+  /* 矿帽：暗金属帽体 + 青蓝描边，和 HUD 面板同族 */
+  .helmet{position:absolute;left:50%;top:-6px;width:34px;height:19px;margin-left:-17px;pointer-events:none;
+    filter:drop-shadow(0 2px 5px rgba(0,0,0,.6));}
+  .helmet .dome{position:absolute;left:0;top:0;width:34px;height:15px;border-radius:17px 17px 3px 3px;
+    background:
+      repeating-linear-gradient(0deg,rgba(140,246,255,.07) 0 1px,transparent 1px 3px),
+      linear-gradient(180deg,#2f7e92 0%,#145261 38%,#0a2833 74%,#071f2a 100%);
+    border:1px solid rgba(99,234,247,.85);border-bottom:0;
+    box-shadow:inset 0 1px 0 rgba(210,252,255,.6),inset 0 -3px 7px rgba(0,8,12,.78),
+      0 0 8px rgba(70,230,242,.22);}
+  .helmet .dome::after{content:'';position:absolute;left:50%;bottom:2px;width:9px;height:2px;margin-left:-4.5px;
+    background:rgba(120,232,255,.5);box-shadow:0 0 5px rgba(70,230,242,.5);}
+  .helmet .brim{position:absolute;left:-5px;top:13px;width:44px;height:5px;
+    background:linear-gradient(180deg,#2b6b7d,#0a2937 60%,#061a24);
+    border:1px solid rgba(99,234,247,.55);border-top:0;border-radius:0 0 2px 2px;
+    clip-path:polygon(0 0,100% 0,100% 56%,calc(100% - 6px) 100%,0 100%);
+    box-shadow:0 1px 0 rgba(70,230,242,.32),0 2px 5px rgba(0,0,0,.45);}
+  .helmet .lamp{position:absolute;left:50%;top:3px;width:6px;height:6px;margin-left:-3px;border-radius:50%;
+    background:#eaffff;border:1px solid rgba(99,234,247,.9);
+    box-shadow:0 0 4px 1px rgba(140,246,255,.9),0 0 10px 3px rgba(70,230,242,.38);}
+  #minerName{position:absolute;left:50%;top:-26px;transform:translateX(-50%);white-space:nowrap;
+    padding:2px 7px;border:1px solid var(--line);border-left:2px solid var(--line2);border-radius:2px;
+    font-size:9px;font-weight:800;letter-spacing:1px;color:var(--accent2);
+    background:linear-gradient(180deg,rgba(8,34,46,.9),rgba(4,18,26,.95));
+    box-shadow:0 0 10px rgba(70,230,242,.18);}
+
+  /* 暂停按钮：与 HUD 同族的切角冷光块 */
+  #pauseBtn{position:absolute;right:10px;top:10px;width:34px;height:34px;z-index:4;display:none;
+    align-items:center;justify-content:center;padding:0;font-family:inherit;font-size:13px;line-height:1;
+    color:var(--accent2);cursor:pointer;
+    background:linear-gradient(180deg,rgba(8,34,46,.9),rgba(4,18,26,.95));
+    border:1px solid var(--line);border-left:2px solid var(--line2);border-radius:2px;
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);
+    box-shadow:0 0 12px rgba(70,230,242,.16);}
+  #pauseBtn.on{display:flex;}
+  #pauseBtn:active{transform:scale(.94);}
+  #pauseBtn::before{content:'❚❚';letter-spacing:1px;}
+
+  /* 番茄金像 */
+  #statueBox{position:absolute;left:0;top:0;width:60px;height:60px;display:none;
+    filter:drop-shadow(0 0 9px rgba(232,185,63,.8)) drop-shadow(0 3px 6px rgba(0,0,0,.45));}
+  #statueBox img{width:100%;height:100%;object-fit:contain;
+    filter:sepia(1) saturate(2.8) hue-rotate(2deg) brightness(1.06) contrast(1.05);}
+  #statueBox svg{width:100%;height:100%;}
+  #statueBox .ring{position:absolute;inset:-5px;border-radius:50%;
+    box-shadow:inset 0 0 0 2px rgba(255,243,176,.6),0 0 16px rgba(232,185,63,.5);}
+  #statueBox::after{content:'';position:absolute;inset:-8%;border-radius:50%;pointer-events:none;
+    background:linear-gradient(115deg,transparent 34%,rgba(255,255,255,.9) 47%,rgba(255,243,176,.55) 54%,transparent 66%);
+    background-size:260% 100%;mix-blend-mode:screen;animation:sweep 2.6s linear infinite;}
+  @keyframes sweep{0%{background-position:190% 0}100%{background-position:-90% 0}}
+  body.lp #statueBox::after{display:none;}
+  body.lp #statueBox{filter:drop-shadow(0 0 6px rgba(232,185,63,.6));}
+
+  /* 横幅 / 提示 */
+  #banner{position:absolute;left:0;right:0;top:42%;text-align:center;pointer-events:none;
+    font-size:26px;font-weight:900;letter-spacing:4px;color:var(--accent2);
+    text-shadow:0 0 18px rgba(70,230,242,.8),0 2px 0 #04141b;opacity:0;transform:scale(.9);}
+  #banner.show{animation:bannerIn 1.8s ease-out;}
+  @keyframes bannerIn{0%{opacity:0;transform:scale(.7)}18%{opacity:1;transform:scale(1.06)}30%{transform:scale(1)}
+    78%{opacity:1}100%{opacity:0;transform:scale(1.02)}}
+  #hint{position:absolute;left:0;right:0;bottom:12px;text-align:center;pointer-events:none;
+    font-size:11px;font-weight:700;letter-spacing:1px;color:rgba(127,167,183,.8);transition:opacity .35s;}
+  #hint.hide{opacity:0;}
+
+  /* ---------- 面板 ---------- */
+  #overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:16px;z-index:5;
+    background:
+      repeating-linear-gradient(0deg,rgba(110,226,240,.025) 0 1px,transparent 1px 4px),
+      radial-gradient(90% 70% at 50% 42%,rgba(6,42,56,.55),rgba(2,9,14,.88));}
+  #overlay.show{display:flex;}
+  body.lp #overlay{background:rgba(2,9,14,.9);}
+  .panel{position:relative;width:min(94%,360px);max-height:100%;overflow:auto;padding:20px 18px 16px;
+    text-align:center;color:var(--text);border-radius:3px;
+    background:
+      linear-gradient(90deg,var(--accent),rgba(70,230,242,0) 38%) left top/100% 1px no-repeat,
+      linear-gradient(180deg,rgba(8,36,48,.985),rgba(3,14,21,.995));
+    border:1px solid var(--line2);
+    box-shadow:0 26px 80px rgba(0,0,0,.65),inset 0 0 40px rgba(70,230,242,.05);}
+  /* 四角括号：单伪元素 8 层背景，静态绘制 */
+  .panel::before{content:'';position:absolute;inset:8px;pointer-events:none;opacity:.5;
+    background:
+      linear-gradient(var(--accent),var(--accent)) left top/14px 2px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) left top/2px 14px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) right top/14px 2px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) right top/2px 14px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) left bottom/14px 2px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) left bottom/2px 14px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) right bottom/14px 2px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) right bottom/2px 14px no-repeat;}
+  .panel .kicker{font-size:9px;font-weight:900;letter-spacing:4px;color:var(--accent);opacity:.85;}
+  .panel .kicker::before{content:'// ';} .panel .kicker::after{content:' //';}
+  .panel .pt{font-size:24px;font-weight:900;letter-spacing:6px;color:var(--accent2);margin:4px 0 2px;
+    text-shadow:0 0 18px rgba(70,230,242,.5),0 0 46px rgba(70,230,242,.22);}
+  .panel .av{width:96px;height:96px;margin:14px auto 0;position:relative;}
+  .panel .av::before{content:'';position:absolute;inset:-9px;border-radius:50%;
+    border:1px solid var(--line2);
+    background:radial-gradient(circle,rgba(70,230,242,.16),rgba(70,230,242,.02) 68%,transparent 70%);
+    box-shadow:inset 0 0 24px rgba(70,230,242,.12);}
+  .panel .av .inner{position:relative;width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center;}
+  .panel .av .inner img,.panel .av .inner svg{width:100%;height:100%;object-fit:contain;}
+  .panel .av .helmet{top:-8px;width:60px;height:33px;margin-left:-30px;transform:none;}
+  .panel .av .helmet .dome{width:60px;height:26px;border-radius:30px 30px 6px 6px;}
+  .panel .av .helmet .brim{left:-6px;top:23px;width:72px;height:8px;border-radius:4px;}
+  .panel .av .helmet .lamp{top:5px;width:10px;height:10px;margin-left:-5px;}
+  .panel .nm{display:inline-block;font-size:12px;font-weight:900;letter-spacing:2px;color:var(--accent2);
+    margin-top:13px;padding:3px 10px;border:1px solid var(--line);
+    background:rgba(70,230,242,.06);}
+  .panel .qt{font-size:11px;line-height:1.65;color:var(--dim);margin-top:9px;min-height:32px;
+    text-align:left;padding:7px 10px;border-left:2px solid var(--line2);background:rgba(70,230,242,.04);}
+  .panel .st{font-size:10px;letter-spacing:.5px;color:var(--dim);margin-top:10px;line-height:1.6;}
+  .panel .rows{margin-top:12px;}
+  .panel .row{display:flex;justify-content:space-between;gap:10px;font-size:12px;padding:6px 2px;
+    border-bottom:1px dashed rgba(90,222,238,.16);}
+  .panel .row:last-child{border-bottom:0;}
+  .panel .row span{color:var(--dim);}
+  .panel .row b{font-weight:900;font-variant-numeric:tabular-nums;color:var(--accent2);}
+  .panel .badge{display:inline-block;margin-top:10px;padding:3px 10px;
+    background:var(--red);color:#210409;font-size:10px;font-weight:900;letter-spacing:2px;
+    box-shadow:0 0 14px rgba(255,84,104,.45);animation:pop .6s ease-out;
+    clip-path:polygon(0 0,100% 0,100% 100%,6px 100%,0 calc(100% - 6px));}
+  @keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.12);opacity:1}100%{transform:scale(1)}}
+  .panel .btnw{display:flex;gap:8px;margin-top:16px;}
+  .panel button{flex:1;height:44px;border:1px solid var(--accent);border-radius:2px;
+    font-family:inherit;font-size:13px;font-weight:900;letter-spacing:2px;cursor:pointer;color:#eafeff;
+    background:linear-gradient(180deg,rgba(70,230,242,.24),rgba(24,140,164,.34));
+    box-shadow:0 0 22px rgba(70,230,242,.18),inset 0 0 18px rgba(70,230,242,.12);
+    transition:transform .12s,background .12s,box-shadow .12s;}
+  .panel button:hover{background:linear-gradient(180deg,rgba(70,230,242,.34),rgba(24,140,164,.44));
+    box-shadow:0 0 26px rgba(70,230,242,.26),inset 0 0 18px rgba(70,230,242,.16);}
+  .panel button:active{transform:scale(.97);}
+
+  #foot{font-size:10px;letter-spacing:1px;color:var(--dim);opacity:.8;height:12px;}
+
+  /* ---------- 连击 / 道具状态条（画布逻辑坐标） ---------- */
+  .gmchip{position:absolute;left:12px;top:12px;display:none;padding:3px 8px;font-size:10px;font-weight:900;
+    letter-spacing:1px;color:var(--accent2);white-space:nowrap;
+    background:rgba(4,18,26,.74);border:1px solid var(--line2);border-left-width:2px;
+    box-shadow:0 0 12px rgba(70,230,242,.18);}
+  #statusChip{left:auto;right:12px;color:#ffe9a8;border-color:rgba(232,185,63,.55);
+    box-shadow:0 0 12px rgba(232,185,63,.18);}
+  .gmchip.show{display:block;}
+  .gmchip.pop{animation:chipPop .26s ease-out;}
+  @keyframes chipPop{0%{transform:scale(.8)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+
+  /* 成就提示：独立于关卡横幅，避免互相覆盖 */
+  #achToast{position:absolute;left:50%;top:14px;z-index:6;pointer-events:none;
+    transform:translate(-50%,-8px);opacity:0;transition:opacity .24s,transform .24s;
+    padding:5px 12px;font-size:11px;font-weight:900;letter-spacing:1px;color:#04141b;white-space:nowrap;
+    background:linear-gradient(180deg,#b0f9ff,#46e6f2);border-radius:2px;
+    box-shadow:0 0 22px rgba(70,230,242,.55);}
+  #achToast.show{opacity:1;transform:translate(-50%,0);}
+
+  /* 道具到手卡片：单独一条，避免和成就 / 关卡横幅互相覆盖 */
+  #itemToast{position:absolute;left:50%;top:44px;z-index:7;pointer-events:none;
+    display:flex;align-items:center;gap:9px;max-width:min(88%,330px);
+    padding:8px 12px;text-align:left;
+    transform:translate(-50%,-10px) scale(.94);opacity:0;
+    transition:opacity .26s,transform .26s;
+    background:linear-gradient(180deg,rgba(10,34,42,.97),rgba(3,13,19,.98));
+    border:1px solid rgba(232,185,63,.62);border-left:3px solid #e8b93f;border-radius:2px;
+    box-shadow:0 10px 30px rgba(0,0,0,.62),0 0 22px rgba(232,185,63,.22);}
+  #itemToast.show{opacity:1;transform:translate(-50%,0) scale(1);}
+  #itemToast .ii{font-size:24px;line-height:1;filter:drop-shadow(0 0 8px rgba(232,185,63,.75));}
+  #itemToast .itt{font-size:8px;font-weight:900;letter-spacing:2px;color:#e8b93f;}
+  #itemToast .inm{font-size:13px;font-weight:900;letter-spacing:1px;color:#eafeff;margin-top:1px;}
+  #itemToast .ids{font-size:9px;line-height:1.5;color:var(--dim);margin-top:2px;}
+
+  /* 金像全屏金色闪光 */
+  #goldFlash{position:absolute;inset:0;z-index:5;pointer-events:none;opacity:0;
+    background:radial-gradient(circle at 50% 54%,rgba(255,248,222,.95),rgba(255,214,106,.5) 34%,rgba(232,185,63,0) 70%);}
+  #goldFlash.show{animation:goldFlash .62s ease-out;}
+  @keyframes goldFlash{0%{opacity:0;transform:scale(.6)}16%{opacity:1;transform:scale(1)}
+    100%{opacity:0;transform:scale(1.28)}}
+  body.lp #goldFlash{display:none;}
+
+  /* 面板内的成就 / 图鉴列表 */
+  .panel .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;}
+  .panel .gcell{position:relative;padding:6px 3px 4px;border:1px solid rgba(90,222,238,.16);
+    background:rgba(70,230,242,.04);}
+  .panel .gcell .ga{width:100%;aspect-ratio:1/1;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;}
+  .panel .gcell .ga img,.panel .gcell .ga svg{width:100%;height:100%;object-fit:contain;}
+  .panel .gcell .gn{font-size:8px;line-height:1.3;color:var(--dim);margin-top:3px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .panel .gcell .gc{position:absolute;right:2px;top:1px;font-size:8px;font-weight:900;color:var(--accent2);}
+  .panel .alist{margin-top:10px;text-align:left;}
+  .panel .aitem{display:flex;gap:8px;align-items:center;padding:6px 2px;border-bottom:1px dashed rgba(90,222,238,.14);}
+  .panel .aitem:last-child{border-bottom:0;}
+  .panel .aitem .dot{width:9px;height:9px;flex:0 0 9px;border:1px solid var(--line2);transform:rotate(45deg);}
+  .panel .aitem.on .dot{background:var(--accent);box-shadow:0 0 8px rgba(70,230,242,.7);}
+  .panel .aitem .an{font-size:11px;font-weight:800;color:var(--text);}
+  .panel .aitem .ad{font-size:9px;color:var(--dim);margin-top:1px;}
+  .panel .aitem.off .an,.panel .aitem.off .ad{opacity:.45;}
+  .panel .btnw.half button{flex:1;}
+  .panel button.ghost{background:rgba(70,230,242,.06);border-color:var(--line);color:var(--dim);}
+  .panel .mode{font-size:9px;letter-spacing:2px;color:var(--accent);opacity:.85;margin-top:6px;}
+
+  /* 横屏窄高：HUD 改侧栏，给矿区留满高度 */
+  @media (orientation:landscape) and (max-height:560px){
+    #app{flex-direction:row;align-items:stretch;}
+    #hud{width:126px;flex:0 0 126px;}
+    #hud .cells{flex-direction:column;height:100%;}
+    #hud .cell{flex:1;}
+    #foot{display:none;}
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="app">
+    <div id="hud">
+      <div class="cells">
+        <div class="cell"><span class="lb" id="lbLv">第 1 关</span><span class="num" id="numTar">0/450</span></div>
+        <div class="cell time"><span class="lb" id="lbTime">时间</span><span class="num" id="numTime">60</span></div>
+        <div class="cell"><span class="lb" id="lbScore">得分</span><span class="num" id="numScore">0</span></div>
+      </div>
+      <div class="tbar" id="tbar"><i id="timeBar"></i></div>
+    </div>
+    <div id="frame">
+      <canvas id="cv"></canvas>
+      <div id="domLayer">
+        <div id="comboChip" class="gmchip"></div>
+        <div id="statusChip" class="gmchip"></div>
+        <div id="statueBox"><img id="statueImg" alt=""><span class="ring"></span></div>
+        <div id="minerBox">
+          <div id="minerTilt"><div class="av" id="minerAv"></div><div class="helmet"><span class="dome"></span><span class="brim"></span><span class="lamp"></span></div></div>
+          <div id="minerName"></div>
+        </div>
+      </div>
+      <button id="pauseBtn" type="button" aria-label="暂停"></button>
+      <div id="goldFlash"></div>
+      <div id="achToast"></div>
+      <div id="itemToast"><span class="ii">🚇</span><div><div class="itt" id="itemToastKicker"></div><div class="inm" id="itemToastName"></div><div class="ids" id="itemToastDesc"></div></div></div>
+      <div id="banner"></div>
+      <div id="hint">点击屏幕 / 空格键 下钩</div>
+      <div id="overlay"><div class="panel" id="panel"></div></div>
+    </div>
+    <div id="foot"></div>
+  </div>
+</div>
+<script>
+(function(){
+'use strict';
+
+/* ================= 常量 ================= */
+const W=480, H=720;
+const PIVOT={x:240, y:104};
+const MINE={x0:34, x1:446, y0:198, y1:648};
+const MAXLEN=596;
+const SHOOT_SPD=700;      // 下钩速度
+const EMPTY_SPD=620;      // 空钩收回
+const CARRY_BASE=200;     // 带物收回基准：越重越慢，且同种里越大越慢
+const CARRY_MIN=38;       // 带物收回速度下限，避免重物卡死不动
+const MAXA=68*Math.PI/180;
+const HOOK_R=8;
+const MINLEN=18;
+const LV_TIME=60;
+const SAVE_KEY='yueba-gold-v1';
+const MAIN_KEY='idle-yueba-save-v2';
+const STATUE_SRC='https://origin.picgo.net/2026/10/22/8972a81ecea59da5668b010802d3bfcb1c75cde7c34bfa6e.th.png';
+
+/* 月巴池：由 index.html 的 TYPES / TYPES2 / TYPES3 导出
+   格式 [id, name, img, color, shape, rarity] */
+const POOL_RAW=[["mb_xiaoyue","小月巴","https://origin.picgo.net/2026/09/03/1512e4bde4713ba02.th.png","#c9b2e8","round",1],["mb_xian","尴尬月巴","https://origin.picgo.net/2026/09/03/4059f70dff59ca4a4.th.png","#d9c7f2","round",1],["mb_chi","进食月巴","https://origin.picgo.net/2026/09/03/15b077f9364349ae92.th.png","#e8c39e","wide",1],["mb_shui","睡觉月巴","https://origin.picgo.net/2026/09/29/4d2c34425dd356082928e5e796a603fcd01d1cbc5324c06f.gif","#e3b8c9","squish",1],["mb_wan","微笑月巴","https://origin.picgo.net/2026/09/03/1512e4bde4713ba02.th.png","#c9b2e8","round",1],["mb_pang","胖月巴","https://origin.picgo.net/2026/10/21/62bc9b437f18c5e1f6f712a8e7a58ecbb2356f889dde89eb.th.png","#e7a3b8","squish",2],["mb_xin","wink月巴","https://origin.picgo.net/2026/09/03/37e1be2540efa2177.th.png","#f0a8c0","heart",2],["mb_gao","高月巴","https://origin.picgo.net/2026/09/29/849e3c845e52aac2178af913058025cdd214e98968e45101.gif","#b8a9e0","tall",2],["mb_ku","背头月巴","https://origin.picgo.net/2026/09/29/19daf98c7a185e7e0c3d529a5f921058d74092d7a8ab4c37.gif","#a9c7ea","cube",2],["mb_lan","休闲月巴","https://origin.picgo.net/2026/09/03/10a99395fea8f81ac7.th.png","#c3a7c9","squish",2],["mb_tan","一坨月巴","https://origin.picgo.net/2026/10/21/41befbe6b2be042271d7ae7805b64f598d5d887397481fdf.th.png","#a5c3e8","wide",2],["mb_jian","健身月巴","https://origin.picgo.net/2026/09/03/9935aafd50857466b.th.png","#9ec48f","tall",3],["mb_zao","晨月巴","","#e8c39e","round",3],["mb_lu","露月巴","","#9fd4e8","drop",3],["mb_wu","午月巴","","#f2b87a","round",3],["mb_hun","昏月巴","","#e8a0bc","round",3],["mb_ye","夜月巴","","#8f74c9","moon",3],["mb_ling","凌晨月巴","","#6f6799","squish",3],["mb_wuye","午夜月巴","","#7e57c2","moon",4],["mb_qing","晴月巴","","#f2c46a","round",3],["mb_yun","云月巴","https://origin.picgo.net/2026/10/21/087c43501b9bd20deb354672a8a79e4ae6b8b7c2a0cfba2c.th.png","#b9b2c9","cube",3],["mb_yu","雨月巴","","#8fc9e8","drop",3],["mb_bao","暴雨月巴","","#5f9ed1","spike",4],["mb_xue","雪月巴","https://origin.picgo.net/2026/10/23/e978b592d6dc67debfa6782c325544cbd87a36af9154021a.th.png","#eef1f7","star",4],["mb_caihong","彩虹月巴","https://origin.picgo.net/2026/10/21/9895b41be4c58da373fcc95f6d8cc5ba0883411035f2a8d7.th.png","#e06b9c","rainbow",4],["mb_chun","春月巴","https://origin.picgo.net/2026/10/22/d7b3e18460b8e44f1964d75b983ef69ac589f56a2b9a3392.th.webp","#8fc48a","round",3],["mb_xia","夏月巴","https://origin.picgo.net/2026/10/22/---Yidi-Nyaomi-Lia67b10aba5615cbe.th.png","#f0857f","wide",3],["mb_qiu","秋月巴","https://origin.picgo.net/2026/10/23/---Yidi-Nyaomi-Li085363c8afe0790e.th.png","#e89b52","round",3],["mb_dong","冬月巴","https://origin.picgo.net/2026/10/23/720cc39489c1fe7d040a16a0a74e5492adb703c20326203b.th.png","#7fa0b8","cube",3],["mb_dishui","阴湿月巴","","#9575cd","round",3],["mb_wenshi","温室月巴","","#6fbe7a","cube",3],["mb_wuding","屋顶月巴","","#5f9ed1","tall",3],["mb_senlin","森系月巴","https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li6e93cacca933846d.th.png","#5c8a64","spike",3],["mb_bing","冰冷月巴","https://origin.picgo.net/2026/10/23/434e565b3ade1792842da6c6e5e0778552a35682cf6024b1.th.png","#7cc4e8","star",4],["mb_yanjiang","滚烫月巴","","#d15852","spike",4],["mb_yunduan","会飞月巴","","#b39ddb","rainbow",4],["mb_kafei","咖啡月巴","https://origin.picgo.net/2026/10/21/coffee-yue---KoTofu4bfeb46ff6179820.th.png","#b98a76","cube",4],["mb_wanou","玩偶月巴","https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Lib2c078bd058ef48c.th.png","#e88aa8","heart",4],["mb_jin","金月巴","https://origin.picgo.net/2026/10/23/1396cf3c90108f3f96217f2c35d5092323f3425ef247f9cb.th.png","#e6c44c","star",4],["mb_xing","巴中月巴","https://origin.picgo.net/2026/09/03/127d7a0746c5de2434.th.png","#c9a8ea","star",4],["mb_da","大月巴","","#e8a89a","wide",4],["mb_ju","巨月巴","https://origin.picgo.net/2026/10/23/7445849475a1a67a9510637d9dd722c0ce1589688044ee9c.th.png","#d98a86","big",4],["mb_chao","超巨月巴","https://origin.picgo.net/2026/10/22/6e242d94aa9b07b9117479ec78fd53985fd887bb68d8fa62.th.png","#e0a34e","big",4],["mb_lian","幸运月巴","https://origin.picgo.net/2026/10/23/f18fc86039bab18c60f2e5a640a82994256efe02bbe849d2.th.png","#e8a8c4","round",4],["mb_kuanglian","极运月巴","","#d9799f","spike",4],["mb_shenlian","神运月巴","https://origin.picgo.net/2026/10/23/75cb6c3c872e0ab0ae24ad2a1d4d16217560c98278e9c3c2.th.png","#b54b7e","rainbow",5],["mb_fanben","墨镜月巴","https://origin.picgo.net/2026/09/03/1115555fb4ab3b2731.th.png","#d9b45a","round",4],["mb_guai","奇怪月巴","https://origin.picgo.net/2026/10/23/4a09ea559862b2830f46cc64b0f4211487bfa91c46fddbcf.th.png","#b89a55","bean",4],["mb_shizhe","归家月巴","https://origin.picgo.net/2026/09/03/2b384c6d07a3d397b.th.png","#5f44a6","moon",5],["mb_zhoumo","双休月巴","https://origin.picgo.net/2026/10/22/---a60a7636bd80eb9e.th.png","#8fc9c9","cube",4],["mb_zhengdian","整点月巴","","#e0d24e","star",4],["mb_xinnian","新年月巴","","#d94a6b","star",6],["mb_qingren","爱情月巴","","#e06b9c","heart",6],["mb_wuyi","劳动月巴","","#d98a5f","cube",6],["mb_guoqing","庆祝月巴","","#c9536b","star",6],["mb_wansheng","万圣月巴","","#8f74c9","moon",6],["mb_shengdan","圣诞月巴","","#c95f8a","star",6],["mb_zhongqiu","中秋月巴","","#d9a44e","moon",6],["mb_wen","蚊月巴","https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li5760b9af6a34d812.th.png","#8fb4c9","bean",3],["mb_shan","闪电月巴","","#e0d24e","spike",5],["mb_pingguo","吃茄月巴","https://origin.picgo.net/2026/09/03/1618abd45272691005.th.png","#c96a73","round",3],["mb_chaos","混沌月巴","","#5a5470","chaos",5],["mb_gungun","滚滚巴","","#f0b27a","round",3],["mb_jiu","酒巴","https://origin.picgo.net/2026/09/20/jiuba7578b776f8c4c528.th.png","#b08a6a","squish",3],["mb_shilaimu","史莱姆巴","https://origin.picgo.net/2026/10/21/75dd505aa51f9864c2dc215b349253592891b6d6ef024a79.th.png","#8fce7f","squish",3],["mb_fengkuang","疯狂月巴","","#e74c3c","spike",4],["mb_liti","立体月巴","https://origin.picgo.net/2026/09/19/litiyueba0f6fd2bd28b7cc83.th.png","#8e9baf","tall",4],["mb_xiaoma","小马月巴","https://origin.picgo.net/2026/09/19/xiaoma59a91dd50534ac93.th.png","#e6c9f0","tall",3],["mb_tomato","番茄大战月巴","https://origin.picgo.net/2026/09/20/fanqiedazhan9861d01c9113a3f3.th.png","#e05b4f","round",2],["mb_powa","抛瓦月巴","","#e0a64e","round",2],["mb_laba","拉巴","https://origin.picgo.net/2026/09/20/laba8ce98439c56d3f6d.th.png","#dbb3e8","round",3],["mb_tangyuan","汤圆月巴","https://origin.picgo.net/2026/09/21/e0a73ec5f90f4b1d90fd1ce444e15c18df5827ccea2e46c6.th.png","#f5e6ee","round",2],["mb_bashan","巴山","https://origin.picgo.net/2026/09/21/shanbf57ea8c56a98c78.th.png","#5c8a64","big",4],["mb_xiba","西巴","https://origin.picgo.net/2026/10/23/c4de9f2c487932b531a8b80294b7d5512139e617afc6aa6c.th.png","#a5c8e8","wide",2],["xitong","系统月巴","https://origin.picgo.net/2026/09/22/xitong3fa4bdcf7695b190.th.png","#8fd0de","squish",3],["huaba","花巴","https://origin.picgo.net/2026/10/23/46597ef9da8ed5c1d86cce52418c84d57c6da995fbc68f8c.th.png","#f8a8c8","big",3],["dabus","大巴车","https://origin.picgo.net/2026/10/21/f696279cfe514001d304e826c68f44f3596857784003a73a.th.png","#f2b639","big",3],["youling","幽灵月巴","https://origin.picgo.net/2026/10/23/9e6b571fe9657417f255527bf3c34cc1963ee4f0f46e3e06.th.png","#beb5e6","tall",3],["xinba","心巴","https://origin.picgo.net/2026/10/21/3f4dfef1286bc40c7002f3d2e220cb36f63b0332ebc9acd3.th.png","#ff6f91","squish",2],["yinxiang","音响月巴","https://origin.picgo.net/2026/10/23/-16ec08b0ad53bd48c.th.png","#6b7280","tall",1],["jieba","戒巴","https://origin.picgo.net/2026/10/23/8a2dd3078a8a2c919d0a8fa208ec9dfdfba03c4be9bcfa05.th.png","#4e9f8d","squish",3],["bazong","巴总","https://origin.picgo.net/2026/10/21/8ff3d46600bd7fcfb5dcab98f93cbd9bbeef26b25b073ec3.th.png","#c68a3a","big",3],["mojing","墨镜笑巴","https://origin.picgo.net/2026/09/27/4d64284ab6f23425f9dda44f0fc540bef12552ef47074e5e.th.png","#8a97a8","round",2],["bukeming","不可名状巴","https://origin.picgo.net/2026/09/27/20c78b17ef4b3fa235abaad68362f4b3e9cd9e87eb7bc133.th.png","#5d4a7a","big",4],["canglong","苍龙月巴","https://origin.picgo.net/2026/09/29/cfdcb713bec9bd6b5307fd8a9edfc1fb421e9a1529506bb0.th.png","#8e9aa8","big",4],["bairixuan","白日宣巴","https://origin.picgo.net/2026/10/22/1aaddaa947c51b53b8f61b776ecf86e331d724a72b40ec07.th.png","#f2c14e","round",1],["niaoba","鸟巴","https://origin.picgo.net/2026/09/29/5333d8fdca76c3b083802650fd853975e1e6162696fd5812.th.png","#7fa8c8","round",2],["mb_fanzhuan","反转月巴","https://origin.picgo.net/2026/10/11/c81c459acde3c23c8697414890a13e0ca4b5043931a9a27e.th.png","#8f8fce","squish",3],["mb_zhongyi","中意月巴","https://origin.picgo.net/2026/10/11/b8ab7bdd789538f043b260d47e4181c4c7feca6cf8eb591c.th.png","#e88aa8","round",3],["mb_lba","喇巴","https://origin.picgo.net/2026/10/11/7f08d97c6eb3a1eac43b80c797216c3893370759f78d1666.th.png","#dbb3e8","round",3],["mb_jingcha","警察月巴","","#4a6fa5","round",3],["mb_faguan","法官月巴","","#4a4a5a","cube",3],["mb_lvshi","律师月巴","","#5a7a8a","tall",3],["mb_jinju","进局子巴","https://origin.picgo.net/2026/10/21/---akai0255d6362d123bd3.th.png","#8a8a8a","squish",3],["mb_zuanshi","钻石月巴","","#9be7ff","cube",3],["mb_huang","黄月月巴","https://origin.picgo.net/2026/10/23/485bfcabf6eaea8ea294ead8e520a0ada29d48a19c9197d6.th.png","#ffd94a","round",2],["mb_qiezhi","茄汁月巴","https://origin.picgo.net/2026/10/21/07de58ae22de5c368964182b7b78934969a8e2ed84c5ab60.th.png","#e5533d","squish",2],["mb_gaoya","高雅月巴","","#6b5b95","tall",3],["mb_long","long～long～巴～","https://origin.picgo.net/2026/10/23/longlongd4f08c948bb96bfa.th.png","#f0a868","wide",3],["bairi","百日月巴","","#ffd54f","big",6],["m2_dou","豆月巴","https://origin.picgo.net/2026/10/23/308a1b31062d7f87283f644cf4d74d71f1a7c076db6cdd2d.th.png","#aed581","round",1],["m2_men","萌月巴","https://origin.picgo.net/2026/10/23/a8cee4c77e6970bf2821d353c3feffbaa138951bc8498773.th.png","#f8bbd0","squish",1],["m2_zhu","猪月巴","","#ffe0b2","wide",1],["m2_dundun","墩墩月巴","https://origin.picgo.net/2026/10/22/chubby-bannyb70ce7f942be59f2.th.png","#c9c9f0","round",1],["m2_mao","猫月巴","https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li578400427d700c6a.th.png","#b0bec5","heart",1],["m2_gou","狗月巴","","#d7ccc8","bean",1],["m2_tian","甜月巴","","#f8bbd0","round",2],["m2_xian","盐月巴","","#90a4ae","cube",2],["m2_bai","白月巴","","#eceff1","round",2],["m2_hei","黑月巴","https://origin.picgo.net/2026/10/23/6a0b54faa9b43d05a7365ff404ff7c63b834626b88cbfb9f.th.png","#5d6670","round",2],["m2_hong","红月巴","","#ef9a9a","wide",2],["m2_lv","绿月巴","","#a5d6a7","tall",2],["m2_lan","蓝月巴","","#90caf9","drop",2],["m2_hudie","蝴蝶月巴","","#f48fb1","round",3],["m2_yinghuo","萤火月巴","","#c5e1a5","star",3],["m2_pubu","瀑布月巴","","#64b5f6","drop",3],["m2_she","蛇月巴","https://origin.picgo.net/2026/10/22/snake-banny1537e823f87200c1.th.png","#ff8a65","spike",3],["m2_wuya","乌鸦月巴","","#ffd54f","spike",3],["m2_xiongmao","熊猫月巴","","#a1887f","big",3],["m2_wo","蜗牛月巴","https://origin.picgo.net/2026/10/23/2ffd65af799fc8080d8a9b2af57ac89782a5d6d5f70cda63.th.png","#b0bec5","squish",3],["m2_xiangjiao","香蕉月巴","","#ffe082","bean",3],["m2_hulu","葫芦月巴","","#dce775","round",3],["m2_bingqilin","冰淇淋月巴","https://origin.picgo.net/2026/10/21/756357abf125a8cd0c6f532836a233717fd3a810900d0252.th.png","#e1bee7","round",3],["m2_shamo","沙漠月巴","","#ffcc80","round",4],["m2_wenquan","温泉月巴","","#ffab91","drop",4],["m2_huoshan","火山月巴","","#d15852","spike",4],["m2_shanhu","珊瑚月巴","","#f06292","spike",4],["m2_baoshi","宝石月巴","","#4dd0e1","cube",4],["m2_long","龙月巴","","#d15852","big",4],["m2_fenghuang","凤凰月巴","","#ff7043","rainbow",5],["m2_jiguang","极光月巴","","#7e57c2","rainbow",5],["m2_xiangrui","祥瑞月巴","","#e6c44c","big",6],["m2_huntun","馄饨月巴","","#f6c557","round",5],["m2_baba","巴巴月巴","","#f48fb1","round",4],["m2_diwang","帝王之巴","","#e6c44c","big",5],["m2_buman","不满月巴","","#9e9e9e","round",4],["m2_tanwu","贪污月巴","https://origin.picgo.net/2026/10/22/ab151905162c9192567261cab1173c3d9475509a44cc77a9.th.png","#6d4c41","round",5],["m2_zhangyu","章鱼月巴","","#7e57c2","spike",4],["m2_xianyi","嫌疑月巴","https://origin.picgo.net/2026/10/21/71e32b7a3e54e6bba0d145f9b63d36bc6b5a368bce3d301e.th.png","#546e7a","ghost",4],["m2_fanqie","番茄月巴","https://origin.picgo.net/2026/10/23/3dece9cc3c952ea2b0615a90ddc71dd43132a85a21517244.th.png","#e57373","round",3],["m2_jinshu","金属月巴","","#b0bec5","cube",4],["m2_shanliang","闪亮月巴","","#ffe082","star",5],["m2_zanmei","赞美月巴","","#fff176","round",3],["m2_zuojia","作家月巴","","#90a4ae","wide",4],["m2_yiji","遗迹月巴","","#c9b18a","cube",4],["m2_shixiang","石像月巴","","#a8926a","big",4],["m2_gubi","古币月巴","","#d4b45a","round",4],["m2_shoubao","守宝月巴","","#8a6a3a","big",5],["m2_binghu","冰湖月巴","","#9fd8e3","drop",4],["m2_lanbing","蓝冰月巴","","#66b8d6","cube",4],["m2_xuelian","雪莲月巴","","#e4f2f7","star",4],["m2_bingling","冰灵月巴","","#bfe8f2","rainbow",5],["m2_wangting","王庭月巴","","#8f7bb5","cube",4],["m2_guowang","执政王月巴","https://origin.picgo.net/2026/10/21/e878f7fde5e72bfa6bad2f681dca742eef9b8997548df54a.th.png","#c9a227","big",5],["m2_zuochen","佐臣月巴","https://origin.picgo.net/2026/10/21/8b6b66f067f39adb13298d8927fbd7eae7f9ab72fac6c4c6.th.png","#7e6a9e","tall",4],["m2_shizhe","誓约月巴","","#d8c7e8","squish",3],["m2_shouling","守陵月巴","","#9aa0a6","ghost",4],["m2_bingzang","冰葬月巴","","#a7d8e8","drop",4],["m2_yizhao","羊皮卷月巴","","#e8dcb0","star",5],["m2_digong","地宫月巴","","#5d5a6e","big",4],["m2_taoyuan","桃源月巴","","#8fd6b4","round",4],["m2_jingling","精灵月巴","","#bfe8d4","star",4],["m2_linyao","林妖月巴","","#7fc9a6","rainbow",5],["m2_yueshi","夜市月巴","","#e0a94f","round",4],["m2_tanghua","糖画月巴","","#e8b96a","star",4],["m2_shoudeng","守灯月巴","","#d99a3c","rainbow",5],["m2_shanggu","上古月巴","","#5a9e8c","round",4],["m2_gulong","古龙月巴","","#4f8f7a","big",4],["m2_shenyu","神谕月巴","","#7fb8a8","star",4],["m2_wailaizhe","外来者月巴","","#9ed8ce","rainbow",5],["m2_kuji","枯寂月巴","","#9b7fb0","round",4],["m2_xinsheng","新生月巴","","#7ec98a","round",4],["m2_shouhu","守护月巴","","#8fa8d8","big",4],["m2_huanmeng","幻梦月巴","","#c9a6d8","rainbow",5],["m2_wuyue","无月月巴","","#6b5f8a","round",4],["m2_yingzi","阴影月巴","","#4a4458","ghost",4],["m2_shouye","不眠月巴","","#8a83b0","star",4],["m2_zhenyan","阵眼月巴","","#9b6fd8","rainbow",5],["m2_zhimeng","织梦月巴","","#7b5fb0","round",4],["m2_yingmeng","噩梦月巴","","#5a4a8a","ghost",4],["m2_zhinian","执念月巴","","#4a3f66","tall",4],["m2_xinglai","清醒月巴","","#b9a8e0","star",4],["m2_mengyan","梦魇月巴","","#8a5fd8","rainbow",5],["m2_island","海岛月巴","","#3fb5a6","round",4],["m2_bonfire","篝火月巴","","#ff8a5c","star",4],["m2_tide","潮汐月巴","","#6fb7d6","drop",4],["m2_isleking","岛主月巴","","#e0b24f","rainbow",5],["m2_sunkcity","沉城月巴","","#3f7fb5","round",4],["m2_merfolk","人鱼月巴","","#4fb0c9","drop",4],["m2_seal","秘术月巴","","#7a6fd0","star",4],["m2_seaking","海底王月巴","","#2f6fa8","rainbow",5],["m2_guihai","归海月巴","","#3fa9c9","drop",4],["m2_geyin","吟歌月巴","","#5cc4d8","star",4],["m2_fazhen","法阵月巴","","#6f8fd0","cube",4],["m2_paomo","泡沫月巴","","#4fb0a8","squish",4],["m2_damofa","大魔法师月巴","","#8f6fd8","rainbow",5],["m2_chuqian","出千月巴","https://origin.picgo.net/2026/10/21/6f0a351bc37096a61e980e6e5d6da80446da29ffafa7a5b8.th.png","#2f8f72","cube",5],["m2_tracker","追踪器月巴","https://origin.picgo.net/2026/10/21/acf7a9ec0fbe767f840a205e24730017da0d83a3264ec36f.th.png","#8bc34a","cube",3],["m2_baqi","巴岐大蛇","https://origin.picgo.net/2026/10/21/00ad700c36c3d7131ffe4fcfae4e5a0cee3d2f4e74eec9cd.th.png","#5f8f6f","spike",4],["m2_qingchun","青春败犬立体巴","https://origin.picgo.net/2026/10/21/cfbed82590fddf492012ef5aa1349f983ae998abddf56193.th.png","#aea8ae","cube",2],["m2_yinan","阴暗巴","https://origin.picgo.net/2026/10/21/7b935eb5528f9cc67c194fe5d47c4a367229b91b95e86400.th.png","#b7b0cc","squish",2],["m2_zuoqi","坐骑月巴","https://origin.picgo.net/2026/10/21/c78c4be6d1ad05b71428d20e99d80e43ef4bf36af33cc07a.th.png","#c8a165","big",1],["m2_teatime","下午茶月巴","https://origin.picgo.net/2026/10/21/teatime-buny---Felimika490cd7af24e32b96.th.png","#c9a77c","round",4],["m2_baboyi","巴巴博弈","https://origin.picgo.net/2026/10/22/67415055497e212216f64fbf52efd52849aeb4517d115733.th.png","#c9c4dc","tall",4],["m2_rainy","雨伞月巴","https://origin.picgo.net/2026/10/22/umbrella-bunny0f0ec74e10bac4fc.th.png","#a9c7e8","drop",2],["m3_cangshu","仓鼠月巴","https://origin.picgo.net/2026/10/23/22cdbf9144b586bf272c4cb61f533bc853372133deea585a.th.png","#d8b17a","round",3]];
+const POOL=POOL_RAW.map(function(a){ return {id:a[0], name:a[1], img:a[2]||'', color:a[3]||'#cccccc', shape:a[4]||'round', r:a[5]||1}; });
+const POOL_BY_ID={};
+POOL.forEach(function(p){ if(!POOL_BY_ID[p.id]) POOL_BY_ID[p.id]=p; });
+
+/* 场上的「石块」换成随机月巴：仅使用有外链立绘的条目 */
+const DIRT_POOL=POOL.filter(function(p){ return !!p.img; });
+const IMG_CACHE={};
+function bannyImage(id){
+  const p=POOL_BY_ID[id];
+  if(!p||!p.img) return null;
+  let im=IMG_CACHE[id];
+  if(!im){
+    im=new Image(); im.decoding='async';
+    // 图片晚到时重烘焙一次静态矿点，避免一直停在石块占位图
+    im.onload=function(){ oreDirty=true; };
+    // 加载失败也标脏一次，让静态层回落到矢量占位，不再等图
+    im.onerror=function(){ oreDirty=true; };
+    im.src=p.img;
+    IMG_CACHE[id]=im;
+  }
+  return (im.complete&&im.naturalWidth>0)?im:null;
+}
+
+const ORE={
+  small: {score:50,  weight:1.0, min:11, max:16},
+  mid:   {score:120, weight:1.5, min:17, max:22},
+  big:   {score:260, weight:2.4, min:23, max:29},
+  dirt:  {score:15,  weight:4.5, min:20, max:27},
+  gem:   {score:600, weight:0.8, min:15, max:19},
+  clock: {score:0,   weight:0.9, min:14, max:18, bonus:5},
+  statue:{score:888, weight:3.0, min:30, max:30},
+  bomb:  {score:0,   weight:1.2, min:16, max:16, item:'bomb'},
+  glue:  {score:0,   weight:1.1, min:16, max:16, item:'glue'},
+  lamp:  {score:0,   weight:1.0, min:16, max:16, item:'lamp'},
+  rot:   {score:-40, weight:2.6, min:17, max:22}
+};
+
+/* 连击：每多连一颗 +5%，封顶 ×1.5（第 11 颗起） */
+const COMBO_STEP=0.05;
+const COMBO_CAP=1.5;
+/* 道具持续 / 效果 */
+const GLUE_TIME=10;      // 马达持续秒数
+const GLUE_MULT=2;       // 拉速倍率
+const BOMB_RADIUS=150;   // 炸药清土半径
+const LAMP_TIME=8;       // 矿灯加时
+
+/* 独立成就：达成后写进 yueba-gold-v1.ach */
+const ACHS=[
+  {id:'first',  n:'ach_first',  d:'ach_first_d'},
+  {id:'statue', n:'ach_statue', d:'ach_statue_d'},
+  {id:'combo8', n:'ach_combo8', d:'ach_combo8_d'},
+  {id:'score2k',n:'ach_score2k',d:'ach_score2k_d'},
+  {id:'lv5',    n:'ach_lv5',    d:'ach_lv5_d'},
+  {id:'miner20',n:'ach_miner20',d:'ach_miner20_d'},
+  {id:'ores100',n:'ach_ores100',d:'ach_ores100_d'},
+  {id:'daily',  n:'ach_daily',  d:'ach_daily_d'}
+];
+
+/* ================= 语言 ================= */
+const LANG=(function(){
+  let q='';
+  try{ q=(new URLSearchParams(location.search).get('lang')||'').toLowerCase(); }catch(e){}
+  if(q==='zh'||q==='en'||q==='ja'||q==='ko') return q;
+  try{
+    const raw=JSON.parse(localStorage.getItem(MAIN_KEY)||'null');
+    const l=raw&&raw.lang;
+    if(l==='zh'||l==='en'||l==='ja'||l==='ko') return l;
+  }catch(e){}
+  const n=String((navigator&&navigator.language)||'').toLowerCase();
+  if(n.indexOf('ja')===0) return 'ja';
+  if(n.indexOf('ko')===0) return 'ko';
+  if(n.indexOf('en')===0) return 'en';
+  return 'zh';
+})();
+
+const TXT={
+  zh:{
+    docTitle:'黄金矿工 · 矿工月巴',
+    lv:'第 {n} 关', time:'时间', score:'得分', best:'最高 {n}',
+    hint:'点击屏幕 / 空格键 下钩 · P 暂停',
+    startTitle:'矿工月巴', startMiner:'本局矿工 · {n}', startBtn:'开始挖矿',
+    statLine:'已遇见 {n} 位矿工 · 已挖到 {m} 座番茄金像',
+    clearTitle:'矿脉通关', overTitle:'收工',
+    total:'总分', level:'到达关卡', miner:'本局矿工', statues:'本局金像', bestRow:'最高分',
+    again:'再来一局', newRecord:'新纪录！',
+    clear:'本关达标！', timeUp:'时间到 · 差一点',
+    statueBanner:'番茄金像 · +888', plusTime:'+5s',
+    paused:'已暂停', resume:'继续游戏', endBtn:'结束本局', pauseHint:'按 P / Esc 或点击按钮继续', pause:'暂停',
+    q1:'{n} 戴上安全帽，下矿了。', q2:'这块番茄在发光！', q3:'这块土也太硬了……',
+    q4:'这一层快挖空了。', q5:'番茄金像！今天手气不错。',
+    combo:'连击 {n}', itemBomb:'炸药', itemGlue:'马达', itemLamp:'矿灯',
+    bombBanner:'炸药清土 ×{n}', glueBanner:'马达 · 拉速 ×2', lampBanner:'矿灯 +8s',
+    rotBanner:'腐烂番茄 −40', coinBanner:'+{n} 🪙',
+    achTitle:'成就', achBtn:'成就', codexBtn:'矿工图鉴', codexTitle:'矿工图鉴',
+    codexEmpty:'还没遇见矿工，先下一趟矿吧。', achCount:'已达成 {n}/{m}',
+    back:'← 返回', dailyBtn:'每日挑战', dailyBest:'今日最高 {n}', achToast:'🏆 成就达成 · {n}',
+    ach_first:'第一次达标', ach_first_d:'任意一关达到目标',
+    ach_statue:'番茄金像', ach_statue_d:'挖到第一座番茄金像',
+    ach_combo8:'八连击', ach_combo8_d:'一局内连击达到 8',
+    ach_score2k:'两千分', ach_score2k_d:'单局总分达到 2000',
+    ach_lv5:'深井', ach_lv5_d:'到达第 5 关',
+    ach_miner20:'矿工熟人', ach_miner20_d:'累计遇见 20 位矿工',
+    ach_ores100:'百颗番茄', ach_ores100_d:'累计挖到 100 颗番茄',
+    itemGot:'获得道具', itemPass:'隧道通行证',
+    itemPassDesc:'装进行囊后出发：无论去哪里，5 分钟后都会带着一封信回来，不需要便当',
+    itemPassOwned:'仓库里已有隧道通行证', itemPassOwnedDesc:'本次不再重复赠送，先用掉它再来挑战',
+    ach_daily:'今日矿工', ach_daily_d:'完成一次每日挑战'
+  },
+  en:{
+    docTitle:'Gold Miner · Banny Miner',
+    lv:'Level {n}', time:'Time', score:'Score', best:'Best {n}',
+    hint:'Tap screen / Space to drop the hook · P to pause',
+    startTitle:'Banny Miner', startMiner:'Miner · {n}', startBtn:'Start mining',
+    statLine:'Met {n} miners · Dug up {m} tomato statues',
+    clearTitle:'Vein cleared', overTitle:'Shift over',
+    total:'Total', level:'Levels', miner:'Miner', statues:'Statues', bestRow:'Best',
+    again:'Play again', newRecord:'NEW RECORD!',
+    clear:'Level clear!', timeUp:'Time up · so close',
+    statueBanner:'Tomato Statue · +888', plusTime:'+5s',
+    paused:'Paused', resume:'Resume', endBtn:'End run', pauseHint:'Press P / Esc or tap the button to continue', pause:'Pause',
+    q1:'{n} puts on a hard hat and heads down.', q2:'This tomato is glowing!', q3:'That lump is way too hard...',
+    q4:'This layer is nearly empty.', q5:'A tomato statue! Lucky day.',
+    combo:'Combo {n}', itemBomb:'Bomb', itemGlue:'Motor', itemLamp:'Lamp',
+    bombBanner:'Bomb! {n} rocks', glueBanner:'Motor · pull ×2', lampBanner:'Lamp +8s',
+    rotBanner:'Rotten tomato −40', coinBanner:'+{n} 🪙',
+    achTitle:'Achievements', achBtn:'Achievements', codexBtn:'Miner Codex', codexTitle:'Miner Codex',
+    codexEmpty:'No miners met yet. Go down and dig.', achCount:'Unlocked {n}/{m}',
+    back:'← Back', dailyBtn:'Daily Run', dailyBest:'Today best {n}', achToast:'🏆 Achievement · {n}',
+    ach_first:'First clear', ach_first_d:'Reach the target of any level',
+    ach_statue:'Tomato statue', ach_statue_d:'Dig up your first tomato statue',
+    ach_combo8:'Eight combo', ach_combo8_d:'Reach an 8 combo in one run',
+    ach_score2k:'2000 club', ach_score2k_d:'Score 2000 in one run',
+    ach_lv5:'Deep shaft', ach_lv5_d:'Reach level 5',
+    ach_miner20:'Miner regular', ach_miner20_d:'Meet 20 miners in total',
+    ach_ores100:'Hundred tomatoes', ach_ores100_d:'Dig up 100 tomatoes in total',
+    ach_daily:'Daily miner',
+    itemGot:'Item acquired', itemPass:'Tunnel Pass',
+    itemPassDesc:'Pack it in your travel bag: any destination, back with a letter in 5 minutes — no bento needed',
+    itemPassOwned:'You already have a Tunnel Pass', itemPassOwnedDesc:'No duplicate this time — use the one you have first',
+    ach_daily_d:'Finish a daily run'
+  },
+  ja:{
+    docTitle:'ゴールドマイナー · バニーマイナー',
+    lv:'第{n}面', time:'時間', score:'スコア', best:'最高 {n}',
+    hint:'画面タップ / スペースでフック・Pで一時停止',
+    startTitle:'バニーマイナー', startMiner:'今回のマイナー · {n}', startBtn:'掘りはじめる',
+    statLine:'出会ったマイナー {n} 匹 · 掘ったトマト像 {m} 体',
+    clearTitle:'鉱脈クリア', overTitle:'作業終了',
+    total:'合計', level:'到達面', miner:'今回のマイナー', statues:'トマト像', bestRow:'最高',
+    again:'もう一度', newRecord:'新記録！',
+    clear:'クリア！', timeUp:'時間切れ · あと少し',
+    statueBanner:'トマト像 · +888', plusTime:'+5秒',
+    paused:'一時停止', resume:'再開する', endBtn:'終了する', pauseHint:'P / Esc またはボタンで再開', pause:'一時停止',
+    q1:'{n}はヘルメットをかぶって坑道へ。', q2:'このトマト、光ってる！', q3:'この土、固すぎる……',
+    q4:'この層もそろそろ空っぽ。', q5:'トマト像！今日はついてる。',
+    combo:'コンボ {n}', itemBomb:'爆弾', itemGlue:'モーター', itemLamp:'ランプ',
+    bombBanner:'爆弾で土 {n} 個', glueBanner:'モーター · 速度 ×2', lampBanner:'ランプ +8秒',
+    rotBanner:'腐ったトマト −40', coinBanner:'+{n} 🪙',
+    achTitle:'実績', achBtn:'実績', codexBtn:'マイナー図鑑', codexTitle:'マイナー図鑑',
+    codexEmpty:'まだ誰にも会っていない。まず坑道へ。', achCount:'達成 {n}/{m}',
+    back:'← 戻る', dailyBtn:'デイリーチャレンジ', dailyBest:'今日の最高 {n}', achToast:'🏆 実績達成 · {n}',
+    ach_first:'初クリア', ach_first_d:'いずれかの面で目標達成',
+    ach_statue:'トマト像', ach_statue_d:'初めてトマト像を掘る',
+    ach_combo8:'8コンボ', ach_combo8_d:'1回で8コンボ達成',
+    ach_score2k:'2000点', ach_score2k_d:'1回で2000点',
+    ach_lv5:'深井戸', ach_lv5_d:'第5面に到達',
+    ach_miner20:'常連', ach_miner20_d:'累計20人のマイナーと出会う',
+    ach_ores100:'100個', ach_ores100_d:'累計100個のトマトを掘る',
+    ach_daily:'今日の鉱夫', ach_daily_d:'デイリーチャレンジを1回完了',
+    itemGot:'アイテム入手', itemPass:'トンネル通行証',
+    itemPassDesc:'旅行バッグに入れて出発：どこへでも5分後に手紙を届けて戻ります（お弁当不要）',
+    itemPassOwned:'トンネル通行証を所持済み', itemPassOwnedDesc:'今回は重複して贈られません。先に使い切ってから再挑戦してください'
+  },
+  ko:{
+    docTitle:'골드 마이너 · 배니 마이너',
+    lv:'{n}단계', time:'시간', score:'점수', best:'최고 {n}',
+    hint:'화면 탭 / 스페이스로 갈고리 · P 일시정지',
+    startTitle:'배니 마이너', startMiner:'이번 광부 · {n}', startBtn:'채굴 시작',
+    statLine:'만난 광부 {n}명 · 캔 토마토 조각상 {m}개',
+    clearTitle:'광맥 클리어', overTitle:'작업 종료',
+    total:'총점', level:'도달 단계', miner:'이번 광부', statues:'토마토 조각상', bestRow:'최고',
+    again:'다시 하기', newRecord:'신기록!',
+    clear:'클리어!', timeUp:'시간 종료 · 아쉬워요',
+    statueBanner:'토마토 조각상 · +888', plusTime:'+5초',
+    paused:'일시정지', resume:'계속하기', endBtn:'게임 종료', pauseHint:'P / Esc 또는 버튼으로 계속', pause:'일시정지',
+    q1:'{n}가 안전모를 쓰고 광산으로 내려갑니다.', q2:'이 토마토 빛나고 있어!', q3:'이 흙덩이는 너무 단단해……',
+    q4:'이 층도 거의 다 캤네.', q5:'토마토 조각상! 오늘 운이 좋아.',
+    combo:'콤보 {n}', itemBomb:'폭탄', itemGlue:'모터', itemLamp:'랜턴',
+    bombBanner:'폭탄! 흙 {n}개', glueBanner:'모터 · 속도 ×2', lampBanner:'랜턴 +8초',
+    rotBanner:'썩은 토마토 −40', coinBanner:'+{n} 🪙',
+    achTitle:'업적', achBtn:'업적', codexBtn:'광부 도감', codexTitle:'광부 도감',
+    codexEmpty:'아직 만난 광부가 없어요. 먼저 갱도로.', achCount:'달성 {n}/{m}',
+    back:'← 뒤로', dailyBtn:'일일 도전', dailyBest:'오늘 최고 {n}', achToast:'🏆 업적 달성 · {n}',
+    ach_first:'첫 클리어', ach_first_d:'아무 단계에서 목표 달성',
+    ach_statue:'토마토 조각상', ach_statue_d:'첫 토마토 조각상 채굴',
+    ach_combo8:'8콤보', ach_combo8_d:'한 판에서 8콤보 달성',
+    ach_score2k:'2000점', ach_score2k_d:'한 판에서 2000점',
+    ach_lv5:'깊은 갱도', ach_lv5_d:'5단계 도달',
+    ach_miner20:'단골', ach_miner20_d:'누적 20명의 광부 만나기',
+    ach_ores100:'백 개', ach_ores100_d:'누적 100개 토마토 채굴',
+    ach_daily:'오늘의 광부', ach_daily_d:'일일 도전 1회 완료',
+    itemGot:'아이템 획득', itemPass:'터널 통행증',
+    itemPassDesc:'여행 가방에 넣고 출발: 어디든 5분 뒤 편지를 가지고 돌아옵니다 (도시락 불필요)',
+    itemPassOwned:'터널 통행증을 이미 보유 중', itemPassOwnedDesc:'이번에는 중복 지급되지 않습니다. 먼저 사용한 뒤 다시 도전하세요'
+  }
+};
+function t(k, vars){
+  let s=(TXT[LANG]&&TXT[LANG][k])||TXT.zh[k]||k;
+  if(vars){ for(const p in vars) s=s.split('{'+p+'}').join(vars[p]); }
+  return s;
+}
+
+/* 月巴名本地化：与首页图鉴专名表（I18N_BANNY）一致，键=条目 id */
+const BANNY_NAME={"mb_xiaoyue":{"en":"Little Banny","ja":"ちびバニー","ko":"꼬마배니"},"mb_xian":{"en":"Awkward Banny","ja":"きまずバニー","ko":"어색배니"},"mb_chi":{"en":"Munching Banny","ja":"もぐもぐバニー","ko":"냠냠배니"},"mb_shui":{"en":"Sleepy Banny","ja":"すやすやバニー","ko":"잠자는배니"},"mb_wan":{"en":"Smiling Banny","ja":"にこにこバニー","ko":"미소배니"},"mb_pang":{"en":"Chubby Banny","ja":"ぷくぷくバニー","ko":"뚱뚱배니"},"mb_xin":{"en":"Winking Banny","ja":"ウィンクバニー","ko":"윙크배니"},"mb_gao":{"en":"Tall Banny","ja":"たかバニー","ko":"키큰배니"},"mb_ku":{"en":"Slick-Back Banny","ja":"オールバックバニー","ko":"올백배니"},"mb_lan":{"en":"Lounging Banny","ja":"ごろごろバニー","ko":"느긋배니"},"mb_tan":{"en":"Blob Banny","ja":"ひとつらバニー","ko":"한덩어리배니"},"mb_jian":{"en":"Workout Banny","ja":"筋トレバニー","ko":"헬스배니"},"mb_zao":{"en":"Dawn Banny","ja":"朝バニー","ko":"아침배니"},"mb_lu":{"en":"Dew Banny","ja":"露バニー","ko":"이슬배니"},"mb_wu":{"en":"Noon Banny","ja":"昼バニー","ko":"낮배니"},"mb_hun":{"en":"Dusk Banny","ja":"夕暮れバニー","ko":"황혼배니"},"mb_ye":{"en":"Night Banny","ja":"夜バニー","ko":"밤배니"},"mb_ling":{"en":"Pre-Dawn Banny","ja":"未明バニー","ko":"새벽배니"},"mb_wuye":{"en":"Midnight Banny","ja":"真夜中バニー","ko":"자정배니"},"mb_qing":{"en":"Sunny Banny","ja":"晴れバニー","ko":"맑음배니"},"mb_yun":{"en":"Cloudy Banny","ja":"雲バニー","ko":"구름배니"},"mb_yu":{"en":"Rainy Banny","ja":"雨バニー","ko":"비배니"},"mb_bao":{"en":"Stormy Banny","ja":"豪雨バニー","ko":"폭우배니"},"mb_xue":{"en":"Snowy Banny","ja":"雪バニー","ko":"눈배니"},"mb_caihong":{"en":"Rainbow Banny","ja":"虹バニー","ko":"무지개배니"},"mb_chun":{"en":"Spring Banny","ja":"春バニー","ko":"봄배니"},"mb_xia":{"en":"Summer Banny","ja":"夏バニー","ko":"여름배니"},"mb_qiu":{"en":"Autumn Banny","ja":"秋バニー","ko":"가을배니"},"mb_dong":{"en":"Winter Banny","ja":"冬バニー","ko":"겨울배니"},"mb_dishui":{"en":"Damp Banny","ja":"じめじめバニー","ko":"음습배니"},"mb_wenshi":{"en":"Greenhouse Banny","ja":"温室バニー","ko":"온실배니"},"mb_wuding":{"en":"Rooftop Banny","ja":"屋上バニー","ko":"옥상배니"},"mb_senlin":{"en":"Woodland Banny","ja":"森バニー","ko":"숲배니"},"mb_bing":{"en":"Frosty Banny","ja":"ひんやりバニー","ko":"차가운배니"},"mb_yanjiang":{"en":"Scalding Banny","ja":"灼熱バニー","ko":"뜨거운배니"},"mb_yunduan":{"en":"Flying Banny","ja":"空飛ぶバニー","ko":"나는배니"},"mb_kafei":{"en":"Coffee Banny","ja":"コーヒーバニー","ko":"커피배니"},"mb_wanou":{"en":"Doll Banny","ja":"ぬいぐるみバニー","ko":"인형배니"},"mb_jin":{"en":"Golden Banny","ja":"金バニー","ko":"황금배니"},"mb_xing":{"en":"Banny Among Bannies","ja":"バニーの中のバニー","ko":"배니 중의 배니"},"mb_da":{"en":"Big Banny","ja":"大バニー","ko":"큰배니"},"mb_ju":{"en":"Giant Banny","ja":"巨バニー","ko":"거대배니"},"mb_chao":{"en":"Colossal Banny","ja":"超巨バニー","ko":"초거대배니"},"mb_lian":{"en":"Lucky Banny","ja":"ラッキーバニー","ko":"행운배니"},"mb_kuanglian":{"en":"Ultra-Lucky Banny","ja":"超ラッキーバニー","ko":"극운배니"},"mb_shenlian":{"en":"Divine-Luck Banny","ja":"神運バニー","ko":"신운배니"},"mb_fanben":{"en":"Sunglasses Banny","ja":"サングラスバニー","ko":"선글라스배니"},"mb_guai":{"en":"Odd Banny","ja":"へんてこバニー","ko":"이상배니"},"mb_shizhe":{"en":"Homebound Banny","ja":"帰りバニー","ko":"귀가배니"},"mb_zhoumo":{"en":"Weekend Banny","ja":"週末バニー","ko":"주말배니"},"mb_zhengdian":{"en":"On-the-Hour Banny","ja":"定時バニー","ko":"정각배니"},"mb_xinnian":{"en":"New Year Banny","ja":"お正月バニー","ko":"새해배니"},"mb_qingren":{"en":"Valentine Banny","ja":"バレンタインバニー","ko":"발렌타인배니"},"mb_wuyi":{"en":"Labor Banny","ja":"労働バニー","ko":"노동배니"},"mb_guoqing":{"en":"Celebration Banny","ja":"祝祭バニー","ko":"축제배니"},"mb_wansheng":{"en":"Halloween Banny","ja":"ハロウィンバニー","ko":"할로윈배니"},"mb_shengdan":{"en":"Christmas Banny","ja":"クリスマスバニー","ko":"크리스마스배니"},"mb_zhongqiu":{"en":"Mid-Autumn Banny","ja":"中秋バニー","ko":"중추배니"},"mb_wen":{"en":"Mosquito Banny","ja":"蚊バニー","ko":"모기배니"},"mb_shan":{"en":"Lightning Banny","ja":"稲妻バニー","ko":"번개배니"},"mb_pingguo":{"en":"Tomato-Eater Banny","ja":"トマト食いバニー","ko":"토마토먹는배니"},"mb_chaos":{"en":"Chaos Banny","ja":"混沌バニー","ko":"혼돈배니"},"mb_gungun":{"en":"Roly-Poly Banny","ja":"ころころバニー","ko":"데굴데굴배니"},"mb_jiu":{"en":"Bar Banny","ja":"酒場バニー","ko":"술집배니"},"mb_shilaimu":{"en":"Slime Banny","ja":"スライムバニー","ko":"슬라임배니"},"mb_fengkuang":{"en":"Crazy Banny","ja":"クレイジーバニー","ko":"미친배니"},"mb_liti":{"en":"3D Banny","ja":"立体バニー","ko":"입체배니"},"mb_xiaoma":{"en":"Pony Banny","ja":"ポニーバニー","ko":"조랑말배니"},"mb_tomato":{"en":"Tomato-War Banny","ja":"トマト大戦バニー","ko":"토마토대전배니"},"mb_powa":{"en":"Power Banny","ja":"パワーバニー","ko":"파워배니"},"mb_laba":{"en":"Lah Banny","ja":"ラーバニー","ko":"라배니"},"mb_tangyuan":{"en":"Tangyuan Banny","ja":"湯円バニー","ko":"탕위안배니"},"mb_bashan":{"en":"Mt. Banny","ja":"バニー山","ko":"배니산"},"mb_xiba":{"en":"West Banny","ja":"西バニー","ko":"서배니"},"xitong":{"en":"System Banny","ja":"システムバニー","ko":"시스템배니"},"huaba":{"en":"Flowerbanny","ja":"花バニー","ko":"꽃배니"},"dabus":{"en":"Bus Banny","ja":"バスバニー","ko":"버스배니"},"youling":{"en":"Ghost Banny","ja":"ゴーストバニー","ko":"유령배니"},"xinba":{"en":"Heartbanny","ja":"ハートバニー","ko":"하트배니"},"yinxiang":{"en":"Speaker Banny","ja":"スピーカーバニー","ko":"스피커배니"},"jieba":{"en":"Quit Banny","ja":"禁バニー","ko":"금단배니"},"bazong":{"en":"Boss Banny","ja":"バニー社長","ko":"배니사장"},"mojing":{"en":"Smiling Shades Banny","ja":"笑顔サングラスバニー","ko":"미소선글라스배니"},"bukeming":{"en":"Unnamable Banny","ja":"名状しがたきバニー","ko":"형언불가배니"},"canglong":{"en":"Azure Dragon Banny","ja":"蒼竜バニー","ko":"창룡배니"},"bairixuan":{"en":"Sunward Banny","ja":"白日バニー","ko":"백일배니"},"niaoba":{"en":"Bird Banny","ja":"鳥バニー","ko":"새배니"},"mb_fanzhuan":{"en":"Flip Banny","ja":"反転バニー","ko":"반전배니"},"mb_zhongyi":{"en":"Fond Banny","ja":"気に入りバニー","ko":"마음에든배니"},"mb_lba":{"en":"Horn Banny","ja":"ラッパバニー","ko":"나팔배니"},"mb_jingcha":{"en":"Police Banny","ja":"警察バニー","ko":"경찰배니"},"mb_faguan":{"en":"Judge Banny","ja":"裁判官バニー","ko":"판사배니"},"mb_lvshi":{"en":"Lawyer Banny","ja":"弁護士バニー","ko":"변호사배니"},"mb_jinju":{"en":"Locked-Up Banny","ja":"拘留バニー","ko":"구치소배니"},"mb_zuanshi":{"en":"Diamond Banny","ja":"ダイヤバニー","ko":"다이아배니"},"mb_huang":{"en":"Yellow Banny","ja":"黄バニー","ko":"노랑배니"},"mb_qiezhi":{"en":"Tomato-Juice Banny","ja":"トマト汁バニー","ko":"토마토주스배니"},"mb_gaoya":{"en":"Elegant Banny","ja":"エレガントバニー","ko":"고상배니"},"mb_long":{"en":"Long-Long Banny","ja":"ロングロングバニー","ko":"롱롱배니"},"bairi":{"en":"Hundred-Day Banny","ja":"百日バニー","ko":"백일배니"},"m2_dou":{"en":"Bean Banny","ja":"豆バニー","ko":"콩배니"},"m2_men":{"en":"Cute Banny","ja":"萌えバニー","ko":"귀요미배니"},"m2_zhu":{"en":"Pig Banny","ja":"豚バニー","ko":"돼지배니"},"m2_dundun":{"en":"Chubby Banny","ja":"ぷにバニー","ko":"통통배니"},"m2_mao":{"en":"Cat Banny","ja":"猫バニー","ko":"고양이배니"},"m2_gou":{"en":"Dog Banny","ja":"犬バニー","ko":"강아지배니"},"m2_tian":{"en":"Sweet Banny","ja":"甘バニー","ko":"단배니"},"m2_xian":{"en":"Salt Banny","ja":"塩バニー","ko":"소금배니"},"m2_bai":{"en":"White Banny","ja":"白バニー","ko":"하얀배니"},"m2_hei":{"en":"Black Banny","ja":"黒バニー","ko":"검은배니"},"m2_hong":{"en":"Red Banny","ja":"赤バニー","ko":"빨간배니"},"m2_lv":{"en":"Green Banny","ja":"緑バニー","ko":"초록배니"},"m2_lan":{"en":"Blue Banny","ja":"青バニー","ko":"파란배니"},"m2_hudie":{"en":"Butterfly Banny","ja":"蝶バニー","ko":"나비배니"},"m2_yinghuo":{"en":"Firefly Banny","ja":"蛍バニー","ko":"반딧불배니"},"m2_pubu":{"en":"Waterfall Banny","ja":"滝バニー","ko":"폭포배니"},"m2_she":{"en":"Snake Banny","ja":"蛇バニー","ko":"뱀배니"},"m2_wuya":{"en":"Crow Banny","ja":"カラスバニー","ko":"까마귀배니"},"m2_xiongmao":{"en":"Panda Banny","ja":"パンダバニー","ko":"판다배니"},"m2_wo":{"en":"Snail Banny","ja":"カタツムリバニー","ko":"달팽이배니"},"m2_xiangjiao":{"en":"Banana Banny","ja":"バナナバニー","ko":"바나나배니"},"m2_hulu":{"en":"Gourd Banny","ja":"ひょうたんバニー","ko":"조롱박배니"},"m2_bingqilin":{"en":"Ice Cream Banny","ja":"アイスクリームバニー","ko":"아이스크림배니"},"m2_shamo":{"en":"Desert Banny","ja":"砂漠バニー","ko":"사막배니"},"m2_wenquan":{"en":"Hot Spring Banny","ja":"温泉バニー","ko":"온천배니"},"m2_huoshan":{"en":"Volcano Banny","ja":"火山バニー","ko":"화산배니"},"m2_shanhu":{"en":"Coral Banny","ja":"珊瑚バニー","ko":"산호배니"},"m2_baoshi":{"en":"Gem Banny","ja":"宝石バニー","ko":"보석배니"},"m2_long":{"en":"Dragon Banny","ja":"竜バニー","ko":"용배니"},"m2_fenghuang":{"en":"Phoenix Banny","ja":"フェニックスバニー","ko":"봉황배니"},"m2_jiguang":{"en":"Aurora Banny","ja":"オーロラバニー","ko":"오로라배니"},"m2_xiangrui":{"en":"Auspice Banny","ja":"祥瑞バニー","ko":"상서배니"},"m2_huntun":{"en":"Wonton Banny","ja":"ワンタンバニー","ko":"완탕배니"},"m2_baba":{"en":"Baba Banny","ja":"バババニー","ko":"바바배니"},"m2_diwang":{"en":"Emperorbanny","ja":"帝王バニー","ko":"제왕배니"},"m2_buman":{"en":"Grumpy Banny","ja":"不満バニー","ko":"불만배니"},"m2_tanwu":{"en":"Corrupt Banny","ja":"汚職バニー","ko":"횡령배니"},"m2_zhangyu":{"en":"Octopus Banny","ja":"タコバニー","ko":"문어배니"},"m2_xianyi":{"en":"Suspect Banny","ja":"容疑バニー","ko":"용의배니"},"m2_fanqie":{"en":"Tomato Banny","ja":"トマトバニー","ko":"토마토배니"},"m2_jinshu":{"en":"Metal Banny","ja":"メタルバニー","ko":"금속배니"},"m2_shanliang":{"en":"Sparkle Banny","ja":"キラキラバニー","ko":"반짝배니"},"m2_zanmei":{"en":"Praise Banny","ja":"賛美バニー","ko":"찬미배니"},"m2_zuojia":{"en":"Writer Banny","ja":"作家バニー","ko":"작가배니"},"m2_yiji":{"en":"Ruin Banny","ja":"遺跡バニー","ko":"유적배니"},"m2_shixiang":{"en":"Statue Banny","ja":"石像バニー","ko":"석상배니"},"m2_gubi":{"en":"Ancient Coin Banny","ja":"古銭バニー","ko":"고대화폐배니"},"m2_shoubao":{"en":"Treasure Guard Banny","ja":"宝守りバニー","ko":"보물지킴배니"},"m2_binghu":{"en":"Ice Lake Banny","ja":"氷湖バニー","ko":"얼음호수배니"},"m2_lanbing":{"en":"Blue Ice Banny","ja":"青氷バニー","ko":"푸른얼음배니"},"m2_xuelian":{"en":"Snow Lotus Banny","ja":"雪蓮バニー","ko":"설련배니"},"m2_bingling":{"en":"Frost Spirit Banny","ja":"氷霊バニー","ko":"얼음정령배니"},"m2_wangting":{"en":"Court Banny","ja":"王庭バニー","ko":"왕정배니"},"m2_guowang":{"en":"Reigning King Banny","ja":"執政王バニー","ko":"집정왕배니"},"m2_zuochen":{"en":"Courtier Banny","ja":"佐臣バニー","ko":"좌신배니"},"m2_shizhe":{"en":"Oath Banny","ja":"誓約バニー","ko":"서약배니"},"m2_shouling":{"en":"Tomb Guardian Banny","ja":"陵守りバニー","ko":"능묘지기배니"},"m2_bingzang":{"en":"Ice Burial Banny","ja":"氷葬バニー","ko":"빙장배니"},"m2_yizhao":{"en":"Parchment Banny","ja":"羊皮紙バニー","ko":"양피지배니"},"m2_digong":{"en":"Crypt Banny","ja":"地宮バニー","ko":"지궁배니"},"m2_taoyuan":{"en":"Arcadia Banny","ja":"桃源バニー","ko":"도원배니"},"m2_jingling":{"en":"Sprite Banny","ja":"精霊バニー","ko":"정령배니"},"m2_linyao":{"en":"Forest Spirit Banny","ja":"森妖バニー","ko":"숲요정배니"},"m2_yueshi":{"en":"Night Market Banny","ja":"夜市バニー","ko":"야시장배니"},"m2_tanghua":{"en":"Sugar Painting Banny","ja":"飴細工バニー","ko":"설탕그림배니"},"m2_shoudeng":{"en":"Lamp Keeper Banny","ja":"灯守りバニー","ko":"등지기배니"},"m2_shanggu":{"en":"Ancient Banny","ja":"上古バニー","ko":"상고배니"},"m2_gulong":{"en":"Elder Dragon Banny","ja":"古龍バニー","ko":"고룡배니"},"m2_shenyu":{"en":"Oracle Banny","ja":"神託バニー","ko":"신탁배니"},"m2_wailaizhe":{"en":"Outsider Banny","ja":"外来者バニー","ko":"외부자배니"},"m2_kuji":{"en":"Desolate Banny","ja":"枯寂バニー","ko":"고적배니"},"m2_xinsheng":{"en":"Newborn Banny","ja":"新生バニー","ko":"신생배니"},"m2_shouhu":{"en":"Guardian Banny","ja":"守護バニー","ko":"수호배니"},"m2_huanmeng":{"en":"Phantom Dream Banny","ja":"幻夢バニー","ko":"환몽배니"},"m2_wuyue":{"en":"Moonless Banny","ja":"無月バニー","ko":"무월배니"},"m2_yingzi":{"en":"Shadow Banny","ja":"影バニー","ko":"그림자배니"},"m2_shouye":{"en":"Sleepless Banny","ja":"不眠バニー","ko":"불면배니"},"m2_zhenyan":{"en":"Nexus Banny","ja":"陣眼バニー","ko":"진안배니"},"m2_zhimeng":{"en":"Dreamweaver Banny","ja":"夢織りバニー","ko":"꿈직조배니"},"m2_yingmeng":{"en":"Nightmare Banny","ja":"悪夢バニー","ko":"악몽배니"},"m2_zhinian":{"en":"Obsession Banny","ja":"執念バニー","ko":"집념배니"},"m2_xinglai":{"en":"Awake Banny","ja":"目覚めバニー","ko":"깨어남배니"},"m2_mengyan":{"en":"Mara Banny","ja":"夢魔バニー","ko":"몽마배니"},"m2_island":{"en":"Island Banny","ja":"島バニー","ko":"섬배니"},"m2_bonfire":{"en":"Bonfire Banny","ja":"焚き火バニー","ko":"모닥불배니"},"m2_tide":{"en":"Tide Banny","ja":"潮汐バニー","ko":"조수배니"},"m2_isleking":{"en":"Island Lord Banny","ja":"島主バニー","ko":"섬주배니"},"m2_sunkcity":{"en":"Sunken City Banny","ja":"沈城バニー","ko":"침몰도시배니"},"m2_merfolk":{"en":"Merfolk Banny","ja":"人魚バニー","ko":"인어배니"},"m2_seal":{"en":"Arcane Banny","ja":"秘術バニー","ko":"비술배니"},"m2_seaking":{"en":"Sea King Banny","ja":"海底王バニー","ko":"해저왕배니"},"m2_guihai":{"en":"Homecoming Banny","ja":"帰海バニー","ko":"귀해배니"},"m2_geyin":{"en":"Song Banny","ja":"吟歌バニー","ko":"노래배니"},"m2_fazhen":{"en":"Magic Circle Banny","ja":"魔法陣バニー","ko":"마법진배니"},"m2_paomo":{"en":"Foam Banny","ja":"泡バニー","ko":"물거품배니"},"m2_damofa":{"en":"Archmage Banny","ja":"大魔法使いバニー","ko":"대마법사배니"},"m2_chuqian":{"en":"Cheater Banny","ja":"イカサマバニー","ko":"사기꾼배니"},"m2_tracker":{"en":"Tracker Banny","ja":"トラッカーバニー","ko":"추적기 배니"},"m2_baqi":{"en":"Baqi Orochi","ja":"バ岐大蛇","ko":"바치 오로치"},"m2_qingchun":{"en":"Youth Underdog 3D Banny","ja":"青春負け犬立体バニー","ko":"청춘 패배견 입체 배니"},"m2_yinan":{"en":"Gloomy Banny","ja":"陰気バニー","ko":"음침배니"},"m2_zuoqi":{"en":"Mount Banny","ja":"乗り物バニー","ko":"탈것배니"},"m2_teatime":{"en":"Tea-Time Banny","ja":"ティータイムバニー","ko":"티타임배니"},"m2_baboyi":{"en":"Babo Gambit","ja":"ババゲーム","ko":"바바 겜블"},"m2_rainy":{"en":"Rainy Banny","ja":"雨傘バニー","ko":"우산배니"},"m3_cangshu":{"en":"Hamster Banny","ja":"ハムスターバニー","ko":"햄스터배니"}};
+/* 非中文时把矿工名换成对应译文；中文或缺少译文时保留原名 */
+if(LANG!=='zh'){
+  POOL.forEach(function(p){
+    const n=BANNY_NAME[p.id];
+    if(n&&n[LANG]) p.name=n[LANG];
+  });
+}
+
+/* ================= 存档（独立键，主存档只读） ================= */
+function loadSave(){
+  const d={v:2,best:0,bestLv:0,plays:0,miners:{},statues:0,last:null,totalOres:0,ach:{},daily:{key:'',best:0,plays:0,rewarded:''}};
+  try{
+    const raw=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');
+    if(!raw||typeof raw!=='object') return d;
+    d.best=Math.max(0,parseInt(raw.best,10)||0);
+    d.bestLv=Math.max(0,parseInt(raw.bestLv,10)||0);
+    d.plays=Math.max(0,parseInt(raw.plays,10)||0);
+    d.statues=Math.max(0,parseInt(raw.statues,10)||0);
+    d.totalOres=Math.max(0,parseInt(raw.totalOres,10)||0);
+    if(raw.miners&&typeof raw.miners==='object'){
+      for(const k in raw.miners){ if(POOL_BY_ID[k]) d.miners[k]=Math.max(0,parseInt(raw.miners[k],10)||0); }
+    }
+    if(raw.ach&&typeof raw.ach==='object'){
+      for(const a of ACHS){ if(raw.ach[a.id]) d.ach[a.id]=1; }
+    }
+    if(raw.daily&&typeof raw.daily==='object'){
+      d.daily.key=String(raw.daily.key||'');
+      d.daily.best=Math.max(0,parseInt(raw.daily.best,10)||0);
+      d.daily.plays=Math.max(0,parseInt(raw.daily.plays,10)||0);
+      d.daily.rewarded=String(raw.daily.rewarded||'');
+    }
+    if(typeof raw.last==='string'&&POOL_BY_ID[raw.last]) d.last=raw.last;
+  }catch(e){}
+  return d;
+}
+function saveStore(){
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(e){}
+}
+function readMain(){
+  try{ return JSON.parse(localStorage.getItem(MAIN_KEY)||'null'); }catch(e){ return null; }
+}
+/* 隧道通行证不可叠加：旅行仓库或行囊里已有，就不再发放 */
+function hasTicket(){
+  const m=readMain();
+  const tr=m&&m.travel;
+  if(!tr) return false;
+  const n=(tr.wh&&tr.wh.goldletter)||0;
+  const inBag=(tr.bag||[]).some(function(x){ return x&&x.k==='goldletter'; });
+  return n>0||inBag;
+}
+function collectedIds(){
+  const m=readMain(); if(!m) return [];
+  const out=[];
+  ['collection','collection2','collection3'].forEach(function(k){
+    const c=m[k]||{};
+    for(const id in c){
+      const n=(c[id]&&c[id].count)||0;
+      if(n>0&&POOL_BY_ID[id]) out.push(id);
+    }
+  });
+  return out;
+}
+/* 矿工池：只收有外链立绘的月巴，没有立绘的一律不出场 */
+function hasArt(id){
+  const p=POOL_BY_ID[id];
+  return !!(p&&p.img);
+}
+function minerPool(){
+  const owned=collectedIds().filter(hasArt);
+  const set={};
+  owned.forEach(function(id){ set[id]=1; });
+  if(owned.length<8){
+    POOL.forEach(function(p){ if(p.img&&p.r<=2) set[p.id]=1; });
+  }
+  if(!Object.keys(set).length){
+    // 极端兜底：基础池也没有可用立绘时，退回全部有立绘的月巴
+    POOL.forEach(function(p){ if(p.img) set[p.id]=1; });
+  }
+  return Object.keys(set);
+}
+function pickMiner(){
+  const pool=minerPool();
+  let list=pool;
+  if(pool.length>1&&save.last) list=pool.filter(function(id){ return id!==save.last; });
+  if(!list.length) list=pool;
+  const id=list[Math.floor(RNG()*list.length)];
+  save.last=id;
+  save.miners[id]=(save.miners[id]||0)+1;
+  return POOL_BY_ID[id]||POOL[0];
+}
+const save=loadSave();
+const mainSave=readMain()||{};
+document.body.classList.toggle('lp', !!mainSave.lowPower);
+
+/* ================= 随机数（每日挑战用固定种子） ================= */
+let RNG=Math.random;
+function seedRng(seed){
+  let s=(seed>>>0)||1;
+  RNG=function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; };
+}
+function resetRng(){ RNG=Math.random; }
+function dailyKey(){
+  const d=new Date();
+  return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();
+}
+function hashNum(n){
+  const str=String(n); let h=2166136261;
+  for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=(h*16777619)>>>0; }
+  return h||1;
+}
+
+/* ================= 工具 ================= */
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function rand(a,b){ return a+RNG()*(b-a); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function hashStr(s){ let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))|0; return Math.abs(h); }
+function shade(hex,amt){
+  try{
+    const n=parseInt(hex.slice(1),16);
+    const r=clamp((n>>16)+amt,0,255), g=clamp(((n>>8)&255)+amt,0,255), b=clamp((n&255)+amt,0,255);
+    return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+  }catch(e){ return hex; }
+}
+
+/* 迷你月巴 SVG（无外链立绘时使用，观感与首页一致） */
+function shapeBody(sh,c,dk){
+  const f='fill="'+c+'"', s='stroke="'+dk+'" stroke-width="1.4"';
+  switch(sh){
+    case 'round':  return '<circle cx="20" cy="21" r="13" '+f+' '+s+'/>';
+    case 'tall':   return '<ellipse cx="20" cy="22" rx="9.5" ry="14" '+f+' '+s+'/>';
+    case 'wide':   return '<ellipse cx="20" cy="22" rx="15" ry="10.5" '+f+' '+s+'/>';
+    case 'squish': return '<ellipse cx="20" cy="24" rx="13.5" ry="9" '+f+' '+s+'/>';
+    case 'cube':   return '<rect x="8" y="9" width="24" height="25" rx="5" '+f+' '+s+'/>';
+    case 'big':    return '<ellipse cx="20" cy="22" rx="16" ry="13" '+f+' '+s+'/>';
+    case 'bean':   return '<circle cx="15.5" cy="22" r="9.5" '+f+' '+s+'/><circle cx="24.5" cy="22" r="9.5" '+f+' '+s+'/>';
+    case 'heart':  return '<path d="M20 32 C10 24 6 17 9 12 C12 7.5 17 8 20 12 C23 8 28 7.5 31 12 C34 17 30 24 20 32 Z" '+f+' '+s+'/>';
+    case 'drop':   return '<path d="M20 7 C26 15 29 20 29 25 A9 9 0 1 1 11 25 C11 20 14 15 20 7 Z" '+f+' '+s+'/>';
+    case 'star':   return '<path d="M20 8 L23.6 16.8 L32.6 17.2 L25.6 22.9 L28.4 31.4 L20 26.6 L11.6 31.4 L14.4 22.9 L7.4 17.2 L16.4 16.8 Z" '+f+' '+s+'/>';
+    case 'spike':  return '<circle cx="20" cy="25" r="10" '+f+' '+s+'/><path d="M14 11 L16 4 L20 10 L24 3 L27 11 L25 14 L15 14 Z" '+f+' '+s+'/>';
+    case 'moon':   return '<path d="M27 5 A14 14 0 1 0 27 35 A11 11 0 1 1 27 5 Z" '+f+' '+s+'/>';
+    case 'rainbow':return '<path d="M12 27 A10 10 0 0 1 28 27 L25 27 A7 7 0 0 0 15 27 Z" '+f+' '+s+'/>';
+    default:       return '<circle cx="20" cy="21" r="13" '+f+' '+s+'/>';
+  }
+}
+function bannySVG(p){
+  const h=hashStr(p.id), c=p.color, dk=shade(c,-26);
+  const ex1=p.shape==='tall'?11:p.shape==='wide'?12:10, ex2=30-ex1;
+  const eye=h%4;
+  let eyes;
+  if(eye===0) eyes='<circle cx="'+ex1+'" cy="18" r="2.4" fill="#3b3654"/><circle cx="'+ex2+'" cy="18" r="2.4" fill="#3b3654"/>';
+  else if(eye===1) eyes='<ellipse cx="'+ex1+'" cy="18" rx="2.5" ry="3" fill="#3b3654"/><ellipse cx="'+ex2+'" cy="18" rx="2.5" ry="3" fill="#3b3654"/>';
+  else if(eye===2) eyes='<path d="M'+ex1+' 15.5 l2.4 2.5 l-2.4 2.5 l-2.4 -2.5 z" fill="#3b3654"/><path d="M'+ex2+' 15.5 l2.4 2.5 l-2.4 2.5 l-2.4 -2.5 z" fill="#3b3654"/>';
+  else eyes='<path d="M'+(ex1-2)+' 18 h4 M'+(ex2-2)+' 18 h4" stroke="#3b3654" stroke-width="1.8" stroke-linecap="round"/>';
+  const mouth=(h>>2)%4;
+  let mm;
+  if(mouth===0) mm='<path d="M14 23.5 Q17 27 20 23.5 Q23 27 26 23.5" stroke="#3b3654" stroke-width="1.8" fill="none" stroke-linecap="round"/>';
+  else if(mouth===1) mm='<circle cx="20" cy="24.5" r="2.4" fill="#3b3654"/>';
+  else if(mouth===2) mm='<path d="M15 25.5 Q20 29 25 25.5 L25 26.5 Q20 30 15 26.5 Z" fill="#3b3654"/>';
+  else mm='<path d="M15 26 Q20 24.5 25 26" stroke="#3b3654" stroke-width="1.8" fill="none" stroke-linecap="round"/>';
+  return '<svg viewBox="0 0 40 40">'+shapeBody(p.shape,c,dk)+eyes+mm+
+    '<circle cx="13.5" cy="10.5" r="2.1" fill="rgba(255,255,255,.5)"/></svg>';
+}
+function avatarHTML(p){
+  if(p.img) return '<img src="'+esc(p.img)+'" alt="" decoding="async" onerror="this.style.display=\'none\';this.parentNode.innerHTML=window.__gmSVG(\''+p.id+'\')">';
+  return bannySVG(p);
+}
+window.__gmSVG=function(id){ const p=POOL_BY_ID[id]; return p?bannySVG(p):''; };
+
+/* ================= 音效 ================= */
+let AC=null;
+const muted=!!mainSave.muted;
+function ac(){
+  if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+  if(AC&&AC.state==='suspended'){ try{ AC.resume(); }catch(e){} }
+  return AC;
+}
+function tone(freq,dur,type,vol,delay){
+  if(muted) return;
+  const a=ac(); if(!a) return;
+  try{
+    const t0=a.currentTime+(delay||0);
+    const o=a.createOscillator(), g=a.createGain();
+    o.type=type||'sine'; o.frequency.value=freq;
+    g.gain.setValueAtTime(0.0001,t0);
+    g.gain.linearRampToValueAtTime(vol||0.08,t0+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+    o.connect(g); g.connect(a.destination);
+    o.start(t0); o.stop(t0+dur+0.03);
+  }catch(e){}
+}
+const SFX={
+  shoot(){ tone(320,0.06,'sawtooth',0.05); },
+  grab(){  tone(880,0.06,'sine',0.09); tone(1318,0.07,'sine',0.07,0.04); },
+  gem(){   [1046,1568,2093].forEach(function(f,i){ tone(f,0.12,'triangle',0.1,i*0.06); }); },
+  dirt(){  tone(120,0.12,'sawtooth',0.08); tone(70,0.16,'sine',0.06,0.04); },
+  clock(){ tone(660,0.07,'triangle',0.14); tone(990,0.09,'triangle',0.1,0.05); },
+  statue(){ [523,784,1046,1568].forEach(function(f,i){ tone(f,0.18,'triangle',0.12,i*0.07); }); },
+  clear(){ [523,659,784,1046].forEach(function(f,i){ tone(f,0.14,'triangle',0.12,i*0.08); }); },
+  fail(){  tone(392,0.14,'sine',0.06); tone(294,0.18,'sine',0.05,0.1); },
+  click(){ tone(720,0.05,'square',0.05); }
+};
+
+/* ================= DOM ================= */
+const $=function(id){ return document.getElementById(id); };
+const stage=$('stage'), app=$('app'), frame=$('frame'), cv=$('cv');
+let ctx=cv.getContext('2d');
+const domLayer=$('domLayer'), minerBox=$('minerBox'), minerTilt=$('minerTilt'), minerAv=$('minerAv'),
+      minerName=$('minerName'), statueBox=$('statueBox'), statueImg=$('statueImg'),
+      bannerEl=$('banner'), hintEl=$('hint'), overlay=$('overlay'), panel=$('panel'),
+      lbLv=$('lbLv'), numTar=$('numTar'), lbTime=$('lbTime'), numTime=$('numTime'),
+      lbScore=$('lbScore'), numScore=$('numScore'), foot=$('foot'),
+      tbar=$('tbar'), timeBar=$('timeBar'), comboChip=$('comboChip'), statusChip=$('statusChip'),
+      pauseBtn=$('pauseBtn'), achToast=$('achToast'), goldFlash=$('goldFlash'),
+      itemToast=$('itemToast'), itemToastKicker=$('itemToastKicker'),
+      itemToastName=$('itemToastName'), itemToastDesc=$('itemToastDesc');
+
+/* 离屏缓存：静态土层 + 静态矿点 */
+let bgCv=null, oreCv=null, oreDirty=true;
+
+let DPR=Math.min(window.devicePixelRatio||1,2);
+let K=1;
+
+/* ================= 状态 ================= */
+const gm={
+  phase:'start', paused:false, raf:0, last:0,
+  lv:1, target:400, lvScore:0, total:0, time:LV_TIME, timeMax:LV_TIME,
+  ores:[], parts:[], texts:[],
+  swing:0, period:2.4,
+  hook:{state:'idle', a:0, len:MINLEN, ore:null},
+  miner:null, statueOre:null, statueCount:0,
+  shake:0, spring:{s:0,vs:0,dy:0,vy:0}, springLast:0, shotAny:false, newRecord:false,
+  lastSec:LV_TIME,
+  streak:0, bestStreak:0, glueT:0, lastGlueSec:0,
+  daily:false, coinEarned:0, boomDirt:0, fpsAcc:0, fpsN:0, dprSteps:0,
+  hitStop:0, band:0,
+  quote:''
+};
+
+function targetFor(lv){
+  const fixed=[400,600,800,1000];
+  if(lv<=4) return fixed[lv-1];
+  let v=1000;
+  for(let i=5;i<=lv;i++) v=Math.round(v*1.15/10)*10;
+  return v;
+}
+
+/* ================= 尺寸 ================= */
+function resize(){
+  const row=getComputedStyle(app).flexDirection==='row';
+  const hudW=row?($('hud').offsetWidth+8):0;
+  const hudH=row?0:($('hud').offsetHeight||42);
+  const footH=row?0:12;
+  const sw=stage.clientWidth-20;
+  const sh=stage.clientHeight-16;
+  const availW=Math.max(120,sw-hudW);
+  const availH=Math.max(160, sh-hudH-footH-14);
+  K=Math.max(0.2, Math.min(availW/W, availH/H));
+  frame.style.width=(W*K)+'px';
+  frame.style.height=(H*K)+'px';
+  cv.width=Math.round(W*DPR);
+  cv.height=Math.round(H*DPR);
+  cv.style.width='100%';
+  cv.style.height='100%';
+  domLayer.style.transform='scale('+K+')';
+  app.style.width=row?'auto':(W*K)+'px';
+  ctx=cv.getContext('2d');
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.imageSmoothingEnabled=true;
+  bakeBg();
+  oreDirty=true;
+}
+window.addEventListener('resize',resize);
+
+/* ================= 生成关卡 ================= */
+function canPlace(x,y,r){
+  if(x<MINE.x0+r||x>MINE.x1-r||y<MINE.y0+r||y>MINE.y1-r) return false;
+  const dx=x-PIVOT.x, dy=y-PIVOT.y;
+  if(Math.sqrt(dx*dx+dy*dy)<110+r) return false;
+  for(let i=0;i<gm.ores.length;i++){
+    const o=gm.ores[i];
+    const ddx=x-o.x, ddy=y-o.y, rr=o.r+r+4;
+    if(ddx*ddx+ddy*ddy<rr*rr) return false;
+  }
+  return true;
+}
+function makeOre(kind,x,y,r){
+  const c=ORE[kind];
+  /* 拉起速度 = 基准 / 重量 × 尺寸系数：同种番茄越大越沉，石头最拖沓 */
+  const refR=(c.min+c.max)/2;
+  const sizeF=Math.pow(refR/Math.max(1,r), 1.2);
+  const pull=Math.max(CARRY_MIN, (CARRY_BASE/Math.max(0.5,c.weight))*sizeF);
+  const o={kind:kind, x:x, y:y, r:r, score:c.score, weight:c.weight, bonus:c.bonus||0,
+          pull:pull, attached:false, seed:RNG()*Math.PI*2};
+  // 石块随机抽取一位有外链立绘的月巴，并提前预热图片
+  if(kind==='dirt'&&DIRT_POOL.length){
+    const p=DIRT_POOL[Math.floor(RNG()*DIRT_POOL.length)];
+    o.imgId=p.id;
+    bannyImage(p.id);
+  }
+  return o;
+}
+function tryPlace(kind){
+  const c=ORE[kind];
+  for(let i=0;i<70;i++){
+    const r=rand(c.min,c.max);
+    const x=rand(MINE.x0+r,MINE.x1-r);
+    const y=rand(MINE.y0+r,MINE.y1-r);
+    if(canPlace(x,y,r)){ const o=makeOre(kind,x,y,r); gm.ores.push(o); return o; }
+  }
+  return null;
+}
+function placeStatue(){
+  for(let i=0;i<220;i++){
+    const r=30;
+    const x=rand(80,390), y=rand(400,620);
+    if(canPlace(x,y,r)){ const o=makeOre('statue',x,y,r); gm.ores.push(o); return o; }
+  }
+  return null;
+}
+function genOres(lv){
+  gm.ores=[]; gm.statueOre=null;
+  if(lv%3===0) gm.statueOre=placeStatue();   // 每 3 关保底 1 座，先放避免被挤掉
+  // 每关 1 个道具（炸药 / 马达 / 矿灯），第 2 关起偶尔混进一颗腐烂番茄
+  tryPlace(['bomb','glue','lamp'][Math.floor(RNG()*3)]);
+  if(lv>=2&&RNG()<0.45) tryPlace('rot');
+  const n=Math.min(32, 18+2*(lv-1));
+  const dirtPct=Math.min(0.26, 0.14+Math.max(0,lv-3)*0.015);
+  const base={small:36, mid:26, big:14, gem:4, clock:3};
+  let sum=0; for(const k in base) sum+=base[k];
+  const scale=(1-dirtPct)/sum;
+  const table=[];
+  for(const k in base) table.push([k, base[k]*scale]);
+  table.push(['dirt', dirtPct]);
+  const pick=function(){
+    let rnd=RNG(), acc=0;
+    for(let i=0;i<table.length;i++){ acc+=table[i][1]; if(rnd<=acc) return table[i][0]; }
+    return 'small';
+  };
+  for(let i=0;i<n;i++) tryPlace(pick());
+  ensureValue();
+}
+/* 保底：场上总价值不足以覆盖目标时，把土块换成中/大番茄 */
+function ensureValue(){
+  const need=gm.target*1.2;
+  let sum=0;
+  for(let i=0;i<gm.ores.length;i++) sum+=Math.max(0,gm.ores[i].score);
+  if(sum>=need) return;
+  const dirt=gm.ores.filter(function(o){ return o.kind==='dirt'; });
+  for(let i=0;i<dirt.length&&sum<need;i++){
+    const o=dirt[i];
+    const c=ORE[i%3===2?'big':'mid'];
+    sum-=o.score;
+    o.kind=i%3===2?'big':'mid';
+    o.r=Math.min(o.r,(c.min+c.max)/2);
+    o.score=c.score; o.weight=c.weight;
+    o.pull=Math.max(CARRY_MIN,(CARRY_BASE/c.weight)*Math.pow(((c.min+c.max)/2)/o.r,1.2));
+    sum+=o.score;
+  }
+  // 还是不够：补几颗小番茄（有空位才补）
+  let extra=0;
+  while(sum<need&&extra<4){
+    const o=tryPlace('small'); if(!o) break;
+    sum+=o.score; extra++;
+  }
+}
+
+/* ================= 关卡流程 ================= */
+function beginLevel(lv){
+  gm.lv=lv;
+  gm.target=targetFor(lv);
+  gm.lvScore=0;
+  gm.time=LV_TIME;
+  gm.period=Math.max(1.6, 2.4*Math.pow(0.94,lv-1));
+  gm.swing=0;
+  gm.hook={state:'idle', a:0, len:MINLEN, ore:null};
+  gm.parts=[]; gm.texts=[];
+  gm.shake=0; gm.spring.s=0; gm.spring.vs=0; gm.spring.dy=0; gm.spring.vy=0;
+  gm.shotAny=false; gm.lastSec=LV_TIME;
+  gm.streak=0; gm.glueT=0; gm.lastGlueSec=0;
+  gm.hitStop=0;
+  const nb=Math.floor((lv-1)/5)%BANDS.length;
+  if(nb!==gm.band){ gm.band=nb; bakeBg(); }   // 每 5 关换一层岩色
+  updateComboChip(); updateStatusChip();
+  genOres(lv);
+  oreDirty=true;
+  gm.phase='play';
+  gm.paused=false;
+  setPauseBtn(true);
+  hintEl.classList.remove('hide');
+  overlay.classList.remove('show');
+  updateHUD();
+  syncStatue();
+  if(lv>=5) unlockAch('lv5');
+}
+function startGame(){
+  if(!gm.miner) gm.miner=pickMiner();
+  gm.quote=t('q1',{n:gm.miner.name});
+  save.plays=(save.plays||0)+1;
+  saveStore();
+  gm.total=0;
+  gm.statueCount=0;
+  gm.newRecord=false;
+  gm.coinEarned=0;
+  gm.boomDirt=0;
+  gm.bestStreak=0;
+  minerAv.innerHTML=avatarHTML(gm.miner);
+  minerName.textContent=gm.miner.name;
+  updateFoot();
+  checkAch();
+  beginLevel(1);
+}
+
+function updateHUD(){
+  lbLv.textContent=t('lv',{n:gm.lv});
+  numTar.textContent=gm.lvScore+'/'+gm.target;
+  lbTime.textContent=t('time');
+  lbScore.textContent=t('score');
+  numTime.textContent=String(Math.max(0,Math.ceil(gm.time)));
+  numTime.classList.toggle('warn', gm.time<=10);
+  numScore.textContent=String(gm.total);
+  timeBar.style.width=(clamp(gm.time/LV_TIME,0,1)*100).toFixed(1)+'%';
+  tbar.classList.toggle('warn', gm.time<=10);
+}
+function updateFoot(){
+  foot.textContent=t('best',{n:save.best})+(save.statues?' · 🏆 '+save.statues:'');
+}
+
+/* ================= 特效 ================= */
+function burst(x,y,color,n,spd){
+  const max=document.body.classList.contains('lp')?Math.ceil(n/2):n;
+  for(let i=0;i<max;i++){
+    const a=Math.random()*Math.PI*2, v=rand(spd*0.4,spd);
+    gm.parts.push({x:x,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-rand(10,50),
+      life:rand(0.35,0.7),max:0.7,color:color,size:rand(2,4.4)});
+  }
+}
+function popText(x,y,txt,color,size){
+  gm.texts.push({x:x,y:y,txt:txt,color:color||'#fff3d6',size:size||18,life:0.9,max:0.9});
+}
+function shake(px){ if(!document.body.classList.contains('lp')) gm.shake=px; }
+/* 移动端震动：低功耗或系统不支持时静默跳过 */
+function buzz(ms){
+  if(document.body.classList.contains('lp')) return;
+  try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){}
+}
+
+/* ================= 钩爪 ================= */
+function tip(){
+  const a=gm.hook.a, l=gm.hook.len;
+  return {x:PIVOT.x+Math.sin(a)*l, y:PIVOT.y+Math.cos(a)*l};
+}
+function shootHook(){
+  if(gm.phase!=='play'||gm.hook.state!=='idle') return;
+  gm.hook.state='shoot';
+  gm.hook.ore=null;
+  kickMiner(-3.0, -42);   // 发射反冲：先拔高一截再回落
+  SFX.shoot();
+  if(!gm.shotAny){ gm.shotAny=true; hintEl.classList.add('hide'); }
+}
+function updateHook(dt){
+  const hk=gm.hook;
+  if(hk.state==='idle'){
+    gm.swing+=dt*Math.PI*2/gm.period;
+    hk.a=Math.sin(gm.swing)*MAXA;
+    hk.len=MINLEN;
+    return;
+  }
+  if(hk.state==='shoot'){
+    hk.len+=SHOOT_SPD*dt;
+    const p=tip();
+    let hit=null, bestD=1e9;
+    for(let i=0;i<gm.ores.length;i++){
+      const o=gm.ores[i];
+      const dx=p.x-o.x, dy=p.y-o.y;
+      const rr=o.r+HOOK_R+((o.kind==='small'||o.kind==='gem')?4:0);
+      const d=Math.sqrt(dx*dx+dy*dy);
+      if(d<=rr&&d<bestD){ bestD=d; hit=o; }
+    }
+    if(hit){
+      // 炸药：钩尖一碰到立刻引爆，不再挂住回收
+      if(hit.kind==='bomb'){
+        explodeBomb(hit);
+        hk.state='retract';
+        hk.ore=null;
+        return;
+      }
+      hk.state='attach'; hk.ore=hit; hit.attached=true; oreDirty=true;
+      // 抓住的瞬间：按重量给一下「坠手感」，重的压得更扁
+      kickMiner(1.2+2.4*Math.min(1,hit.weight/4.2), 26*Math.min(1,hit.weight/4.2));
+      if(hit.kind==='gem'){ burst(p.x,p.y,'#ffe9a8',8,120); }
+      if(hit.kind==='statue'){ SFX.statue(); }
+      if(hit.weight>=2.4) tone(96,0.22,'sawtooth',0.05);   // 重物的低鸣
+      // 命中定格 + 掉土 + 震动：强化「抓到了」的手感
+      if(hit.kind==='big'||hit.kind==='gem'||hit.kind==='statue') gm.hitStop=0.055;
+      if(hit.kind==='small'||hit.kind==='mid'||hit.kind==='big'){
+        burst(p.x,p.y+hit.r*0.3,'#6b5a45',4,60);
+      }
+      if(hit.weight>=3.0) buzz(18);
+    }else if(hk.len>=MAXLEN){
+      hk.state='retract';
+      gm.streak=0; updateComboChip();   // 空钩断连击
+    }
+    return;
+  }
+  if(hk.state==='attach'){
+    const o=hk.ore;
+    let spd=Math.max(CARRY_MIN, o.pull || CARRY_BASE/Math.max(0.5,o.weight));
+    if(gm.glueT>0) spd*=GLUE_MULT;
+    hk.len-=spd*dt;
+    const p=tip();
+    o.x=p.x; o.y=p.y;
+    if(hk.len<=MINLEN){ collect(hk.ore); hk.ore=null; hk.state='retract'; hk.len=MINLEN; }
+    return;
+  }
+  if(hk.state==='retract'){
+    hk.len-=EMPTY_SPD*dt;
+    if(hk.len<=MINLEN){ hk.len=MINLEN; hk.state='idle'; }
+  }
+}
+
+function comboMult(){
+  return Math.min(COMBO_CAP, 1+Math.max(0,gm.streak-1)*COMBO_STEP);
+}
+function updateComboChip(){
+  if(gm.streak>=2){
+    comboChip.classList.add('show');
+    const m=comboMult();
+    comboChip.textContent=t('combo',{n:gm.streak})+' ×'+(Math.round(m*100)/100);
+    comboChip.classList.remove('pop'); void comboChip.offsetWidth; comboChip.classList.add('pop');
+  }else{
+    comboChip.classList.remove('show');
+  }
+}
+function updateStatusChip(){
+  if(gm.glueT>0){
+    statusChip.classList.add('show');
+    statusChip.textContent='⚙️ '+t('itemGlue')+' '+Math.ceil(gm.glueT)+'s';
+  }else{
+    statusChip.classList.remove('show');
+  }
+}
+function addScore(base){
+  const v=Math.round(base*comboMult());
+  gm.total=Math.max(0,gm.total+v);
+  gm.lvScore=Math.max(0,gm.lvScore+v);
+  return v;
+}
+function resetCombo(){ gm.streak=0; updateComboChip(); }
+
+/* 炸药：钩尖触到即引爆，清掉半径内的土块，自身消失并震屏 */
+function explodeBomb(o){
+  const x=o.x, y=o.y;
+  const idx=gm.ores.indexOf(o);
+  if(idx>=0) gm.ores.splice(idx,1);
+  let n=0;
+  for(let i=gm.ores.length-1;i>=0;i--){
+    const d=gm.ores[i];
+    if(d.kind!=='dirt') continue;
+    if(Math.hypot(d.x-x,d.y-y)<=BOMB_RADIUS){
+      burst(d.x,d.y,'#8b8175',6,130);
+      gm.ores.splice(i,1); n++;
+    }
+  }
+  gm.boomDirt+=n;
+  oreDirty=true;
+  tone(90,0.26,'sawtooth',0.09); tone(58,0.3,'sine',0.06,0.03);
+  burst(x,y,'#ffb35c',16,240);
+  kickMiner(4.2, 24);   // 爆炸气浪把月巴掀得往下一沉
+  shake(8);
+  showBanner(t('bombBanner',{n:n}));
+}
+
+function collect(o){
+  const x=o.x, y=o.y, idx=gm.ores.indexOf(o);
+  if(idx>=0) gm.ores.splice(idx,1);
+  oreDirty=true;
+  const kind=o.kind;
+  if(kind==='statue'){
+    gm.streak++;
+    const v=addScore(o.score);
+    gm.bestStreak=Math.max(gm.bestStreak,gm.streak);
+    gm.statueCount++;
+    save.statues=(save.statues||0)+1;
+    saveStore();
+    gm.statueOre=null;
+    SFX.statue();
+    shake(7);
+    buzz(45);
+    if(goldFlash){
+      goldFlash.classList.remove('show');
+      void goldFlash.offsetWidth;
+      goldFlash.classList.add('show');
+    }
+    burst(x,y,'#ffe9a8',18,220);
+    popText(x,y-14,'+'+v,'#fff3b0',22);
+    showBanner(t('statueBanner'));
+    kickMiner(-3.2, -46);   // 金像到手：开心地蹦一下
+    gm.quote=t('q5');
+    unlockAch('statue');
+    updateComboChip();
+  }else if(kind==='gem'){
+    gm.streak++;
+    const v=addScore(o.score);
+    gm.bestStreak=Math.max(gm.bestStreak,gm.streak);
+    SFX.gem(); shake(6); buzz(25);
+    burst(x,y,'#9be7ff',14,190);
+    popText(x,y-10,'+'+v,'#d9f7ff',20);
+    kickMiner(-2.4, -30);   // 宝石：小跳
+    gm.quote=t('q2');
+    updateComboChip();
+  }else if(kind==='dirt'){
+    const v=addScore(o.score);
+    resetCombo();
+    SFX.dirt();
+    const bp=o.imgId?POOL_BY_ID[o.imgId]:null;
+    burst(x,y,bp?bp.color:'#6b6257',8,110);
+    popText(x,y-10,'+'+v,'#d9cdbb',16);
+    kickMiner(2.6, 14);   // 泥土入手：轻轻一沉
+    gm.quote=t('q3');
+  }else if(kind==='clock'){
+    gm.time=Math.min(LV_TIME,gm.time+o.bonus);
+    flashTime();
+    SFX.clock();
+    burst(x,y,'#9be07a',10,150);
+    popText(x,y-10,t('plusTime'),'#b8f08a',19);
+  }else if(kind==='small'||kind==='mid'||kind==='big'){
+    gm.streak++;
+    const v=addScore(o.score);
+    gm.bestStreak=Math.max(gm.bestStreak,gm.streak);
+    save.totalOres=(save.totalOres||0)+1;
+    SFX.grab();
+    burst(x,y,'#ff9b8d',7,140);
+    popText(x,y-10,'+'+v,'#ffe0b8',kind==='big'?22:18);
+    kickMiner(kind==='big'?-2.0:-1.2, kind==='big'?-26:-12);   // 大番茄弹得更高
+    updateComboChip();
+  }else if(kind==='rot'){
+    gm.total=Math.max(0,gm.total+o.score);
+    gm.lvScore=Math.max(0,gm.lvScore+o.score);
+    resetCombo();
+    SFX.dirt();
+    tone(180,0.18,'sawtooth',0.06);
+    burst(x,y,'#7e6b4a',10,120);
+    popText(x,y-10,'−40','#c9a86a',18);
+    kickMiner(3.4, 18);   // 吃到烂番茄：嫌弃地往下一缩
+  }else if(kind==='glue'){
+    gm.glueT=GLUE_TIME;
+    updateStatusChip();
+    SFX.clock();
+    burst(x,y,'#7de3ff',12,170);
+    showBanner(t('glueBanner'));
+  }else if(kind==='lamp'){
+    gm.time=Math.min(LV_TIME,gm.time+LAMP_TIME);
+    flashTime();
+    SFX.clock();
+    burst(x,y,'#ffe9a8',12,180);
+    showBanner(t('lampBanner'));
+  }
+  saveStore();
+  checkAch();
+  if(gm.lvScore>=gm.target) levelClear();
+}
+
+let achToastT=null;
+function popToast(txt){
+  achToast.textContent=txt;
+  achToast.classList.add('show');
+  if(achToastT) clearTimeout(achToastT);
+  achToastT=setTimeout(function(){ achToast.classList.remove('show'); },2600);
+}
+/* 道具到手卡片：收到（或已有）隧道通行证时明确提示一次 */
+let itemToastT=null;
+function showItemToast(ok){
+  itemToastKicker.textContent=t(ok?'itemGot':'itemPassOwned');
+  itemToastName.textContent=t('itemPass');
+  itemToastDesc.textContent=t(ok?'itemPassDesc':'itemPassOwnedDesc');
+  itemToast.classList.add('show');
+  if(itemToastT) clearTimeout(itemToastT);
+  itemToastT=setTimeout(function(){ itemToast.classList.remove('show'); },ok?4600:3200);
+  if(ok){ tone(1318,0.1,'triangle',0.1); tone(1760,0.14,'triangle',0.09,0.1); }
+}
+let itemAckT=null;
+function armItemPrompt(){
+  if(itemAckT) clearTimeout(itemAckT);
+  itemAckT=setTimeout(function(){ itemAckT=null; showItemToast(!hasTicket()); },1000);
+}
+window.addEventListener('message',function(e){
+  const d=e&&e.data;
+  if(!d||d.type!=='yueba-gold-item-ack') return;
+  if(String(d.item||'')!=='goldletter') return;
+  if(itemAckT) clearTimeout(itemAckT);
+  itemAckT=null;
+  showItemToast(!!d.ok);
+});
+function sendItem(item){
+  try{
+    if(window.parent&&window.parent!==window){
+      window.parent.postMessage({type:'yueba-gold-item',item:item},'*');
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+function unlockAch(id){
+  if(save.ach[id]) return false;
+  const a=ACHS.filter(function(x){ return x.id===id; })[0];
+  if(!a) return false;
+  save.ach[id]=1;
+  saveStore();
+  popToast(t('achToast',{n:t(a.n)}));
+  tone(1046,0.09,'triangle',0.1);
+  tone(1568,0.12,'triangle',0.09,0.08);
+  return true;
+}
+function checkAch(){
+  if(gm.streak>=8) unlockAch('combo8');
+  if(gm.total>=2000) unlockAch('score2k');
+  if((save.totalOres||0)>=100) unlockAch('ores100');
+  if(Object.keys(save.miners||{}).length>=20) unlockAch('miner20');
+  if(gm.lv>=5) unlockAch('lv5');
+}
+function flashTime(){
+  numTime.classList.remove('flash');
+  void numTime.offsetWidth;
+  numTime.classList.add('flash');
+}
+
+/* ================= 结算 ================= */
+function sendCoins(n){
+  if(!(n>0)) return;
+  try{
+    if(window.parent&&window.parent!==window){
+      window.parent.postMessage({type:'yueba-gold-coins',coins:n},'*');
+    }
+  }catch(e){}
+}
+function levelClear(){
+  if(gm.phase!=='play') return;
+  gm.phase='clear';
+  gm.paused=false;
+  setPauseBtn(false);
+  const bonus=Math.ceil(gm.time)*3;
+  gm.total+=bonus;
+  const coins=Math.round(gm.target/2);
+  gm.coinEarned+=coins;
+  sendCoins(coins);
+  gm.streak=0; updateComboChip();
+  gm.glueT=0; updateStatusChip();
+  save.bestLv=Math.max(save.bestLv,gm.lv);
+  saveStore();
+  SFX.clear();
+  unlockAch('first');
+  // 每日挑战首次达标：送一张隧道通行证到旅行仓库（每天限 1 次，不可叠加）
+  if(gm.daily){
+    const dk=String(dailyKey());
+    if(save.daily.rewarded!==dk){
+      save.daily.rewarded=dk;
+      saveStore();
+      if(!hasTicket()){
+        if(sendItem('goldletter')) armItemPrompt();
+      }else{
+        setTimeout(function(){ showItemToast(false); },620);
+      }
+    }
+  }
+  showBanner(t('clear'));
+  if(bonus>0) popText(PIVOT.x,PIVOT.y+170,'+'+bonus,'#ffe9a8',22);
+  if(coins>0) popText(PIVOT.x,PIVOT.y+205,t('coinBanner',{n:coins}),'#ffd86a',18);
+  updateHUD();
+  gm.quote=t('q4');
+  setTimeout(function(){
+    if(gm.phase==='clear') beginLevel(gm.lv+1);
+  },1900);
+}
+function endRun(){
+  if(gm.phase!=='play') return;
+  gm.phase='over';
+  gm.paused=false;
+  setPauseBtn(false);
+  SFX.fail();
+  gm.streak=0; updateComboChip();
+  gm.glueT=0; updateStatusChip();
+  if(gm.daily){
+    const key=String(dailyKey());
+    if(save.daily.key!==key){ save.daily={key:key,best:0,plays:0,rewarded:save.daily.rewarded||''}; }
+    save.daily.best=Math.max(save.daily.best,gm.total);
+    save.daily.plays=(save.daily.plays||0)+1;
+    gm.newRecord=gm.total>=save.daily.best&&gm.total>0;
+    unlockAch('daily');
+  }else{
+    gm.newRecord=gm.total>save.best;
+    if(gm.newRecord) save.best=gm.total;
+  }
+  saveStore();
+  updateFoot();
+  showSettle();
+}
+
+/* ================= 面板 ================= */
+function showStart(){
+  gm.phase='start';
+  gm.daily=false;
+  gm.paused=false;
+  setPauseBtn(false);
+  gm.streak=0; updateComboChip(); gm.glueT=0; updateStatusChip();
+  const m=gm.miner||POOL[0];
+  const met=Object.keys(save.miners||{}).length;
+  const achN=Object.keys(save.ach||{}).length;
+  panel.innerHTML=
+    '<div class="kicker">GOLD VEIN</div>'
+    +'<div class="pt">'+esc(t('startTitle'))+'</div>'
+    +'<div class="av"><div class="inner">'+avatarHTML(m)+'</div>'
+      +'<div class="helmet"><span class="dome"></span><span class="brim"></span><span class="lamp"></span></div></div>'
+    +'<div class="nm">'+esc(t('startMiner',{n:m.name}))+'</div>'
+    +'<div class="qt">“'+esc(t('q1',{n:m.name}))+'”</div>'
+    +'<div class="st">'+esc(t('statLine',{n:met,m:save.statues||0}))+'</div>'
+    +'<div class="btnw">'
+      +'<button class="primary" data-act="start">'+esc(t('startBtn'))+'</button>'
+      +'<button class="ghost" data-act="daily">'+esc(t('dailyBtn'))+'</button>'
+    +'</div>'
+    +'<div class="btnw half">'
+      +'<button class="ghost" data-act="codex">'+esc(t('codexBtn'))+' '+met+'</button>'
+      +'<button class="ghost" data-act="ach">'+esc(t('achBtn'))+' '+achN+'/'+ACHS.length+'</button>'
+    +'</div>';
+  overlay.classList.add('show');
+  minerAv.innerHTML=avatarHTML(m);
+  minerName.textContent=m.name;
+}
+function showSettle(){
+  const m=gm.miner||POOL[0];
+  const bestVal=gm.daily?save.daily.best:save.best;
+  panel.innerHTML=
+    '<div class="kicker">'+(gm.daily?'DAILY':'RESULT')+'</div>'
+    +'<div class="pt">'+esc(gm.lvScore>=gm.target?t('clearTitle'):t('overTitle'))+'</div>'
+    +'<div class="nm" style="margin-top:6px">'+esc(m.name)+'</div>'
+    +(gm.daily?'<div class="mode">'+esc(t('dailyBest',{n:save.daily.best}))+'</div>':'')
+    +'<div class="rows">'
+      +'<div class="row"><span>'+esc(t('total'))+'</span><b id="svTotal">'+gm.total+'</b></div>'
+      +'<div class="row"><span>'+esc(t('level'))+'</span><b id="svLv">'+gm.lv+'</b></div>'
+      +'<div class="row"><span>'+esc(t('statues'))+'</span><b id="svStatue">'+gm.statueCount+'</b></div>'
+      +'<div class="row"><span>🪙</span><b id="svCoin">+'+gm.coinEarned+'</b></div>'
+      +'<div class="row"><span>'+esc(t('bestRow'))+'</span><b id="svBest">'+bestVal+'</b></div>'
+    +'</div>'
+    +(gm.newRecord?'<div class="badge">'+esc(t('newRecord'))+'</div>':'')
+    +'<div class="btnw">'
+      +'<button class="primary" data-act="again">'+esc(t('again'))+'</button>'
+      +'<button class="ghost" data-act="ach">'+esc(t('achBtn'))+'</button>'
+    +'</div>';
+  overlay.classList.add('show');
+  updateHUD();
+  // 结算数字滚动
+  countUp('svTotal',gm.total,520);
+  countUp('svLv',gm.lv,360);
+  countUp('svStatue',gm.statueCount,420);
+  countUp('svCoin',gm.coinEarned,520,true);
+  countUp('svBest',bestVal,520);
+}
+/* 结算数字从 0 滚到目标值；用 setTimeout 链，避免额外占用 rAF */
+function countUp(id,to,dur,prefix){
+  const el=document.getElementById(id);
+  if(!el||!(to>0)) return;
+  const steps=12, iv=Math.max(20,Math.round((dur||480)/steps));
+  let i=0;
+  const tick=function(){
+    i++;
+    const p=i/steps;
+    const e=1-Math.pow(1-p,3);
+    el.textContent=(prefix?'+':'')+Math.round(to*e);
+    if(i<steps) setTimeout(tick,iv);
+    else el.textContent=(prefix?'+':'')+to;
+  };
+  setTimeout(tick,iv);
+}
+function showCodex(){
+  const ids=Object.keys(save.miners||{}).filter(function(id){ return POOL_BY_ID[id]; })
+    .sort(function(a,b){ return (save.miners[b]||0)-(save.miners[a]||0); });
+  let body='';
+  if(!ids.length){
+    body='<div class="st">'+esc(t('codexEmpty'))+'</div>';
+  }else{
+    body='<div class="grid">'+ids.map(function(id){
+      const p=POOL_BY_ID[id];
+      return '<div class="gcell"><span class="gc">'+(save.miners[id]||0)+'</span>'
+        +'<div class="ga">'+avatarHTML(p)+'</div>'
+        +'<div class="gn">'+esc(p.name)+'</div></div>';
+    }).join('')+'</div>';
+  }
+  panel.innerHTML=
+    '<div class="kicker">CODEX</div>'
+    +'<div class="pt" style="font-size:18px;letter-spacing:3px">'+esc(t('codexTitle'))+'</div>'
+    +'<div class="st">'+esc(t('statLine',{n:ids.length,m:save.statues||0}))+'</div>'
+    +body
+    +'<div class="btnw"><button class="ghost" data-act="back">'+esc(t('back'))+'</button></div>';
+  overlay.classList.add('show');
+}
+function showAch(){
+  const got=Object.keys(save.ach||{}).length;
+  const list=ACHS.map(function(a){
+    const on=!!save.ach[a.id];
+    return '<div class="aitem '+(on?'on':'off')+'"><span class="dot"></span><div>'
+      +'<div class="an">'+esc(t(a.n))+'</div><div class="ad">'+esc(t(a.d))+'</div></div></div>';
+  }).join('');
+  panel.innerHTML=
+    '<div class="kicker">TROPHY</div>'
+    +'<div class="pt" style="font-size:18px;letter-spacing:3px">'+esc(t('achTitle'))+'</div>'
+    +'<div class="st">'+esc(t('achCount',{n:got,m:ACHS.length}))+'</div>'
+    +'<div class="alist">'+list+'</div>'
+    +'<div class="btnw"><button class="ghost" data-act="back">'+esc(t('back'))+'</button></div>';
+  overlay.classList.add('show');
+}
+function startDaily(){
+  gm.daily=true;
+  seedRng(hashNum(dailyKey()));   // 只固定矿图；矿工沿用开始面板展示的「本局矿工」
+  if(!gm.miner) gm.miner=pickMiner();
+  overlay.classList.remove('show');
+  startGame();
+}
+
+/* ================= 暂停 ================= */
+function setPauseBtn(on){ pauseBtn.classList.toggle('on', !!on); }
+function showPause(){
+  panel.innerHTML=
+    '<div class="kicker">PAUSED</div>'
+    +'<div class="pt">'+esc(t('paused'))+'</div>'
+    +'<div class="st">'+esc(t('pauseHint'))+'</div>'
+    +'<div class="btnw">'
+      +'<button class="primary" data-act="resume">'+esc(t('resume'))+'</button>'
+      +'<button class="ghost" data-act="end">'+esc(t('endBtn'))+'</button>'
+    +'</div>';
+  overlay.classList.add('show');
+}
+function pauseGame(){
+  if(gm.phase!=='play'||gm.paused) return;
+  gm.paused=true;
+  setPauseBtn(false);
+  showPause();
+}
+function resumeGame(){
+  if(!gm.paused) return;
+  gm.paused=false;
+  setPauseBtn(true);
+  overlay.classList.remove('show');
+  gm.last=0;
+}
+
+panel.addEventListener('click',function(e){
+  const b=e.target.closest('button[data-act]');
+  if(!b) return;
+  const act=b.getAttribute('data-act');
+  SFX.click();
+  if(act==='start'){
+    gm.daily=false; resetRng();
+    overlay.classList.remove('show');
+    startGame();
+  }else if(act==='again'){
+    overlay.classList.remove('show');
+    if(gm.daily){ startDaily(); }
+    else{ gm.miner=pickMiner(); startGame(); }
+  }else if(act==='daily'){
+    startDaily();
+  }else if(act==='codex'){
+    showCodex();
+  }else if(act==='ach'){
+    showAch();
+  }else if(act==='resume'){
+    resumeGame();
+  }else if(act==='end'){
+    endRun();
+  }else if(act==='back'){
+    gm.daily=false; resetRng();
+    gm.miner=pickMiner();
+    showStart();
+  }
+});
+pauseBtn.addEventListener('pointerdown',function(e){ e.stopPropagation(); });
+pauseBtn.addEventListener('click',function(e){
+  e.stopPropagation();
+  SFX.click();
+  pauseGame();
+});
+
+function showBanner(txt){
+  bannerEl.textContent=txt;
+  bannerEl.classList.remove('show');
+  void bannerEl.offsetWidth;
+  bannerEl.classList.add('show');
+}
+
+/* ================= 金像同步 ================= */
+function syncStatue(){
+  const o=gm.statueOre;
+  const list=gm.ores.filter(function(x){ return x.kind==='statue'; });
+  const st=list.length?list[0]:null;
+  if(!st){ statueBox.style.display='none'; return; }
+  statueBox.style.display='block';
+  const x=st.x, y=st.y;
+  statueBox.style.transform='translate('+(x-30)+'px,'+(y-30)+'px)';
+}
+function statueFallback(){
+  return '<svg viewBox="0 0 40 40">'
+    +'<circle cx="20" cy="23" r="13" fill="#e8b93f" stroke="#a67c14" stroke-width="1.4"/>'
+    +'<path d="M20 9 L23 15 L20 14 L17 15 Z" fill="#6ea544"/>'
+    +'<ellipse cx="14.5" cy="15.5" rx="3" ry="1.6" fill="#ffe9a8" opacity=".8"/>'
+    +'<circle cx="20" cy="23" r="13" fill="none" stroke="#fff3b0" stroke-width="1" opacity=".7"/>'
+    +'</svg>';
+}
+statueImg.addEventListener('error',function(){
+  statueImg.style.display='none';
+  if(!statueBox.querySelector('svg')){
+    const d=document.createElement('div');
+    d.innerHTML=statueFallback();
+    statueBox.appendChild(d.firstChild);
+  }
+});
+statueImg.src=STATUE_SRC;
+
+/* ================= 绘制 ================= */
+/* 渐变缓存：静态背景只建一次；矿点静止时复用，被钩住移动时才重建，降低每帧分配 */
+let BG_G=null, PIT_GLOW=null;
+
+/* 岩层配色：每 5 关换一层，深处更冷 */
+const BANDS=[
+  {a:'#07202b', b:'#05161f', c:'#020b11', line:'rgba(120,232,255,.045)', pit:'#0a2632', glow:'70,230,242'},
+  {a:'#06251f', b:'#041813', c:'#020c09', line:'rgba(120,255,214,.045)', pit:'#0a2b23', glow:'70,242,190'},
+  {a:'#0d1830', b:'#070f20', c:'#03060f', line:'rgba(150,180,255,.05)',  pit:'#101a38', glow:'120,150,255'}
+];
+function drawBg(){
+  const pal=BANDS[(gm.band||0)%BANDS.length];
+  if(!BG_G){
+    BG_G=ctx.createLinearGradient(0,0,0,H);
+    BG_G.addColorStop(0,pal.a);
+    BG_G.addColorStop(0.28,pal.b);
+    BG_G.addColorStop(1,pal.c);
+  }
+  ctx.fillStyle=BG_G;
+  ctx.fillRect(0,0,W,H);
+
+  // 井口柔光：只留月巴身后一团，把角色从背景里托出来
+  if(!PIT_GLOW){
+    PIT_GLOW=ctx.createRadialGradient(PIVOT.x,PIVOT.y-34,8,PIVOT.x,PIVOT.y-34,136);
+    PIT_GLOW.addColorStop(0,'rgba('+pal.glow+',.15)');
+    PIT_GLOW.addColorStop(.5,'rgba('+pal.glow+',.05)');
+    PIT_GLOW.addColorStop(1,'rgba('+pal.glow+',0)');
+  }
+  ctx.fillStyle=PIT_GLOW;
+  ctx.fillRect(PIVOT.x-140,0,280,PIVOT.y+96);
+
+  // 土层纹理：从平台下方开始，线条更轻更平
+  ctx.strokeStyle=pal.line;
+  ctx.lineWidth=1;
+  for(let y=196;y<H;y+=52){
+    ctx.beginPath();
+    for(let x=0;x<=W;x+=48){
+      const yy=y+Math.sin((x+y)*0.018)*2.6;
+      if(x===0) ctx.moveTo(x,yy); else ctx.lineTo(x,yy);
+    }
+    ctx.stroke();
+  }
+  // 矿口平台：干净的地台 + 顶缘冷光
+  ctx.fillStyle=pal.pit;
+  ctx.beginPath();
+  ctx.ellipse(PIVOT.x,PIVOT.y+4,76,14,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='rgba('+pal.glow+',.09)';
+  ctx.beginPath();
+  ctx.ellipse(PIVOT.x,PIVOT.y+2,64,9,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle='rgba('+pal.glow+',.34)';
+  ctx.lineWidth=1.2;
+  ctx.beginPath();
+  ctx.ellipse(PIVOT.x,PIVOT.y+4,76,14,0,Math.PI*1.04,Math.PI*1.96);
+  ctx.stroke();
+  // 月巴脚下压暗，稳住重心
+  ctx.fillStyle='rgba(2,10,16,.5)';
+  ctx.beginPath();
+  ctx.ellipse(PIVOT.x,PIVOT.y+2,32,7,0,0,Math.PI*2);
+  ctx.fill();
+}
+
+/* ================= HD-2D 像素番茄 ================= */
+/* 本体在 26×30 的像素格上烘焙：硬边轮廓 + 分级色带 + 像素高光，
+   运行时再叠柔光和右下冷调轮廓光，得到「像素本体 + 现代光照」的 HD-2D 观感 */
+const TOM_W=26, TOM_H=30, TOM_CX=13, TOM_CY=16.5, TOM_RX=11, TOM_RY=10.2;
+const TOM_PAL={
+  normal:{edge:'#2a0b0c', deep:'#5f1719', shadow:'#8d2622', base:'#c0352b',
+          light:'#e05244', high:'#ff8672', spec:'#ffd3bd', rim:'#69c3d2'},
+  big:   {edge:'#2a0b0c', deep:'#641a1c', shadow:'#952a25', base:'#ca3a2e',
+          light:'#eb5a4b', high:'#ff8f79', spec:'#ffd8c4', rim:'#7ad4e4'},
+  rot:   {edge:'#241a10', deep:'#35281a', shadow:'#4f3d26', base:'#6a5236',
+          light:'#826846', high:'#9d8158', spec:'#c5ad80', rim:'#6d9a8c'}
+};
+const TOM_SPRITES={};
+const TOM_MOLD=[[8,19],[9,20],[10,19],[17,21],[18,22],[17,14],[7,23],[18,11],[10,24]];
+
+function makeTomatoSprite(kind, variant){
+  const pal=TOM_PAL[kind==='rot'?'rot':(kind==='big'?'big':'normal')];
+  const c=document.createElement('canvas');
+  c.width=TOM_W; c.height=TOM_H;
+  const g=c.getContext('2d');
+  g.imageSmoothingEnabled=false;
+  const bands=[pal.deep,pal.shadow,pal.base,pal.light,pal.high,pal.spec];
+  const cuts=[0.24,0.40,0.56,0.72,0.86];
+  // 球体：以左上光点为圆心算亮度，量化成 6 级色带（像素画的明暗分层）
+  const lx=-0.52, ly=-0.58;
+  for(let py=0;py<TOM_H;py++){
+    for(let px=0;px<TOM_W;px++){
+      const nx=(px+0.5-TOM_CX)/TOM_RX, ny=(py+0.5-TOM_CY)/TOM_RY;
+      const d=Math.sqrt(nx*nx+ny*ny);
+      if(d>1) continue;
+      if(d>0.9){
+        const cool=(nx*0.45+ny*0.9)>0.22;
+        g.fillStyle=cool?pal.rim:pal.edge;
+        g.fillRect(px,py,1,1);
+        continue;
+      }
+      let B=1-0.52*Math.sqrt((nx-lx)*(nx-lx)+(ny-ly)*(ny-ly));
+      if(d>0.84) B-=0.10;
+      B+=((((Math.sin(px*12.9898+py*78.233+variant*7.13)*43758.5453)%1)+1)%1)*0.04-0.02;
+      let bi=0;
+      while(bi<cuts.length&&B>cuts[bi]) bi++;
+      g.fillStyle=bands[bi];
+      g.fillRect(px,py,1,1);
+    }
+  }
+  // 硬边高光 / 霉斑
+  if(kind!=='rot'){
+    g.fillStyle=pal.spec;
+    g.fillRect(9,11,1,1);
+  }else{
+    for(let i=0;i<TOM_MOLD.length;i++){
+      g.fillStyle=i%2?'#b8c08d':'#8a9a68';
+      g.fillRect(TOM_MOLD[i][0],TOM_MOLD[i][1],1,1);
+    }
+    g.fillStyle='#2f2416';
+    g.fillRect(9,21,1,1); g.fillRect(16,15,1,1);
+  }
+  // 五片像素绿萼：叶片从蒂芯向外伸出，压在果肩上方
+  const hubX=TOM_CX, hubY=6.8;
+  const baseA=-Math.PI/2+variant*0.13;
+  for(let py=0;py<TOM_H;py++){
+    for(let px=0;px<TOM_W;px++){
+      const dx=px+0.5-hubX, dy=py+0.5-hubY;
+      let q=-1;
+      if(dx*dx+dy*dy<=2.1) q=0;
+      else{
+        for(let i=0;i<5;i++){
+          const a=baseA+i*Math.PI*2/5, ca=Math.cos(a), sa=Math.sin(a);
+          const ox=ca*2.3, oy=sa*2.3;
+          const u=((dx-ox)*ca+(dy-oy)*sa)/2.3;
+          const v=(-(dx-ox)*sa+(dy-oy)*ca)/1.15;
+          const e=u*u+v*v;
+          if(e<=1&&(q<0||e<q)) q=e;
+        }
+      }
+      if(q<0) continue;
+      let col;
+      if(q>0.62) col='#0e3a29';
+      else if(q>0) col='#2f9469';
+      else col='#1c6b4d';
+      if(q>0&&q<=0.62&&(-0.5*dx-0.72*dy)>0) col='#54c08c';
+      g.fillStyle=col;
+      g.fillRect(px,py,1,1);
+    }
+  }
+  // 小藤
+  g.fillStyle='#123d2c'; g.fillRect(12,3,2,4);
+  g.fillStyle='#3f9a70'; g.fillRect(12,3,1,4);
+  g.fillStyle='#0d2c20'; g.fillRect(12,6,2,1);
+  return c;
+}
+
+function tomatoSprite(kind, seed){
+  const k=kind==='big'?'big':(kind==='rot'?'rot':'normal');
+  const v=Math.floor((seed||0)*3)%4;
+  const key=k+'|'+v;
+  if(!TOM_SPRITES[key]) TOM_SPRITES[key]=makeTomatoSprite(k, v);
+  return TOM_SPRITES[key];
+}
+
+/* 漂浮矿尘：廉价的视差层，让静态背景有空气感 */
+function drawDust(){
+  if(document.body.classList.contains('lp')) return;
+  const t=performance.now()/1000;
+  const pal=BANDS[(gm.band||0)%BANDS.length];
+  ctx.fillStyle='rgba('+pal.glow+',.12)';
+  for(let i=0;i<12;i++){
+    const x=(i*97 + Math.sin(t*0.35+i*1.3)*22 + 480)%480;
+    const y=(i*151 + t*(9+i%4*3))%720;
+    ctx.beginPath();
+    ctx.arc(x,y,1+ (i%3)*0.5,0,Math.PI*2);
+    ctx.fill();
+  }
+}
+
+function drawTomato(o){
+  const x=o.x, y=o.y, r=o.r, rot=o.kind==='rot';
+  // 土丘 + 冷光地圈
+  ctx.fillStyle='rgba(2,10,16,.75)';
+  ctx.beginPath();
+  ctx.ellipse(x,y+r*0.82,r*0.9,r*0.32,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle='rgba(70,230,242,.16)';
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.ellipse(x,y+r*0.82,r*0.9,r*0.32,0,0,Math.PI*2);
+  ctx.stroke();
+  // 柔光晕：像素本体外的暖色 bloom（腐烂番茄偏土黄）
+  ctx.save();
+  ctx.globalCompositeOperation='lighter';
+  const gr=ctx.createRadialGradient(x-r*0.28,y-r*0.32,r*0.1,x,y,r*1.72);
+  if(rot){
+    gr.addColorStop(0,'rgba(150,132,86,.16)');
+    gr.addColorStop(.55,'rgba(120,108,70,.05)');
+  }else{
+    gr.addColorStop(0,'rgba(255,120,92,.22)');
+    gr.addColorStop(.55,'rgba(255,80,58,.08)');
+  }
+  gr.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=gr;
+  ctx.beginPath();
+  ctx.ellipse(x,y,r*1.72,r*1.55,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+  // 像素本体：关闭插值放大，保持硬边颗粒
+  const sp=tomatoSprite(o.kind, o.seed);
+  const s=r/TOM_RX;
+  const w=Math.round(TOM_W*s*DPR)/DPR;
+  const h=Math.round(TOM_H*s*DPR)/DPR;
+  const ox=Math.round((x-TOM_CX*s)*DPR)/DPR;
+  const oy=Math.round((y-TOM_CY*s)*DPR)/DPR;
+  const smooth=ctx.imageSmoothingEnabled;
+  ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(sp, ox, oy, w, h);
+  ctx.imageSmoothingEnabled=smooth;
+  // 右下冷调轮廓光：HD-2D 的「现代光照」层
+  ctx.save();
+  ctx.globalCompositeOperation='lighter';
+  ctx.strokeStyle=rot?'rgba(140,210,190,.14)':'rgba(150,240,255,.17)';
+  ctx.lineWidth=Math.max(1,r*0.07);
+  ctx.beginPath();
+  ctx.ellipse(x,y,r*0.97,r*0.92,0,Math.PI*0.14,Math.PI*0.62);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/* 钻石本体：番茄金像外链图缩小当「钻石番茄」，再叠冷光 + 星芒特效 */
+const GEM_SRC=STATUE_SRC;
+let GEM_IMG=null;
+function gemImage(){
+  if(!GEM_IMG){
+    GEM_IMG=new Image(); GEM_IMG.decoding='async';
+    // 图晚到时重烘焙一次静态矿点，避免一直停在矢量占位
+    GEM_IMG.onload=function(){ oreDirty=true; };
+    GEM_IMG.onerror=function(){ oreDirty=true; };
+    GEM_IMG.src=GEM_SRC;
+  }
+  return (GEM_IMG.complete&&GEM_IMG.naturalWidth>0)?GEM_IMG:null;
+}
+/* 四芒星：两层细长菱形交叉，配合叠加混合得到钻石星芒 */
+function gemStar(x,y,len,alpha,rot){
+  ctx.save();
+  ctx.translate(x,y);
+  ctx.rotate(rot);
+  ctx.globalAlpha=alpha;
+  ctx.fillStyle='#eafcff';
+  for(let i=0;i<2;i++){
+    ctx.rotate(i?Math.PI/2:0);
+    ctx.beginPath();
+    ctx.moveTo(0,-len);
+    ctx.quadraticCurveTo(len*0.14,0,0,len);
+    ctx.quadraticCurveTo(-len*0.14,0,0,-len);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+function drawGemShape(o){
+  // 外链图未就绪时的矢量占位（仍是旧宝石轮廓，避免空窗）
+  const x=o.x, y=o.y, r=o.r;
+  const g=ctx.createLinearGradient(x-r,y-r,x+r,y+r);
+  g.addColorStop(0,'#ffd6cf');
+  g.addColorStop(0.35,'#ff7b6b');
+  g.addColorStop(0.62,'#ffb3a6');
+  g.addColorStop(1,'#c9342b');
+  ctx.beginPath();
+  ctx.moveTo(x,y-r);
+  ctx.lineTo(x+r*0.78,y-r*0.25);
+  ctx.lineTo(x+r*0.5,y+r*0.75);
+  ctx.lineTo(x-r*0.5,y+r*0.75);
+  ctx.lineTo(x-r*0.78,y-r*0.25);
+  ctx.closePath();
+  ctx.fillStyle=g; ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.85)'; ctx.lineWidth=1.4; ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.55)'; ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.moveTo(x-r*0.5,y-r*0.25); ctx.lineTo(x+r*0.5,y-r*0.25);
+  ctx.moveTo(x,y-r); ctx.lineTo(x,y+r*0.75);
+  ctx.stroke();
+}
+function drawGem(o){
+  const x=o.x, y=o.y, r=o.r;
+  const t=performance.now()/1000;
+  const pulse=0.5+0.5*Math.sin(t*2.1+o.seed);
+  ctx.fillStyle='rgba(2,10,16,.7)';
+  ctx.beginPath(); ctx.ellipse(x,y+r*0.85,r*0.9,r*0.3,0,0,Math.PI*2); ctx.fill();
+  // 冷光晕：钻石的呼吸底光
+  ctx.save();
+  ctx.globalCompositeOperation='lighter';
+  const halo=ctx.createRadialGradient(x,y,r*0.15,x,y,r*2.05);
+  halo.addColorStop(0,'rgba(160,242,255,'+(0.20+0.12*pulse).toFixed(3)+')');
+  halo.addColorStop(.55,'rgba(70,230,242,'+(0.08+0.05*pulse).toFixed(3)+')');
+  halo.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=halo;
+  ctx.beginPath(); ctx.arc(x,y,r*2.05,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+  // 本体：番茄外链图缩到与旧钻石同尺寸（直径约 2r）
+  const im=gemImage();
+  if(im){
+    const s=r*1.96;
+    ctx.drawImage(im,x-s/2,y-s/2,s,s);
+  }else{
+    drawGemShape(o);
+  }
+  // 冷调轮廓光 + 偶发高光扫过（钻石切面感）
+  ctx.save();
+  ctx.globalCompositeOperation='lighter';
+  ctx.strokeStyle='rgba(190,250,255,'+(0.30+0.20*pulse).toFixed(3)+')';
+  ctx.lineWidth=Math.max(1,r*0.07);
+  ctx.beginPath();
+  ctx.ellipse(x,y,r*0.94,r*0.9,0,Math.PI*0.1,Math.PI*0.66);
+  ctx.stroke();
+  const cyc=(t*0.42+o.seed*0.16)%1;
+  if(cyc<0.4){
+    const k=cyc/0.4;                       // 0→1 扫过本体
+    const gx=x-r*1.1+k*r*2.2;
+    const gleam=ctx.createLinearGradient(gx-r*0.5,y-r,gx+r*0.5,y+r);
+    gleam.addColorStop(0,'rgba(255,255,255,0)');
+    gleam.addColorStop(.5,'rgba(225,252,255,.42)');
+    gleam.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.save();
+    ctx.beginPath(); ctx.arc(x,y,r*0.96,0,Math.PI*2); ctx.clip();
+    ctx.fillStyle=gleam;
+    ctx.fillRect(x-r,y-r,r*2,r*2);
+    ctx.restore();
+  }
+  ctx.restore();
+  // 星芒：主星呼吸闪烁 + 两颗小星环绕
+  const tw=Math.pow(0.5+0.5*Math.sin(t*3.1+o.seed*5.7),2);
+  ctx.save();
+  ctx.globalCompositeOperation='lighter';
+  gemStar(x-r*0.22,y-r*0.3,r*(0.55+0.25*tw),0.35+0.55*tw,t*0.25);
+  const a1=t*0.9+o.seed;
+  gemStar(x+Math.cos(a1)*r*1.15,y+Math.sin(a1)*r*0.92,Math.max(2,r*0.16),0.25+0.45*tw,Math.PI/4);
+  const a2=-a1*0.7+1.7;
+  gemStar(x+Math.cos(a2)*r*1.05,y+Math.sin(a2)*r*1.0,Math.max(1.6,r*0.11),0.2+0.4*(1-tw),0);
+  ctx.restore();
+}
+
+function drawClock(o){
+  drawTomato({x:o.x,y:o.y,r:o.r*1.02,kind:'mid',seed:o.seed});
+  const x=o.x, y=o.y, r=o.r*0.62;
+  ctx.fillStyle='#082b39';
+  ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#46e6f2'; ctx.lineWidth=1.6; ctx.stroke();
+  ctx.strokeStyle='#b0f9ff'; ctx.lineWidth=2.2; ctx.lineCap='round';
+  const ang=performance.now()/900;
+  ctx.beginPath();
+  ctx.moveTo(x,y); ctx.lineTo(x+Math.cos(ang)*r*0.55,y+Math.sin(ang)*r*0.55);
+  ctx.moveTo(x,y); ctx.lineTo(x+Math.cos(ang*0.4-1.2)*r*0.42,y+Math.sin(ang*0.4-1.2)*r*0.42);
+  ctx.stroke();
+  ctx.fillStyle='#ff5468';
+  ctx.beginPath(); ctx.arc(x,y,1.8,0,Math.PI*2); ctx.fill();
+}
+
+function drawDirt(o){
+  const x=o.x, y=o.y, r=o.r;
+  const im=o.imgId?bannyImage(o.imgId):null;
+  // 投影
+  ctx.fillStyle='rgba(2,10,16,.7)';
+  ctx.beginPath(); ctx.ellipse(x,y+r*0.85,r*0.9,r*0.3,0,0,Math.PI*2); ctx.fill();
+  if(im){
+    // 圆形立绘牌：任意外链图都裁进冷光圆盘，观感统一
+    ctx.save();
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.clip();
+    ctx.fillStyle='#0e2b36';
+    ctx.fillRect(x-r,y-r,r*2,r*2);
+    const s=r*2.35;
+    ctx.drawImage(im,x-s/2,y-s/2,s,s);
+    ctx.restore();
+    ctx.strokeStyle='rgba(120,232,255,.5)';
+    ctx.lineWidth=Math.max(1,r*0.07);
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.stroke();
+    ctx.strokeStyle='rgba(200,252,255,.55)';
+    ctx.lineWidth=Math.max(.8,r*0.04);
+    ctx.beginPath(); ctx.arc(x,y,r*0.94,Math.PI*1.12,Math.PI*1.72); ctx.stroke();
+    return;
+  }
+  const pts=6, seed=o.seed;
+  ctx.beginPath();
+  for(let i=0;i<pts;i++){
+    const a=i/pts*Math.PI*2+seed*0.3;
+    const rr=r*(0.82+((Math.sin(seed+i*2.1)+1)/2)*0.26);
+    const px=x+Math.cos(a)*rr, py=y+Math.sin(a)*rr*0.92;
+    if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  ctx.closePath();
+  const g=ctx.createLinearGradient(x,y-r,x,y+r);
+  g.addColorStop(0,'#6b6257'); g.addColorStop(1,'#3a3630');
+  ctx.fillStyle=g; ctx.fill();
+  ctx.strokeStyle='#2b2721'; ctx.lineWidth=1.2; ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.12)';
+  for(let i=0;i<3;i++){
+    const a=seed+i*1.7;
+    ctx.beginPath();
+    ctx.arc(x+Math.cos(a)*r*0.4, y+Math.sin(a)*r*0.35, r*0.11,0,Math.PI*2);
+    ctx.fill();
+  }
+}
+
+/* ---------- 道具 / 腐烂番茄 ---------- */
+function drawBomb(o){
+  const x=o.x, y=o.y, r=o.r;
+  ctx.fillStyle='rgba(0,0,0,.35)';
+  ctx.beginPath(); ctx.ellipse(x,y+r*0.86,r*0.9,r*0.3,0,0,Math.PI*2); ctx.fill();
+  const g=ctx.createRadialGradient(x-r*0.35,y-r*0.4,r*0.18,x,y,r);
+  g.addColorStop(0,'#66707c'); g.addColorStop(.55,'#353c45'); g.addColorStop(1,'#171b20');
+  ctx.fillStyle=g;
+  ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#6f7a86'; ctx.lineWidth=1.4; ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.35)';
+  ctx.beginPath(); ctx.ellipse(x-r*0.34,y-r*0.36,r*0.24,r*0.14,-0.5,0,Math.PI*2); ctx.fill();
+  // 引线
+  ctx.strokeStyle='#c9a86a'; ctx.lineWidth=2.2; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(x,y-r*0.9);
+  ctx.quadraticCurveTo(x+r*0.5,y-r*1.25,x+r*0.28,y-r*1.5);
+  ctx.stroke();
+  // 火花
+  const tw=0.6+0.4*Math.sin(performance.now()/90);
+  ctx.fillStyle='#ffd76a';
+  ctx.beginPath(); ctx.arc(x+r*0.28,y-r*1.5,r*0.2*tw+1.6,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(255,235,160,.55)';
+  ctx.beginPath(); ctx.arc(x+r*0.28,y-r*1.5,r*0.5*tw+2.4,0,Math.PI*2); ctx.fill();
+}
+/* 马达：金属机身 + 散热鳍片 + 常转不休的风扇，一眼看出「拉速 ×2」 */
+function drawMotor(o){
+  const x=o.x, y=o.y, r=o.r;
+  const spin=performance.now()/180;
+  ctx.fillStyle='rgba(0,0,0,.3)';
+  ctx.beginPath(); ctx.ellipse(x,y+r*0.9,r*0.9,r*0.28,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(125,227,255,.14)';
+  ctx.beginPath(); ctx.arc(x,y,r*1.2,0,Math.PI*2); ctx.fill();
+  // 机身
+  const g=ctx.createLinearGradient(x,y-r*0.62,x,y+r*0.62);
+  g.addColorStop(0,'#aec2cf'); g.addColorStop(.44,'#5f7484'); g.addColorStop(1,'#27333e');
+  ctx.fillStyle=g;
+  ctx.beginPath();
+  if(ctx.roundRect) ctx.roundRect(x-r*0.8,y-r*0.62,r*1.5,r*1.24,r*0.2);
+  else ctx.rect(x-r*0.8,y-r*0.62,r*1.5,r*1.24);
+  ctx.fill();
+  ctx.strokeStyle='rgba(215,245,255,.72)'; ctx.lineWidth=1.2; ctx.stroke();
+  // 散热鳍片
+  ctx.strokeStyle='rgba(8,22,30,.45)'; ctx.lineWidth=1;
+  for(let i=0;i<4;i++){
+    const bx=x-r*0.6+i*r*0.23;
+    ctx.beginPath(); ctx.moveTo(bx,y-r*0.42); ctx.lineTo(bx,y+r*0.24); ctx.stroke();
+  }
+  // 接线端子
+  ctx.fillStyle='#d8a54a';
+  ctx.fillRect(x-r*0.52,y-r*0.84,r*0.28,r*0.22);
+  // 前端风扇
+  const fx=x+r*0.52, fy=y, fr=r*0.42;
+  ctx.fillStyle='#0f1c25';
+  ctx.beginPath(); ctx.arc(fx,fy,fr,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(150,240,255,.8)'; ctx.lineWidth=1.1; ctx.stroke();
+  ctx.save();
+  ctx.translate(fx,fy); ctx.rotate(spin);
+  ctx.fillStyle='rgba(168,228,242,.92)';
+  for(let i=0;i<3;i++){
+    ctx.rotate(Math.PI*2/3);
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.quadraticCurveTo(fr*0.55,-fr*0.5,fr*0.92,-fr*0.1);
+    ctx.quadraticCurveTo(fr*0.5,fr*0.14,0,0);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+  ctx.fillStyle='#0b1620';
+  ctx.beginPath(); ctx.arc(fx,fy,fr*0.22,0,Math.PI*2); ctx.fill();
+}
+function drawLamp(o){
+  const x=o.x, y=o.y, r=o.r;
+  ctx.fillStyle='rgba(255,215,106,.14)';
+  ctx.beginPath(); ctx.arc(x,y,r*1.3,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,.3)';
+  ctx.beginPath(); ctx.ellipse(x,y+r*0.92,r*0.72,r*0.24,0,0,Math.PI*2); ctx.fill();
+  // 提手
+  ctx.strokeStyle='#8f9aa6'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(x,y-r*0.78,r*0.42,Math.PI,0); ctx.stroke();
+  // 灯体
+  const g=ctx.createLinearGradient(x,y-r*0.6,x,y+r*0.7);
+  g.addColorStop(0,'#ffe9a8'); g.addColorStop(.5,'#ffd76a'); g.addColorStop(1,'#c98f1f');
+  ctx.fillStyle=g;
+  ctx.beginPath();
+  ctx.roundRect ? ctx.roundRect(x-r*0.6,y-r*0.55,r*1.2,r*1.2,r*0.22)
+                : ctx.rect(x-r*0.6,y-r*0.55,r*1.2,r*1.2);
+  ctx.fill();
+  ctx.strokeStyle='#8c6a1c'; ctx.lineWidth=1.3; ctx.stroke();
+  ctx.fillStyle='#fffbe8';
+  ctx.beginPath(); ctx.arc(x,y,r*0.26,0,Math.PI*2); ctx.fill();
+  // 上下盖
+  ctx.fillStyle='#8f9aa6';
+  ctx.fillRect(x-r*0.68,y-r*0.68,r*1.36,r*0.16);
+  ctx.fillRect(x-r*0.68,y+r*0.56,r*1.36,r*0.16);
+}
+function drawRot(o){
+  // 腐烂番茄同样走像素精灵，只换土黄霉变调色板
+  drawTomato(o);
+  const x=o.x, y=o.y, r=o.r;
+  // 小飞虫
+  const t=performance.now()/600+o.seed;
+  ctx.fillStyle='#d9d2a8';
+  for(let i=0;i<2;i++){
+    ctx.beginPath();
+    ctx.arc(x+Math.cos(t+i*2.1)*r*1.2, y-r*0.4+Math.sin(t*1.7+i)*r*0.5, 1.6,0,Math.PI*2);
+    ctx.fill();
+  }
+}
+
+function drawOre(o){
+  if(o.kind==='dirt') drawDirt(o);
+  else if(o.kind==='gem') drawGem(o);
+  else if(o.kind==='clock') drawClock(o);
+  else if(o.kind==='bomb') drawBomb(o);
+  else if(o.kind==='glue') drawMotor(o);
+  else if(o.kind==='lamp') drawLamp(o);
+  else if(o.kind==='rot') drawRot(o);
+  else drawTomato(o);
+}
+
+function drawHook(){
+  const p=tip();
+  // 拉重物时绳子被绷弯 + 轻微抖动，直观表现「沉」
+  let strain=0;
+  if(gm.hook.state==='attach'&&gm.hook.ore) strain=Math.min(1, gm.hook.ore.weight/4.2);
+  const dx=p.x-PIVOT.x, dy=p.y-PIVOT.y;
+  const len=Math.hypot(dx,dy)||1;
+  const sag=strain*len*0.05;
+  const jit=(strain>0.1)?Math.sin(performance.now()/85)*strain*1.1:0;
+  const mx=(PIVOT.x+p.x)/2 + (dy/len)*(sag*0.9+jit);
+  const my=(PIVOT.y+p.y)/2 - (dx/len)*(sag*0.9+jit);
+  const drawLine=function(){
+    ctx.beginPath();
+    ctx.moveTo(PIVOT.x,PIVOT.y);
+    if(sag>0.4) ctx.quadraticCurveTo(mx,my,p.x,p.y);
+    else ctx.lineTo(p.x,p.y);
+    ctx.stroke();
+  };
+  ctx.lineCap='round';
+  ctx.strokeStyle='rgba(70,230,242,.22)';
+  ctx.lineWidth=6;
+  drawLine();
+  ctx.strokeStyle=strain>0.5?'rgba(200,252,255,.95)':'rgba(176,249,255,.85)';
+  ctx.lineWidth=2;
+  drawLine();
+  // 钩子
+  ctx.save();
+  ctx.translate(p.x,p.y);
+  ctx.rotate(-gm.hook.a);
+  ctx.strokeStyle='#a9c8d4';
+  ctx.lineWidth=3;
+  ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(0,0);
+  ctx.lineTo(0,7);
+  ctx.arc(-5,7,5,0,Math.PI,false);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawParticles(){
+  for(let i=gm.parts.length-1;i>=0;i--){
+    const p=gm.parts[i];
+    p.life-=1/60;
+    p.x+=p.vx/60; p.y+=p.vy/60; p.vy+=260/60;
+    if(p.life<=0){ gm.parts.splice(i,1); continue; }
+    ctx.globalAlpha=Math.max(0,p.life/p.max);
+    ctx.fillStyle=p.color;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+function drawTexts(){
+  for(let i=gm.texts.length-1;i>=0;i--){
+    const o=gm.texts[i];
+    o.life-=1/60;
+    o.y-=26/60;
+    if(o.life<=0){ gm.texts.splice(i,1); continue; }
+    ctx.globalAlpha=Math.min(1,o.life/0.35);
+    ctx.font='900 '+o.size+'px system-ui,"PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textAlign='center';
+    ctx.lineWidth=4;
+    ctx.strokeStyle='rgba(40,24,12,.85)';
+    ctx.strokeText(o.txt,o.x,o.y);
+    ctx.fillStyle=o.color;
+    ctx.fillText(o.txt,o.x,o.y);
+  }
+  ctx.globalAlpha=1;
+}
+
+/* ---------- 离屏烘焙：土层只画一次，静态矿点按需重烘焙 ---------- */
+function bakeBg(){
+  const c=document.createElement('canvas');
+  c.width=Math.round(W*DPR); c.height=Math.round(H*DPR);
+  const g=c.getContext('2d');
+  g.setTransform(DPR,0,0,DPR,0,0);
+  const prev=ctx; ctx=g;
+  BG_G=null; PIT_GLOW=null;
+  drawBg();
+  ctx=prev;
+  bgCv=c;
+}
+function isStaticOre(o){
+  return o.kind==='small'||o.kind==='mid'||o.kind==='big'||o.kind==='dirt'
+    ||o.kind==='rot'||o.kind==='glue'||o.kind==='lamp';
+}
+function bakeOres(){
+  if(!oreCv) oreCv=document.createElement('canvas');
+  if(oreCv.width!==Math.round(W*DPR)||oreCv.height!==Math.round(H*DPR)){
+    oreCv.width=Math.round(W*DPR); oreCv.height=Math.round(H*DPR);
+  }
+  const g=oreCv.getContext('2d');
+  g.setTransform(1,0,0,1,0,0);
+  g.clearRect(0,0,oreCv.width,oreCv.height);
+  g.setTransform(DPR,0,0,DPR,0,0);
+  const prev=ctx; ctx=g;
+  for(let i=0;i<gm.ores.length;i++){
+    const o=gm.ores[i];
+    if(!isStaticOre(o)||o.attached) continue;
+    drawOre(o);
+  }
+  ctx=prev;
+  oreDirty=false;
+}
+
+function render(){
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.clearRect(0,0,W,H);
+  let sx=0, sy=0;
+  if(gm.shake>0){
+    sx=(Math.random()-0.5)*gm.shake;
+    sy=(Math.random()-0.5)*gm.shake;
+    gm.shake=Math.max(0,gm.shake-0.6);
+  }
+  ctx.save();
+  ctx.translate(sx,sy);
+  if(bgCv) ctx.drawImage(bgCv,0,0,W,H);
+  else drawBg();
+  drawDust();
+  if(oreDirty) bakeOres();
+  if(oreCv) ctx.drawImage(oreCv,0,0,W,H);
+  for(let i=0;i<gm.ores.length;i++){
+    const o=gm.ores[i];
+    if(o.kind==='statue') continue;
+    if(!isStaticOre(o)||o.attached) drawOre(o);
+  }
+  drawHook();
+  drawParticles();
+  drawTexts();
+  ctx.restore();
+  syncDom();
+}
+
+/* 月巴 Q 弹：挤压/拉伸与上下位移各一根弹簧，阻尼略欠一点以保留回弹 */
+const SQ_K=300, SQ_C=17;   // ω≈17.3、ζ≈0.49 → 一次明显回弹
+const DY_K=260, DY_C=19;
+function kickMiner(sq, dy){
+  const S=gm.spring;
+  if(sq) S.vs+=sq;
+  if(dy) S.vy+=dy;
+}
+
+function syncDom(){
+  const a=gm.hook.a;
+  const rot=a*0.1;
+  const S=gm.spring;
+  const now=performance.now();
+  let dt=gm.springLast?(now-gm.springLast)/1000:1/60;
+  gm.springLast=now;
+  if(dt>0.05) dt=0.05;
+  // 拉重物时矿工被往下拽、轻微发抖，强化「沉」的手感
+  let strain=0;
+  if(gm.hook.state==='attach'&&gm.hook.ore) strain=Math.min(1, gm.hook.ore.weight/4.2);
+  const jit=(strain>0.4&&!document.body.classList.contains('lp'))?(Math.random()-0.5)*1.6*strain:0;
+  const tgtDy=strain*3.0;
+  // 弹簧积分：s>0 压扁（矮胖）、s<0 拉长（瘦高），回弹留一点点过冲
+  S.vs+=(-SQ_K*S.s-SQ_C*S.vs)*dt;
+  S.s+=S.vs*dt;
+  if(S.s>0.34){ S.s=0.34; if(S.vs>0) S.vs*=-0.3; }
+  if(S.s<-0.26){ S.s=-0.26; if(S.vs<0) S.vs*=-0.3; }
+  S.vy+=(-DY_K*(S.dy-tgtDy)-DY_C*S.vy)*dt;
+  S.dy+=S.vy*dt;
+  // 待机呼吸：极轻的竖向起伏，静止时也不僵
+  const br=Math.sin(now*0.0032)*0.006;
+  const sy=1-S.s+br;
+  const sx=1+S.s*0.62-br*0.5;
+  minerTilt.style.transform='rotate('+rot.toFixed(4)+'rad) translate('+jit.toFixed(2)+'px,'
+    +(S.dy+br*2.2).toFixed(2)+'px) scale('+sx.toFixed(3)+','+sy.toFixed(3)+')';
+  syncStatue();
+}
+
+/* ================= 主循环 ================= */
+function tick(dt){
+  if(gm.phase==='play'){
+    if(gm.glueT>0){
+      gm.glueT=Math.max(0, gm.glueT-dt);
+      const sec=Math.ceil(gm.glueT);
+      if(sec!==gm.lastGlueSec){ gm.lastGlueSec=sec; updateStatusChip(); }
+    }
+    gm.time-=dt;
+    if(gm.time<=10){
+      const sec=Math.ceil(gm.time);
+      if(sec!==gm.lastSec){ gm.lastSec=sec; if(sec>0) tone(1046,0.035,'square',0.035); }
+    }
+    if(gm.time<=0){
+      gm.time=0;
+      updateHUD();
+      endRun();
+    }else{
+      updateHook(dt);
+      if(gm.phase==='play') updateHUD();
+    }
+  }else if(gm.phase==='clear'){
+    // 结算横幅期间仍让钩子归位
+    gm.hook.state='idle';
+  }
+}
+function loop(ts){
+  gm.raf=requestAnimationFrame(loop);
+  if(!gm.last) gm.last=ts;
+  let dt=(ts-gm.last)/1000;
+  gm.last=ts;
+  if(dt>0.1) dt=0.1;
+  if(gm.hitStop>0){ gm.hitStop=Math.max(0,gm.hitStop-dt); render(); return; }
+  // 帧率自适应：持续偏低时下调渲染倍率，保住交互流畅度
+  if(gm.phase==='play'&&gm.dprSteps<2&&dt>0.001&&dt<0.2){
+    gm.fpsAcc+=dt; gm.fpsN++;
+    if(gm.fpsN>=90){
+      const avg=gm.fpsAcc/gm.fpsN;
+      if(avg>1/44&&DPR>1.25){
+        DPR=Math.max(1.25,(DPR===2?1.5:1.25));
+        gm.dprSteps++;
+        resize();
+      }
+      gm.fpsAcc=0; gm.fpsN=0;
+    }
+  }
+  if(!gm.paused) tick(dt);
+  render();
+}
+
+/* ================= 输入 ================= */
+frame.addEventListener('pointerdown',function(e){
+  if(overlay.classList.contains('show')) return;
+  ac();
+  shootHook();
+});
+window.addEventListener('keydown',function(e){
+  if(e.code==='Space'||e.code==='ArrowDown'){
+    e.preventDefault();
+    if(overlay.classList.contains('show')) return;
+    ac();
+    shootHook();
+  }else if(e.code==='Enter'){
+    if(overlay.classList.contains('show')&&gm.phase!=='over'&&gm.phase!=='start'){
+      return;
+    }
+    if(gm.phase==='start'||gm.phase==='over'){
+      const b=panel.querySelector('button[data-act]');
+      if(b) b.click();
+    }
+  }else if(e.code==='Escape'||e.code==='KeyP'){
+    if(gm.phase!=='play') return;
+    e.preventDefault();
+    if(gm.paused) resumeGame(); else pauseGame();
+  }
+});
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden&&gm.phase==='play'&&!gm.paused) pauseGame();
+  gm.last=0;
+});
+window.addEventListener('pagehide',function(){
+  try{ cancelAnimationFrame(gm.raf); }catch(e){}
+  try{ if(AC&&AC.state==='running') AC.suspend(); }catch(e){}
+});
+
+/* ================= 启动 ================= */
+function applyLangStatic(){
+  document.title=t('docTitle');
+  hintEl.textContent=t('hint');
+  pauseBtn.setAttribute('aria-label', t('pause'));
+  pauseBtn.title=t('pause');
+  updateFoot();
+}
+applyLangStatic();
+resize();
+// 先抽一位矿工给开始面板展示
+resetRng();
+gm.miner=pickMiner();
+minerAv.innerHTML=avatarHTML(gm.miner);
+minerName.textContent=gm.miner.name;
+showStart();
+gm.raf=requestAnimationFrame(loop);
+
+})();
+</script>
+</body>
+</html>
