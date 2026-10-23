@@ -1365,7 +1365,7 @@ const T = {
     gearSlotNo:'槽位 {a}', gearUnequip:'卸下',
     gearDrop:'装备掉落', gearDropCoins:'装备已集齐（折算金币）', gearDropNone:'无装备掉落',
     up_dmg:'汁多不压身', up_dmg_d:'伤害 +20%',
-    up_rate:'手速拉满', up_rate_d:'射速 +18%',
+    up_rate:'手速拉满', up_rate_d:'全武器射速 +18%',
     up_speed:'溜得快', up_speed_d:'移速 +10%',
     up_hp:'多长点肉', up_hp_d:'最大生命 +20，并回复 20',
     up_magnet:'香飘十里', up_magnet_d:'拾取范围 +25%',
@@ -5099,13 +5099,14 @@ function auraRadius(p){
   if(!lv) return 0;
   let r = 70 + 6 * (lv - 1);
   r *= (p.aurMul || 1);
+  r *= (1 + 0.06 * multiSt(p)) * areaMul(p, 0.35);
   if(p.evo.thorn) r *= 1.4;
   return r;
 }
 function orbitCount(p){
   const lv = wpLv('orbit');
   if(!lv) return 0;
-  return 2 + (lv >= 3 ? 1 : 0) + (lv >= 5 ? 1 : 0) + (p.orbitBonus || 0) + (p.evo.corona ? 1 : 0);
+  return Math.min(12, 2 + (lv >= 3 ? 1 : 0) + (lv >= 5 ? 1 : 0) + (p.orbitBonus || 0) + (p.evo.corona ? 1 : 0) + multiSt(p));
 }
 function charmDmgMul(p){
   let m = 1;
@@ -5129,6 +5130,19 @@ function durEff(st){
 /* 节奏曲线用时长：加时段沿用关卡基础曲线（不摊薄），无尽模式保持原行为 */
 function paceDur(st){ return (G.mode === 'endless') ? G.dur : st.dur; }
 function wDmg(base, p){ return base * Math.max(0.5, p.dmg * charmDmgMul(p) / 4); }
+/* ===== 基础强化 → 全武器换算 =====
+ * 伤害：所有武器共享 p.dmg（见 wDmg）
+ * 射速：atkMul 缩放所有武器攻击间隔；持续型武器换算为转速 / 命中间隔
+ * 多重：multiSt 层数，按武器类型换算为弹数 / 数量 / 范围 / 跳数
+ * 弹速：bspdMul 缩放投射物速度；无弹道武器换算为射程 / 范围 / 转速
+ */
+const BASE_RATE = 0.45, BASE_BSPD = 620;
+function atkMul(p){ return Math.max(0.40, (p.rate || BASE_RATE) / BASE_RATE); }
+function bspdMul(p){ return Math.max(0.60, (p.bulletSpeed || BASE_BSPD) / BASE_BSPD); }
+function multiSt(p){ return Math.max(0, (p.multi | 0) - 1); }
+function spinMul(p){ return Math.min(1.8, 0.6 + 0.4 / atkMul(p)); }
+function areaMul(p, k){ return 1 + (bspdMul(p) - 1) * (k == null ? 0.5 : k); }
+function rangeMul(p){ return Math.sqrt(bspdMul(p)); }
 /* ===== Plan 5 副武器共享工具 ===== */
 function nearestEnemyTo(x, y, maxR){
   let best = null, bd = (maxR || 400) * (maxR || 400);
@@ -5213,7 +5227,7 @@ function updateWeapons(dt){
   if(alv > 0){
     p.wcd.aura = (p.wcd.aura || 0) - dt;
     if(p.wcd.aura <= 0){
-      p.wcd.aura = 1.0;
+      p.wcd.aura = Math.max(0.45, 1.0 * atkMul(p));
       const rad = auraRadius(p);
       const dmg = wDmg(5 + 2.5 * (alv - 1), p);
       let hit = false;
@@ -5239,7 +5253,7 @@ function updateWeapons(dt){
   const olv = wpLv('orbit');
   if(olv > 0){
     const n = orbitCount(p);
-    p.orbitA = (p.orbitA || 0) + dt * 2.4;
+    p.orbitA = (p.orbitA || 0) + dt * 2.4 * spinMul(p);
     const dmg = wDmg(8 + 3 * (olv - 1), p);
     const critCh = p.evo.corona ? Math.max(0.15, p.crit || 0) : 0;
     for(let k=0;k<n;k++){
@@ -5249,7 +5263,7 @@ function updateWeapons(dt){
         const e = G.enemies[i];
         if(e.dead || (e.orbT || 0) > G.time) continue;
         if(dist2(sx, sy, e.x, e.y) > (14 + e.r) * (14 + e.r)) continue;
-        e.orbT = G.time + 0.35;
+        e.orbT = G.time + Math.max(0.18, 0.35 * atkMul(p));
         let d = dmg;
         if(critCh && Math.random() < critCh){ d *= 2; addPart(sx, sy, '#ffd166', 3, 0.3); }
         e.hp -= d * (1 - (e.dr || 0));
@@ -5265,13 +5279,14 @@ function updateWeapons(dt){
   if(clv > 0){
     p.wcd.chain = (p.wcd.chain || 0) - dt;
     if(p.wcd.chain <= 0){
-      p.wcd.chain = Math.max(1.0, 2.4 - 0.18 * (clv - 1));
-      let maxT = Math.min(6, 2 + (clv - 1) + (p.chainBonus || 0) + (p.evo.acid ? 1 : 0));
+      p.wcd.chain = Math.max(0.85, (2.4 - 0.18 * (clv - 1)) * atkMul(p));
+      let maxT = Math.min(9, 2 + (clv - 1) + (p.chainBonus || 0) + (p.evo.acid ? 1 : 0) + multiSt(p));
+      const chainR = 220 * rangeMul(p);
       const dmg = wDmg(12 + 4 * (clv - 1), p);
       const pts = [{x:p.x, y:p.y}], hit = [];
       let from = p;
       for(let k=0;k<maxT;k++){
-        let best = null, bd = 220 * 220;
+        let best = null, bd = chainR * chainR;
         for(let i=0;i<G.enemies.length;i++){
           const e = G.enemies[i];
           if(e.dead || hit.indexOf(e) >= 0) continue;
@@ -5308,10 +5323,10 @@ function updateWeapons(dt){
         if(d < bd){ bd = d; best = e; }
       }
       if(best){
-        p.wcd.pinecone = 1.7;
-        const rad = 42 + 4 * (plv - 1);
+        p.wcd.pinecone = Math.max(0.9, 1.7 * atkMul(p));
+        const rad = (42 + 4 * (plv - 1)) * areaMul(p, 0.4);
         const dmg = wDmg(14 + 3 * (plv - 1), p);
-        const shots = plv >= 5 ? 2 : 1;
+        const shots = Math.min(4, (plv >= 5 ? 2 : 1) + multiSt(p));
         const baseA = Math.atan2(best.y - p.y, best.x - p.x);
         for(let k=0;k<shots;k++){
           const off = shots > 1 ? (k ? 1 : -1) * 26 : 0;
@@ -5320,7 +5335,7 @@ function updateWeapons(dt){
           const a = Math.atan2(ty - p.y, tx - p.x);
           if(G.pines.length >= 40) G.pines.shift();
           G.pines.push({ x:p.x, y:p.y, tx:tx, ty:ty,
-            vx:Math.cos(a) * 420, vy:Math.sin(a) * 420,
+            vx:Math.cos(a) * 420 * bspdMul(p), vy:Math.sin(a) * 420 * bspdMul(p),
             dmg:dmg, rad:rad, t:0, spin:Math.random() * 6.28 });
         }
         tone(320, 0.07, 'triangle', 0.03, 50);
@@ -5363,8 +5378,8 @@ function updateWeapons(dt){
   if(slv > 0){
     p.wcd.spore = (p.wcd.spore || 0) - dt;
     if(p.wcd.spore <= 0){
-      p.wcd.spore = Math.max(1.6, 2.5 - 0.14 * (slv - 1));
-      const n = 1 + (slv >= 3 ? 1 : 0) + (slv >= 5 ? 1 : 0);
+      p.wcd.spore = Math.max(1.0, (2.5 - 0.14 * (slv - 1)) * atkMul(p));
+      const n = Math.min(5, 1 + (slv >= 3 ? 1 : 0) + (slv >= 5 ? 1 : 0) + multiSt(p));
       const near = [];
       for(let i=0;i<G.enemies.length;i++){
         const e = G.enemies[i];
@@ -5380,7 +5395,7 @@ function updateWeapons(dt){
           tx = p.x + Math.cos(a) * d; ty = p.y + Math.sin(a) * d;
         }
         if(G.spores.length >= 12) G.spores.shift();
-        G.spores.push({x:tx, y:ty, r:(34 + 3 * (slv - 1)) * (p.evo.mycelium ? 1.35 : 1),
+        G.spores.push({x:tx, y:ty, r:(34 + 3 * (slv - 1)) * (1 + 0.05 * multiSt(p)) * areaMul(p, 0.35) * (p.evo.mycelium ? 1.35 : 1),
           t:3.2, max:3.2, tick:0});
       }
       tone(300, 0.1, 'sine', 0.03, -40);
@@ -5390,7 +5405,7 @@ function updateWeapons(dt){
   for(let i=G.spores.length-1;i>=0;i--){
     const z = G.spores[i];
     z.t -= dt; z.tick += dt;
-    if(z.tick >= 0.55){
+    if(z.tick >= Math.max(0.28, 0.55 * atkMul(p))){
       z.tick = 0;
       const dmg = wDmg(3 + 1.2 * (slv - 1), p);
       for(let j=0;j<G.enemies.length;j++){
@@ -5409,7 +5424,7 @@ function updateWeapons(dt){
 
   // 蜂群：绕身待命，轮流冲刺最近的敌人
   const blv = wpLv('bee');
-  const wantBees = blv > 0 ? 1 + (blv >= 3 ? 1 : 0) + (blv >= 5 ? 1 : 0) + (p.evo.queen ? 2 : 0) : 0;
+  const wantBees = blv > 0 ? Math.min(6, 1 + (blv >= 3 ? 1 : 0) + (blv >= 5 ? 1 : 0) + (p.evo.queen ? 2 : 0) + multiSt(p)) : 0;
   while(G.bees.length < wantBees){
     const a = Math.random() * 6.283;
     G.bees.push({a:a, cd:rand(0.2, 0.9), mode:'orbit', t:0, hit:false, tx:0, ty:0,
@@ -5420,7 +5435,7 @@ function updateWeapons(dt){
   for(let i=0;i<G.bees.length;i++){
     const b = G.bees[i];
     if(b.mode === 'orbit'){
-      b.a += dt * 2.6;
+      b.a += dt * 2.6 * spinMul(p);
       b.x = p.x + Math.cos(b.a) * 58;
       b.y = p.y + Math.sin(b.a) * 58;
       b.cd -= dt;
@@ -5439,8 +5454,8 @@ function updateWeapons(dt){
       b.t += dt;
       const dx = b.tx - b.x, dy = b.ty - b.y, d = Math.hypot(dx, dy) || 1;
       b.face = Math.atan2(dy, dx);
-      b.x += dx / d * 380 * dt;
-      b.y += dy / d * 380 * dt;
+      b.x += dx / d * 380 * bspdMul(p) * dt;
+      b.y += dy / d * 380 * bspdMul(p) * dt;
       if(!b.hit){
         for(let j=0;j<G.enemies.length;j++){
           const e = G.enemies[j];
@@ -5459,10 +5474,10 @@ function updateWeapons(dt){
     } else {
       const dx = p.x - b.x, dy = p.y - b.y, d = Math.hypot(dx, dy) || 1;
       b.face = Math.atan2(dy, dx);
-      const step = 460 * dt;
+      const step = 460 * bspdMul(p) * dt;
       b.x += dx / d * Math.min(step, d);
       b.y += dy / d * Math.min(step, d);
-      if(d < 18){ b.mode = 'orbit'; b.cd = Math.max(0.45, 0.95 - 0.07 * (blv - 1)); }
+      if(d < 18){ b.mode = 'orbit'; b.cd = Math.max(0.3, (0.95 - 0.07 * (blv - 1)) * atkMul(p)); }
     }
   }
 
@@ -5479,14 +5494,14 @@ function updateWeapons(dt){
         if(d < bd){ bd = d; best = e; }
       }
       if(best){
-        p.wcd.blade = Math.max(0.9, 1.7 - 0.12 * (klv - 1));
-        const shots = 1 + (klv >= 5 ? 1 : 0) + (p.evo.twinblade ? 1 : 0);
+        p.wcd.blade = Math.max(0.6, (1.7 - 0.12 * (klv - 1)) * atkMul(p));
+        const shots = Math.min(4, 1 + (klv >= 5 ? 1 : 0) + (p.evo.twinblade ? 1 : 0) + multiSt(p));
         const base = Math.atan2(best.y - p.y, best.x - p.x);
         const dmg = wDmg(9 + 2.8 * (klv - 1), p);
         for(let k=0;k<shots;k++){
           const a = base + (k - (shots - 1) / 2) * 0.26;
           if(G.blades.length >= 8) G.blades.shift();
-          G.blades.push({x:p.x, y:p.y, vx:Math.cos(a) * 460, vy:Math.sin(a) * 460,
+          G.blades.push({x:p.x, y:p.y, vx:Math.cos(a) * 460 * bspdMul(p), vy:Math.sin(a) * 460 * bspdMul(p),
             t:0, state:'out', dmg:dmg, spin:Math.random() * 6.28, hitOut:[], hitBack:[]});
         }
         tone(520, 0.08, 'triangle', 0.03, 80);
@@ -5513,8 +5528,8 @@ function updateWeapons(dt){
       if(b.t >= 0.5) b.state = 'back';
     } else {
       const dx = p.x - b.x, dy = p.y - b.y, d = Math.hypot(dx, dy) || 1;
-      b.x += dx / d * 520 * dt;
-      b.y += dy / d * 520 * dt;
+      b.x += dx / d * 520 * bspdMul(p) * dt;
+      b.y += dy / d * 520 * bspdMul(p) * dt;
       for(let j=0;j<G.enemies.length;j++){
         const e = G.enemies[j];
         if(e.dead || b.hitBack.indexOf(e) >= 0) continue;
@@ -5543,10 +5558,10 @@ function updateWeapons(dt){
       }
       if(near.length){
         near.sort(function(a, b){ return a.d - b.d; });
-        p.wcd.spike = Math.max(0.75, 1.7 - 0.12 * (qlv - 1));
+        p.wcd.spike = Math.max(0.5, (1.7 - 0.12 * (qlv - 1)) * atkMul(p));
         const dmg = wDmg(15 + 3.5 * (qlv - 1), p);
-        const r = (26 + 3 * (qlv - 1)) * (p.evo.quake ? 1.4 : 1);
-        const n = Math.min(1 + (qlv >= 3 ? 1 : 0) + (qlv >= 5 ? 1 : 0), near.length);
+        const r = (26 + 3 * (qlv - 1)) * areaMul(p, 0.4) * (p.evo.quake ? 1.4 : 1);
+        const n = Math.min(1 + (qlv >= 3 ? 1 : 0) + (qlv >= 5 ? 1 : 0) + multiSt(p), near.length, 5);
         for(let k=0;k<n;k++){
           if(G.spikes.length >= 12) G.spikes.shift();
           G.spikes.push({x:near[k].e.x, y:near[k].e.y, r:r, t:0.42, delay:0.42, dmg:dmg, done:false});
@@ -5582,13 +5597,13 @@ function updateWeapons(dt){
     if(p.wcd.gun <= 0){
       const ge = nearestEnemyTo(p.x, p.y, 460);
       if(ge){
-        p.wcd.gun = Math.max(0.30, (0.55 - 0.03 * (gunLv - 1)) * (relLv('w_gun') ? 0.82 : 1));
+        p.wcd.gun = Math.max(0.22, (0.55 - 0.03 * (gunLv - 1)) * (relLv('w_gun') ? 0.82 : 1) * atkMul(p));
         const base = Math.atan2(ge.y - p.y, ge.x - p.x);
-        const shots = 1 + (gunLv >= 3 ? 1 : 0) + (gunLv >= 5 ? 1 : 0);
+        const shots = Math.min(5, 1 + (gunLv >= 3 ? 1 : 0) + (gunLv >= 5 ? 1 : 0) + multiSt(p));
         const dmg = wDmg(3.6 + 0.72 * (gunLv - 1), p);
         for(let k=0;k<shots;k++){
           const a = base + (k - (shots - 1) / 2) * 0.07 + rand(-0.02, 0.02);
-          spawnShot(p, a, 760, dmg, 3.4, 0.7, gunLv >= 5 ? 1 : 0, '#ff9d6b');
+          spawnShot(p, a, 760 * bspdMul(p), dmg, 3.4, 0.7, gunLv >= 5 ? 1 : 0, '#ff9d6b');
         }
         tone(320, 0.04, 'triangle', 0.018, 20);
       }
@@ -5602,13 +5617,13 @@ function updateWeapons(dt){
     if(p.wcd.grapes <= 0){
       const ge = nearestEnemyTo(p.x, p.y, 340);
       if(ge){
-        p.wcd.grapes = Math.max(1.15, 1.8 - 0.13 * (grLv - 1));
+        p.wcd.grapes = Math.max(0.85, (1.8 - 0.13 * (grLv - 1)) * atkMul(p));
         const base = Math.atan2(ge.y - p.y, ge.x - p.x);
-        const n = 3 + (grLv >= 3 ? 1 : 0) + (grLv >= 5 ? 1 : 0) + (relLv('w_grapes') ? 2 : 0);
+        const n = Math.min(9, 3 + (grLv >= 3 ? 1 : 0) + (grLv >= 5 ? 1 : 0) + (relLv('w_grapes') ? 2 : 0) + multiSt(p));
         const dmg = wDmg(4.6 + 1.47 * (grLv - 1), p);
         for(let k=0;k<n;k++){
           const a = base + (k - (n - 1) / 2) * 0.17 + rand(-0.04, 0.04);
-          spawnShot(p, a, 520 + rand(-30, 30), dmg, 4, 0.48, 0, '#c084fc');
+          spawnShot(p, a, (520 + rand(-30, 30)) * bspdMul(p), dmg, 4, 0.48, 0, '#c084fc');
         }
         tone(300, 0.07, 'triangle', 0.03, -30);
       }
@@ -5621,11 +5636,11 @@ function updateWeapons(dt){
     p.flameVis = Math.max(0, (p.flameVis || 0) - dt);
     p.wcd.flame = (p.wcd.flame || 0) - dt;
     if(p.wcd.flame <= 0){
-      p.wcd.flame = 0.16;
+      p.wcd.flame = Math.max(0.09, 0.16 * atkMul(p));
       p.flameA = aimAngle(p, 260);
       p.flameVis = 0.2;
-      p.flameRange = (118 + 9 * (flLv - 1)) * (relLv('w_flame') ? 1.25 : 1);
-      coneHit(p, p.flameA, p.flameRange, 0.38, wDmg(1.85 + 0.5 * (flLv - 1), p) * (relLv('w_flame') ? 1.1 : 1), '#ffb04a');
+      p.flameRange = (118 + 9 * (flLv - 1)) * (relLv('w_flame') ? 1.25 : 1) * rangeMul(p) * (1 + 0.04 * multiSt(p));
+      coneHit(p, p.flameA, p.flameRange, Math.min(0.55, 0.38 + 0.025 * multiSt(p)), wDmg(1.85 + 0.5 * (flLv - 1), p) * (relLv('w_flame') ? 1.1 : 1), '#ffb04a');
       if(Math.random() < 0.35){
         const a = p.flameA + rand(-0.38, 0.38), d = rand(30, p.flameRange);
         addPart(p.x + Math.cos(a) * d, p.y + Math.sin(a) * d, '#ffb04a', rand(1.5, 3), 0.2);
@@ -5640,8 +5655,8 @@ function updateWeapons(dt){
     p.wcd.zap = (p.wcd.zap || 0) - dt;
     if(p.wcd.zap <= 0){
       if(nearestEnemyTo(p.x, p.y, 420)){
-        p.wcd.zap = Math.max(1.35, 2.0 - 0.16 * (zpLv - 1));
-        const n = 1 + (zpLv >= 3 ? 1 : 0) + (zpLv >= 5 ? 1 : 0);
+        p.wcd.zap = Math.max(1.0, (2.0 - 0.16 * (zpLv - 1)) * atkMul(p));
+        const n = Math.min(5, 1 + (zpLv >= 3 ? 1 : 0) + (zpLv >= 5 ? 1 : 0) + multiSt(p));
         const dmg = wDmg(11.3 + 3.3 * (zpLv - 1), p);
         const picked = [];
         for(let k=0;k<n;k++){
@@ -5654,7 +5669,7 @@ function updateWeapons(dt){
           }
           if(!bz) break;
           picked.push(bz);
-          zapStrike(bz.x, bz.y, (34 + 2 * (zpLv - 1)) * (relLv('w_zap') ? 1.3 : 1), dmg, '#ffe066');
+          zapStrike(bz.x, bz.y, (34 + 2 * (zpLv - 1)) * (relLv('w_zap') ? 1.3 : 1) * areaMul(p, 0.4), dmg, '#ffe066');
         }
         tone(320, 0.08, 'triangle', 0.028, -110);
       }
@@ -5672,9 +5687,13 @@ function updateWeapons(dt){
     if(p.wcd.javelin <= 0){
       const je = nearestEnemyTo(p.x, p.y, 520);
       if(je){
-        p.wcd.javelin = Math.max(1.2, 1.9 - 0.15 * (jvLv - 1));
+        p.wcd.javelin = Math.max(0.9, (1.9 - 0.15 * (jvLv - 1)) * atkMul(p));
         const a = Math.atan2(je.y - p.y, je.x - p.x);
-        spawnShot(p, a, 880, wDmg(15.6 + 4.15 * (jvLv - 1), p), 5.5, 1.1, 2 + (jvLv >= 5 ? 1 : 0) + (relLv('w_javelin') ? 2 : 0), '#ff9d4a');
+        const jn = Math.min(3, 1 + multiSt(p));
+        const jd = wDmg(15.6 + 4.15 * (jvLv - 1), p);
+        const jp = 2 + (jvLv >= 5 ? 1 : 0) + (relLv('w_javelin') ? 2 : 0);
+        for(let k=0;k<jn;k++)
+          spawnShot(p, a + (k - (jn - 1) / 2) * 0.09, 880 * bspdMul(p), jd, 5.5, 1.1, jp, '#ff9d4a');
         tone(360, 0.09, 'triangle', 0.03, 70);
       }
     }
@@ -5687,12 +5706,17 @@ function updateWeapons(dt){
     if(p.wcd.melon <= 0){
       const e = nearestEnemyTo(p.x, p.y, 460);
       if(e){
-        p.wcd.melon = Math.max(2.0, 3.2 - 0.22 * (meLv - 1));
+        p.wcd.melon = Math.max(1.5, (3.2 - 0.22 * (meLv - 1)) * atkMul(p));
         const a = Math.atan2(e.y - p.y, e.x - p.x);
-        if(G.melons.length >= 3) G.melons.shift();
-        G.melons.push({x:p.x, y:p.y, vx:Math.cos(a) * 240, vy:Math.sin(a) * 240,
-          r:(17 + 2 * (meLv - 1)) * (relLv('w_melon') ? 1.25 : 1), dmg:wDmg(11 + 5.05 * (meLv - 1), p),
-          t:3.6 + (relLv('w_melon') ? 1.2 : 0), hit:[], spin:0, vine:false});
+        const mn = Math.min(3, 1 + multiSt(p));
+        const md = wDmg(11 + 5.05 * (meLv - 1), p);
+        const mr = (17 + 2 * (meLv - 1)) * (relLv('w_melon') ? 1.25 : 1) * areaMul(p, 0.4);
+        for(let k=0;k<mn;k++){
+          if(G.melons.length >= 4) G.melons.shift();
+          const ma = a + (k - (mn - 1) / 2) * 0.2;
+          G.melons.push({x:p.x, y:p.y, vx:Math.cos(ma) * 240 * bspdMul(p), vy:Math.sin(ma) * 240 * bspdMul(p),
+            r:mr, dmg:md, t:3.6 + (relLv('w_melon') ? 1.2 : 0), hit:[], spin:0, vine:false});
+        }
         tone(260, 0.12, 'triangle', 0.04, -40);
       }
     }
@@ -5726,10 +5750,16 @@ function updateWeapons(dt){
   if(mnLv > 0){
     p.wcd.mine = (p.wcd.mine || 0) - dt;
     if(p.wcd.mine <= 0){
-      p.wcd.mine = Math.max(1.8, 2.4 - 0.15 * (mnLv - 1));
-      if(G.mines.length >= 8) G.mines.shift();
-      G.mines.push({x:p.x + rand(-14, 14), y:p.y + rand(-14, 14), arm:0.55,
-        r:22, rad:(64 + 3 * (mnLv - 1)) * (relLv('w_mine') ? 1.3 : 1), dmg:wDmg(18.8 + 3.3 * (mnLv - 1), p), t:8});
+      p.wcd.mine = Math.max(1.4, (2.4 - 0.15 * (mnLv - 1)) * atkMul(p));
+      const mnn = Math.min(3, 1 + multiSt(p));
+      const mnd = wDmg(18.8 + 3.3 * (mnLv - 1), p);
+      const mnr = (64 + 3 * (mnLv - 1)) * (relLv('w_mine') ? 1.3 : 1) * areaMul(p, 0.4);
+      for(let k=0;k<mnn;k++){
+        if(G.mines.length >= 10) G.mines.shift();
+        const ma = Math.random() * 6.283, mdd = k ? rand(18, 34) : rand(0, 14);
+        G.mines.push({x:p.x + Math.cos(ma) * mdd, y:p.y + Math.sin(ma) * mdd, arm:0.55,
+          r:22, rad:mnr, dmg:mnd, t:8});
+      }
       tone(190, 0.06, 'triangle', 0.025, 40);
     }
   }
@@ -5758,14 +5788,20 @@ function updateWeapons(dt){
   if(boLv > 0){
     p.wcd.bomb = (p.wcd.bomb || 0) - dt;
     if(p.wcd.bomb <= 0){
-      p.wcd.bomb = Math.max(1.9, 2.8 - 0.2 * (boLv - 1));
+      p.wcd.bomb = Math.max(1.4, (2.8 - 0.2 * (boLv - 1)) * atkMul(p));
       const e = nearestEnemyTo(p.x, p.y, 460);
       let tx, ty;
       if(e){ tx = e.x; ty = e.y; }
       else { const a = aimAngle(p, 460); tx = p.x + Math.cos(a) * 180; ty = p.y + Math.sin(a) * 180; }
-      if(G.pineapples.length >= 6) G.pineapples.shift();
-      G.pineapples.push({x:p.x, y:p.y, sx:p.x, sy:p.y, tx:tx, ty:ty, t:0, dur:0.75,
-        rad:(58 + 4 * (boLv - 1)) * (relLv('w_bomb') ? 1.25 : 1), dmg:wDmg(24 + 5.5 * (boLv - 1), p), spin:0});
+      const bnn = Math.min(3, 1 + multiSt(p));
+      const bnd = wDmg(24 + 5.5 * (boLv - 1), p);
+      const bnr = (58 + 4 * (boLv - 1)) * (relLv('w_bomb') ? 1.25 : 1) * areaMul(p, 0.4);
+      for(let k=0;k<bnn;k++){
+        if(G.pineapples.length >= 8) G.pineapples.shift();
+        const ox = k ? rand(-26, 26) : 0, oy = k ? rand(-26, 26) : 0;
+        G.pineapples.push({x:p.x, y:p.y, sx:p.x, sy:p.y, tx:tx + ox, ty:ty + oy, t:0, dur:0.75,
+          rad:bnr, dmg:bnd, spin:0});
+      }
       tone(300, 0.08, 'triangle', 0.03, 60);
     }
   }
@@ -5791,21 +5827,35 @@ function updateWeapons(dt){
     if(p.wcd.beam <= 0){
       const e = nearestEnemyTo(p.x, p.y, 520);
       if(e){
-        p.wcd.beam = Math.max(1.1, 1.8 - 0.15 * (beLv - 1));
-        const a = Math.atan2(e.y - p.y, e.x - p.x);
-        const len = (460 + 20 * (beLv - 1)) * (relLv('w_beam') ? 1.25 : 1);
-        const x2 = p.x + Math.cos(a) * len, y2 = p.y + Math.sin(a) * len;
+        p.wcd.beam = Math.max(0.85, (1.8 - 0.15 * (beLv - 1)) * atkMul(p));
+        const bn = Math.min(3, 1 + multiSt(p));
+        const len = (460 + 20 * (beLv - 1)) * (relLv('w_beam') ? 1.25 : 1) * rangeMul(p);
+        const bw = (relLv('w_beam') ? 17 : 11) * areaMul(p, 0.3);
         const dmg = wDmg(16.5 + 4.15 * (beLv - 1), p);
-        for(let j=0;j<G.enemies.length;j++){
-          const en = G.enemies[j];
-          if(en.dead || segDist2(en.x, en.y, p.x, p.y, x2, y2) > ((relLv('w_beam') ? 17 : 11) + en.r) * ((relLv('w_beam') ? 17 : 11) + en.r)) continue;
-          en.hp -= dmg * (1 - (en.dr || 0));
-          en.hitFlash = Math.max(en.hitFlash, 0.1);
-          addPart(en.x, en.y, '#ffe066', rand(1.5, 3), 0.22);
-          if(en.hp <= 0) killEnemy(en);
+        const picked = [];
+        for(let k=0;k<bn;k++){
+          let tgt = null, td = 520 * 520;
+          for(let j=0;j<G.enemies.length;j++){
+            const en = G.enemies[j];
+            if(en.dead || picked.indexOf(en) >= 0) continue;
+            const dd = dist2(p.x, p.y, en.x, en.y);
+            if(dd < td){ td = dd; tgt = en; }
+          }
+          if(!tgt) break;
+          picked.push(tgt);
+          const a = Math.atan2(tgt.y - p.y, tgt.x - p.x);
+          const x2 = p.x + Math.cos(a) * len, y2 = p.y + Math.sin(a) * len;
+          for(let j=0;j<G.enemies.length;j++){
+            const en = G.enemies[j];
+            if(en.dead || segDist2(en.x, en.y, p.x, p.y, x2, y2) > (bw + en.r) * (bw + en.r)) continue;
+            en.hp -= dmg * (1 - (en.dr || 0));
+            en.hitFlash = Math.max(en.hitFlash, 0.1);
+            addPart(en.x, en.y, '#ffe066', rand(1.5, 3), 0.22);
+            if(en.hp <= 0) killEnemy(en);
+          }
+          if(G.beams.length >= 6) G.beams.shift();
+          G.beams.push({x1:p.x, y1:p.y, x2:x2, y2:y2, t:0.22, max:0.22, col:''});
         }
-        if(G.beams.length >= 6) G.beams.shift();
-        G.beams.push({x1:p.x, y1:p.y, x2:x2, y2:y2, t:0.22, max:0.22, col:''});
         tone(480, 0.1, 'sine', 0.035, 80);
       }
     }
@@ -5816,8 +5866,8 @@ function updateWeapons(dt){
   // 生菜护盾：叶片绕身旋转，接触伤害 + 减速
   const lfLv = wpLv('leaf');
   if(lfLv > 0){
-    const n = 2 + (lfLv >= 3 ? 1 : 0) + (lfLv >= 5 ? 1 : 0) + (relLv('w_leaf') ? 1 : 0);
-    p.leafA = (p.leafA || 0) + dt * 2.1;
+    const n = Math.min(6, 2 + (lfLv >= 3 ? 1 : 0) + (lfLv >= 5 ? 1 : 0) + (relLv('w_leaf') ? 1 : 0) + multiSt(p));
+    p.leafA = (p.leafA || 0) + dt * 2.1 * spinMul(p);
     const dmg = wDmg(4.6 + 1.38 * (lfLv - 1), p);
     for(let k=0;k<n;k++){
       const a = p.leafA + k * Math.PI * 2 / n;
@@ -5826,7 +5876,7 @@ function updateWeapons(dt){
         const e = G.enemies[j];
         if(e.dead || (e.leafT || 0) > G.time) continue;
         if(dist2(sx, sy, e.x, e.y) > (13 + e.r) * (13 + e.r)) continue;
-        e.leafT = G.time + 0.4;
+        e.leafT = G.time + Math.max(0.2, 0.4 * atkMul(p));
         e.hp -= dmg * (1 - (e.dr || 0));
         e.hitFlash = Math.max(e.hitFlash, 0.08);
         if(!e.boss){ e.slowT = Math.max(e.slowT, 0.5); e.slowAmt = Math.max(e.slowAmt, 0.15); }
@@ -5842,7 +5892,7 @@ function updateWeapons(dt){
   if(coLv > 0){
     p.wcd.corn = (p.wcd.corn || 0) - dt;
     if(p.wcd.corn <= 0){
-      const n = 2 + (coLv >= 3 ? 1 : 0) + (coLv >= 5 ? 1 : 0) + (relLv('w_corn') ? 1 : 0);
+      const n = Math.min(7, 2 + (coLv >= 3 ? 1 : 0) + (coLv >= 5 ? 1 : 0) + (relLv('w_corn') ? 1 : 0) + multiSt(p));
       const picked = [];
       for(let k=0;k<n;k++){
         let be = null, bd = 480 * 480;
@@ -5856,12 +5906,12 @@ function updateWeapons(dt){
         picked.push(be);
       }
       if(picked.length){
-        p.wcd.corn = Math.max(0.85, 1.5 - 0.15 * (coLv - 1));
+        p.wcd.corn = Math.max(0.6, (1.5 - 0.15 * (coLv - 1)) * atkMul(p));
         const dmg = wDmg(7.4 + 2.2 * (coLv - 1), p);
         for(let k=0;k<picked.length;k++){
           const e = picked[k];
           const a = Math.atan2(e.y - p.y, e.x - p.x) + rand(-0.03, 0.03);
-          spawnShot(p, a, 680 * (relLv('w_corn') ? 1.15 : 1), dmg, 3, 0.8, 0, '#ffe066');
+          spawnShot(p, a, 680 * (relLv('w_corn') ? 1.15 : 1) * bspdMul(p), dmg, 3, 0.8, 0, '#ffe066');
         }
         tone(360, 0.05, 'triangle', 0.02, 30);
       }
@@ -5873,8 +5923,8 @@ function updateWeapons(dt){
   if(onLv > 0){
     p.wcd.onion = (p.wcd.onion || 0) - dt;
     if(p.wcd.onion <= 0){
-      p.wcd.onion = Math.max(1.9, 2.6 - 0.17 * (onLv - 1));
-      const rad = (92 + 10 * (onLv - 1)) * (relLv('w_onion') ? 1.25 : 1);
+      p.wcd.onion = Math.max(1.4, (2.6 - 0.17 * (onLv - 1)) * atkMul(p));
+      const rad = (92 + 10 * (onLv - 1)) * (relLv('w_onion') ? 1.25 : 1) * (1 + 0.06 * multiSt(p)) * areaMul(p, 0.35);
       if(G.rings.length >= 8) G.rings.shift();
       G.rings.push({x:p.x, y:p.y, r:rad, t:0.35, max:0.35, col:'#f2c7ff'});
       aoeHit(p.x, p.y, rad, wDmg(8.6 + 2.5 * (onLv - 1), p), relLv('w_onion') ? 0.3 : 0.2, relLv('w_onion') ? 1.4 : 1.1);
@@ -5891,7 +5941,7 @@ function updateWeapons(dt){
   if(tuLv > 0){
     p.wcd.turret = (p.wcd.turret || 0) - dt;
     if(p.wcd.turret <= 0){
-      p.wcd.turret = Math.max(6, 9 - 0.7 * (tuLv - 1));
+      p.wcd.turret = Math.max(4, (9 - 0.7 * (tuLv - 1)) * atkMul(p));
       if(G.turrets.length >= 4) G.turrets.shift();
       G.turrets.push({x:p.x + rand(-30, 30), y:p.y + rand(-30, 30),
         t:8 + (tuLv >= 5 ? 3 : 0) + (relLv('w_turret') ? 3 : 0), cd:0.2, lv:tuLv, dmg:wDmg(4.4 + 1.35 * (tuLv - 1), p)});
@@ -5904,11 +5954,15 @@ function updateWeapons(dt){
       if(tu.cd > 0) continue;
       const te = nearestEnemyTo(tu.x, tu.y, 320);
       if(!te) continue;
-      tu.cd = Math.max(0.26, (0.6 - 0.05 * (tu.lv - 1)) * (relLv('w_turret') ? 0.8 : 1));
-      if(G.bullets.length >= 240) G.bullets.shift();
+      tu.cd = Math.max(0.18, (0.6 - 0.05 * (tu.lv - 1)) * (relLv('w_turret') ? 0.8 : 1) * atkMul(p));
       const ta = Math.atan2(te.y - tu.y, te.x - tu.x);
-      G.bullets.push({x:tu.x, y:tu.y - 12, vx:Math.cos(ta) * 700, vy:Math.sin(ta) * 700,
-        r:3, dmg:tu.dmg, life:0.8, pierce:0, hitIds:[], dead:false, col:'#b8f07a'});
+      const tn = Math.min(4, 1 + multiSt(p));
+      for(let q=0;q<tn;q++){
+        if(G.bullets.length >= 240) G.bullets.shift();
+        const qa = ta + (q - (tn - 1) / 2) * 0.06;
+        G.bullets.push({x:tu.x, y:tu.y - 12, vx:Math.cos(qa) * 700 * bspdMul(p), vy:Math.sin(qa) * 700 * bspdMul(p),
+          r:3, dmg:tu.dmg, life:0.8, pierce:0, hitIds:[], dead:false, col:'#b8f07a'});
+      }
       tone(620, 0.03, 'square', 0.012, 30);
     }
   }
@@ -5920,10 +5974,10 @@ function updateWeapons(dt){
     if(p.wcd.well <= 0){
       const wsrc = nearestEnemyTo(p.x, p.y, 420);
       if(wsrc){
-        p.wcd.well = Math.max(3.4, 4.6 - 0.3 * (weLv - 1));
+        p.wcd.well = Math.max(2.4, (4.6 - 0.3 * (weLv - 1)) * atkMul(p));
         if(G.wells.length >= 2) G.wells.shift();
         G.wells.push({x:wsrc.x, y:wsrc.y, t:2.2 + (relLv('w_well') ? 0.8 : 0), max:2.2 + (relLv('w_well') ? 0.8 : 0),
-          r:(110 + 8 * (weLv - 1)) * (relLv('w_well') ? 1.3 : 1), cd:0, spin:0,
+          r:(110 + 8 * (weLv - 1)) * (relLv('w_well') ? 1.3 : 1) * (1 + 0.06 * multiSt(p)) * areaMul(p, 0.35), cd:0, spin:0,
           dmg:wDmg(2.7 + 0.9 * (weLv - 1), p)});
         tone(140, 0.3, 'sine', 0.04, -50);
       }
@@ -5932,7 +5986,7 @@ function updateWeapons(dt){
       const w = G.wells[i];
       w.t -= dt; w.cd -= dt; w.spin += dt * 2.4;
       if(w.cd <= 0){
-        w.cd = 0.28;
+        w.cd = Math.max(0.16, 0.28 * atkMul(p));
         const pull = 0.12;
         for(let j=0;j<G.enemies.length;j++){
           const e = G.enemies[j];
@@ -5958,10 +6012,13 @@ function updateWeapons(dt){
   if(peLv > 0){
     p.wcd.peel = (p.wcd.peel || 0) - dt;
     if(p.wcd.peel <= 0){
-      p.wcd.peel = Math.max(1.5, 2.4 - 0.22 * (peLv - 1));
-      if(G.peels.length >= 10) G.peels.shift();
-      G.peels.push({x:p.x + rand(-18, 18), y:p.y + rand(-18, 18), t:8, spin:rand(0, 6.28),
-        dmg:wDmg(6.7 + 2.4 * (peLv - 1), p), dead:false});
+      p.wcd.peel = Math.max(1.0, (2.4 - 0.22 * (peLv - 1)) * atkMul(p));
+      const pn2 = Math.min(2, 1 + multiSt(p));
+      for(let q=0;q<pn2;q++){
+        if(G.peels.length >= 10) G.peels.shift();
+        G.peels.push({x:p.x + rand(-18, 18), y:p.y + rand(-18, 18), t:8, spin:rand(0, 6.28),
+          dmg:wDmg(6.7 + 2.4 * (peLv - 1), p), dead:false});
+      }
     }
     for(let i=G.peels.length-1;i>=0;i--){
       const pe = G.peels[i];
@@ -5972,7 +6029,7 @@ function updateWeapons(dt){
         if(e.dead) continue;
         if(dist2(pe.x, pe.y, e.x, e.y) > (14 + e.r) * (14 + e.r)) continue;
         pe.dead = true;
-        aoeHit(pe.x, pe.y, relLv('w_peel') ? 42 : 30, pe.dmg, relLv('w_peel') ? 0.7 : 0.55, relLv('w_peel') ? 1.8 : 1.4);
+        aoeHit(pe.x, pe.y, (relLv('w_peel') ? 42 : 30) * areaMul(p, 0.4), pe.dmg, relLv('w_peel') ? 0.7 : 0.55, relLv('w_peel') ? 1.8 : 1.4);
         for(let k=0;k<6;k++) addPart(pe.x, pe.y, '#ffe066', rand(1.5, 3), 0.25);
         break;
       }
@@ -5984,16 +6041,17 @@ function updateWeapons(dt){
   if(hasWeapon('ustorm')){
     p.wcd.ustorm = (p.wcd.ustorm || 0) - dt;
     if(p.wcd.ustorm <= 0){
-      p.wcd.ustorm = 0.22;
+      p.wcd.ustorm = Math.max(0.12, 0.22 * atkMul(p));
       p.ustN = (p.ustN || 0) + 1;
       const a0 = aimAngle(p, 520);
       if(p.ustN % 6 === 0){
-        for(let k=0;k<10;k++) spawnShot(p, a0 + k * Math.PI * 2 / 10, 560, wDmg(13, p), 4.2, 0.7, 1, '#ffb3a8');
+        const fan = Math.min(16, 10 + 2 * multiSt(p));
+        for(let k=0;k<fan;k++) spawnShot(p, a0 + k * Math.PI * 2 / fan, 560 * bspdMul(p), wDmg(13, p), 4.2, 0.7, 1, '#ffb3a8');
         tone(420, 0.09, 'triangle', 0.03, 50);
       } else {
-        spawnShot(p, a0 - 0.1, 820, wDmg(8, p), 3.6, 0.7, 1, '#ff9d6b');
-        spawnShot(p, a0, 820, wDmg(8, p), 3.6, 0.7, 1, '#ff9d6b');
-        spawnShot(p, a0 + 0.1, 820, wDmg(8, p), 3.6, 0.7, 1, '#ff9d6b');
+        const vn = Math.min(6, 3 + multiSt(p));
+        for(let k=0;k<vn;k++)
+          spawnShot(p, a0 + (k - (vn - 1) / 2) * 0.1, 820 * bspdMul(p), wDmg(8, p), 3.6, 0.7, 1, '#ff9d6b');
         tone(300, 0.035, 'triangle', 0.015, 20);
       }
     }
@@ -6004,22 +6062,34 @@ function updateWeapons(dt){
     p.flameVis = Math.max(0, (p.flameVis || 0) - dt);
     p.wcd.uflame = (p.wcd.uflame || 0) - dt;
     if(p.wcd.uflame <= 0){
-      p.wcd.uflame = 0.14;
+      p.wcd.uflame = Math.max(0.09, 0.14 * atkMul(p));
       p.flameA = aimAngle(p, 280);
       p.flameVis = 0.18;
-      p.flameRange = 175;
-      coneHit(p, p.flameA, 175, 0.44, wDmg(4.8, p), '#ff8a5c');
+      p.flameRange = 175 * rangeMul(p);
+      coneHit(p, p.flameA, p.flameRange, Math.min(0.6, 0.44 + 0.02 * multiSt(p)), wDmg(4.8, p), '#ff8a5c');
     }
     p.wcd.uzap = (p.wcd.uzap || 0) - dt;
     if(p.wcd.uzap <= 0){
       const e = nearestEnemyTo(p.x, p.y, 420);
       if(e){
-        p.wcd.uzap = 0.75;
+        p.wcd.uzap = Math.max(0.45, 0.75 * atkMul(p));
         const dmg = wDmg(18, p);
         const picked = [e];
-        zapStrike(e.x, e.y, 40, dmg, '#ff8a5c');
-        const other = (function(){ for(let j=0;j<G.enemies.length;j++){ const q = G.enemies[j]; if(!q.dead && picked.indexOf(q) < 0 && dist2(p.x, p.y, q.x, q.y) < 420 * 420) return q; } return null; })();
-        if(other) zapStrike(other.x, other.y, 40, dmg, '#ff8a5c');
+        const zr = 40 * areaMul(p, 0.4);
+        zapStrike(e.x, e.y, zr, dmg, '#ff8a5c');
+        const zextra = Math.min(3, 1 + multiSt(p));
+        for(let k=0;k<zextra;k++){
+          let other = null, od = 420 * 420;
+          for(let j=0;j<G.enemies.length;j++){
+            const q = G.enemies[j];
+            if(q.dead || picked.indexOf(q) >= 0) continue;
+            const dd = dist2(p.x, p.y, q.x, q.y);
+            if(dd < od){ od = dd; other = q; }
+          }
+          if(!other) break;
+          picked.push(other);
+          zapStrike(other.x, other.y, zr, dmg, '#ff8a5c');
+        }
         tone(330, 0.08, 'triangle', 0.028, -100);
       } else p.wcd.uzap = 0.2;
     }
@@ -6030,20 +6100,26 @@ function updateWeapons(dt){
     p.wcd.uroller = (p.wcd.uroller || 0) - dt;
     if(p.wcd.uroller <= 0){
       const e = nearestEnemyTo(p.x, p.y, 520);
-      p.wcd.uroller = 2.4;
+      p.wcd.uroller = Math.max(1.2, 2.4 * atkMul(p));
       const a = e ? Math.atan2(e.y - p.y, e.x - p.x) : aimAngle(p, 520);
-      if(G.melons.length >= 3) G.melons.shift();
-      G.melons.push({x:p.x, y:p.y, vx:Math.cos(a) * 210, vy:Math.sin(a) * 210,
-        r:30, dmg:wDmg(40, p), t:4.0, hit:[], spin:0, vine:true});
+      const wcnt = Math.min(3, 1 + Math.floor(multiSt(p) / 2));
+      for(let k=0;k<wcnt;k++){
+        if(G.melons.length >= 4) G.melons.shift();
+        const wa = a + (k - (wcnt - 1) / 2) * 0.16;
+        G.melons.push({x:p.x, y:p.y, vx:Math.cos(wa) * 210 * bspdMul(p), vy:Math.sin(wa) * 210 * bspdMul(p),
+          r:30 * areaMul(p, 0.4), dmg:wDmg(40, p), t:4.0, hit:[], spin:0, vine:true});
+      }
       tone(220, 0.16, 'triangle', 0.05, -60);
     }
     p.wcd.uroller2 = (p.wcd.uroller2 || 0) - dt;
     if(p.wcd.uroller2 <= 0){
       const e = nearestEnemyTo(p.x, p.y, 520);
       if(e){
-        p.wcd.uroller2 = 1.1;
+        p.wcd.uroller2 = Math.max(0.6, 1.1 * atkMul(p));
         const a = Math.atan2(e.y - p.y, e.x - p.x);
-        spawnShot(p, a, 900, wDmg(24, p), 5.5, 1.0, 3, '#7fe0a8');
+        const scnt = Math.min(3, 1 + multiSt(p));
+        for(let k=0;k<scnt;k++)
+          spawnShot(p, a + (k - (scnt - 1) / 2) * 0.08, 900 * bspdMul(p), wDmg(24, p), 5.5, 1.0, 3, '#7fe0a8');
         tone(360, 0.07, 'triangle', 0.03, 70);
       } else p.wcd.uroller2 = 0.3;
     }
@@ -6053,12 +6129,13 @@ function updateWeapons(dt){
   if(hasWeapon('ufarm')){
     p.wcd.ufarm = (p.wcd.ufarm || 0) - dt;
     if(p.wcd.ufarm <= 0){
-      p.wcd.ufarm = 1.7;
-      for(let k=0;k<2;k++){
+      p.wcd.ufarm = Math.max(1.0, 1.7 * atkMul(p));
+      const fmn = Math.min(4, 2 + multiSt(p));
+      for(let k=0;k<fmn;k++){
         if(G.mines.length >= 12) G.mines.shift();
         const a = Math.random() * 6.283, dd = rand(10, 46);
         G.mines.push({x:p.x + Math.cos(a) * dd, y:p.y + Math.sin(a) * dd, arm:0.5,
-          r:24, rad:74, dmg:wDmg(28, p), t:8});
+          r:24, rad:74 * areaMul(p, 0.4), dmg:wDmg(28, p), t:8});
       }
       const e = nearestEnemyTo(p.x, p.y, 480);
       let tx, ty;
@@ -6066,22 +6143,23 @@ function updateWeapons(dt){
       else { const a = aimAngle(p, 480); tx = p.x + Math.cos(a) * 200; ty = p.y + Math.sin(a) * 200; }
       if(G.pineapples.length >= 8) G.pineapples.shift();
       G.pineapples.push({x:p.x, y:p.y, sx:p.x, sy:p.y, tx:tx, ty:ty, t:0, dur:0.8,
-        rad:74, dmg:wDmg(38, p), spin:0});
+        rad:74 * areaMul(p, 0.4), dmg:wDmg(38, p), spin:0});
       tone(260, 0.1, 'triangle', 0.04, 50);
     }
   }
 
   // 光合要塞：5 片叶盾 + 贯穿光束（命中回血）
   if(hasWeapon('ufort')){
-    p.leafA = (p.leafA || 0) + dt * 2.8;
-    for(let k=0;k<5;k++){
-      const a = p.leafA + k * Math.PI * 2 / 5;
+    p.leafA = (p.leafA || 0) + dt * 2.8 * spinMul(p);
+    const fn = Math.min(8, 5 + multiSt(p));
+    for(let k=0;k<fn;k++){
+      const a = p.leafA + k * Math.PI * 2 / fn;
       const sx = p.x + Math.cos(a) * 58, sy = p.y + Math.sin(a) * 58;
       for(let j=0;j<G.enemies.length;j++){
         const e = G.enemies[j];
         if(e.dead || (e.leafT || 0) > G.time) continue;
         if(dist2(sx, sy, e.x, e.y) > (14 + e.r) * (14 + e.r)) continue;
-        e.leafT = G.time + 0.4;
+        e.leafT = G.time + Math.max(0.2, 0.4 * atkMul(p));
         e.hp -= wDmg(12, p) * (1 - (e.dr || 0));
         e.hitFlash = Math.max(e.hitFlash, 0.08);
         if(!e.boss){ e.slowT = Math.max(e.slowT, 0.6); e.slowAmt = Math.max(e.slowAmt, 0.3); }
@@ -6093,9 +6171,9 @@ function updateWeapons(dt){
     if(p.wcd.ufort <= 0){
       const e = nearestEnemyTo(p.x, p.y, 520);
       if(e){
-        p.wcd.ufort = 1.2;
+        p.wcd.ufort = Math.max(0.8, 1.2 * atkMul(p));
         const a = Math.atan2(e.y - p.y, e.x - p.x);
-        const x2 = p.x + Math.cos(a) * 500, y2 = p.y + Math.sin(a) * 500;
+        const x2 = p.x + Math.cos(a) * 500 * rangeMul(p), y2 = p.y + Math.sin(a) * 500 * rangeMul(p);
         const dmg = wDmg(36, p);
         let hits = 0;
         for(let j=0;j<G.enemies.length;j++){
