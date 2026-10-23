@@ -3904,7 +3904,8 @@ const TYPES=[
   {id:'mb_xing',   name:'巴中月巴',   img:'https://origin.picgo.net/2026/09/03/127d7a0746c5de2434.th.png', r:4, v:150, t:900,  cond:{t:'item',i:'starlight'}, color:'#c9a8ea', shape:'star'},
 
   {id:'mb_da',       name:'大月巴',   r:4, v:80,  t:600,  cond:{t:'harvest',n:50},  color:'#e8a89a', shape:'wide', size:1.5},
-  {id:'mb_ju',       name:'巨月巴',   r:4, v:150, t:900,  cond:{t:'harvest',n:200}, color:'#d98a86', shape:'big', size:2},
+  {id:'mb_ju',       name:'巨月巴',   img:'https://origin.picgo.net/2026/10/23/7445849475a1a67a9510637d9dd722c0ce1589688044ee9c.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/23/7445849475a1a67a9510637d9dd722c0ce1589688044ee9c.th.png', by:'鲸弑', note:'你也太壮了。'}], r:4, v:150, t:900,  cond:{t:'harvest',n:200}, color:'#d98a86', shape:'big', size:2},
   {id:'mb_chao',     name:'超巨月巴', img:'https://origin.picgo.net/2026/10/22/6e242d94aa9b07b9117479ec78fd53985fd887bb68d8fa62.th.png', r:4, v:300, t:1500, cond:{t:'harvest',n:500}, color:'#e0a34e', shape:'big', size:3},
   {id:'mb_lian',     name:'幸运月巴', img:'https://origin.picgo.net/2026/10/23/f18fc86039bab18c60f2e5a640a82994256efe02bbe849d2.th.png',
     imgs:[{url:'https://origin.picgo.net/2026/10/23/f18fc86039bab18c60f2e5a640a82994256efe02bbe849d2.th.png', by:'影子生物'}], r:4, v:60,  t:480,  cond:null, weight:0.05, color:'#e8a8c4', shape:'round'},
@@ -3969,7 +3970,7 @@ const TYPES=[
   {id:'mb_jingcha', name:'警察月巴',    r:3, v:45, t:460, cond:null, color:'#4a6fa5', shape:'round'},
   {id:'mb_faguan',  name:'法官月巴',    r:3, v:45, t:460, cond:null, color:'#4a4a5a', shape:'cube'},
   {id:'mb_lvshi',   name:'律师月巴',    r:3, v:45, t:460, cond:null, color:'#5a7a8a', shape:'tall'},
-  {id:'mb_jinju',   name:'进局子巴',  r:3, v:40, t:400, cond:null, img:'https://origin.picgo.net/2026/10/21/---akai0255d6362d123bd3.th.png', color:'#8a8a8a', shape:'squish'},
+  {id:'mb_jinju',   name:'进局子巴',  r:3, v:40, t:400, cond:null, img:'https://origin.picgo.net/2026/10/21/---akai0255d6362d123bd3.th.png', color:'#8a8a8a', shape:'squish', artScale:1.45},
   {id:'mb_zuanshi', name:'钻石月巴',  r:3, v:260, t:1250, cond:null, color:'#9be7ff', shape:'cube'},
   {id:'mb_huang',   name:'黄月月巴',    img:'https://origin.picgo.net/2026/10/23/485bfcabf6eaea8ea294ead8e520a0ada29d48a19c9197d6.th.png',
     imgs:[{url:'https://origin.picgo.net/2026/10/23/485bfcabf6eaea8ea294ead8e520a0ada29d48a19c9197d6.th.png', by:'影子生物'}], r:2, v:24, t:220, cond:null, color:'#ffd94a', shape:'round'},
@@ -4155,6 +4156,7 @@ const YB_PIC_AUTHOR={
   jieba:'鲸弑',
   m2_hei:'鲸弑',
   m2_wo:'鲸弑',
+  mb_ju:'鲸弑',
   m2_men:'Suwa',
   huaba:'Suwa',
   mb_xue:'Suwa',
@@ -8363,6 +8365,9 @@ function artIndex(t){
   return (typeof p==='number'&&p>=0&&p<n)?p:0;
 }
 function artURL(t){ const l=artList(t); return l.length?l[artIndex(t)].url:''; }
+/* 立绘微调：部分投稿 PNG 画布留白偏多，显示时显得比别的月巴小，
+   用 artScale 单独放大（只作用于立绘 PNG；无立绘的 SVG 仍用 size）。 */
+function picScale(t){ return artURL(t)?((t&&t.artScale)||1):((t&&t.size)||1); }
 function artBy(t){ const l=artList(t); return l.length?l[artIndex(t)].by:''; }
 function artNote(t){ const l=artList(t); return l.length?(l[artIndex(t)].note||''):''; }
 /* 图鉴卡片右上角的「🎨n」角标：这只月巴有几张立绘 */
@@ -9357,7 +9362,7 @@ function bookRowsHTML(list,quiet){
       </div>`;
     }
     const rowM=false; rows+=`<div class="bcard${quiet?'':' anim-in'} ${c?'':'locked'} ${t.r>=4?'epic':''} ${t.r===5?'legend':''}${t.id==='bairi'&&c?' bairi':''}${allGold?' allgold':''}" data-id="${t.id}"${quiet?'':` style="--stagger:${i*36}ms"`} ${c?`onclick="openFatDetail('${t.id}')"`:''}>
-      <div class="pic">${c?`<span style="display:inline-block;transform:scale(${artURL(t)?1:(t.size||1)})">${fatSVG(t)}</span>${artBadgeHTML(t)}`:lockedSVG()}</div>
+      <div class="pic">${c?`<span style="display:inline-block;transform:scale(${picScale(t)})">${fatSVG(t)}</span>${artBadgeHTML(t)}`:lockedSVG()}</div>
       <div class="nm">${c?t.name:'???'}</div>
       <div class="cnt">${c?$tf('收获 x{n}',{n:c}):$t('未发现')} <span class="rar-tag ${rcl}">${$t(RAR_NAME[t.r])}</span></div>
       ${stats}
@@ -9677,7 +9682,7 @@ function openFatDetail(id){ // 图鉴点开某月巴：悬浮层放大图 + 记�
     <div class="fd-card">
       <div class="fd-head"><span>📖 ${t.name}</span><button class="iconbtn" onclick="closeFatDetail()">✕</button></div>
       <div class="fd">
-        <div class="fd-pic ${t.r>=4?'epic':''} ${t.r===5?'legend':''}"><span style="display:inline-block;transform:scale(${artURL(t)?1:(t.size||1)})">${fatSVG(t)}</span></div>
+        <div class="fd-pic ${t.r>=4?'epic':''} ${t.r===5?'legend':''}"><span style="display:inline-block;transform:scale(${picScale(t)})">${fatSVG(t)}</span></div>
         ${artList(t).length>1?`<div class="fd-arts">
           <button class="iconbtn" title="${esc($t('切换立绘'))}" onclick="switchArt('${t.id}',-1)">‹</button>
           <span>🎨 ${artIndex(t)+1} / ${artList(t).length}</span>
@@ -9722,7 +9727,7 @@ function syncDexCard(id){
   const card=document.querySelector('.bcard[data-id="'+id+'"]');
   if(!card) return;
   const pic=card.querySelector('.pic'); if(!pic) return;
-  pic.innerHTML=`<span style="display:inline-block;transform:scale(${artURL(t)?1:(t.size||1)})">${fatSVG(t)}</span>${artBadgeHTML(t)}`;
+  pic.innerHTML=`<span style="display:inline-block;transform:scale(${picScale(t)})">${fatSVG(t)}</span>${artBadgeHTML(t)}`;
 }
 function openShop(){
   pomoModalOpen=false;
