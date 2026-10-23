@@ -65,6 +65,11 @@
     display:flex;align-items:center;gap:10px;flex-wrap:wrap;
     border-radius:16px;padding:10px 14px;
   }
+  /* 旧版 WebView 不支持 flex 的 gap，元素会紧贴、金币数字压住图鉴文字；
+     boot 时探测并给 <html> 加 nogap 类，改用 margin 补齐间距 */
+  html.nogap #topbar{gap:0;margin-bottom:-10px;}
+  html.nogap #topbar>*{margin-bottom:10px;}
+  html.nogap #topbar>*+*{margin-left:10px;}
   #topbar .title{font-weight:800;font-size:18px;letter-spacing:1px;color:var(--purple2);}
   #topbar .title span{color:var(--gold);}
   /* 存档写入失败时的常驻警告条（默认隐藏） */
@@ -74,16 +79,26 @@
     color:var(--danger);font-size:12px;font-weight:800;text-align:center;
   }
   #saveWarn:active{transform:scale(.99);}
-  .coinbox{display:flex;align-items:center;gap:6px;font-weight:800;font-size:19px;color:var(--gold);}
+  .coinbox{display:flex;align-items:center;flex:0 0 auto;white-space:nowrap;font-weight:800;font-size:19px;color:var(--gold);}
   .coinbox .cico{font-size:20px;}
+  #coinTxt{white-space:nowrap;margin-left:6px;}
+  /* 金币图标：部分设备缺少 🪙 字形，改用内联 SVG，不依赖系统 emoji 字体 */
+  .cico{
+    display:inline-block;width:1em;height:1em;vertical-align:-.12em;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cdefs%3E%3ClinearGradient id='c' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23ffe9a3'/%3E%3Cstop offset='.55' stop-color='%23f3c33f'/%3E%3Cstop offset='1' stop-color='%23d29b18'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='12' cy='12' r='11' fill='url(%23c)'/%3E%3Ccircle cx='12' cy='12' r='10.3' fill='none' stroke='%23b17d0c' stroke-width='1.1' opacity='.6'/%3E%3Ccircle cx='12' cy='12' r='6.4' fill='none' stroke='%23fff7d6' stroke-width='1.5' opacity='.9'/%3E%3C/svg%3E") center/contain no-repeat;
+    font-style:normal;
+  }
   .coinbox.pulse{animation:coinpop .35s ease;}
   @keyframes coinpop{0%{transform:scale(1.35);}100%{transform:scale(1);}}
   .chip{
     display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:700;
     border-radius:999px;padding:5px 12px;color:var(--text);
   }
-  .collbox{flex:1;min-width:130px;}
-  .collbox .top{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);margin-bottom:4px;}
+  .collbox{flex:1 1 130px;min-width:0;}
+  .collbox .top{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--dim);margin-bottom:4px;}
+  .collbox .top>span:first-child{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .collbox .top>span:last-child{flex:0 0 auto;white-space:nowrap;margin-left:8px;}
+  #topbar .iconbtn{flex:0 0 auto;}
   .bar{height:9px;background:#e6e0f5;border-radius:99px;overflow:hidden;}
   .bar i{display:block;height:100%;background:linear-gradient(90deg,#b39ddb,#7e57c2);border-radius:99px;transition:width .4s ease;}
   .iconbtn{
@@ -212,6 +227,7 @@
   .wcell{
     position:absolute;width:42px;height:56px;transform-origin:50% 100%;z-index:4;
     cursor:pointer;border:none;background:transparent;padding:0;
+    touch-action:manipulation;   /* 双击切换立绘时不要触发浏览器的双击缩放 */
   }
   .wcell .spr{position:absolute;left:0;top:0;width:100%;height:100%;}
   .wcell .pg{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:34px;height:4px;
@@ -222,6 +238,9 @@
   .wcell.grow .spr{animation:bob 2.4s ease-in-out infinite;}
   .wcell.mature .spr{animation:readyBounce .5s cubic-bezier(.34,1.56,.64,1);}
   .wcell.mature:hover .spr{transform:scale(1.1);}
+  /* 双击换立绘：整株轻轻弹一下作反馈 */
+  .wcell.artswap{animation:artSwap .3s cubic-bezier(.34,1.56,.64,1);}
+  @keyframes artSwap{0%{transform:scale(.88);}60%{transform:scale(1.06);}100%{transform:scale(1);}}
   @keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-3px);}}
   @keyframes readyBounce{0%{transform:scale(.4);}60%{transform:scale(1.2);}100%{transform:scale(1);}}
   .scenefoot{
@@ -3438,7 +3457,7 @@
 <div id="app">
   <div id="topbar" class="frost">
     <div class="title" data-i18n-html="放置<span>月巴</span> 🐰">放置<span>月巴</span> 🐰</div>
-    <div class="coinbox" id="coinbox"><span class="cico">🪙</span><span id="coinTxt">0</span></div>
+    <div class="coinbox" id="coinbox"><span class="cico"></span><span id="coinTxt">0</span></div>
     <div class="collbox">
       <div class="top"><span data-i18n="📖 图鉴收集">📖 图鉴收集</span><span id="collTxt">0/0 (0%)</span></div>
       <div class="bar"><i id="collBar" style="width:0%"></i></div>
@@ -7749,7 +7768,7 @@ const I18N_MISC={    // 事件/台词/系统说明：键为语义 key（字段�
   help_goal_t:{d:{en:'🎯 Goal',ja:'🎯 目標',ko:'🎯 목표'}},
   help_goal:{d:{en:'Collect every Banny in the Codex; each new species pays <b>3× Coins</b> on first collection. Complete the first Codex to unlock <b>the second Codex and Trips</b>; collect the <b>Hundred-Day Banny</b> to unlock the <b>🪽 flight minigame</b>.',ja:'図鑑のすべてのバニーを集めましょう。新種を初めて収穫すると<b>コイン 3 倍</b>。第一図鑑を完成させると<b>第二図鑑と旅</b>が解放され、<b>百日バニー</b>を集めると<b>🪽 飛行ミニゲーム</b>が解放されます。',ko:'도감의 모든 배니를 모으세요. 새 종을 처음 수확하면 <b>코인 3배</b>를 받아요. 첫 도감을 완성하면 <b>두 번째 도감과 여행</b>이 열리고, <b>백일 배니</b>를 모으면 <b>🪽 비행 미니게임</b>이 열려요.'}},
   help_grow_t:{d:{en:'🌱 Growth & Harvest',ja:'🌱 成長と収穫',ko:'🌱 성장과 수확'}},
-  help_grow:{d:{en:'On a piece of wood a Banny goes through <b>Baby → Growing → Ripe</b>. Only when ripe can you see its true form and harvest it; the rarer it is, the harder it appears. Once ripe you must <b>tap to collect</b> (Pomodoro focus collects automatically). They also grow while offline, up to <b>12 hours</b> at a time.',ja:'バニーは木材の上で<b>幼年 → 成長 → 成熟</b>と進みます。成熟して初めて本当の姿が見え、収穫できます。レア度が高いほど出現しにくくなります。成熟後は<b>タップして収穫</b>が必要です（ポモドーロの集中中は自動収穫）。オフラインでも成長し、最大 <b>12 時間</b>分まで精算されます。',ko:'배니는 나무 위에서 <b>유아 → 성장 → 성숙</b> 단계를 거쳐요. 성숙해야만 본모습을 보고 수확할 수 있으며, 희귀도가 높을수록 나타나기 어려워요. 성숙 후에는 <b>직접 탭해서 수확</b>해야 해요(뽀모도로 집중 중에는 자동 수확). 오프라인에서도 성장하며, 최대 <b>12시간</b>까지 정산돼요.'}},
+  help_grow:{d:{en:'On a piece of wood a Banny goes through <b>Baby → Growing → Ripe</b>. Only when ripe can you see its true form and harvest it; the rarer it is, the harder it appears. Once ripe you must <b>tap to collect</b> (Pomodoro focus collects automatically). They also grow while offline, up to <b>12 hours</b> at a time. Bannies with more than one illustration can be <b>double-tapped</b> in the scene to switch that plant’s artwork.',ja:'バニーは木材の上で<b>幼年 → 成長 → 成熟</b>と進みます。成熟して初めて本当の姿が見え、収穫できます。レア度が高いほど出現しにくくなります。成熟後は<b>タップして収穫</b>が必要です（ポモドーロの集中中は自動収穫）。オフラインでも成長し、最大 <b>12 時間</b>分まで精算されます。立ち絵が複数あるバニーは、シーン内で<b>ダブルタップ</b>するとその株の立ち絵を切り替えられます。',ko:'배니는 나무 위에서 <b>유아 → 성장 → 성숙</b> 단계를 거쳐요. 성숙해야만 본모습을 보고 수확할 수 있으며, 희귀도가 높을수록 나타나기 어려워요. 성숙 후에는 <b>직접 탭해서 수확</b>해야 해요(뽀모도로 집중 중에는 자동 수확). 오프라인에서도 성장하며, 최대 <b>12시간</b>까지 정산돼요. 일러스트가 여러 장인 배니는 장면에서 <b>더블 탭</b>하면 그 개체의 일러스트를 바꿀 수 있어요.'}},
   help_zone_t:{d:{en:'🏡 Plots',ja:'🏡 区画',ko:'🏡 구획'}},
   help_zone:{d:{en:'There are 8 plots, and each plot unlocks different Bannies; <b>buying wood and expanding slots are both done inside the scene</b>, and each piece of wood can host several Bannies.',ja:'区画は全部で 8 つあり、区画ごとに解放されるバニーが異なります。<b>木材の購入と発生枠の拡張はシーン内で行います</b>。木材 1 本につき複数匹を育てられます。',ko:'구획은 총 8곳이며, 구획마다 해금되는 배니가 달라요. <b>나무 구매와 슬롯 확장은 장면 안에서 이뤄져요</b>. 나무 하나에 여러 마리를 키울 수 있어요.'}},
   help_pomo_t:{d:{en:'🍅 Pomodoro',ja:'🍅 ポモドーロ',ko:'🍅 뽀모도로'}},
@@ -8344,7 +8363,7 @@ const sfx={
 let _toastT=null;
 function toast(msg, sub){
   /* P2：以中文原文为键自动查表；带变量的模板由调用处先用 $tf() 拼好，这里查不到即原样返回 */
-  msg=$t(msg); if(sub) sub=$t(sub);
+  msg=$t(msg).replace(/\s*🪙/g,''); if(sub) sub=$t(sub);
   const t=$('toast');
   if(sub){ t.classList.remove('pill'); t.innerHTML='<b>'+msg+'</b><span class="tsub">'+sub+'</span>'; }
   else { t.classList.add('pill'); t.textContent=msg; }
@@ -8466,15 +8485,22 @@ function artBadgeHTML(t){
 }
 /* 场景地图上的月巴：有多张立绘时随机挑一张显示。
    种子取自播种时生成的 cell.artSeed，同一株每次重绘都是同一张，重新种下才换；
-   url 参数用于给 fatSVG 指定图片，不传则用图鉴里选中的那张。 */
-function artRandURL(t,seed){
-  const l=artList(t);
-  if(!l.length) return '';
-  if(l.length===1) return l[0].url;
+   玩家双击换过的立绘另存在 cell.artIdx（优先使用，见 cellArtURL）。 */
+function artRandIndex(t,seed){
+  const n=artList(t).length;
+  if(n<2) return 0;
   const s=String(seed==null?'':seed);
   let h=2166136261;
   for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); }
-  return l[(h>>>0)%l.length].url;
+  return (h>>>0)%n;
+}
+/* 这一株月巴本轮生长显示的立绘：玩家双击换过就用 cell.artIdx，否则按播种种子随机 */
+function cellArtURL(t,cell){
+  const l=artList(t);
+  if(!l.length) return '';
+  const p=cell&&cell.artIdx;
+  if(typeof p==='number'&&p>=0&&p<l.length) return l[p].url;
+  return l[artRandIndex(t,cellArtSeed(cell))].url;
 }
 /* 一株月巴在本轮生长中固定的立绘种子。
    不能用 cell.start 当种子：点月巴加速、快长肥、速度倍率折算都会改 start，
@@ -8605,6 +8631,7 @@ function spawnIn(zone,wood,cell){
   const st=rollStats(t.r);
   cell.t=t.id; cell.start=now(); cell.dur=growDur(t); cell.h=st.h; cell.w=st.w; cell.delay=0;
   cell.artSeed=(Math.random()*1e9)|0;   // 本次播种固定的立绘种子（见 cellArtSeed）
+  cell.artIdx=null;                     // 重新种下：清掉上一轮手动选过的立绘，回到随机
 }
 function cellRemaining(cell){ return (cell.dur/speedMult())-(now()-cell.start); }
 function cellReady(cell){ return cell.t && cellRemaining(cell)<=0; }
@@ -8659,11 +8686,11 @@ function doHarvest(z,w,i,cell,el,quiet){
     const x=r.left+r.width/2, y=r.top+r.height/2;
     const col=[type.color,shade(type.color,20),'#e6c44c'];
     burst(x,y,col,isNew?26:14,isNew?5:3.4);
-    floatText(x,y-8,`+${fmt(val)} 🪙 · ${cell.h}cm`,isNew?'#e6c44c':'#7e57c2');
+    floatText(x,y-8,`+${fmt(val)} · ${cell.h}cm`,isNew?'#e6c44c':'#7e57c2');
     coinFly(x,y,coinTarget());
   }
   if(beats.length) toast($tf('📐 新纪录！「{a}」{b} {c}cm / {d}g',{a:type.name,b:beats.join('、'),c:cell.h,d:cell.w}));
-  if(isNew) unlockBanner(type,cell,artRandURL(type,cellArtSeed(cell)));
+  if(isNew) unlockBanner(type,cell,cellArtURL(type,cell));
   if(!quiet) hvSfx(isNew); /* 收获音（含金币/新解锁音）：同一时刻多只月巴收获合并为一次 */
   cell.t=null; cell.delay=now()+rand(900,2600);
   updateHeader();
@@ -8675,7 +8702,7 @@ function unlockBanner(type,cell,art){
   $('bannerPic').innerHTML=fatSVG(type,art);
   $('bannerName').textContent=`${type.name} (${cell.h}cm · ${cell.w}g)`;
   $('bannerDesc').textContent=condText(type.cond);
-  $('bannerReward').textContent=$t('首次收获 x3 · ')+fmt(type.v*3)+' 🪙';
+  $('bannerReward').innerHTML=$t('首次收获 x3 · ')+fmt(type.v*3)+' <i class="cico"></i>';
   const b=$('banner'); b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
 }
 
@@ -8705,7 +8732,7 @@ function renderOverview(){
           <div class="zn">${zd.icon} ${zd.name}</div>
           <div class="zs">${zone.bought?$tf('🪵{n} 木头 · {m} 槽位',{n:woodCnt,m:slotCnt}):$t('尚未解锁')}</div>
         </div>
-        <div class="zb">${zone.bought?$t('👀 查看'):'🔓 '+fmt(zd.cost)+'🪙'}</div>
+        <div class="zb">${zone.bought?$t('👀 查看'):'🔓 '+fmt(zd.cost)+'<i class="cico"></i>'}</div>
       </div>
     </div>`;
   }
@@ -8784,8 +8811,8 @@ function renderCell(z,w,i){
   const type=cellTypeOf(cell);   // 失效的月巴 id 会在此清空槽位，走下面的空槽分支
   if(type){
     const stage=cellStage(cell);
-    // 地图上多立绘随机展示：同一株固定同一张（种子在播种时生成），重新种下才换
-    const art=artRandURL(type,cellArtSeed(cell));
+    // 地图上多立绘随机展示：同一株固定同一张（双击可单株切换，见 switchCellArt）
+    const art=cellArtURL(type,cell);
     if(stage==='mature'){
       const s=hScale(cell.h)*(type.size||1)*SCENE_FAT_ZOOM;
       el.className='wcell mature';
@@ -8819,16 +8846,53 @@ function renderCell(z,w,i){
 }
 const TAP_SECS=10;        // 点击一次，增加 10 秒生长进度
 const TAP_CD=300;          // 点击加速节流（ms）
+const TAP_DBL=320;         // 双击判定窗口（ms）：同一株两次点击内算双击，切换这株的立绘
 let tapCd={};              // 各槽位点击冷却 key:`z-w-i`
+let tapAt={};              // 各槽位上次点击 {t:时间, acc:是否加了生长进度} key:`z-w-i`
+/* 双击切换这一株月巴的立绘：只改这一株，不影响同种的其他株；重种后重新随机 */
+function switchCellArt(z,w,i,cell,type){
+  const n=artList(type).length;
+  if(n<2) return;
+  const cur=(typeof cell.artIdx==='number'&&cell.artIdx>=0&&cell.artIdx<n)
+    ? cell.artIdx : artRandIndex(type,cellArtSeed(cell));
+  cell.artIdx=(cur+1)%n;
+  save();
+  renderCell(z,w,i);
+  const el=cellEls[z+'-'+w+'-'+i];
+  if(el){
+    const r=el.getBoundingClientRect();
+    floatText(r.left+r.width/2, r.top+r.height*0.2, `${cell.artIdx+1}/${n}`, '#7e57c2');
+    el.classList.add('artswap');
+    setTimeout(function(){ el.classList.remove('artswap'); }, 320);
+  }
+  sfx.tap();
+}
 function clickCell(z,w,i){
   const cell=S.zones[z].woods[w].cells[i];
   if(cell&&cell.t){
-    if(cellReady(cell)){ doHarvest(z,w,i,cell,cellEls[`${z}-${w}-${i}`]); return; }
-    const k=now(); const key=z+'-'+w+'-'+i;
+    const key=z+'-'+w+'-'+i;
+    const type=cellTypeOf(cell);
+    const ready=cellReady(cell);
+    /* 未成熟时双击 = 换立绘（多张立绘才生效）。成熟后的点击就是收获，不参与双击判定 */
+    if(type && !ready && artList(type).length>1){
+      const p=tapAt[key];
+      if(p && now()-p.t<TAP_DBL){
+        tapAt[key]=null;
+        if(p.acc) cell.start+=TAP_SECS*1000;   // 退回第一下的加速：换立绘不白送生长进度
+        switchCellArt(z,w,i,cell,type);
+        return;
+      }
+      tapAt[key]={t:now(),acc:false};
+    }else{
+      tapAt[key]=null;
+    }
+    if(ready){ doHarvest(z,w,i,cell,cellEls[`${z}-${w}-${i}`]); return; }
+    const k=now();
     if(!tapCd[key]||k-tapCd[key]>TAP_CD){
       tapCd[key]=k;
       // 每次点击增加 10 秒生长进度（start 前移=更早播种），进度满即成熟
       cell.start-= TAP_SECS*1000;
+      if(tapAt[key]) tapAt[key].acc=true;
       save();
       if(currentZone>=0) renderCell(z,w,i);
       if(cellReady(cell)){ doHarvest(z,w,i,cell,cellEls[`${z}-${w}-${i}`]); }
@@ -9027,20 +9091,20 @@ function updateHeader(){
   $('collBar').style.width=(got/total*100)+'%';
   const mut=$('btnMute'); mut.textContent=S.muted?'🔇':'🔊';
   const wb=$('btnWeather');
-  if(wb) wb.innerHTML= weatherActive()?'<b>🌦️</b><small>'+$t('🌦️ 自选天气')+'</small>':'<b>🌦️</b><small>'+$t('🌦️ 天气瓶')+' '+fmt(WEATHER_COST)+'🪙</small>';
+  if(wb) wb.innerHTML= weatherActive()?'<b>🌦️</b><small>'+$t('🌦️ 自选天气')+'</small>':'<b>🌦️</b><small>'+$t('🌦️ 天气瓶')+' '+fmt(WEATHER_COST)+'<i class="cico"></i></small>';
   updateTaskBadge();
 }
 /* 场景顶栏道具按钮标注价格 */
 function updateSceneBar(){
   const wb=$('sceneWoodBtn');
-  if(wb && currentZone>=0) wb.textContent=$t('🪵 新木头')+' '+fmt(woodCost(currentZone,S.zones[currentZone].woods.length))+'🪙';
+  if(wb && currentZone>=0) wb.innerHTML=$t('🪵 新木头')+' '+fmt(woodCost(currentZone,S.zones[currentZone].woods.length))+'<i class="cico"></i>';
   const we=$('sceneWeather');
-  if(we) we.textContent= weatherActive()?$t('🌦️ 自选天气'):$t('🌦️ 天气瓶')+' '+fmt(WEATHER_COST)+'🪙';
+  if(we) we.innerHTML= weatherActive()?$t('🌦️ 自选天气'):$t('🌦️ 天气瓶')+' '+fmt(WEATHER_COST)+'<i class="cico"></i>';
   const sf=$('sceneFast');
   if(sf){
     const CD=10*60*1000, since=now()-S.lastFast;
-    sf.textContent = (S.lastFast>0 && since<CD) ? $t('⏳ 快长肥')+' '+Math.ceil((CD-since)/1000)+'s'
-      : $t('🍅 快长肥')+' '+fmt(fastCost())+'🪙';
+    sf.innerHTML = (S.lastFast>0 && since<CD) ? $t('⏳ 快长肥')+' '+Math.ceil((CD-since)/1000)+'s'
+      : $t('🍅 快长肥')+' '+fmt(fastCost())+'<i class="cico"></i>';
   }
 }
 function periodOf(h){
@@ -9110,7 +9174,7 @@ function openSlotMenu(){
         <div class="d">${full?$tf('已达到最大槽位 ({n} 槽)',{n:MAX_SLOTS}):$t('购买后增加 1 个种植槽')}</div>
       </div>
       ${full?`<span class="btn" style="opacity:.5;cursor:default">${$t('已满')}</span>`:
-        `<button class="btn gold" onclick="buySlotFromMenu(${z},${w})">${$tf('槽位+ {n}🪙',{n:fmt(slotCost(z,w))})}</button>`}
+        `<button class="btn gold" onclick="buySlotFromMenu(${z},${w})">${$tf('槽位+ {n}🪙',{n:fmt(slotCost(z,w))}).replace('🪙','<i class="cico"></i>')}</button>`}
     </div>`;
   }
   openModal($tf('🪵 槽位购买 · {n}',{n:ZONES[z].name}),
@@ -9150,9 +9214,9 @@ function fastCoolTick(){
   const sf=currentZone>=0?$('sceneFast'):null;
   if(!sf) return;
   const CD=10*60*1000, since=now()-S.lastFast;
-  sf.textContent = (S.lastFast>0 && since<CD)
+  sf.innerHTML = (S.lastFast>0 && since<CD)
     ? $t('⏳ 快长肥')+' '+Math.ceil((CD-since)/1000)+'s'
-    : $t('🍅 快长肥')+' '+fmt(fastCost())+'🪙';
+    : $t('🍅 快长肥')+' '+fmt(fastCost())+'<i class="cico"></i>';
 }
 const W_NAMES={sunny:['☀️','晴'],cloudy:['☁️','多云'],rain:['🌧️','雨'],storm:['⛈️','暴雨'],snow:['❄️','雪']};
 const WEATHER_HOLD=2*3600*1000; // 天气瓶选定的天气持续 2 现实小时
@@ -9170,7 +9234,7 @@ function openWeatherPicker(){
     </button>`;
   }).join('');
   const state=act?`${$t('天气瓶已生效，重新选择会重置为新的 2 小时。')}`
-    :`${$tf('选择天气需消耗 1 瓶（{n}🪙），生效 2 现实小时。',{n:fmt(WEATHER_COST)})}`;
+    :`${$tf('选择天气需消耗 1 瓶（{n}🪙），生效 2 现实小时。',{n:fmt(WEATHER_COST)}).replace('🪙','<i class="cico"></i>')}`;
   openModal('🌦️ 天气瓶 · 选择天气',
     `<div class="wgrid">${opts}</div>
      <div class="hintline">${state} ${$t('时间结束后瓶即失效，需重新购入。')}</div>`);
@@ -9535,7 +9599,7 @@ function openDexEvent(){
       <div style="font-size:14px;color:#e02424;font-weight:800;margin-bottom:2px">${$tf('🍅 {a} 送给你 {b} 金币！',{a:esc(t.name),b:fmt(reward)})}</div>
       ${extra}
       ${skim}
-      <button class="btn gold" onclick="claimDexEvent()">${$t('收下')} · +${fmt(reward)} 🪙${tomato>0?' +'+tomato+' 🍅':''}</button>
+      <button class="btn gold" onclick="claimDexEvent()">${$t('收下')} · +${fmt(reward)} <i class="cico"></i>${tomato>0?' +'+tomato+' 🍅':''}</button>
     </div>`, 60);
 }
 function claimDexEvent(){
@@ -9836,20 +9900,20 @@ function openShop(){
     return `<div class="shoprow ${owned?'owned':''}">
       <span class="ico">${it.icon}</span>
       <div class="info"><div class="t">${it.name}</div><div class="d">${it.desc}</div></div>
-      <button class="btn" ${owned?'disabled':''} onclick="buyItem('${it.id}')">${owned?$t('已拥有'):fmt(it.cost)+'🪙'}</button>
+      <button class="btn" ${owned?'disabled':''} onclick="buyItem('${it.id}')">${owned?$t('已拥有'):fmt(it.cost)+'<i class="cico"></i>'}</button>
     </div>`;
   }).join('');
   const accel=`<div class="shoprow">
       <span class="ico">⚙️</span>
       <div class="info"><div class="t">${$tf('常驻加速器 Lv.{n}',{n:S.accelLv})}${S.accelLv>=ACCEL_MAX?$t('（满级）'):''}</div>
       <div class="d">${$tf('所有月巴生长速度永久 +10%/级，当前共 +{n}%',{n:S.accelLv*10})}</div></div>
-      <button class="btn" ${S.accelLv>=ACCEL_MAX?'disabled':''} onclick="buyAccel()">${S.accelLv>=ACCEL_MAX?$t('已满级'):fmt(accelCost())+'🪙'}</button>
+      <button class="btn" ${S.accelLv>=ACCEL_MAX?'disabled':''} onclick="buyAccel()">${S.accelLv>=ACCEL_MAX?$t('已满级'):fmt(accelCost())+'<i class="cico"></i>'}</button>
     </div>`;
   const fast=`<div class="shoprow">
       <span class="ico">🍅</span>
       <div class="info"><div class="t">${$t('快长肥')}</div>
       <div class="d">${$t('所有生长中的月巴剩余时间减半')}</div></div>
-      <button class="btn" onclick="useFast()">${fmt(fastCost())}🪙</button>
+      <button class="btn" onclick="useFast()">${fmt(fastCost())}<i class="cico"></i></button>
     </div>`;
   const wb=weatherActive()
     ?`<div class="shoprow wbitem">
@@ -9862,7 +9926,7 @@ function openShop(){
       <span class="ico">🌦️</span>
       <div class="info"><div class="t">${$t('天气瓶')}</div>
       <div class="d">${$t('自选天气（晴/多云/雨/暴雨/雪）· 生效 2 现实小时')}</div></div>
-      <button class="btn" onclick="useWeather()">${fmt(WEATHER_COST)}🪙</button>
+      <button class="btn" onclick="useWeather()">${fmt(WEATHER_COST)}<i class="cico"></i></button>
     </div>`;
   openModal('🛒 商店', `${fast}${wb}${accel}${items}`, openShop);
 }
@@ -9876,7 +9940,7 @@ function openHelp(){
       <div class="sec">${$tm('help_goal_t','🎯 目标')}</div>
       ${$tm('help_goal','收集图鉴里所有月巴，每发现新种类首收 <b>3 倍金币</b>。集齐第一图鉴解锁<b>第二图鉴与旅行</b>；收集到<b>百日月巴</b>后解锁<b>🪽 飞行小游戏</b>。')}
       <div class="sec">${$tm('help_grow_t','🌱 生长与收获')}</div>
-      ${$tm('help_grow','月巴在木头上经历<b>幼年 → 成长 → 成熟</b>，只有成熟后才能看到真面目并收获，稀有度越高越难出现。成熟后需<b>手动点击收取</b>（番茄钟专注期间自动收集）。离线也会生长，最多结算 <b>12 小时</b>。')}
+      ${$tm('help_grow','月巴在木头上经历<b>幼年 → 成长 → 成熟</b>，只有成熟后才能看到真面目并收获，稀有度越高越难出现。成熟后需<b>手动点击收取</b>（番茄钟专注期间自动收集）。离线也会生长，最多结算 <b>12 小时</b>。有多张立绘的月巴，可在场景里<b>双击</b>这一株来切换它的立绘。')}
       <div class="sec">${$tm('help_zone_t','🏡 场地')}</div>
       ${$tm('help_zone','共 8 个场地，不同场地解锁不同月巴；<b>买木头、扩槽位都在场景内完成</b>，每根木头可养多只。')}
       <div class="sec">${$tm('help_pomo_t','🍅 番茄钟')}</div>
@@ -10358,7 +10422,7 @@ function feedCollect(got){
   if(!feed)return;
   const el=document.createElement('div');
   el.className='cf-item';
-  el.innerHTML=`<span class="dot" style="background:${got.color}"></span>🐰 ${esc(got.name)} +${fmt(got.val)}🪙`;
+  el.innerHTML=`<span class="dot" style="background:${got.color}"></span>🐰 ${esc(got.name)} +${fmt(got.val)}<i class="cico"></i>`;
   feed.appendChild(el);
   setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(),320); },2200);
   while(feed.children.length>6) feed.firstChild.remove();
@@ -10376,7 +10440,7 @@ function pomoRoundSummary(){
   }
   openNotice('pomoRound', $tf('🍅 「{n}」本轮收获',{n:esc(pomoName())}), `
     <div class="rsum">${rows}
-      <div class="rsum-total">共 ${n} 个月巴 · 收获 +${fmt(total)}🪙</div>
+      <div class="rsum-total">共 ${n} 个月巴 · 收获 +${fmt(total)}<i class="cico"></i></div>
       <button class="btn" style="width:100%" onclick="closeModal();openPomo()">👍 好的</button>
     </div>`, 80);
 }
@@ -11802,7 +11866,7 @@ const SPECIAL_EMOJI={
   /* 小镇 */
   '果子面包':'🍞','糖果':'🍬','钟声曲':'🎵','布丁':'🍮','风筝':'🪁','纽扣':'🔵','明信片':'💌',
   /* 月光夜市 */
-  '桂花糕':'🍡','糖画':'🐉','灯笼芯':'🏮','夜市灯':'🪔','幸运签':'🎋','铜板':'🪙','手作糖':'🍬','夜来香':'🌼',
+  '桂花糕':'🍡','糖画':'🐉','灯笼芯':'🏮','夜市灯':'🪔','幸运签':'🎋','铜板':'<i class="cico"></i>','手作糖':'🍬','夜来香':'🌼',
   /* 无月之夜 */
   '熄灭的灯芯':'🕯️','噩梦残片':'🌫️','阴影碎片':'🌑','地窖钥匙':'🗝️','暗道地图':'🗺️','阵眼碎片':'🔮','无月之尘':'✨','清醒之种':'🌱',
   /* 番茄之梦 */
@@ -11810,7 +11874,7 @@ const SPECIAL_EMOJI={
   /* 雪山 */
   '雪绒花':'❄️','冰晶':'🧊','热可可':'☕','松枝':'🌲','雪松果':'🌰','极光尘':'✨','暖石':'🪨',
   /* 遗迹 */
-  '陶片':'🏺','古币':'🪙','壁画拓片':'🖼️','石像眼':'👁️','铜铃':'🔔','沙漏':'⏳','星图残卷':'📜',
+  '陶片':'🏺','古币':'<i class="cico"></i>','壁画拓片':'🖼️','石像眼':'👁️','铜铃':'🔔','沙漏':'⏳','星图残卷':'📜',
   /* 冰湖 */
   '蓝冰':'🧊','冻湖虾':'🦐','雪莲':'🪷','冰裂纹石':'🪨','寒铁':'⚙️','湖心石':'💠','冰羽':'🪶',
   /* 失落王庭 */
@@ -11867,7 +11931,7 @@ const TV_LETTERS={
  M9:{d:'deco-moon',e:'🌼',txt:'巷子深处开着一丛夜来香，番茄凑过去闻了又闻，直到我把它抱走。'},
  M10:{d:'deco-moon',e:'🍜',txt:'打烊前，摊主们会互相分一碗热汤。番茄端着碗小口小口地喝，说很喜欢这样的热闹。'},
  M11:{d:'deco-moon',e:'🔔',txt:'我和番茄坐在钟楼底下数灯笼，一盏、两盏……数到最后谁也记不清了，就一起笑了。'},
- M12:{d:'deco-moon',e:'🪙',txt:'收摊的铜板叮叮当当落进匣子里，番茄说想看看到底有多少钱，我说小心摊主揍我们。'},
+ M12:{d:'deco-moon',e:'<i class="cico"></i>',txt:'收摊的铜板叮叮当当落进匣子里，番茄说想看看到底有多少钱，我说小心摊主揍我们。'},
  M13:{d:'deco-moon',e:'🌅',txt:'天快亮时，灯笼一盏盏灭下去。番茄回头看了看空荡荡的巷子，说：我们以后还来，好吗？'},
  B1:{d:'deco-sea',e:'🌊',txt:'海浪好大好大，我和番茄的帽子都被吹走了，又顺着浪花漂了回来，真是奇遇。'},
  B2:{d:'deco-sea',e:'🐚',txt:'我和番茄捡到了漂亮的贝壳，番茄把耳朵贴上去，说里面装着大海在唱歌。'},
@@ -11912,7 +11976,7 @@ const TV_LETTERS={
  D12:{d:'deco-snow',e:'🕯️',txt:'夜里洞里好黑，番茄贴着我讲它见过的所有温暖的事，讲着讲着天就亮了。'},
  D13:{d:'deco-snow',e:'🏔️',txt:'山顶的风好大，我和番茄肩并肩站着看云海，它说这一趟来得太值了。'},
  E1:{d:'deco-ruins',e:'🏺',txt:'断墙下我捡到一只完好的陶罐，番茄把自己塞进去试了试，说刚好合身。'},
- E2:{d:'deco-ruins',e:'🪙',txt:'我们在石缝里摸出一枚旧币，我说要用它给番茄换一个新枕头。'},
+ E2:{d:'deco-ruins',e:'<i class="cico"></i>',txt:'我们在石缝里摸出一枚旧币，我说要用它给番茄换一个新枕头。'},
  E3:{d:'deco-ruins',e:'🗿',txt:'一尊歪头石像盯着我们看，番茄学着它的表情，僵在原地好久不肯动。'},
  E4:{d:'deco-ruins',e:'🖼️',txt:'墙上的壁画褪了色，番茄站在红色的部分，说以前应该是这个颜色。'},
  E5:{d:'deco-ruins',e:'🔔',txt:'风穿过破庙的檐角，铜铃自己响了一声，番茄吓得贴到我脚边。'},
@@ -13026,10 +13090,10 @@ function gamblePickHTML(){
     const gold=gambleTierGold(pct), tom=gambleTierTomato(pct), can=S.coins>=gold;
     _gbQuote[i]=gold;
     h+='<button class="gb-tier'+(can?'':' off')+'" onclick="gamblePick('+i+')">'
-      +'<span class="gb-tier-gold">🪙 '+fmt(gold)+'</span>'
+      +'<span class="gb-tier-gold"><i class="cico"></i> '+fmt(gold)+'</span>'
       +'<span class="gb-tier-tom">🍅 '+tom+'</span></button>';
   });
-  h+=$t('</div><p style="text-align:center;color:var(--dim);font-size:11px;margin:10px 0 0">当前金币 🪙 ')+fmt(S.coins)+'</p>';
+  h+=$t('</div><p style="text-align:center;color:var(--dim);font-size:11px;margin:10px 0 0">当前金币 🪙 ').replace('🪙','<i class="cico"></i>')+fmt(S.coins)+'</p>';
   h+=$t('<p style="text-align:center;margin-top:8px"><button class="btn" onclick="closeModal()">收下离开</button></p>');
   return h;
 }
@@ -13047,7 +13111,7 @@ function gamblePick(i){
 }
 function gambleBetHTML(){
   const g=gambleFresh();
-  const amt=g.round<=1?('🪙 '+fmt(g.stake)):('🍅 '+fmt(g.stake));
+  const amt=g.round<=1?('<i class="cico"></i> '+fmt(g.stake)):('🍅 '+fmt(g.stake));
   let h=gambleCrossNote();
   h+=$t('<p style="text-align:center;color:var(--text);font-size:13px;margin:2px 0 4px">第 ')+g.round+' / '+GAMBLE_MAXROUND+$t(' 轮 · 赌注 ')+amt+'</p>';
   h+=$t('<p style="text-align:center;color:var(--dim);font-size:11px;margin:0 0 8px">押大（4·5·6）还是押小（1·2·3）？赢了番茄到手，还能继续加注。</p>');
@@ -14601,7 +14665,7 @@ function claimCode4099(){
   openModal($t('🎑 中秋快乐'), '<div style="text-align:center">'
     +'<div style="font-size:46px;line-height:1.1">🥮</div>'
     +$t('<p style="font-size:13px;color:var(--text);margin:6px 0 4px">按你现有的 <b>')+totalSlots()+$t('</b> 个槽位，收到了约 24 小时的金币产出</p>')
-    +'<p style="font-size:22px;font-weight:800;color:#e08a3c;margin:4px 0">+'+fmt(gold)+' 🪙'+(tomato?(' ＋ '+tomato+' 🍅'):'')+'</p>'
+    +'<p style="font-size:22px;font-weight:800;color:#e08a3c;margin:4px 0">+'+fmt(gold)+' <i class="cico"></i>'+(tomato?(' ＋ '+tomato+' 🍅'):'')+'</p>'
     +'<p style="font-size:15px;font-weight:800;color:#e02424;margin:10px 0 4px">'+$t('🌕 月巴和番茄祝大家中秋节快乐！🥮')+'</p>'
     +'<p style="font-size:12px;color:var(--dim)">'+(tomato?$t('（第二图鉴已开启，附赠 500 🍅）'):$t('（开启第二图鉴后还能额外获得 500 🍅）'))+'</p>'
     +'<div style="margin-top:12px"><button class="btn cta" onclick="closeModal()">'+$t('收下')+'</button></div>'
@@ -14633,7 +14697,7 @@ function claimCode1001(){
   openModal($t('🎉 国庆快乐'), '<div style="text-align:center">'
     +'<div style="font-size:46px;line-height:1.1">🚩</div>'
     +$t('<p style="font-size:13px;color:var(--text);margin:6px 0 4px">按你现有的 <b>')+totalSlots()+$t('</b> 个槽位，收到了约 24 小时的金币产出</p>')
-    +'<p style="font-size:22px;font-weight:800;color:#e08a3c;margin:4px 0">+'+fmt(gold)+' 🪙'+(tomato?(' ＋ '+tomato+' 🍅'):'')+'</p>'
+    +'<p style="font-size:22px;font-weight:800;color:#e08a3c;margin:4px 0">+'+fmt(gold)+' <i class="cico"></i>'+(tomato?(' ＋ '+tomato+' 🍅'):'')+'</p>'
     +'<p style="font-size:15px;font-weight:800;color:#e02424;margin:10px 0 4px">'+$t(' 月巴和番茄祝贺大家国庆节快乐！🎉')+'</p>'
     +'<p style="font-size:12px;color:var(--dim)">'+(tomato?$t('（第二图鉴已开启，附赠 500 🍅）'):$t('（开启第二图鉴后还能额外获得 500 🍅）'))+'</p>'
     +'<div style="margin-top:12px"><button class="btn cta" onclick="closeModal()">'+$t('收下')+'</button></div>'
@@ -14690,7 +14754,7 @@ const ACHS=[
   {id:'w10',ic:'🌳', n:'木头大亨',    d:'栽培木总数达到 10 根',            c:()=>achWoods()>=10,                     p:()=>[achWoods(),10]},
   {id:'p2', ic:'⏱️', n:'百次专注',    d:'累计打卡 100 次',                c:()=>S.pomo.history.length>=100,         p:()=>[S.pomo.history.length,100]},
   {id:'p3', ic:'🔥', n:'连续七天',    d:'连续打卡 7 天',                  c:()=>pomoStreak()>=7,                    p:()=>[pomoStreak(),7]},
-  {id:'g1', ic:'🪙', n:'富甲一方',    d:'累计赚取 1,000,000 金币',        c:()=>(S.totalCoins||0)>=1e6,             p:()=>[S.totalCoins||0,1e6]},
+  {id:'g1', ic:'<i class="cico"></i>', n:'富甲一方',    d:'累计赚取 1,000,000 金币',        c:()=>(S.totalCoins||0)>=1e6,             p:()=>[S.totalCoins||0,1e6]},
   {id:'i4', ic:'🧸', n:'道具齐全',    d:'商店 4 件道具全部购入',           c:()=>S.boughtItems.length>=ITEMS.length, p:()=>[S.boughtItems.length,ITEMS.length]},
   {id:'t1', ic:'✅', n:'待办达人',    d:'累计完成 50 个任务',              c:()=>achTasks()>=50,                     p:()=>[achTasks(),50]},
   {id:'a10',ic:'⚙️', n:'加速引擎',    d:'常驻加速器升到 Lv.10',            c:()=>S.accelLv>=10,                      p:()=>[S.accelLv,10]},
@@ -14779,6 +14843,19 @@ function openAch(){
 }
 
 /* ---------------- 初始化 ---------------- */
+/* 探测 flex 的 gap 支持：旧版 WebView（如 Android 旧 WebView）不支持，顶栏元素会紧贴，
+   金币数字会压住右侧图鉴文字，这里加 nogap 类用 margin 兜底（对应 #topbar 的 html.nogap 样式） */
+(function(){
+  try{
+    const d=document.createElement('div');
+    d.style.cssText='position:absolute;left:-9999px;top:0;display:flex;gap:3px';
+    d.innerHTML='<i style="width:10px;height:1px"></i><i style="width:10px;height:1px"></i>';
+    document.body.appendChild(d);
+    const a=d.children[0].getBoundingClientRect(), b=d.children[1].getBoundingClientRect();
+    if(b.left-a.right < 2) document.documentElement.classList.add('nogap');
+    d.remove();
+  }catch(e){}
+})();
 function init(){
   const hasSave=load();
   clockInit();
