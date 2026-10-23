@@ -626,8 +626,12 @@ function pickMiner(){
   if(!list.length) list=pool;
   const id=list[Math.floor(RNG()*list.length)];
   save.last=id;
-  save.miners[id]=(save.miners[id]||0)+1;
   return POOL_BY_ID[id]||POOL[0];
+}
+/* 图鉴只在真正开局后记录；仅展示/刷新首页不计入 */
+function recordMiner(id){
+  if(!id||!POOL_BY_ID[id]) return;
+  save.miners[id]=(save.miners[id]||0)+1;
 }
 const save=loadSave();
 const mainSave=readMain()||{};
@@ -935,6 +939,7 @@ function beginLevel(lv){
 }
 function startGame(){
   if(!gm.miner) gm.miner=pickMiner();
+  recordMiner(gm.miner.id);
   gm.quote=t('q1',{n:gm.miner.name});
   save.plays=(save.plays||0)+1;
   saveStore();
