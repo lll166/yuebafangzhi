@@ -3906,11 +3906,13 @@ const TYPES=[
   {id:'mb_da',       name:'大月巴',   r:4, v:80,  t:600,  cond:{t:'harvest',n:50},  color:'#e8a89a', shape:'wide', size:1.5},
   {id:'mb_ju',       name:'巨月巴',   r:4, v:150, t:900,  cond:{t:'harvest',n:200}, color:'#d98a86', shape:'big', size:2},
   {id:'mb_chao',     name:'超巨月巴', img:'https://origin.picgo.net/2026/10/22/6e242d94aa9b07b9117479ec78fd53985fd887bb68d8fa62.th.png', r:4, v:300, t:1500, cond:{t:'harvest',n:500}, color:'#e0a34e', shape:'big', size:3},
-  {id:'mb_lian',     name:'幸运月巴', r:4, v:60,  t:480,  cond:null, weight:0.05, color:'#e8a8c4', shape:'round'},
+  {id:'mb_lian',     name:'幸运月巴', img:'https://origin.picgo.net/2026/10/23/f18fc86039bab18c60f2e5a640a82994256efe02bbe849d2.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/23/f18fc86039bab18c60f2e5a640a82994256efe02bbe849d2.th.png', by:'影子生物'}], r:4, v:60,  t:480,  cond:null, weight:0.05, color:'#e8a8c4', shape:'round'},
   {id:'mb_kuanglian',name:'极运月巴', r:4, v:130, t:840,  cond:null, weight:0.03, color:'#d9799f', shape:'spike'},
   {id:'mb_shenlian', name:'神运月巴', img:'https://origin.picgo.net/2026/10/23/75cb6c3c872e0ab0ae24ad2a1d4d16217560c98278e9c3c2.th.png', r:5, v:400, t:2400, cond:null, weight:0.015, color:'#b54b7e', shape:'rainbow'},
   {id:'mb_fanben',   name:'墨镜月巴', img:'https://origin.picgo.net/2026/09/03/1115555fb4ab3b2731.th.png', r:4, v:70,  t:540,  cond:{t:'count',id:'mb_xian',n:20}, color:'#d9b45a', shape:'round'},
-  {id:'mb_guai',     name:'奇怪月巴',   r:4, v:90,  t:600,  cond:{t:'count',id:'mb_pang',n:15}, color:'#b89a55', shape:'bean'},
+  {id:'mb_guai',     name:'奇怪月巴',   img:'https://origin.picgo.net/2026/10/23/4a09ea559862b2830f46cc64b0f4211487bfa91c46fddbcf.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/23/4a09ea559862b2830f46cc64b0f4211487bfa91c46fddbcf.th.png', by:'鲸弑', note:'行为古怪，没人猜得到它下一秒想干嘛。'}], r:4, v:90,  t:600,  cond:{t:'count',id:'mb_pang',n:15}, color:'#b89a55', shape:'bean'},
   {id:'mb_shizhe',   name:'归家月巴', img:'https://origin.picgo.net/2026/09/03/2b384c6d07a3d397b.th.png', r:5, v:130, t:840,  cond:{t:'count',id:'mb_ye',n:10},   color:'#5f44a6', shape:'moon'},
 
   {id:'mb_zhoumo',   name:'双休月巴', img:'https://origin.picgo.net/2026/10/22/---a60a7636bd80eb9e.th.png',
@@ -3944,7 +3946,8 @@ const TYPES=[
   {id:'xitong',    name:'系统月巴',   r:3, v:60, t:480,  cond:null, img:'https://origin.picgo.net/2026/09/22/xitong3fa4bdcf7695b190.th.png', color:'#8fd0de', shape:'squish'},
   {id:'huaba',     name:'花巴',       img:'https://origin.picgo.net/2026/10/23/46597ef9da8ed5c1d86cce52418c84d57c6da995fbc68f8c.th.png', r:3, v:1500, t:3600, cond:null, color:'#f8a8c8', shape:'big'},
   {id:'dabus',     name:'大巴车',     img:'https://origin.picgo.net/2026/10/21/f696279cfe514001d304e826c68f44f3596857784003a73a.th.png', r:3, v:48, t:460,  cond:null, color:'#f2b639', shape:'big'},
-  {id:'youling',   name:'幽灵月巴',     r:3, v:300, t:1200, cond:null, color:'#beb5e6', shape:'tall'},
+  {id:'youling',   name:'幽灵月巴',     img:'https://origin.picgo.net/2026/10/23/9e6b571fe9657417f255527bf3c34cc1963ee4f0f46e3e06.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/23/9e6b571fe9657417f255527bf3c34cc1963ee4f0f46e3e06.th.png', by:'鲸弑', note:'番茄睡觉的时候总觉得身上沉沉的。诶，身上盖的不只有被子吗？'}], r:3, v:300, t:1200, cond:null, color:'#beb5e6', shape:'tall'},
   {id:'xinba',     name:'心巴',       r:2, v:20, t:180,  cond:null, img:'https://origin.picgo.net/2026/10/21/3f4dfef1286bc40c7002f3d2e220cb36f63b0332ebc9acd3.th.png',
     imgs:[{url:'https://origin.picgo.net/2026/10/21/2c041a17d8e59a3cf.th.png', by:'軟管', note:'巴啦巴巴巴。'}], color:'#ff6f91', shape:'squish'},
   {id:'yinxiang',  name:'音响月巴',   img:'https://origin.picgo.net/2026/10/23/-16ec08b0ad53bd48c.th.png',
@@ -3952,7 +3955,8 @@ const TYPES=[
       {url:'https://origin.picgo.net/2026/10/23/-16ec08b0ad53bd48c.th.png', by:'落白', note:'乐队pa月巴以及拼命跳动的番茄主唱XD'},
       {url:'https://origin.picgo.net/2026/10/23/6f22696b8370916ad8368b8c73fa5138da7cea25462febe4.th.png', by:'影子生物'},
     ], r:1, v:8, t:90,   cond:null, color:'#6b7280', shape:'tall'},
-  {id:'jieba',     name:'戒巴',       r:3, v:55, t:520,  cond:null, color:'#4e9f8d', shape:'squish'},
+  {id:'jieba',     name:'戒巴',       img:'https://origin.picgo.net/2026/10/23/8a2dd3078a8a2c919d0a8fa208ec9dfdfba03c4be9bcfa05.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/23/8a2dd3078a8a2c919d0a8fa208ec9dfdfba03c4be9bcfa05.th.png', by:'鲸弑'}], r:3, v:55, t:520,  cond:null, color:'#4e9f8d', shape:'squish'},
   {id:'bazong',    name:'巴总',       img:'https://origin.picgo.net/2026/10/21/8ff3d46600bd7fcfb5dcab98f93cbd9bbeef26b25b073ec3.th.png', r:3, v:1800, t:4200, cond:null, color:'#c68a3a', shape:'big'},
   {id:'mojing',    name:'墨镜笑巴',   r:2, v:22, t:220,  cond:null, img:'https://origin.picgo.net/2026/09/27/4d64284ab6f23425f9dda44f0fc540bef12552ef47074e5e.th.png', color:'#8a97a8', shape:'round'},
   {id:'bukeming',  name:'不可名状巴', r:4, v:200,t:1100, cond:null, img:'https://origin.picgo.net/2026/09/27/20c78b17ef4b3fa235abaad68362f4b3e9cd9e87eb7bc133.th.png', color:'#5d4a7a', shape:'big', size:3.5},
@@ -3967,7 +3971,8 @@ const TYPES=[
   {id:'mb_lvshi',   name:'律师月巴',    r:3, v:45, t:460, cond:null, color:'#5a7a8a', shape:'tall'},
   {id:'mb_jinju',   name:'进局子巴',  r:3, v:40, t:400, cond:null, img:'https://origin.picgo.net/2026/10/21/---akai0255d6362d123bd3.th.png', color:'#8a8a8a', shape:'squish'},
   {id:'mb_zuanshi', name:'钻石月巴',  r:3, v:260, t:1250, cond:null, color:'#9be7ff', shape:'cube'},
-  {id:'mb_huang',   name:'黄月月巴',    r:2, v:24, t:220, cond:null, color:'#ffd94a', shape:'round'},
+  {id:'mb_huang',   name:'黄月月巴',    img:'https://origin.picgo.net/2026/10/23/485bfcabf6eaea8ea294ead8e520a0ada29d48a19c9197d6.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/23/485bfcabf6eaea8ea294ead8e520a0ada29d48a19c9197d6.th.png', by:'影子生物'}], r:2, v:24, t:220, cond:null, color:'#ffd94a', shape:'round'},
   {id:'mb_qiezhi',  name:'茄汁月巴',  r:2, v:22, t:200, cond:null, img:'https://origin.picgo.net/2026/10/21/07de58ae22de5c368964182b7b78934969a8e2ed84c5ab60.th.png',
     imgs:[{url:'https://origin.picgo.net/2026/10/21/2deb811980dbbda80.th.png'}], color:'#e5533d', shape:'squish'},
   {id:'mb_gaoya',   name:'高雅月巴',    r:3, v:50, t:500, cond:null, color:'#6b5b95', shape:'tall'},
@@ -3988,7 +3993,8 @@ const TYPES2=[
   {id:'m2_tian',   name:'甜月巴',  r:2, v:16, t:160, cond:null, color:'#f8bbd0', shape:'round'},
   {id:'m2_xian',    name:'盐月巴',  r:2, v:17, t:170, cond:null, color:'#90a4ae', shape:'cube'},
   {id:'m2_bai',    name:'白月巴',  r:2, v:18, t:180, cond:null, color:'#eceff1', shape:'round'},
-  {id:'m2_hei',    name:'黑月巴',  r:2, v:19, t:190, cond:null, color:'#5d6670', shape:'round'},
+  {id:'m2_hei',    name:'黑月巴',  img:'https://origin.picgo.net/2026/10/23/6a0b54faa9b43d05a7365ff404ff7c63b834626b88cbfb9f.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/23/6a0b54faa9b43d05a7365ff404ff7c63b834626b88cbfb9f.th.png', by:'鲸弑', note:'黑到几乎看不见，夜里只能看到两只眼睛。'}], r:2, v:19, t:190, cond:null, color:'#5d6670', shape:'round'},
   {id:'m2_hong',   name:'红月巴',  r:2, v:20, t:200, cond:null, color:'#ef9a9a', shape:'wide'},
   {id:'m2_lv',     name:'绿月巴',  r:2, v:21, t:210, cond:null, color:'#a5d6a7', shape:'tall'},
   {id:'m2_lan',    name:'蓝月巴',  r:2, v:22, t:220, cond:null, color:'#90caf9', shape:'drop'},
@@ -3998,7 +4004,8 @@ const TYPES2=[
   {id:'m2_she',     name:'蛇月巴',    img:'https://origin.picgo.net/2026/10/22/snake-banny1537e823f87200c1.th.png', r:3, v:36, t:380, cond:{t:'time',a:9,b:12},     color:'#ff8a65', shape:'spike'},
   {id:'m2_wuya',    name:'乌鸦月巴',  r:3, v:38, t:400, cond:{t:'time',a:14,b:17},    color:'#ffd54f', shape:'spike'},
   {id:'m2_xiongmao',name:'熊猫月巴',    r:3, v:36, t:400, cond:{t:'time',a:2,b:5},      color:'#a1887f', shape:'big'},
-  {id:'m2_wo',     name:'蜗牛月巴',  r:3, v:34, t:360, cond:{t:'time',a:20,b:23},    color:'#b0bec5', shape:'squish'},
+  {id:'m2_wo',     name:'蜗牛月巴',  img:'https://origin.picgo.net/2026/10/23/2ffd65af799fc8080d8a9b2af57ac89782a5d6d5f70cda63.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/23/2ffd65af799fc8080d8a9b2af57ac89782a5d6d5f70cda63.th.png', by:'鲸弑', note:'背着房子慢慢走，房子里住着番茄'}], r:3, v:34, t:360, cond:{t:'time',a:20,b:23},    color:'#b0bec5', shape:'squish'},
   {id:'m2_xiangjiao',name:'香蕉月巴',r:3, v:36, t:360, cond:{t:'weather',w:'sunny'}, color:'#ffe082', shape:'bean'},
   {id:'m2_hulu',   name:'葫芦月巴',  r:3, v:40, t:420, cond:{t:'season',s:'autumn'}, color:'#dce775', shape:'round'},
   {id:'m2_bingqilin',name:'冰淇淋月巴',img:'https://origin.picgo.net/2026/10/21/756357abf125a8cd0c6f532836a233717fd3a810900d0252.th.png',
@@ -4141,6 +4148,13 @@ const YB_PIC_AUTHOR={
   m2_she:'hellomelody',
   mb_chao:'影子生物',
   m2_tanwu:'三重彩',
+  mb_huang:'影子生物',
+  mb_lian:'影子生物',
+  mb_guai:'鲸弑',
+  youling:'鲸弑',
+  jieba:'鲸弑',
+  m2_hei:'鲸弑',
+  m2_wo:'鲸弑',
   m2_men:'Suwa',
   huaba:'Suwa',
   mb_xue:'Suwa',
@@ -4818,6 +4832,7 @@ const I18N_UI={
   '（贪吃）蛇月巴':{en:'(Greedy) Snake Banny',ja:'（食いしん坊）ヘビバニー',ko:'（먹보）뱀 배니'},
   '🐍 蛇月巴':{en:'🐍 Snake Banny',ja:'🐍 ヘビバニー',ko:'🐍 뱀 배니'},
   '🐍 进入蛇月巴':{en:'🐍 Enter Snake Banny',ja:'🐍 ヘビバニーへ',ko:'🐍 뱀 배니 입장'},
+  '月巴拳魂':{en:'Banny Brawl',ja:'バニー拳魂',ko:'배니 권혼'},
   /* C. 场地工具条 */
   '← 返回':{en:'← Back',ja:'← 戻る',ko:'← 뒤로'},
   '🪵 新木头':{en:'🪵 New Log',ja:'🪵 新しい木材',ko:'🪵 새 나무'},
@@ -4839,6 +4854,8 @@ const I18N_UI={
   '🏷 图鉴':{en:'🏷 Codex',ja:'🏷 図鑑',ko:'🏷 도감'},
   '🎲 对赌':{en:'🎲 Gamble',ja:'🎲 賭け',ko:'🎲 내기'},
   '🎲 对赌中':{en:'🎲 Gambling',ja:'🎲 賭け中',ko:'🎲 내기 중'},
+  '🎲 进入对赌':{en:'🎲 Enter Gamble',ja:'🎲 賭けへ',ko:'🎲 내기 입장'},
+  '🃏 进入斗月巴':{en:'🃏 Enter Banny Duel',ja:'🃏 バニー対決へ',ko:'🃏 배니 맞짱 입장'},
   '{n}分':{en:'{n} min',ja:'{n}分',ko:'{n}분'},
   /* ===== P8 统计页补译（#stBody 是开弹窗后才填的，靠 $walkText + 这些键） ===== */
   '今日番茄':{en:'Tomatoes today',ja:'今日のトマト',ko:'오늘 토마토'},
@@ -9295,8 +9312,8 @@ const DEX_EVENTS=[
    lock:true 表示该游戏需先开启第二图鉴，未达成时点开只显示解锁条件。 */
 const DEX_GAME={
   mb_yunduan:{icon:'🪽', label:'🪽 飞行小游戏', game:'fly'},
-  jieba:{icon:'🎲', label:'🎲 对赌', game:'gamble', lock:true},
-  m2_chuqian:{icon:'🃏', label:'🃏 斗月巴', game:'dd', lock:true},
+  jieba:{icon:'🎲', label:'🎲 对赌', enter:'🎲 进入对赌', game:'gamble', lock:true},
+  m2_chuqian:{icon:'🃏', label:'🃏 斗月巴', enter:'🃏 进入斗月巴', game:'dd', lock:true},
   m2_she:{icon:'🐍', label:'🐍 蛇月巴', enter:'🐍 进入蛇月巴', game:'snake'},
 };
 function dexGameOf(id){ return DEX_GAME[id]||null; }
@@ -13741,6 +13758,7 @@ const GB_GAMES=[
   {id:'snake', codex:'m2_she', name:'（贪吃）蛇月巴', game:'snake'},
   {id:'gamble', codex:'jieba', name:'🎲 对赌', game:'gamble', lock:true},
   {id:'dd', codex:'m2_chuqian', name:'🃏 斗月巴', game:'dd', lock:true},
+  {id:'fight', codex:'mb_tomato', name:'月巴拳魂', html:'fight.html'},
 ];
 let gbFrameId=null;
 function gbRender(){
@@ -13795,7 +13813,7 @@ function gbFrameOpen(g){
   gbFrameId=g.id;
   const ov=$('gbGameOverlay'), fr=$('gbGameFrame'), ttl=$('gbGameTitle');
   if(ttl) ttl.textContent='🎁 '+$t(g.name);
-  if(fr) fr.src=g.html;
+  if(fr) fr.src=g.html+(g.html.indexOf('?')>=0?'&':'?')+'lang='+curLang();
   if(ov) ov.classList.add('show');
   document.body.classList.add('gb-lock');
   setTimeout(function(){ try{ fr.focus(); }catch(e){} },300);
