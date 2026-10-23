@@ -8070,6 +8070,10 @@ function load(){
       if(d.zones) for(const z of d.zones) for(const w of (z.woods||[])) for(const c of w.cells){
         if(c && c.t && c.dur && c.dur<10000) c.dur=c.dur*(1000/BASE_SPEED);
       }
+      // 迁移：给已在生长的月巴补一个固定的立绘种子（旧版拿 start 当种子，点月巴加速后会换立绘）
+      if(d.zones) for(const z of d.zones) for(const w of (z.woods||[])) for(const c of w.cells){
+        if(c && c.t && c.artSeed==null) c.artSeed=(Math.random()*1e9)|0;
+      }
       S=Object.assign(defaultState(),d);
       // 复用上次的校时偏移：读档、离线结算与旅行判定都发生在联网校时完成之前，
       // 此时若直接信任本机时间，电脑时间被改动过就会一次性跳过旅途与离线收益（表现为出发时间跳到「明天」、信件立刻送达）
@@ -8461,7 +8465,7 @@ function artBadgeHTML(t){
   return n>1?`<span class="artn" title="${esc($tf('共 {n} 张立绘',{n:n}))}">🎨${n}</span>`:'';
 }
 /* 场景地图上的月巴：有多张立绘时随机挑一张显示。
-   种子取自槽位与种植时间，同一株每次重绘都是同一张，重新种下才换；
+   种子取自播种时生成的 cell.artSeed，同一株每次重绘都是同一张，重新种下才换；
    url 参数用于给 fatSVG 指定图片，不传则用图鉴里选中的那张。 */
 function artRandURL(t,seed){
   const l=artList(t);
@@ -8471,6 +8475,14 @@ function artRandURL(t,seed){
   let h=2166136261;
   for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); }
   return l[(h>>>0)%l.length].url;
+}
+/* 一株月巴在本轮生长中固定的立绘种子。
+   不能用 cell.start 当种子：点月巴加速、快长肥、速度倍率折算都会改 start，
+   同一株会在生长途中「换脸」（点一下换一张立绘）。种子只在播种时生成一次。 */
+function cellArtSeed(cell){
+  if(!cell) return 0;
+  if(cell.artSeed==null) cell.artSeed=(Math.random()*1e9)|0;   // 旧存档补种（读档时已批量迁移，这里兜底）
+  return cell.artSeed;
 }
 function fatSVG(type,url){
   const u=(url!=null)?url:artURL(type);
@@ -8592,6 +8604,7 @@ function spawnIn(zone,wood,cell){
   const t=weightedPick(availableTypes());
   const st=rollStats(t.r);
   cell.t=t.id; cell.start=now(); cell.dur=growDur(t); cell.h=st.h; cell.w=st.w; cell.delay=0;
+  cell.artSeed=(Math.random()*1e9)|0;   // 本次播种固定的立绘种子（见 cellArtSeed）
 }
 function cellRemaining(cell){ return (cell.dur/speedMult())-(now()-cell.start); }
 function cellReady(cell){ return cell.t && cellRemaining(cell)<=0; }
@@ -8650,7 +8663,7 @@ function doHarvest(z,w,i,cell,el,quiet){
     coinFly(x,y,coinTarget());
   }
   if(beats.length) toast($tf('📐 新纪录！「{a}」{b} {c}cm / {d}g',{a:type.name,b:beats.join('、'),c:cell.h,d:cell.w}));
-  if(isNew) unlockBanner(type,cell,artRandURL(type,z+'-'+w+'-'+i+'-'+cell.start));
+  if(isNew) unlockBanner(type,cell,artRandURL(type,cellArtSeed(cell)));
   if(!quiet) hvSfx(isNew); /* 收获音（含金币/新解锁音）：同一时刻多只月巴收获合并为一次 */
   cell.t=null; cell.delay=now()+rand(900,2600);
   updateHeader();
@@ -8771,8 +8784,8 @@ function renderCell(z,w,i){
   const type=cellTypeOf(cell);   // 失效的月巴 id 会在此清空槽位，走下面的空槽分支
   if(type){
     const stage=cellStage(cell);
-    // 地图上多立绘随机展示：同一株固定同一张（种子含槽位与种植时间），重新种下才可能换
-    const art=artRandURL(type,z+'-'+w+'-'+i+'-'+cell.start);
+    // 地图上多立绘随机展示：同一株固定同一张（种子在播种时生成），重新种下才换
+    const art=artRandURL(type,cellArtSeed(cell));
     if(stage==='mature'){
       const s=hScale(cell.h)*(type.size||1)*SCENE_FAT_ZOOM;
       el.className='wcell mature';
