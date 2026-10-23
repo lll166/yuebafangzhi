@@ -1345,7 +1345,6 @@ function applyPowerMode(low){
   PERF.dprCap = PERF.low ? 1 : 2;
   PERF.shadows = !PERF.low;
   PERF.maxParts = PERF.low ? 80 : 220;
-  PERF.maxEnemies = PERF.low ? 100 : 140;
   PERF.fps = PERF.low ? 30 : 0;
   PERF.step = PERF.fps ? 1000 / PERF.fps : 1000 / 60;
   document.body.classList.toggle('low-power', PERF.low);
@@ -4702,7 +4701,7 @@ function preloadArt(){
 const MAX_ENEMIES = 140;
 const MAX_GEMS = 150;
 const MAX_PARTS = 220;
-/* 实际上限由 PERF 决定：省电模式下敌人与粒子更少 */
+/* 实际上限由 PERF 决定：省电模式只减少粒子，敌人数量不变 */
 
 /* 全局难度系数：武器池扩容后统一上调，改这里即可整体缩放难度 */
 const ENEMY_HP_BOOST  = 1.10;  // 普通敌人血量
@@ -4813,6 +4812,36 @@ function trimEnemiesTo(limit){
   if(G.boss && G.enemies.indexOf(G.boss) < 0) G.enemies.push(G.boss);
   /* 守卫不能被裁掉：否则宝箱会没人可打却直接判定开启 */
   for(let i=0;i<guards.length;i++) if(G.enemies.indexOf(guards[i]) < 0) G.enemies.push(guards[i]);
+}
+/* 雷达外的普通怪：直接删除，并在玩家附近重新生成
+   雷达（右上角小地图）只显示 MINI_RANGE 内的敌人，圈外等于玩家看不到；
+   风筝后落在身后的敌人会永久滞留并占满 PERF.maxEnemies，导致附近不再刷怪。
+   Boss 与宝箱守卫不回收：Boss 不能被传送，守卫被移除会让宝箱直接判定开启。 */
+function recycleFarEnemies(){
+  const p = G.player;
+  if(!p) return 0;
+  const r2 = MINI_RANGE * MINI_RANGE;
+  const arr = G.enemies;
+  let w = 0, kinds = null;
+  for(let i=0;i<arr.length;i++){
+    const e = arr[i];
+    if(e.dead || e.boss || e.guard || dist2(p.x, p.y, e.x, e.y) <= r2){
+      arr[w++] = e;
+    } else {
+      (kinds || (kinds = [])).push(e.kind);
+    }
+  }
+  if(!kinds) return 0;
+  arr.length = w;
+  for(let i=0;i<kinds.length;i++){
+    const a = Math.random() * Math.PI * 2;
+    const rad = MINI_RANGE * rand(0.86, 0.98);
+    spawnEnemy(kinds[i], {
+      x: clamp(p.x + Math.cos(a) * rad, 30, W - 30),
+      y: clamp(p.y + Math.sin(a) * rad, 30, H - 30)
+    });
+  }
+  return kinds.length;
 }
 
 /* 事件生成 */
@@ -7287,15 +7316,23 @@ function update(dt){
   ensureTerrainAround(p.x, p.y);
   resolveTerrainActor(p, true);
 
+  // 雷达圈外的普通怪：删除并在玩家附近重新生成
+  recycleFarEnemies();
+
   // 刷怪
   const st = stageDef(G.stage);
   G.spawnT -= dt;
-  if(G.spawnT <= 0 && G.enemies.length < PERF.maxEnemies){
-    /* BOSS 战期间收缩普通刷怪：把 BOSS 变成“决斗”，而不是被小怪淹没 */
-    const bossCalm = (G.bossSpawned && !G.bossKilled) ? 1.6 : 1;
-    const interval = Math.max(0.20, (1.00 - G.time * 0.0016) / (st.spawnMul * diffDef(G.diff).spawn * spawnRamp(G.time, paceDur(st), st) * bossCalm));
-    G.spawnT = interval * rand(0.82, 1.18);
-    spawnEnemy(pickKind());
+  if(G.spawnT <= 0){
+    if(G.enemies.length < PERF.maxEnemies){
+      /* BOSS 战期间收缩普通刷怪：把 BOSS 变成“决斗”，而不是被小怪淹没 */
+      const bossCalm = (G.bossSpawned && !G.bossKilled) ? 1.6 : 1;
+      const interval = Math.max(0.20, (1.00 - G.time * 0.0016) / (st.spawnMul * diffDef(G.diff).spawn * spawnRamp(G.time, paceDur(st), st) * bossCalm));
+      G.spawnT = interval * rand(0.82, 1.18);
+      spawnEnemy(pickKind());
+    } else {
+      /* 满员（守卫 / Boss 占位）：稍后再试，避免计时器负值堆积 */
+      G.spawnT = 0.20;
+    }
   }
   if(G.time >= G.nextElite && (G.mode === 'endless' || G.time < G.dur)){
     G.nextElite += Math.round(Math.max(40, Math.round(60 / st.spawnMul)) * (G.charm === 'elite' ? 0.7 : 1));
