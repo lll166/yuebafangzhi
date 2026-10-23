@@ -545,6 +545,42 @@
   /* 偷番茄的月巴：庭院里同步显示为黑色剪影 */
   .tv-yf.steal-silhouette .tv-traveler{filter:brightness(0) drop-shadow(0 0 9px rgba(255,120,90,.7));}
   .tv-yf.steal-silhouette{animation:tvbob 1.4s ease-in-out infinite;}
+  /* 庭院：可戳的月巴（点击反馈 / 连击 / 亲密度 / 喂食） */
+  .tv-yf{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;z-index:2;}
+  .tv-traveler{transform-origin:50% 88%;}
+  .tv-traveler.poke{animation:tvPokeSquash .46s cubic-bezier(.18,1.8,.4,1);}
+  .tv-traveler.poke-spin{animation:tvPokeSpin .62s ease-in-out;}
+  .tv-traveler.poke-flop{animation:tvPokeFlop .6s ease-in-out;}
+  .tv-traveler.poke-puff{animation:tvPokePuff .55s cubic-bezier(.2,1.6,.4,1);}
+  @keyframes tvPokeSquash{0%{transform:scale(1,1)}28%{transform:scale(1.18,.78) translateY(4px)}60%{transform:scale(.92,1.1)}100%{transform:scale(1,1)}}
+  @keyframes tvPokeSpin{0%{transform:rotate(0) scale(1)}30%{transform:rotate(-16deg) scale(1.06)}70%{transform:rotate(348deg) scale(1.06)}100%{transform:rotate(360deg) scale(1)}}
+  @keyframes tvPokeFlop{0%{transform:rotate(0) translateY(0)}30%{transform:rotate(-24deg) translateY(3px)}60%{transform:rotate(9deg) translateY(0)}82%{transform:rotate(-4deg)}100%{transform:rotate(0)}}
+  @keyframes tvPokePuff{0%{transform:scale(1)}35%{transform:scale(1.32,1.2)}68%{transform:scale(.9,1.02)}100%{transform:scale(1)}}
+  .tv-yf-hearts{position:absolute;left:50%;bottom:-13px;transform:translateX(-50%);display:inline-flex;align-items:center;gap:2px;padding:1px 5px;border-radius:999px;background:var(--panel);border:1px solid var(--line);color:var(--danger);font-size:9px;font-weight:800;line-height:1.25;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.18);}
+  .tv-yf-hearts.max{color:var(--danger);border-color:var(--danger);box-shadow:0 0 8px rgba(255,80,120,.35);}
+  /* 满好感：普通模式飘爱心，省点模式不飘、改成戴在头上 */
+  .tv-yf-love{position:absolute;top:-13px;left:50%;display:none;transform:translateX(-50%);font-size:14px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));pointer-events:none;}
+  body.low-power .tv-yf-love{display:block;}
+  .tv-poke-bubble{position:absolute;z-index:6;width:max-content;max-width:186px;padding:8px 10px;border-radius:12px;background:var(--panel);color:var(--text);border:1.2px solid var(--line);box-shadow:0 7px 20px rgba(0,0,0,.22);font-size:12px;font-weight:700;line-height:1.45;opacity:0;pointer-events:none;transform:translate(-50%,-100%) scale(.86);transition:opacity .14s ease,transform .14s ease;}
+  .tv-poke-bubble.show{opacity:1;pointer-events:auto;transform:translate(-50%,-100%) scale(1);}
+  .tv-poke-bubble.below,.tv-poke-bubble.below.show{transform:translate(-50%,0) scale(1);}
+  .tv-poke-bubble::after{content:"";position:absolute;left:50%;bottom:-6px;width:10px;height:10px;margin-left:-5px;background:var(--panel);border-right:1.2px solid var(--line);border-bottom:1.2px solid var(--line);transform:rotate(45deg);}
+  .tv-poke-bubble.below::after{bottom:auto;top:-6px;border:0;border-left:1.2px solid var(--line);border-top:1.2px solid var(--line);}
+  .tv-pk-line{white-space:normal;word-break:break-word;}
+  /* 好感升级进度条：只在戳/喂的气泡里出现 */
+  .tv-pk-bar{height:4px;margin:0 0 6px;border-radius:3px;background:rgba(0,0,0,.14);overflow:hidden;}
+  .tv-pk-bar>i{display:block;height:100%;width:0;border-radius:3px;background:linear-gradient(90deg,#ffb3cd,var(--danger));transition:width .32s ease-out;}
+
+  .tv-pk-foot{display:flex;align-items:center;gap:6px;margin-top:6px;}
+  .tv-pk-combo{padding:0 5px;border-radius:999px;background:var(--gold);color:#5a4300;font-size:10px;font-weight:900;line-height:1.5;}
+  .tv-pk-h{color:var(--danger);font-size:11px;font-weight:900;}
+  .tv-pk-btn{margin-left:auto;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:8px;padding:3px 7px;font-size:11px;font-weight:800;font-family:inherit;cursor:pointer;}
+  .tv-pk-btn:active{transform:scale(.94);}
+  .tv-pk-hungry{margin-left:auto;font-size:10px;font-weight:700;color:var(--dim);}
+  .tv-pk-p{position:absolute;z-index:5;font-size:14px;line-height:1;pointer-events:none;animation:tvPkUp .95s ease-out forwards;}
+  .tv-pk-p.slow{font-size:15px;animation:tvPkUp 3.2s linear forwards;} /* 满好感缓慢飘心：同一套粒子，只放慢 */
+  @keyframes tvPkUp{0%{opacity:0;transform:translate(-50%,0) scale(.6)}18%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--dx,0px)),-46px) scale(1.12)}}
+  @media (prefers-reduced-motion: reduce){ .tv-traveler.poke,.tv-traveler.poke-spin,.tv-traveler.poke-flop,.tv-traveler.poke-puff,.tv-pk-p{animation:none!important;} }
   /* 月巴偷番茄：偷窃弹窗（黑色遮罩剪影）*/
   .tv-steal{text-align:center;padding:2px;}
   .tv-steal-stage{position:relative;height:136px;margin:2px auto 10px;display:flex;align-items:center;justify-content:center;border-radius:16px;overflow:hidden;
@@ -3911,8 +3947,8 @@ const TYPES=[
 
   {id:'mb_dishui',  name:'阴湿月巴', r:3, v:50, t:400, cond:{t:'zone',z:2}, color:'#9575cd', shape:'round'},
   {id:'mb_wenshi',  name:'温室月巴',   r:3, v:55, t:420, cond:{t:'zone',z:3}, color:'#6fbe7a', shape:'cube'},
-  {id:'mb_wuding',  name:'屋顶月巴',   img:'https://origin.picgo.net/2026/10/24/40cae9beac0d3e5c441774e6edcfe2a64dd539e4c7a6ef5f.th.png',
-    imgs:[{url:'https://origin.picgo.net/2026/10/24/40cae9beac0d3e5c441774e6edcfe2a64dd539e4c7a6ef5f.th.png', by:'hellomelody'}], r:3, v:60, t:450, cond:{t:'zone',z:4}, color:'#5f9ed1', shape:'tall'},
+  {id:'mb_wuding',  name:'屋顶月巴',   img:'https://origin.picgo.net/2026/10/24/ddb838b24b14c9bc66c93f3e145393e1f054aa99f643d304.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/24/ddb838b24b14c9bc66c93f3e145393e1f054aa99f643d304.th.png', by:'hellomelody'}], r:3, v:60, t:450, cond:{t:'zone',z:4}, color:'#5f9ed1', shape:'tall'},
   {id:'mb_senlin',  name:'森系月巴', img:'https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li6e93cacca933846d.th.png', r:3, v:70, t:480, cond:{t:'zone',z:5}, color:'#5c8a64', shape:'spike'},
   {id:'mb_bing',    name:'冰冷月巴',   img:'https://origin.picgo.net/2026/10/23/434e565b3ade1792842da6c6e5e0778552a35682cf6024b1.th.png', r:4, v:80, t:540, cond:{t:'zone',z:6}, color:'#7cc4e8', shape:'star'},
   {id:'mb_yanjiang',name:'滚烫月巴',   r:4, v:90, t:600, cond:{t:'zone',z:7}, color:'#d15852', shape:'spike'},
@@ -3959,8 +3995,8 @@ const TYPES=[
   {id:'mb_liti',    name:'立体月巴',  r:4, v:250, t:1100, cond:null,  img:'https://origin.picgo.net/2026/09/19/litiyueba0f6fd2bd28b7cc83.th.png', color:'#8e9baf', shape:'tall', size:1.5},
   {id:'mb_xiaoma',  name:'小马月巴',  r:3, v:48, t:460,  cond:null, img:'https://origin.picgo.net/2026/09/19/xiaoma59a91dd50534ac93.th.png', color:'#e6c9f0', shape:'tall'},
   {id:'mb_tomato',  name:'番茄大战月巴', r:2, v:16, t:160, cond:null, img:'https://origin.picgo.net/2026/09/20/fanqiedazhan9861d01c9113a3f3.th.png', color:'#e05b4f', shape:'round'},
-  {id:'mb_powa',    name:'抛瓦月巴',   img:'https://origin.picgo.net/2026/10/24/e13ea7ed7a88bf778041f3a1f62f79131ca5a525c6308b22.th.png',
-    imgs:[{url:'https://origin.picgo.net/2026/10/24/e13ea7ed7a88bf778041f3a1f62f79131ca5a525c6308b22.th.png', by:'hellomelody'}], r:2, v:18, t:190, cond:null, color:'#e0a64e', shape:'round'},
+  {id:'mb_powa',    name:'抛瓦月巴',   img:'https://origin.picgo.net/2026/10/24/bbe23930e0a5236e05eca1b6bef4230a8a7078b7a228f913.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/24/bbe23930e0a5236e05eca1b6bef4230a8a7078b7a228f913.th.png', by:'hellomelody'}], r:2, v:18, t:190, cond:null, color:'#e0a64e', shape:'round'},
   {id:'mb_laba',    name:'拉巴',    r:3, v:40, t:400, cond:null, img:'https://origin.picgo.net/2026/09/20/laba8ce98439c56d3f6d.th.png', color:'#dbb3e8', shape:'round'},
   {id:'mb_tangyuan',name:'汤圆月巴', r:2, v:20, t:200, cond:null, img:'https://origin.picgo.net/2026/09/21/e0a73ec5f90f4b1d90fd1ce444e15c18df5827ccea2e46c6.th.png', color:'#f5e6ee', shape:'round'},
   {id:'mb_bashan',  name:'巴山',    r:4, v:250, t:1200, cond:null, img:'https://origin.picgo.net/2026/09/21/shanbf57ea8c56a98c78.th.png', color:'#5c8a64', shape:'big', size:3.5},
@@ -5464,6 +5500,29 @@ const I18N_UI={
   '🕯️ {name}隔着光似乎看到了番茄的身影：「剩这点余温，也够我撑到春天了。」':{en:'🕯️ {name} seems to see the tomato\u2019s figure through the light: "This little leftover warmth is enough to carry me to spring."',ja:'🕯️ {name}は光の向こうにトマトの姿が見えた気がする。「この残り火みたいな温もりでも、春まで持たせられるよ。」',ko:'🕯️ {name}는 빛 너머로 토마토의 모습이 보이는 듯하다. "이 남은 온기만으로도 봄까지 버틸 수 있어."'},
   '🍒 {name}把番茄举到耳边，尾音低低：「这样我们就永远永远在一起了哦？」':{en:'🍒 {name} holds the tomato to its ear, voice trailing low: "Now we\u2019ll be together forever and ever, right?"',ja:'🍒 {name}はトマトを耳元に持ち上げ、語尾を低く落とす。「これでボクたち、ずっとずっと一緒だね？」',ko:'🍒 {name}는 토마토를 귀에 대고 끝음을 낮춘다. "이제 우리 영원히영원히 함께야, 그렇지?"'},
   '🥂 {name}轻轻抵着番茄微笑：「是等着被谁一口吃掉吗……还是让我来吃掉讨厌的番茄吧。」':{en:'🥂 {name} leans gently against the tomato and smiles: "Are you waiting for someone to eat you up in one bite... or shall I eat this infuriating tomato myself?"',ja:'🥂 {name}はトマトにそっと寄りかかって微笑む。「誰かに一口で食べられるのを待ってるの……それとも、嫌いなトマトはボクが食べてあげようか。」',ko:'🥂 {name}는 토마토에 살며시 기대어 미소 짓는다. "누군가에게 한 입에 먹히기를 기다리는 거야…… 아니면 이 밉살스러운 토마토는 내가 먹어 줄까."'},
+  /* ===== 庭院戳月巴（点击反应 / 连击 / 亲密度 / 喂食） ===== */
+  '被戳到的{n}抖了一下，假装什么都没发生。':{en:'{n} twitches from the poke and pretends nothing happened.',ja:'{n}はつつかれてびくっとしたが、何もなかったふりをした。',ko:'{n}는 콕 찔리자 움찔하고는 아무 일도 없었다는 척한다.'},
+  '{n}鼓成一团，又慢慢弹回来。':{en:'{n} puffs up into a ball, then slowly bounces back.',ja:'{n}はまんまるに膨らんで、ゆっくり元に戻った。',ko:'{n}는 동그랗게 부풀었다가 천천히 원래대로 돌아온다.'},
+  '{n}翻了个身，露出番茄最爱的软软肚皮。':{en:'{n} rolls over and shows off the soft belly that tomatoes love most.',ja:'{n}はころんと寝返りを打って、トマトがいちばん大好きなやわらかいお腹を見せた。',ko:'{n}는 데굴 굴러 뒤집혀서 토마토가 가장 좋아하는 말랑한 배를 보여 준다.'},
+  '{n}警惕地看着你，似乎在找番茄的身影。':{en:'{n} watches you warily, as if looking for a tomato.',ja:'{n}は警戒してこちらを見て、トマトの姿を探しているようだ。',ko:'{n}는 경계하듯 쳐다보며, 토마토를 찾는 것 같다.'},
+  '{n}挪了挪位置，没看到番茄，又挪了回来。':{en:'{n} shuffles aside, sees no tomato, and shuffles back.',ja:'{n}は場所を移したが、トマトが見えなくてまた戻ってきた。',ko:'{n}는 자리를 옮겼다가 토마토가 보이지 않아 다시 돌아온다.'},
+  '{n}试图绕到你背后，偷走你的番茄。':{en:'{n} tries to sneak behind you and steal your tomatoes.',ja:'{n}はあなたの背後に回り込んで、トマトを盗もうとしている。',ko:'{n}는 네 뒤로 돌아가 토마토를 훔치려 한다.'},
+  '{n}和地上的番茄一起滚动。':{en:'{n} rolls around together with the tomatoes on the ground.',ja:'{n}は地面のトマトと一緒に転がり回る。',ko:'{n}는 바닥의 토마토와 함께 굴러다닌다.'},
+  '{n}小声哼了一下，像在抗议你给的番茄不够。':{en:'{n} lets out a tiny huff, as if protesting that you didn\u2019t give enough tomatoes.',ja:'{n}は小さく鼻を鳴らして、トマトが足りないと抗議しているみたい。',ko:'{n}는 작게 훙 내며, 토마토가 부족하다고 항의하는 것 같다.'},
+  '{n}被你戳得转了三圈，晕乎乎地扶住了篱笆。':{en:'{n} spins three times from your pokes and grabs the fence, dizzy.',ja:'{n}はつつかれて三回転し、ふらふらと垣根につかまった。',ko:'{n}는 콕콕 찔리더니 세 바퀴 돌고는 어지러워서 울타리를 붙잡는다.'},
+  '{n}找不到番茄的踪迹，彻底躺平了。':{en:'{n} can\u2019t find a single tomato and flops over in defeat.',ja:'{n}はトマトの痕跡すら見つからず、すっかり寝そべってしまった。',ko:'{n}는 토마토의 흔적조차 찾지 못하고 완전히 누워 버린다.'},
+  '{n}为了得到番茄，进行了反击。':{en:'{n} fights back in the hope of getting a tomato.',ja:'{n}はトマトを手に入れるため、反撃に出た。',ko:'{n}는 토마토를 얻기 위해 반격에 나선다.'},
+  '{n}如果吃不到番茄，它永远不会原谅你。':{en:'{n} will never forgive you if it doesn\u2019t get a tomato.',ja:'{n}はトマトを食べられなければ、絶対に許してくれない。',ko:'{n}는 토마토를 먹지 못하면 절대 용서하지 않을 것이다.'},
+  '💗 {n}一顿饱和顿顿饱还是分得清的（♥{h}）':{en:'💗 {n} knows the difference between one full meal and being fed every day (♥{h})',ja:'💗 {n}は一度のお腹いっぱいと毎回のお腹いっぱいの違いがわかる（♥{h}）',ko:'💗 {n}는 한 끼 배부른 것과 매번 배부른 것의 차이를 안다 (♥{h})'},
+  '🎉 {n}看在番茄的份上，月巴和你关系更亲近了。（♥5），以后会一直飘着爱心。':{en:'🎉 For the tomatoes\u2019 sake, {n} is now your closest friend (♥5) — hearts will keep floating from now on.',ja:'🎉 トマトのよしみで、{n}とは大の仲良しになった（♥5）。これからはずっとハートが浮かぶよ。',ko:'🎉 토마토 덕분에 {n}와 가장 친해졌다 (♥5). 앞으로 계속 하트가 떠오를 거야.'},
+  '{n}小口小口地吃掉了番茄，看起来很开心。':{en:'{n} nibbles the tomato in tiny bites and looks very happy.',ja:'{n}はトマトを少しずつ食べて、とてもうれしそうだ。',ko:'{n}는 토마토를 조금씩 먹으며 아주 기뻐 보인다.'},
+  '🍅 番茄不够了，先去旅行或收获吧。':{en:'🍅 Not enough tomatoes. Go traveling or harvest some first.',ja:'🍅 トマトが足りない。旅行か収穫で手に入れよう。',ko:'🍅 토마토가 부족하다. 먼저 여행하거나 수확하자.'},
+  '🍅 喂它（{a}/{b}）':{en:'🍅 Feed ({a}/{b})',ja:'🍅 食べさせる（{a}/{b}）',ko:'🍅 먹이 주기 ({a}/{b})'},
+  '它这次已经吃不下了':{en:'Can\u2019t eat any more this time',ja:'今回はもう食べられない',ko:'이번에는 더 못 먹는다'},
+  '已经吃过足够多的番茄，等它下次来庭院吧。':{en:'It has already had plenty of tomatoes. Wait until it comes to the yard again.',ja:'もう十分トマトを食べた。次に庭に来たときにあげよう。',ko:'이미 토마토를 충분히 먹었다. 다음에 마당에 올 때 먹여 주자.'},
+  '{n}这次已经吃够了，不用再喂啦。':{en:'{n} has had enough this time — no need to feed more.',ja:'{n}は今回はもう十分食べた。これ以上あげなくて大丈夫。',ko:'{n}는 이번에는 충분히 먹었다. 더 먹이지 않아도 돼.'},
+  '院子里的月巴们帮忙招待了客人，🍅 +{n}':{en:'The Bannies in the yard helped entertain the guest. 🍅 +{n}',ja:'庭のバニーたちがお客さんをもてなした。🍅 +{n}',ko:'마당의 배니들이 손님을 접대했다. 🍅 +{n}'},
+  '🚪 有客人来了：院子里的月巴们帮忙招待了客人 🍅 +{n}':{en:'🚪 A guest arrived: the Bannies in the yard entertained them. 🍅 +{n}',ja:'🚪 お客さんが来た。庭のバニーたちがもてなした。🍅 +{n}',ko:'🚪 손님이 왔다. 마당의 배니들이 접대했다. 🍅 +{n}'},
   /* ===== P7.2 庭院事件 TV_YARD_EVENTS（88 条，{n}/{a}/{b} = 月巴名） ===== */
   '一只月巴':{en:'a Banny',ja:'あるバニー',ko:'어떤 배니'},
   '另一只月巴':{en:'another Banny',ja:'もう一匹のバニー',ko:'또 다른 배니'},
@@ -8357,6 +8416,9 @@ const sfx={
   slotLow(){ tone(880,0.1,'sine',0.075); },                                                                   // 番茄机 · 普通收获
   slotReady(){ tone(880,0.09,'sine',0.07); tone(1318,0.13,'triangle',0.06,0.08); },                          // 好运收获攒够可拉（旅行图标 🎰 亮起）
   yardEv(){ tone(1318,0.06,'sine',0.05); tone(1760,0.09,'sine',0.04,0.06); },                                // 庭院事件出现：轻闪
+  petPoke(){ tone(760,0.05,'sine',0.06); tone(1040,0.06,'sine',0.045,0.03); },                              // 戳月巴：软软的回弹
+  petHeart(){ [880,1175,1568].forEach((f,i)=>tone(f,0.12,'triangle',0.11,i*0.07)); tone(2093,0.2,'sine',0.04,0.26); }, // 亲密度提升
+  petFeed(){ tone(523,0.07,'triangle',0.08); tone(659,0.08,'sine',0.06,0.05); tone(880,0.1,'sine',0.06,0.1); }, // 喂番茄
 };
 
 /* ---------------- 轻提示 ---------------- */
@@ -12304,7 +12366,8 @@ function tvFresh(){
   if(t.ddStreak==null)t.ddStreak=0;         // 斗月巴：玩家连胜场数（每场 +2% 遇出千月巴的概率；赢出千局同样 +1，输了清零）
   if(t.ddLossStreak==null)t.ddLossStreak=0; // 斗月巴：玩家连败场数（认输不计入，用于结算时的安慰台词）
   t.ddRecords=t.ddRecords||[];              // 斗月巴：战绩记录（新的在前，最多保留 DD_REC_MAX 条）
-  t.journal=t.journal||[];                  // 旅行笔记：每次旅行的记录（新的在前，最多保留 TV_JOURNAL_MAX 条）
+  t.journal=t.journal||[];                   // 旅行笔记：每次旅行的记录（新的在前，最多保留 TV_JOURNAL_MAX 条）
+  if(!t.pet||typeof t.pet!=='object'||Array.isArray(t.pet))t.pet={}; // 庭院亲密度：{月巴id:{p:点数}}
   return t;
 }
 /* 护身符单件耐久：优先取该件的 du，旧数据缺省为满耐久 */
@@ -12318,7 +12381,7 @@ let DR_DEBUG=false; // #debugall 调试开关（旅行加速、无限资源等�
 let DR_SV_UNLOCK=false; // #debugall-1：只解锁番茄幸存者，不开启无限资源（金币等与新账号一致）
 let tvView='yard';
 function openTravel(){ if(!dex2Unlocked())return; tvFresh(); const settled=travelSettleIf(); updateTravelIcon(); tvRenderAll(); $('travel').style.display='flex'; tvUpdateHarvest(); tvUpdateDoor(); if(tvView==='home'&&!settled)tvEnterHome(); galSync(true); }
-function closeTravel(){ $('travel').style.display='none'; }
+function closeTravel(){ $('travel').style.display='none'; tvLoveStop(); }
 function tvRenderAll(){ tvRenderScene(); tvUpdateBar(); }
 function tvUpdateBar(){ const t=tvFresh(); const e=$('tvTomato'); if(e)e.textContent=t.tomato; const s=$('tvState'); if(s)s.textContent=t.frog.status==='away'?$t('旅途中'):(t.frog.status==='pack'?$t('准备行囊'):$t('在家')); }
 function tvTab(v){ tvView=v; if(v==='home')tvEnterHome(); else tvRenderScene(); }
@@ -12516,13 +12579,56 @@ function tvEventRoll(){
   sfx.yardEv();
   return true;
 }
+/* 庭院固定 3 只：不足时从已拥有的月巴里补齐（正在旅行的那只除外），保证每次都能看到 3 只 */
+function tvYardEnsure(t){
+  const away=(t&&t.frog&&t.frog.status==='away')?t.frog.fatId:null;
+  const arr=Array.isArray(t&&t.yardEv)?t.yardEv:[];
+  const keep=[], seen={};
+  arr.forEach(function(o){
+    if(!o||!o.id||o.id===away||seen[o.id]||!typeById(o.id))return;
+    seen[o.id]=1; keep.push(o);
+  });
+  if(keep.length<3){
+    const pool=tvOwnedFats().filter(function(o){ return o.id!==away&&!seen[o.id]; });
+    while(keep.length<3&&pool.length){
+      const o=pool.shift();
+      seen[o.id]=1;
+      keep.push({id:o.id,x:50,y:50});
+    }
+  }
+  if(keep.length>3)keep.length=3;
+  if(keep.length!==arr.length||keep.some(function(o,i){return o!==arr[i];})){ t.yardEv=keep; save(); }
+  else t.yardEv=keep;
+  return t;
+}
+/* 庭院站位：每只月巴固定 64px 宽，最多 3 只。按数量分配互不重叠的横向列，
+   避免叠在一起时点不到想戳的那一只（布局在渲染时归一化，旧存档也会自动修正）。 */
+const TV_YARD_COLS={1:[50],2:[30,70],3:[16,46,76]};
+function tvYardSlots(list){
+  const arr=list.slice().sort(function(a,b){ return (parseFloat(a.x)||0)-(parseFloat(b.x)||0); });
+  const cols=TV_YARD_COLS[Math.min(3,arr.length)]||TV_YARD_COLS[3];
+  const out={};
+  arr.forEach(function(o,i){
+    let y=parseFloat(o.y); if(!isFinite(y))y=44;
+    out[o.id]={x:cols[Math.min(i,cols.length-1)],y:Math.max(32,Math.min(68,y))};
+  });
+  return out;
+}
 function tvYardHTML(t){
+  tvYardEnsure(t);
   let h='<div class="tvyard">';
   const exclude=t.frog.status==='away'?t.frog.fatId:null;
   const shown=(t.yardEv||[]).filter(function(o){return o.id!==exclude;});
+  const pos=tvYardSlots(shown);
   shown.forEach(function(o){
-    h+='<div class="tv-yf'+(o.id===_tvStealWho?' steal-silhouette':'')+'" style="left:'+o.x+'%;top:'+o.y+'%"><span class="tv-traveler">'+fatSVG(typeById(o.id))+'</span></div>';
+    const p=tvPetRec(t,o.id), hh=tvPetHearts(p), q=pos[o.id]||{x:50,y:44};
+    h+='<div class="tv-yf'+(o.id===_tvStealWho?' steal-silhouette':'')+'" data-pid="'+o.id+'" style="left:'+q.x+'%;top:'+q.y+'%" onpointerdown="tvPoke(event,\''+o.id+'\')">'
+      +(hh>=TV_PET_MAX?'<span class="tv-yf-love">❤️</span>':'')
+      +'<span class="tv-traveler">'+fatSVG(typeById(o.id))+'</span>'
+      +(hh>0?'<span class="tv-yf-hearts'+(hh>=TV_PET_MAX?' max':'')+'">♥'+hh+'</span>':'')
+      +'</div>';
   });
+  h+='<div class="tv-poke-bubble" id="tvPokeBubble"></div>';
   h+='</div>';
   if(shown.length){
     let txt=t.yardTxt;
@@ -12536,6 +12642,207 @@ function tvYardHTML(t){
   else h+='<div class="tv-note">'+$tm('ui_tv_yard_empty','🧺 庭院安安静静，先去图鉴里收集一些月巴吧')+'</div>';
   return h;
 }
+/* ---------------- 庭院戳月巴：点击反馈 / 连击 / 亲密度 / 喂食 ----------------
+   互动本身不产出番茄；喂食消耗番茄。亲密度点数上限 1000，每 200 点 1 心、最多 5 心。
+   每只月巴每次在庭院出现，最多只能戳 5 次、喂 5 次（次数记在 yardEv 条目上，刷新庭院时重置），
+   超出部分只播动画、不再加好感。 */
+const TV_PET_PER_HEART=200, TV_PET_MAX=5, TV_PET_FEED_PTS=10, TV_PET_FEED_MAX=5, TV_PET_POKE_MAX=5;
+const TV_PET_LINES=[
+  '被戳到的{n}抖了一下，假装什么都没发生。',
+  '{n}鼓成一团，又慢慢弹回来。',
+  '{n}翻了个身，露出番茄最爱的软软肚皮。',
+  '{n}警惕地看着你，似乎在找番茄的身影。',
+  '{n}挪了挪位置，没看到番茄，又挪了回来。',
+  '{n}试图绕到你背后，偷走你的番茄。',
+  '{n}和地上的番茄一起滚动。',
+  '{n}小声哼了一下，像在抗议你给的番茄不够。'
+];
+let _tvPoke={id:null,n:0,t:0}, _tvPokeSnd=0, _tvPokeAnimT=null, _tvBubbleT=null, _tvPetSaveT=null;
+function tvPetRec(t,id){
+  t.pet=(t.pet&&typeof t.pet==='object'&&!Array.isArray(t.pet))?t.pet:{};
+  let p=t.pet[id];
+  if(!p||typeof p!=='object'||Array.isArray(p))p=t.pet[id]={p:0};
+  p.p=Math.max(0,Math.min(TV_PET_MAX*TV_PET_PER_HEART,parseInt(p.p,10)||0));
+  return p;
+}
+function tvPetHearts(p){ return Math.min(TV_PET_MAX,Math.floor((p&&p.p||0)/TV_PET_PER_HEART)); }
+/* 本次「出现」还能喂几次：次数记在该次庭院的 yardEv 条目上，庭院刷新时条目重建即重置 */
+function tvPetYardEntry(t,id){
+  const arr=(t&&t.yardEv)||[];
+  for(let i=0;i<arr.length;i++)if(arr[i].id===id)return arr[i];
+  return null;
+}
+function tvPetFedLeft(t,id){ const o=tvPetYardEntry(t,id); return TV_PET_FEED_MAX-((o&&o.f)||0); }
+function tvPetUseFeed(t,id){ const o=tvPetYardEntry(t,id); if(!o||(o.f||0)>=TV_PET_FEED_MAX)return false; o.f=(o.f||0)+1; return true; }
+/* 本次「出现」还能戳几次（加好感的次数，超出后只播动画） */
+function tvPetPokeLeft(t,id){ const o=tvPetYardEntry(t,id); return TV_PET_POKE_MAX-((o&&o.k)||0); }
+function tvPetUsePoke(t,id){ const o=tvPetYardEntry(t,id); if(!o||(o.k||0)>=TV_PET_POKE_MAX)return false; o.k=(o.k||0)+1; return true; }
+/* 当前这一级（心）内的进度百分比，满好感时固定 100%；保留小数，戳一下也能看到条在动 */
+function tvPetPct(p){
+  const pts=(p&&p.p)||0;
+  if(pts>=TV_PET_MAX*TV_PET_PER_HEART)return 100;
+  return Math.max(0,Math.min(100,+(pts%TV_PET_PER_HEART/TV_PET_PER_HEART*100).toFixed(2)));
+}
+/* 庭院里当前可见月巴的心数合计：访客来访时按这个数回赠番茄 */
+function tvYardHearts(t){
+  const ex=(t&&t.frog&&t.frog.status==='away')?t.frog.fatId:null;
+  const arr=(t&&t.yardEv)||[]; let n=0;
+  for(let i=0;i<arr.length;i++){ if(arr[i].id===ex)continue; n+=tvPetHearts(tvPetRec(t,arr[i].id)); }
+  return n;
+}
+function tvPetSaveSoon(){ if(_tvPetSaveT)return; _tvPetSaveT=setTimeout(function(){ _tvPetSaveT=null; save(); },700); }
+function tvPetBunny(id){ return document.querySelector('.tv-yf[data-pid="'+id+'"]'); }
+function tvPokeAnim(el,cls){
+  if(!el)return;
+  const inner=el.querySelector('.tv-traveler'); if(!inner)return;
+  inner.classList.remove('poke','poke-spin','poke-flop','poke-puff');
+  void inner.offsetWidth;
+  inner.classList.add(cls);
+  if(_tvPokeAnimT)clearTimeout(_tvPokeAnimT);
+  _tvPokeAnimT=setTimeout(function(){ inner.classList.remove(cls); _tvPokeAnimT=null; },700);
+}
+function tvPokeFx(id,chars,n){
+  if(S&&S.lowPower)return;
+  const yard=document.querySelector('.tvyard'), el=tvPetBunny(id);
+  if(!yard||!el)return;
+  const x=el.offsetLeft+el.offsetWidth/2, y=el.offsetTop+16;
+  for(let i=0;i<n;i++){
+    const s=document.createElement('span');
+    s.className='tv-pk-p'; s.textContent=chars[i%chars.length];
+    s.style.left=(x+rand(-14,14))+'px'; s.style.top=(y+rand(-4,8))+'px';
+    s.style.setProperty('--dx',rand(-28,28).toFixed(0)+'px');
+    s.style.animationDelay=(i*35)+'ms';
+    yard.appendChild(s);
+    setTimeout(function(){ if(s.parentNode)s.parentNode.removeChild(s); },1200+i*35);
+  }
+}
+function tvPetSyncDom(id){
+  const el=tvPetBunny(id); if(!el)return;
+  const t=tvFresh(), p=tvPetRec(t,id), hh=tvPetHearts(p);
+  let chip=el.querySelector('.tv-yf-hearts');
+  if(hh>0){
+    if(!chip){ chip=document.createElement('span'); chip.className='tv-yf-hearts'; el.appendChild(chip); }
+    chip.textContent='♥'+hh;
+    chip.classList.toggle('max',hh>=TV_PET_MAX);
+  }else if(chip){ chip.parentNode.removeChild(chip); }
+  if(hh>=TV_PET_MAX && !el.querySelector('.tv-yf-love')){
+    const c=document.createElement('span'); c.className='tv-yf-love'; c.textContent='❤️'; el.insertBefore(c,el.firstChild);
+  }
+}
+function tvBubbleHTML(id,line,combo){
+  const t=tvFresh(), p=tvPetRec(t,id), hh=tvPetHearts(p), left=tvPetFedLeft(t,id);
+  let h='';
+  if(combo>=2) h+='<span class="tv-pk-combo">×'+combo+'</span>';
+  h+='<div class="tv-pk-line">'+escHTML(line)+'</div>';
+  h+='<div class="tv-pk-bar"><i data-w="'+tvPetPct(p)+'"></i></div>';
+  h+='<div class="tv-pk-foot">';
+  if(hh>0) h+='<span class="tv-pk-h">♥ '+hh+'</span>';
+  if(hh<TV_PET_MAX){
+    if(left>0) h+='<button class="tv-pk-btn" onpointerdown="tvPetFeed(event,\''+id+'\')">'+$tf('🍅 喂它（{a}/{b}）',{a:TV_PET_FEED_MAX-left,b:TV_PET_FEED_MAX})+'</button>';
+    else h+='<span class="tv-pk-hungry">'+$t('它这次已经吃不下了')+'</span>';
+  }
+  h+='</div>';
+  return h;
+}
+function tvBubbleShow(id,line,combo){
+  const bn=$('tvPokeBubble'), sc=$('tvScene'), el=tvPetBunny(id);
+  if(!bn||!sc||!el)return;
+  let from=0;
+  if(bn.classList.contains('show')){ const of=bn.querySelector('.tv-pk-bar>i'); if(of)from=parseFloat(of.style.width)||0; }
+  bn.classList.remove('below');
+  bn.innerHTML=tvBubbleHTML(id,line,combo);
+  const fill=bn.querySelector('.tv-pk-bar>i');
+  if(fill){ const to=parseFloat(fill.dataset.w)||0; fill.style.width=from+'%'; void fill.offsetWidth; fill.style.width=to+'%'; }
+  bn.classList.add('show');
+  const W=sc.clientWidth||360;
+  const half=Math.min(100,(bn.offsetWidth||120)/2+4);
+  bn.style.left=clamp(el.offsetLeft+el.offsetWidth/2,half,W-half)+'px';
+  const y=el.offsetTop, bh=bn.offsetHeight||80;
+  if(y-10-bh<6){ bn.classList.add('below'); bn.style.top=(el.offsetTop+el.offsetHeight+6)+'px'; }
+  else bn.style.top=(y-8)+'px';
+  if(_tvBubbleT)clearTimeout(_tvBubbleT);
+  _tvBubbleT=setTimeout(function(){ bn.classList.remove('show'); _tvBubbleT=null; },3000);
+}
+function tvBubbleHide(){
+  const bn=$('tvPokeBubble'); if(bn)bn.classList.remove('show');
+  if(_tvBubbleT){ clearTimeout(_tvBubbleT); _tvBubbleT=null; }
+}
+function tvPetHeartUp(id,tp,p,after){
+  tvPokeFx(id,['💗','✨'],6);
+  sfx.petHeart();
+  const full=after>=TV_PET_MAX;
+  const line=$tf(full?'🎉 {n}看在番茄的份上，月巴和你关系更亲近了。（♥5），以后会一直飘着爱心。':'💗 {n}一顿饱和顿顿饱还是分得清的（♥{h}）',{n:tp.name,h:after});
+  tvBubbleShow(id,line,0);
+  tvPetSyncDom(id);
+  if(full){ save(); tvLoveStart(); }
+}
+function tvPoke(ev,id){
+  if(ev){ ev.preventDefault(); ev.stopPropagation(); }
+  const t=tvFresh(), tp=typeById(id); if(!tp)return;
+  const p=tvPetRec(t,id), before=tvPetHearts(p), n0=now();
+  if(_tvPoke.id!==id||n0-_tvPoke.t>1100)_tvPoke.n=0;
+  _tvPoke.id=id; _tvPoke.n++; _tvPoke.t=n0;
+  /* 每次出现只算前 5 下好感，之后的戳只播动画 */
+  const canGain=tvPetPokeLeft(t,id)>0;
+  if(canGain){ tvPetUsePoke(t,id); p.p=(p.p||0)+1; }
+  const after=tvPetHearts(p), combo=_tvPoke.n;
+  let cls='poke', key=TV_PET_LINES[randi(0,TV_PET_LINES.length-1)], params={n:tp.name};
+  if(combo===3){ cls='poke-spin'; key='{n}被你戳得转了三圈，晕乎乎地扶住了篱笆。'; }
+  else if(combo===6){ cls='poke-flop'; key='{n}找不到番茄的踪迹，彻底躺平了。'; }
+  else if(combo===10){ cls='poke-puff'; key='{n}为了得到番茄，进行了反击。'; }
+  else if(!canGain) key='{n}如果吃不到番茄，它永远不会原谅你。';
+  else if(Math.random()<0.10) cls='poke-puff';
+  tvPokeAnim(tvPetBunny(id),cls);
+  if(n0-_tvPokeSnd>120){ _tvPokeSnd=n0; sfx.petPoke(); }
+  if(combo===3||combo===6||combo===10) tvPokeFx(id,['✨','💫'],4);
+  else if(combo%3===0) tvPokeFx(id,['💗','🍅','✨'],2);
+  if(after>before) tvPetHeartUp(id,tp,p,after);
+  else tvBubbleShow(id,$tf(key,params),combo);
+  tvPetSaveSoon();
+}
+function tvPetFeed(ev,id){
+  if(ev){ ev.preventDefault(); ev.stopPropagation(); }
+  const t=tvFresh(), tp=typeById(id)||{name:$t('月巴')};
+  const p=tvPetRec(t,id), before=tvPetHearts(p);
+  if(before>=TV_PET_MAX){ tvBubbleShow(id,$tf('{n}这次已经吃够了，不用再喂啦。',{n:tp.name}),0); return; }
+  if(tvPetFedLeft(t,id)<=0){ tvBubbleShow(id,$t('已经吃过足够多的番茄，等它下次来庭院吧。'),0); return; }
+  if((t.tomato||0)<1){ toast('🍅 番茄不够了，先去旅行或收获吧。'); try{ sfx.error&&sfx.error(); }catch(e){} return; }
+  tvPetUseFeed(t,id);
+  t.tomato-=1; p.p=(p.p||0)+TV_PET_FEED_PTS;
+  const after=tvPetHearts(p);
+  const e=$('tvTomato'); if(e)e.textContent=t.tomato;
+  save(); sfx.petFeed();
+  tvPokeAnim(tvPetBunny(id),'poke');
+  tvPokeFx(id,['🍅','💗'],4);
+  if(after>before) tvPetHeartUp(id,tp,p,after);
+  else tvBubbleShow(id,$tf('{n}小口小口地吃掉了番茄，看起来很开心。',{n:tp.name}),0);
+  tvPetSyncDom(id);
+}
+/* 满好感缓慢飘心：全局一个定时器轮流给满好感的月巴冒 1 颗，省点模式不飘（改为头上戴心） */
+let _tvLoveT=null, _tvLoveI=0;
+function tvLoveFxOne(el){
+  const yard=document.querySelector('.tvyard'); if(!yard||!el)return;
+  const s=document.createElement('span');
+  s.className='tv-pk-p slow'; s.textContent='❤️';
+  s.style.left=(el.offsetLeft+el.offsetWidth/2+rand(-8,8))+'px';
+  s.style.top=(el.offsetTop+2)+'px';
+  s.style.setProperty('--dx',rand(-14,14).toFixed(0)+'px');
+  yard.appendChild(s);
+  setTimeout(function(){ if(s.parentNode)s.parentNode.removeChild(s); },3400);
+}
+function tvLoveStop(){ if(_tvLoveT){ clearInterval(_tvLoveT); _tvLoveT=null; } }
+function tvLoveTick(){
+  const tr=$('travel');
+  if(!tr||tr.style.display==='none'||tvView!=='yard'||document.hidden){ tvLoveStop(); return; }
+  if(S&&S.lowPower)return;                       // 省点模式：不飘，改成头上戴心（纯 CSS 显示）
+  const els=document.querySelectorAll('#tvScene .tvyard .tv-yf');
+  if(!els.length){ tvLoveStop(); return; }
+  const t=tvFresh(), full=[];
+  for(let i=0;i<els.length;i++){ if(tvPetHearts(tvPetRec(t,els[i].dataset.pid))>=TV_PET_MAX) full.push(els[i]); }
+  if(!full.length)return;
+  tvLoveFxOne(full[_tvLoveI++%full.length]);
+}
+function tvLoveStart(){ if(!_tvLoveT)_tvLoveT=setInterval(tvLoveTick,1800); }
 /* 让庭院里的某只月巴同步为黑色剪影（_tvStealWho）或恢复原色：重绘庭院 DOM */
 function tvStealSyncYard(){
   if(tvView!=='yard')return;
@@ -12879,7 +13186,7 @@ function tvHomeHTML(t){
 }
 function tvOwnedFats(){ const out=[]; const add=function(coll){ for(const id in coll){ const c=coll[id]; if(c&&c.count>0){ const tp=typeById(id); if(tp)out.push({id:id,t:tp}); } } }; add(S.collection); if(dex2Unlocked())add(S.collection2||{}); add(S.collection3||{}); out.sort(function(a,b){ return (a.t.r||0)-(b.t.r||0) || (a.t.name<b.t.name?-1:a.t.name>b.t.name?1:0); }); return out; }
 function tvPickFat(id){ const t=tvFresh(); t.frog.fatId=(id&&id===t.frog.fatId)?null:(id||null); save(); tvBag(); }
-function tvRenderScene(){ const sc=$('tvScene'); if(!sc)return; const t=tvFresh(); tvEventRoll(); sc.innerHTML=tvView==='yard'?tvYardHTML(t):tvHomeHTML(t); if(tvView==='yard')tvStealMaybe(); }
+function tvRenderScene(){ const sc=$('tvScene'); if(!sc)return; const t=tvFresh(); tvEventRoll(); sc.innerHTML=tvView==='yard'?tvYardHTML(t):tvHomeHTML(t); if(tvView==='yard'){ tvStealMaybe(); tvLoveStart(); } else tvLoveStop(); }
 const TV_SLOTS=['🍅','🌶️','🍑','🍒','🍓','🥫','🌻','⭐'];
 const TV_SLOT_LOW=['🌶️','🍑','🍒','🍓','🌻','⭐']; /* 非番茄类符号，最低档专用 */
 function tvShuffle(a){ for(let i=a.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const s=a[i]; a[i]=a[j]; a[j]=s; } return a; }
@@ -13234,10 +13541,10 @@ function tvPityRefresh(){ const n=tvPity(); const lb=$('tvPityLbl'),tk=$('tvPity
 function tvSendCardIf(){ const t=tvFresh(); if(t.frog.status!=='away')return; if((t.frog.cardsSent||0)>=(t.frog.cardQuota||1))return; const d=tvDestOf(t.bag); const unread=d.cards.some(function(c){return t.cards.indexOf(c)<0;}); let pend=(t.pityPending!=null)?t.pityPending:(t.cardPity||0); let c; if(unread&&pend>=TV_PITY_MAX){ const pool=d.cards.filter(function(x){return t.cards.indexOf(x)<0;}); c=pool[Math.floor(Math.random()*pool.length)]; pend=0; } else { c=d.cards[Math.floor(Math.random()*d.cards.length)]; if(t.cards.indexOf(c)>=0){ const _b=pend; pend=Math.min(TV_PITY_MAX,_b+1); if(pend>_b)t.pityComfort=true; } } const _isNew=(t.cards.indexOf(c)<0); if(_isNew)t.cards.push(c); if(t.inbox.indexOf(c)<0)t.inbox.push(c); if(!t.frog.cardsGot)t.frog.cardsGot=[]; t.frog.cardsGot.push({c:c,new:_isNew}); tvNoteCard(c,t.frog.fatId); tvNoteMood(c); t.frog.cardsSent=(t.frog.cardsSent||0)+1; t.pityPending=pend; /* 累计条只在「打开室内」时结算（见 tvEnterHome），旅行途中不更新，避免剧透 */ tvUpdateBar(); if(_isNew)sfx.cardNew(); else sfx.cardDup(); save(); }
 function tvUpdateBar(){ const t=tvFresh(); const e=$('tvTomato'); if(e)e.textContent=t.tomato; const s=$('tvState'); if(s)s.textContent=t.frog.status==='away'?$t('旅途中'):(t.frog.status==='pack'?$t('准备行囊'):$t('在家')); const d=$('tvMailDot'); if(d)d.style.display=(t.inbox.length>0)?'block':'none'; }
 function tvOpenBook(){ openModal($t('🏷 旅行图鉴'), tvBookHTML(), tvOpenBook); }
-function tvLetterEnv(c){ const L=TV_LETTERS[c]; if(!L)return ''; const t=tvFresh(); const fw=(t.cardFirst&&t.cardFirst[c])||null; let sig=''; if(fw){ const tp=typeById(fw); if(tp)sig='<div class="ltr-sig">'+tp.name+'</div>'; } let note=''; const moods=tvMoodList(c); if(moods.length){ const it=moods[moods.length-1]; const to=tvMoodTo(it); note='<div class="ltr-note">💬 '+(to?(escHTML(to)+'：'):'')+escHTML(it.m||$t('（无留言）'))+'<span class="ltr-note-t">· 出发 '+fmtDT(it.t)+'</span></div>'; } return '<div class="ltr-env mini '+L.d+'" onclick="tvOpenLetter(\''+c+'\')">'+note+'<div class="ltr-front"><div class="ltr-flap"></div><div class="ltr-seal">'+L.e+'</div>'+sig+'</div></div>'; }
+function tvLetterEnv(c){ const L=TV_LETTERS[c]; if(!L)return ''; const t=tvFresh(); const fw=(t.cardFirst&&t.cardFirst[c])||null; let sig=''; if(fw){ const tp=typeById(fw); if(tp)sig='<div class="ltr-sig">'+tp.name+'</div>'; } let note=''; const moods=tvMoodList(c); if(moods.length){ const it=moods[moods.length-1]; const to=tvMoodTo(it); note='<div class="ltr-note">💬 '+(to?(escHTML(to)+'：'):'')+escHTML(it.m||$t('（无留言）'))+'<span class="ltr-note-t">'+$t(' · 出发 ')+fmtDT(it.t)+'</span></div>'; } return '<div class="ltr-env mini '+L.d+'" onclick="tvOpenLetter(\''+c+'\')">'+note+'<div class="ltr-front"><div class="ltr-flap"></div><div class="ltr-seal">'+L.e+'</div>'+sig+'</div></div>'; }
 function tvWhoRow(c,right){ const t=tvFresh(); const who=(t.cardWho&&t.cardWho[c])||[]; if(!who.length)return ''; let h='<div class="ltr-who'+(right?' right':'')+'">'; for(const id of who){ const tp=typeById(id); if(!tp)continue; h+='<span class="ltr-who-sq" style="background:'+tp.color+'" title="'+tp.name+'" onclick="tvShowWho(\''+id+'\')">'+tp.name.charAt(0)+'</span>'; } return h+'</div>'; }
 function tvShowWho(id){ const tp=typeById(id); if(!tp)return; openModal($t('🐰 收到此信的月巴'),'<div style="text-align:center"><div style="font-size:60px;line-height:1.1;margin:6px 0">'+fatSVG(tp)+'</div><div style="font-weight:800;font-size:16px;color:var(--text)">'+tp.name+'</div><div class="rar-tag rr'+(tp.r||1)+'" style="display:inline-block;margin-top:6px">'+$t(RAR_NAME[tp.r])+'</div></div><p style="text-align:center"><button class="btn" onclick="closeModal()">'+$t('返回')+'</button></p>'); }
-function tvOpenNoteHTML(c){ const moods=tvMoodList(c); if(!moods.length)return ''; let h=''; moods.forEach(function(it){ const to=tvMoodTo(it); h+='<div class="ltr-opennote">'+(to?('to：<b>'+escHTML(to)+'</b> · '):'')+'💬 '+escHTML(it.m||$t('（无留言）'))+'<span class="ltr-opentime">· 出发 '+fmtDT(it.t)+'</span></div>'; }); return h; }
+function tvOpenNoteHTML(c){ const moods=tvMoodList(c); if(!moods.length)return ''; let h=''; moods.forEach(function(it){ const to=tvMoodTo(it); h+='<div class="ltr-opennote">'+(to?('to：<b>'+escHTML(to)+'</b> · '):'')+'💬 '+escHTML(it.m||$t('（无留言）'))+'<span class="ltr-opentime">'+$t(' · 出发 ')+fmtDT(it.t)+'</span></div>'; }); return h; }
 /* 旅行图鉴分区：把地图按区域归类（森林+世外桃源 / 雪地四图等） */
 const TV_REGIONS=[
  {id:'forest', n:'森林',        d:'deco-forest', dests:['forest','fairy','ancient','cursed']},
@@ -13309,15 +13616,15 @@ function tvShowLetter(c, from){
 }
 function tvOpenMail(){ openModal('📮 信箱 · 来信', tvMailHTML(), ()=>tvOpenMail()); }
 function tvMailHTML(){ const t=tvFresh(); let h='<p style="color:var(--text);font-size:13px">'+$t('此次旅行月巴寄回、尚未拆开的信件，点击可以拆开：')+'</p><div class="sh-grid">'; if(!t.inbox.length)h+='<p style="color:var(--dim);text-align:center;grid-column:1/-1">'+$t('信箱空空，还没有未拆的信件')+'</p>'; for(const c of t.inbox)h+=tvLetterEnv(c); h+='</div><p style="text-align:center"><button class="btn" onclick="closeModal()">'+$t('返回')+'</button></p>'; return h; }
-function tvFriendModal(f,t){ const fr=t.friends.find(function(x){return x.id===f.id;}); const fc=fr?fr.count:0; const emo=f.e; const want=t.pendingVisitWant; const wantHas=!!want&&t.specials.indexOf(want)>=0; const sayLine=!want?$t('💬 「今天就是路过看看你呀。」'):(wantHas?($t('💬 「今天我特别想要 ')+spEmo(want)+' '+$sp(want)+$t(' 呢。」')):$t('💬 「我今天想要的一样特产，你好像还没收着呢。」')); let h='<p style="text-align:center;font-size:40px">'+emo+'</p><p style="text-align:center"><b>'+f.n+'</b>'+(fc?$t('（第 ')+(fc+1)+$t(' 次来访）'):$t('（第一次来访）'))+'</p><p style="text-align:center;color:var(--text)">'+f.t+'</p><p style="text-align:center;color:var(--text);font-weight:700">'+sayLine+'<div class="sh-grid">'; for(const s of f.like){ const has=t.specials.indexOf(s)>=0; const isWant=(s===want); h+='<div class="sh-card'+(isWant?' want':'')+'">'+(isWant?$t('<div class="sh-want">💛 更想要</div>'):'')+'<div class="sh-n">'+(has?(spEmo(s)+' '+$sp(s)):'❔ ???')+'</div><button class="btn" '+(has?'':'disabled')+' onclick="tvFeed(\''+f.id+'\',\''+s+$t('\')">招待</button></div>'); } h+=$t('</div><p style="text-align:center;margin-top:6px"><button class="btn" onclick="closeModal()">让它再等等</button> <button class="btn" onclick="tvTurnAway()">请回吧</button></p>'); return h; }
-function tvTurnAway(){ const t=tvFresh(); if(!t.pendingVisit){ closeModal(); return; } t.pendingVisit=null; t.pendingVisitWant=null; if(!t.nextVisit||t.nextVisit<now())t.nextVisit=now()+tvVisitGap(); save(); tvUpdateDoor(); updateTravelIcon(); tvRenderScene(); sfx.bye(); closeModal(); toast($t('🚪 你客气地请访客回去了，它说改天再来。')); }
+function tvFriendModal(f,t){ const fr=t.friends.find(function(x){return x.id===f.id;}); const fc=fr?fr.count:0; const emo=f.e; const want=t.pendingVisitWant; const wantHas=!!want&&t.specials.indexOf(want)>=0; const sayLine=!want?$t('💬 「今天就是路过看看你呀。」'):(wantHas?($t('💬 「今天我特别想要 ')+spEmo(want)+' '+$sp(want)+$t(' 呢。」')):$t('💬 「我今天想要的一样特产，你好像还没收着呢。」')); let h='<p style="text-align:center;font-size:40px">'+emo+'</p><p style="text-align:center"><b>'+f.n+'</b>'+(fc?$t('（第 ')+(fc+1)+$t(' 次来访）'):$t('（第一次来访）'))+'</p><p style="text-align:center;color:var(--text)">'+f.t+'</p><p style="text-align:center;color:var(--text);font-weight:700">'+sayLine+'<div class="sh-grid">'; for(const s of f.like){ const has=t.specials.indexOf(s)>=0; const isWant=(s===want); h+='<div class="sh-card'+(isWant?' want':'')+'">'+(isWant?$t('<div class="sh-want">💛 更想要</div>'):'')+'<div class="sh-n">'+(has?(spEmo(s)+' '+$sp(s)):'❔ ???')+'</div><button class="btn" '+(has?'':'disabled')+' onclick="tvFeed(\''+f.id+'\',\''+s+$t('\')">招待</button></div>'); } h+='</div>'+(t.pendingVisitGift>0?$tf('院子里的月巴们帮忙招待了客人，🍅 +{n}',{n:t.pendingVisitGift}):'')+$t('<p style="text-align:center;margin-top:6px"><button class="btn" onclick="closeModal()">让它再等等</button> <button class="btn" onclick="tvTurnAway()">请回吧</button></p>'); return h; }
+function tvTurnAway(){ const t=tvFresh(); if(!t.pendingVisit){ closeModal(); return; } t.pendingVisit=null; t.pendingVisitWant=null; t.pendingVisitGift=0; if(!t.nextVisit||t.nextVisit<now())t.nextVisit=now()+tvVisitGap(); save(); tvUpdateDoor(); updateTravelIcon(); tvRenderScene(); sfx.bye(); closeModal(); toast($t('🚪 你客气地请访客回去了，它说改天再来。')); }
 /* 访客本次「更想要」的特产：从它喜欢的特产里随机挑一个（每次来访重新抽） */
 function tvPickWant(f){ return (f&&f.like&&f.like.length)?f.like[Math.floor(Math.random()*f.like.length)]:null; }
 /* 有人上门只在「门口」按钮亮起，不直接弹窗；点开门后才招待 */
-function tvFriendPop(){ const t=tvFresh(); if(t.pendingVisit)return; if(!t.nextVisit)t.nextVisit=now()+tvVisitGap(); if(now()<t.nextVisit)return; const f=TV_FRIENDS[Math.floor(Math.random()*TV_FRIENDS.length)]; t.pendingVisit=f.id; t.pendingVisitWant=tvPickWant(f); t.nextVisit=now()+tvVisitGap(); save(); sfx.knock(); }
+function tvFriendPop(){ const t=tvFresh(); if(t.pendingVisit)return; if(!t.nextVisit)t.nextVisit=now()+tvVisitGap(); if(now()<t.nextVisit)return; const f=TV_FRIENDS[Math.floor(Math.random()*TV_FRIENDS.length)]; t.pendingVisit=f.id; t.pendingVisitWant=tvPickWant(f); t.nextVisit=now()+tvVisitGap(); const hearts=tvYardHearts(tvYardEnsure(t)); t.pendingVisitGift=hearts; if(hearts>0){ t.tomato=Math.max(0,(t.tomato||0)+hearts); const e=$('tvTomato'); if(e)e.textContent=t.tomato; } save(); sfx.knock(); if(hearts>0)toast($tf('🚪 有客人来了：院子里的月巴们帮忙招待了客人 🍅 +{n}',{n:hearts})); }
 function tvDoorOpen(){ const t=tvFresh(); if(!t.pendingVisit){ toast($t('🚪 门口没有人，安静得很')); return; } const f=TV_FRIENDS.find(function(x){return x.id===t.pendingVisit;}); if(!f){ t.pendingVisit=null; t.pendingVisitWant=null; save(); return; } if(!t.pendingVisitWant){ t.pendingVisitWant=tvPickWant(f); save(); } sfx.tap(); openModal($t('👋 门口有人敲门'), tvFriendModal(f,t)); }
 function tvUpdateDoor(){ const b=$('tvDoorBtn'); if(b)b.style.display=tvFresh().pendingVisit?'flex':'none'; }
-function tvFeed(fid,s){ const t=tvFresh(); const f=TV_FRIENDS.find(function(x){return x.id===fid;}); if(!f||t.specials.indexOf(s)<0)return; const want=t.pendingVisitWant; const liked=!!want&&s===want; t.pendingVisit=null; t.pendingVisitWant=null; tvUpdateDoor(); let fr=t.friends.find(function(x){return x.id===fid;}); if(!fr){ fr={id:fid,count:0}; t.friends.push(fr); } fr.count++; const gain=!want?(15+Math.floor(Math.random()*20)):(liked?(20+Math.floor(Math.random()*20)):(6+Math.floor(Math.random()*14))); let h=!want?('<p style="text-align:center;color:var(--text)">'+f.n+$t(' 收下了 ')+spEmo(s)+' '+$sp(s)+$t('，开心地回礼 🍅 +')+gain+'</p>'):(liked?($t('<p style="text-align:center;color:var(--text)">正好是 ')+f.n+$t(' 更想要的 ')+spEmo(s)+' '+$sp(s)+$t('，它开心极了，回礼 🍅 +')+gain+'</p>'):('<p style="text-align:center;color:var(--text)">'+f.n+$t(' 收下了 ')+spEmo(s)+' '+$sp(s)+$t('，不过它今天更想要别的，回礼 🍅 +')+gain+'</p>')); if(Math.random()<0.1&&f.rare&&t.cards.indexOf(f.rare)<0){ t.cards.push(f.rare); t.inbox.push(f.rare); tvNoteCard(f.rare,t.frog.fatId); const tm=t.frog&&t.frog.fatId&&typeById(t.frog.fatId)?typeById(t.frog.fatId).name:$t('月巴'); h+=$t('<p style="text-align:center">💌 邻居 ')+f.e+' '+f.n+$t(' 在外路过时遇到了 <b>')+tm+'</b>，'+tm+$t(' 托它转交一封来自「')+tvDestOfCard(f.rare)+$t('」的信！</p>'); } h+=$t('<p style="text-align:center"><button class="btn" onclick="closeModal()">收下</button></p>'); liked?sfx.guestYes():sfx.guestOk(); openModal($t('🎁 回礼'), h); tvTomato(gain); save(); }
+function tvFeed(fid,s){ const t=tvFresh(); const f=TV_FRIENDS.find(function(x){return x.id===fid;}); if(!f||t.specials.indexOf(s)<0)return; const want=t.pendingVisitWant; const liked=!!want&&s===want; t.pendingVisit=null; t.pendingVisitWant=null; t.pendingVisitGift=0; tvUpdateDoor(); let fr=t.friends.find(function(x){return x.id===fid;}); if(!fr){ fr={id:fid,count:0}; t.friends.push(fr); } fr.count++; const gain=!want?(15+Math.floor(Math.random()*20)):(liked?(20+Math.floor(Math.random()*20)):(6+Math.floor(Math.random()*14))); let h=!want?('<p style="text-align:center;color:var(--text)">'+f.n+$t(' 收下了 ')+spEmo(s)+' '+$sp(s)+$t('，开心地回礼 🍅 +')+gain+'</p>'):(liked?($t('<p style="text-align:center;color:var(--text)">正好是 ')+f.n+$t(' 更想要的 ')+spEmo(s)+' '+$sp(s)+$t('，它开心极了，回礼 🍅 +')+gain+'</p>'):('<p style="text-align:center;color:var(--text)">'+f.n+$t(' 收下了 ')+spEmo(s)+' '+$sp(s)+$t('，不过它今天更想要别的，回礼 🍅 +')+gain+'</p>')); if(Math.random()<0.1&&f.rare&&t.cards.indexOf(f.rare)<0){ t.cards.push(f.rare); t.inbox.push(f.rare); tvNoteCard(f.rare,t.frog.fatId); const tm=t.frog&&t.frog.fatId&&typeById(t.frog.fatId)?typeById(t.frog.fatId).name:$t('月巴'); h+=$t('<p style="text-align:center">💌 邻居 ')+f.e+' '+f.n+$t(' 在外路过时遇到了 <b>')+tm+'</b>，'+tm+$t(' 托它转交一封来自「')+tvDestOfCard(f.rare)+$t('」的信！</p>'); } h+=$t('<p style="text-align:center"><button class="btn" onclick="closeModal()">收下</button></p>'); liked?sfx.guestYes():sfx.guestOk(); openModal($t('🎁 回礼'), h); tvTomato(gain); save(); }
 function tvLabel(f){ return f?f.e||'🐰':'🐰'; }
 function tvCharmDest(){ const ds=TV_DESTS.filter(function(x){return x.need==='charm'&&!x.hidden;}); return ds[(Math.random()*ds.length)|0]||ds[ds.length-1]||TV_DESTS[TV_DESTS.length-1]; }
 /* —— 小号护身符（永久道具） —— */
