@@ -47,10 +47,15 @@
   .hpbox .row{display:flex;align-items:center;justify-content:space-between;gap:8px;
     font-size:10px;font-weight:800;letter-spacing:1.4px;color:var(--dim);}
   .hpbox .row b{color:var(--text);font-size:12px;letter-spacing:1px;}
-  .bar{height:7px;background:rgba(70,230,242,.09);overflow:hidden;margin-top:5px;
+  .bar{position:relative;height:7px;background:rgba(70,230,242,.09);overflow:hidden;margin-top:5px;
     box-shadow:inset 0 0 0 1px rgba(70,230,242,.16);}
   .bar i{display:block;height:100%;width:0%;transition:width .12s linear;}
   #hpFill{background:linear-gradient(90deg,#ff5468,#ff98a4);box-shadow:0 0 12px rgba(255,84,104,.5);}
+  /* 回血残影：新回复的那一段先发白，再慢慢变回红色（格斗游戏掉血残影的反向） */
+  #hpHeal{position:absolute;left:0;top:0;height:100%;width:0%;opacity:0;
+    transition:opacity .18s linear;pointer-events:none;
+    background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.28) 45%,rgba(255,255,255,.95));
+    box-shadow:0 0 10px rgba(255,255,255,.55);}
   /* 无敌遗物状态：就绪/充能 */
   .shieldchip{display:flex;align-items:center;gap:4px;margin-top:5px;
     font-size:9px;font-weight:900;letter-spacing:1px;color:rgba(125,246,255,.7);}
@@ -931,7 +936,7 @@
   <div class="botbar">
     <div class="hpbox">
       <div class="row"><span data-t="hp">生命</span><b id="hpText">100 / 100</b></div>
-      <div class="bar"><i id="hpFill"></i></div>
+      <div class="bar"><i id="hpFill"></i><i id="hpHeal"></i></div>
       <div class="shieldchip hidden" id="shieldChip"><span>🛡</span><span id="shieldText"></span></div>
     </div>
   </div>
@@ -5446,9 +5451,17 @@ function charmDmgMul(p){
 }
 /* 苦行：所有回血都失效 */
 const KARMA_NO_HEAL = {regen:1, leech:1, sprout:1, firefly:1};
+/* 回血残影窗口：最近 0.55 秒内回复的那一段先画白色，随后自然退回红色 */
+const HP_HEAL_FX_WIN = 0.55;
 function healP(p, n){
   if(!p || !(n > 0) || G.charm === 'karma') return;
+  const before = p.hp;
   p.hp = Math.min(p.maxHp, p.hp + n);
+  if(p.hp <= before || !(p.maxHp > 0)) return;
+  const tr = p.hpTrail || (p.hpTrail = []);
+  tr.push({t:G.time, pct:before / p.maxHp});
+  while(tr.length && G.time - tr[0].t > HP_HEAL_FX_WIN) tr.shift();
+  if(tr.length > 48) tr.splice(0, tr.length - 48);
 }
 /* 战斗回血上限：每个来源独立计算，每秒最多回复 capPct 倍最大生命 */
 function healCapped(p, amount, key, capPct){
@@ -8937,6 +8950,24 @@ function updateHUD(){
 
   $('hpText').textContent = Math.ceil(p.hp) + ' / ' + Math.ceil(p.maxHp);
   $('hpFill').style.width = clamp(p.hp / p.maxHp * 100, 0, 100) + '%';
+  /* 回血残影：窗口内回复的生命显示为白色，随后褪回红色 */
+  const hpHeal = $('hpHeal');
+  if(hpHeal){
+    const pct = clamp(p.hp / p.maxHp, 0, 1);
+    const tr = p.hpTrail;
+    let from = pct;
+    if(tr && tr.length){
+      while(tr.length && G.time - tr[0].t > HP_HEAL_FX_WIN) tr.shift();
+      if(tr.length) from = Math.min(pct, tr[0].pct);
+    }
+    if(pct - from > 0.002){
+      hpHeal.style.left = from * 100 + '%';
+      hpHeal.style.width = (pct - from) * 100 + '%';
+      hpHeal.style.opacity = '1';
+    } else {
+      hpHeal.style.opacity = '0';
+    }
+  }
   const chip = $('shieldChip');
   if(chip){
     if(p.shieldMax > 0){
