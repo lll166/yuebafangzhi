@@ -6887,8 +6887,8 @@ function drawWeapons(){
   }
   // 生菜叶盾
   const lfCount = wpEff('leaf') > 0
-    ? (2 + (wpEff('leaf') >= 3 ? 1 : 0) + (wpEff('leaf') >= 5 ? 1 : 0))
-    : (hasWeapon('ufort') ? 5 : 0);
+    ? Math.min(6, 2 + (wpEff('leaf') >= 3 ? 1 : 0) + (wpEff('leaf') >= 5 ? 1 : 0) + (relLv('w_leaf') ? 1 : 0) + multiSt(p))
+    : (hasWeapon('ufort') ? Math.min(8, 5 + multiSt(p)) : 0);
   if(lfCount > 0){
     const lr = hasWeapon('ufort') ? 52 : 43;
     for(let k=0;k<lfCount;k++){
