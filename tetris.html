@@ -2684,34 +2684,6 @@
   /* 供首页的「新版本自动刷新」读取对局状态：对局中（含暂停、结束动画）不允许刷新打断这一局 */
   window.__tbState = function () { return st; };
 
-  /* TEMP-DEATH-TEST */
-  window.__death = function () {
-    if (st !== 'play') startGame();
-    board = blankGrid(); faceMark = blankGrid(); earMark = blankGrid();
-    var types = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
-    for (var r = 6; r < ROWS; r++) {
-      for (var c = 0; c < COLS; c++) {
-        if (r === 7 && c % 4 === 2) continue;
-        board[r][c] = types[(r * 3 + c) % 7];
-      }
-    }
-    for (r = 6; r < ROWS; r++) {
-      for (c = 0; c < COLS; c++) {
-        if (!board[r][c] || (r + c) % 4) continue;
-        faceMark[r][c] = (r % 2) ? GLASS_CLEAR : GLASS_SUN;
-        earMark[r][c] = 1;
-      }
-    }
-    beginGameOver();
-  };
-  if (QS.get('death') === '1') setTimeout(window.__death, 500);
-  /* TEMP-DEATH-TEST-END */
-
-  boot();
-})();
-</script>
-</body>
-</html>
   boot();
 })();
 </script>
