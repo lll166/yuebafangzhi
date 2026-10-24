@@ -3987,7 +3987,8 @@ const TYPES=[
   {id:'mb_wen',  name:'蚊月巴', img:'https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li5760b9af6a34d812.th.png', r:3, v:45, t:420, cond:{t:'season',s:'summer',night:1}, color:'#8fb4c9', shape:'bean'},
   {id:'mb_shan', name:'闪电月巴', r:5, v:150,t:900, cond:{t:'weather',w:'storm',night:1}, color:'#e0d24e', shape:'spike'},
   {id:'mb_pingguo',name:'吃茄月巴',img:'https://origin.picgo.net/2026/09/03/1618abd45272691005.th.png',r:3,v:45,t:420, cond:{t:'season',s:'autumn',day:1},    color:'#c96a73', shape:'round'},
-  {id:'mb_chaos',name:'混沌月巴', r:5, v:1000,t:5400, cond:null,  color:'#5a5470', shape:'chaos'},
+  {id:'mb_chaos',name:'混沌月巴', img:'https://origin.picgo.net/2026/10/24/8f4ccf5a7a4813d86478b59c05bd7c80e45b28cbcfd280ec.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/24/8f4ccf5a7a4813d86478b59c05bd7c80e45b28cbcfd280ec.th.png', by:'軟管'}], r:5, v:1000,t:5400, cond:null,  color:'#5a5470', shape:'chaos'},
   {id:'mb_gungun',  name:'滚滚巴',    r:3, v:40, t:420,  cond:null, color:'#f0b27a', shape:'round', size:1.35},
   {id:'mb_jiu',     name:'酒巴',      r:3, v:45, t:480,  cond:{t:'night'}, img:'https://origin.picgo.net/2026/09/20/jiuba7578b776f8c4c528.th.png', color:'#b08a6a', shape:'squish'},
   {id:'mb_shilaimu',name:'史莱姆巴',  img:'https://origin.picgo.net/2026/10/21/75dd505aa51f9864c2dc215b349253592891b6d6ef024a79.th.png', r:3, v:50, t:520, cond:null, color:'#8fce7f', shape:'squish'},
@@ -4222,6 +4223,7 @@ const YB_PIC_AUTHOR={
   mb_long:'Suwa',
   mb_jin:'Suwa',
   mb_xiba:'軟管',
+  mb_chaos:'軟管',
   mb_wuding:'hellomelody',
   mb_powa:'hellomelody',
 };
@@ -4888,7 +4890,9 @@ const I18N_UI={
   '小游戏合集':{en:'Mini-game Collection',ja:'ミニゲーム集',ko:'미니게임 모음'},
   '飞行小游戏':{en:'Flight Mini-game',ja:'フライトミニゲーム',ko:'비행 미니게임'},
   '黄金矿工':{en:'Gold Miner',ja:'ゴールドマイナー',ko:'골드 마이너'},
+  '月巴数织':{en:'Banny Nonogram',ja:'バニー数織',ko:'배니 노노그램'},
   '⛏ 黄金矿工 +{n} 🪙':{en:'⛏ Gold Miner +{n} 🪙',ja:'⛏ ゴールドマイナー +{n} 🪙',ko:'⛏ 골드 마이너 +{n} 🪙'},
+  '✦ 月巴数织 +{n} 🪙':{en:'✦ Banny Nonogram +{n} 🪙',ja:'✦ バニー数織 +{n} 🪙',ko:'✦ 배니 노노그램 +{n} 🪙'},
   '🚇 隧道通行证已放入旅行仓库，可在行囊里带上出发':{en:'🚇 A Tunnel Pass was stored in the travel stash — pack it in your bag before departure',ja:'🚇 トンネル通行証を旅行倉庫に入れました。行囊に入れて出発できます',ko:'🚇 터널 통행증을 여행 창고에 넣었습니다. 배낭에 넣고 출발하세요'},
   '🚇 已有隧道通行证，不能叠加':{en:'🚇 You already have a Tunnel Pass — it does not stack',ja:'🚇 トンネル通行証をすでに所持しています。重ねて持てません',ko:'🚇 터널 통행증을 이미 보유하고 있어 중첩할 수 없습니다'},
   '装进行囊后出发：无论去哪里，5 分钟后都会带着一封信回来，且不需要便当；目的地仍由铃铛/油灯等道具决定':{en:'Pack it and depart: wherever you go, it returns with a letter in 5 minutes — no bento needed; direction items like the Bell still choose the destination',ja:'行囊に入れて出発：どこへ行っても5分で手紙を届けて戻ります。お弁当は不要。行き先は鈴やランプなどの道具が決めます',ko:'배낭에 넣고 출발: 어디로 가든 5분 만에 편지를 물고 돌아오며 도시락이 필요 없습니다. 목적지는 방울/램프 같은 아이템이 결정합니다'},
@@ -5063,6 +5067,8 @@ const I18N_UI={
   '❌ 文件不是有效的存档内容':{en:'❌ The file is not a valid save',ja:'❌ ファイルは有効なセーブデータではありません',ko:'❌ 파일이 올바른 세이브가 아니에요'},
   '⚠️ 请先粘贴存档内容':{en:'⚠️ Paste the save content first',ja:'⚠️ 先にセーブ内容を貼り付けてください',ko:'⚠️ 먼저 세이브 내용을 붙여넣어 주세요'},
   '❌ 存档格式无效，导入失败':{en:'❌ Invalid save format — import failed',ja:'❌ セーブ形式が無効です。インポートに失敗しました',ko:'❌ 세이브 형식이 올바르지 않아 가져오기에 실패했어요'},
+  /* H5a. 存档时间异常提示（只提醒 + 引导备份，不做惩罚） */
+  '⚠️ 存档时间记录可能有问题，请注意备份，小心数据损坏':{en:'⚠️ Save time records may be off — please back up your save to avoid data damage',ja:'⚠️ セーブの時刻記録に問題がある可能性があります。データ破損に備えてバックアップしてください',ko:'⚠️ 세이브 시간 기록에 문제가 있을 수 있어요. 데이터 손상에 대비해 백업해 주세요'},
   /* H5b. 本地存档文件 */
   '未绑定：存档只存在浏览器里，清缓存/网站数据会丢失':{en:'Not bound: the save only lives in the browser — clearing cache or site data will erase it',ja:'未連携：セーブはブラウザ内のみ。キャッシュやサイトデータを消すと失われます',ko:'연결 안 됨: 세이브가 브라우저에만 있어 캐시나 사이트 데이터를 지우면 사라져요'},
   '✅ 已绑定：{a}':{en:'✅ Bound: {a}',ja:'✅ 連携済み：{a}',ko:'✅ 연결됨: {a}'},
@@ -8112,7 +8118,7 @@ function save(){
   if(typeof svMode!=='undefined' && svMode==='prod') svMergeFromDisk();
   S.lastSave=now();
   S.netOff=NET_OFF;   // 一并存下校时偏移：下次读档先复用，避免校时完成前用被改动的电脑时间结算
-  S.netTrusted=!!_netTrusted; // 本次校时是否可信：决定下次读档能否直接用离线时长补进度
+  S.netTrusted=!!_netTrusted; // 本次是否成功校时（仅作存档记录，不再用于限制离线收益）
   try{
     localStorage.setItem(SAVE_KEY, JSON.stringify(S));
     if(_saveFail){ _saveFail=false; updateSaveWarn(); }  // 写入恢复：自动隐藏常驻警告
@@ -8156,7 +8162,7 @@ function load(){
       // 复用上次的校时偏移：读档、离线结算与旅行判定都发生在联网校时完成之前，
       // 此时若直接信任本机时间，电脑时间被改动过就会一次性跳过旅途与离线收益（表现为出发时间跳到「明天」、信件立刻送达）
       NET_OFF=(typeof d.netOff==='number'&&isFinite(d.netOff))?d.netOff:0;
-      _prevNetTrusted=!!d.netTrusted;   // 上次存档所在的时间基准是否经过可信校时
+      _bootLastSave=(typeof S.lastSave==='number'&&S.lastSave>0)?S.lastSave:0;   // 本次读档的离线起点（见 offlineSettle）
       // 第三图鉴：旧档没有该字段时补默认值，并把数字型收集数升级为 {count}
       if(!S.collection3||typeof S.collection3!=='object'||Array.isArray(S.collection3)) S.collection3={};
       for(const k in S.collection3){ if(typeof S.collection3[k]==='number') S.collection3[k]={count:S.collection3[k]}; }
@@ -8189,6 +8195,7 @@ function load(){
       S.survivor.runs=Math.max(0, S.survivor.runs|0);
       S.survivor.totalKills=Math.max(0, S.survivor.totalKills|0);
       S.survivor.v=3;
+      _timeAnomaly=detectSaveAnomaly();   // 先取证：看看归一化之前存档里是否有明显落在未来的时间戳（用于提示玩家备份）
       normalizeFutureTimes();   // 时间基准被改动过的存档：把落在未来的时间戳纠回现在，否则生长与事件永远不触发
       galInitLegacy();   // 画廊：本次上线前就已达成条件的条目记为「时间未知」
       _lfsBootHadSave=true;
@@ -8196,6 +8203,7 @@ function load(){
     }
   }catch(e){}
   S=defaultState();
+  _timeAnomaly=null;
   _lfsBootHadSave=false;
   return false;
 }
@@ -8229,6 +8237,9 @@ function normalizeFutureTimes(){
   if(S.nextWeatherAt>wLim) S.nextWeatherAt=t;
   if(S.weatherHoldEnd>wLim) S.weatherHoldEnd=0;
   if(S.lastRainAt>lim) S.lastRainAt=t;
+  /* 存档写入时刻落在未来（换设备/系统时钟前跳过再调回）：拉回现在，否则「距上次存档超过 5 秒才自动存档」
+     会长期不成立，进度可能一直不落盘 */
+  if(S.lastSave>lim) S.lastSave=t;
   if(S.lastFast>lim) S.lastFast=t;
   if(S.lastExtreme>lim) S.lastExtreme=t;
   const tr=(S.travel&&typeof S.travel==='object'&&!Array.isArray(S.travel))?S.travel:null;
@@ -8243,6 +8254,42 @@ function normalizeFutureTimes(){
     if(tr.frog && tr.frog.syncAt>trLim) tr.frog.syncAt=t;
     if(Array.isArray(tr.journal)) tr.journal.forEach(function(e){ if(!e)return; if(e.t>lim)e.t=t; if(e.depart>lim)e.depart=t; });
   }
+}
+/* 读档时的「存档时间记录异常」侦测：只用于提醒玩家备份，不做任何惩罚、不改变规则。
+   正常存档的关键时间戳都落在「现在」附近；一旦明显落在未来，多半是电脑/手机时间被改动过、
+   系统同步出错或存档被外部编辑过。必须在 normalizeFutureTimes() 之前调用，才能看到修正前的原值。 */
+let _timeAnomaly=null;
+function detectSaveAnomaly(){
+  if(!S||typeof S!=='object') return null;
+  /* 阈值都按「正常计时器的最大时长 + 余量」来定，远宽于正常值，避免正常存档误报：
+     旅行采摘/访客最长约 45 分钟（装备加成后），信件事件 30 分钟；青蛙返程最远目的地约 110 分钟；
+     天气瓶 2 小时。超过这些上限还落在更远的未来，才算异常。 */
+  const t=now(), FUT=t+FUTURE_SKEW_TOL, TRL=t+2*3600*1000, FRG=t+3*3600*1000, WEA=t+2*3600*1000+10*60000;
+  const hits=[];
+  const chk=function(v,lim,key){ if(typeof v==='number'&&isFinite(v)&&v>lim) hits.push(key); };
+  chk(S.lastSave,t+10*60000,'lastSave');
+  chk(S.dexNext,t+45*60000,'dexNext');
+  chk(S.nextWeatherAt,WEA,'nextWeatherAt');
+  chk(S.weatherHoldEnd,WEA,'weatherHoldEnd');
+  chk(S.lastRainAt,t+10*60000,'lastRainAt');
+  chk(S.lastFast,t+10*60000,'lastFast');
+  chk(S.lastExtreme,t+10*60000,'lastExtreme');
+  if(S.clock&&typeof S.clock.wallMax==='number'&&S.clock.wallMax>t+10*60000) hits.push('clock.wallMax');
+  let cellHit=false;
+  const zones=Array.isArray(S.zones)?S.zones:[];
+  for(const z of zones) for(const w of (Array.isArray(z&&z.woods)?z.woods:[])) for(const c of (Array.isArray(w&&w.cells)?w.cells:[])){
+    if(!c) continue;
+    if((typeof c.start==='number'&&c.start>FUT)||(typeof c.delay==='number'&&c.delay>FUT)) cellHit=true;
+  }
+  if(cellHit) hits.push('cell');
+  const tr=(S.travel&&typeof S.travel==='object'&&!Array.isArray(S.travel))?S.travel:null;
+  if(tr){
+    chk(tr.harvestT,TRL,'travel.harvestT');
+    chk(tr.eventT,TRL,'travel.eventT');
+    chk(tr.nextVisit,TRL,'travel.nextVisit');
+    if(tr.frog){ chk(tr.frog.ret,FRG,'frog.ret'); chk(tr.frog.syncAt,t+10*60000,'frog.syncAt'); }
+  }
+  return hits.length?{at:t,keys:hits}:null;
 }
 function speedMult(){ return (1+S.accelLv*0.1) * (S.pomo && S.pomo.running && S.pomo.mode==='focus' ? 2 : 1); }
 /* 生长倍率变化时折算各槽位的 start：已获得的进度按旧倍率结清，新倍率只作用于之后的时间。
@@ -10362,7 +10409,7 @@ function ripePomoTipTick(){
   if(t-_pageOpenAt<8000) return;               // 刚打开页面先不打扰
   if(ripeCellCount()<=0) return;
   const tip=pomoTipState();
-  if(tip.day===dayKey(t)) return;              // 今日不再提醒
+  if(tip.day===dayKey(clockNow())) return;      // 今日不再提醒
   if(tip.until && t<tip.until) return;         // 30 分钟静默期
   showRipePomoTip();
 }
@@ -10395,7 +10442,7 @@ function ripeTipLater(){
 }
 function ripeTipToday(){
   _ripeTipOpen=false;
-  pomoTipState().day=dayKey(now());
+  pomoTipState().day=dayKey(clockNow());
   save(); closeModal();
   toast($t('今天不再提醒'));
 }
@@ -10732,10 +10779,10 @@ function localizeStatics(){
 }
 try{ localizeStatics(); }catch(e){}
 let tkCalY=0, tkCalM=0, tkSelDay=''; // 待办日历：当前年月 + 选中日期(dayKey)
-function dayKeyOf(off){ return dayKey(now()+off*86400000); }
+function dayKeyOf(off){ return dayKey(clockNow()+off*86400000); }
 function taskById(id){ return (S.tasks||[]).find(t=>t.id===id); }
 function taskDayLabel(key){
-  const today=dayKey(now());
+  const today=dayKey(clockNow());
   if(key===today) return $t('📅 今天');
   if(key===dayKeyOf(1)) return $t('📅 明天');
   if(key===dayKeyOf(-1)) return $t('🌙 昨天');
@@ -10752,7 +10799,7 @@ function nextDayKey(key){ const d=new Date(key+'T00:00:00'); d.setDate(d.getDate
 /* 任务是否覆盖某天：设定了起止日期(from~to)按范围判断，否则按单日 due 判断 */
 function taskCovers(t,key){ if(t&&t.from&&t.to)return key>=t.from&&key<=t.to; return !!(t&&t.due)&&t.due===key; }
 /* 未完成且已超过截止日：持续显示在待办日历下方，直到勾选完成 */
-function taskOverdue(t){ if(!t||t.doneAt)return false; const today=dayKey(now()); if(t.from&&t.to)return today>t.to; return !!t.due&&today>t.due; }
+function taskOverdue(t){ if(!t||t.doneAt)return false; const today=dayKey(clockNow()); if(t.from&&t.to)return today>t.to; return !!t.due&&today>t.due; }
 /* 表单里起止日期变化时：同步选中日与日期标签 */
 function syncTaskRange(){
   let f=inpVal('tkFrom','').trim(), to=inpVal('tkTo','').trim();
@@ -10769,7 +10816,7 @@ function taskUndoneOn(t,key){
 }
 function taskUndoneCount(t){
   if(t.habit&&t.from&&t.to){
-    const today=dayKey(now());
+    const today=dayKey(clockNow());
     if(t.from>today) return 0;
     const end=t.to<today?t.to:today;
     let n=0, k=t.from, g=0;
@@ -10780,7 +10827,7 @@ function taskUndoneCount(t){
     }
     return n;
   }
-  return (!t.doneAt&&(taskCovers(t,dayKey(now()))||taskOverdue(t)))?1:0;
+  return (!t.doneAt&&(taskCovers(t,dayKey(clockNow()))||taskOverdue(t)))?1:0;
 }
 /* 超期明细：习惯把 -2 天及更早的未勾选日期逐日展开，昨天/今天在各自分组显示避免重复 */
 function taskOverdueRows(t){
@@ -10836,17 +10883,17 @@ function taskHabitSubToggle(id,day,i,stay){
   else openTasks();
 }
 function syncTaskCalFromSel(){
-  const d=new Date((tkSelDay||dayKey(now()))+'T00:00:00');
+  const d=new Date((tkSelDay||dayKey(clockNow()))+'T00:00:00');
   tkCalY=d.getFullYear(); tkCalM=d.getMonth();
 }
 function taskCalHTML(){
-  const sel=tkSelDay||dayKey(now());
+  const sel=tkSelDay||dayKey(clockNow());
   const selD=new Date(sel+'T00:00:00');
   if(!tkCalY){ tkCalY=selD.getFullYear(); tkCalM=selD.getMonth(); }
   const first=new Date(tkCalY,tkCalM,1);
   const startWd=(first.getDay()+6)%7;
   const days=new Date(tkCalY,tkCalM+1,0).getDate();
-  const todayKey=dayKey(now());
+  const todayKey=dayKey(clockNow());
   const taskDays=new Set();
   (S.tasks||[]).forEach(t=>{ if(t.from&&t.to){ let k=t.from, g=0; while(k<=t.to&&g++<1000){ taskDays.add(k); k=nextDayKey(k); } } else if(t.due) taskDays.add(t.due); });
   let grid='';
@@ -10943,7 +10990,7 @@ function taskRowHTML(t, stay, day){
     : subs
       ? `<span class="task-pomos ${need>0&&done>=need?'full':''}">✅ ${done}/${need}${esc(unit)}</span>`
       : `<span class="task-pomos ${need>0&&done>=need?'full':''}">🍅 ${done}/${need||'∞'}</span>`;
-  const today=dayKey(now());
+  const today=dayKey(clockNow());
   const hOver=isHab&&!hDone&&day<today;
   const rowCls=isHab?(hDone?'done':''):(t.doneAt?'done':'');
   const chkCls=isHab?(hDone?'on':''):(t.doneAt?'on':'');
@@ -10988,9 +11035,9 @@ function taskRowHTML(t, stay, day){
 }
 function openTasks(){
   pomoModalOpen=false;
-  if(!tkSelDay) tkSelDay=dayKey(now());
+  if(!tkSelDay) tkSelDay=dayKey(clockNow());
   if(!tkCalY) syncTaskCalFromSel();
-  const todayKey=dayKey(now());
+  const todayKey=dayKey(clockNow());
   openModal('✅ 任务 / 待办',
     `<div class="pomo-wrap">
       <div class="task-form">
@@ -11033,7 +11080,7 @@ function openTasks(){
 function renderTaskList(){
   const el=$('taskList'); if(!el)return;
   const ts=S.tasks||[];
-  const yd=dayKeyOf(-1), today=dayKey(now()), tmw=dayKeyOf(1), sel=tkSelDay||today;
+  const yd=dayKeyOf(-1), today=dayKey(clockNow()), tmw=dayKeyOf(1), sel=tkSelDay||today;
   const groups=[[$t('🌙 昨天'),yd],[$t('📋 今日待办清单'),today],[$t('🌅 明天'),tmw]];
   let html=groups.map(function(d){
     const lt=ts.filter(function(t){return taskCovers(t,d[1]);});
@@ -11074,7 +11121,7 @@ function taskAdd(){
   const task={id:'t'+now()+Math.floor(Math.random()*1e3), title, cat, tag, pri,
     need, done:0, doneAt:0, created:now(), unit};
   if(f&&to&&f!==to){ task.from=f; task.to=to; }
-  else task.due=f||to||tkSelDay||dayKey(now());
+  else task.due=f||to||tkSelDay||dayKey(clockNow());
   if(habit) task.habit=1;
   (S.tasks||(S.tasks=[])).push(task);
   taskSubs(S.tasks[S.tasks.length-1]);
@@ -11087,9 +11134,9 @@ function taskAdd(){
 function taskEdit(id){
   const t=taskById(id); if(!t)return;
   pomoModalOpen=false;
-  tkSelDay=t.due||t.from||dayKey(now());
+  tkSelDay=t.due||t.from||dayKey(clockNow());
   syncTaskCalFromSel();
-  const todayKey=dayKey(now());
+  const todayKey=dayKey(clockNow());
   const tFrom=t.from||t.due||tkSelDay, tTo=t.to||t.due||tkSelDay;
   const tLbl=(t.from&&t.to&&t.from!==t.to)?('📅 '+mdKey(t.from)+' ~ '+mdKey(t.to)):taskDayLabel(tkSelDay);
   openModal($t('✏️ 编辑任务'),
@@ -11533,7 +11580,7 @@ function timeSlotDist(mode, view){
 }
 function trendBarHTML(rows, dense){
   const max=Math.max(1, ...rows.map(r=>r.dur));
-  const todayKey=dayKey(now());
+  const todayKey=dayKey(clockNow());
   return `<div class="trend ${dense?'dense':''}">${rows.map((r,i)=>{
     const h=Math.max(2,Math.round(r.dur/max*100));
     const on=r.key===todayKey;
@@ -11594,7 +11641,7 @@ function statCalGrid(){
   const first=new Date(Y,M,1);
   const startWd=(first.getDay()+6)%7;
   const days=new Date(Y,M+1,0).getDate();
-  const todayKey=dayKey(now());
+  const todayKey=dayKey(clockNow());
   let grid='';
   for(let i=0;i<startWd;i++) grid+='<div class="cal-cell empty"></div>';
   for(let day=1;day<=days;day++){
@@ -11624,7 +11671,7 @@ function statTimelineHTML(recs, dayTs){
   const DAY=1440, TL=672; // 24 小时 * 28px
   const fmtHm=m=>`${pad(Math.floor(m/60)%24)}:${pad(Math.floor(m%60))}`;
   const selTs=dayTs||(stCalDay?bjTs(stCalY,stCalM,stCalDay,0,0,0):now());
-  const isToday=dayKey(selTs)===dayKey(now());
+  const isToday=dayKey(selTs)===dayKey(clockNow());
   const nowP=bjParts(now());
   const nowMin=nowP.h*60+nowP.mi;
   let hrs='', bars='';
@@ -11885,7 +11932,7 @@ function pomoReportCheck(){
   if(!S.pomo.reportSeen) S.pomo.reportSeen={week:'',month:''};
   const d=bjDate(now()), h=d.getHours(), rw=S.pomo.reportSeen;
   if(d.getDay()===0 && h>=20){
-    const wk=dayKey(startOfWeek(now()));
+    const wk=dayKey(startOfWeek(clockNow()));
     if(rw.week!==wk){ rw.week=wk; save(); pomoReport('week'); return; }
   }
   const lastDay=new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
@@ -12277,12 +12324,26 @@ function tvTripAdvance(){
   f.elapsed=Math.min(f.dur,f.elapsed+dt);
   f.syncAt=now();
 }
-/* 校时基准变化（联网校时修正 / 电脑时间被改动）时，把旅行相关时间点整体平移 delta：
-   保持每趟旅行的真实时长与出发时刻不变，避免进行中的旅行瞬间结束、信件提前送达，或被拖到「明天」 */
-function tvShiftTimes(delta){
+/* 校时基准变化（联网校时修正 / 电脑时间被大幅改动）时，把存档里所有「进行中」的绝对时间戳
+   整体平移 delta：保持每个计时器已流逝/剩余的比例不变，避免校时瞬间生长全部成熟、天气立刻轮换、
+   番茄钟瞬间结束，反向偏差时也不让所有计时一起停摆。 */
+function shiftTimeBasis(delta){
   if(!delta||!S)return;
   const mv=function(o,k){ if(o&&k&&typeof o[k]==='number'&&o[k]>0&&isFinite(o[k]))o[k]+=delta; };
-  mv(S,'dexNext');   // 天降事件也按时间基准平移：否则校时后会立刻连发或长时间不亮
+  /* 生长：开始时刻 / 补种等待时刻 */
+  const zones=Array.isArray(S.zones)?S.zones:[];
+  for(const z of zones) for(const w of (Array.isArray(z&&z.woods)?z.woods:[])) for(const c of (Array.isArray(w&&w.cells)?w.cells:[])){
+    if(!c)continue; mv(c,'start'); mv(c,'delay');
+  }
+  /* 天气 / 冷却 / 虚拟季节（gameNow 用 now()-gameStart，两者同移才不跳季） */
+  mv(S,'nextWeatherAt'); mv(S,'weatherHoldEnd'); mv(S,'lastRainAt');
+  mv(S,'lastFast'); mv(S,'lastExtreme'); mv(S,'gameStart');
+  /* 番茄钟 / 成熟提醒（remain/total 是时长，不参与平移） */
+  if(S.pomo){ mv(S.pomo,'start'); mv(S.pomo,'end'); }
+  if(S.pomoTip) mv(S.pomoTip,'until');
+  /* 天降事件 */
+  mv(S,'dexNext');
+  /* 旅行相关 */
   if(!S.travel)return;
   const t=S.travel;
   mv(t,'harvestT'); mv(t,'eventT'); mv(t,'nextVisit');
@@ -13220,6 +13281,11 @@ function tvUpdateHarvest(){ const b=$('tvHarvestBtn'); if(b)b.style.display=tvSl
    读档时用 Date.now()-S.lastSave 补齐离线流逝（只补正值，回拨不前进）；若检测到回拨（real 明显小于历史最大）
    则把 base 抬到历史最大并冻结，玩家必须用真实时间追上才能继续。纯前端无法完全杜绝「关页后向前调时间」，
    但页内改时间被完全免疫、回拨会被惩罚。 */
+/* wallMax 本意是「历史最大真实时刻」，用于防回拨；但一次异常前跳（改系统时间 / 虚拟机恢复 /
+   系统同步错误）会把墙上的最大值永久写进存档，之后每次读档都把 base 冻到那个未来值。
+   现在以正常玩家体验优先：超过「本机时间 + 10 分钟」就视为异常，读档时作废并重新立基准，
+   同时在读档后弹出一次备份提醒（见 detectSaveAnomaly / maybeWarnTimeAnomaly）。 */
+const CLOCK_WALLMAX_TOL=10*60*1000;
 function clockNow(){ const c=S.clock; return (c&&c.base)?c.base:now(); }
 function clockInit(){
   if(!S.clock||typeof S.clock!=='object')S.clock={base:0,perf:0,wallMax:0,lastReal:0};
@@ -13229,6 +13295,12 @@ function clockInit(){
   if(!c.base){ c.base=real; c.wallMax=real; c.perf=p; c.lastReal=real; return; }
   const off=real-(S.lastSave||real);
   c.base+=Math.max(0,off);                                            // 离线流逝（回拨不前进）
+  /* wallMax 被「未来系统时间」污染：作废历史最大值（base 若同样离谱一并收回），
+     否则每次读档都会把 base 抬到那个未来值，赌大小 / 押注的日键长期错位 */
+  if((c.wallMax||0)>real+CLOCK_WALLMAX_TOL){
+    c.wallMax=real;
+    if(c.base>real+CLOCK_WALLMAX_TOL)c.base=real;
+  }
   if(real<(c.wallMax||0)-60000)c.base=Math.max(c.base,c.wallMax||0);  // 回拨：冻结到历史最大
   c.perf=p; c.lastReal=real;
   c.wallMax=Math.max(c.wallMax||0,real);
@@ -13243,12 +13315,13 @@ function clockTick(){
   if(real>(c.wallMax||0))c.wallMax=real;
 }
 /* ---------------- 联网校时（北京时间） ----------------
-   加载时并行读取多个可信时间源（均返回绝对 Unix 毫秒），取往返中点补偿网络延迟，估算本地时钟偏差
-   写入 NET_OFF（校正后 now() = Date.now()+NET_OFF）。全部失败（离线 / file:// 无网 / CORS）时保持
-   NET_OFF 不变，回退电脑时钟 + 上面的单调防回拨时钟。诚实玩家偏差≈0，玩家改系统时间会被自动拉回。 */
-/* 校时状态：_netCalibDone=本次校时流程是否结束；_netTrusted=是否由多源共识确认；
+   加载时并行读取多个可信时间源（均返回绝对 Unix 毫秒），每个源用自己「发出/收到」的中点单独补偿
+   网络延迟，再多源取共识；写入 NET_OFF（校正后 now() = Date.now()+NET_OFF）。全部失败（离线 /
+   file:// 无网 / CORS）时保持 NET_OFF 不变，回退电脑时钟 + 上面的单调防回拨时钟。 */
+/* 校时状态：_netCalibDone=本次校时流程是否结束；_netTrusted=是否由校时源确认；
    _offlineGapOK=能否用「离线时长」补旅行进度（时间基准被大幅改动过时为 false：宁可不补，也绝不让旅程提前结束） */
-let _netCalibDone=false, _netTrusted=false, _offlineGapOK=true, _prevNetTrusted=false;
+let _netCalibDone=false, _netTrusted=false, _offlineGapOK=true;
+let _netCalibRunning=false, _netCalibAt=0;   // 正在校时 / 上次完成时刻（用于周期重校）
 function netParseSuning(j){
   const m=j&&j.sysTime2&&String(j.sysTime2).match(/(\d+)-(\d+)-(\d+)[ T](\d+):(\d+):(\d+)/);
   return m?Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+m[6])-BJ_OFF:0; // sysTime2 为北京时间
@@ -13258,59 +13331,91 @@ const NET_SOURCES=[
   {u:'https://quan.suning.com/getSysTime.do', get:netParseSuning},
   {u:'https://worldtimeapi.org/api/timezone/Asia/Shanghai', get:j=>j&&j.unixtime?j.unixtime*1000:0}
 ];
-async function netCalibrate(){
-  if(typeof fetch!=='function'){ _netCalibDone=true; return; }
-  const hasAbort=(typeof AbortController!=='undefined');
-  const t0=Date.now();
-  const results=await Promise.all(NET_SOURCES.map(async s=>{
-    try{
-      const ctl=hasAbort?new AbortController():null;
-      const to=ctl?setTimeout(()=>ctl.abort(),4000):0;
-      const opt={cache:'no-store'}; if(ctl)opt.signal=ctl.signal;
-      const r=await fetch(s.u,opt);
-      if(to)clearTimeout(to);
-      if(!r.ok)return null;
-      const j=await r.json();
-      const t=s.get(j);
-      return t>0?t:null;
-    }catch(e){ return null; }
-  }));
-  const t1=Date.now();
-  const vals=results.filter(v=>v&&isFinite(v));
-  if(!vals.length){ _netCalibDone=true; return; }   // 全部失败：保持现状
-  vals.sort((a,b)=>a-b);
-  const localMid=(t0+t1)/2;                        // 本地往返中点
-  /* 多源共识：至少两个来源互相吻合（1 分钟内）才采信；
-     只有一个来源时，仅当与本地时间相差不超过 5 分钟才用于微调。
-     避免某个时间源偶发返回异常值，把「本来正常的玩家时间」拉偏一整天。 */
-  let off=null;
-  for(let i=0;i+1<vals.length;i++){
-    if(vals[i+1]-vals[i]<=60000){ off=Math.round((vals[i]+vals[i+1])/2-localMid); break; }
+/* 多源共识：找出「互相差 ≤60 秒」的最大簇（至少两源），返回簇内中位数；
+   不足两源返回 null。比「取最小相邻两个值的中点」更稳：单个异常源会被排除，且不会固定偏低。 */
+function netConsensus(offs){
+  let best=null;
+  for(let i=0;i<offs.length;i++){
+    const grp=offs.filter(function(v){ return Math.abs(v-offs[i])<=60000; });
+    if(grp.length>=2&&(!best||grp.length>best.length)) best=grp;
   }
-  if(off==null){
-    const only=Math.round(vals[0]-localMid);
-    if(Math.abs(only)<=5*60000)off=only;
-  }
-  if(off==null){ _netCalibDone=true; return; }      // 无法互相印证：不校准，保持现状（不跳时间、不惩罚）
-  const delta=off-NET_OFF;                         // 时间坐标切换量：已有旅行时间点需同步平移
-  _netTrusted=true;
-  /* 只有「上次存档的时间基准可信」或「本机时间基本没变」时，才允许用离线时长补旅行进度；
-     否则宁可不补（旅程暂停在关闭时的位置），也绝不让它提前结束。 */
-  _offlineGapOK=(_prevNetTrusted||Math.abs(delta)<=120000);
-  NET_OFF=off;
-  if(delta)tvShiftTimes(delta);
-  clockResync();                                   // 重新锚定受保护单调时钟
-  save();
-  _netCalibDone=true;
-  if(Math.abs(off)>=60000)toast($tf('🕒 已按北京时间校准时钟（修正 {n} 秒）',{n:Math.round(off/1000)}));
+  if(!best) return null;
+  best.sort(function(a,b){ return a-b; });
+  const n=best.length;
+  return n%2?best[(n-1)/2]:(best[n/2-1]+best[n/2])/2;
 }
-/* 校时后重新锚定受保护时钟：base 对齐到校正后的真实时刻，wallMax 只抬不降 */
+async function netCalibrate(){
+  if(_netCalibRunning)return;
+  _netCalibRunning=true;
+  try{
+    if(typeof fetch!=='function')return;
+    const hasAbort=(typeof AbortController!=='undefined');
+    const offs=await Promise.all(NET_SOURCES.map(async s=>{
+      try{
+        const ctl=hasAbort?new AbortController():null;
+        const to=ctl?setTimeout(()=>ctl.abort(),4000):0;
+        const opt={cache:'no-store'}; if(ctl)opt.signal=ctl.signal;
+        const t0=Date.now();
+        const r=await fetch(s.u,opt);
+        const t1=Date.now();                        // 只算到响应头到达：逐源补偿各自的网络延迟
+        if(to)clearTimeout(to);
+        if(!r.ok)return null;
+        const j=await r.json();
+        const t=s.get(j);
+        if(!(t>0)||!isFinite(t)||t1<=t0)return null;
+        return t-(t0+t1)/2;                         // 该源推算出的「本地时钟偏差」
+      }catch(e){ return null; }
+    }));
+    const list=offs.filter(v=>v!=null&&isFinite(v));
+    if(!list.length)return;                         // 全部失败：保持现状
+    let off=netConsensus(list);
+    /* 单源兜底：只有一个来源可用时，仅采信 5 分钟内的微调（避免偶发异常值把正常时间拉偏一整天） */
+    if(off==null&&list.length===1&&Math.abs(list[0])<=5*60000)off=list[0];
+    if(off==null)return;                            // 无法互相印证：不校准，不跳时间、不惩罚
+    off=Math.round(off);
+    const delta=off-NET_OFF;                        // 时间坐标切换量：所有进行中的计时器都要同步平移
+    _netTrusted=true;
+    /* 时间坐标切换量超过 10 分钟：不允许用「离线时长」补旅行进度，宁可不补，也绝不让旅程提前结束。
+       阈值放宽到 10 分钟——小幅度时钟偏差不该打扰正常玩家 */
+    _offlineGapOK=(Math.abs(delta)<=10*60000);
+    NET_OFF=off;
+    if(delta)shiftTimeBasis(delta);
+    clockResync();                                  // 重新锚定受保护单调时钟
+    save();
+    if(Math.abs(off)>=60000)toast($tf('🕒 已按北京时间校准时钟（修正 {n} 秒）',{n:Math.round(off/1000)}));
+  }catch(e){
+    /* 校时异常不阻塞游戏：保持现有时间基准 */
+  }finally{
+    _netCalibRunning=false;
+    _netCalibAt=now();
+    _netCalibDone=true;
+    maybeOfflineSettle();   // 首次校时结束后再做离线结算（需要先知道本次时间基准是否可信）
+  }
+}
+/* 校时后重新锚定受保护时钟：base 对齐到校正后的真实时刻；可信校时得到的是权威时刻，
+   以它作为新的防回拨基准（顺带清掉历史前跳留下的 wallMax 污染，避免下次读档又被冻到未来） */
 function clockResync(){
   const c=S.clock; if(!c)return;
   const real=now();
   const hasPerf=(typeof performance!=='undefined'&&performance&&performance.now);
   c.base=real; c.perf=hasPerf?performance.now():0;
-  c.lastReal=real; c.wallMax=Math.max(c.wallMax||0,real);
+  c.lastReal=real; c.wallMax=real;
+}
+/* 首次离线结算延后到联网校时结束（最长等 8 秒兜底）：结算需要知道本次时间基准是否可信。
+   同时记住读档时的 lastSave：校时成功后 netCalibrate 会 save() 刷新 lastSave，
+   若用它算离线时长会把「本次离线」清零，读档空槽就不再补种了。 */
+let _bootOfflinePending=false, _bootLastSave=0;
+function maybeOfflineSettle(){
+  if(!_bootOfflinePending||!_netCalibDone)return;
+  _bootOfflinePending=false;
+  offlineSettle();
+}
+/* 存档时间异常提示：用与「低功耗模式开启」同一套 toast，只出现一句话，不弹窗、不惩罚。 */
+let _timeWarnShown=false;
+function maybeWarnTimeAnomaly(){
+  if(_timeWarnShown||!_timeAnomaly)return;
+  _timeWarnShown=true;
+  toast('⚠️ 存档时间记录可能有问题，请注意备份，小心数据损坏');
 }
 
 /* ---------------- 金币对赌（赌大小） ----------------
@@ -13630,7 +13735,7 @@ function tvCharmDest(){ const ds=TV_DESTS.filter(function(x){return x.need==='ch
 /* —— 小号护身符（永久道具） —— */
 /* 返回当前自然周标识：以周一 00:00 为一周起点 */
 function tvWeekKey(){
-  const d=bjDate(now()); const day=(d.getDay()+6)%7; // 周一=0
+  const d=bjDate(clockNow()); const day=(d.getDay()+6)%7; // 周一=0
   const mon=new Date(d.getFullYear(),d.getMonth(),d.getDate()-day); // 本周周一 0 点
   return mon.getFullYear()+'-'+pad(mon.getMonth()+1)+'-'+pad(mon.getDate());
 }
@@ -14094,10 +14199,15 @@ function tick(){
 
 /* ---------------- 离线结算 ---------------- */
 function offlineSettle(){
-  const elapsed=now()-S.lastSave;
+  /* 用读档时记下的 lastSave：联网校时成功后 netCalibrate 会 save() 刷新 lastSave，
+     用它计算会把本次离线时长清零（读档空槽不会补种、也不会提示欢迎回来） */
+  const since=(_bootLastSave>0)?_bootLastSave:S.lastSave;
+  const elapsed=now()-since;
   if(elapsed<=2000)return;
+  /* 正常玩家优先：不区分信任级别，一律按真实离线时长结算（12 小时封顶）。
+     时间记录异常只通过一句 toast 提醒玩家备份，不惩罚离线收益。 */
   const capped=Math.min(elapsed,OFFLINE_CAP);
-  const backAt=new Date(now()-capped);
+  const backAt=now()-capped;
   let readyCount=0;
   for(let z=0;z<S.zones.length;z++){
     for(let w=0;w<S.zones[z].woods.length;w++){
@@ -14107,8 +14217,9 @@ function offlineSettle(){
           const list=availableTypes();
           const t=weightedPick(list);
           const st=rollStats(t.r);
-          S.zones[z].woods[w].cells[i]={t:t.id,start:backAt.getTime(),dur:t.t*(1000/BASE_SPEED),h:st.h,w:st.w};
-          if(now()-backAt.getTime()>=t.t*(1000/BASE_SPEED)/speedMult()) readyCount++;
+          const neu={t:t.id,start:backAt,dur:t.t*(1000/BASE_SPEED),h:st.h,w:st.w};
+          S.zones[z].woods[w].cells[i]=neu;
+          if(cellReady(neu)) readyCount++;
         }else if(cell.t&&cellReady(cell)){
           readyCount++;
         }
@@ -14328,6 +14439,7 @@ const GB_GAMES=[
   {id:'gamble', codex:'jieba', name:'🎲 对赌', game:'gamble', lock:true},
   {id:'dd', codex:'m2_chuqian', name:'🃏 斗月巴', game:'dd', lock:true},
   {id:'gold', codex:'mb_jin', name:'黄金矿工', html:'goldminer.html'},
+  /* 月巴数织入口暂时隐藏，实装完成后恢复：{id:'nonogram', codex:'mb_zhengdian', name:'月巴数织', html:'nonogram.html'} */
   /* 月巴拳魂入口暂时隐藏，页面完成后恢复：{id:'fight', codex:'mb_tomato', name:'月巴拳魂', html:'fight.html'} */
 ];
 let gbFrameId=null;
@@ -14426,6 +14538,12 @@ window.addEventListener('message',function(e){
     addCoins(n);
     save();
     toast($tf('⛏ 黄金矿工 +{n} 🪙',{n:n}));
+  }else if(d.type==='yueba-nonogram-coins'){
+    const n=Math.max(0,Math.min(50000,parseInt(d.n,10)||0));
+    if(!n) return;
+    addCoins(n);
+    save();
+    toast($tf('✦ 月巴数织 +{n} 🪙',{n:n}));
   }else if(d.type==='yueba-gold-item'){
     if(String(d.item||'')!=='goldletter') return;
     const t=tvFresh();
@@ -15166,8 +15284,8 @@ function openAch(){
 function init(){
   const hasSave=load();
   clockInit();
-  netCalibrate().catch(function(){ _netCalibDone=true; }).then(function(){ normalizeFutureTimes(); }); // 联网校时：以北京时间为准，纠正被改动的电脑时间（失败则回退本地时钟）。校时会换时间基准，完成后再归一化一次
-  setTimeout(function(){ _netCalibDone=true; },8000);      // 兜底：校时异常卡住时也不要让旅行计时一直停着
+  netCalibrate().catch(function(){ _netCalibDone=true; }).then(function(){ normalizeFutureTimes(); maybeOfflineSettle(); }); // 联网校时：以北京时间为准，纠正被改动的电脑时间（失败则回退本地时钟）。校时会换时间基准，完成后再归一化一次
+  setTimeout(function(){ _netCalibDone=true; maybeOfflineSettle(); },8000);      // 兜底：校时异常卡住时也不要让离线结算与旅行计时一直停着
   syncGrowthSpeed(); // 记录读档时的生长倍率基准（只登记不折算：存档里的进度已按当前倍率计算）
   // 累计赚取金币（成就用）：老存档没有这个字段，用当前余额补一个起点；之后只由 addCoins 累加
   if(S.totalCoins==null) S.totalCoins=Math.max(0,S.coins||0);
@@ -15179,7 +15297,8 @@ function init(){
     S.coins+=100; S.seenHelp=true;
     openHelp();
   }
-  if(hasSave) offlineSettle();
+  if(hasSave) _bootOfflinePending=true;   // 延后到联网校时结束后再结算（需要先知道本次时间基准是否可信）
+  if(hasSave) setTimeout(maybeWarnTimeAnomaly,1500);   // 存档时间记录异常：只弹一句 toast，不惩罚
   // 老玩家已收集齐第一图鉴：进入后补一次第二图鉴开启恭喜（只弹一次）
   if(dex2Unlocked() && !S.dex2Celebrated){ S.dex2Celebrated=true; setTimeout(openDex2Celebrate,900); }
   if(!S.lang) S.lang=detectLang();   // 首次进入：跟随浏览器语言（ja/ko/en，其余中文）
@@ -15210,6 +15329,11 @@ function init(){
     }
   }
   setInterval(tick,250);
+  /* 长挂机 / 休眠唤醒后系统时钟会漂移：每小时重校一次；切回页面时若距上次校时超过 30 分钟也重校 */
+  setInterval(function(){ if(!document.hidden&&!_netCalibRunning) netCalibrate(); },60*60*1000);
+  document.addEventListener('visibilitychange',function(){
+    if(!document.hidden&&!_netCalibRunning&&now()-_netCalibAt>30*60000) netCalibrate();
+  });
   // 未成熟月巴：按住跟随手指、松开弹回（事件委托到场地层）
   const folWrap=$('sceneWoods');
   if(folWrap && folWrap.addEventListener){
@@ -17048,7 +17172,7 @@ function ddAchWeekKey(ts){ return dayKey(startOfWeek(ts)); }
 /* 跨天 / 跨周：清空对应已完成列表；返回是否有变化 */
 function ddAchRoll(){
   const a=ddAchState();
-  const dk=dayKey(now()), wk=ddAchWeekKey(now());
+  const dk=dayKey(clockNow()), wk=ddAchWeekKey(clockNow());
   let ch=false;
   if(a.day!==dk){ a.day=dk; a.dayDone={}; ch=true; }
   if(a.week!==wk){ a.week=wk; a.weekDone={}; ch=true; }
@@ -17168,10 +17292,10 @@ const DD_ACH_TOTAL=[
 /* 按日 / 周筛选战绩（北京时间） */
 function ddAchFilter(recs,scope){
   if(scope==='day'){
-    const k=dayKey(now());
+    const k=dayKey(clockNow());
     return recs.filter(function(r){ return dayKey(r.t)===k; });
   }
-  const ws=startOfWeek(now()), tn=now();
+  const ws=startOfWeek(clockNow()), tn=clockNow();
   return recs.filter(function(r){ const t=r.t||0; return t>=ws && t<=tn; });
 }
 /* 结算时累加总成就计数（记录已写入 ddRecords，直接吃这一条） */
@@ -18030,16 +18154,21 @@ function ddSparkHTML(cum){
       return st!=='menu' && st!=='result';
     }catch(e){ return true; }
   }
-  /* 黄金矿工是否一局进行中：只有开始/结算面板才允许刷新首页；
+  /* 黄金矿工 / 月巴数织是否一局进行中：只有开始/结算面板才允许刷新首页；
      进行中（含暂停、过关过渡）跳过，等这局打完再刷；读不到状态时按进行中处理。 */
   function gbBusy(){
-    if(typeof gbFrameId==='undefined'||gbFrameId!=='gold') return false;
+    if(typeof gbFrameId==='undefined'||!gbFrameId) return false;
+    if(gbFrameId!=='gold'&&gbFrameId!=='nonogram') return false;
     try{
       var fr=document.getElementById('gbGameFrame');
       var w=fr&&fr.contentWindow;
       if(!w) return true;
-      var st=(typeof w.__gmState==='function')?w.__gmState():'';
-      return st!=='start' && st!=='over';
+      if(gbFrameId==='gold'){
+        var st=(typeof w.__gmState==='function')?w.__gmState():'';
+        return st!=='start' && st!=='over';
+      }
+      var st2=(typeof w.__NP_STATE==='function')?w.__NP_STATE():'';
+      return st2==='play'||st2==='pause';
     }catch(e){ return true; }
   }
   function check(){
