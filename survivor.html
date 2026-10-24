@@ -54,7 +54,7 @@
   /* 回血残影：新回复的那一段先发白，再慢慢变回红色（格斗游戏掉血残影的反向） */
   #hpHeal{position:absolute;left:0;top:0;height:100%;width:0%;opacity:0;
     transition:opacity .18s linear;pointer-events:none;
-    background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.28) 45%,rgba(255,255,255,.95));
+    background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.62) 35%,rgba(255,255,255,.98));
     box-shadow:0 0 10px rgba(255,255,255,.55);}
   /* 无敌遗物状态：就绪/充能 */
   .shieldchip{display:flex;align-items:center;gap:4px;margin-top:5px;
@@ -2412,6 +2412,10 @@ function applyRewards(victory, stats, stage){
 
   const coinLv = sanLv('coin');
   const charmCoinMul = (G.charm === 'greed' ? 1.35 : 1) * (G.charm === 'hourglass' ? 1.12 : 1);
+  /* 未通关的「基础金币」：击杀 + 存活秒 × 各类金币倍率，此时尚未乘死亡系数 */
+  const lossBase = (stats.kills + stats.time) *
+    ((stats.coinMul || 1) / (diffDef(diff).coin || 1)) *
+    (1 + coinLv * 0.03) * charmCoinMul;
   /* 单局重复收益按基础公式打折：基础、击杀、等级、时长；装备折算不缩放；首通/首胜不再额外加成 */
   const coins = victory
     ? Math.round((
@@ -2419,14 +2423,10 @@ function applyRewards(victory, stats, stage){
         out.gearCoins
       ) * (stats.coinMul || 1) * (1 + coinLv * 0.03) * charmCoinMul)
     /* 未通关收益：击杀 + 存活秒，无保底；不乘难度金币倍率 */
-    : Math.round(
-        (stats.kills + stats.time) * RUN_COIN_LOSS_RATE *
-        ((stats.coinMul || 1) / (diffDef(diff).coin || 1)) *
-        (1 + coinLv * 0.03) * charmCoinMul
-      );
+    : Math.round(lossBase * RUN_COIN_LOSS_RATE);
   out.coins = coins + (stats.bonusCoins || 0);
-  /* 无尽模式单局封顶：金币不再增加，但玩家可以继续挂机游玩 */
-  if(stats.mode === 'endless' && out.coins >= ENDLESS_COIN_CAP){
+  /* 无尽模式：基础金币（未乘死亡系数）到 3000 即免掉死亡系数、按全款发放，同局上限仍是 3000 */
+  if(stats.mode === 'endless' && !victory && (lossBase >= ENDLESS_COIN_CAP || out.coins >= ENDLESS_COIN_CAP)){
     out.coins = ENDLESS_COIN_CAP;
     out.capped = true;
   }
@@ -8930,14 +8930,16 @@ function drawMinimap(){
  * ============================================================ */
 let _hudAt = 0;
 /* 本局实时金币：与「此刻失败」的结算收益一致（击杀 + 存活秒，含各类金币倍率）
-   无尽模式同样受单局上限约束 */
+   无尽模式：基础金币到上限时免死亡系数、直接显示全款；未到时按死亡系数折算 */
 function liveRunCoins(){
   if(!G.player || G.state === 'menu' || G.state === 'result') return 0;
   const coinLv = sanLv('coin');
   const charmMul = (G.charm === 'greed' ? 1.35 : 1) * (G.charm === 'hourglass' ? 1.12 : 1);
-  const v = Math.round((G.kills + G.time) * RUN_COIN_LOSS_RATE *
-    (G.player.coinMul || 1) * (1 + coinLv * 0.03) * charmMul) + (G.player.bonusCoins || 0);
-  return (G.mode === 'endless' && v >= ENDLESS_COIN_CAP) ? ENDLESS_COIN_CAP : v;
+  const base = (G.kills + G.time) *
+    (G.player.coinMul || 1) * (1 + coinLv * 0.03) * charmMul;
+  const v = Math.round(base * RUN_COIN_LOSS_RATE) + (G.player.bonusCoins || 0);
+  if(G.mode === 'endless' && (base >= ENDLESS_COIN_CAP || v >= ENDLESS_COIN_CAP)) return ENDLESS_COIN_CAP;
+  return v;
 }
 function updateHUD(){
   if(G.state === 'menu' || G.state === 'result'){ $('hud').classList.add('hidden'); return; }
@@ -9536,12 +9538,24 @@ function togglePause(){
   if(G.state === 'playing') pauseGame();
   else if(G.state === 'paused') resumeGame();
 }
+/* 本局是否尚未结算（这些状态退出时需要补结算） */
+function runInProgress(){
+  return G.state === 'playing' || G.state === 'paused' || G.state === 'levelup'
+    || G.state === 'chest' || G.state === 'eliteChest';
+}
+/* 退出结算：关闭窗口 / 关标签页 / 刷新 / 退出到标题统一走这里，
+   按未通关结算金币与进度；结算后立刻切到 menu，保证同一局只结算一次 */
+function settleRunOnExit(){
+  if(!runInProgress()) return 0;
+  const reward = applyRewards(false, runStats(), stageDef(G.stage));
+  G.state = 'menu';
+  G.result = null;
+  return (reward && reward.ok) ? (reward.coins || 0) : 0;
+}
 function quitToTitle(){
   /* 中途退出也按未通关结算，避免「结束了却没拿到金币」 */
-  if(G.state === 'playing' || G.state === 'paused' || G.state === 'levelup'){
-    const reward = applyRewards(false, runStats(), stageDef(G.stage));
-    if(reward.ok && reward.coins > 0) toast(t('rewardLineCoin') + ' +' + reward.coins);
-  }
+  const coins = settleRunOnExit();
+  if(coins > 0) toast(t('rewardLineCoin') + ' +' + coins);
   G.state = 'menu';
   G.result = null;
   hideChestLayer();
@@ -9553,6 +9567,13 @@ function quitToTitle(){
   renderWeaponBar();
   renderStartBest();
 }
+/* 供首页关闭内嵌窗口时同步调用：先结算本局金币，再卸载 iframe */
+try{ window.__svExitSettle = settleRunOnExit; }catch(e){}
+/* 直接关闭标签页 / 刷新时兜底结算；进入 bfcache 不算真正退出，不结算 */
+window.addEventListener('pagehide', function(e){
+  if(e && e.persisted) return;
+  settleRunOnExit();
+});
 function renderStageList(){
   const box = $('stageList');
   if(!box) return;
