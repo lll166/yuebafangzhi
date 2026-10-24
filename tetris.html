@@ -721,6 +721,7 @@
       haloActive: 'rgba(206,214,255,.30)',
       haloLand: 'rgba(206,214,255,.24)',
       haloMini: 'rgba(206,214,255,.28)',
+      shadow: 'rgba(0,0,0,.55)',
       edge: 'rgba(8,10,20,.82)',
       ghost: false
     },
@@ -734,6 +735,7 @@
       haloActive: 'rgba(88,94,130,.32)',
       haloLand: 'rgba(88,94,130,.24)',
       haloMini: 'rgba(88,94,130,.28)',
+      shadow: 'rgba(45,50,78,.32)',
       edge: 'rgba(45,50,78,.62)',
       ghost: true
     }
@@ -1124,6 +1126,19 @@
     return face;
   }
 
+  /* 浅色主题下，近白色块（I）需要 1px 细描边，否则会融进浅色棋盘 */
+  function paleBlock(type) {
+    var n = parseInt(STYLE[type].c.slice(1), 16);
+    var lum = ((n >> 16) & 255) * 0.299 + ((n >> 8) & 255) * 0.587 + (n & 255) * 0.114;
+    return lum > 225;
+  }
+  function strokePale(g, type, path) {
+    if (!LIGHT || !paleBlock(type)) return;
+    g.lineWidth = 1;
+    g.strokeStyle = STYLE[type].d;
+    g.stroke(path);
+  }
+
   /* ---------- 锁定层 ---------- */
   function drawLockedCell(g, r, c, type) {
     var st = STYLE[type];
@@ -1145,9 +1160,9 @@
     }
   }
 
-  function redrawStatic() {
-    var g = sctx, c, r;
-    g.clearRect(0, 0, BW, BH);
+  /* 棋盘背景：静态层与失败动画共用（失败时不再绘制静态层） */
+  function drawBoardBg(g) {
+    var c, r;
     var lg = g.createLinearGradient(0, 0, 0, BH);
     lg.addColorStop(0, TH.boardA);
     lg.addColorStop(1, TH.boardB);
@@ -1168,6 +1183,27 @@
     g.moveTo(0, HIDDEN * CELL + 0.5);
     g.lineTo(BW, HIDDEN * CELL + 0.5);
     g.stroke();
+    g.restore();
+  }
+
+  function redrawStatic() {
+    var g = sctx, c, r;
+    g.clearRect(0, 0, BW, BH);
+    drawBoardBg(g);
+    /* 落地方块整体投影：所有格子拼成一条路径只画一次阴影，再画实体，避免邻格阴影在缝隙里叠深 */
+    var sp = new Path2D();
+    for (r = 0; r < ROWS; r++) {
+      if (clearMask && clearMask.indexOf(r) >= 0) continue;
+      for (c = 0; c < COLS; c++) {
+        if (board[r][c]) addRound(sp, c * CELL + 1.3, r * CELL + 1.3, CELL - 2.6, CELL - 2.6, CELL * 0.28);
+      }
+    }
+    g.save();
+    g.shadowColor = TH.shadow;
+    g.shadowBlur = 4;
+    g.shadowOffsetY = 2;
+    g.fillStyle = '#000';
+    g.fill(sp);
     g.restore();
     for (r = 0; r < ROWS; r++) {
       if (clearMask && clearMask.indexOf(r) >= 0) continue;
@@ -1204,18 +1240,9 @@
     for (i = 0; i < 4; i++) {
       addRound(p, (piece.x + cells[i][0]) * CELL + 1.4, (piece.y + cells[i][1]) * CELL + 1.4, CELL - 2.8, CELL - 2.8, CELL * 0.3);
     }
-    ctx.lineJoin = 'round';
-    ctx.strokeStyle = TH.haloLand;
-    ctx.lineWidth = 6.4;
-    ctx.stroke(p);
-    ctx.strokeStyle = st.g;
-    ctx.globalAlpha = 0.55;
-    ctx.lineWidth = 3;
-    ctx.stroke(p);
-    ctx.globalAlpha = 1;
     ctx.fillStyle = st.c;
     ctx.fill(p);
-
+    strokePale(ctx, piece.type, p);
     var face = pickFace(cells);
     var fx = (piece.x + face[0] + 0.5) * CELL;
     var fy = (piece.y + face[1] + 0.5) * CELL + Math.sin(animT * 0.006) * 0.6;
@@ -1251,17 +1278,14 @@
     for (i = 0; i < 4; i++) {
       addRound(p, (landFx.x + cells[i][0]) * CELL + 1.4, (landFx.y + cells[i][1]) * CELL + 1.4, CELL - 2.8, CELL - 2.8, CELL * 0.3);
     }
-    ctx.lineJoin = 'round';
-    ctx.strokeStyle = 'rgba(206,214,255,.30)';
-    ctx.lineWidth = 6.4;
-    ctx.stroke(p);
-    ctx.strokeStyle = st.g;
-    ctx.globalAlpha = 0.55;
-    ctx.lineWidth = 3;
-    ctx.stroke(p);
-    ctx.globalAlpha = 1;
     ctx.fillStyle = st.c;
+    ctx.shadowColor = TH.shadow;
+    ctx.shadowBlur = 4;
+    ctx.shadowOffsetY = 2;
     ctx.fill(p);
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
     var hero = pickFace(cells);
     var hx = (landFx.x + hero[0] + 0.5) * CELL;
     var hy = (landFx.y + hero[1] + 0.5) * CELL + 1;
@@ -1359,6 +1383,57 @@
     }
   }
 
+  /* ---------- 失败特效：整面墙碎成一块一块，Q 弹着散落、往下掉 ---------- */
+  var DEATH_G = 0.00055;             /* 下坠加速度（px / ms²），实际位移是按 g/2 计的 */
+  function drawDeathFX() {
+    if (!deathBlocks) return;
+    var g = ctx;
+    var dk = Math.min(1, deathT / DEATH_MS);
+    /* 开场轻微抖动 + 整面墙慢慢下沉，不再有全屏红闪 */
+    var amp = 4.5 * (1 - dk) * (1 - dk);
+    g.save();
+    g.translate(Math.sin(deathT * 0.052) * amp, Math.cos(deathT * 0.041) * amp * 0.5 + dk * dk * 26);
+    for (var i = 0; i < deathBlocks.length; i++) {
+      var b = deathBlocks[i];
+      var p = Math.max(0, deathT - b.delay);
+      var x = b.c * CELL + b.vx * p;
+      var y = b.r * CELL + b.vy * p + DEATH_G * p * p;
+      var op = Math.max(0, Math.min(1, (BH + 30 - y) / 90));
+      if (op <= 0) continue;
+      var st = STYLE[b.type];
+      /* Q 弹：每块带着自己的相位抖动，弹几下后随下坠消失在画面外 */
+      var wob = Math.sin(p * 0.045 + b.seed) * Math.exp(-p / 260);
+      var sy = 1 - 0.26 * wob, sx = 1 + 0.18 * wob;
+      var rot = b.rotV * p;
+      var cx = x + CELL / 2, cy = y + CELL / 2;
+      g.save();
+      g.globalAlpha = op;
+      g.translate(cx, cy);
+      g.rotate(rot);
+      g.scale(sx, sy);
+      g.translate(-cx, -cy);
+      rrPath(g, x + 1.3, y + 1.3, CELL - 2.6, CELL - 2.6, CELL * 0.28);
+      g.strokeStyle = TH.halo;
+      g.lineWidth = 3;
+      g.stroke();
+      var lg = g.createLinearGradient(0, y, 0, y + CELL);
+      lg.addColorStop(0, st.b);
+      lg.addColorStop(1, st.c);
+      g.fillStyle = lg;
+      g.fill();
+      g.strokeStyle = TH.edge;
+      g.lineWidth = 1.2;
+      g.stroke();
+      if (b.fm) {
+        drawFace(g, cx, cy + 1, 0.92, st, 'surprised', op);
+        if (b.fm === GLASS_SUN) drawGlasses(g, cx, cy + 1, 0.92, st, GLASS_SUN, op);
+      }
+      if (b.em) drawEars(g, cx, y + 2, 0.6, st, 0, rot * 2);
+      g.restore();
+    }
+    g.restore();
+  }
+
   /* ---------- 粒子 ---------- */
   var parts = [];
   var PARTS_MAX = lowPower ? 0 : 120;
@@ -1427,17 +1502,9 @@
     for (i = 0; i < 4; i++) {
       addRound(p, cells[i][0] * CELL + 2, cells[i][1] * CELL + 2, CELL - 4, CELL - 4, CELL * 0.3);
     }
-    g.lineJoin = 'round';
-    g.strokeStyle = TH.haloMini;
-    g.lineWidth = 7;
-    g.stroke(p);
-    g.strokeStyle = st.g;
-    g.globalAlpha = (alpha == null ? 1 : alpha) * 0.55;
-    g.lineWidth = 4;
-    g.stroke(p);
-    g.globalAlpha = alpha == null ? 1 : alpha;
     g.fillStyle = st.c;
     g.fill(p);
+    strokePale(g, type, p);
     var face = pickFace(cells);
     var gs = (type.charCodeAt(0) % 2) ? GLASS_CLEAR : GLASS_SUN;
     drawFace(g, (face[0] + 0.5) * CELL, (face[1] + 0.5) * CELL, 1, st, 'normal', 1);
@@ -1462,23 +1529,9 @@
     ctx.save();
     ctx.translate(0, EAR_PAD);
     if (st === 'dying') {
-      /* 失败动效：棋盘震动 + 红闪 + 轻微下沉，播完才弹结算面板 */
-      var dk = Math.min(1, deathT / DEATH_MS);
-      var amp = 9 * (1 - dk) * (1 - dk);
-      var ox = Math.sin(deathT * 0.055) * amp;
-      var oy = Math.cos(deathT * 0.041) * amp * 0.55 + dk * dk * 4;
-      ctx.save();
-      ctx.translate(ox, oy);
-      ctx.drawImage(staticCv, 0, 0, BW, BH);
-      ctx.restore();
-      ctx.save();
-      ctx.globalAlpha = 0.10 + 0.26 * Math.sin(dk * Math.PI);
-      ctx.fillStyle = '#c5303c';
-      ctx.fillRect(0, 0, BW, BH);
-      ctx.globalAlpha = 0.30 * Math.max(0, 1 - dk / 0.18);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, BW, BH);
-      ctx.restore();
+      /* 失败动效：棋盘背景留下，所有方块碎开散落掉出画面，播完才弹结算面板 */
+      drawBoardBg(ctx);
+      drawDeathFX();
     } else {
       ctx.drawImage(staticCv, 0, 0, BW, BH);
     }
@@ -1514,8 +1567,9 @@
   var blinkAt = 2200, blinkEnd = 0;
   var landFx = null;                 /* 落地回弹：{t,type,rot,x,y} */
   var clearMask = null;              /* 消行期间先隐藏的静态行 */
-  var DEATH_MS = 900;
+  var DEATH_MS = 1500;
   var deathT = 0;                    /* 失败动效计时 */
+  var deathBlocks = null;            /* 失败时散落的方块（每格独立一块） */
 
   /* 出生缩放：easeOutBack，轻微过冲才是 Q 弹而不是单纯放大 */
   function popScale() {
@@ -1946,11 +2000,33 @@
     if (lines >= 100) unlock('t_run_100');
   }
 
-  /* 结束动效：先让棋盘点亮红、震一下并下沉，再弹出结算面板 */
+  /* 结束动效：整面墙碎成一块一块，Q 弹着散落掉出画面，再弹出结算面板 */
+  function buildDeathBlocks() {
+    var out = [], r, c;
+    for (r = 0; r < ROWS; r++) {
+      for (c = 0; c < COLS; c++) {
+        var ty = board[r][c];
+        if (!ty) continue;
+        out.push({
+          c: c, r: r, type: ty,
+          fm: (faceMark[r] && faceMark[r][c]) || 0,
+          em: (earMark[r] && earMark[r][c]) ? 1 : 0,
+          delay: Math.random() * 150,
+          vx: (Math.random() - 0.5) * 0.16,
+          vy: -(0.06 + Math.random() * 0.12),
+          rotV: (Math.random() - 0.5) * 0.006,
+          seed: Math.random() * Math.PI * 2
+        });
+      }
+    }
+    return out;
+  }
+
   function beginGameOver() {
     if (st !== 'play') return;
     st = 'dying';
     deathT = 0;
+    deathBlocks = buildDeathBlocks();
     clearing = null;
     clearMask = null;
     piece = null;
@@ -1964,6 +2040,11 @@
     clearing = null;
     clearMask = null;
     piece = null;
+    deathBlocks = null;
+    /* 方块已经散落掉出画面：结算面板背后留一面空棋盘 */
+    board = blankGrid();
+    faceMark = blankGrid();
+    earMark = blankGrid();
     parts.length = 0;
     landFx = null;
     redrawStatic();
@@ -1990,7 +2071,7 @@
     runMs = 0;
     parts.length = 0;
     landFx = null; pendingMood = '';
-    clearMask = null; deathT = 0;
+    clearMask = null; deathT = 0; deathBlocks = null;
     popT = 1; sqz = 0; sqzV = 0; wobble = 0; wobbleV = 0; earLag = 0; earLagV = 0;
     setMood('normal', 0); blinkEnd = 0; blinkAt = animT + 2200;
     hideOverlay();
@@ -2603,6 +2684,34 @@
   /* 供首页的「新版本自动刷新」读取对局状态：对局中（含暂停、结束动画）不允许刷新打断这一局 */
   window.__tbState = function () { return st; };
 
+  /* TEMP-DEATH-TEST */
+  window.__death = function () {
+    if (st !== 'play') startGame();
+    board = blankGrid(); faceMark = blankGrid(); earMark = blankGrid();
+    var types = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
+    for (var r = 6; r < ROWS; r++) {
+      for (var c = 0; c < COLS; c++) {
+        if (r === 7 && c % 4 === 2) continue;
+        board[r][c] = types[(r * 3 + c) % 7];
+      }
+    }
+    for (r = 6; r < ROWS; r++) {
+      for (c = 0; c < COLS; c++) {
+        if (!board[r][c] || (r + c) % 4) continue;
+        faceMark[r][c] = (r % 2) ? GLASS_CLEAR : GLASS_SUN;
+        earMark[r][c] = 1;
+      }
+    }
+    beginGameOver();
+  };
+  if (QS.get('death') === '1') setTimeout(window.__death, 500);
+  /* TEMP-DEATH-TEST-END */
+
+  boot();
+})();
+</script>
+</body>
+</html>
   boot();
 })();
 </script>
