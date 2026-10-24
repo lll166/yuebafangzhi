@@ -3946,13 +3946,16 @@ const TYPES=[
     imgs:[{url:'https://origin.picgo.net/2026/10/23/---Yidi-Nyaomi-Li81e0dde889812007.th.png', by:'Nyaomi'}], r:3, v:35, t:360, cond:{t:'season',s:'winter'}, color:'#7fa0b8', shape:'cube'},
 
   {id:'mb_dishui',  name:'阴湿月巴', r:3, v:50, t:400, cond:{t:'zone',z:2}, color:'#9575cd', shape:'round'},
-  {id:'mb_wenshi',  name:'温室月巴',   r:3, v:55, t:420, cond:{t:'zone',z:3}, color:'#6fbe7a', shape:'cube'},
+  {id:'mb_wenshi',  name:'温室月巴',  img:'https://origin.picgo.net/2026/10/25/a4de870a23ff1f883c8454cb72ef80d762cde2ab6de81042.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/25/a4de870a23ff1f883c8454cb72ef80d762cde2ab6de81042.th.png', by:'Nyaomi', note:'我从一开始就在外面。一直待在笼子里的人是你。'}], r:3, v:55, t:420, cond:{t:'zone',z:3}, color:'#6fbe7a', shape:'cube'},
   {id:'mb_wuding',  name:'屋顶月巴',   img:'https://origin.picgo.net/2026/10/24/ddb838b24b14c9bc66c93f3e145393e1f054aa99f643d304.th.png',
     imgs:[{url:'https://origin.picgo.net/2026/10/24/ddb838b24b14c9bc66c93f3e145393e1f054aa99f643d304.th.png', by:'hellomelody'}], r:3, v:60, t:450, cond:{t:'zone',z:4}, color:'#5f9ed1', shape:'tall'},
   {id:'mb_senlin',  name:'森系月巴', img:'https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li6e93cacca933846d.th.png', r:3, v:70, t:480, cond:{t:'zone',z:5}, color:'#5c8a64', shape:'spike'},
   {id:'mb_bing',    name:'冰冷月巴',   img:'https://origin.picgo.net/2026/10/23/434e565b3ade1792842da6c6e5e0778552a35682cf6024b1.th.png', r:4, v:80, t:540, cond:{t:'zone',z:6}, color:'#7cc4e8', shape:'star'},
   {id:'mb_yanjiang',name:'滚烫月巴',   r:4, v:90, t:600, cond:{t:'zone',z:7}, color:'#d15852', shape:'spike'},
-  {id:'mb_yunduan', name:'会飞月巴',   r:4, v:110,t:720, cond:{t:'zone',z:8}, color:'#b39ddb', shape:'rainbow'},
+  {id:'mb_yunduan', name:'会飞月巴',   img:'https://origin.picgo.net/2026/10/25/0c49c146c2e1b0322b58ede6c45ace220be030c873f439d5.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/25/0c49c146c2e1b0322b58ede6c45ace220be030c873f439d5.th.png', by:'鲸弑', note:'月巴会飞。'},
+          {url:'https://origin.picgo.net/2026/10/25/230fb576b0a523a89.th.png', by:'匿名', note:'小飞棍来咯。'}], r:4, v:110,t:720, cond:{t:'zone',z:8}, color:'#b39ddb', shape:'rainbow'},
 
   {id:'mb_kafei', name:'咖啡月巴', img:'https://origin.picgo.net/2026/10/21/coffee-yue---KoTofu4bfeb46ff6179820.th.png', r:4, v:80,  t:540,  cond:{t:'item',i:'coffee'},    color:'#b98a76', shape:'cube'},
   {id:'mb_wanou', name:'玩偶月巴', img:'https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Lib2c078bd058ef48c.th.png', r:4, v:90,  t:600,  cond:{t:'item',i:'doll'},      color:'#e88aa8', shape:'heart'},
@@ -3975,7 +3978,8 @@ const TYPES=[
   {id:'mb_zhoumo',   name:'双休月巴', img:'https://origin.picgo.net/2026/10/22/---a60a7636bd80eb9e.th.png',
     imgs:[{url:'https://origin.picgo.net/2026/10/22/---a60a7636bd80eb9e.th.png', note:'朝から掃除をする週末。48時間ベッドにいる週末もある。'}],
     r:4, v:120, t:720, cond:null,   color:'#8fc9c9', shape:'cube'},
-  {id:'mb_zhengdian',name:'整点月巴', r:4, v:300, t:900, cond:null,  color:'#e0d24e', shape:'star'},
+  {id:'mb_zhengdian',name:'整点月巴', img:'https://origin.picgo.net/2026/10/25/444672cea81dc05a5326f57baf4a41062d4fd68fc76f8de6.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/25/444672cea81dc05a5326f57baf4a41062d4fd68fc76f8de6.th.png', by:'鲸弑', note:'咦怎么有点瞎瞎的？'}], r:4, v:300, t:900, cond:null,  color:'#e0d24e', shape:'star'},
   {id:'mb_xinnian',  name:'新年月巴', r:6, v:500, t:600, cond:null, weight:0.1, color:'#d94a6b', shape:'star'},
   {id:'mb_qingren',  name:'爱情月巴', r:6, v:500, t:600, cond:null, weight:0.1, color:'#e06b9c', shape:'heart'},
   {id:'mb_wuyi',     name:'劳动月巴', r:6, v:400, t:600, cond:null, weight:0.1, color:'#d98a5f', shape:'cube'},
@@ -4170,6 +4174,10 @@ const TYPES3=[
   {id:'m2_rainy',    name:'雨伞月巴',  img:'https://origin.picgo.net/2026/10/22/umbrella-bunny0f0ec74e10bac4fc.th.png', r:2, v:20, t:200, cond:null, color:'#a9c7e8', shape:'drop'},
   {id:'m3_cangshu',  name:'仓鼠月巴',  img:'https://origin.picgo.net/2026/10/23/22cdbf9144b586bf272c4cb61f533bc853372133deea585a.th.png', r:3, v:35, t:400, cond:null, color:'#d8b17a', shape:'round'},
   {id:'m2_yinan',    name:'阴暗巴',    img:'https://origin.picgo.net/2026/10/21/7b935eb5528f9cc67c194fe5d47c4a367229b91b95e86400.th.png', r:2, v:19, t:190, cond:null, color:'#b7b0cc', shape:'squish'},
+  {id:'m3_eluosi',   name:'俄罗斯巴块', img:'https://origin.picgo.net/2026/10/25/5184c509e7017738e29c29fd93540a98dc98667d5767b52a.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/25/5184c509e7017738e29c29fd93540a98dc98667d5767b52a.th.png', by:'Nyaomi'}], r:3, v:40, t:420, cond:null, color:'#7ec8e3', shape:'cube'},
+  {id:'m3_you',      name:'鱿巴',      img:'https://origin.picgo.net/2026/10/25/fa99573013c8914358ccc065c6cb7bf3d161a11cf298572f.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/25/fa99573013c8914358ccc065c6cb7bf3d161a11cf298572f.th.png', by:'番凩'}], r:4, v:70, t:700, cond:null, color:'#c98bd0', shape:'tall'},
 ];
 const RAR_NAME={1:'普通',2:'常见',3:'稀有',4:'史诗',5:'传说',6:'活动'};
 const R_H={1:[2,5],2:[4,8],3:[6,12],4:[10,20],5:[16,30],6:[22,40]};   // 身高 cm 范围
@@ -4201,6 +4209,8 @@ const YB_PIC_AUTHOR={
   m2_baboyi:'ak',
   m2_rainy:'Feyy',
   m3_cangshu:'番凩-FFANMER',
+  m3_eluosi:'Nyaomi',
+  m3_you:'番凩',
   mb_dong:'mari',
   mb_shenlian:'mari',
   bairixuan:'影子生物',
@@ -4226,6 +4236,9 @@ const YB_PIC_AUTHOR={
   mb_chaos:'軟管',
   mb_wuding:'hellomelody',
   mb_powa:'hellomelody',
+  mb_wenshi:'Nyaomi',
+  mb_yunduan:'鲸弑',
+  mb_zhengdian:'鲸弑',
 };
 /* 每种月巴的「简介(文字)作者」by ID，图鉴详情弹窗简介末尾展示；未填则不显示文字作者 */
 const YB_TXT_AUTHOR={};
@@ -4440,6 +4453,8 @@ const FAT_INTRO={
   m2_baboyi:'对其他月巴抱有很大敌意，最常说的一句话是：“我可不是什么好好先生。”',
   m2_rainy:'月巴伞会保护拓海的番茄园不受雨淋！',
   m3_cangshu:'仓鼠月巴偷吃掉了你的番茄！',
+  m3_eluosi:'这个游戏好像bug了，永远不会出现第11个巴块。',
+  m3_you:'鱿鱼鱿鱼。',
 };
 
 /* ---------------- 界面皮肤（图鉴解锁） ---------------- */
@@ -7042,6 +7057,8 @@ const I18N_BANNY={
   m2_baboyi:{n:{en:'Babo Gambit',ja:'ババゲーム',ko:'바바 겜블'}},
   m2_rainy:{n:{en:'Rainy Banny',ja:'雨傘バニー',ko:'우산배니'}},
   m3_cangshu:{n:{en:'Hamster Banny',ja:'ハムスターバニー',ko:'햄스터배니'}},
+  m3_eluosi:{n:{en:'Tetris Banny',ja:'テトリスバニー',ko:'테트리스배니'}},
+  m3_you:{n:{en:'Squid Banny',ja:'イカバニー',ko:'오징어배니'}},
 
   dest_forest:{n:{en:'Forest Edge',ja:'森のほとり',ko:'숲의 가장자리'}},
   dest_fairy:{n:{en:'Fairy Hideaway',ja:'桃源郷',ko:'무릉도원'}},
@@ -7519,6 +7536,8 @@ const I18N_BANNY={
   m2_baboyi_intro:{d:{en:'Deeply hostile toward other Bannies. Its favourite line: "I am no nice guy."',ja:'他のバニーに強い敵意を抱いている。口癖は「俺はお人好しじゃないんだよ」。',ko:'다른 배니들에게 큰 적의를 품고 있다. 가장 자주 하는 말은 "난 좋은 사람이 아니야."'}},
   m2_rainy_intro:{d:{en:'The Banny umbrella keeps Takumi\'s tomato garden safe from the rain!',ja:'バニーの傘が拓海のトマト農園を雨から守ってくれる！',ko:'배니 우산이 타쿠미의 토마토 농장을 비로부터 지켜 줘요!'}},
   m3_cangshu_intro:{d:{en:'The Hamster Banny sneaked in and ate your tomatoes!',ja:'ハムスターバニーがあなたのトマトをこっそり食べちゃった！',ko:'햄스터배니가 네 토마토를 몰래 훔쳐 먹었어!'}},
+  m3_eluosi_intro:{d:{en:'This game seems to be bugged, the 11th banny never appears.',ja:'このゲームはバグっているようで、11 番目のバニーが永遠に現れない。',ko:'이 게임은 버그가 난 것 같아서, 11번째 배니는 영원히 나타나지 않는다.'}},
+  m3_you_intro:{d:{en:'Squid, squid.',ja:'イカ、イカ。',ko:'오징어, 오징어.'}},
   /* ---------- P5：成就描述 ach_<id>_desc（字段 d） ---------- */
   ach_h1_desc:{d:{en:'Harvest your first Banny',ja:'初めてバニーを収穫する',ko:'첫 배니를 수확하기'}},
   ach_d1_desc:{d:{en:'Unlock 10 Banny species in the Codex',ja:'図鑑で 10 種のバニーを解放する',ko:'도감에서 배니 10종 해금하기'}},
@@ -18180,10 +18199,39 @@ function ddSparkHTML(cum){
       return st2==='play'||st2==='pause';
     }catch(e){ return true; }
   }
+  /* （贪吃）蛇月巴是否一局进行中：准备/结算界面允许刷新首页；
+     对局中（含暂停）跳过，等这局打完再刷；读不到状态时按进行中处理。 */
+  function snBusy(){
+    if(typeof snOpenFlag==='undefined'||!snOpenFlag) return false;
+    try{
+      var fr=document.getElementById('snFrame');
+      var w=fr&&fr.contentWindow;
+      if(!w) return true;
+      if(typeof w.__snState!=='function') return true;   // 内嵌页还没加载完：先别刷
+      var st=w.__snState();
+      return st==='play'||st==='pause';
+    }catch(e){ return true; }
+  }
+  /* 月巴拳魂是否一局进行中：只有标题页才允许刷新首页；
+     选人、对战、过关、强化、结算（还挂着续关/换月巴）一律跳过，
+     等这局结束、下一轮检查再刷；读不到内嵌页状态时按进行中处理。 */
+  function fbBusy(){
+    if(typeof gbFrameId==='undefined'||gbFrameId!=='fight') return false;
+    try{
+      var fr=document.getElementById('gbGameFrame');
+      var w=fr&&fr.contentWindow;
+      if(!w) return true;
+      if(typeof w.__fbState!=='function') return true;   // 内嵌页还没加载完：先别刷
+      var st=w.__fbState();
+      return st!=='title';
+    }catch(e){ return true; }
+  }
   function check(){
     if(reloading) return;
     if(svBusy()) return;
-    if(gbBusy()) return;                        // 黄金矿工一局进行中不打断
+    if(gbBusy()) return;                        // 黄金矿工 / 月巴数织一局进行中不打断
+    if(fbBusy()) return;                        // 月巴拳魂一局进行中不打断
+    if(snBusy()) return;                        // 蛇月巴一局进行中不打断
     fetch(location.href,{method:'HEAD',cache:'no-store'}).then(sig).then(function(s){
       if(!s) return;                          // 该环境不返回版本标识时静默跳过
       if(base===null){ base=s; return; }       // 首次：记录基线
