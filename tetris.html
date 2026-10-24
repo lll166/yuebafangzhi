@@ -238,6 +238,63 @@
   body.low #frame .scan{display:none;}
   body.low #frame{box-shadow:0 10px 26px rgba(0,0,0,.55);}
   body.low #banner,body.low #comboPop{text-shadow:none;}
+
+  /* ---------- 浅色主题 ---------- */
+  html.light,body.light{
+    --bg:#eef0f8; --bg2:#ffffff;
+    --line:rgba(72,78,120,.22); --line2:rgba(72,78,120,.45);
+    --text:#2b2f4a; --dim:#6b7094;
+    --accent:#6c72a6; --accent2:#262b4d; --mid:#8b90b5;
+    --red:#b52b37; --red2:#d63f4c;
+    --board:#f6f7fc;
+  }
+  body.light::after{background:radial-gradient(120% 82% at 50% 6%,transparent 54%,rgba(96,102,140,.14) 100%);}
+  body.light #stage{background:radial-gradient(72% 58% at 50% 40%,rgba(150,160,215,.28),rgba(238,240,248,0) 72%);}
+  body.light .stat,body.light #btnPause,body.light #btnAch,body.light #achClose{
+    background:linear-gradient(180deg,#ffffff,#e7eaf7);}
+  body.light .pbox{background:linear-gradient(180deg,#ffffff,#eaedf9);}
+  body.light .pstat{background:rgba(255,255,255,.78);}
+  body.light .brand span{text-shadow:0 0 10px rgba(120,128,180,.35);}
+  body.light #frame{background:#e4e7f4;
+    box-shadow:0 0 22px rgba(120,128,180,.20),0 14px 32px rgba(80,86,130,.22),inset 0 0 26px rgba(255,255,255,.6);}
+  body.light #frame .scan{opacity:.2;
+    background:repeating-linear-gradient(0deg,rgba(72,78,120,.045) 0 1px,transparent 1px 3px);}
+  body.light #overlay{background:radial-gradient(90% 70% at 50% 42%,rgba(238,240,250,.62),rgba(191,197,219,.90));}
+  body.light #overlay .panel{background:linear-gradient(180deg,#ffffff,#f0f2fb);
+    box-shadow:0 14px 34px rgba(80,86,130,.26),inset 0 0 24px rgba(160,170,210,.10);}
+  body.light #ovTitle{text-shadow:0 2px 12px rgba(120,128,180,.30);}
+  body.light #overlay .panel.over #ovTitle{text-shadow:0 2px 12px rgba(214,63,76,.28);}
+  body.light .ovCell{background:rgba(245,246,252,.92);}
+  body.light .setBtn{background:rgba(255,255,255,.82);color:var(--dim);}
+  body.light .setBtn.on{color:#ffffff;
+    background:linear-gradient(180deg,var(--accent2),var(--accent));}
+  body.light .setBtn.on,body.light #ovBtn,body.light .cbtn.on,body.light .cbtn:active,
+  body.light #achToast{color:#ffffff;}
+  body.light #ovBtn{box-shadow:0 6px 16px rgba(120,128,180,.32);}
+  body.light #ovBtn2{background:rgba(255,255,255,.82);}
+  body.light #achModal{background:radial-gradient(90% 70% at 50% 42%,rgba(238,240,250,.80),rgba(191,197,219,.94));}
+  body.light .achPanel{background:linear-gradient(180deg,#ffffff,#f0f2fb);
+    box-shadow:0 14px 34px rgba(80,86,130,.26),inset 0 0 24px rgba(160,170,210,.10);}
+  body.light .achRow{background:rgba(246,247,252,.92);}
+  body.light .achRow.done{border-color:rgba(120,128,180,.55);
+    background:linear-gradient(180deg,#eef1fd,#e6e9f8);}
+  body.light .achIcon{background:rgba(240,242,250,.92);}
+  body.light .cbtn{background:linear-gradient(180deg,#ffffff,#e7eaf7);
+    box-shadow:inset 0 0 12px rgba(160,170,210,.10);}
+  body.light .cbtn.on,body.light .cbtn:active{background:linear-gradient(180deg,var(--accent2),var(--accent));
+    box-shadow:0 6px 14px rgba(120,128,180,.30);}
+  body.light .cbtn.drop{border-color:rgba(181,43,55,.40);box-shadow:inset 0 0 14px rgba(181,43,55,.08);}
+  body.light .cbtn.drop.on,body.light .cbtn.drop:active{background:linear-gradient(180deg,var(--red2),var(--red));}
+  body.light #selfTest{background:rgba(232,235,245,.92);}
+  body.light .stPanel{background:linear-gradient(180deg,#ffffff,#f0f2fb);}
+  body.light .stRow.ok b{color:#1f9d63;}
+  body.light .stRow.ng{color:#a52531;}
+  body.light #tips,body.light #ovRec,body.light #ovHint,body.light .achFoot{color:rgba(90,96,130,.9);}
+  body.light #achToast{box-shadow:0 4px 12px rgba(120,128,180,.35);}
+  body.light #comboPop{text-shadow:0 0 10px rgba(214,63,76,.35),0 2px 6px rgba(255,255,255,.7);}
+  body.light #banner{text-shadow:0 0 14px rgba(120,128,180,.38),0 2px 6px rgba(255,255,255,.7);}
+  body.light #banner.red{text-shadow:0 0 14px rgba(214,63,76,.55);}
+  .setBtn.wide{grid-column:1 / -1;}
 </style>
 </head>
 <body>
@@ -295,6 +352,7 @@
                 <button class="setBtn" id="setHaptics"></button>
                 <button class="setBtn" id="setGhost"></button>
                 <button class="setBtn" id="setInput"></button>
+                <button class="setBtn wide" id="setTheme"></button>
               </div>
             </div>
             <button id="ovBtn">开始</button>
@@ -375,6 +433,7 @@
       setHapticsOn: '震动 开', setHapticsOff: '震动 关',
       setGhostOn: '影子 开', setGhostOff: '影子 关',
       setBoth: '手势 + 按键', setTouch: '仅手势', setBtn: '仅按键',
+      setThemeDark: '主题 · 深色', setThemeLight: '主题 · 浅色',
       tipsDesktop: '← → 移动 · ↑/X 旋转 · Z 逆旋 · ↓ 软降 · 空格 硬降',
       tipsTouch: '点按旋转 · 左右拖动移动 · 下滑软降 · 快速下滑硬降',
       achTitle: '成就', achFoot: '成就只记录在本机 · 不影响主存档',
@@ -427,6 +486,7 @@
       setHapticsOn: 'Haptics ON', setHapticsOff: 'Haptics OFF',
       setGhostOn: 'Ghost ON', setGhostOff: 'Ghost OFF',
       setBoth: 'Touch + Buttons', setTouch: 'Touch only', setBtn: 'Buttons only',
+      setThemeDark: 'Theme · Dark', setThemeLight: 'Theme · Light',
       tipsDesktop: '← → move · ↑/X rotate · Z rotate CCW · ↓ soft drop · Space hard drop',
       tipsTouch: 'Tap to rotate · drag to move · drag down to soft drop · flick down to hard drop',
       achTitle: 'Achievements', achFoot: 'Saved on this device only · main save untouched',
@@ -479,6 +539,7 @@
       setHapticsOn: '振動 オン', setHapticsOff: '振動 オフ',
       setGhostOn: 'ゴースト オン', setGhostOff: 'ゴースト オフ',
       setBoth: 'タッチ + ボタン', setTouch: 'タッチのみ', setBtn: 'ボタンのみ',
+      setThemeDark: 'テーマ · ダーク', setThemeLight: 'テーマ · ライト',
       tipsDesktop: '← → 移動 · ↑/X 回転 · Z 逆回転 · ↓ ソフトドロップ · スペース ハードドロップ',
       tipsTouch: 'タップで回転 · 左右ドラッグで移動 · 下ドラッグでソフトドロップ · 素早く下へでハードドロップ',
       achTitle: '実績', achFoot: '実績はこの端末のみ · メインセーブは変更しません',
@@ -531,6 +592,7 @@
       setHapticsOn: '진동 켬', setHapticsOff: '진동 끔',
       setGhostOn: '고스트 켬', setGhostOff: '고스트 끔',
       setBoth: '터치 + 버튼', setTouch: '터치만', setBtn: '버튼만',
+      setThemeDark: '테마 · 어두움', setThemeLight: '테마 · 밝음',
       tipsDesktop: '← → 이동 · ↑/X 회전 · Z 역회전 · ↓ 소프트 드롭 · 스페이스 하드 드롭',
       tipsTouch: '탭 회전 · 좌우 드래그 이동 · 아래로 드래그 소프트 드롭 · 빠르게 아래로 하드 드롭',
       achTitle: '업적', achFoot: '업적은 이 기기에만 저장 · 메인 세이브는 변경하지 않습니다',
@@ -647,6 +709,36 @@
     J: { c: '#535884', e: '#eef0ff', g: '#8e93bf', d: '#31344d', b: '#8085b3' },
     L: { c: '#b23642', e: '#ffe9e9', g: '#e3767e', d: '#6d1c24', b: '#d4585f' }
   };
+  /* 画布内的主题配色：深色/浅色两套，切换时只换 TH 引用再重绘静态层 */
+  var THEMES = {
+    dark: {
+      earPad: '#0a0c16',
+      boardA: '#0b0e1c', boardB: '#0d1020',
+      grid: 'rgba(185,191,230,.055)',
+      hidden: 'rgba(4,5,12,.5)',
+      danger: 'rgba(197,48,60,.42)',
+      halo: 'rgba(206,214,255,.26)',
+      haloActive: 'rgba(206,214,255,.30)',
+      haloLand: 'rgba(206,214,255,.24)',
+      haloMini: 'rgba(206,214,255,.28)',
+      edge: 'rgba(8,10,20,.82)',
+      ghost: false
+    },
+    light: {
+      earPad: '#eef0f8',
+      boardA: '#f7f8fc', boardB: '#eceef8',
+      grid: 'rgba(72,78,120,.10)',
+      hidden: 'rgba(120,126,160,.14)',
+      danger: 'rgba(181,43,55,.45)',
+      halo: 'rgba(88,94,130,.28)',
+      haloActive: 'rgba(88,94,130,.32)',
+      haloLand: 'rgba(88,94,130,.24)',
+      haloMini: 'rgba(88,94,130,.28)',
+      edge: 'rgba(45,50,78,.62)',
+      ghost: true
+    }
+  };
+  var LIGHT = false, TH = THEMES.dark;
   var KICKS = [[0, 0], [-1, 0], [1, 0], [-2, 0], [2, 0], [0, -1], [0, 1], [-1, -1], [1, -1]];
   var SPAWN_X = 3, SPAWN_Y = 1;
 
@@ -664,6 +756,7 @@
   var ovScore = $('ovScore'), ovLines = $('ovLines'), ovLevel = $('ovLevel'), ovCombo = $('ovCombo');
   var ovRec = $('ovRec'), setWrap = $('setWrap'), setTitleEl = $('setTitle');
   var setSound = $('setSound'), setHaptics = $('setHaptics'), setGhost = $('setGhost'), setInput = $('setInput');
+  var setTheme = $('setTheme');
   var ovBtn = $('ovBtn'), ovBtn2 = $('ovBtn2'), ovHint = $('ovHint');
   var achModal = $('achModal'), achList = $('achList'), achFoot = $('achFoot');
   var achTotal = $('achTotal'), achTitleTxt = $('achTitleTxt'), achClose = $('achClose');
@@ -770,7 +863,8 @@
         sound: mainSave.muted ? false : true,
         haptics: true,
         ghost: true,
-        input: 'both'
+        input: 'both',
+        theme: 'dark'
       }
     };
   }
@@ -808,6 +902,7 @@
     if (typeof s.haptics === 'boolean') d.set.haptics = s.haptics;
     if (typeof s.ghost === 'boolean') d.set.ghost = s.ghost;
     if (s.input === 'both' || s.input === 'touch' || s.input === 'btn') d.set.input = s.input;
+    if (s.theme === 'light' || s.theme === 'dark') d.set.theme = s.theme;
     return d;
   }
   var data = loadData();
@@ -1034,14 +1129,21 @@
     var st = STYLE[type];
     var x = c * CELL, y = r * CELL;
     rrPath(g, x + 1.3, y + 1.3, CELL - 2.6, CELL - 2.6, CELL * 0.28);
+    /* 外圈微光：给方块留一道极淡的亮边，避免深色描边和深色背景糊成一片 */
+    g.strokeStyle = TH.halo;
+    g.lineWidth = 3;
+    g.stroke();
     var lg = g.createLinearGradient(0, y, 0, y + CELL);
     lg.addColorStop(0, st.b);
     lg.addColorStop(1, st.c);
     g.fillStyle = lg;
     g.fill();
-    g.strokeStyle = 'rgba(8,10,20,.82)';
-    g.lineWidth = 1.2;
+    /* 边缘微光：用方块自身的亮色描一圈淡边，替代原来的深色描边 */
+    g.strokeStyle = st.g;
+    g.globalAlpha = 0.5;
+    g.lineWidth = 1.4;
     g.stroke();
+    g.globalAlpha = 1;
     if (faceMark[r] && faceMark[r][c]) {
       var gs = faceMark[r][c];
       drawFace(g, x + CELL / 2, y + CELL / 2 + 1, 0.92, st, 'sleep', 0.34);
@@ -1057,20 +1159,20 @@
     var g = sctx, c, r;
     g.clearRect(0, 0, BW, BH);
     var lg = g.createLinearGradient(0, 0, 0, BH);
-    lg.addColorStop(0, '#0b0e1c');
-    lg.addColorStop(1, '#0d1020');
+    lg.addColorStop(0, TH.boardA);
+    lg.addColorStop(1, TH.boardB);
     g.fillStyle = lg;
     g.fillRect(0, 0, BW, BH);
-    g.strokeStyle = 'rgba(185,191,230,.055)';
+    g.strokeStyle = TH.grid;
     g.lineWidth = 1;
     g.beginPath();
     for (c = 1; c < COLS; c++) { g.moveTo(c * CELL + 0.5, 0); g.lineTo(c * CELL + 0.5, BH); }
     for (r = 1; r < ROWS; r++) { g.moveTo(0, r * CELL + 0.5); g.lineTo(BW, r * CELL + 0.5); }
     g.stroke();
-    g.fillStyle = 'rgba(4,5,12,.5)';
+    g.fillStyle = TH.hidden;
     g.fillRect(0, 0, BW, HIDDEN * CELL);
     g.save();
-    g.strokeStyle = 'rgba(197,48,60,.42)';
+    g.strokeStyle = TH.danger;
     g.setLineDash([5, 5]);
     g.beginPath();
     g.moveTo(0, HIDDEN * CELL + 0.5);
@@ -1113,9 +1215,14 @@
       addRound(p, (piece.x + cells[i][0]) * CELL + 1.4, (piece.y + cells[i][1]) * CELL + 1.4, CELL - 2.8, CELL - 2.8, CELL * 0.3);
     }
     ctx.lineJoin = 'round';
-    ctx.strokeStyle = st.d;
-    ctx.lineWidth = 4;
+    ctx.strokeStyle = TH.haloLand;
+    ctx.lineWidth = 6.4;
     ctx.stroke(p);
+    ctx.strokeStyle = st.g;
+    ctx.globalAlpha = 0.55;
+    ctx.lineWidth = 3;
+    ctx.stroke(p);
+    ctx.globalAlpha = 1;
     ctx.fillStyle = st.c;
     ctx.fill(p);
 
@@ -1155,9 +1262,14 @@
       addRound(p, (landFx.x + cells[i][0]) * CELL + 1.4, (landFx.y + cells[i][1]) * CELL + 1.4, CELL - 2.8, CELL - 2.8, CELL * 0.3);
     }
     ctx.lineJoin = 'round';
-    ctx.strokeStyle = st.d;
-    ctx.lineWidth = 4;
+    ctx.strokeStyle = 'rgba(206,214,255,.30)';
+    ctx.lineWidth = 6.4;
     ctx.stroke(p);
+    ctx.strokeStyle = st.g;
+    ctx.globalAlpha = 0.55;
+    ctx.lineWidth = 3;
+    ctx.stroke(p);
+    ctx.globalAlpha = 1;
     ctx.fillStyle = st.c;
     ctx.fill(p);
     var hero = pickFace(cells);
@@ -1195,11 +1307,12 @@
     for (i = 0; i < 4; i++) {
       var x = (piece.x + cells[i][0]) * CELL, y = (gy + cells[i][1]) * CELL;
       rrPath(ctx, x + 1.6, y + 1.6, CELL - 3.2, CELL - 3.2, CELL * 0.3);
-      ctx.globalAlpha = 0.1;
-      ctx.fillStyle = st.c;
+      var gcol = LIGHT ? st.d : st.c;
+      ctx.globalAlpha = LIGHT ? 0.12 : 0.1;
+      ctx.fillStyle = gcol;
       ctx.fill();
-      ctx.globalAlpha = 0.34;
-      ctx.strokeStyle = st.c;
+      ctx.globalAlpha = LIGHT ? 0.45 : 0.34;
+      ctx.strokeStyle = gcol;
       ctx.lineWidth = 1;
       ctx.setLineDash([4, 3]);
       ctx.stroke();
@@ -1236,9 +1349,12 @@
         rrPath(ctx, c * CELL + 1.3, y + 1.3, CELL - 2.6, CELL - 2.6, CELL * 0.28);
         ctx.fillStyle = st2.b;
         ctx.fill();
-        ctx.strokeStyle = 'rgba(8,10,20,.82)';
-        ctx.lineWidth = 1.2;
+        /* 边缘微光：消行动画里的方块也改用亮色淡边 */
+        ctx.strokeStyle = st2.g;
+        ctx.globalAlpha = fade * 0.5;
+        ctx.lineWidth = 1.4;
         ctx.stroke();
+        ctx.globalAlpha = fade;
         drawFace(ctx, cx2, cy2 + 1, 0.92, st2, 'surprised', fade);
         drawGlasses(ctx, cx2, cy2 + 1, 0.92, st2, faceMark[r][c], fade);
         if (earMark[r][c] && (r === 0 || !board[r - 1][c])) {
@@ -1328,9 +1444,14 @@
       addRound(p, cells[i][0] * CELL + 2, cells[i][1] * CELL + 2, CELL - 4, CELL - 4, CELL * 0.3);
     }
     g.lineJoin = 'round';
-    g.strokeStyle = st.d;
-    g.lineWidth = 5;
+    g.strokeStyle = TH.haloMini;
+    g.lineWidth = 7;
     g.stroke(p);
+    g.strokeStyle = st.g;
+    g.globalAlpha = (alpha == null ? 1 : alpha) * 0.55;
+    g.lineWidth = 4;
+    g.stroke(p);
+    g.globalAlpha = alpha == null ? 1 : alpha;
     g.fillStyle = st.c;
     g.fill(p);
     var face = pickFace(cells);
@@ -1352,7 +1473,7 @@
   /* ---------- 主绘制 ---------- */
   function draw() {
     ctx.clearRect(0, 0, CW, CH);
-    ctx.fillStyle = '#0a0c16';
+    ctx.fillStyle = TH.earPad;
     ctx.fillRect(0, 0, CW, EAR_PAD);
     ctx.save();
     ctx.translate(0, EAR_PAD);
@@ -1661,7 +1782,7 @@
     haptic(12);
     if (!lowPower) {
       for (i = 0; i < 4; i++) {
-        spawnBurst((piece.x + cells[i][0] + 0.5) * CELL, (piece.y + cells[i][1] + 1) * CELL, 2, 'rgba(185,191,230,.45)');
+        spawnBurst((piece.x + cells[i][0] + 0.5) * CELL, (piece.y + cells[i][1] + 1) * CELL, 2, LIGHT ? 'rgba(88,94,130,.5)' : 'rgba(185,191,230,.45)');
       }
     }
 
@@ -1964,7 +2085,19 @@
     setGhost.classList.toggle('on', !!data.set.ghost);
     setInput.textContent = data.set.input === 'touch' ? t('setTouch') : (data.set.input === 'btn' ? t('setBtn') : t('setBoth'));
     setInput.classList.add('on');
+    setTheme.textContent = data.set.theme === 'light' ? t('setThemeLight') : t('setThemeDark');
+    setTheme.classList.toggle('on', data.set.theme === 'light');
     applyInputMode();
+  }
+
+  function applyTheme(repaint) {
+    LIGHT = data.set.theme === 'light';
+    TH = LIGHT ? THEMES.light : THEMES.dark;
+    document.documentElement.classList.toggle('light', LIGHT);
+    document.body.classList.toggle('light', LIGHT);
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', LIGHT ? '#eef0f8' : '#0a0c16');
+    if (repaint !== false) { redrawStatic(); renderPreviews(); }
   }
 
   function applyInputMode() {
@@ -2280,6 +2413,13 @@
       persist();
       syncSetBtns();
     });
+    setTheme.addEventListener('click', function () {
+      setTheme.blur();
+      data.set.theme = data.set.theme === 'light' ? 'dark' : 'light';
+      persist();
+      syncSetBtns();
+      applyTheme();
+    });
 
     document.addEventListener('visibilitychange', function () {
       if (document.hidden && st === 'play') pauseGame();
@@ -2462,6 +2602,7 @@
     board = blankGrid();
     faceMark = blankGrid();
     earMark = blankGrid();
+    applyTheme(false);
     redrawStatic();
     renderPreviews();
     applyLang();
@@ -2474,6 +2615,9 @@
     requestAnimationFrame(loop);
     if (QS.get('selftest') === '1') setTimeout(selftest, 160);
   }
+
+  /* 供首页的「新版本自动刷新」读取对局状态：对局中（含暂停、结束动画）不允许刷新打断这一局 */
+  window.__tbState = function () { return st; };
 
   boot();
 })();
