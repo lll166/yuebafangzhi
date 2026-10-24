@@ -690,7 +690,7 @@
         newRecord = true;
         try { localStorage.setItem(BEST_KEY, String(best)); } catch(e) {}
       }
-      tickMs = Math.max(70, 150 - eaten * 3);
+      tickMs = Math.max(80, 150 - eaten * 2);
       scoreEl.textContent = eaten;
       scoreEl.classList.remove('pop');
       void scoreEl.offsetWidth;
