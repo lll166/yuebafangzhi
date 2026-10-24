@@ -6458,7 +6458,8 @@ function updateWeapons(dt){
       const e = nearestEnemyTo(p.x, p.y, 520);
       p.wcd.uroller = Math.max(1.2, 2.4 * atkMul(p));
       const a = e ? Math.atan2(e.y - p.y, e.x - p.x) : aimAngle(p, 520);
-      const wcnt = Math.min(3, 1 + Math.floor(multiSt(p) / 2));
+      /* 与进化前西瓜一致的弹数：多吐一颗的层数全额生效，不再折半 */
+      const wcnt = Math.min(3, 1 + multiSt(p));
       for(let k=0;k<wcnt;k++){
         if(G.melons.length >= 4) G.melons.shift();
         const wa = a + (k - (wcnt - 1) / 2) * 0.16;
@@ -6474,8 +6475,10 @@ function updateWeapons(dt){
         p.wcd.uroller2 = Math.max(0.6, 1.1 * atkMul(p));
         const a = Math.atan2(e.y - p.y, e.x - p.x);
         const scnt = Math.min(3, 1 + multiSt(p));
-        for(let k=0;k<scnt;k++)
-          spawnShot(p, a + (k - (scnt - 1) / 2) * 0.08, 900, wDmg(24, p), 5.5, 1.0, 3, '#7fe0a8');
+        for(let k=0;k<scnt;k++){
+          const sb = spawnShot(p, a + (k - (scnt - 1) / 2) * 0.08, 900, wDmg(24, p), 5.5, 1.0, 3, '#7fe0a8');
+          sb.vineGun = true;
+        }
         tone(360, 0.07, 'triangle', 0.03, 70);
       } else p.wcd.uroller2 = 0.3;
     }
@@ -6792,21 +6795,57 @@ function drawWeapons(){
     }
     ctx.restore();
   }
-  // 西瓜滚轮
+  // 西瓜滚轮 / 藤蔓巨轮
   for(let i=0;i<G.melons.length;i++){
     const m = G.melons[i];
     ctx.save();
     ctx.translate(m.x, m.y);
-    ctx.rotate(m.spin);
-    ctx.fillStyle = m.vine ? '#6fbf5a' : '#3fa34d';
-    if(PERF.shadows){ ctx.shadowColor = 'rgba(60,180,90,.5)'; ctx.shadowBlur = 10; }
-    ctx.beginPath(); ctx.arc(0, 0, m.r, 0, 6.28); ctx.fill();
-    ctx.shadowBlur = 0;
-    ctx.strokeStyle = m.vine ? 'rgba(185,255,180,.6)' : 'rgba(20,80,30,.55)';
-    ctx.lineWidth = 2;
-    for(let j=0;j<3;j++){
-      const a = j * 1.047;
-      ctx.beginPath(); ctx.arc(0, 0, m.r * 0.78, a, a + 0.9); ctx.stroke();
+    if(m.vine){
+      /* 藤蔓巨轮：带辐条的巨轮，旋转时轮廓和辐条清晰可见，区别于西瓜 */
+      ctx.rotate(m.spin * 1.6);
+      const R = m.r;
+      if(PERF.shadows){ ctx.shadowColor = 'rgba(110,255,150,.55)'; ctx.shadowBlur = 14; }
+      ctx.strokeStyle = '#2e8b57';
+      ctx.lineWidth = R * 0.34;
+      ctx.beginPath(); ctx.arc(0, 0, R * 0.8, 0, 6.28); ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = '#7fe0a8';
+      ctx.lineWidth = R * 0.08;
+      ctx.beginPath(); ctx.arc(0, 0, R * 0.86, 0, 6.28); ctx.stroke();
+      /* 辐射藤条 */
+      ctx.strokeStyle = '#93e06a';
+      ctx.lineWidth = Math.max(2, R * 0.11);
+      for(let j=0;j<6;j++){
+        const a = j * 1.0472;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * R * 0.26, Math.sin(a) * R * 0.26);
+        ctx.lineTo(Math.cos(a) * R * 0.78, Math.sin(a) * R * 0.78);
+        ctx.stroke();
+      }
+      /* 外缘缠绕的藤蔓 */
+      ctx.strokeStyle = 'rgba(190,255,180,.8)';
+      ctx.lineWidth = Math.max(1.5, R * 0.07);
+      for(let j=0;j<3;j++){
+        const a = j * 2.0944 + 0.4;
+        ctx.beginPath(); ctx.arc(0, 0, R * 0.98, a, a + 1.1); ctx.stroke();
+      }
+      /* 轮毂 */
+      ctx.fillStyle = '#c99a55';
+      ctx.beginPath(); ctx.arc(0, 0, R * 0.24, 0, 6.28); ctx.fill();
+      ctx.fillStyle = '#f0cf94';
+      ctx.beginPath(); ctx.arc(-R * 0.05, -R * 0.05, R * 0.09, 0, 6.28); ctx.fill();
+    } else {
+      ctx.rotate(m.spin);
+      ctx.fillStyle = '#3fa34d';
+      if(PERF.shadows){ ctx.shadowColor = 'rgba(60,180,90,.5)'; ctx.shadowBlur = 10; }
+      ctx.beginPath(); ctx.arc(0, 0, m.r, 0, 6.28); ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = 'rgba(20,80,30,.55)';
+      ctx.lineWidth = 2;
+      for(let j=0;j<3;j++){
+        const a = j * 1.047;
+        ctx.beginPath(); ctx.arc(0, 0, m.r * 0.78, a, a + 0.9); ctx.stroke();
+      }
     }
     ctx.restore();
   }
@@ -8291,6 +8330,35 @@ function drawHealDrop(g){
 }
 
 function drawBullet(b){
+  /* 藤枪：绿色藤杆 + 橙色萝卜枪尖 + 拖尾，和普通子弹区分开 */
+  if(b.vineGun){
+    const r = b.r;
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    ctx.rotate(Math.atan2(b.vy, b.vx));
+    const g = ctx.createLinearGradient(-r * 6, 0, 0, 0);
+    g.addColorStop(0, 'rgba(127,224,168,0)');
+    g.addColorStop(1, 'rgba(127,224,168,.55)');
+    ctx.strokeStyle = g;
+    ctx.lineWidth = r * 0.9;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(-r * 6, 0); ctx.lineTo(0, 0); ctx.stroke();
+    ctx.fillStyle = '#4fa868';
+    ctx.beginPath(); ctx.ellipse(-r * 0.2, 0, r * 1.7, r * 0.6, 0, 0, 6.28); ctx.fill();
+    ctx.fillStyle = 'rgba(190,255,180,.5)';
+    ctx.beginPath(); ctx.ellipse(-r * 0.5, -r * 0.18, r * 1.0, r * 0.16, 0, 0, 6.28); ctx.fill();
+    ctx.fillStyle = '#ff9a3c';
+    if(PERF.shadows){ ctx.shadowColor = 'rgba(255,150,60,.8)'; ctx.shadowBlur = 10; }
+    ctx.beginPath();
+    ctx.moveTo(r * 2.4, 0);
+    ctx.lineTo(r * 0.7, -r * 0.62);
+    ctx.lineTo(r * 0.55, 0);
+    ctx.lineTo(r * 0.7, r * 0.62);
+    ctx.closePath(); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+    return;
+  }
   const col = b.col || (b.cannon ? '#46e6f2' : '#ff8a5c');
   const gold = !!b.cannon;
   ctx.save();
