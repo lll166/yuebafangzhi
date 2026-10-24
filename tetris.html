@@ -1129,21 +1129,11 @@
     var st = STYLE[type];
     var x = c * CELL, y = r * CELL;
     rrPath(g, x + 1.3, y + 1.3, CELL - 2.6, CELL - 2.6, CELL * 0.28);
-    /* 外圈微光：给方块留一道极淡的亮边，避免深色描边和深色背景糊成一片 */
-    g.strokeStyle = TH.halo;
-    g.lineWidth = 3;
-    g.stroke();
     var lg = g.createLinearGradient(0, y, 0, y + CELL);
     lg.addColorStop(0, st.b);
     lg.addColorStop(1, st.c);
     g.fillStyle = lg;
     g.fill();
-    /* 边缘微光：用方块自身的亮色描一圈淡边，替代原来的深色描边 */
-    g.strokeStyle = st.g;
-    g.globalAlpha = 0.5;
-    g.lineWidth = 1.4;
-    g.stroke();
-    g.globalAlpha = 1;
     if (faceMark[r] && faceMark[r][c]) {
       var gs = faceMark[r][c];
       drawFace(g, x + CELL / 2, y + CELL / 2 + 1, 0.92, st, 'sleep', 0.34);
@@ -1349,12 +1339,6 @@
         rrPath(ctx, c * CELL + 1.3, y + 1.3, CELL - 2.6, CELL - 2.6, CELL * 0.28);
         ctx.fillStyle = st2.b;
         ctx.fill();
-        /* 边缘微光：消行动画里的方块也改用亮色淡边 */
-        ctx.strokeStyle = st2.g;
-        ctx.globalAlpha = fade * 0.5;
-        ctx.lineWidth = 1.4;
-        ctx.stroke();
-        ctx.globalAlpha = fade;
         drawFace(ctx, cx2, cy2 + 1, 0.92, st2, 'surprised', fade);
         drawGlasses(ctx, cx2, cy2 + 1, 0.92, st2, faceMark[r][c], fade);
         if (earMark[r][c] && (r === 0 || !board[r - 1][c])) {
