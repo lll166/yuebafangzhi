@@ -215,11 +215,20 @@
   }
   #scene .sbar .sname{font-weight:800;font-size:15px;color:var(--purple2);flex:1;min-width:90px;}
   #scene .sbar .btn{padding:6px 10px;font-size:12px;}
-  #sceneWoods{position:absolute;inset:0;z-index:3;}
+  /* 木头多到一屏放不下时，这一层可左右滚动；木头绝对定位在 .swinner 画布上 */
+  #sceneWoods{position:absolute;inset:0;z-index:3;overflow-x:auto;overflow-y:hidden;
+    overscroll-behavior:contain;touch-action:pan-x;-webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;scrollbar-color:rgba(126,87,194,.35) transparent;}
+  #sceneWoods::-webkit-scrollbar{height:6px;}
+  #sceneWoods::-webkit-scrollbar-track{background:transparent;}
+  #sceneWoods::-webkit-scrollbar-thumb{background:rgba(126,87,194,.35);border-radius:99px;}
+  #sceneWoods .swinner{position:relative;min-width:100%;height:100%;}
 
-  .wood{position:absolute;height:150px;transform-origin:center;transition:opacity .3s;}
+  .wood{position:absolute;height:150px;transform-origin:center;
+    transform:scale(var(--ws,1));transition:opacity .3s;}
   .wood.pop{animation:woodpop .35s cubic-bezier(.34,1.56,.64,1);}
-  @keyframes woodpop{0%{transform:scale(.6);}100%{transform:scale(1);}}
+  @keyframes woodpop{0%{transform:scale(calc(var(--ws,1) * .6));}
+    100%{transform:scale(var(--ws,1));}}
   .wimg{position:absolute;left:0;right:0;bottom:0;height:46px;border-radius:14px;z-index:1;
     background-size:cover;background-position:center;
     box-shadow:inset 0 3px 8px rgba(120,90,60,.25), inset 0 -5px 10px rgba(0,0,0,.18);}
@@ -236,6 +245,7 @@
   .wcell .val{position:absolute;top:-2px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:800;
     color:var(--gold);text-shadow:0 1px 2px rgba(255,255,255,.8);white-space:nowrap;}
   .wcell.grow .spr{animation:bob 2.4s ease-in-out infinite;}
+  .wcell.grow{touch-action:none;}   /* 生长中的月巴可拖拽：手指按在它身上时不触发场景滚动 */
   .wcell.mature .spr{animation:readyBounce .5s cubic-bezier(.34,1.56,.64,1);}
   .wcell.mature:hover .spr{transform:scale(1.1);}
   /* 双击换立绘：整株轻轻弹一下作反馈 */
@@ -3465,7 +3475,9 @@
   .gbcard:active{transform:scale(.96);}
   .gbcard .gbico{width:66px;height:66px;border-radius:50%;display:flex;align-items:center;justify-content:center;
     overflow:hidden;background:rgba(149,117,205,.12);border:1px solid rgba(149,117,205,.22);}
-  .gbcard .gbico svg,.gbcard .gbico img{width:80%;height:80%;object-fit:contain;display:block;}
+  /* 月巴图片本体投影：沿图案轮廓落影，让图片从圆底上浮起 */
+  .gbcard .gbico svg,.gbcard .gbico img{width:80%;height:80%;object-fit:contain;display:block;
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,.30));}
   .gbcard .gbnm{font-size:12px;font-weight:800;color:var(--gbtxt,var(--purple2));text-align:center;line-height:1.35;}
   .gbcard .gbsub{font-size:10px;font-weight:700;color:var(--dim);}
   /* 需解锁的小游戏：图标角上挂锁，卡片整体压暗，点开在箱内显示解锁条件 */
@@ -3888,36 +3900,28 @@ function fmtDurTrend(ms){ // 趋势图紧凑格式：长时长用本地化单位
 const ZONES=[
   {name:'初始庭院', icon:'🏡', cost:0,     woodBase:300,   woodMult:2.2,
    // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/1_FotoSketcherdd5b7aa2f895b494.jpg',
-   spots:[[15,60],[33,52],[52,62],[70,54],[86,61],[25,40],[62,40],[44,75]]},
+   bg:'https://origin.picgo.net/2026/09/03/1_FotoSketcherdd5b7aa2f895b494.jpg'},
   {name:'潮湿地下室', icon:'🕳️', cost:2000,   woodBase:900,   woodMult:2.3,
    // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/__128135210_FotoSketcherc9f81392cbdead6a.jpg',
-   spots:[[16,62],[34,54],[53,63],[71,55],[87,62],[26,42],[63,42],[45,76]]},
+   bg:'https://origin.picgo.net/2026/09/03/__128135210_FotoSketcherc9f81392cbdead6a.jpg'},
   {name:'玻璃温室', icon:'🌱', cost:12000,  woodBase:2600,  woodMult:2.4,
    // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/_1788429025766_35140043_FotoSketchere2f4a0425f632220.jpg',
-   spots:[[14,60],[31,52],[50,62],[68,54],[85,61],[24,40],[61,40],[43,75]]},
+   bg:'https://origin.picgo.net/2026/09/03/_1788429025766_35140043_FotoSketchere2f4a0425f632220.jpg'},
   {name:'天台风场', icon:'🌬️', cost:60000,  woodBase:8000,  woodMult:2.5,
    // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/__183720300_FotoSketcherf4ae1401dd537290.jpg',
-   spots:[[15,61],[33,53],[52,63],[70,55],[86,62],[26,41],[63,41],[45,76]]},
+   bg:'https://origin.picgo.net/2026/09/03/__183720300_FotoSketcherf4ae1401dd537290.jpg'},
   {name:'幽暗森林', icon:'🌲', cost:300000, woodBase:26000, woodMult:2.6,
    // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/_-_194310583_FotoSketcher982611e1ba4e7a12.jpg',
-   spots:[[14,60],[32,52],[51,62],[69,54],[85,61],[24,40],[61,40],[43,75]]},
+   bg:'https://origin.picgo.net/2026/09/03/_-_194310583_FotoSketcher982611e1ba4e7a12.jpg'},
   {name:'冰雪洞穴', icon:'❄️', cost:1500000, woodBase:90000, woodMult:2.7,
    // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/__131195802_FotoSketcherd1e880cdc7babeca.jpg',
-   spots:[[15,61],[33,53],[52,63],[70,55],[86,62],[26,41],[63,41],[45,76]]},
+   bg:'https://origin.picgo.net/2026/09/03/__131195802_FotoSketcherd1e880cdc7babeca.jpg'},
   {name:'熔岩深坑', icon:'🌋', cost:7000000, woodBase:300000,woodMult:2.8,
    // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/__1714459_FotoSketcherdaa767a1a264dfaf.jpg',
-   spots:[[14,60],[32,52],[51,62],[69,54],[85,61],[24,40],[61,40],[43,75]]},
+   bg:'https://origin.picgo.net/2026/09/03/__1714459_FotoSketcherdaa767a1a264dfaf.jpg'},
   {name:'云端之上', icon:'☁️', cost:30000000,woodBase:1000000,woodMult:3,
    // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/_-_194592063_FotoSketcher96545d1331d68cfd.jpg',
-   spots:[[15,61],[33,53],[52,63],[70,55],[86,62],[26,41],[63,41],[45,76]]},
+   bg:'https://origin.picgo.net/2026/09/03/_-_194592063_FotoSketcher96545d1331d68cfd.jpg'},
 ];
 // 木头图（自定义图片直链，玩家提供）
 const WOOD_IMG='https://origin.picgo.net/2026/09/03/58512f7c468327988fd65ba259f261417096759aace686b4.jpg';
@@ -4954,6 +4958,7 @@ const I18N_UI={
   '更多小游戏陆续装箱中…':{en:'More mini-games are being packed…',ja:'さらにミニゲームを追加予定…',ko:'더 많은 미니게임을 준비 중…'},
   '✕ 返回百巴箱':{en:'✕ Back to Box',ja:'✕ 箱に戻る',ko:'✕ 박스로 돌아가기'},
   '✕ 返回放置月巴':{en:'✕ Back to Idle Banny',ja:'✕ 放置バニーへ',ko:'✕ 방치 배니로'},
+  '中途退出结算 · 金币 +{a}':{en:'Exit settlement · Coins +{a}',ja:'途中退出の精算 · コイン +{a}',ko:'중도 퇴장 정산 · 코인 +{a}'},
   '（贪吃）蛇月巴':{en:'(Greedy) Snake Banny',ja:'（食いしん坊）ヘビバニー',ko:'（먹보）뱀 배니'},
   '🐍 蛇月巴':{en:'🐍 Snake Banny',ja:'🐍 ヘビバニー',ko:'🐍 뱀 배니'},
   '🐍 进入蛇月巴':{en:'🐍 Enter Snake Banny',ja:'🐍 ヘビバニーへ',ko:'🐍 뱀 배니 입장'},
@@ -8927,50 +8932,129 @@ function openScene(z){
   $('sceneName').textContent=`${ZONES[z].icon} ${ZONES[z].name}`;
   $('sceneBg').style.backgroundImage=`url('${ZONES[z].bg}')`;
   $('scene').classList.add('show');
+  $('sceneWoods').scrollLeft=0;
   renderSceneWoods();
   updateSceneBar();
   sfx.click();
 }
 function closeScene(){ $('scene').classList.remove('show'); currentZone=-1; for(const k in cellEls) delete cellEls[k]; clearFx(); }
-function woodSpot(z,wi){
-  const spots=ZONES[z].spots;
-  const base=spots[wi%spots.length];
-  const extra=Math.floor(wi/spots.length);
-  // 限制最低位置，避免手机端木头/月巴被屏幕底缘遮挡
-  return {l:base[0], t:Math.min(base[1]+extra*2, 70)};
+/* 木头自动排布：按屏幕尺寸分 2~6 排错落摆放，每根带横纵抖动与不均匀间距（木头本身不倾斜），
+   既保留「错落有致」的摆放感，又不会压住彼此的槽位；窄屏整体缩放以多露几根木头。
+   木头多到一屏放不下时场景层横向滚动，可以继续往右摆放。
+   位置只由存档里的木头顺序 + 稳定散列推导，旧存档无需迁移就会按同一规则重排。 */
+const WOOD_GAP_MIN=10, WOOD_GAP_MAX=34;   // 同一排相邻木头的水平间距范围
+const WOOD_MARGIN=16;                     // 最左侧留白
+/* 稳定散列再混合一次：弱散列连续取值时也能散开，避免木头位置/排布雷同 */
+function mixHash(n){
+  n=(n^61)^(n>>>16); n=(n+(n<<3))|0; n^=n>>>4;
+  n=Math.imul(n,0x27d4eb2d); n^=n>>>15;
+  return n>>>0;
+}
+function sceneWoodLayout(z){
+  const wrap=$('sceneWoods');
+  const W=Math.max(300, (wrap&&wrap.clientWidth)||innerWidth||360);
+  const H=Math.max(280, (wrap&&wrap.clientHeight)||innerHeight||640);
+  // 屏幕越窄木头越小：手机上能同时看到更多根，槽位仍够点
+  const scale=W<520?0.82:(W<820?0.92:1);
+  const vh=150*scale;
+  const bar=document.querySelector('#scene .sbar');
+  const barBottom=bar?bar.getBoundingClientRect().bottom:56;         // 顶部工具栏下沿，木头不压住它
+  const topLimit=Math.max(58, barBottom+8);
+  const bottomLimit=H-42;                                            // 底部提示条上方
+  const band=Math.max(vh*1.4, bottomLimit-topLimit);
+  const woods=S.zones[z].woods, out=[];
+  // 排数：先按「所有木头横向铺开需要几排」估，再用可用高度兜住上限
+  let visTotal=0;
+  for(let i=0;i<woods.length;i++) visTotal+=(110+woods[i].cells.length*22)*scale+20;
+  const rowsH=Math.max(2, Math.floor((band-vh)/(vh*0.62))+1);
+  let rows=Math.min(6, rowsH, Math.max(2, Math.ceil(visTotal/Math.max(220, W-WOOD_MARGIN*2))));
+  let step=rows>1?(band-vh)/(rows-1):0;
+  step=Math.max(vh*0.62, Math.min(step, vh*0.98));                   // 排间距：允许轻微搭接，但不糊成一团
+  const jyRange=Math.max(4, Math.min(26, (step-vh*0.62)/2));         // 排间距越大，纵向抖动越放开（打破「排成一条线」）
+  const frontTop=bottomLimit-vh/2-75;                                // 最前排排版框 top（缩放围绕中心）
+  const backMinTop=topLimit+vh/2-75;                                 // 最上排排版框 top 的下限（不压工具栏）
+  const startSpread=Math.min(64, W*0.12);                            // 每排起点随机错开，避免竖向连成列
+  // 每排起点错开，避免木头竖向排成一列
+  const cursor=[], counts=[];
+  for(let r=0;r<rows;r++){
+    cursor.push(WOOD_MARGIN+(mixHash(hashStr('row'+z+'_'+r))%startSpread));
+    counts.push(0);
+  }
+  for(let i=0;i<woods.length;i++){
+    const baseW=110+woods[i].cells.length*22;
+    const h=mixHash((hashStr('wood'+z)*31+i*2654435761)|0);
+    // 两排里选已放得更少的那一排：随机但不失衡
+    const r1=h%rows, r2=(h>>>7)%rows;
+    const row=counts[r1]<=counts[r2]?r1:r2;
+    counts[row]++;
+    const visW=baseW*scale;
+    const jx=((h>>>8)%11)-5;
+    const visLeft=cursor[row]+jx;
+    const gap=WOOD_GAP_MIN+((h>>>13)%(WOOD_GAP_MAX-WOOD_GAP_MIN+1));
+    cursor[row]=Math.max(cursor[row], visLeft+visW+gap);              // 同排按实际落点推进，不重叠太多
+    let top=frontTop-step*row+(((h>>>17)%(jyRange*2+1))-jyRange);     // 位置抖动
+    top=Math.min(frontTop, Math.max(backMinTop, top));                // 抖动后仍不越出工具栏/底部提示
+    out.push({
+      left:visLeft-baseW*(1-scale)/2,                                 // transform-origin 居中，换算成排版框 left
+      top, w:baseW, s:scale, z:40-row*6
+    });
+  }
+  return {out, width:Math.ceil(Math.max(W, ...cursor.map(c=>c+WOOD_MARGIN))), height:H};
+}
+/* 新买的木头若落在屏幕外，横向滚动过去让它露出来 */
+function scrollWoodIntoView(z,w){
+  const wrap=$('sceneWoods'), el=$('wood-'+z+'-'+w);
+  if(!wrap||!el) return;
+  const er=el.getBoundingClientRect(), wr=wrap.getBoundingClientRect();
+  if(er.left>=wr.left+8 && er.right<=wr.right-8) return;
+  const target=wrap.scrollLeft+(er.left+er.width/2)-(wr.left+wr.width/2);
+  try{ wrap.scrollTo({left:Math.max(0,target),behavior:'smooth'}); }catch(e){ wrap.scrollLeft=Math.max(0,target); }
 }
 function renderSceneWoods(){
-  const wrap=$('sceneWoods');
-  let html='';
-  for(let w=0;w<S.zones[currentZone].woods.length;w++){
-    const wood=S.zones[currentZone].woods[w];
-    const n=wood.cells.length;
-    const sp=woodSpot(currentZone,w);
-    html+=`<div class="wood" id="wood-${currentZone}-${w}" style="left:calc(${sp.l}% - ${(110+n*22)/2}px);top:calc(${sp.t}% - 75px);width:${110+n*22}px">
+  const wrap=$('sceneWoods'), z=currentZone;
+  if(!wrap||z<0) return;
+  const keep=wrap.scrollLeft;
+  const lay=sceneWoodLayout(z);
+  let html=`<div class="swinner" style="width:${lay.width}px;height:${lay.height}px">`;
+  for(let w=0;w<S.zones[z].woods.length;w++){
+    const wood=S.zones[z].woods[w];
+    const n=wood.cells.length, pos=lay.out[w];
+    html+=`<div class="wood" id="wood-${z}-${w}" style="left:${pos.left}px;top:${pos.top}px;width:${pos.w}px;--ws:${pos.s};z-index:${pos.z}">
       <div class="wslots">`;
     for(let i=0;i<n;i++){
       const left=(i+0.5)/n*100;
       const jx=((i*37)%21)-10;
-      html+=`<button class="wcell" id="cell-${currentZone}-${w}-${i}" data-z="${currentZone}" data-w="${w}" data-i="${i}"
-        style="left:${left}%;bottom:${4+jx}px" onclick="clickCell(${currentZone},${w},${i})"></button>`;
+      html+=`<button class="wcell" id="cell-${z}-${w}-${i}" data-z="${z}" data-w="${w}" data-i="${i}"
+        style="left:${left}%;bottom:${4+jx}px" onclick="clickCell(${z},${w},${i})"></button>`;
     }
     html+=`</div>
       <div class="wimg" style="background-image:url('${WOOD_IMG}'),linear-gradient(180deg,#cdb9e6,#a58fd0)"></div>
     </div>`;
   }
+  html+='</div>';
   wrap.innerHTML=html;
   // 重建 cell 引用
   for(const k in cellEls) delete cellEls[k];
-  for(let w=0;w<S.zones[currentZone].woods.length;w++){
-    const wood=S.zones[currentZone].woods[w];
+  for(let w=0;w<S.zones[z].woods.length;w++){
+    const wood=S.zones[z].woods[w];
     for(let i=0;i<wood.cells.length;i++){
-      const el=document.getElementById(`cell-${currentZone}-${w}-${i}`);
-      if(el){ cellEls[`${currentZone}-${w}-${i}`]=el; renderCell(currentZone,w,i); }
+      const el=document.getElementById(`cell-${z}-${w}-${i}`);
+      if(el){ cellEls[`${z}-${w}-${i}`]=el; renderCell(z,w,i); }
     }
   }
+  // 尽量保持当前横向滚动位置（买木头后由 scrollWoodIntoView 滚到新木头）
+  wrap.scrollLeft=Math.min(keep, Math.max(0, lay.width-wrap.clientWidth));
   // 新木头入场动画
   const last=wrap.querySelectorAll('.wood'); if(last.length) last[last.length-1].classList.add('pop');
 }
+/* 窗口尺寸变化后重新排布木头（防抖：拖拽/滚动过程中不反复重建） */
+let _sceneLayT=null;
+addEventListener('resize',function(){
+  clearTimeout(_sceneLayT);
+  _sceneLayT=setTimeout(function(){
+    if(currentZone>=0 && $('scene').classList.contains('show')) renderSceneWoods();
+  },200);
+});
 function renderCell(z,w,i){
   const cell=S.zones[z].woods[w].cells[i];
   const el=cellEls[`${z}-${w}-${i}`];
@@ -9314,7 +9398,7 @@ function buyWood(z){
   if(S.coins<c){ sfx.error(); toast($t('金币不足')); return; }
   S.coins-=c; zone.woods.push({cells:[null,null,null]});
   sfx.buy(); save(); renderOverview(); updateHeader();
-  if(currentZone===z){ renderSceneWoods(); updateSceneBar(); }
+  if(currentZone===z){ renderSceneWoods(); scrollWoodIntoView(z,zone.woods.length-1); updateSceneBar(); }
 }
 function upgradeSlots(z,w){
   const wood=S.zones[z].woods[w];
@@ -14673,6 +14757,12 @@ function svClose(){
   if(!svMode)return;
   const mode=svMode; svMode=null;
   const fr=$('svFrame'), ov=$('svOverlay');
+  /* 关窗即退出：先让独立页按未通关结算本局金币，再卸载 iframe */
+  let exitCoins=0;
+  try{
+    const w=fr&&fr.contentWindow;
+    if(w && typeof w.__svExitSettle==='function') exitCoins=+w.__svExitSettle()||0;
+  }catch(e){}
   try{ fr.src='about:blank'; }catch(e){}   // 卸载 iframe：停掉幸存者的计时与音效
   if(ov) ov.classList.remove('show');
   document.body.classList.remove('sv-lock');
@@ -14682,6 +14772,7 @@ function svClose(){
   }
   updateSurvivorIcon();
   try{ svBuffRender(true); }catch(e){}     // 装备可能刚在独立页改过
+  if(exitCoins>0) toast($tf('中途退出结算 · 金币 +{a}', {a:exitCoins}));
 }
 /* ================= （贪吃）蛇月巴（独立页入口） =================
    游戏本体在 snake.html；图鉴「蛇月巴」与百巴箱都从这里进。
@@ -18256,6 +18347,19 @@ function ddSparkHTML(cum){
       return st==='play'||st==='pause';
     }catch(e){ return true; }
   }
+  /* 俄罗斯巴块是否一局进行中：只有准备/结算面板才允许刷新首页；
+     对局中（含暂停、方块消除、结束动画）跳过，等这局打完再刷；读不到内嵌页状态时按进行中处理。 */
+  function tbBusy(){
+    if(typeof gbFrameId==='undefined'||gbFrameId!=='tetris') return false;
+    try{
+      var fr=document.getElementById('gbGameFrame');
+      var w=fr&&fr.contentWindow;
+      if(!w) return true;
+      if(typeof w.__tbState!=='function') return true;   // 内嵌页还没加载完：先别刷
+      var st=w.__tbState();
+      return st!=='ready' && st!=='over';
+    }catch(e){ return true; }
+  }
   /* 月巴拳魂是否一局进行中：只有标题页才允许刷新首页；
      选人、对战、过关、强化、结算（还挂着续关/换月巴）一律跳过，
      等这局结束、下一轮检查再刷；读不到内嵌页状态时按进行中处理。 */
@@ -18276,6 +18380,7 @@ function ddSparkHTML(cum){
     if(gbBusy()) return;                        // 黄金矿工 / 月巴数织一局进行中不打断
     if(fbBusy()) return;                        // 月巴拳魂一局进行中不打断
     if(snBusy()) return;                        // 蛇月巴一局进行中不打断
+    if(tbBusy()) return;                        // 俄罗斯巴块一局进行中不打断
     fetch(location.href,{method:'HEAD',cache:'no-store'}).then(sig).then(function(s){
       if(!s) return;                          // 该环境不返回版本标识时静默跳过
       if(base===null){ base=s; return; }       // 首次：记录基线
