@@ -68,6 +68,7 @@
   .coinline small{font-size:9px;line-height:1;opacity:.8;}
   .coinline b{font-size:12px;font-weight:800;letter-spacing:.5px;font-variant-numeric:tabular-nums;
     color:rgba(176,249,255,.72);text-shadow:0 1px 6px rgba(0,0,0,.55);}
+  .coinline small.cap{color:#ffd166;opacity:.95;letter-spacing:.5px;}
   /* 暂停放右下、血条上方：外层保留 44px 手指热区，图标本身画小 */
   .hud-actions{position:absolute;left:auto;right:14px;bottom:calc(86px + env(safe-area-inset-bottom));
     display:flex;align-items:center;gap:6px;pointer-events:auto;}
@@ -304,6 +305,7 @@
   .sanrow.charm.on{border-color:var(--line2);background:rgba(70,230,242,.09);
     box-shadow:inset 0 0 18px rgba(70,230,242,.06);}
   .sanrow.charm.lock{opacity:.42;}
+  .sanrow.lock{opacity:.5;}
   .sanrow.charm .lv{min-width:96px;}
   .cards.four{grid-template-columns:repeat(2,1fr);}
   .btnrow{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px;}
@@ -880,7 +882,7 @@
 <div id="hud" class="hidden">
   <div class="timerbox">
     <b id="timer">00:00</b>
-    <span class="coinline"><small>🪙</small><b id="coinText">0</b></span>
+    <span class="coinline"><small>🪙</small><b id="coinText">0</b><small id="coinCapText" class="cap hidden" data-t="coinCapHud">已达上限</small></span>
   </div>
   <div class="hud-top">
     <div class="topbars">
@@ -1477,7 +1479,7 @@ const T = {
     wp_uflame:'麻辣风暴', wp_uflame_d:'联合进化：喷火与落雷合体，持续火舌中不断劈落闪电',
     wp_uroller:'藤蔓巨轮', wp_uroller_d:'联合进化：标枪与西瓜合体，巨型藤轮碾场并不断射出藤枪',
     wp_ufarm:'炸弹农场', wp_ufarm_d:'联合进化：地雷与菠萝合体，同时布雷与抛弹，遍地开花',
-    wp_ufort:'光合要塞', wp_ufort_d:'联合进化：光束与叶盾合体，环身叶盾加高频贯穿光束并吸血',
+    wp_ufort:'光合要塞', wp_ufort_d:'联合进化：光束与叶盾合体，环身叶盾加高频贯穿光束并吸血，每秒上限 3% 最大生命',
     wp_corn:'玉米散射', wp_corn_d:'同时向最近的多个敌人各射出一粒爆裂玉米',
     wp_onion:'洋葱冲击环', wp_onion_d:'周期性以自身为中心释放环形冲击，伤害并减速周围敌人',
     wp_turret:'西兰花哨戒炮', wp_turret_d:'在脚下架设哨戒炮台，自动射击附近的敌人',
@@ -1538,6 +1540,7 @@ const T = {
     diff_nightmare:'噩梦', diff_nightmare_d:'敌人生命 ×1.7 · 金币 ×2.0',
     diffLocked:'通关第 {a} 关解锁',
     rewardLineChar:'本局角色', endlessBest:'无尽最佳', endlessKills:'无尽击杀',
+    coinCapHud:'已达上限', coinCapHint:'本局上限 {a} · 可继续挂机游玩',
     codexBtn:'📖 图鉴', codexTitle:'图鉴', codexSub:'已见 {a} · 已获得 {b}', codexUnknown:'???',
     codexTabWeapon:'武器', codexTabRelic:'宝物', codexSubWeapon:'共 {a} 件武器', codexGrpUnion:'联合进化',
     statsBtn:'📊 统计', statsTitle:'统计', statsSub:'数据来自首页存档',
@@ -1554,6 +1557,9 @@ const T = {
     san_rate:'连点器', san_rate_d:'每级射击间隔 -1.5%',
     san_crit:'幸运', san_crit_d:'每级暴击率 +2%',
     san_coin:'来财', san_coin_d:'每级关卡结算金币 +3%',
+    san_leech:'吸血', san_leech_d:'伤害的 6/9/12% 回血，每秒上限 1.5/2.5/3.5% 最大生命',
+    san_leech_lock:'通关噩梦难度第 5 关后解锁',
+    sanctLockedToast:'尚未解锁：先通关噩梦难度第 5 关',
     charmTitle:'信物', charmSub:'只能携带 1 个 · 每通关 1 关解锁 1 个', sanctUpTitle:'永久强化',
     charmEquip:'装备', charmEquipped:'已装备', charmOff:'卸下',
     charmLocked:'通关第 {a} 关解锁', charmOn:'已装备：{a}', charmOffToast:'已卸下信物',
@@ -1652,7 +1658,7 @@ const T = {
     wp_uflame:'Szechuan Storm', wp_uflame_d:'Union: flame + bolt. A constant fire cone with lightning strikes',
     wp_uroller:'Vine Roller', wp_uroller_d:'Union: javelin + melon. A giant vine wheel plus endless vine spears',
     wp_ufarm:'Bomb Farm', wp_ufarm_d:'Union: mine + bomb. Plants mines and lobs bombs at the same time',
-    wp_ufort:'Photosynthesis Fort', wp_ufort_d:'Union: beam + leaf. Leaf shield plus rapid piercing beams that lifesteal',
+    wp_ufort:'Photosynthesis Fort', wp_ufort_d:'Union: beam + leaf. Leaf shield plus rapid piercing beams that lifesteal, capped at 3% max HP per second',
     wp_corn:'Corn Scatter', wp_corn_d:'Fires one bursting kernel at each of several nearby enemies',
     wp_onion:'Onion Shockring', wp_onion_d:'Periodically releases a shock ring that damages and slows nearby enemies',
     wp_turret:'Broccoli Sentry', wp_turret_d:'Deploys a sentry turret that automatically shoots nearby enemies',
@@ -1713,6 +1719,7 @@ const T = {
     diff_nightmare:'Nightmare', diff_nightmare_d:'Enemy HP ×1.7 · Coins ×2.0',
     diffLocked:'Clear stage {a} to unlock',
     rewardLineChar:'Character', endlessBest:'Endless best', endlessKills:'Endless kills',
+    coinCapHud:'CAP REACHED', coinCapHint:'Run cap {a} · keep idling freely',
     codexBtn:'📖 Codex', codexTitle:'Codex', codexSub:'Seen {a} · Owned {b}', codexUnknown:'???',
     codexTabWeapon:'Weapons', codexTabRelic:'Relics', codexSubWeapon:'{a} weapons', codexGrpUnion:'Unions',
     statsBtn:'📊 Stats', statsTitle:'Stats', statsSub:'Data comes from the home-page save',
@@ -1729,6 +1736,9 @@ const T = {
     san_rate:'Rapid Fire', san_rate_d:'Fire interval −1.5% per level',
     san_crit:'Lucky', san_crit_d:'Crit chance +2% per level',
     san_coin:'Fortune', san_coin_d:'Stage coin payout +3% per level',
+    san_leech:'Lifesteal', san_leech_d:'Heal 6/9/12% of damage dealt, capped at 1.5/2.5/3.5% max HP per second',
+    san_leech_lock:'Clear Stage 5 on Nightmare to unlock',
+    sanctLockedToast:'Locked: clear Stage 5 on Nightmare first',
     charmTitle:'Keepsake', charmSub:'Carry only one · 1 unlocked per stage clear', sanctUpTitle:'Permanent upgrades',
     charmEquip:'Equip', charmEquipped:'Equipped', charmOff:'Unequip',
     charmLocked:'Clear stage {a} to unlock', charmOn:'Equipped: {a}', charmOffToast:'Keepsake removed',
@@ -1827,7 +1837,7 @@ const T = {
     wp_uflame:'麻辣ストーム', wp_uflame_d:'連合進化：火炎＋落雷。絶え間ない火舌と雷撃',
     wp_uroller:'蔦の大車輪', wp_uroller_d:'連合進化：投槍＋スイカ。巨大な蔦の車輪と絶え間ない蔦槍',
     wp_ufarm:'爆弾農園', wp_ufarm_d:'連合進化：地雷＋爆弾。地雷設置と爆弾投擲を同時に行う',
-    wp_ufort:'光合成要塞', wp_ufort_d:'連合進化：光線＋葉盾。葉の盾と高頻度貫通光線で吸収',
+    wp_ufort:'光合成要塞', wp_ufort_d:'連合進化：光線＋葉盾。葉の盾と高頻度貫通光線で吸収、毎秒 最大HP の 3% まで',
     wp_corn:'コーン散射', wp_corn_d:'近くの複数の敵それぞれに爆裂コーンを一発ずつ撃ち込む',
     wp_onion:'オニオン衝撃輪', wp_onion_d:'定期的に自身を中心とした衝撃輪を放ち、周囲の敵にダメージと減速',
     wp_turret:'ブロッコリー哨戒砲', wp_turret_d:'足元に哨戒砲を設置し、近くの敵を自動で射撃する',
@@ -1888,6 +1898,7 @@ const T = {
     diff_nightmare:'ナイトメア', diff_nightmare_d:'敵HP ×1.7 · コイン ×2.0',
     diffLocked:'ステージ {a} クリアで解放',
     rewardLineChar:'使用キャラ', endlessBest:'エンドレス最長', endlessKills:'エンドレス撃破',
+    coinCapHud:'上限到達', coinCapHint:'1プレイ上限 {a} · 放置プレイは継続OK',
     codexBtn:'📖 図鑑', codexTitle:'図鑑', codexSub:'確認 {a} · 獲得 {b}', codexUnknown:'???',
     codexTabWeapon:'武器', codexTabRelic:'宝物', codexSubWeapon:'武器 {a} 種', codexGrpUnion:'連合進化',
     statsBtn:'📊 統計', statsTitle:'統計', statsSub:'データはホームのセーブから取得',
@@ -1904,6 +1915,9 @@ const T = {
     san_rate:'速射', san_rate_d:'1 レベルごとに射撃間隔 −1.5%',
     san_crit:'幸運', san_crit_d:'1 レベルごとに会心率 +2%',
     san_coin:'招福', san_coin_d:'1 レベルごとにステージ報酬コイン +3%',
+    san_leech:'吸血', san_leech_d:'与えたダメージの 6/9/12% を回復。毎秒 最大HP の 1.5/2.5/3.5% まで',
+    san_leech_lock:'悪夢難易度のステージ5クリアで解放',
+    sanctLockedToast:'未解放：悪夢難易度のステージ5を先にクリア',
     charmTitle:'信物', charmSub:'1つだけ携帯 · ステージ1クリアごとに1つ解放', sanctUpTitle:'永久強化',
     charmEquip:'装備', charmEquipped:'装備中', charmOff:'外す',
     charmLocked:'ステージ {a} クリアで解放', charmOn:'装備しました：{a}', charmOffToast:'信物を外しました',
@@ -2002,7 +2016,7 @@ const T = {
     wp_uflame:'마라 폭풍', wp_uflame_d:'연합 진화: 화염+낙뢰. 끊임없는 화염과 번개',
     wp_uroller:'덩굴 대차륜', wp_uroller_d:'연합 진화: 투창+수박. 거대 덩굴 바퀴와 끊임없는 덩굴 창',
     wp_ufarm:'폭탄 농장', wp_ufarm_d:'연합 진화: 지뢰+폭탄. 지뢰 설치와 폭탄 투척을 동시에',
-    wp_ufort:'광합성 요새', wp_ufort_d:'연합 진화: 광선+잎 방패. 잎 방패와 고빈도 관통 광선으로 흡혈',
+    wp_ufort:'광합성 요새', wp_ufort_d:'연합 진화: 광선+잎 방패. 잎 방패와 고빈도 관통 광선으로 흡혈, 초당 최대 HP의 3%까지',
     wp_corn:'옥수수 산사', wp_corn_d:'가까운 여러 적에게 각각 폭발 옥수수를 한 발씩 발사한다',
     wp_onion:'양파 충격 고리', wp_onion_d:'주기적으로 자신을 중심으로 충격 고리를 방출해 주변 적에게 피해와 감속',
     wp_turret:'브로콜리 초소 포', wp_turret_d:'발밑에 초소 포를 설치해 가까운 적을 자동으로 사격한다',
@@ -2063,6 +2077,7 @@ const T = {
     diff_nightmare:'나이트메어', diff_nightmare_d:'적 HP ×1.7 · 코인 ×2.0',
     diffLocked:'스테이지 {a} 클리어 시 해금',
     rewardLineChar:'사용 캐릭터', endlessBest:'엔드리스 최고', endlessKills:'엔드리스 처치',
+    coinCapHud:'한도 도달', coinCapHint:'1판 한도 {a} · 계속 방치 플레이 가능',
     codexBtn:'📖 도감', codexTitle:'도감', codexSub:'확인 {a} · 획득 {b}', codexUnknown:'???',
     codexTabWeapon:'무기', codexTabRelic:'유물', codexSubWeapon:'무기 {a}종', codexGrpUnion:'연합 진화',
     statsBtn:'📊 통계', statsTitle:'통계', statsSub:'데이터는 홈 저장에서 가져옵니다',
@@ -2079,6 +2094,9 @@ const T = {
     san_rate:'속사', san_rate_d:'레벨당 사격 간격 -1.5%',
     san_crit:'행운', san_crit_d:'레벨당 치명타 확률 +2%',
     san_coin:'재물', san_coin_d:'레벨당 스테이지 코인 보상 +3%',
+    san_leech:'흡혈', san_leech_d:'입힌 피해의 6/9/12%를 회복, 초당 최대 HP의 1.5/2.5/3.5%까지',
+    san_leech_lock:'악몽 난이도 스테이지 5 클리어 시 해금',
+    sanctLockedToast:'미해금: 악몽 난이도 스테이지 5를 먼저 클리어',
     charmTitle:'신물', charmSub:'1개만 휴대 · 스테이지 클리어마다 1개 해금', sanctUpTitle:'영구 강화',
     charmEquip:'장착', charmEquipped:'장착 중', charmOff:'해제',
     charmLocked:'스테이지 {a} 클리어 시 해금', charmOn:'장착: {a}', charmOffToast:'신물 해제',
@@ -2294,7 +2312,7 @@ function svDefault(){
     stageClear:0, stageSel:1, stageBest:{}, relics:{}, relicSeen:{}, chests:0,
     chars:{unlocked:{tomato:true}, sel:'tomato'},
     diff:'normal', mode:'campaign', endlessBest:0, endlessKills:0,
-    daily:{day:'', best:0}, novel:{unlocked:1, seen:0}, sanctuary:{hp:0, dmg:0, luck:0, reroll:0, spd:0, rate:0, crit:0, coin:0}, charm:'',
+    daily:{day:'', best:0}, novel:{unlocked:1, seen:0}, sanctuary:{hp:0, dmg:0, luck:0, reroll:0, spd:0, rate:0, crit:0, coin:0, leech:0}, charm:'',
     gear:{owned:{}, equipped:[], bonus:{time:0, card:0, spec:0, tomato:0, home:0, steal:0, visit:0, rest:0, gamble:0, food:0, rare:0}},
     settings:{dmgNum:true, shake:true, parts:true},
     runs:0, totalKills:0};
@@ -2312,7 +2330,8 @@ function normSv(sv){
   if(!sv.novel || typeof sv.novel !== 'object') sv.novel = {unlocked:1, seen:0};
   sv.novel.unlocked = clamp(parseInt(sv.novel.unlocked, 10) || 1, 1, Math.max(1, NOVEL.length));
   sv.novel.seen = clamp(parseInt(sv.novel.seen, 10) || 0, 0, sv.novel.unlocked);
-  if(!sv.sanctuary || typeof sv.sanctuary !== 'object') sv.sanctuary = {hp:0, dmg:0, luck:0, reroll:0, spd:0, rate:0, crit:0, coin:0};
+  if(!sv.sanctuary || typeof sv.sanctuary !== 'object') sv.sanctuary = {hp:0, dmg:0, luck:0, reroll:0, spd:0, rate:0, crit:0, coin:0, leech:0};
+  if(typeof sv.sanctuary.leech !== 'number') sv.sanctuary.leech = 0;
   if(typeof sv.charm !== 'string' || !charmDef(sv.charm)) sv.charm = '';
   if(!sv.settings || typeof sv.settings !== 'object') sv.settings = {dmgNum:true, shake:true, parts:true};
   if(!sv.gear || typeof sv.gear !== 'object') sv.gear = {owned:{}, equipped:[], bonus:{time:0, card:0, spec:0}};
@@ -2349,10 +2368,12 @@ function saveSv(mut){
 /* 单局金币系数：通关重复收益 / 未通关收益（击杀 + 存活秒），两者独立调整 */
 const RUN_COIN_RATE = 0.1;
 const RUN_COIN_LOSS_RATE = 0.4;
+/* 无尽模式单局金币上限：达到上限后仍可继续挂机游玩，只是本局不再增加金币 */
+const ENDLESS_COIN_CAP = 3000;
 function applyRewards(victory, stats, stage){
   const st = stage || stageDef(1);
   let save = readSave();
-  const out = { ok:false, coins:0, gifts:[], first:false, clears:0, total:0, stage:st.n, firstStage:false, unlockedNext:false, stageClear:0, stageBest:null, gearDrop:null, gearCoins:0, novel:null };
+  const out = { ok:false, coins:0, capped:false, gifts:[], first:false, clears:0, total:0, stage:st.n, firstStage:false, unlockedNext:false, stageClear:0, stageBest:null, gearDrop:null, gearCoins:0, novel:null };
   /* 读不到首页存档时（直接打开本页、存储被清理等）不再静默返回 0 金币，
      而是就地补一份最小存档，保证结算的金币照常计算并写入 */
   const newSave = !save;
@@ -2399,6 +2420,11 @@ function applyRewards(victory, stats, stage){
         (1 + coinLv * 0.03) * charmCoinMul
       );
   out.coins = coins + (stats.bonusCoins || 0);
+  /* 无尽模式单局封顶：金币不再增加，但玩家可以继续挂机游玩 */
+  if(stats.mode === 'endless' && out.coins >= ENDLESS_COIN_CAP){
+    out.coins = ENDLESS_COIN_CAP;
+    out.capped = true;
+  }
 
   /* 金币独立：只进幸存者自己的钱包（save.svCoins），不与首页 save.coins 互通 */
   save.svCoins = (save.svCoins || 0) + out.coins;
@@ -2467,7 +2493,7 @@ function applyRewards(victory, stats, stage){
   const np = nextPlayable(st.n);
   out.unlockedNext = !!(victory && np && out.stageClear >= st.n && !stageBestOfIn(sv, np.n, diff));
   sv.lastReward = {
-    at: Date.now(), victory: !!victory, coins: coins, stage: st.n,
+    at: Date.now(), victory: !!victory, coins: out.coins, stage: st.n,
     gifts: out.gifts.map(function(g){ return g.id; }),
     time: stats.time, kills: stats.kills, level: stats.level,
     mode: stats.mode || 'campaign', diff: diff, char: stats.char || sv.chars.sel
@@ -2864,7 +2890,10 @@ const SANCT = [
   {k:'spd',    max:6,  base:600,  cap:9000,  key:'san_spd'},
   {k:'rate',   max:5,  base:800,  cap:12000, key:'san_rate'},
   {k:'crit',   max:5,  base:1000, cap:12000, key:'san_crit'},
-  {k:'coin',   max:5,  base:900,  cap:10000, key:'san_coin'}
+  {k:'coin',   max:5,  base:900,  cap:10000, key:'san_coin'},
+  /* 吸血：伤害转化生命，按最大生命限制每秒回复量；噩梦第 5 关通关后解锁 */
+  {k:'leech',  max:3,  base:8000, cap:32000, key:'san_leech',
+    conv:[0.06,0.09,0.12], healCap:[0.015,0.025,0.035], nightmare:5}
 ];
 /* 信物：整局只能携带 1 个，按通关关卡逐个解锁 */
 const CHARMS = [
@@ -2901,6 +2930,13 @@ function endlessUnlocked(){ return stageClearN() >= 6; }
 function sanLv(k){ const sv = svData(); const d = sanctDef(k); const v = sv && sv.sanctuary && sv.sanctuary[k]; return clamp(parseInt(v, 10) || 0, 0, d ? d.max : 10); }
 function sanctDef(k){ for(let i=0;i<SANCT.length;i++) if(SANCT[i].k === k) return SANCT[i]; return null; }
 function sanctCost(k, lv){ const d = sanctDef(k); if(!d) return 0; return Math.min(d.cap, d.base * Math.pow(2, lv)); }
+/* 圣所解锁：nightmare 表示「以噩梦难度通关指定关」 */
+function sanctUnlocked(d){
+  if(!d || !d.nightmare) return true;
+  const sv = svData();
+  const rec = sv && sv.stageBest && sv.stageBest[bestKey(d.nightmare, 'nightmare')];
+  return !!(rec && typeof rec === 'object' && rec.time > 0);
+}
 
 const G = {
   state:'menu', time:0, kills:0, level:1, xp:0, xpNeed:8, pendingLv:0,
@@ -2949,6 +2985,12 @@ function newPlayer(){
   p.speed *= 1 + sanLv('spd') * 0.015;
   p.rate *= Math.pow(0.985, sanLv('rate'));
   p.crit = Math.min(0.6, p.crit + sanLv('crit') * 0.02);
+  /* 圣所吸血：伤害转化率 + 每秒回血上限（按最大生命百分比），与其它回血来源各自独立 */
+  const lchLv = sanLv('leech'), lchDef = sanctDef('leech');
+  p.leechPct = (lchLv > 0 && lchDef) ? lchDef.conv[lchLv - 1] : 0;
+  p.leechCapPct = (lchLv > 0 && lchDef) ? lchDef.healCap[lchLv - 1] : 0;
+  p.leechFxT = 0;
+  p.healWin = {};
   /* 信物（全局只携带 1 个，整局生效） */
   if(G.charm === 'soul'){
     p.maxHp = Math.max(30, Math.round(p.maxHp * 0.75));
@@ -3248,7 +3290,10 @@ const RELICS = [
     d:{zh:'9% 概率造成 2 倍伤害',en:'9% chance for 2× damage',ja:'9% の確率で 2倍ダメージ',ko:'9% 확률로 2배 피해'}},
   {id:'leech',  rar:2, ic:'🩸', max:3,
     n:{zh:'边打边吃',en:'Leech',ja:'吸血',ko:'흡혈'},
-    d:{zh:'击杀回复 1 生命',en:'Heal 1 per kill',ja:'撃破ごとに HP 1 回復',ko:'처치 시 체력 1 회복'}},
+    d:{zh:'击杀回复 1 生命；每秒最多 1.5% 最大生命（随层数叠加）',
+       en:'Heal 1 per kill; up to 1.5% max HP per second (scales with stacks)',
+       ja:'撃破ごとに HP 1 回復；毎秒 最大HP の 1.5% まで（重ね掛けで増加）',
+       ko:'처치 시 체력 1 회복; 초당 최대 HP의 1.5%까지 (중첩 시 증가)'}},
   {id:'boom',   rar:2, ic:'💣', max:2,
     n:{zh:'艺术就是爆炸',en:'Detonation',ja:'爆裂',ko:'폭발'},
     d:{zh:'击杀产生 60px 范围爆炸',en:'Kills explode within 60px',ja:'撃破時に 60px 爆発',ko:'처치 시 60px 폭발'}},
@@ -5405,15 +5450,41 @@ function healP(p, n){
   if(!p || !(n > 0) || G.charm === 'karma') return;
   p.hp = Math.min(p.maxHp, p.hp + n);
 }
+/* 战斗回血上限：每个来源独立计算，每秒最多回复 capPct 倍最大生命 */
+function healCapped(p, amount, key, capPct){
+  if(!p || !(amount > 0) || !(capPct > 0) || p.hp <= 0 || G.charm === 'karma') return 0;
+  if(!p.healWin) p.healWin = {};
+  let w = p.healWin[key];
+  if(!w || G.time < w.t || G.time - w.t >= 1) w = p.healWin[key] = {t:G.time, used:0};
+  const cap = p.maxHp * capPct;
+  const heal = Math.min(amount, Math.max(0, cap - w.used));
+  if(heal <= 0) return 0;
+  w.used += heal;
+  healP(p, heal);
+  return heal;
+}
+/* 圣所吸血：按实际命中伤害回血，并受每秒上限约束 */
+function leechGain(real){
+  const p = G.player;
+  if(!p || !(real > 0) || p.leechPct <= 0 || p.hp <= 0) return;
+  const healed = healCapped(p, real * p.leechPct, 'sanLeech', p.leechCapPct);
+  if(healed <= 0) return;
+  if(G.time - (p.leechFxT || 0) >= 0.4){
+    p.leechFxT = G.time;
+    for(let i=0;i<3;i++) addPart(p.x + rand(-10, 10), p.y + rand(-10, 10), '#ff6b8a', rand(1.6, 3), rand(0.25, 0.5));
+    if(G.rings.length < 16) G.rings.push({x:p.x, y:p.y, r:22, t:0.3, max:0.3, col:'#ff6b8a'});
+  }
+}
 function durEff(st){
   const endless = (G.mode === 'endless');
   const df = diffDef(G.diff);
-  let base = st.dur * (endless ? 1 : (df.dur || 1));
+  /* 无尽模式同样套用难度时长曲线：困难/噩梦首 Boss 更晚，与战役同难度的曲线一致 */
+  let base = st.dur * (df.dur || 1);
   if(!endless) base = Math.max(base, df.durMin || 0);
   return Math.round(base * (G.charm === 'hourglass' ? 0.88 : 1));
 }
-/* 节奏曲线用时长：加时段沿用关卡基础曲线（不摊薄），无尽模式保持原行为 */
-function paceDur(st){ return (G.mode === 'endless') ? G.dur : st.dur; }
+/* 节奏曲线用时长：加时段沿用关卡基础曲线（不摊薄），无尽模式也按同一曲线 */
+function paceDur(st){ return st.dur; }
 function wDmg(base, p){ return base * Math.max(0.5, p.dmg * charmDmgMul(p) / 4); }
 /* ===== 基础强化 → 副武器生效规则 =====
  * 伤害：所有武器共享 p.dmg（见 wDmg）
@@ -6470,7 +6541,7 @@ function updateWeapons(dt){
           hits++;
           if(en.hp <= 0) killEnemy(en);
         }
-        if(hits > 0) healP(p, Math.min(3, hits));
+        if(hits > 0) healCapped(p, Math.min(3, hits), 'ufort', 0.03);
         if(G.beams.length >= 6) G.beams.shift();
         G.beams.push({x1:p.x, y1:p.y, x2:x2, y2:y2, t:0.22, max:0.22, col:'#a8e07a'});
         tone(480, 0.1, 'sine', 0.035, 90);
@@ -7031,7 +7102,8 @@ function killEnemy(e, fromBoom){
     G.booms.push({x:e.x, y:e.y, t:0.9, r:70, dmg:14, dead:false});
   }
   // 吸血
-  if(p && p.leech > 0 && p.hp > 0) healP(p, p.leech);
+  if(p && p.leech > 0 && p.hp > 0)
+    healCapped(p, p.leech, 'leech', 0.015 * p.leech);   // 每层每秒上限 1.5% 最大生命
   // 舔包：击杀时概率回血（与吸血区分，按层数提高概率）
   if(p && p.hp > 0 && relLv('sprout') > 0 && Math.random() < 0.18 * relLv('sprout')) healP(p, 1);
   // 爆裂遗物：击杀引发范围伤害（连锁爆炸不再二次触发）
@@ -7159,9 +7231,11 @@ function trackDmgNums(){
   for(let i=0;i<G.enemies.length;i++){
     const e = G.enemies[i];
     if(e._hpPrev == null){ e._hpPrev = e.hp; continue; }
-    const delta = e._hpPrev - e.hp;
+    const before = e._hpPrev;
+    const delta = before - e.hp;
     e._hpPrev = e.hp;
     if(delta <= 0) continue;                 // 被治疗者回血，忽略
+    leechGain(Math.min(delta, Math.max(0, before)));   // 过杀伤害不计
     e._dacc = (e._dacc || 0) + delta;
     if(e._dacc < 0.8) continue;              // 极小持续伤害先累积，避免每帧都冒字
     const dmg = e._dacc;
@@ -8774,13 +8848,15 @@ function drawMinimap(){
  * HUD / 结算
  * ============================================================ */
 let _hudAt = 0;
-/* 本局实时金币：与「此刻失败」的结算收益一致（击杀 + 存活秒，含各类金币倍率） */
+/* 本局实时金币：与「此刻失败」的结算收益一致（击杀 + 存活秒，含各类金币倍率）
+   无尽模式同样受单局上限约束 */
 function liveRunCoins(){
   if(!G.player || G.state === 'menu' || G.state === 'result') return 0;
   const coinLv = sanLv('coin');
   const charmMul = (G.charm === 'greed' ? 1.35 : 1) * (G.charm === 'hourglass' ? 1.12 : 1);
-  return Math.round((G.kills + G.time) * RUN_COIN_LOSS_RATE *
+  const v = Math.round((G.kills + G.time) * RUN_COIN_LOSS_RATE *
     (G.player.coinMul || 1) * (1 + coinLv * 0.03) * charmMul) + (G.player.bonusCoins || 0);
+  return (G.mode === 'endless' && v >= ENDLESS_COIN_CAP) ? ENDLESS_COIN_CAP : v;
 }
 function updateHUD(){
   if(G.state === 'menu' || G.state === 'result'){ $('hud').classList.add('hidden'); return; }
@@ -8806,7 +8882,10 @@ function updateHUD(){
     }
   }
   $('timer').textContent = fmtTime(G.time);
-  $('coinText').textContent = (G.state === 'result' && G.result) ? (G.result.reward.coins || 0) : liveRunCoins();
+  const liveCoins = (G.state === 'result' && G.result) ? (G.result.reward.coins || 0) : liveRunCoins();
+  $('coinText').textContent = liveCoins;
+  const capEl = $('coinCapText');
+  if(capEl) capEl.classList.toggle('hidden', !(G.mode === 'endless' && liveCoins >= ENDLESS_COIN_CAP));
   $('xpText').textContent = 'Lv.' + G.level + ' · ' + Math.floor(G.xp) + ' / ' + G.xpNeed;
   $('xpFill').style.width = clamp(G.xp / G.xpNeed * 100, 0, 100) + '%';
 
@@ -9281,6 +9360,10 @@ function renderResult(){
   const lines = [];
   lines.push('<div class="rewardline"><span>' + esc(t('rewardLineChar')) + '</span><b>' + esc(t('char_' + r.stats.char)) + '</b></div>');
   lines.push('<div class="rewardline"><span>' + esc(t('rewardLineCoin')) + '</span><b>+' + r.reward.coins + '</b></div>');
+  if(r.reward.capped){
+    lines.push('<div class="rewardline"><span>' + esc(t('coinCapHud')) + '</span><b>'
+      + esc(t('coinCapHint', ENDLESS_COIN_CAP)) + '</b></div>');
+  }
   if(r.reward.gearDrop){
     lines.push('<div class="rewardline"><span>' + esc(t('gearDrop')) + '</span><b>'
       + esc(gearName(r.reward.gearDrop)) + ' · ' + esc(gearDesc(r.reward.gearDrop))
@@ -9844,13 +9927,14 @@ function renderSanctuary(){
   $('sanctRows').innerHTML = SANCT.map(function(d){
     const lv = sanLv(d.k);
     const maxed = lv >= d.max;
+    const locked = !sanctUnlocked(d);
     const cost = maxed ? 0 : sanctCost(d.k, lv);
-    const can = !maxed && coins >= cost;
-    return '<div class="sanrow"><div class="info"><b>' + esc(t(d.key)) + '</b>'
-      + '<small>' + esc(t(d.key + '_d')) + '</small></div>'
-      + '<span class="lv">Lv.' + lv + ' / ' + d.max + '</span>'
+    const can = !locked && !maxed && coins >= cost;
+    return '<div class="sanrow' + (locked ? ' lock' : '') + '"><div class="info"><b>' + esc(t(d.key)) + '</b>'
+      + '<small>' + esc(locked ? t(d.key + '_lock') : t(d.key + '_d')) + '</small></div>'
+      + '<span class="lv">' + (locked ? '' : 'Lv.' + lv + ' / ' + d.max) + '</span>'
       + '<button class="buy" data-k="' + d.k + '"' + (can ? '' : ' disabled') + '>'
-      + (maxed ? esc(t('sanctMax')) : '💰 ' + cost) + '</button></div>';
+      + (locked ? '🔒' : (maxed ? esc(t('sanctMax')) : '💰 ' + cost)) + '</button></div>';
   }).join('');
   Array.prototype.forEach.call($('sanctRows').querySelectorAll('.buy'), function(el){
     el.onclick = function(){ buySanct(el.getAttribute('data-k')); };
@@ -9896,6 +9980,7 @@ function buySanct(k){
   if(!d) return false;
   const lv = sanLv(k);
   if(lv >= d.max) return false;
+  if(!sanctUnlocked(d)){ toast(t('sanctLockedToast')); return false; }
   const cost = sanctCost(k, lv);
   const save = readSave();
   if(!save){ toast(t('noSave')); return false; }
