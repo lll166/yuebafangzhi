@@ -4020,7 +4020,8 @@ const TYPES=[
   {id:'mb_qingren',  name:'爱情月巴', r:6, v:500, t:600, cond:null, weight:0.1, color:'#e06b9c', shape:'heart'},
   {id:'mb_wuyi',     name:'劳动月巴', r:6, v:400, t:600, cond:null, weight:0.1, color:'#d98a5f', shape:'cube'},
   {id:'mb_guoqing',  name:'庆祝月巴', r:6, v:500, t:600, cond:null, weight:0.1, color:'#c9536b', shape:'star'},
-  {id:'mb_wansheng', name:'万圣月巴', r:6, v:600, t:600, cond:null, weight:0.1, color:'#8f74c9', shape:'moon'},
+  {id:'mb_wansheng', name:'万圣月巴', img:'https://origin.picgo.net/2026/10/25/---Yidi-Nyaomi-Lib4ec70c5a69d6d5a.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/25/---Yidi-Nyaomi-Lib4ec70c5a69d6d5a.th.png', by:'Nyaomi'}], r:6, v:600, t:600, cond:null, weight:0.1, color:'#8f74c9', shape:'moon'},
   {id:'mb_shengdan', name:'圣诞月巴', r:6, v:700, t:600, cond:null, weight:0.1, color:'#c95f8a', shape:'star'},
   {id:'mb_zhongqiu', name:'中秋月巴', r:6, v:550, t:600, cond:null, weight:0.1, color:'#d9a44e', shape:'moon'},
 
@@ -4215,6 +4216,10 @@ const TYPES3=[
     imgs:[{url:'https://origin.picgo.net/2026/10/25/5184c509e7017738e29c29fd93540a98dc98667d5767b52a.th.png', by:'Nyaomi'}], r:3, v:40, t:420, cond:null, color:'#7ec8e3', shape:'cube'},
   {id:'m3_you',      name:'鱿巴',      img:'https://origin.picgo.net/2026/10/25/fa99573013c8914358ccc065c6cb7bf3d161a11cf298572f.th.png',
     imgs:[{url:'https://origin.picgo.net/2026/10/25/fa99573013c8914358ccc065c6cb7bf3d161a11cf298572f.th.png', by:'番凩'}], r:4, v:70, t:700, cond:null, color:'#c98bd0', shape:'tall'},
+  {id:'m3_egg',      name:'电子宠物巴', img:'https://origin.picgo.net/2026/10/25/new-banny---Phuong-Uyen-Nguyenf4a2e131c7ef8d69.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/25/new-banny---Phuong-Uyen-Nguyenf4a2e131c7ef8d69.th.png', by:'hellomelody'}], r:2, v:20, t:200, cond:null, color:'#a8c8b8', shape:'round'},
+  {id:'m3_badaba',   name:'巴拉巴巴巴', img:'https://origin.picgo.net/2026/10/25/---Yidi-Nyaomi-Li343d957950ab0548.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/25/---Yidi-Nyaomi-Li343d957950ab0548.th.png', by:'Nyaomi'}], r:4, v:80, t:760, cond:null, color:'#9a8fa8', shape:'wide'},
 ];
 const RAR_NAME={1:'普通',2:'常见',3:'稀有',4:'史诗',5:'传说',6:'活动'};
 const R_H={1:[2,5],2:[4,8],3:[6,12],4:[10,20],5:[16,30],6:[22,40]};   // 身高 cm 范围
@@ -4277,6 +4282,9 @@ const YB_PIC_AUTHOR={
   mb_yunduan:'鲸弑',
   mb_zhengdian:'鲸弑',
   m2_bai:'Nyaomi',
+  m3_egg:'hellomelody',
+  m3_badaba:'Nyaomi',
+  mb_wansheng:'Nyaomi',
 };
 /* 每种月巴的「简介(文字)作者」by ID，图鉴详情弹窗简介末尾展示；未填则不显示文字作者 */
 const YB_TXT_AUTHOR={};
@@ -4493,6 +4501,8 @@ const FAT_INTRO={
   m3_cangshu:'仓鼠月巴偷吃掉了你的番茄！',
   m3_eluosi:'这个游戏好像bug了，永远不会出现第11个巴块。',
   m3_you:'鱿鱼鱿鱼。',
+  m3_egg:'总有一天会变成乖孩子（？）',
+  m3_badaba:'很不高兴为您服务。',
 };
 
 /* ---------------- 界面皮肤（图鉴解锁） ---------------- */
@@ -7101,6 +7111,8 @@ const I18N_BANNY={
   m3_cangshu:{n:{en:'Hamster Banny',ja:'ハムスターバニー',ko:'햄스터배니'}},
   m3_eluosi:{n:{en:'Tetris Banny',ja:'テトリスバニー',ko:'테트리스배니'}},
   m3_you:{n:{en:'Squid Banny',ja:'イカバニー',ko:'오징어배니'}},
+  m3_egg:{n:{en:'Egg Banny',ja:'エッグバニー',ko:'에그배니'}},
+  m3_badaba:{n:{en:'Badabababa',ja:'バダバババ',ko:'바다바바바'}},
 
   dest_forest:{n:{en:'Forest Edge',ja:'森のほとり',ko:'숲의 가장자리'}},
   dest_fairy:{n:{en:'Fairy Hideaway',ja:'桃源郷',ko:'무릉도원'}},
@@ -7580,6 +7592,8 @@ const I18N_BANNY={
   m3_cangshu_intro:{d:{en:'The Hamster Banny sneaked in and ate your tomatoes!',ja:'ハムスターバニーがあなたのトマトをこっそり食べちゃった！',ko:'햄스터배니가 네 토마토를 몰래 훔쳐 먹었어!'}},
   m3_eluosi_intro:{d:{en:'This game seems to be bugged, the 11th banny never appears.',ja:'このゲームはバグっているようで、11 番目のバニーが永遠に現れない。',ko:'이 게임은 버그가 난 것 같아서, 11번째 배니는 영원히 나타나지 않는다.'}},
   m3_you_intro:{d:{en:'Squid, squid.',ja:'イカ、イカ。',ko:'오징어, 오징어.'}},
+  m3_egg_intro:{d:{en:'It will become a good boy someday(?)',ja:'いつかきっといい子になる（？）',ko:'언젠가는 좋은 아이가 될 거야(?)'}},
+  m3_badaba_intro:{d:{en:'You are not welcome.',ja:'喜んでご案内する気はありません。',ko:'기분 좋게 응대해 드릴 생각은 없습니다.'}},
   /* ---------- P5：成就描述 ach_<id>_desc（字段 d） ---------- */
   ach_h1_desc:{d:{en:'Harvest your first Banny',ja:'初めてバニーを収穫する',ko:'첫 배니를 수확하기'}},
   ach_d1_desc:{d:{en:'Unlock 10 Banny species in the Codex',ja:'図鑑で 10 種のバニーを解放する',ko:'도감에서 배니 10종 해금하기'}},
