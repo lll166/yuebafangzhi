@@ -1,0 +1,2482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0a0c16">
+<title>俄罗斯巴块 · 百巴箱</title>
+<style>
+  :root{
+    --bg:#0a0c16; --bg2:#151830;
+    --line:rgba(185,191,230,.20); --line2:rgba(185,191,230,.48);
+    --text:#e9ebf8; --dim:#8b90b5;
+    --accent:#b9bfe6; --accent2:#eef0ff; --mid:#7e81ab;
+    --red:#c5303c; --red2:#ff5b66;
+    --board:#0d1020;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;}
+  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);}
+  body{font-family:"SF Mono","Cascadia Mono",Consolas,system-ui,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    touch-action:none;overscroll-behavior:none;}
+  body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:radial-gradient(120% 82% at 50% 6%,transparent 46%,rgba(3,4,10,.66) 100%);}
+  #stage{position:fixed;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;
+    padding:calc(8px + env(safe-area-inset-top)) 10px calc(8px + env(safe-area-inset-bottom));
+    background:radial-gradient(72% 58% at 50% 40%,rgba(52,56,96,.30),rgba(2,3,10,0) 72%);}
+  #wrap{display:flex;flex-direction:column;gap:6px;width:min(420px,100%);max-height:100%;}
+
+  /* ---------- 顶部 HUD ---------- */
+  #topbar{display:flex;align-items:center;gap:5px;height:34px;padding:0 1px;flex:0 0 auto;}
+  .brand{font-size:12px;font-weight:900;letter-spacing:2px;white-space:nowrap;color:var(--text);}
+  .brand span{color:var(--accent2);text-shadow:0 0 14px rgba(185,191,230,.6);}
+  .stats{display:flex;align-items:center;gap:4px;margin-left:auto;}
+  .stat{display:flex;align-items:baseline;gap:4px;padding:3px 6px;
+    border:1px solid var(--line);border-left:2px solid var(--line2);
+    background:linear-gradient(180deg,rgba(24,27,48,.9),rgba(12,14,28,.94));
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%);}
+  .stat span{font-size:7px;font-weight:800;letter-spacing:1px;color:var(--dim);}
+  .stat b{display:inline-block;min-width:16px;font-size:12px;text-align:right;color:var(--accent2);
+    font-variant-numeric:tabular-nums;}
+  @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+  .pop{animation:pop .26s ease-out;}
+  #btnPause,#btnAch{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:2px;
+    height:32px;font-family:inherit;line-height:1;color:var(--accent2);cursor:pointer;
+    border:1px solid var(--line);background:linear-gradient(180deg,rgba(24,27,48,.9),rgba(12,14,28,.94));
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%);}
+  #btnPause{width:30px;font-size:11px;}
+  #btnAch{padding:0 5px;font-size:11px;}
+  #btnAch b{font-size:7px;font-weight:800;letter-spacing:0;color:var(--dim);font-variant-numeric:tabular-nums;}
+  #btnPause:active,#btnAch:active{transform:scale(.94);}
+
+  /* ---------- 行数等级 / 预览 ---------- */
+  #prow{display:flex;align-items:stretch;gap:5px;height:58px;flex:0 0 auto;}
+  .pbox{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px 4px 3px;
+    border:1px solid var(--line);background:linear-gradient(180deg,rgba(22,25,45,.85),rgba(11,13,26,.92));
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%);}
+  .plbl{font-size:6.5px;font-weight:900;letter-spacing:1.4px;color:var(--dim);}
+  .pstats{display:flex;flex-direction:column;justify-content:center;gap:3px;flex:0 0 64px;min-width:0;}
+  .pstat{display:flex;align-items:baseline;justify-content:space-between;gap:3px;padding:2px 5px;
+    border:1px solid var(--line);background:rgba(12,15,28,.7);
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%);}
+  .pstat span{font-size:6.5px;font-weight:800;letter-spacing:1px;color:var(--dim);}
+  .pstat b{font-size:11px;color:var(--accent2);font-variant-numeric:tabular-nums;}
+  .nextw{flex:1;min-width:0;}
+  .nextRow{display:flex;align-items:center;justify-content:center;gap:2px;}
+  .nextRow canvas{display:block;width:32px;height:32px;}
+
+  /* ---------- 棋盘 ---------- */
+  #frameWrap{display:flex;justify-content:center;align-items:flex-start;flex:0 0 auto;}
+  #frame{position:relative;overflow:hidden;background:#05060d;border:1px solid var(--line2);
+    box-shadow:0 0 26px rgba(185,191,230,.10),0 18px 46px rgba(0,0,0,.62),inset 0 0 34px rgba(185,191,230,.04);}
+  #cv{display:block;width:100%;height:100%;}
+  #frame .scan{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:.34;
+    background:repeating-linear-gradient(0deg,rgba(200,206,245,.05) 0 1px,transparent 1px 3px);}
+  #frame::before{content:'';position:absolute;inset:5px;z-index:3;pointer-events:none;opacity:.55;
+    background:
+      linear-gradient(var(--accent),var(--accent)) left top/13px 2px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) left top/2px 13px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) right top/13px 2px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) right top/2px 13px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) left bottom/13px 2px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) left bottom/2px 13px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) right bottom/13px 2px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) right bottom/2px 13px no-repeat;}
+
+  /* ---------- 弹层 ---------- */
+  #overlay{position:absolute;inset:0;z-index:4;display:none;align-items:center;justify-content:center;padding:8px;
+    background:radial-gradient(90% 70% at 50% 42%,rgba(28,31,58,.60),rgba(3,4,10,.86));
+    -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);}
+  #overlay.show{display:flex;}
+  #overlay .panel{position:relative;width:100%;max-height:100%;overflow-y:auto;overscroll-behavior:contain;
+    padding:14px 12px 12px;text-align:center;
+    background:linear-gradient(180deg,rgba(24,27,50,.97),rgba(9,11,22,.985));
+    border:1px solid var(--line2);border-radius:3px;
+    box-shadow:0 16px 44px rgba(0,0,0,.62),inset 0 0 28px rgba(185,191,230,.05);}
+  #overlay .panel::before{content:'';position:absolute;inset:6px;pointer-events:none;opacity:.45;
+    background:
+      linear-gradient(var(--accent),var(--accent)) left top/11px 2px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) left top/2px 11px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) right top/11px 2px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) right top/2px 11px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) left bottom/11px 2px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) left bottom/2px 11px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) right bottom/11px 2px no-repeat,
+      linear-gradient(var(--accent),var(--accent)) right bottom/2px 11px no-repeat;}
+  .kicker{font-size:8px;font-weight:900;letter-spacing:3.5px;color:var(--accent);opacity:.9;}
+  #ovTitle{font-size:20px;font-weight:900;letter-spacing:3px;line-height:1.2;margin:6px 0 3px;color:var(--accent2);
+    text-shadow:0 0 16px rgba(185,191,230,.5),0 0 40px rgba(185,191,230,.18);}
+  #overlay .panel.over #ovTitle{color:var(--red2);text-shadow:0 0 16px rgba(255,91,102,.45),0 0 40px rgba(197,48,60,.22);}
+  #ovSub{font-size:10px;line-height:1.6;color:var(--dim);margin:4px 0 8px;}
+  #ovStats{display:none;grid-template-columns:repeat(4,1fr);gap:3px;margin:2px 0 8px;}
+  .ovCell{display:flex;flex-direction:column;gap:1px;padding:3px 2px;border:1px solid var(--line);background:rgba(10,13,26,.6);}
+  .ovCell span{font-size:6.5px;font-weight:800;letter-spacing:1px;color:var(--dim);}
+  .ovCell b{font-size:12px;color:var(--accent2);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;}
+  #ovRec{font-size:8.5px;line-height:1.5;letter-spacing:.5px;color:rgba(139,144,181,.95);margin-bottom:6px;min-height:1px;}
+  #setWrap{display:none;margin:8px 0 2px;padding-top:6px;border-top:1px solid var(--line);}
+  .setTitle{font-size:7.5px;font-weight:900;letter-spacing:1.6px;color:var(--dim);margin-bottom:4px;}
+  .setGrid{display:grid;grid-template-columns:1fr 1fr;gap:3px;}
+  .setBtn{height:24px;padding:0 3px;font-family:inherit;font-size:8px;font-weight:800;letter-spacing:.2px;
+    color:var(--dim);cursor:pointer;border:1px solid var(--line);background:rgba(12,15,28,.7);}
+  .setBtn.on{color:#0b0d17;border-color:transparent;
+    background:linear-gradient(180deg,var(--accent2),var(--accent));}
+  .setBtn:active{transform:scale(.97);}
+  #ovBtn{width:100%;margin-top:8px;padding:10px 0;border:0;cursor:pointer;font-family:inherit;
+    font-size:11px;font-weight:900;letter-spacing:2.5px;color:#0b0d17;
+    background:linear-gradient(180deg,var(--accent2),var(--accent));
+    box-shadow:0 0 16px rgba(185,191,230,.3);
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%);}
+  #ovBtn:active{transform:translateY(1px);filter:brightness(.94);}
+  #ovBtn2{display:none;width:100%;margin-top:5px;padding:7px 0;cursor:pointer;font-family:inherit;
+    font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--dim);
+    border:1px solid var(--line);background:rgba(12,15,28,.7);}
+  #ovBtn2:active{transform:scale(.98);}
+  #ovHint{margin-top:7px;font-size:8px;line-height:1.5;letter-spacing:.5px;color:rgba(139,144,181,.85);}
+
+  /* ---------- 成就弹层 ---------- */
+  #achModal{position:absolute;inset:0;z-index:6;display:none;align-items:center;justify-content:center;padding:6px;
+    background:radial-gradient(90% 70% at 50% 42%,rgba(28,31,58,.78),rgba(3,4,10,.92));
+    -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);}
+  #achModal.show{display:flex;}
+  .achPanel{width:100%;max-height:100%;display:flex;flex-direction:column;
+    background:linear-gradient(180deg,rgba(24,27,50,.97),rgba(9,11,22,.985));
+    border:1px solid var(--line2);border-radius:3px;
+    box-shadow:0 16px 44px rgba(0,0,0,.62),inset 0 0 28px rgba(185,191,230,.05);}
+  .achTop{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;padding:9px 10px 7px;
+    border-bottom:1px solid var(--line);}
+  .achKicker{font-size:7px;font-weight:900;letter-spacing:2.5px;color:var(--accent);opacity:.9;}
+  .achTitle{font-size:12px;font-weight:900;letter-spacing:2px;color:var(--accent2);margin-top:3px;}
+  .achTitle b{font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--dim);margin-left:3px;}
+  #achClose{width:24px;height:24px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+    font-family:inherit;font-size:10px;color:var(--accent2);cursor:pointer;border:1px solid var(--line);
+    background:linear-gradient(180deg,rgba(24,27,48,.9),rgba(12,14,28,.94));}
+  #achClose:active{transform:scale(.94);}
+  .achList{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+    padding:8px 9px 10px;display:flex;flex-direction:column;gap:4px;}
+  .achTier{font-size:7px;font-weight:900;letter-spacing:1.8px;color:var(--dim);margin:4px 0 1px;}
+  .achRow{display:flex;align-items:center;gap:6px;padding:5px 6px;
+    border:1px solid var(--line);background:rgba(14,17,32,.6);}
+  .achRow.done{border-color:rgba(185,191,230,.52);
+    background:linear-gradient(180deg,rgba(40,44,74,.85),rgba(16,19,36,.9));}
+  .achIcon{width:20px;height:20px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+    font-size:11px;border:1px solid var(--line);background:rgba(9,11,22,.7);}
+  .achTxt{min-width:0;text-align:left;}
+  .achName{font-size:10px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .achDesc{font-size:8px;line-height:1.45;color:var(--dim);margin-top:1px;}
+  .achState{margin-left:auto;flex:0 0 auto;font-size:8px;font-weight:800;letter-spacing:.3px;color:var(--dim);
+    font-variant-numeric:tabular-nums;text-align:right;}
+  .achRow.done .achState{color:var(--accent2);}
+  .achFoot{padding:6px 10px;border-top:1px solid var(--line);text-align:center;
+    font-size:7.5px;line-height:1.5;color:rgba(139,144,181,.85);}
+
+  /* ---------- 成就横幅 / 连击 / 大字 ---------- */
+  #achToast{position:absolute;left:50%;top:8px;z-index:5;transform:translate(-50%,-160%);
+    max-width:94%;padding:5px 10px;font-size:9px;font-weight:900;letter-spacing:.8px;color:#0b0d17;
+    background:linear-gradient(180deg,var(--accent2),var(--accent));
+    box-shadow:0 0 15px rgba(185,191,230,.42);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    pointer-events:none;opacity:0;
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%);
+    transition:transform .22s ease,opacity .22s ease;}
+  #achToast.show{transform:translate(-50%,0);opacity:1;}
+  #comboPop{position:absolute;right:7px;top:34%;z-index:5;pointer-events:none;opacity:0;
+    font-size:14px;font-weight:900;letter-spacing:1px;color:var(--red2);
+    text-shadow:0 0 12px rgba(255,91,102,.6),0 2px 8px rgba(0,0,0,.6);}
+  #comboPop.show{animation:comboIn .7s ease-out;}
+  @keyframes comboIn{0%{opacity:0;transform:translateY(8px) scale(.7)}22%{opacity:1;transform:translateY(0) scale(1.15)}70%{opacity:1;transform:scale(1)}100%{opacity:0;transform:translateY(-10px)}}
+  #banner{position:absolute;left:50%;top:44%;z-index:5;transform:translate(-50%,-50%);pointer-events:none;
+    opacity:0;white-space:nowrap;font-size:17px;font-weight:900;letter-spacing:3px;color:var(--accent2);
+    text-shadow:0 0 18px rgba(185,191,230,.6),0 3px 10px rgba(0,0,0,.6);}
+  #banner.red{color:#fff;text-shadow:0 0 18px rgba(255,91,102,.85),0 0 40px rgba(197,48,60,.5);}
+  #banner.show{animation:bannerIn .9s ease-out;}
+  @keyframes bannerIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}18%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}72%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.04)}}
+
+  /* ---------- 提示 / 手机按键 ---------- */
+  #tips{height:13px;flex:0 0 auto;font-size:8px;line-height:13px;letter-spacing:.6px;text-align:center;
+    color:rgba(139,144,181,.82);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #ctrl{display:none;grid-template-columns:repeat(5,1fr);gap:4px;flex:0 0 auto;}
+  body.touch #ctrl{display:grid;}
+  body.touch[data-input="touch"] #ctrl{display:none;}
+  .cbtn{height:46px;display:flex;align-items:center;justify-content:center;
+    font-family:inherit;font-size:14px;font-weight:800;line-height:1;color:var(--accent2);cursor:pointer;
+    touch-action:none;border:1px solid var(--line);
+    background:linear-gradient(180deg,rgba(24,27,48,.92),rgba(12,14,28,.95));
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);
+    box-shadow:inset 0 0 12px rgba(185,191,230,.05);transition:transform .06s ease,background .06s ease;}
+  .cbtn.drop{font-size:17px;color:var(--red2);border-color:rgba(197,48,60,.45);
+    box-shadow:inset 0 0 14px rgba(197,48,60,.12);}
+  .cbtn.on,.cbtn:active{transform:scale(.94);color:#0b0d17;
+    background:linear-gradient(180deg,var(--accent2),var(--accent));
+    box-shadow:0 0 16px rgba(185,191,230,.4);}
+  .cbtn.drop.on,.cbtn.drop:active{background:linear-gradient(180deg,var(--red2),var(--red));box-shadow:0 0 16px rgba(255,91,102,.42);}
+
+  /* ---------- 自测面板 ---------- */
+  #selfTest{position:absolute;inset:0;z-index:9;display:none;align-items:center;justify-content:center;padding:6px;
+    background:rgba(2,3,10,.9);}
+  #selfTest.show{display:flex;}
+  .stPanel{width:100%;max-height:100%;display:flex;flex-direction:column;border:1px solid var(--line2);
+    background:linear-gradient(180deg,rgba(22,25,45,.98),rgba(8,10,20,.99));}
+  .stTop{padding:6px 9px;font-size:8px;font-weight:900;letter-spacing:2px;color:var(--accent2);
+    border-bottom:1px solid var(--line);}
+  .stList{overflow-y:auto;padding:6px 8px 9px;display:flex;flex-direction:column;gap:3px;}
+  .stRow{display:flex;gap:5px;font-size:8px;line-height:1.35;color:var(--dim);}
+  .stRow b{flex:0 0 12px;text-align:center;}
+  .stRow.ok b{color:#7bf5b5;}
+  .stRow.ng b{color:var(--red2);}
+  .stRow.ng{color:#ffb3b8;}
+
+  @media (max-height:560px){
+    #tips{display:none;}
+    #prow{height:48px;}
+    .nextRow canvas{width:26px;height:26px;}
+    .cbtn{height:40px;}
+    #ovTitle{font-size:17px;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .pop{animation:none;}
+    #achToast{transition:none;}
+    #comboPop.show,#banner.show{animation:none;opacity:1;}
+  }
+  body.low #frame .scan{display:none;}
+  body.low #frame{box-shadow:0 10px 26px rgba(0,0,0,.55);}
+  body.low #banner,body.low #comboPop{text-shadow:none;}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="wrap">
+    <div id="topbar">
+      <div class="brand" id="brand">俄罗斯<span>巴块</span></div>
+      <div class="stats">
+        <div class="stat"><span>SCORE</span><b id="scoreEl">0</b></div>
+        <div class="stat"><span>BEST</span><b id="bestEl">0</b></div>
+      </div>
+      <button id="btnAch">🏆<b id="achCount">0/15</b></button>
+      <button id="btnPause">❚❚</button>
+    </div>
+
+    <div id="prow">
+      <div class="pstats">
+        <div class="pstat"><span>LINES</span><b id="linesEl">0</b></div>
+        <div class="pstat"><span>LEVEL</span><b id="levelEl">1</b></div>
+      </div>
+      <div class="pbox nextw">
+        <span class="plbl">NEXT</span>
+        <div class="nextRow">
+          <canvas id="nx1" width="80" height="80"></canvas>
+          <canvas id="nx2" width="80" height="80"></canvas>
+          <canvas id="nx3" width="80" height="80"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div id="frameWrap">
+      <div id="frame">
+        <canvas id="cv" width="240" height="542"></canvas>
+        <div class="scan" id="scan"></div>
+        <div id="comboPop"></div>
+        <div id="banner"></div>
+        <div id="achToast" aria-live="polite"></div>
+
+        <div id="overlay" class="show">
+          <div class="panel" id="ovPanel">
+            <div class="kicker" id="ovKicker">// READY //</div>
+            <h1 id="ovTitle">俄罗斯巴块</h1>
+            <p id="ovSub"></p>
+            <div id="ovStats">
+              <div class="ovCell"><span>SCORE</span><b id="ovScore">0</b></div>
+              <div class="ovCell"><span>LINES</span><b id="ovLines">0</b></div>
+              <div class="ovCell"><span>LEVEL</span><b id="ovLevel">1</b></div>
+              <div class="ovCell"><span>COMBO</span><b id="ovCombo">0</b></div>
+            </div>
+            <div id="ovRec"></div>
+            <div id="setWrap">
+              <div class="setTitle" id="setTitle">设置</div>
+              <div class="setGrid">
+                <button class="setBtn" id="setSound"></button>
+                <button class="setBtn" id="setHaptics"></button>
+                <button class="setBtn" id="setGhost"></button>
+                <button class="setBtn" id="setInput"></button>
+              </div>
+            </div>
+            <button id="ovBtn">开始</button>
+            <button id="ovBtn2"></button>
+            <div id="ovHint"></div>
+          </div>
+        </div>
+
+        <div id="achModal">
+          <div class="achPanel">
+            <div class="achTop">
+              <div>
+                <div class="achKicker">// ACHIEVEMENTS //</div>
+                <div class="achTitle"><span id="achTitleTxt">成就</span><b id="achTotal">0/15</b></div>
+              </div>
+              <button id="achClose">✕</button>
+            </div>
+            <div class="achList" id="achList"></div>
+            <div class="achFoot" id="achFoot"></div>
+          </div>
+        </div>
+
+        <div id="selfTest">
+          <div class="stPanel">
+            <div class="stTop">SELF TEST</div>
+            <div class="stList" id="stList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tips"></div>
+
+    <div id="ctrl" role="group">
+      <button class="cbtn" id="bLeft">◀</button>
+      <button class="cbtn" id="bRight">▶</button>
+      <button class="cbtn" id="bRot">↻</button>
+      <button class="cbtn" id="bDown">▼</button>
+      <button class="cbtn drop" id="bDrop">⇩</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  /* ==================== PART 1 · 语言 / 常量 / 存档 ==================== */
+  var QS = new URLSearchParams(location.search);
+  var MAIN_KEY = 'idle-yueba-save-v2';
+  var SAVE_KEY = 'yueba-tetris-v1';
+  var mainSave = {};
+  try { mainSave = JSON.parse(localStorage.getItem(MAIN_KEY) || '{}') || {}; } catch (e) { mainSave = {}; }
+
+  var LANGS = ['zh', 'en', 'ja', 'ko'];
+  var TXT = {
+    zh: {
+      brand1: '俄罗斯', brand2: '巴块',
+      score: 'SCORE', best: 'BEST', lines: 'LINES', level: 'LEVEL',
+      next: 'NEXT', combo: 'COMBO',
+      ovReadyKicker: '// CLASSIC ENDLESS //',
+      ovReadySub: '经典无尽 · 月巴们会一直掉下来，直到堆到顶端。',
+      ovStart: '开 始',
+      ovReadyHint: '← → 移动 · ↑ / X 旋转 · ↓ 软降 · 空格 硬降 · P 暂停',
+      readyBest: '历史最高 {n} 分 · {l} 行',
+      ovPauseKicker: '// PAUSED //',
+      ovPauseTitle: '已暂停',
+      ovPauseSub: '月巴们在半空中睡着了。',
+      ovResume: '继 续',
+      ovRestart: '重 开',
+      ovPauseHint: '继续后从暂停处掉落，本局成绩保留。',
+      ovOverKicker: '// GAME OVER //',
+      ovOverTitle: '月巴们睡着了',
+      ovOverSub: '棋盘堆到顶端，这一局结束了。',
+      ovAgain: '再 来 一 局',
+      ovOverHint: '空格键 / 点击按钮可以马上再来一局。',
+      setTitle: '设置（只影响本页）',
+      setSoundOn: '音效 开', setSoundOff: '音效 关',
+      setHapticsOn: '震动 开', setHapticsOff: '震动 关',
+      setGhostOn: '影子 开', setGhostOff: '影子 关',
+      setBoth: '手势 + 按键', setTouch: '仅手势', setBtn: '仅按键',
+      tipsDesktop: '← → 移动 · ↑/X 旋转 · Z 逆旋 · ↓ 软降 · 空格 硬降',
+      tipsTouch: '点按旋转 · 左右拖动移动 · 下滑软降 · 快速下滑硬降',
+      achTitle: '成就', achFoot: '成就只记录在本机 · 不影响主存档',
+      achCommon: '普通', achLong: '长线', achHidden: '隐藏',
+      achLocked: '未达成', achDone: '已达成',
+      bannerTetris: '四消 · 大丰收',
+      bannerPerfect: '全 清',
+      recNew: '新纪录！最高分 {n}',
+      recBest: '历史最高 {n} 分',
+      recNone: '还没有记录，这一局就是新纪录。',
+      achToast: '成就达成 · {n}',
+      ach_t_first_clear_n: '初次收获', ach_t_first_clear_d: '消除第一行月巴。',
+      ach_t_tetris_n: '大丰收', ach_t_tetris_d: '一次消掉 4 行（四消）。',
+      ach_t_perfect_n: '一尘不染', ach_t_perfect_d: '完成一次全清（Perfect Clear）。',
+      ach_t_combo3_n: '三连收获', ach_t_combo3_d: '连续 3 次消行。',
+      ach_t_combo5_n: '五连收获', ach_t_combo5_d: '连续 5 次消行。',
+      ach_t_lv5_n: '五级月巴', ach_t_lv5_d: '达到等级 5。',
+      ach_t_hard_20_n: '急坠', ach_t_hard_20_d: '单局硬降 20 次。',
+      ach_t_lv10_n: '十级月巴', ach_t_lv10_d: '达到等级 10。',
+      ach_t_lv15_n: '十五级月巴', ach_t_lv15_d: '达到等级 15。',
+      ach_t_total_100_n: '百行', ach_t_total_100_d: '累计消除 100 行。',
+      ach_t_total_1000_n: '千行', ach_t_total_1000_d: '累计消除 1000 行。',
+      ach_t_score_10k_n: '一万分', ach_t_score_10k_d: '单局得分达到 10000。',
+      ach_t_score_50k_n: '五万分', ach_t_score_50k_d: '单局得分达到 50000。',
+      ach_t_run_100_n: '百行一局', ach_t_run_100_d: '单局消除 100 行。',
+      ach_t_i11_n: '第十一个巴块', ach_t_i11_d: '单局消除第 11 行时，它真的出现了。'
+    },
+    en: {
+      brand1: 'Tetris', brand2: 'Banny',
+      score: 'SCORE', best: 'BEST', lines: 'LINES', level: 'LEVEL',
+      next: 'NEXT', combo: 'COMBO',
+      ovReadyKicker: '// CLASSIC ENDLESS //',
+      ovReadySub: 'Classic endless. Bannies keep falling until the stack reaches the top.',
+      ovStart: 'START',
+      ovReadyHint: '← → move · ↑ / X rotate · ↓ soft drop · Space hard drop · P pause',
+      readyBest: 'Best {n} · {l} lines',
+      ovPauseKicker: '// PAUSED //',
+      ovPauseTitle: 'Paused',
+      ovPauseSub: 'The Bannies are asleep in mid-air.',
+      ovResume: 'RESUME',
+      ovRestart: 'RESTART',
+      ovPauseHint: 'Resume exactly where you paused. Your score is kept.',
+      ovOverKicker: '// GAME OVER //',
+      ovOverTitle: 'The Bannies fell asleep',
+      ovOverSub: 'The stack reached the top. This run is over.',
+      ovAgain: 'PLAY AGAIN',
+      ovOverHint: 'Press Space or tap the button to start again.',
+      setTitle: 'Settings (this page only)',
+      setSoundOn: 'Sound ON', setSoundOff: 'Sound OFF',
+      setHapticsOn: 'Haptics ON', setHapticsOff: 'Haptics OFF',
+      setGhostOn: 'Ghost ON', setGhostOff: 'Ghost OFF',
+      setBoth: 'Touch + Buttons', setTouch: 'Touch only', setBtn: 'Buttons only',
+      tipsDesktop: '← → move · ↑/X rotate · Z rotate CCW · ↓ soft drop · Space hard drop',
+      tipsTouch: 'Tap to rotate · drag to move · drag down to soft drop · flick down to hard drop',
+      achTitle: 'Achievements', achFoot: 'Saved on this device only · main save untouched',
+      achCommon: 'Standard', achLong: 'Long-term', achHidden: 'Hidden',
+      achLocked: 'Locked', achDone: 'Unlocked',
+      bannerTetris: 'TETRIS · BIG HARVEST',
+      bannerPerfect: 'PERFECT CLEAR',
+      recNew: 'New record! Best {n}',
+      recBest: 'Best {n}',
+      recNone: 'No record yet. This run sets the first one.',
+      achToast: 'Achievement · {n}',
+      ach_t_first_clear_n: 'First Harvest', ach_t_first_clear_d: 'Clear your first line of Bannies.',
+      ach_t_tetris_n: 'Big Harvest', ach_t_tetris_d: 'Clear 4 lines at once.',
+      ach_t_perfect_n: 'Spotless', ach_t_perfect_d: 'Get a Perfect Clear.',
+      ach_t_combo3_n: 'Triple Harvest', ach_t_combo3_d: '3 clears in a row.',
+      ach_t_combo5_n: 'Quintuple Harvest', ach_t_combo5_d: '5 clears in a row.',
+      ach_t_lv5_n: 'Level 5 Banny', ach_t_lv5_d: 'Reach level 5.',
+      ach_t_hard_20_n: 'Rapid Drop', ach_t_hard_20_d: '20 hard drops in a single run.',
+      ach_t_lv10_n: 'Level 10 Banny', ach_t_lv10_d: 'Reach level 10.',
+      ach_t_lv15_n: 'Level 15 Banny', ach_t_lv15_d: 'Reach level 15.',
+      ach_t_total_100_n: 'Hundred Lines', ach_t_total_100_d: 'Clear 100 lines in total.',
+      ach_t_total_1000_n: 'Thousand Lines', ach_t_total_1000_d: 'Clear 1000 lines in total.',
+      ach_t_score_10k_n: '10K', ach_t_score_10k_d: 'Score 10,000 in a single run.',
+      ach_t_score_50k_n: '50K', ach_t_score_50k_d: 'Score 50,000 in a single run.',
+      ach_t_run_100_n: 'Century Run', ach_t_run_100_d: 'Clear 100 lines in a single run.',
+      ach_t_i11_n: 'The 11th Piece', ach_t_i11_d: 'Unlocks when you clear the 11th line in one run.'
+    },
+    ja: {
+      brand1: 'テトリス', brand2: 'バニー',
+      score: 'SCORE', best: 'BEST', lines: 'LINES', level: 'LEVEL',
+      next: 'NEXT', combo: 'COMBO',
+      ovReadyKicker: '// CLASSIC ENDLESS //',
+      ovReadySub: 'クラシック・エンドレス。月バニーは上まで積み上がるまで落ち続けます。',
+      ovStart: 'スタート',
+      ovReadyHint: '← → 移動 · ↑ / X 回転 · ↓ ソフトドロップ · スペース ハードドロップ · P ポーズ',
+      readyBest: '自己ベスト {n} 点 · {l} 列',
+      ovPauseKicker: '// PAUSED //',
+      ovPauseTitle: 'ポーズ中',
+      ovPauseSub: '月バニーたちは空中で眠っています。',
+      ovResume: 'つづける',
+      ovRestart: 'やり直す',
+      ovPauseHint: 'ポーズした場所から再開します。スコアはそのまま。',
+      ovOverKicker: '// GAME OVER //',
+      ovOverTitle: '月バニーが眠った',
+      ovOverSub: '盤面が上まで積み上がり、このプレイは終了しました。',
+      ovAgain: 'もう一度',
+      ovOverHint: 'スペースキー / ボタンでもう一度始められます。',
+      setTitle: '設定（このページのみ）',
+      setSoundOn: '音 オン', setSoundOff: '音 オフ',
+      setHapticsOn: '振動 オン', setHapticsOff: '振動 オフ',
+      setGhostOn: 'ゴースト オン', setGhostOff: 'ゴースト オフ',
+      setBoth: 'タッチ + ボタン', setTouch: 'タッチのみ', setBtn: 'ボタンのみ',
+      tipsDesktop: '← → 移動 · ↑/X 回転 · Z 逆回転 · ↓ ソフトドロップ · スペース ハードドロップ',
+      tipsTouch: 'タップで回転 · 左右ドラッグで移動 · 下ドラッグでソフトドロップ · 素早く下へでハードドロップ',
+      achTitle: '実績', achFoot: '実績はこの端末のみ · メインセーブは変更しません',
+      achCommon: '通常', achLong: '長期', achHidden: '隠し',
+      achLocked: '未達成', achDone: '達成',
+      bannerTetris: '4列消し · 大収穫',
+      bannerPerfect: 'パーフェクト',
+      recNew: '新記録！ベスト {n}',
+      recBest: '自己ベスト {n} 点',
+      recNone: '記録はまだありません。このプレイが最初の記録です。',
+      achToast: '実績達成 · {n}',
+      ach_t_first_clear_n: '初収穫', ach_t_first_clear_d: '月バニーの列を初めて消す。',
+      ach_t_tetris_n: '大収穫', ach_t_tetris_d: '一度に4列消す。',
+      ach_t_perfect_n: '完璧', ach_t_perfect_d: 'パーフェクトクリアを達成する。',
+      ach_t_combo3_n: '3連収穫', ach_t_combo3_d: '3回連続で列を消す。',
+      ach_t_combo5_n: '5連収穫', ach_t_combo5_d: '5回連続で列を消す。',
+      ach_t_lv5_n: 'レベル5', ach_t_lv5_d: 'レベル5に到達する。',
+      ach_t_hard_20_n: '急降下', ach_t_hard_20_d: '1プレイで20回ハードドロップする。',
+      ach_t_lv10_n: 'レベル10', ach_t_lv10_d: 'レベル10に到達する。',
+      ach_t_lv15_n: 'レベル15', ach_t_lv15_d: 'レベル15に到達する。',
+      ach_t_total_100_n: '100列', ach_t_total_100_d: '累計100列消す。',
+      ach_t_total_1000_n: '1000列', ach_t_total_1000_d: '累計1000列消す。',
+      ach_t_score_10k_n: '1万点', ach_t_score_10k_d: '1プレイで10000点獲得する。',
+      ach_t_score_50k_n: '5万点', ach_t_score_50k_d: '1プレイで50000点獲得する。',
+      ach_t_run_100_n: '100列ラン', ach_t_run_100_d: '1プレイで100列消す。',
+      ach_t_i11_n: '11番目のバ块', ach_t_i11_d: '1プレイで11列目を消すと解放されます。'
+    },
+    ko: {
+      brand1: '테트리스', brand2: '배니',
+      score: 'SCORE', best: 'BEST', lines: 'LINES', level: 'LEVEL',
+      next: 'NEXT', combo: 'COMBO',
+      ovReadyKicker: '// CLASSIC ENDLESS //',
+      ovReadySub: '클래식 엔드리스. 달바니는 맨 위까지 쌓일 때까지 계속 떨어집니다.',
+      ovStart: '시작',
+      ovReadyHint: '← → 이동 · ↑ / X 회전 · ↓ 소프트 드롭 · 스페이스 하드 드롭 · P 일시정지',
+      readyBest: '최고 {n} 점 · {l} 줄',
+      ovPauseKicker: '// PAUSED //',
+      ovPauseTitle: '일시정지',
+      ovPauseSub: '달바니들이 공중에서 잠들었습니다.',
+      ovResume: '계속',
+      ovRestart: '다시 시작',
+      ovPauseHint: '일시정지한 위치에서 이어집니다. 점수는 유지됩니다.',
+      ovOverKicker: '// GAME OVER //',
+      ovOverTitle: '달바니들이 잠들었습니다',
+      ovOverSub: '보드가 맨 위까지 쌓여 이번 판이 끝났습니다.',
+      ovAgain: '다시 하기',
+      ovOverHint: '스페이스 키 / 버튼으로 바로 다시 시작할 수 있습니다.',
+      setTitle: '설정 (이 페이지에만 적용)',
+      setSoundOn: '소리 켬', setSoundOff: '소리 끔',
+      setHapticsOn: '진동 켬', setHapticsOff: '진동 끔',
+      setGhostOn: '고스트 켬', setGhostOff: '고스트 끔',
+      setBoth: '터치 + 버튼', setTouch: '터치만', setBtn: '버튼만',
+      tipsDesktop: '← → 이동 · ↑/X 회전 · Z 역회전 · ↓ 소프트 드롭 · 스페이스 하드 드롭',
+      tipsTouch: '탭 회전 · 좌우 드래그 이동 · 아래로 드래그 소프트 드롭 · 빠르게 아래로 하드 드롭',
+      achTitle: '업적', achFoot: '업적은 이 기기에만 저장 · 메인 세이브는 변경하지 않습니다',
+      achCommon: '일반', achLong: '장기', achHidden: '숨김',
+      achLocked: '미달성', achDone: '달성',
+      bannerTetris: '4줄 삭제 · 대수확',
+      bannerPerfect: '퍼펙트 클리어',
+      recNew: '신기록! 최고 {n}',
+      recBest: '최고 {n} 점',
+      recNone: '기록이 없습니다. 이번 판이 첫 기록입니다.',
+      achToast: '업적 달성 · {n}',
+      ach_t_first_clear_n: '첫 수확', ach_t_first_clear_d: '달바니 한 줄을 처음으로 지운다.',
+      ach_t_tetris_n: '대수확', ach_t_tetris_d: '한 번에 4줄을 지운다.',
+      ach_t_perfect_n: '완벽', ach_t_perfect_d: '퍼펙트 클리어를 달성한다.',
+      ach_t_combo3_n: '3연속 수확', ach_t_combo3_d: '3번 연속으로 줄을 지운다.',
+      ach_t_combo5_n: '5연속 수확', ach_t_combo5_d: '5번 연속으로 줄을 지운다.',
+      ach_t_lv5_n: '레벨 5', ach_t_lv5_d: '레벨 5에 도달한다.',
+      ach_t_hard_20_n: '급강하', ach_t_hard_20_d: '한 판에서 하드 드롭을 20회 한다.',
+      ach_t_lv10_n: '레벨 10', ach_t_lv10_d: '레벨 10에 도달한다.',
+      ach_t_lv15_n: '레벨 15', ach_t_lv15_d: '레벨 15에 도달한다.',
+      ach_t_total_100_n: '100줄', ach_t_total_100_d: '누적 100줄을 지운다.',
+      ach_t_total_1000_n: '1000줄', ach_t_total_1000_d: '누적 1000줄을 지운다.',
+      ach_t_score_10k_n: '1만 점', ach_t_score_10k_d: '한 판에서 10000점을 얻는다.',
+      ach_t_score_50k_n: '5만 점', ach_t_score_50k_d: '한 판에서 50000점을 얻는다.',
+      ach_t_run_100_n: '100줄 한 판', ach_t_run_100_d: '한 판에서 100줄을 지운다.',
+      ach_t_i11_n: '11번째 블록', ach_t_i11_d: '한 판에서 11번째 줄을 지우면 해제됩니다.'
+    }
+  };
+
+  var lang = (function () {
+    var q = String(QS.get('lang') || '').toLowerCase();
+    if (LANGS.indexOf(q) >= 0) return q;
+    var m = String(mainSave.lang || '').toLowerCase().slice(0, 2);
+    if (LANGS.indexOf(m) >= 0) return m;
+    var n = String(navigator.language || 'zh').toLowerCase();
+    if (n.indexOf('ja') === 0) return 'ja';
+    if (n.indexOf('ko') === 0) return 'ko';
+    if (n.indexOf('zh') === 0) return 'zh';
+    return 'en';
+  })();
+
+  function t(k) {
+    var d = TXT[lang] || TXT.zh;
+    if (d && d[k] != null) return d[k];
+    if (TXT.zh[k] != null) return TXT.zh[k];
+    return k;
+  }
+  function fmtTpl(s, o) {
+    return String(s).replace(/\{(\w+)\}/g, function (m, k) {
+      return (o && o[k] != null) ? o[k] : m;
+    });
+  }
+  function fmtNum(n) {
+    return String(Math.max(0, Math.floor(n || 0))).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  /* ---------- 常量 ---------- */
+  var COLS = 10, ROWS = 22, HIDDEN = 2, CELL = 24;
+  var BW = COLS * CELL, BH = ROWS * CELL, EAR_PAD = 14, CW = BW, CH = BH + EAR_PAD;
+  var CLEAR_MS = 220, LOCK_MS = 500, LOCK_RESET_MAX = 15;
+  var DAS = 150, ARR = 33, SOFT = 45;
+
+  var SHAPES = {
+    I: [
+      [[0, 1], [1, 1], [2, 1], [3, 1]],
+      [[2, 0], [2, 1], [2, 2], [2, 3]],
+      [[0, 2], [1, 2], [2, 2], [3, 2]],
+      [[1, 0], [1, 1], [1, 2], [1, 3]]
+    ],
+    O: [
+      [[1, 0], [2, 0], [1, 1], [2, 1]],
+      [[1, 0], [2, 0], [1, 1], [2, 1]],
+      [[1, 0], [2, 0], [1, 1], [2, 1]],
+      [[1, 0], [2, 0], [1, 1], [2, 1]]
+    ],
+    T: [
+      [[1, 0], [0, 1], [1, 1], [2, 1]],
+      [[1, 0], [1, 1], [2, 1], [1, 2]],
+      [[0, 1], [1, 1], [2, 1], [1, 2]],
+      [[1, 0], [0, 1], [1, 1], [1, 2]]
+    ],
+    S: [
+      [[1, 0], [2, 0], [0, 1], [1, 1]],
+      [[1, 0], [1, 1], [2, 1], [2, 2]],
+      [[1, 1], [2, 1], [0, 2], [1, 2]],
+      [[0, 0], [0, 1], [1, 1], [1, 2]]
+    ],
+    Z: [
+      [[0, 0], [1, 0], [1, 1], [2, 1]],
+      [[2, 0], [1, 1], [2, 1], [1, 2]],
+      [[0, 1], [1, 1], [1, 2], [2, 2]],
+      [[1, 0], [0, 1], [1, 1], [0, 2]]
+    ],
+    J: [
+      [[0, 0], [0, 1], [1, 1], [2, 1]],
+      [[1, 0], [2, 0], [1, 1], [1, 2]],
+      [[0, 1], [1, 1], [2, 1], [2, 2]],
+      [[1, 0], [1, 1], [0, 2], [1, 2]]
+    ],
+    L: [
+      [[2, 0], [0, 1], [1, 1], [2, 1]],
+      [[1, 0], [1, 1], [1, 2], [2, 2]],
+      [[0, 1], [1, 1], [2, 1], [0, 2]],
+      [[0, 0], [1, 0], [1, 1], [1, 2]]
+    ]
+  };
+  var TYPES = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
+  var STYLE = {
+    I: { c: '#f0f1fc', e: '#2b2e44', g: '#ffffff', d: '#6f7398', b: '#ffffff' },
+    O: { c: '#d2d6ee', e: '#2b2e44', g: '#f2f3fb', d: '#7a7ea6', b: '#f6f7ff' },
+    T: { c: '#b4b9de', e: '#20233a', g: '#dde0f4', d: '#6b6f97', b: '#e6e8f8' },
+    S: { c: '#9699c8', e: '#1b1e33', g: '#c6c9e8', d: '#5b5e83', b: '#c9cce9' },
+    Z: { c: '#7277a6', e: '#f4f5ff', g: '#a9add4', d: '#454866', b: '#a3a7cf' },
+    J: { c: '#535884', e: '#eef0ff', g: '#8e93bf', d: '#31344d', b: '#8085b3' },
+    L: { c: '#b23642', e: '#ffe9e9', g: '#e3767e', d: '#6d1c24', b: '#d4585f' }
+  };
+  var KICKS = [[0, 0], [-1, 0], [1, 0], [-2, 0], [2, 0], [0, -1], [0, 1], [-1, -1], [1, -1]];
+  var SPAWN_X = 3, SPAWN_Y = 1;
+
+  /* ---------- DOM ---------- */
+  function $(id) { return document.getElementById(id); }
+  var cv = $('cv'), ctx = cv.getContext('2d');
+  var brandEl = $('brand'), scoreEl = $('scoreEl'), bestEl = $('bestEl');
+  var linesEl = $('linesEl'), levelEl = $('levelEl'), achCount = $('achCount');
+  var btnAch = $('btnAch'), btnPause = $('btnPause');
+  var nx = [$('nx1'), $('nx2'), $('nx3')];
+  var frame = $('frame'), wrapEl = $('wrap'), topbarEl = $('topbar'), prowEl = $('prow');
+  var tipsEl = $('tips'), ctrlEl = $('ctrl'), scanEl = $('scan');
+  var overlay = $('overlay'), ovPanel = $('ovPanel'), ovKicker = $('ovKicker');
+  var ovTitle = $('ovTitle'), ovSub = $('ovSub'), ovStats = $('ovStats');
+  var ovScore = $('ovScore'), ovLines = $('ovLines'), ovLevel = $('ovLevel'), ovCombo = $('ovCombo');
+  var ovRec = $('ovRec'), setWrap = $('setWrap'), setTitleEl = $('setTitle');
+  var setSound = $('setSound'), setHaptics = $('setHaptics'), setGhost = $('setGhost'), setInput = $('setInput');
+  var ovBtn = $('ovBtn'), ovBtn2 = $('ovBtn2'), ovHint = $('ovHint');
+  var achModal = $('achModal'), achList = $('achList'), achFoot = $('achFoot');
+  var achTotal = $('achTotal'), achTitleTxt = $('achTitleTxt'), achClose = $('achClose');
+  var comboPop = $('comboPop'), bannerEl = $('banner'), achToast = $('achToast');
+  var selfTestEl = $('selfTest'), stList = $('stList');
+  var bLeft = $('bLeft'), bRight = $('bRight'), bRot = $('bRot');
+  var bDown = $('bDown'), bDrop = $('bDrop');
+
+  /* ---------- 低功耗 ---------- */
+  var reducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var lowPower = !!(mainSave.lowPower || reducedMotion);
+  if (lowPower) document.body.classList.add('low');
+
+  /* ---------- 音效 ---------- */
+  var AC = null, master = null, lastToneAt = 0, toneCount = 0;
+  function initAudio() {
+    if (AC) return;
+    var Ctor = window.AudioContext || window.webkitAudioContext;
+    if (!Ctor) return;
+    try {
+      AC = new Ctor();
+      master = AC.createGain();
+      master.gain.value = 0.7;
+      master.connect(AC.destination);
+    } catch (e) { AC = null; }
+  }
+  function tone(freq, dur, type, vol, delay, slideTo) {
+    if (!data || !data.set.sound) return;
+    initAudio();
+    if (!AC) return;
+    if (AC.state === 'suspended') { try { AC.resume(); } catch (e) {} }
+    var now = AC.currentTime + (delay || 0);
+    if (toneCount > 7) { toneCount = 0; }
+    toneCount++;
+    var o = AC.createOscillator(), g = AC.createGain();
+    o.type = type || 'sine';
+    o.frequency.setValueAtTime(freq, now);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(Math.max(40, slideTo), now + dur);
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.linearRampToValueAtTime(vol == null ? 0.12 : vol, now + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    o.connect(g);
+    g.connect(master);
+    o.start(now);
+    o.stop(now + dur + 0.03);
+  }
+  function sfxMove() { tone(420, 0.045, 'square', 0.05); }
+  function sfxRotate() { tone(560, 0.06, 'triangle', 0.09, 0, 700); }
+  function sfxLock() { tone(150, 0.11, 'sine', 0.13, 0, 96); }
+  function sfxHard() { tone(180, 0.13, 'sawtooth', 0.09, 0, 70); }
+  function sfxClear(n) {
+    var base = n >= 4 ? 440 : 380;
+    for (var i = 0; i < n; i++) tone(base + i * 110, 0.12, 'triangle', 0.1, i * 0.055);
+    if (n >= 4) tone(78, 0.3, 'sine', 0.2, 0.02, 52);
+  }
+  function sfxPerfect() {
+    for (var i = 0; i < 5; i++) tone(520 + i * 130, 0.16, 'sine', 0.11, i * 0.07);
+  }
+  function sfxOver() {
+    tone(300, 0.22, 'sine', 0.14, 0, 150);
+    tone(180, 0.34, 'sine', 0.12, 0.18, 90);
+  }
+  function sfxAch() {
+    tone(660, 0.1, 'triangle', 0.1);
+    tone(880, 0.14, 'triangle', 0.1, 0.09);
+  }
+  function haptic(ms) {
+    if (!data || !data.set.haptics) return;
+    if (navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) {} }
+  }
+
+  /* ---------- 成就表 ---------- */
+  var ACH = [
+    { id: 't_first_clear', icon: '🌱', tier: 'common' },
+    { id: 't_tetris', icon: '🌾', tier: 'common' },
+    { id: 't_perfect', icon: '✨', tier: 'common' },
+    { id: 't_combo3', icon: '🔥', tier: 'common' },
+    { id: 't_combo5', icon: '💥', tier: 'common' },
+    { id: 't_lv5', icon: '🪜', tier: 'common' },
+    { id: 't_hard_20', icon: '⤓', tier: 'long' },
+    { id: 't_lv10', icon: '⭐', tier: 'long' },
+    { id: 't_lv15', icon: '🌟', tier: 'long' },
+    { id: 't_total_100', icon: '📏', tier: 'long' },
+    { id: 't_total_1000', icon: '🧱', tier: 'long' },
+    { id: 't_score_10k', icon: '💰', tier: 'long' },
+    { id: 't_score_50k', icon: '🏆', tier: 'long' },
+    { id: 't_run_100', icon: '🐇', tier: 'long' },
+    { id: 't_i11', icon: '❔', tier: 'hidden' }
+  ];
+
+  /* ---------- 存档 ---------- */
+  function num(v, d) {
+    var n = Number(v);
+    return isFinite(n) ? n : d;
+  }
+  function int(v, d) { return Math.max(0, Math.floor(num(v, d))); }
+  function defaults() {
+    return {
+      v: 1,
+      best: { score: 0, lines: 0, level: 1, combo: 0, date: 0, duration: 0 },
+      total: { runs: 0, lines: 0, clears: [0, 0, 0, 0], perfect: 0, playMs: 0, hardDrops: 0 },
+      ach: { done: {}, stat: {} },
+      set: {
+        sound: mainSave.muted ? false : true,
+        haptics: true,
+        ghost: true,
+        input: 'both'
+      }
+    };
+  }
+  function loadData() {
+    var d = defaults();
+    var raw = null;
+    try { raw = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) { raw = null; }
+    if (!raw || typeof raw !== 'object') return d;
+    var b = raw.best || {};
+    d.best.score = int(b.score, 0);
+    d.best.lines = int(b.lines, 0);
+    d.best.level = Math.max(1, Math.min(20, int(b.level, 1)));
+    d.best.combo = int(b.combo, 0);
+    d.best.date = int(b.date, 0);
+    d.best.duration = int(b.duration, 0);
+    var tot = raw.total || {};
+    d.total.runs = int(tot.runs, 0);
+    d.total.lines = int(tot.lines, 0);
+    d.total.perfect = int(tot.perfect, 0);
+    d.total.playMs = int(tot.playMs, 0);
+    d.total.hardDrops = int(tot.hardDrops, 0);
+    if (Array.isArray(tot.clears)) {
+      for (var i = 0; i < 4; i++) d.total.clears[i] = int(tot.clears[i], 0);
+    }
+    var a = raw.ach || {};
+    var done = {}, src = (a.done && typeof a.done === 'object') ? a.done : {};
+    for (var j = 0; j < ACH.length; j++) {
+      var id = ACH[j].id;
+      if (src[id]) done[id] = Math.max(1, int(src[id], 1));
+    }
+    d.ach.done = done;
+    d.ach.stat = (a.stat && typeof a.stat === 'object') ? a.stat : {};
+    var s = raw.set || {};
+    if (typeof s.sound === 'boolean') d.set.sound = s.sound;
+    if (typeof s.haptics === 'boolean') d.set.haptics = s.haptics;
+    if (typeof s.ghost === 'boolean') d.set.ghost = s.ghost;
+    if (s.input === 'both' || s.input === 'touch' || s.input === 'btn') d.set.input = s.input;
+    return d;
+  }
+  var data = loadData();
+  function persist() {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); } catch (e) {}
+  }
+  /* ==================== PART 2 · 渲染 ==================== */
+  var DPR = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = Math.round(CW * DPR);
+  cv.height = Math.round(CH * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  var staticCv = document.createElement('canvas');
+  staticCv.width = Math.round(BW * DPR);
+  staticCv.height = Math.round(BH * DPR);
+  var sctx = staticCv.getContext('2d');
+  sctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+  function rrPath(g, x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    g.beginPath();
+    g.moveTo(x + r, y);
+    g.lineTo(x + w - r, y);
+    g.quadraticCurveTo(x + w, y, x + w, y + r);
+    g.lineTo(x + w, y + h - r);
+    g.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    g.lineTo(x + r, y + h);
+    g.quadraticCurveTo(x, y + h, x, y + h - r);
+    g.lineTo(x, y + r);
+    g.quadraticCurveTo(x, y, x + r, y);
+    g.closePath();
+  }
+  function addRound(p, x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    p.moveTo(x + r, y);
+    p.lineTo(x + w - r, y);
+    p.quadraticCurveTo(x + w, y, x + w, y + r);
+    p.lineTo(x + w, y + h - r);
+    p.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    p.lineTo(x + r, y + h);
+    p.quadraticCurveTo(x, y + h, x, y + h - r);
+    p.lineTo(x, y + r);
+    p.quadraticCurveTo(x, y, x + r, y);
+    p.closePath();
+  }
+
+  /* 表情：normal / happy / surprised / focus / dizzy / wink / blink / sleep
+     只有「主角格」（同时长耳朵的那一格）才有表情；落地后统一 sleep。 */
+  function drawFace(g, cx, cy, s, st, mood, alpha) {
+    g.save();
+    g.globalAlpha = alpha == null ? 1 : alpha;
+    g.lineCap = 'round';
+    g.lineJoin = 'round';
+    var eyeCol = '#8b5cf6';
+
+    if (mood === 'normal' || mood === 'happy' || mood === 'wink') {
+      g.fillStyle = mood === 'happy' ? 'rgba(214,100,130,.6)' : 'rgba(206,104,132,.4)';
+      g.beginPath(); g.ellipse(cx - 6.3 * s, cy + 1.9 * s, 1.9 * s, 1.1 * s, 0, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.ellipse(cx + 6.3 * s, cy + 1.9 * s, 1.9 * s, 1.1 * s, 0, 0, Math.PI * 2); g.fill();
+    }
+
+    if (mood === 'sleep' || mood === 'blink') {
+      g.strokeStyle = eyeCol;
+      g.lineWidth = 1.15 * s;
+      g.beginPath(); g.arc(cx - 3.5 * s, cy - 0.4 * s, 1.5 * s, 0.12 * Math.PI, 0.88 * Math.PI); g.stroke();
+      g.beginPath(); g.arc(cx + 3.5 * s, cy - 0.4 * s, 1.5 * s, 0.12 * Math.PI, 0.88 * Math.PI); g.stroke();
+      g.strokeStyle = st.e;
+      if (mood === 'blink') {
+        g.lineWidth = 1.05 * s;
+        g.beginPath(); g.arc(cx, cy + 2.2 * s, 1.5 * s, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();
+      } else {
+        g.beginPath(); g.moveTo(cx - 1.4 * s, cy + 3.4 * s); g.lineTo(cx + 1.4 * s, cy + 3.4 * s); g.stroke();
+      }
+    } else if (mood === 'happy') {
+      g.strokeStyle = eyeCol;
+      g.lineWidth = 1.3 * s;
+      g.beginPath(); g.arc(cx - 3.5 * s, cy + 1.1 * s, 1.6 * s, 1.12 * Math.PI, 1.88 * Math.PI); g.stroke();
+      g.beginPath(); g.arc(cx + 3.5 * s, cy + 1.1 * s, 1.6 * s, 1.12 * Math.PI, 1.88 * Math.PI); g.stroke();
+      g.strokeStyle = st.e;
+      g.lineWidth = 1.2 * s;
+      g.beginPath(); g.moveTo(cx - 2.4 * s, cy + 2.0 * s); g.quadraticCurveTo(cx, cy + 4.6 * s, cx + 2.4 * s, cy + 2.0 * s); g.stroke();
+    } else if (mood === 'surprised') {
+      g.fillStyle = eyeCol;
+      g.beginPath(); g.ellipse(cx - 3.6 * s, cy - 1.5 * s, 1.9 * s, 2.4 * s, 0, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.ellipse(cx + 3.6 * s, cy - 1.5 * s, 1.9 * s, 2.4 * s, 0, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = st.e;
+      g.lineWidth = 1.1 * s;
+      g.beginPath(); g.ellipse(cx, cy + 2.7 * s, 1.15 * s, 1.35 * s, 0, 0, Math.PI * 2); g.stroke();
+    } else if (mood === 'focus') {
+      g.strokeStyle = eyeCol;
+      g.lineWidth = 1.5 * s;
+      g.beginPath();
+      g.moveTo(cx - 4.9 * s, cy - 1.2 * s); g.lineTo(cx - 2.1 * s, cy - 1.2 * s);
+      g.moveTo(cx + 2.1 * s, cy - 1.2 * s); g.lineTo(cx + 4.9 * s, cy - 1.2 * s);
+      g.stroke();
+      g.strokeStyle = st.e;
+      g.lineWidth = 1.1 * s;
+      g.beginPath(); g.moveTo(cx - 1.3 * s, cy + 2.9 * s); g.lineTo(cx + 1.3 * s, cy + 2.9 * s); g.stroke();
+    } else if (mood === 'dizzy') {
+      g.strokeStyle = eyeCol;
+      g.lineWidth = 1.05 * s;
+      for (var k = -1; k <= 1; k += 2) {
+        var ex = cx + k * 3.5 * s, ey = cy - 1.3 * s, rr = 1.45 * s;
+        g.beginPath(); g.arc(ex, ey, rr, 0.15 * Math.PI, 1.55 * Math.PI); g.stroke();
+        g.beginPath(); g.arc(ex, ey, rr * 0.52, 1.15 * Math.PI, 2.45 * Math.PI); g.stroke();
+      }
+      g.strokeStyle = st.e;
+      g.lineWidth = 1.1 * s;
+      g.beginPath();
+      g.moveTo(cx - 2.2 * s, cy + 2.7 * s);
+      g.quadraticCurveTo(cx - 1.1 * s, cy + 3.6 * s, cx, cy + 2.6 * s);
+      g.quadraticCurveTo(cx + 1.1 * s, cy + 1.6 * s, cx + 2.2 * s, cy + 2.7 * s);
+      g.stroke();
+    } else {
+      /* normal / wink */
+      g.fillStyle = eyeCol;
+      g.beginPath(); g.ellipse(cx - 3.5 * s, cy - 1.4 * s, 1.5 * s, 1.9 * s, 0, 0, Math.PI * 2); g.fill();
+      if (mood === 'wink') {
+        g.strokeStyle = eyeCol;
+        g.lineWidth = 1.2 * s;
+        g.beginPath(); g.arc(cx + 3.5 * s, cy - 0.4 * s, 1.5 * s, 0.12 * Math.PI, 0.88 * Math.PI); g.stroke();
+      } else {
+        g.fillStyle = eyeCol;
+        g.beginPath(); g.ellipse(cx + 3.5 * s, cy - 1.4 * s, 1.5 * s, 1.9 * s, 0, 0, Math.PI * 2); g.fill();
+      }
+      g.strokeStyle = st.e;
+      g.lineWidth = 1.1 * s;
+      g.beginPath(); g.arc(cx, cy + 2.2 * s, 1.7 * s, 0.18 * Math.PI, 0.82 * Math.PI); g.stroke();
+    }
+    g.restore();
+  }
+
+  function drawOneEar(g, x, y, h, w, ang, st) {
+    g.save();
+    g.translate(x, y);
+    g.rotate(ang);
+    g.beginPath();
+    g.ellipse(0, -h * 0.5, w * 0.5, h * 0.5, 0, 0, Math.PI * 2);
+    g.fillStyle = st.c;
+    g.fill();
+    g.lineWidth = 1.5;
+    g.strokeStyle = st.d;
+    g.stroke();
+    g.beginPath();
+    g.ellipse(0, -h * 0.5, w * 0.2, h * 0.29, 0, 0, Math.PI * 2);
+    g.globalAlpha = 0.7;
+    g.fillStyle = st.g;
+    g.fill();
+    g.restore();
+  }
+  function drawEars(g, cx, topY, s, st, lag, tilt) {
+    var h = 13.4 * s, w = 7.6 * s, gap = 4.0 * s;
+    var lx = lag || 0, tl = tilt || 0;
+    drawOneEar(g, cx - gap + lx, topY, h, w, -0.30 + tl, st);
+    drawOneEar(g, cx + gap + lx, topY, h, w, 0.30 + tl, st);
+  }
+
+  /* 眼镜 / 墨镜：每只月巴随机戴一种，画在眼睛之上 */
+  var GLASS_CLEAR = 1, GLASS_SUN = 2;
+  function rollGlasses() {
+    return Math.random() < 0.9 ? GLASS_CLEAR : GLASS_SUN;
+  }
+  function drawGlasses(g, cx, cy, s, st, style, alpha) {
+    if (!style) return;
+    g.save();
+    g.globalAlpha = alpha == null ? 1 : alpha;
+    g.lineCap = 'round';
+    g.lineJoin = 'round';
+    var ey = cy - 1.4 * s;
+    var lw = 6.2 * s, lh = 4.2 * s, gap = 0.75 * s, r = 1.5 * s;
+    var lx = cx - gap - lw, rx = cx + gap;
+    if (style === GLASS_SUN) {
+      g.fillStyle = 'rgba(9,11,20,.9)';
+      g.strokeStyle = 'rgba(5,7,14,.95)';
+      g.lineWidth = 1.35 * s;
+      rrPath(g, lx, ey - lh / 2, lw, lh, r); g.fill(); g.stroke();
+      rrPath(g, rx, ey - lh / 2, lw, lh, r); g.fill(); g.stroke();
+      g.lineWidth = 1.5 * s;
+      g.beginPath(); g.moveTo(cx - gap, ey); g.lineTo(cx + gap, ey); g.stroke();
+      g.lineWidth = 1.15 * s;
+      g.beginPath();
+      g.moveTo(lx, ey - 0.4 * s); g.lineTo(lx - 1.5 * s, ey - 1.0 * s);
+      g.moveTo(rx + lw, ey - 0.4 * s); g.lineTo(rx + lw + 1.5 * s, ey - 1.0 * s);
+      g.stroke();
+    } else {
+      g.fillStyle = 'rgba(215,224,255,.14)';
+      g.strokeStyle = st.d;
+      g.lineWidth = 1.0 * s;
+      rrPath(g, lx, ey - lh / 2, lw, lh, r); g.fill(); g.stroke();
+      rrPath(g, rx, ey - lh / 2, lw, lh, r); g.fill(); g.stroke();
+      g.beginPath(); g.moveTo(cx - gap, ey); g.lineTo(cx + gap, ey); g.stroke();
+      g.beginPath();
+      g.moveTo(lx, ey - 0.4 * s); g.lineTo(lx - 1.5 * s, ey - 1.0 * s);
+      g.moveTo(rx + lw, ey - 0.4 * s); g.lineTo(rx + lw + 1.5 * s, ey - 1.0 * s);
+      g.stroke();
+    }
+    g.restore();
+  }
+
+  /* 主角格：整块最上面一行里、最靠近水平质心的一格；表情与兔耳只长在这一格。 */
+  function pickFace(cells) {
+    var minRow = 99, cx = 0, i;
+    for (i = 0; i < 4; i++) {
+      if (cells[i][1] < minRow) minRow = cells[i][1];
+      cx += cells[i][0];
+    }
+    cx /= 4;
+    var best = cells[0], bd = 1e9;
+    for (i = 0; i < 4; i++) {
+      if (cells[i][1] !== minRow) continue;
+      var d = Math.abs(cells[i][0] - cx);
+      if (d < bd - 1e-6 || (Math.abs(d - bd) < 1e-6 && cells[i][0] < best[0])) {
+        bd = d;
+        best = cells[i];
+      }
+    }
+    return best;
+  }
+  function pickEarCell(cells, face) {
+    return face;
+  }
+
+  /* ---------- 锁定层 ---------- */
+  function drawLockedCell(g, r, c, type) {
+    var st = STYLE[type];
+    var x = c * CELL, y = r * CELL;
+    rrPath(g, x + 1.3, y + 1.3, CELL - 2.6, CELL - 2.6, CELL * 0.28);
+    var lg = g.createLinearGradient(0, y, 0, y + CELL);
+    lg.addColorStop(0, st.b);
+    lg.addColorStop(1, st.c);
+    g.fillStyle = lg;
+    g.fill();
+    g.strokeStyle = 'rgba(8,10,20,.82)';
+    g.lineWidth = 1.2;
+    g.stroke();
+    if (faceMark[r] && faceMark[r][c]) {
+      var gs = faceMark[r][c];
+      drawFace(g, x + CELL / 2, y + CELL / 2 + 1, 0.92, st, 'sleep', 0.34);
+      /* 睡着后普通眼镜已经取下，只有墨镜还戴着 */
+      if (gs === GLASS_SUN) drawGlasses(g, x + CELL / 2, y + CELL / 2 + 1, 0.92, st, gs, 0.34);
+    }
+    if (earMark[r] && earMark[r][c] && (r === 0 || !board[r - 1][c])) {
+      drawEars(g, x + CELL / 2, y + 2, 0.6, st, 0, 0);
+    }
+  }
+
+  function redrawStatic() {
+    var g = sctx, c, r;
+    g.clearRect(0, 0, BW, BH);
+    var lg = g.createLinearGradient(0, 0, 0, BH);
+    lg.addColorStop(0, '#0b0e1c');
+    lg.addColorStop(1, '#0d1020');
+    g.fillStyle = lg;
+    g.fillRect(0, 0, BW, BH);
+    g.strokeStyle = 'rgba(185,191,230,.055)';
+    g.lineWidth = 1;
+    g.beginPath();
+    for (c = 1; c < COLS; c++) { g.moveTo(c * CELL + 0.5, 0); g.lineTo(c * CELL + 0.5, BH); }
+    for (r = 1; r < ROWS; r++) { g.moveTo(0, r * CELL + 0.5); g.lineTo(BW, r * CELL + 0.5); }
+    g.stroke();
+    g.fillStyle = 'rgba(4,5,12,.5)';
+    g.fillRect(0, 0, BW, HIDDEN * CELL);
+    g.save();
+    g.strokeStyle = 'rgba(197,48,60,.42)';
+    g.setLineDash([5, 5]);
+    g.beginPath();
+    g.moveTo(0, HIDDEN * CELL + 0.5);
+    g.lineTo(BW, HIDDEN * CELL + 0.5);
+    g.stroke();
+    g.restore();
+    for (r = 0; r < ROWS; r++) {
+      if (clearMask && clearMask.indexOf(r) >= 0) continue;
+      for (c = 0; c < COLS; c++) {
+        if (board[r][c]) drawLockedCell(g, r, c, board[r][c]);
+      }
+    }
+  }
+
+  /* ---------- 活动块 ---------- */
+  function drawActivePiece() {
+    if (!piece) return;
+    var cells = SHAPES[piece.type][piece.rot];
+    var st = STYLE[piece.type];
+    var i, minC = 99, maxC = -99, maxR = -99;
+    for (i = 0; i < 4; i++) {
+      var cc = cells[i][0], rrr = cells[i][1];
+      if (cc < minC) minC = cc;
+      if (cc > maxC) maxC = cc;
+      if (rrr > maxR) maxR = rrr;
+    }
+    /* Q 弹：以整块底部中心为轴心，出生弹入 + 移动挤压 + 旋转摆动 */
+    var px = (piece.x + (minC + maxC + 1) / 2) * CELL;
+    var py = (piece.y + maxR + 1) * CELL;
+    var ps = popScale();
+    var sy = ps * (1 - sqz), sx = ps * (1 + sqz * 0.55);
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(wobble);
+    ctx.scale(sx, sy);
+    ctx.translate(-px, -py);
+
+    var p = new Path2D();
+    for (i = 0; i < 4; i++) {
+      addRound(p, (piece.x + cells[i][0]) * CELL + 1.4, (piece.y + cells[i][1]) * CELL + 1.4, CELL - 2.8, CELL - 2.8, CELL * 0.3);
+    }
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = st.d;
+    ctx.lineWidth = 4;
+    ctx.stroke(p);
+    ctx.fillStyle = st.c;
+    ctx.fill(p);
+
+    var face = pickFace(cells);
+    var fx = (piece.x + face[0] + 0.5) * CELL;
+    var fy = (piece.y + face[1] + 0.5) * CELL + Math.sin(animT * 0.006) * 0.6;
+    drawFace(ctx, fx, fy, 1, st, faceMood(), 1);
+    drawGlasses(ctx, fx, fy, 1, st, piece.gs, 1);
+    var earTop = (piece.y + face[1]) * CELL + 2;
+    drawEars(ctx, (piece.x + face[0] + 0.5) * CELL, earTop, 1, st, earLag, earLag * 0.02);
+    ctx.restore();
+  }
+
+  /* 落地瞬间：新方块以「压扁 → 回弹」动画融进墙体，最后交给静态层。 */
+  function drawLanding() {
+    if (!landFx) return;
+    var k = Math.min(1, landFx.t / LAND_MS);
+    var decay = Math.exp(-3.8 * k);
+    var sy = 1 - 0.26 * Math.cos(6.0 * k) * decay;
+    var sx = 1 + (1 - sy) * 0.58;
+    var cells = SHAPES[landFx.type][landFx.rot];
+    var st = STYLE[landFx.type];
+    var i, minC = 99, maxC = -99, maxR = -99;
+    for (i = 0; i < 4; i++) {
+      if (cells[i][0] < minC) minC = cells[i][0];
+      if (cells[i][0] > maxC) maxC = cells[i][0];
+      if (cells[i][1] > maxR) maxR = cells[i][1];
+    }
+    var px = (landFx.x + (minC + maxC + 1) / 2) * CELL;
+    var py = (landFx.y + maxR + 1) * CELL;
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.scale(sx, sy);
+    ctx.translate(-px, -py);
+    var p = new Path2D();
+    for (i = 0; i < 4; i++) {
+      addRound(p, (landFx.x + cells[i][0]) * CELL + 1.4, (landFx.y + cells[i][1]) * CELL + 1.4, CELL - 2.8, CELL - 2.8, CELL * 0.3);
+    }
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = st.d;
+    ctx.lineWidth = 4;
+    ctx.stroke(p);
+    ctx.fillStyle = st.c;
+    ctx.fill(p);
+    var hero = pickFace(cells);
+    var hx = (landFx.x + hero[0] + 0.5) * CELL;
+    var hy = (landFx.y + hero[1] + 0.5) * CELL + 1;
+    var faceA = k < 0.4 ? 1 : Math.max(0.34, 1.05 - k);
+    drawFace(ctx, hx, hy, 0.92, st, k < 0.4 ? 'surprised' : 'sleep', faceA);
+    if (landFx.gs === GLASS_SUN) {
+      drawGlasses(ctx, hx, hy, 0.92, st, GLASS_SUN, faceA);
+    } else {
+      /* 普通眼镜：落地瞬间把眼镜摘下来——向上抬起并淡出 */
+      var off = Math.max(0, (k - 0.25) / 0.75);
+      if (off < 1) {
+        var oe = off * off * (3 - 2 * off);
+        ctx.save();
+        ctx.translate(hx, hy - 6 * oe);
+        ctx.rotate(-0.16 * oe);
+        ctx.translate(-hx, -hy);
+        drawGlasses(ctx, hx, hy, 0.92, st, GLASS_CLEAR, 1 - oe);
+        ctx.restore();
+      }
+    }
+    drawEars(ctx, hx, (landFx.y + hero[1]) * CELL + 2, 1, st, earLag * 0.6, earLag * 0.02);
+    ctx.restore();
+  }
+
+  function drawGhost() {
+    if (!data.set.ghost || !piece) return;
+    var cells = SHAPES[piece.type][piece.rot];
+    var st = STYLE[piece.type];
+    var gy = piece.y, i;
+    while (!collidesIn(board, cells, piece.x, gy + 1)) gy++;
+    if (gy === piece.y) return;
+    ctx.save();
+    for (i = 0; i < 4; i++) {
+      var x = (piece.x + cells[i][0]) * CELL, y = (gy + cells[i][1]) * CELL;
+      rrPath(ctx, x + 1.6, y + 1.6, CELL - 3.2, CELL - 3.2, CELL * 0.3);
+      ctx.globalAlpha = 0.1;
+      ctx.fillStyle = st.c;
+      ctx.fill();
+      ctx.globalAlpha = 0.34;
+      ctx.strokeStyle = st.c;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 3]);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  /* ---------- 消行特效：被收走的月巴先压扁、回弹、上跳，再淡出 ---------- */
+  function drawClearFX() {
+    if (!clearing) return;
+    var k = Math.min(1, clearing.t / CLEAR_MS);
+    var flash = Math.sin(k * Math.PI);
+    for (var i = 0; i < clearing.rows.length; i++) {
+      var r = clearing.rows[i];
+      var y = r * CELL;
+      for (var c = 0; c < COLS; c++) {
+        var ty = board[r][c];
+        if (!ty) continue;
+        var st2 = STYLE[ty];
+        var ck = Math.max(0, Math.min(1, k * 1.45 - c * 0.032));
+        var spring = Math.cos(ck * Math.PI * 2.2) * Math.exp(-2.0 * ck);
+        var sy = 1 - 0.30 * spring;
+        var sx = 1 + (1 - sy) * 0.62;
+        var rise = -Math.sin(ck * Math.PI) * 5;
+        var fade = 1 - Math.max(0, (ck - 0.78) / 0.22);
+        if (fade <= 0) continue;
+        var cx2 = c * CELL + CELL / 2, cy2 = y + CELL / 2;
+        ctx.save();
+        ctx.globalAlpha = fade;
+        ctx.translate(cx2, cy2 + rise);
+        ctx.rotate(spring * 0.09);
+        ctx.scale(sx, sy);
+        ctx.translate(-cx2, -cy2);
+        rrPath(ctx, c * CELL + 1.3, y + 1.3, CELL - 2.6, CELL - 2.6, CELL * 0.28);
+        ctx.fillStyle = st2.b;
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(8,10,20,.82)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+        drawFace(ctx, cx2, cy2 + 1, 0.92, st2, 'surprised', fade);
+        drawGlasses(ctx, cx2, cy2 + 1, 0.92, st2, faceMark[r][c], fade);
+        if (earMark[r][c] && (r === 0 || !board[r - 1][c])) {
+          drawEars(ctx, cx2, y + 2, 0.6, st2, 0, spring * 0.25);
+        }
+        ctx.restore();
+      }
+      ctx.save();
+      ctx.globalAlpha = 0.10 + flash * 0.30;
+      ctx.fillStyle = k > 0.32 ? '#ff5b66' : '#eef0ff';
+      ctx.fillRect(0, y, BW, CELL);
+      if (!lowPower) {
+        ctx.globalAlpha = 0.32 + flash * 0.45;
+        ctx.fillStyle = '#ffd7d9';
+        ctx.fillRect(BW * (k * 1.4 - 0.3), y + 2, 26, CELL - 4);
+      }
+      ctx.restore();
+    }
+  }
+
+  /* ---------- 粒子 ---------- */
+  var parts = [];
+  var PARTS_MAX = lowPower ? 0 : 120;
+  function spawnBurst(px, py, n, color) {
+    if (!PARTS_MAX || !n) return;
+    for (var i = 0; i < n; i++) {
+      if (parts.length >= PARTS_MAX) parts.shift();
+      var a = Math.random() * Math.PI * 2;
+      var sp = 0.02 + Math.random() * 0.11;
+      parts.push({
+        x: px, y: py,
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp - 0.05,
+        life: 0,
+        max: 300 + Math.random() * 260,
+        sz: 1.6 + Math.random() * 2.6,
+        col: color
+      });
+    }
+  }
+  function updateParticles(dt) {
+    for (var i = parts.length - 1; i >= 0; i--) {
+      var p = parts[i];
+      p.life += dt;
+      if (p.life >= p.max) { parts.splice(i, 1); continue; }
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 0.00022 * dt;
+    }
+  }
+  function drawParticles() {
+    if (!parts.length) return;
+    ctx.save();
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i];
+      var k = 1 - p.life / p.max;
+      ctx.globalAlpha = Math.max(0, k);
+      ctx.fillStyle = p.col;
+      ctx.fillRect(p.x - p.sz / 2, p.y - p.sz / 2, p.sz, p.sz);
+    }
+    ctx.restore();
+  }
+
+  /* ---------- 预览 ---------- */
+  function drawMini(g, w, h, type, rot, alpha) {
+    g.clearRect(0, 0, w, h);
+    if (!type) return;
+    var cells = SHAPES[type][rot || 0];
+    var st = STYLE[type];
+    var minC = 9, maxC = -9, minR = 9, maxR = -9, i;
+    for (i = 0; i < 4; i++) {
+      if (cells[i][0] < minC) minC = cells[i][0];
+      if (cells[i][0] > maxC) maxC = cells[i][0];
+      if (cells[i][1] < minR) minR = cells[i][1];
+      if (cells[i][1] > maxR) maxR = cells[i][1];
+    }
+    var cw = maxC - minC + 1, chh = maxR - minR + 1;
+    var cs = Math.min((w - 10) / cw, (h - 18) / chh);
+    var ox = (w - cw * cs) / 2 - minC * cs;
+    var oy = (h - chh * cs) / 2 - minR * cs + 5;
+    g.save();
+    g.globalAlpha = alpha == null ? 1 : alpha;
+    g.translate(ox, oy);
+    g.scale(cs / CELL, cs / CELL);
+    var p = new Path2D();
+    for (i = 0; i < 4; i++) {
+      addRound(p, cells[i][0] * CELL + 2, cells[i][1] * CELL + 2, CELL - 4, CELL - 4, CELL * 0.3);
+    }
+    g.lineJoin = 'round';
+    g.strokeStyle = st.d;
+    g.lineWidth = 5;
+    g.stroke(p);
+    g.fillStyle = st.c;
+    g.fill(p);
+    var face = pickFace(cells);
+    var gs = (type.charCodeAt(0) % 2) ? GLASS_CLEAR : GLASS_SUN;
+    drawFace(g, (face[0] + 0.5) * CELL, (face[1] + 0.5) * CELL, 1, st, 'normal', 1);
+    drawGlasses(g, (face[0] + 0.5) * CELL, (face[1] + 0.5) * CELL, 1, st, gs, 1);
+    drawEars(g, (face[0] + 0.5) * CELL, face[1] * CELL + 2, 1, st, 0, 0);
+    g.restore();
+  }
+
+  function renderPreviews() {
+    for (var i = 0; i < 3; i++) {
+      var g2 = nx[i].getContext('2d');
+      g2.setTransform(1, 0, 0, 1, 0, 0);
+      drawMini(g2, 80, 80, queue[i] || '', 0, i === 0 ? 1 : 0.55);
+    }
+  }
+
+  /* ---------- 主绘制 ---------- */
+  function draw() {
+    ctx.clearRect(0, 0, CW, CH);
+    ctx.fillStyle = '#0a0c16';
+    ctx.fillRect(0, 0, CW, EAR_PAD);
+    ctx.save();
+    ctx.translate(0, EAR_PAD);
+    if (st === 'dying') {
+      /* 失败动效：棋盘震动 + 红闪 + 轻微下沉，播完才弹结算面板 */
+      var dk = Math.min(1, deathT / DEATH_MS);
+      var amp = 9 * (1 - dk) * (1 - dk);
+      var ox = Math.sin(deathT * 0.055) * amp;
+      var oy = Math.cos(deathT * 0.041) * amp * 0.55 + dk * dk * 4;
+      ctx.save();
+      ctx.translate(ox, oy);
+      ctx.drawImage(staticCv, 0, 0, BW, BH);
+      ctx.restore();
+      ctx.save();
+      ctx.globalAlpha = 0.10 + 0.26 * Math.sin(dk * Math.PI);
+      ctx.fillStyle = '#c5303c';
+      ctx.fillRect(0, 0, BW, BH);
+      ctx.globalAlpha = 0.30 * Math.max(0, 1 - dk / 0.18);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, BW, BH);
+      ctx.restore();
+    } else {
+      ctx.drawImage(staticCv, 0, 0, BW, BH);
+    }
+    if (piece && !clearing && (st === 'play' || st === 'pause')) {
+      drawGhost();
+      drawActivePiece();
+    }
+    drawLanding();
+    if (clearing) drawClearFX();
+    drawParticles();
+    ctx.restore();
+  }
+  /* ==================== PART 3 · 逻辑 ==================== */
+  var st = 'ready';
+  var board = [], faceMark = [], earMark = [];
+  var piece = null;
+  var bag = [], queue = [];
+  var score = 0, lines = 0, level = 1, combo = 0, maxCombo = 0;
+  var clearTally = [0, 0, 0, 0], perfectCount = 0, hardDrops = 0;
+  var dropAcc = 0, lockAcc = 0, lockResets = 0, grounded = false, softHeld = false;
+  var clearing = null, runMs = 0, lastTime = 0, pendingAction = '', lastRecord = false;
+  var toastTimer = 0, bannerTimer = 0;
+  var LINE_SCORE = [0, 100, 300, 500, 800];
+
+  /* ---------- Q 弹 / 表情状态 ---------- */
+  var LAND_MS = 170;
+  var animT = 0;
+  var popT = 1;                      /* 出生弹入进度 0→1 */
+  var sqz = 0, sqzV = 0;             /* 挤压回弹（正值=压扁） */
+  var wobble = 0, wobbleV = 0;       /* 旋转后的摆动角 */
+  var earLag = 0, earLagV = 0;       /* 兔耳惯性位移 */
+  var mood = 'normal', moodUntil = 0, pendingMood = '';
+  var blinkAt = 2200, blinkEnd = 0;
+  var landFx = null;                 /* 落地回弹：{t,type,rot,x,y} */
+  var clearMask = null;              /* 消行期间先隐藏的静态行 */
+  var DEATH_MS = 900;
+  var deathT = 0;                    /* 失败动效计时 */
+
+  /* 出生缩放：easeOutBack，轻微过冲才是 Q 弹而不是单纯放大 */
+  function popScale() {
+    if (popT >= 1) return 1;
+    var x = popT, c1 = 1.45, c3 = c1 + 1;
+    return 0.62 + 0.38 * (1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2));
+  }
+  function setMood(m, ms) { mood = m; moodUntil = animT + (ms || 0); }
+  function faceMood() {
+    if (moodUntil > animT) return mood;
+    if (grounded) return 'focus';   /* 贴着堆顶等待锁定时，眯眼专注 */
+    if (blinkEnd && animT < blinkEnd) return 'blink';
+    return 'normal';
+  }
+  function updateAnim(dt) {
+    var step = dt / 16.667;
+    if (step <= 0) return;
+    animT += dt;
+
+    /* 出生弹入 */
+    if (popT < 1) popT = Math.min(1, popT + dt / 210);
+
+    /* 挤压 → 回弹 */
+    sqzV += (-sqz) * 0.42 * step;
+    sqzV *= Math.pow(0.82, step);
+    sqz += sqzV * step;
+    if (sqz > 0.09) { sqz = 0.09; if (sqzV > 0) sqzV = 0; }
+    else if (sqz < -0.09) { sqz = -0.09; if (sqzV < 0) sqzV = 0; }
+
+    /* 旋转余摆 */
+    wobbleV += (-wobble) * 0.30 * step;
+    wobbleV *= Math.pow(0.86, step);
+    wobble += wobbleV * step;
+
+    /* 耳朵惯性 */
+    earLagV += (-earLag) * 0.34 * step;
+    earLagV *= Math.pow(0.80, step);
+    earLag += earLagV * step;
+
+    /* 空闲时偶尔眨眼 */
+    if (!blinkEnd) {
+      if (animT > blinkAt) blinkEnd = animT + 120;
+    } else if (animT > blinkEnd) {
+      blinkEnd = 0;
+      blinkAt = animT + 2200 + Math.random() * 2800;
+    }
+
+    /* 落地回弹结束 → 交给静态层 */
+    if (landFx) {
+      landFx.t += dt;
+      if (landFx.t >= LAND_MS) {
+        landFx = null;
+        redrawStatic();
+      }
+    }
+  }
+
+  function newRow() {
+    var a = new Array(COLS);
+    for (var i = 0; i < COLS; i++) a[i] = 0;
+    return a;
+  }
+  function blankGrid() {
+    var a = [];
+    for (var r = 0; r < ROWS; r++) a.push(newRow());
+    return a;
+  }
+
+  function collidesIn(b, cells, px, py) {
+    for (var i = 0; i < 4; i++) {
+      var r = py + cells[i][1], c = px + cells[i][0];
+      if (c < 0 || c >= COLS || r >= ROWS) return true;
+      if (r < 0) continue;
+      if (b[r][c]) return true;
+    }
+    return false;
+  }
+
+  function refillBag() {
+    bag = TYPES.slice();
+    for (var i = bag.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = bag[i]; bag[i] = bag[j]; bag[j] = tmp;
+    }
+  }
+  function nextType() {
+    if (!bag.length) refillBag();
+    return bag.pop();
+  }
+  function fillQueue() {
+    while (queue.length < 3) queue.push(nextType());
+  }
+
+  function spawnNext(type) {
+    fillQueue();
+    var ty = type || queue.shift();
+    fillQueue();
+    piece = { type: ty, rot: 0, x: SPAWN_X, y: SPAWN_Y, gs: rollGlasses() };
+    dropAcc = 0; lockAcc = 0; lockResets = 0;
+    /* 新的一只月巴弹进来：出生 Q 弹 + 短暂惊讶脸 */
+    popT = 0;
+    sqz = 0; sqzV = 0; wobble = 0; wobbleV = 0;
+    earLag = 0; earLagV = 0;
+    var nm = pendingMood || (Math.random() < 0.28 ? 'wink' : 'surprised');
+    pendingMood = '';
+    setMood(nm, nm === 'happy' ? 950 : nm === 'wink' ? 420 : 240);
+    var cells = SHAPES[piece.type][0];
+    if (collidesIn(board, cells, piece.x, piece.y)) {
+      if (!collidesIn(board, cells, piece.x, piece.y - 1)) {
+        piece.y -= 1;
+      } else {
+        piece = null;
+        beginGameOver();
+        return;
+      }
+    }
+    grounded = collidesIn(board, SHAPES[piece.type][piece.rot], piece.x, piece.y + 1);
+    renderPreviews();
+    updateHUD();
+  }
+
+  function gravityMs() {
+    return Math.max(45, 1000 * Math.pow(0.86, level - 1));
+  }
+
+  function afterMove() {
+    if (!piece) return;
+    var cells = SHAPES[piece.type][piece.rot];
+    grounded = collidesIn(board, cells, piece.x, piece.y + 1);
+    if (lockResets < LOCK_RESET_MAX) {
+      lockAcc = 0;
+      lockResets++;
+    }
+  }
+
+  function tryMove(dx) {
+    if (!piece || clearing || st !== 'play') return false;
+    var cells = SHAPES[piece.type][piece.rot];
+    if (!collidesIn(board, cells, piece.x + dx, piece.y)) {
+      piece.x += dx;
+      afterMove();
+      /* Q 弹：横向移动时身体压扁一下，兔耳往反方向甩 */
+      sqzV += 0.035;
+      earLagV -= dx * 1.5;
+      sfxMove();
+      return true;
+    }
+    return false;
+  }
+
+  function tryRotate(dir) {
+    if (!piece || clearing || st !== 'play') return false;
+    for (var i = 0; i < KICKS.length; i++) {
+      var nr = (piece.rot + dir + 4) % 4;
+      var cells = SHAPES[piece.type][nr];
+      var nx = piece.x + KICKS[i][0], ny = piece.y + KICKS[i][1];
+      if (!collidesIn(board, cells, nx, ny)) {
+        piece.rot = nr;
+        piece.x = nx;
+        piece.y = ny;
+        afterMove();
+        /* Q 弹：旋转后左右摆动一下，并露出晕乎乎的表情 */
+        wobbleV += dir * 0.055;
+        sqzV += 0.02;
+        earLagV += dir * 1.4;
+        setMood('dizzy', 420);
+        sfxRotate();
+        haptic(6);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function softStep() {
+    if (!piece || clearing || st !== 'play') return;
+    var cells = SHAPES[piece.type][piece.rot];
+    if (!collidesIn(board, cells, piece.x, piece.y + 1)) {
+      piece.y += 1;
+      score += 1;
+      grounded = false;
+      lockAcc = 0;
+      dropAcc = 0;
+      sqzV -= 0.006;   /* 软降时被拉长一点 */
+      updateHUD();
+    } else {
+      grounded = true;
+    }
+  }
+
+  function hardDrop() {
+    if (!piece || clearing || st !== 'play') return;
+    var cells = SHAPES[piece.type][piece.rot];
+    var n = 0;
+    while (!collidesIn(board, cells, piece.x, piece.y + 1)) { piece.y++; n++; }
+    if (n) score += n * 2;
+    hardDrops++;
+    grounded = true;
+    sfxHard();
+    haptic(20);
+    if (!lowPower) {
+      for (var i = 0; i < 4; i++) {
+        spawnBurst((piece.x + cells[i][0] + 0.5) * CELL, (piece.y + cells[i][1] + 1) * CELL, 3, 'rgba(197,48,60,.45)');
+      }
+    }
+    lockPiece();
+  }
+
+  function addClearScore(n) {
+    var tbl = LINE_SCORE;
+    pendingMood = 'happy';
+    score += tbl[n] * level;
+    combo += 1;
+    if (combo > maxCombo) maxCombo = combo;
+    if (combo > 1) score += 50 * combo * level;
+    lines += n;
+    clearTally[n - 1] += 1;
+    var nl = Math.min(20, Math.floor(lines / 10) + 1);
+    level = nl;
+    if (n >= 4) showBanner(t('bannerTetris'), true);
+    if (combo >= 2) showCombo(combo);
+    scoreEl.textContent = fmtNum(score);
+    popEl(scoreEl);
+    updateHUD();
+    checkAch();
+  }
+
+  function lockPiece() {
+    if (!piece) return;
+    /* 上一块的落地回弹还没播完：先并进静态层，避免被新块打断而消失 */
+    if (landFx) { landFx = null; redrawStatic(); }
+    var cells = SHAPES[piece.type][piece.rot];
+    var face = pickFace(cells);
+    var ear = pickEarCell(cells, face);
+    var allHidden = true, i;
+    for (i = 0; i < 4; i++) {
+      var r = piece.y + cells[i][1], c = piece.x + cells[i][0];
+      if (r < 0 || r >= ROWS || c < 0 || c >= COLS) continue;
+      board[r][c] = piece.type;
+      if (r >= HIDDEN) allHidden = false;
+    }
+    var fr = piece.y + face[1], fc = piece.x + face[0];
+    if (fr >= 0 && fr < ROWS && fc >= 0 && fc < COLS) faceMark[fr][fc] = piece.gs || GLASS_CLEAR;
+    var er = piece.y + ear[1], ec = piece.x + ear[0];
+    if (er >= 0 && er < ROWS && ec >= 0 && ec < COLS) earMark[er][ec] = 1;
+
+    sfxLock();
+    haptic(12);
+    if (!lowPower) {
+      for (i = 0; i < 4; i++) {
+        spawnBurst((piece.x + cells[i][0] + 0.5) * CELL, (piece.y + cells[i][1] + 1) * CELL, 2, 'rgba(185,191,230,.45)');
+      }
+    }
+
+    var full = [];
+    for (var rr = 0; rr < ROWS; rr++) {
+      var ok = true;
+      for (var cc = 0; cc < COLS; cc++) {
+        if (!board[rr][cc]) { ok = false; break; }
+      }
+      if (ok) full.push(rr);
+    }
+
+    /* 落地 Q 弹：先留在动态层做「压扁→回弹」，动画结束再并入静态层 */
+    landFx = { t: 0, type: piece.type, rot: piece.rot, x: piece.x, y: piece.y, gs: piece.gs || GLASS_CLEAR };
+    piece = null;
+    grounded = false;
+
+    if (full.length) {
+      /* 消行：先把这些行从静态层藏起来，全部交给动态层做 Q 弹 */
+      landFx = null;
+      clearMask = full.slice();
+      redrawStatic();
+      clearing = { rows: full, t: 0 };
+      addClearScore(full.length);
+      sfxClear(full.length);
+      haptic(full.length >= 4 ? 40 : 18);
+      if (!lowPower) {
+        for (var q = 0; q < full.length; q++) {
+          var cy = full[q] * CELL + CELL / 2;
+          for (var x = 0; x < COLS; x++) {
+            if (Math.random() < 0.5) {
+              spawnBurst(x * CELL + CELL / 2, cy, 1, Math.random() < 0.55 ? '#ff5b66' : '#c8ccec');
+            }
+          }
+        }
+      }
+    } else {
+      combo = 0;
+      if (allHidden) {
+        landFx = null;
+        redrawStatic();
+        beginGameOver();
+        return;
+      }
+      spawnNext();
+    }
+  }
+
+  function endClear() {
+    var rows = clearing.rows.slice();
+    clearing = null;
+    clearMask = null;
+    landFx = null;
+    var keep = [], r;
+    for (r = 0; r < ROWS; r++) {
+      if (rows.indexOf(r) < 0) keep.push({ b: board[r], f: faceMark[r], e: earMark[r] });
+    }
+    var nb = [], nf = [], ne = [], i;
+    for (i = 0; i < rows.length; i++) { nb.push(newRow()); nf.push(newRow()); ne.push(newRow()); }
+    for (i = 0; i < keep.length; i++) { nb.push(keep[i].b); nf.push(keep[i].f); ne.push(keep[i].e); }
+    board = nb; faceMark = nf; earMark = ne;
+
+    var empty = true;
+    for (r = 0; r < ROWS && empty; r++) {
+      for (var c = 0; c < COLS; c++) {
+        if (board[r][c]) { empty = false; break; }
+      }
+    }
+    if (empty) {
+      perfectCount += 1;
+      score += 1000 * level;
+      showBanner(t('bannerPerfect'), false);
+      sfxPerfect();
+      popEl(scoreEl);
+      if (!lowPower) {
+        for (var k = 0; k < 26; k++) {
+          spawnBurst(Math.random() * BW, Math.random() * BH * 0.7 + BH * 0.15, 1, '#ffffff');
+        }
+      }
+    }
+    redrawStatic();
+    updateHUD();
+    checkAch();
+    spawnNext();
+  }
+
+  function popEl(el) {
+    if (!el) return;
+    el.classList.remove('pop');
+    void el.offsetWidth;
+    el.classList.add('pop');
+  }
+  function updateHUD() {
+    scoreEl.textContent = fmtNum(score);
+    bestEl.textContent = fmtNum(Math.max(data.best.score, score));
+    linesEl.textContent = String(lines);
+    levelEl.textContent = String(level);
+  }
+
+  function showToast(msg) {
+    achToast.textContent = msg;
+    achToast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { achToast.classList.remove('show'); }, 2400);
+  }
+  function showBanner(text, red) {
+    bannerEl.textContent = text;
+    bannerEl.classList.toggle('red', !!red);
+    bannerEl.classList.remove('show');
+    void bannerEl.offsetWidth;
+    bannerEl.classList.add('show');
+    clearTimeout(bannerTimer);
+    bannerTimer = setTimeout(function () { bannerEl.classList.remove('show'); }, lowPower ? 720 : 950);
+  }
+  function showCombo(n) {
+    comboPop.textContent = '×' + n;
+    comboPop.classList.remove('show');
+    void comboPop.offsetWidth;
+    comboPop.classList.add('show');
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (m) {
+      return m === '&' ? '&amp;' : (m === '<' ? '&lt;' : (m === '>' ? '&gt;' : '&quot;'));
+    });
+  }
+
+  function updateAchCount() {
+    var n = 0;
+    for (var i = 0; i < ACH.length; i++) if (data.ach.done[ACH[i].id]) n++;
+    achCount.textContent = n + '/' + ACH.length;
+    achTotal.textContent = n + '/' + ACH.length;
+  }
+  function renderAchList() {
+    var groups = [['common', t('achCommon')], ['long', t('achLong')], ['hidden', t('achHidden')]];
+    var html = '';
+    for (var g = 0; g < groups.length; g++) {
+      html += '<div class="achTier">' + esc(groups[g][1]) + '</div>';
+      for (var i = 0; i < ACH.length; i++) {
+        var a = ACH[i];
+        if (a.tier !== groups[g][0]) continue;
+        var done = !!data.ach.done[a.id];
+        var hidden = a.tier === 'hidden' && !done;
+        html += '<div class="achRow' + (done ? ' done' : '') + '">'
+          + '<div class="achIcon">' + (hidden ? '❔' : a.icon) + '</div>'
+          + '<div class="achTxt"><div class="achName">' + esc(hidden ? '???' : t('ach_' + a.id + '_n')) + '</div>'
+          + '<div class="achDesc">' + esc(hidden ? t('achHidden') : t('ach_' + a.id + '_d')) + '</div></div>'
+          + '<div class="achState">' + (done ? t('achDone') : t('achLocked')) + '</div></div>';
+      }
+    }
+    achList.innerHTML = html;
+  }
+  function unlock(id) {
+    if (data.ach.done[id]) return;
+    data.ach.done[id] = Date.now();
+    persist();
+    sfxAch();
+    showToast(fmtTpl(t('achToast'), { n: t('ach_' + id + '_n') }));
+    updateAchCount();
+    renderAchList();
+  }
+  function checkAch() {
+    var totalLines = data.total.lines + lines;
+    if (lines >= 11) unlock('t_i11');
+    if (lines >= 1) unlock('t_first_clear');
+    if (clearTally[3] >= 1) unlock('t_tetris');
+    if (perfectCount >= 1) unlock('t_perfect');
+    if (maxCombo >= 3) unlock('t_combo3');
+    if (maxCombo >= 5) unlock('t_combo5');
+    if (level >= 5) unlock('t_lv5');
+    if (level >= 10) unlock('t_lv10');
+    if (level >= 15) unlock('t_lv15');
+    if (hardDrops >= 20) unlock('t_hard_20');
+    if (totalLines >= 100) unlock('t_total_100');
+    if (totalLines >= 1000) unlock('t_total_1000');
+    if (score >= 10000) unlock('t_score_10k');
+    if (score >= 50000) unlock('t_score_50k');
+    if (lines >= 100) unlock('t_run_100');
+  }
+
+  /* 结束动效：先让棋盘点亮红、震一下并下沉，再弹出结算面板 */
+  function beginGameOver() {
+    if (st !== 'play') return;
+    st = 'dying';
+    deathT = 0;
+    clearing = null;
+    clearMask = null;
+    piece = null;
+    if (landFx) { landFx = null; redrawStatic(); }
+    sfxOver();
+    haptic(60);
+  }
+
+  function gameOver() {
+    st = 'over';
+    clearing = null;
+    clearMask = null;
+    piece = null;
+    parts.length = 0;
+    landFx = null;
+    redrawStatic();
+    haptic(20);
+    checkAch();
+    commitRun();
+    updateHUD();
+    showOverlay('over');
+  }
+
+  function startGame() {
+    initAudio();
+    st = 'play';
+    committed = false;
+    clearing = null;
+    board = blankGrid();
+    faceMark = blankGrid();
+    earMark = blankGrid();
+    score = 0; lines = 0; level = 1; combo = 0; maxCombo = 0;
+    clearTally = [0, 0, 0, 0];
+    perfectCount = 0; hardDrops = 0;
+    bag = []; queue = [];
+    dropAcc = 0; lockAcc = 0; lockResets = 0; pendingAction = '';
+    runMs = 0;
+    parts.length = 0;
+    landFx = null; pendingMood = '';
+    clearMask = null; deathT = 0;
+    popT = 1; sqz = 0; sqzV = 0; wobble = 0; wobbleV = 0; earLag = 0; earLagV = 0;
+    setMood('normal', 0); blinkEnd = 0; blinkAt = animT + 2200;
+    hideOverlay();
+    redrawStatic();
+    updateHUD();
+    fillQueue();
+    renderPreviews();
+    spawnNext();
+    lastTime = 0;
+  }
+
+  function pauseGame() {
+    if (st !== 'play' || clearing) return;
+    st = 'pause';
+    /* 暂停时把没播完的落地回弹直接并进静态层，避免停在半途 */
+    if (landFx) { landFx = null; redrawStatic(); }
+    showOverlay('pause');
+  }
+  function resumeGame() {
+    if (st !== 'pause') return;
+    st = 'play';
+    hideOverlay();
+    lastTime = 0;
+  }
+
+  function hideOverlay() { overlay.classList.remove('show'); }
+  function showOverlay(mode) {
+    overlay.classList.add('show');
+    ovPanel.classList.toggle('over', mode === 'over');
+    ovStats.style.display = 'none';
+    setWrap.style.display = 'none';
+    ovBtn2.style.display = 'none';
+    if (mode === 'ready') {
+      ovKicker.textContent = t('ovReadyKicker');
+      ovTitle.textContent = t('brand1') + t('brand2');
+      ovSub.textContent = t('ovReadySub') + (data.best.score > 0
+        ? ' · ' + fmtTpl(t('readyBest'), { n: fmtNum(data.best.score), l: fmtNum(data.best.lines) })
+        : '');
+      ovBtn.textContent = t('ovStart');
+      ovHint.textContent = t('ovReadyHint');
+      setWrap.style.display = 'block';
+      syncSetBtns();
+    } else if (mode === 'pause') {
+      ovKicker.textContent = t('ovPauseKicker');
+      ovTitle.textContent = t('ovPauseTitle');
+      ovSub.textContent = t('ovPauseSub');
+      ovBtn.textContent = t('ovResume');
+      ovBtn2.textContent = t('ovRestart');
+      ovBtn2.style.display = 'block';
+      ovHint.textContent = t('ovPauseHint');
+      setWrap.style.display = 'block';
+      syncSetBtns();
+    } else {
+      ovKicker.textContent = t('ovOverKicker');
+      ovTitle.textContent = t('ovOverTitle');
+      ovSub.textContent = t('ovOverSub');
+      ovScore.textContent = fmtNum(score);
+      ovLines.textContent = String(lines);
+      ovLevel.textContent = String(level);
+      ovCombo.textContent = String(maxCombo);
+      ovStats.style.display = 'grid';
+      if (lastRecord) ovRec.textContent = fmtTpl(t('recNew'), { n: fmtNum(data.best.score) });
+      else if (data.best.score > 0) ovRec.textContent = fmtTpl(t('recBest'), { n: fmtNum(data.best.score) });
+      else ovRec.textContent = t('recNone');
+      ovBtn.textContent = t('ovAgain');
+      ovHint.textContent = t('ovOverHint');
+    }
+  }
+
+  function syncSetBtns() {
+    setSound.textContent = data.set.sound ? t('setSoundOn') : t('setSoundOff');
+    setSound.classList.toggle('on', !!data.set.sound);
+    setHaptics.textContent = data.set.haptics ? t('setHapticsOn') : t('setHapticsOff');
+    setHaptics.classList.toggle('on', !!data.set.haptics);
+    setGhost.textContent = data.set.ghost ? t('setGhostOn') : t('setGhostOff');
+    setGhost.classList.toggle('on', !!data.set.ghost);
+    setInput.textContent = data.set.input === 'touch' ? t('setTouch') : (data.set.input === 'btn' ? t('setBtn') : t('setBoth'));
+    setInput.classList.add('on');
+    applyInputMode();
+  }
+
+  function applyInputMode() {
+    document.body.dataset.input = data.set.input;
+    tipsEl.textContent = document.body.classList.contains('touch') ? t('tipsTouch') : t('tipsDesktop');
+    fit();
+  }
+
+  function applyLang() {
+    brandEl.innerHTML = esc(t('brand1')) + '<span>' + esc(t('brand2')) + '</span>';
+    achTitleTxt.textContent = t('achTitle');
+    achFoot.textContent = t('achFoot');
+    setTitleEl.textContent = t('setTitle');
+    tipsEl.textContent = document.body.classList.contains('touch') ? t('tipsTouch') : t('tipsDesktop');
+    updateAchCount();
+    renderAchList();
+    syncSetBtns();
+  }
+
+  function updatePlay(dt) {
+    if (!piece) return;
+    if (pendingAction) {
+      var pa = pendingAction;
+      pendingAction = '';
+      if (pa === 'rot') tryRotate(1);
+    }
+    if (!piece) return;
+    handleRepeat(dt);
+    var gi = gravityMs();
+    if (softHeld) gi = Math.min(gi, SOFT);
+    dropAcc += dt;
+    var guard = 0;
+    while (dropAcc >= gi && guard < 44 && piece) {
+      dropAcc -= gi;
+      guard++;
+      var cells = SHAPES[piece.type][piece.rot];
+      if (!collidesIn(board, cells, piece.x, piece.y + 1)) {
+        piece.y += 1;
+        if (softHeld) { score += 1; updateHUD(); }
+        if (lockResets < LOCK_RESET_MAX) lockAcc = 0;
+      } else {
+        break;
+      }
+    }
+    if (!piece) return;
+    var cells2 = SHAPES[piece.type][piece.rot];
+    grounded = collidesIn(board, cells2, piece.x, piece.y + 1);
+    if (grounded) {
+      lockAcc += dt;
+      if (lockAcc >= LOCK_MS) lockPiece();
+    } else {
+      lockAcc = 0;
+    }
+  }
+  /* ==================== PART 4 · 输入 / 设置 / 启动 ==================== */
+  var keys = { left: false, right: false };
+  var bHeld = { left: false, right: false };
+  var dasDir = 0, dasTimer = 0, arrTimer = 0, committed = false;
+
+  function currentDir() {
+    if (bHeld.left || keys.left) return -1;
+    if (bHeld.right || keys.right) return 1;
+    return 0;
+  }
+  function doMoveDir(d) {
+    if (st !== 'play' || clearing) return;
+    tryMove(d);
+  }
+  function startDir(immediate) {
+    var d = currentDir();
+    if (d === 0) { dasDir = 0; return; }
+    dasDir = d;
+    dasTimer = 0;
+    arrTimer = 0;
+    if (immediate) doMoveDir(d);
+  }
+  function handleRepeat(dt) {
+    if (dasDir === 0 || st !== 'play' || clearing) return;
+    dasTimer += dt;
+    if (dasTimer < DAS) return;
+    arrTimer += dt;
+    var guard = 0;
+    while (arrTimer >= ARR && guard < 12) {
+      arrTimer -= ARR;
+      guard++;
+      if (!tryMove(dasDir)) break;
+    }
+  }
+  function rotateOrBuffer(dir) {
+    if (clearing) { pendingAction = 'rot'; return; }
+    tryRotate(dir);
+  }
+
+  function commitRun() {
+    if (committed) return;
+    committed = true;
+    data.total.runs += 1;
+    data.total.lines += lines;
+    for (var i = 0; i < 4; i++) data.total.clears[i] += clearTally[i];
+    data.total.perfect += perfectCount;
+    data.total.playMs += Math.round(runMs);
+    data.total.hardDrops += hardDrops;
+    lastRecord = score > data.best.score;
+    if (lastRecord) {
+      data.best.score = score;
+      data.best.date = Date.now();
+      data.best.duration = Math.round(runMs);
+    }
+    if (lines > data.best.lines) data.best.lines = lines;
+    if (level > data.best.level) data.best.level = level;
+    if (maxCombo > data.best.combo) data.best.combo = maxCombo;
+    persist();
+  }
+
+  function press(el, down, up) {
+    var active = false;
+    function onDown(e) {
+      if (e.button != null && e.button !== 0) return;
+      e.preventDefault();
+      if (active) return;
+      active = true;
+      el.classList.add('on');
+      try { el.setPointerCapture(e.pointerId); } catch (err) {}
+      down();
+    }
+    function onUp() {
+      if (!active) return;
+      active = false;
+      el.classList.remove('on');
+      if (up) up();
+    }
+    el.addEventListener('pointerdown', onDown);
+    el.addEventListener('pointerup', onUp);
+    el.addEventListener('pointercancel', onUp);
+  }
+
+  /* ---------- 手势 ---------- */
+  var tg = null;
+  function gestureStart(e) {
+    if (st !== 'play') return;
+    if (data.set.input === 'btn') return;
+    if (e.target && e.target.closest && e.target.closest('button')) return;
+    if (e.button != null && e.button !== 0) return;
+    tg = {
+      x0: e.clientX, y0: e.clientY,
+      lx: e.clientX, ly: e.clientY,
+      t0: (window.performance && performance.now ? performance.now() : Date.now()),
+      accX: 0, accY: 0, moved: false
+    };
+    try { frame.setPointerCapture(e.pointerId); } catch (err) {}
+    e.preventDefault();
+  }
+  function gestureMove(e) {
+    if (!tg || st !== 'play') return;
+    if (data.set.input === 'btn') { tg = null; return; }
+    var dx = e.clientX - tg.lx, dy = e.clientY - tg.ly;
+    tg.lx = e.clientX;
+    tg.ly = e.clientY;
+    var cellPx = frame.clientWidth / COLS;
+    if (Math.abs(dx) >= Math.abs(dy)) {
+      tg.accX += dx;
+      tg.accY = 0;
+      var step = cellPx * 0.45;
+      var guard = 0;
+      while (Math.abs(tg.accX) >= step && guard < 12) {
+        guard++;
+        var s = tg.accX > 0 ? 1 : -1;
+        tg.accX -= s * step;
+        doMoveDir(s);
+        tg.moved = true;
+      }
+    } else {
+      tg.accX = 0;
+      tg.accY += dy;
+      var vstep = cellPx * 0.55;
+      var g2 = 0;
+      while (tg.accY >= vstep && g2 < 8) {
+        g2++;
+        tg.accY -= vstep;
+        if (!clearing) softStep();
+        tg.moved = true;
+      }
+      if (tg.accY < 0) tg.accY = 0;
+    }
+    e.preventDefault();
+  }
+  function gestureEnd(e) {
+    if (!tg) return;
+    var t = (window.performance && performance.now ? performance.now() : Date.now());
+    var dt = t - tg.t0;
+    var dx = e.clientX - tg.x0, dy = e.clientY - tg.y0;
+    var cellPx = frame.clientWidth / COLS;
+    if (dt < 230 && Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+      rotateOrBuffer(1);
+    } else if (dy > cellPx * 1.1 && dt < 280 && Math.abs(dx) < cellPx) {
+      if (!clearing) hardDrop();
+    }
+    tg = null;
+    e.preventDefault();
+  }
+
+  /* ---------- 布局 ---------- */
+  function fit() {
+    var vh = window.innerHeight || document.documentElement.clientHeight;
+    var availH = vh - 16;
+    var used = topbarEl.offsetHeight + prowEl.offsetHeight;
+    var count = 3;
+    if (tipsEl.offsetHeight > 0) { used += tipsEl.offsetHeight; count++; }
+    if (ctrlEl.offsetHeight > 0) { used += ctrlEl.offsetHeight; count++; }
+    var avail = availH - used - 6 * count;
+    var maxW = wrapEl.clientWidth || 400;
+    var w = Math.min(maxW, avail * (CW / CH));
+    w = Math.max(118, Math.floor(w));
+    var h = Math.round(w * CH / CW);
+    frame.style.width = w + 'px';
+    frame.style.height = h + 'px';
+  }
+
+  /* ---------- 绑定 ---------- */
+  function bindAll() {
+    document.addEventListener('keydown', function (e) {
+      var k = e.key;
+      if (e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName || '')) return;
+      if (k === ' ' || k === 'Spacebar' || k === 'ArrowUp' || k === 'ArrowDown' || k === 'ArrowLeft' || k === 'ArrowRight') e.preventDefault();
+      if (achModal.classList.contains('show')) {
+        if (k === 'Escape' || k === 'p' || k === 'P') achModal.classList.remove('show');
+        return;
+      }
+      if (st === 'ready' || st === 'over') {
+        if (k === ' ' || k === 'Enter') startGame();
+        return;
+      }
+      if (st === 'pause') {
+        if (k === ' ' || k === 'Enter' || k === 'Escape' || k === 'p' || k === 'P') resumeGame();
+        return;
+      }
+      if (st !== 'play' || e.repeat) return;
+      if (k === 'ArrowLeft') { keys.left = true; startDir(true); }
+      else if (k === 'ArrowRight') { keys.right = true; startDir(true); }
+      else if (k === 'ArrowDown') { softHeld = true; softStep(); }
+      else if (k === 'ArrowUp' || k === 'x' || k === 'X') { rotateOrBuffer(1); }
+      else if (k === 'z' || k === 'Z') { rotateOrBuffer(-1); }
+      else if (k === ' ') { if (!clearing) hardDrop(); }
+      else if (k === 'p' || k === 'P' || k === 'Escape') { pauseGame(); }
+    }, { passive: false });
+
+    document.addEventListener('keyup', function (e) {
+      var k = e.key;
+      if (k === 'ArrowLeft') { keys.left = false; startDir(false); }
+      else if (k === 'ArrowRight') { keys.right = false; startDir(false); }
+      else if (k === 'ArrowDown') { softHeld = false; }
+    });
+
+    frame.addEventListener('pointerdown', gestureStart);
+    frame.addEventListener('pointermove', gestureMove);
+    frame.addEventListener('pointerup', gestureEnd);
+    frame.addEventListener('pointercancel', function () { tg = null; });
+    frame.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+    press(bLeft, function () { bHeld.left = true; startDir(true); }, function () { bHeld.left = false; startDir(false); });
+    press(bRight, function () { bHeld.right = true; startDir(true); }, function () { bHeld.right = false; startDir(false); });
+    press(bDown, function () { softHeld = true; softStep(); }, function () { softHeld = false; });
+    press(bRot, function () { rotateOrBuffer(1); });
+    press(bDrop, function () { if (!clearing) hardDrop(); });
+
+    btnPause.addEventListener('click', function () {
+      btnPause.blur();
+      if (st === 'play') pauseGame();
+      else if (st === 'pause') resumeGame();
+    });
+    btnAch.addEventListener('click', function () {
+      btnAch.blur();
+      renderAchList();
+      achModal.classList.add('show');
+    });
+    achClose.addEventListener('click', function () {
+      achClose.blur();
+      achModal.classList.remove('show');
+    });
+    ovBtn.addEventListener('click', function () {
+      ovBtn.blur();
+      if (st === 'ready' || st === 'over') startGame();
+      else if (st === 'pause') resumeGame();
+    });
+    ovBtn2.addEventListener('click', function () {
+      ovBtn2.blur();
+      startGame();
+    });
+
+    setSound.addEventListener('click', function () {
+      setSound.blur();
+      data.set.sound = !data.set.sound;
+      persist();
+      syncSetBtns();
+      if (data.set.sound) { initAudio(); sfxMove(); }
+    });
+    setHaptics.addEventListener('click', function () {
+      setHaptics.blur();
+      data.set.haptics = !data.set.haptics;
+      persist();
+      syncSetBtns();
+      if (data.set.haptics) haptic(12);
+    });
+    setGhost.addEventListener('click', function () {
+      setGhost.blur();
+      data.set.ghost = !data.set.ghost;
+      persist();
+      syncSetBtns();
+    });
+    setInput.addEventListener('click', function () {
+      setInput.blur();
+      data.set.input = data.set.input === 'both' ? 'touch' : (data.set.input === 'touch' ? 'btn' : 'both');
+      persist();
+      syncSetBtns();
+    });
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden && st === 'play') pauseGame();
+    });
+    window.addEventListener('pagehide', function () {
+      if (st === 'play' || st === 'pause') commitRun();
+    });
+    window.addEventListener('blur', function () {
+      if (st === 'play') pauseGame();
+    });
+    window.addEventListener('resize', function () { fit(); });
+    window.addEventListener('orientationchange', function () { setTimeout(fit, 220); });
+  }
+
+  /* ---------- 自测 ---------- */
+  function selftest() {
+    var results = [];
+    function ok(name, cond, extra) { results.push({ name: name, ok: !!cond, extra: extra || '' }); }
+
+    var i, j, r;
+    var drawn = [];
+    bag = [];
+    for (i = 0; i < 70; i++) drawn.push(nextType());
+    var bagOK = true;
+    for (i = 0; i < 10; i++) {
+      var seen = {};
+      for (j = 0; j < 7; j++) seen[drawn[i * 7 + j]] = 1;
+      if (Object.keys(seen).length !== 7) bagOK = false;
+    }
+    ok('7-bag distribution', bagOK);
+
+    var inBox = true;
+    for (var ty in SHAPES) {
+      for (r = 0; r < 4; r++) {
+        for (i = 0; i < 4; i++) {
+          if (SHAPES[ty][r][i][0] < 0 || SHAPES[ty][r][i][0] > 3 || SHAPES[ty][r][i][1] < 0 || SHAPES[ty][r][i][1] > 3) inBox = false;
+        }
+      }
+    }
+    ok('rotation bounds', inBox);
+
+    var heroOK = true;
+    for (var ty2 in SHAPES) {
+      for (r = 0; r < 4; r++) {
+        var hero = pickFace(SHAPES[ty2][r]);
+        var ear2 = pickEarCell(SHAPES[ty2][r], hero);
+        if (ear2[0] !== hero[0] || ear2[1] !== hero[1]) heroOK = false;
+      }
+    }
+    ok('face on ear cell', heroOK);
+
+    var tb = blankGrid();
+    tb[10][5] = 'T';
+    var hit = collidesIn(tb, [[0, 0], [1, 0], [0, 1], [1, 1]], 4, 9);
+    var free = !collidesIn(tb, [[0, 0], [1, 0], [0, 1], [1, 1]], 0, 0);
+    ok('collision detection', hit && free);
+
+    var savedPiece = piece, savedBoard = board, savedSt = st, savedSound = data.set.sound;
+    data.set.sound = false;
+    st = 'play';
+    board = blankGrid();
+    piece = { type: 'I', rot: 1, x: -1, y: 5 };
+    tryRotate(1);
+    var kickOK = piece.rot === 2 && piece.x === 0;
+    st = savedSt;
+    piece = savedPiece;
+    board = savedBoard;
+    data.set.sound = savedSound;
+    ok('wall kick', kickOK);
+
+    var lb = blankGrid();
+    for (var c = 0; c < COLS; c++) lb[21][c] = 'O';
+    var fullRows = [];
+    for (r = 0; r < ROWS; r++) {
+      var fullOne = true;
+      for (c = 0; c < COLS; c++) { if (!lb[r][c]) { fullOne = false; break; } }
+      if (fullOne) fullRows.push(r);
+    }
+    ok('line clear detect', fullRows.length === 1 && fullRows[0] === 21);
+
+    var tblOK = LINE_SCORE[1] === 100 && LINE_SCORE[2] === 300 && LINE_SCORE[3] === 500 && LINE_SCORE[4] === 800;
+    ok('scoring table', tblOK);
+
+    var lv = Math.min(20, Math.floor(100 / 10) + 1);
+    var gm = Math.max(45, 1000 * Math.pow(0.86, lv - 1));
+    ok('level / gravity', lv === 11 && gm > 45 && gm < 260, 'lv11=' + Math.round(gm));
+
+    var raw0 = null;
+    try { raw0 = localStorage.getItem(SAVE_KEY); } catch (e) {}
+    var fb = false;
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify({
+        best: { score: 'x', lines: -5 },
+        total: { clears: 'no' },
+        ach: { done: { t_lv5: 1, bogus: 1 } },
+        set: { input: 'zzz' }
+      }));
+      var d2 = loadData();
+      fb = d2.best.score === 0 && d2.best.lines === 0 && d2.total.clears.length === 4 &&
+        d2.set.input === 'both' && !!d2.ach.done.t_lv5 && !d2.ach.done.bogus;
+      if (raw0 === null) localStorage.removeItem(SAVE_KEY);
+      else localStorage.setItem(SAVE_KEY, raw0);
+    } catch (e) { fb = false; }
+    ok('save fallback', fb);
+
+    var missing = 0;
+    for (var kk in TXT.zh) {
+      for (i = 0; i < LANGS.length; i++) {
+        if (TXT[LANGS[i]][kk] == null) missing++;
+      }
+    }
+    ok('i18n keys', missing === 0, missing ? missing + ' missing' : '');
+
+    var smokeOK = false, smokeErr = '';
+    try {
+      var sPiece = piece, sBoard = board, sFace = faceMark, sEar = earMark, sSt = st, sClear = clearing;
+      st = 'play';
+      clearing = null;
+      board = blankGrid();
+      faceMark = blankGrid();
+      earMark = blankGrid();
+      piece = { type: 'T', rot: 0, x: 3, y: 6 };
+      redrawStatic();
+      draw();
+      renderPreviews();
+      smokeOK = true;
+      st = sSt;
+      clearing = sClear;
+      board = sBoard;
+      faceMark = sFace;
+      earMark = sEar;
+      piece = sPiece;
+    } catch (e) {
+      smokeErr = String(e && e.message || e);
+    }
+    ok('render smoke', smokeOK, smokeErr);
+
+    var pass = 0, html = '';
+    for (i = 0; i < results.length; i++) {
+      if (results[i].ok) pass++;
+      html += '<div class="stRow ' + (results[i].ok ? 'ok' : 'ng') + '"><b>' + (results[i].ok ? '✓' : '✕') + '</b><span>'
+        + esc(results[i].name) + (results[i].extra ? ' · ' + esc(results[i].extra) : '') + '</span></div>';
+    }
+    html += '<div class="stRow ' + (pass === results.length ? 'ok' : 'ng') + '"><b>' + (pass === results.length ? '✓' : '✕') + '</b><span>'
+      + pass + ' / ' + results.length + '</span></div>';
+    stList.innerHTML = html;
+    selfTestEl.classList.add('show');
+    try { console.log('[tetris selftest] ' + pass + '/' + results.length, results); } catch (e) {}
+  }
+
+  /* ---------- 循环 ---------- */
+  function loop(ts) {
+    requestAnimationFrame(loop);
+    if (!lastTime) lastTime = ts;
+    var dt = ts - lastTime;
+    lastTime = ts;
+    if (dt > 120) dt = 120;
+    if (dt < 0) dt = 0;
+    if (st === 'play') {
+      runMs += dt;
+      updateAnim(dt);
+      if (clearing) {
+        clearing.t += dt;
+        if (clearing.t >= CLEAR_MS) endClear();
+      } else {
+        updatePlay(dt);
+      }
+    } else if (st === 'dying') {
+      deathT += dt;
+      if (deathT >= DEATH_MS) gameOver();
+    }
+    updateParticles(dt);
+    draw();
+  }
+
+  /* ---------- 启动 ---------- */
+  function boot() {
+    if ('ontouchstart' in window || (navigator.maxTouchPoints || 0) > 0) document.body.classList.add('touch');
+    document.body.dataset.input = data.set.input;
+    board = blankGrid();
+    faceMark = blankGrid();
+    earMark = blankGrid();
+    redrawStatic();
+    renderPreviews();
+    applyLang();
+    applyInputMode();
+    updateHUD();
+    showOverlay('ready');
+    bindAll();
+    fit();
+    setTimeout(fit, 60);
+    requestAnimationFrame(loop);
+    if (QS.get('selftest') === '1') setTimeout(selftest, 160);
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>
