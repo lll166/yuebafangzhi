@@ -26,11 +26,16 @@
   #wrap{display:flex;flex-direction:column;gap:8px;width:var(--sq);}
 
   /* ---------- 顶部 HUD ---------- */
-  #topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;height:34px;padding:0 2px;}
-  .brand{font-size:13px;font-weight:900;letter-spacing:3px;white-space:nowrap;}
+  #topbar{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0;
+    height:34px;padding:0 2px;}
+  .brand{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;
+    font-size:13px;font-weight:900;letter-spacing:3px;white-space:nowrap;}
+  .brand .bpre{font-style:normal;}
+  /* 窄屏：只留短标题，保证 SCORE / BEST / 成就 / 暂停都排得下 */
+  body.narrow .brand .bpre{display:none;}
   .brand span{color:var(--accent2);text-shadow:0 0 14px rgba(70,230,242,.6);}
-  .stats{display:flex;align-items:center;gap:6px;margin-left:auto;}
-  .stat{display:flex;align-items:baseline;gap:5px;padding:4px 7px;
+  .stats{display:flex;align-items:center;gap:5px;margin-left:auto;flex:0 0 auto;}
+  .stat{flex:0 0 auto;display:flex;align-items:baseline;gap:4px;padding:4px 6px;
     border:1px solid var(--line);border-left:2px solid var(--line2);
     background:linear-gradient(180deg,rgba(8,34,46,.85),rgba(4,18,26,.92));
     clip-path:polygon(0 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%);}
@@ -199,7 +204,7 @@
 <div id="stage">
   <div id="wrap">
     <div id="topbar">
-      <div class="brand">（贪吃）蛇<span>月巴</span></div>
+      <div class="brand"><i class="bpre">（贪吃）</i>蛇<span>月巴</span></div>
       <div class="stats">
         <div class="stat"><span>SCORE</span><b id="scoreEl">0</b></div>
         <div class="stat"><span>BEST</span><b id="bestEl">0</b></div>
@@ -285,7 +290,7 @@
   const TXT = {
     zh:{
       docTitle:'（贪吃）蛇月巴 · 像素蛇',
-      brand:'（贪吃）蛇<span>月巴</span>',
+      brand:'<i class="bpre">（贪吃）</i>蛇<span>月巴</span>',
       acAch:'成就', acPause:'暂停', acClose:'关闭',
       readySub:'吃番茄变长，别撞墙，别咬到自己', start:'开始',
       readyHint:'方向键 / WASD · 手机滑动',
@@ -320,7 +325,7 @@
     },
     en:{
       docTitle:'(Greedy) Snake Banny · Pixel Snake',
-      brand:'(Greedy) Snake <span>Banny</span>',
+      brand:'<i class="bpre">(Greedy) </i>Snake <span>Banny</span>',
       acAch:'Achievements', acPause:'Pause', acClose:'Close',
       readySub:'Eat Tomatoes to grow — dodge walls and your own tail', start:'Start',
       readyHint:'Arrow keys / WASD · Swipe on mobile',
@@ -355,7 +360,7 @@
     },
     ja:{
       docTitle:'（食いしん坊）ヘビバニー · ピクセルスネーク',
-      brand:'（食いしん坊）ヘビ<span>バニー</span>',
+      brand:'<i class="bpre">（食いしん坊）</i>ヘビ<span>バニー</span>',
       acAch:'実績', acPause:'一時停止', acClose:'閉じる',
       readySub:'トマトを食べて伸びよう。壁と自分のしっぽに注意', start:'スタート',
       readyHint:'方向キー / WASD · スマホはスワイプ',
@@ -390,7 +395,7 @@
     },
     ko:{
       docTitle:'（먹보）뱀 배니 · 픽셀 스네이크',
-      brand:'（먹보）뱀 <span>배니</span>',
+      brand:'<i class="bpre">（먹보）</i>뱀 <span>배니</span>',
       acAch:'업적', acPause:'일시정지', acClose:'닫기',
       readySub:'토마토를 먹고 길어져요. 벽과 내 꼬리를 조심해요', start:'시작',
       readyHint:'방향키 / WASD · 모바일은 스와이프',
@@ -908,7 +913,7 @@
     overlay.classList.add('show');
     if(kind === 'ready'){
       ovKicker.textContent = '// READY //';
-      ovTitle.textContent = t('brand').replace(/<\/?span>/g, '');
+      ovTitle.textContent = t('brand').replace(/<[^>]+>/g, '');
       ovSub.textContent = t('readySub');
       ovStats.style.display = 'none';
       ovBtn.textContent = t('start');
@@ -937,7 +942,7 @@
     document.documentElement.lang = (LANG === 'zh') ? 'zh-CN' : LANG;
     document.title = t('docTitle');
     const brand = document.querySelector('.brand');
-    if(brand) brand.innerHTML = t('brand');
+    if(brand){ brand.innerHTML = t('brand'); fitBrand(); }
     const at = $('achTitleTxt'); if(at) at.textContent = t('achTitle');
     const af = $('achFoot'); if(af) af.textContent = t('achFoot');
     const tp = $('tips'); if(tp) tp.textContent = t('tips');
@@ -1132,6 +1137,15 @@
     const reserve = 104 + dpadH; // 顶栏 + 提示 + 方向键 + 间距 + 安全边距
     const sq = Math.max(isTouch ? 160 : 200, Math.min(vw - 24, vh - reserve, 620));
     document.documentElement.style.setProperty('--sq', Math.round(sq) + 'px');
+    fitBrand();
+  }
+
+  /* 顶栏排不下时收起标题前缀（窄屏机型），避免把「暂停」挤出屏幕右侧 */
+  function fitBrand(){
+    const brand = document.querySelector('.brand');
+    if(!brand) return;
+    document.body.classList.remove('narrow');
+    if(brand.scrollWidth > brand.clientWidth + 1) document.body.classList.add('narrow');
   }
 
   /* ================= 输入 ================= */
@@ -1237,6 +1251,9 @@
   reset();
   showOver('ready');
   requestAnimationFrame(loop);
+
+  /* 供首页的「新版本自动刷新」读取对局状态：play/pause 时不允许刷新打断这一局 */
+  window.__snState=function(){ return state; };
 })();
 </script>
 </body>
