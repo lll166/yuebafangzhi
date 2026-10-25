@@ -241,6 +241,13 @@ header#top{
 .cell.bb{--sh:inset -1px 0 0 var(--line),inset 0 -2px 0 var(--line2)}
 .cell.br.bb{--sh:inset -2px 0 0 var(--line2),inset 0 -2px 0 var(--line2)}
 .cell.fill{background:linear-gradient(160deg,#949cc0,#737ca6);box-shadow:var(--sh),inset 0 1px 0 rgba(255,255,255,.4),inset 0 -2px 0 rgba(0,0,0,.13)}
+.cell.tent{
+  background:
+    repeating-linear-gradient(45deg,rgba(160,143,194,.32) 0 3px,rgba(160,143,194,.10) 3px 6px),
+    rgba(255,255,255,.52);
+  box-shadow:var(--sh),inset 0 0 0 1px rgba(160,143,194,.4);
+}
+.cell.tent::after{content:"";position:absolute;inset:2px;border:1px dashed rgba(99,108,158,.38);pointer-events:none}
 .cell.cross::before{content:"✕";font-size:calc(var(--cell) * .48);color:rgba(38,42,58,.38);line-height:1}
 .cell.fill.cross::before{content:none}
 .cell.hm::after{content:"✦";position:absolute;right:1px;top:-1px;font-size:calc(var(--cell) * .4);color:rgba(255,255,255,.85);text-shadow:0 0 3px rgba(0,0,0,.6)}
@@ -263,8 +270,10 @@ header#top{
 .tool b{font-size:15px;font-weight:800;color:var(--paper);line-height:1}
 .tool.fillmode.on{background:linear-gradient(180deg,rgba(99,108,158,.16),rgba(99,108,158,.06));border-color:rgba(99,108,158,.6);border-left-color:var(--acc);box-shadow:inset 0 0 16px rgba(99,108,158,.12)}
 .tool.crossmode.on{background:linear-gradient(180deg,rgba(127,158,201,.2),rgba(127,158,201,.08));border-color:rgba(127,158,201,.62);border-left-color:var(--ice);box-shadow:inset 0 0 16px rgba(127,158,201,.14)}
+.tool.tentmode.on{background:linear-gradient(180deg,rgba(160,143,194,.2),rgba(160,143,194,.08));border-color:rgba(160,143,194,.62);border-left-color:var(--pink);box-shadow:inset 0 0 16px rgba(160,143,194,.14)}
 .tool.fillmode.on b{color:var(--acc)}
 .tool.crossmode.on b{color:var(--ice)}
+.tool.tentmode.on b{color:var(--pink)}
 .tool.easymode.on{background:linear-gradient(180deg,rgba(127,158,201,.2),rgba(127,158,201,.08));border-color:rgba(127,158,201,.62);border-left-color:var(--ice);box-shadow:inset 0 0 16px rgba(127,158,201,.14)}
 .tool.easymode.on b{color:var(--ice)}
 .tool:active{transform:scale(.95)}
@@ -554,6 +563,7 @@ body.low-power .rvart{animation-duration:.5s;animation-delay:.05s}
     <div class="toolbar">
       <button class="tool fillmode on" id="modeFill"><b>■</b><span id="lblFill">涂黑</span></button>
       <button class="tool crossmode" id="modeCross"><b>✕</b><span id="lblCross">打叉</span></button>
+      <button class="tool tentmode" id="modeTent"><b>▨</b><span id="lblTent">待选</span></button>
       <button class="tool" id="btnUndo"><b>↶</b><span id="lblUndo">撤销</span></button>
       <button class="tool" id="btnClear"><b>⌫</b><span id="lblClear">清空</span></button>
       <button class="tool" id="btnHint"><b>✦</b><span id="lblHint">提示</span></button>
@@ -616,7 +626,7 @@ const I18N={
     common:'普通', uncommon:'常见', rare:'稀有', epic:'史诗', legend:'传说', event:'活动',
     unsolvedShort:'未解救', collected:'已收',
     puzzleNo:'解救 #{n}', size:'{n}×{n}', mistakes:'失误', hints:'提示', time:'用时',
-    fill:'涂黑', cross:'打叉', undo:'撤销', clear:'清空', hint:'提示', pause:'暂停',
+    fill:'涂黑', cross:'打叉', tent:'待选', undo:'撤销', clear:'清空', hint:'提示', pause:'暂停',
     easy:'降难度', easyOn:'降难度：开（自动划叉、实时判错）', easyOff:'降难度：关（自己划叉，填满才判错）',
     fillWrong:'填满了，但和答案不一致，撤销几格检查一下',
     paused:'已暂停', pauseSub:'计时已停止，棋盘会保留。', back:'← 名册', backCatalog:'返回名册',
@@ -643,7 +653,7 @@ const I18N={
     howto:'玩法说明', howtoSub:'数织（Nonogram）：从行列数字推理出笼中的月巴，把它解救出来。',
     hw1:'每行/每列外侧的数字，表示该线连续涂黑格的长度与顺序。',
     hw2:'例如「3 1」表示先涂 3 格、至少空 1 格、再涂 1 格。',
-    hw3:'触屏：点格按「涂黑 → 清空 → 打叉」循环，长按反向。电脑：左键涂黑/取消，右键打叉/取消。',
+    hw3:'触屏：先选笔刷（涂黑/打叉/待选），点格即涂，滑动可连续涂；再点同一格、长按，或从已标记的格子滑动，即可连续消除。电脑：左键使用当前笔刷，右键打叉/取消。不确定的格可用「待选」做浅色标记，确定后再用「涂黑」覆盖。',
     hw4:'一条线的数字全部满足时会变灰划线。开启「降难度」时，行/列不成立会标红并计一次失误；关闭后不实时判错，填满才检查。可随时撤销。',
     hw5:'「提示」按行列逻辑填入必然格，每个笼位 3 次，卡住时使用。',
     hw6:'所有行列线索满足即解救成功并揭晓立绘；只有图鉴已收集的月巴可以解救。',
@@ -657,7 +667,7 @@ const I18N={
     common:'Common', uncommon:'Uncommon', rare:'Rare', epic:'Epic', legend:'Legend', event:'Event',
     unsolvedShort:'Caged', collected:'Owned',
     puzzleNo:'Rescue #{n}', size:'{n}×{n}', mistakes:'Mistakes', hints:'Hints', time:'Time',
-    fill:'Fill', cross:'Cross', undo:'Undo', clear:'Clear', hint:'Hint', pause:'Pause',
+    fill:'Fill', cross:'Cross', tent:'Mark', undo:'Undo', clear:'Clear', hint:'Hint', pause:'Pause',
     easy:'Easier', easyOn:'Easier: ON (auto-cross + live mistakes)', easyOff:'Easier: OFF (cross manually, errors only when full)',
     fillWrong:'Board is full but not correct — undo a few cells and check again',
     paused:'Paused', pauseSub:'The timer is stopped. Your board is kept.', back:'← List', backCatalog:'Back to list',
@@ -684,7 +694,7 @@ const I18N={
     howto:'How to Play', howtoSub:'Nonogram: read the row and column numbers to free the Banny inside the cage.',
     hw1:'The numbers beside each row and column give the lengths of consecutive filled blocks, in order.',
     hw2:'For example, “3 1” means 3 filled, at least 1 empty, then 1 filled.',
-    hw3:'Touch: tap cycles Fill → Clear → Cross; long-press marks the opposite. Desktop: left-click fills/clears, right-click crosses/clears.',
+    hw3:'Touch: pick a brush (Fill / Cross / Mark), tap to apply and slide to keep painting; tap the same cell again, long-press, or slide from an already marked cell to erase continuously. Desktop: left-click uses the current brush, right-click crosses/clears. Use “Mark” to pencil in unsure cells in a light color; overwrite with Fill when certain.',
     hw4:'A line greys out when its clues are satisfied. With "Easier" on, an impossible line turns red and counts as a mistake; with it off, errors are only checked when the board is full. Undo any time.',
     hw5:'Hint fills logically certain cells, 3 per rescue. Use it when stuck.',
     hw6:'Satisfy every row and column clue to free the Banny and reveal the artwork. Only collected Bannies can be rescued.',
@@ -698,7 +708,7 @@ const I18N={
     common:'普通', uncommon:'よくある', rare:'レア', epic:'エピック', legend:'伝説', event:'イベント',
     unsolvedShort:'未救助', collected:'収集済',
     puzzleNo:'救助 #{n}', size:'{n}×{n}', mistakes:'ミス', hints:'ヒント', time:'時間',
-    fill:'塗る', cross:'×', undo:'戻す', clear:'消す', hint:'ヒント', pause:'一時停止',
+    fill:'塗る', cross:'×', tent:'仮置き', undo:'戻す', clear:'消す', hint:'ヒント', pause:'一時停止',
     easy:'易しく', easyOn:'易しく：オン（自動×・即時ミス判定）', easyOff:'易しく：オフ（×は手動、満杯時のみ判定）',
     fillWrong:'盤面は埋まりましたが正解と違います。何マスか戻して確認してください',
     paused:'一時停止中', pauseSub:'タイマーは停止しました。盤面は保持されます。', back:'← リスト', backCatalog:'リストへ',
@@ -725,7 +735,7 @@ const I18N={
     howto:'遊び方', howtoSub:'数織（ノノグラム）：行と列の数字から檻の中のバニーを推理して助け出します。',
     hw1:'各行・各列の数字は、連続して塗るマスの長さと順番を表します。',
     hw2:'例：「3 1」は 3 マス塗る、1 マス以上空ける、1 マス塗る。',
-    hw3:'タッチ：タップで「塗る → 消す → ×」を循環、長押しで逆の印。PC：左クリックは塗る／取消、右クリックは×／取消。',
+    hw3:'タッチ：筆（塗る／×／仮置き）を選び、タップで塗ってスライドで連続塗り。同じマスをもう一度タップ、長押し、またはマーク済みのマスからスライドで連続消去。PC：左クリックは現在の筆、右クリックは×／取消。不確実なマスは「仮置き」で薄く印を付け、確定したら「塗る」で上書きできます。',
     hw4:'手がかりを満たすと数字が灰色になり取り消し線。「易しく」オンのとき成立しない線は赤くなりミス＋1、オフのときは盤面が埋まるまで判定しません。いつでも戻せます。',
     hw5:'ヒントは論理的に確定するマスを埋めます（1 回の救助につき 3 回）。詰まったら使いましょう。',
     hw6:'すべての行と列の手がかりを満たすと救助成功。立ち絵が現れます。救助できるのは図鑑で収集済みのバニーだけです。',
@@ -739,7 +749,7 @@ const I18N={
     common:'보통', uncommon:'흔함', rare:'희귀', epic:'에픽', legend:'전설', event:'이벤트',
     unsolvedShort:'미구출', collected:'수집됨',
     puzzleNo:'구출 #{n}', size:'{n}×{n}', mistakes:'실수', hints:'힌트', time:'시간',
-    fill:'칠하기', cross:'×', undo:'되돌리기', clear:'지우기', hint:'힌트', pause:'일시정지',
+    fill:'칠하기', cross:'×', tent:'임시', undo:'되돌리기', clear:'지우기', hint:'힌트', pause:'일시정지',
     easy:'쉬움', easyOn:'쉬움: 켜짐 (자동 ×, 실시간 오류 판정)', easyOff:'쉬움: 꺼짐 (× 수동, 다 채워야 판정)',
     fillWrong:'다 채웠지만 정답과 다릅니다. 몇 칸 되돌리고 확인하세요',
     paused:'일시정지', pauseSub:'타이머가 멈췄습니다. 판은 유지됩니다.', back:'← 목록', backCatalog:'목록으로',
@@ -766,7 +776,7 @@ const I18N={
     howto:'플레이 방법', howtoSub:'노노그램: 행과 열의 숫자로 우리 안의 배니를 추리해 구출합니다.',
     hw1:'각 행/열의 숫자는 연속으로 칠하는 칸의 길이와 순서를 나타냅니다.',
     hw2:'예: 「3 1」은 3칸 칠하고, 1칸 이상 띄운 뒤 1칸 칠한다는 뜻입니다.',
-    hw3:'터치: 탭하면 「칠하기 → 지우기 → ×」가 순환하고 길게 누르면 반대 표시. PC: 왼쪽 클릭은 칠하기/취소, 오른쪽 클릭은 ×/취소.',
+    hw3:'터치: 브러시(칠하기/×/임시)를 골라 탭하면 적용되고 드래그하면 계속 칠할 수 있습니다. 같은 칸을 다시 탭하거나 길게 누르거나 표시된 칸에서 드래그하면 연속으로 지워집니다. PC: 왼쪽 클릭은 현재 브러시, 오른쪽 클릭은 ×/취소. 확실하지 않은 칸은 「임시」로 옅게 표시하고, 확정되면 「칠하기」로 덮어쓰세요.',
     hw4:'단서가 모두 만족되면 숫자가 회색으로 바뀌고 취소선이 그어집니다. 「쉬움」이 켜지면 불가능한 줄이 빨갛게 변하고 실수 +1, 꺼지면 판이 다 채워질 때만 판정합니다. 언제든 되돌릴 수 있습니다.',
     hw5:'힌트는 논리적으로 확정된 칸을 채웁니다(구출당 3회). 막히면 사용하세요.',
     hw6:'모든 행과 열의 단서를 만족하면 구출 성공, 일러스트가 나타납니다. 구출할 수 있는 것은 도감에서 수집한 배니뿐입니다.',
@@ -864,7 +874,7 @@ function saveGame(){
 const LIVE_KEY='yueba-nonogram-live-v1';
 function packCells(arr){
   let s='';
-  for(let i=0;i<arr.length;i++) s+=arr[i]===1?'2':(arr[i]===0?'1':'0');
+  for(let i=0;i<arr.length;i++) s+=arr[i]===1?'2':(arr[i]===0?'1':(arr[i]===2?'3':'0'));
   return s;
 }
 function unpackCells(str,n,fill){
@@ -872,7 +882,7 @@ function unpackCells(str,n,fill){
   for(let i=0;i<n*n;i++){
     const c=str.charAt(i);
     if(fill===1) a[i]=c==='1'?1:0;
-    else a[i]=c==='2'?1:(c==='1'?0:-1);
+    else a[i]=c==='2'?1:(c==='1'?0:(c==='3'?2:-1));
   }
   return a;
 }
@@ -906,7 +916,7 @@ function restoreLive(){
   G.t0=0; G.running=false;
   G.mistakes=Math.max(0,parseInt(d.m,10)||0);
   G.hintsLeft=Math.max(0,Math.min(3,parseInt(d.h,10)||0));
-  G.mode=d.mode===0?0:1;
+  G.mode=(d.mode===0||d.mode===2)?d.mode:1;
   setMode(G.mode,true);
   renderBoard();
   saveLive();
@@ -1045,6 +1055,7 @@ function tone(freq,dur,type,vol,delay){
 const SFX={
   fill:function(){ tone(620,.05,'sine',.045); },
   cross:function(){ tone(380,.04,'triangle',.035); },
+  tent:function(){ tone(520,.035,'triangle',.03); },
   line:function(){ tone(880,.08,'sine',.06); tone(1046,.09,'sine',.045,.05); },
   err:function(){ tone(150,.10,'sawtooth',.055); tone(110,.12,'sine',.045,.05); },
   win:function(){ [523,659,784,1046].forEach(function(f,i){ tone(f,.14,'triangle',.09,i*.08); }); },
@@ -1317,6 +1328,7 @@ function renderBoard(){
 function applyCell(el,i,v,anim){
   el.classList.toggle('fill',v===1);
   el.classList.toggle('cross',v===0);
+  el.classList.toggle('tent',v===2);
   el.classList.toggle('hm',!!(G.hintM[i]&&v===1));
   if(anim){ el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
 }
@@ -1369,7 +1381,7 @@ function updateLines(silent){
 }
 function boardFull(){
   if(!G) return false;
-  for(let i=0;i<G.marks.length;i++) if(G.marks[i]===-1) return false;
+  for(let i=0;i<G.marks.length;i++) if(G.marks[i]===-1||G.marks[i]===2) return false;
   return true;
 }
 function lineInfo(kind,idx){
@@ -1441,18 +1453,14 @@ function paintCell(i,val,nseq){
   if(!G.hintM[i]||val!==1) G.hintM[i]=0;
   STROKE.changes.push({i:i,from:from,to:val,fs:fs});
   applyCell(G.cellEls[i],i,val,true);
-  if(val===1) SFX.fill(); else if(val===0) SFX.cross(); else SFX.click();
+  if(val===1) SFX.fill(); else if(val===0) SFX.cross(); else if(val===2) SFX.tent(); else SFX.click();
   return true;
 }
-/* 连点循环：填涂 → 清空 → 打叉（打叉模式下顺序为 打叉 → 清空 → 填涂）
-   seq 记录该格的进度：0 未点过 / 1 刚填涂 / 2 刚清空 / 3 刚打叉 */
-function seqOfVal(v){ return v===1?1:(v===0?3:0); }
-function tapNextSeq(val){ return val===1?1:(val===0?3:2); }
-function tapNextValue(from,fromSeq){
-  if(from===G.mode) return -1;
-  if(from===-1&&fromSeq===2) return G.mode===1?0:1;
-  return G.mode;
-}
+/* 点击：涂上当前笔刷；同一格再次点击则消除
+   seq 记录该格的进度：0 未点过 / 1 刚填涂 / 2 刚清空 / 3 刚打叉 / 4 刚待选 */
+function seqOfVal(v){ return v===1?1:(v===0?3:(v===2?4:0)); }
+function tapNextSeq(val){ return val===1?1:(val===0?3:(val===2?4:2)); }
+function tapNextValue(from){ return from===G.mode?-1:G.mode; }
 function cellFromPoint(x,y){
   const rect=$('grid').getBoundingClientRect();
   if(x<rect.left||y<rect.top||x>=rect.right||y>=rect.bottom) return -1;
@@ -1462,26 +1470,26 @@ function cellFromPoint(x,y){
   if(r<0||c<0||r>=n||c>=n) return -1;
   return r*n+c;
 }
-function beginStroke(i,reverse,desktop,pid){
+function beginStroke(i,reverse,desktop,pid,px,py){
   if(!G||G.done||G.paused) return;
   markStart();
-  const from=G.marks[i], fromSeq=G.seq[i];
-  STROKE={changes:[],reverse:!!reverse,origin:i,from:from,fromSeq:fromSeq,moved:false,defer:false,desktop:!!desktop,tapVal:null,pid:pid};
+  const from=G.marks[i];
+  STROKE={changes:[],reverse:!!reverse,erase:false,origin:i,from:from,moved:false,desktop:!!desktop,tapVal:null,pid:pid,px:px,py:py};
   if(desktop){
-    /* 电脑鼠标：左键只在「涂黑 / 取消」间切换，右键只在「打叉 / 取消」间切换。
-       起手是取消时，拖动整段都按取消处理；起手是涂黑/打叉时，拖动按同一动作连续标记。 */
-    const val=reverse?(from===0?-1:0):(from===1?-1:1);
+    /* 电脑鼠标：左键使用当前笔刷（涂黑 / 打叉 / 待选），再次点击同一格则取消；
+       右键固定为「打叉 / 取消」。起手是取消时，拖动整段都按取消处理。 */
+    const val=reverse?(from===0?-1:0):(from===G.mode?-1:G.mode);
     STROKE.tapVal=val;
     paintCell(i,val);
     return;
   }
   if(STROKE.reverse){
-    paintCell(i,G.mode===1?0:1);
+    paintCell(i,-1);
   }else{
-    const val=tapNextValue(from,fromSeq);
-    // 填涂立即落下；清空/打叉等抬手再落，拖动时不会误伤起始格
-    if(val===G.mode) paintCell(i,val,tapNextSeq(val));
-    else STROKE.defer=true;
+    const val=tapNextValue(from);
+    // 起手格已是当前笔刷 → 整段滑动都按消除处理，可连续擦除
+    if(val===-1) STROKE.erase=true;
+    paintCell(i,val,tapNextSeq(val));
   }
 }
 function endStroke(){
@@ -1502,7 +1510,7 @@ function autoCross(rec){
     if(!sameClue(clueOfStates(rowStates(p,G.marks,r)),p._rows[r])) continue;
     for(let c=0;c<n;c++){
       const i=r*n+c;
-      if(G.marks[i]===-1){ const fs=G.seq[i]; G.marks[i]=0; G.seq[i]=3; rec.changes.push({i:i,from:-1,to:0,fs:fs}); applyCell(G.cellEls[i],i,0,false); }
+      if(G.marks[i]===-1||G.marks[i]===2){ const from=G.marks[i], fs=G.seq[i]; G.marks[i]=0; G.seq[i]=3; rec.changes.push({i:i,from:from,to:0,fs:fs}); applyCell(G.cellEls[i],i,0,false); }
     }
   }
   for(let c=0;c<n;c++){
@@ -1510,7 +1518,7 @@ function autoCross(rec){
     if(!sameClue(clueOfStates(states),p._cols[c])) continue;
     for(let r=0;r<n;r++){
       const i=r*n+c;
-      if(G.marks[i]===-1){ const fs=G.seq[i]; G.marks[i]=0; G.seq[i]=3; rec.changes.push({i:i,from:-1,to:0,fs:fs}); applyCell(G.cellEls[i],i,0,false); }
+      if(G.marks[i]===-1||G.marks[i]===2){ const from=G.marks[i], fs=G.seq[i]; G.marks[i]=0; G.seq[i]=3; rec.changes.push({i:i,from:from,to:0,fs:fs}); applyCell(G.cellEls[i],i,0,false); }
     }
   }
 }
@@ -1658,6 +1666,7 @@ function setMode(m,silent){
   G.mode=m;
   $('modeFill').classList.toggle('on',m===1);
   $('modeCross').classList.toggle('on',m===0);
+  $('modeTent').classList.toggle('on',m===2);
   if(!silent) SFX.click();
 }
 /* ================= 解救成功：棋盘 → 立绘 ================= */
@@ -1723,6 +1732,10 @@ function finish(){
   G.done=true;
   clearLive();
   stopTimer();
+  // 待选格统一落定为打叉，避免通关后仍留浅色标记
+  for(let i=0;i<G.marks.length;i++){
+    if(G.marks[i]===2){ G.marks[i]=0; G.seq[i]=3; applyCell(G.cellEls[i],i,0,false); }
+  }
   const p=G.p, ms=Math.max(0,Math.round(G.base)), m=G.mistakes, h=3-G.hintsLeft;
   const stars=starsFor(p,ms,m,h);
   const prev=S.solved[p.id];
@@ -1938,7 +1951,7 @@ function bindBoard(){
     if(e.button===2||e.pointerType!=='mouse') ctxGuard=Date.now();
     // 只保留一个活动笔画：多指/误触的第二次按下先结算上一次，避免串到相邻格
     if(STROKE) endStroke();
-    beginStroke(i,reverse,e.pointerType!=='touch',e.pointerId);
+    beginStroke(i,reverse,e.pointerType!=='touch',e.pointerId,e.clientX,e.clientY);
     LONG_FIRED=false;
     clearTimeout(LONG_T);
     if(!reverse&&e.pointerType!=='mouse'){
@@ -1946,8 +1959,8 @@ function bindBoard(){
         if(!STROKE||STROKE.pid!==e.pointerId) return;
         LONG_FIRED=true;
         STROKE.reverse=true;
-        const val=G.mode===1?0:1;
-        // 翻转起始格
+        const val=-1;
+        // 撤销按下时已经涂上的笔刷，长按统一按消除处理
         const changes=STROKE.changes;
         if(changes.length){
           const ch=changes[0];
@@ -1966,22 +1979,22 @@ function bindBoard(){
   grid.addEventListener('pointermove',function(e){
     if(!STROKE||e.pointerId!==STROKE.pid||!G||G.done||G.paused) return;
     e.preventDefault();
-    if(!LONG_FIRED&&e.pointerType!=='mouse'){ /* 拖动前取消长按 */ clearTimeout(LONG_T); }
+    // 轻微抖动不取消长按，手指明显移动后才取消，长按后继续拖动可连续消除
+    if(!LONG_FIRED&&e.pointerType!=='mouse'&&STROKE.px!=null){
+      const dx=e.clientX-STROKE.px, dy=e.clientY-STROKE.py;
+      if(dx*dx+dy*dy>64) clearTimeout(LONG_T);
+    }
     const i=cellFromPoint(e.clientX,e.clientY);
     if(i<0) return;
-    if(i!==STROKE.origin&&!STROKE.moved){
-      STROKE.moved=true;
-      // 已进入拖动：起始格按普通填涂处理，取消连点循环
-      if(STROKE.defer){ STROKE.defer=false; paintCell(STROKE.origin,G.mode); }
-    }
-    paintCell(i,STROKE.desktop?STROKE.tapVal:(STROKE.reverse?(G.mode===1?0:1):G.mode));
+    if(i!==STROKE.origin&&!STROKE.moved) STROKE.moved=true;
+    paintCell(i,STROKE.desktop?STROKE.tapVal:((STROKE.reverse||STROKE.erase)?-1:G.mode));
   });
   function up(e){
     clearTimeout(LONG_T);
     if(!STROKE||e.pointerId!==STROKE.pid) return;
-    // 触屏纯点击（没拖到别的格子）：按“填涂 → 清空 → 打叉”循环前进一格；电脑按下时已落子
+    // 触屏纯点击（没拖到别的格子）：涂上当前笔刷，或再点一次取消；电脑按下时已落子
     if(!STROKE.moved&&!STROKE.reverse&&!LONG_FIRED&&!STROKE.desktop){
-      const val=tapNextValue(STROKE.from,STROKE.fromSeq);
+      const val=tapNextValue(STROKE.from);
       paintCell(STROKE.origin,val,tapNextSeq(val));
     }
     endStroke();
@@ -2119,6 +2132,7 @@ function applyStaticText(){
   $('btnBack').textContent=t('back');
   $('lblFill').textContent=t('fill');
   $('lblCross').textContent=t('cross');
+  $('lblTent').textContent=t('tent');
   $('lblUndo').textContent=t('undo');
   $('lblClear').textContent=t('clear');
   $('lblHint').textContent=t('hint');
@@ -2211,6 +2225,7 @@ function init(){
   $('pauseBack').onclick=function(){ backToCatalog(); };
   $('modeFill').onclick=function(){ setMode(1); };
   $('modeCross').onclick=function(){ setMode(0); };
+  $('modeTent').onclick=function(){ setMode(2); };
   $('btnUndo').onclick=function(){ undo(); };
   $('btnClear').onclick=function(){ clearBoard(); };
   $('btnHint').onclick=function(){ useHint(); };
