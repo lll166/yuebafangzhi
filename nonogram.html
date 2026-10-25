@@ -643,7 +643,7 @@ const I18N={
     howto:'玩法说明', howtoSub:'数织（Nonogram）：从行列数字推理出笼中的月巴，把它解救出来。',
     hw1:'每行/每列外侧的数字，表示该线连续涂黑格的长度与顺序。',
     hw2:'例如「3 1」表示先涂 3 格、至少空 1 格、再涂 1 格。',
-    hw3:'点格涂黑，再点一次清空，第三次打叉。也可切到「打叉」模式；长按或右键直接标反。',
+    hw3:'触屏：点格按「涂黑 → 清空 → 打叉」循环，长按反向。电脑：左键涂黑/取消，右键打叉/取消。',
     hw4:'一条线的数字全部满足时会变灰划线。开启「降难度」时，行/列不成立会标红并计一次失误；关闭后不实时判错，填满才检查。可随时撤销。',
     hw5:'「提示」按行列逻辑填入必然格，每个笼位 3 次，卡住时使用。',
     hw6:'所有行列线索满足即解救成功并揭晓立绘；只有图鉴已收集的月巴可以解救。',
@@ -684,7 +684,7 @@ const I18N={
     howto:'How to Play', howtoSub:'Nonogram: read the row and column numbers to free the Banny inside the cage.',
     hw1:'The numbers beside each row and column give the lengths of consecutive filled blocks, in order.',
     hw2:'For example, “3 1” means 3 filled, at least 1 empty, then 1 filled.',
-    hw3:'Tap a cell to fill it, tap again to clear, and a third tap marks an ×. You can also switch to Cross mode; long-press or right-click marks the opposite.',
+    hw3:'Touch: tap cycles Fill → Clear → Cross; long-press marks the opposite. Desktop: left-click fills/clears, right-click crosses/clears.',
     hw4:'A line greys out when its clues are satisfied. With "Easier" on, an impossible line turns red and counts as a mistake; with it off, errors are only checked when the board is full. Undo any time.',
     hw5:'Hint fills logically certain cells, 3 per rescue. Use it when stuck.',
     hw6:'Satisfy every row and column clue to free the Banny and reveal the artwork. Only collected Bannies can be rescued.',
@@ -725,7 +725,7 @@ const I18N={
     howto:'遊び方', howtoSub:'数織（ノノグラム）：行と列の数字から檻の中のバニーを推理して助け出します。',
     hw1:'各行・各列の数字は、連続して塗るマスの長さと順番を表します。',
     hw2:'例：「3 1」は 3 マス塗る、1 マス以上空ける、1 マス塗る。',
-    hw3:'マスをタップで塗る。もう一度タップで消去、三度目のタップで×。×モードも使えます。長押し／右クリックで逆の印。',
+    hw3:'タッチ：タップで「塗る → 消す → ×」を循環、長押しで逆の印。PC：左クリックは塗る／取消、右クリックは×／取消。',
     hw4:'手がかりを満たすと数字が灰色になり取り消し線。「易しく」オンのとき成立しない線は赤くなりミス＋1、オフのときは盤面が埋まるまで判定しません。いつでも戻せます。',
     hw5:'ヒントは論理的に確定するマスを埋めます（1 回の救助につき 3 回）。詰まったら使いましょう。',
     hw6:'すべての行と列の手がかりを満たすと救助成功。立ち絵が現れます。救助できるのは図鑑で収集済みのバニーだけです。',
@@ -766,7 +766,7 @@ const I18N={
     howto:'플레이 방법', howtoSub:'노노그램: 행과 열의 숫자로 우리 안의 배니를 추리해 구출합니다.',
     hw1:'각 행/열의 숫자는 연속으로 칠하는 칸의 길이와 순서를 나타냅니다.',
     hw2:'예: 「3 1」은 3칸 칠하고, 1칸 이상 띄운 뒤 1칸 칠한다는 뜻입니다.',
-    hw3:'칸을 탭하면 칠하고, 한 번 더 탭하면 지우며, 세 번째 탭에 ×가 표시됩니다. × 모드도 사용할 수 있고, 길게 누르거나 우클릭하면 반대로 표시됩니다.',
+    hw3:'터치: 탭하면 「칠하기 → 지우기 → ×」가 순환하고 길게 누르면 반대 표시. PC: 왼쪽 클릭은 칠하기/취소, 오른쪽 클릭은 ×/취소.',
     hw4:'단서가 모두 만족되면 숫자가 회색으로 바뀌고 취소선이 그어집니다. 「쉬움」이 켜지면 불가능한 줄이 빨갛게 변하고 실수 +1, 꺼지면 판이 다 채워질 때만 판정합니다. 언제든 되돌릴 수 있습니다.',
     hw5:'힌트는 논리적으로 확정된 칸을 채웁니다(구출당 3회). 막히면 사용하세요.',
     hw6:'모든 행과 열의 단서를 만족하면 구출 성공, 일러스트가 나타납니다. 구출할 수 있는 것은 도감에서 수집한 배니뿐입니다.',
@@ -1462,11 +1462,19 @@ function cellFromPoint(x,y){
   if(r<0||c<0||r>=n||c>=n) return -1;
   return r*n+c;
 }
-function beginStroke(i,reverse){
+function beginStroke(i,reverse,desktop,pid){
   if(!G||G.done||G.paused) return;
   markStart();
   const from=G.marks[i], fromSeq=G.seq[i];
-  STROKE={changes:[],reverse:!!reverse,origin:i,from:from,fromSeq:fromSeq,moved:false,defer:false};
+  STROKE={changes:[],reverse:!!reverse,origin:i,from:from,fromSeq:fromSeq,moved:false,defer:false,desktop:!!desktop,tapVal:null,pid:pid};
+  if(desktop){
+    /* 电脑鼠标：左键只在「涂黑 / 取消」间切换，右键只在「打叉 / 取消」间切换。
+       起手是取消时，拖动整段都按取消处理；起手是涂黑/打叉时，拖动按同一动作连续标记。 */
+    const val=reverse?(from===0?-1:0):(from===1?-1:1);
+    STROKE.tapVal=val;
+    paintCell(i,val);
+    return;
+  }
   if(STROKE.reverse){
     paintCell(i,G.mode===1?0:1);
   }else{
@@ -1905,6 +1913,20 @@ function backToCatalog(){
 function bindBoard(){
   const grid=$('grid');
   grid.addEventListener('contextmenu',function(e){ e.preventDefault(); });
+  /* 右键（或触屏长按）起手后拖到棋盘外再松手时，系统菜单会弹到游戏界面之外。
+     在起手后的一小段时间内整页拦截 contextmenu，保证右键手势不会“出界”。 */
+  let ctxGuard=0;
+  window.addEventListener('contextmenu',function(e){
+    if(grid.contains(e.target)||STROKE||(ctxGuard&&Date.now()-ctxGuard<2500)){
+      e.preventDefault();
+      ctxGuard=0;
+    }
+  },true);
+  // 在棋盘外松手也能正常结束本次笔画，避免标记跟着指针乱跑
+  window.addEventListener('pointerup',function(e){
+    if(ctxGuard) ctxGuard=Date.now();
+    if(STROKE&&e.pointerId===STROKE.pid) endStroke();
+  },false);
   grid.addEventListener('pointerdown',function(e){
     if(!G||G.done||G.paused) return;
     if(e.button!==undefined&&e.button!==0&&e.button!==2) return;
@@ -1913,12 +1935,15 @@ function bindBoard(){
     e.preventDefault();
     try{ grid.setPointerCapture(e.pointerId); }catch(err){}
     const reverse=(e.button===2)||e.shiftKey;
-    beginStroke(i,reverse);
+    if(e.button===2||e.pointerType!=='mouse') ctxGuard=Date.now();
+    // 只保留一个活动笔画：多指/误触的第二次按下先结算上一次，避免串到相邻格
+    if(STROKE) endStroke();
+    beginStroke(i,reverse,e.pointerType!=='touch',e.pointerId);
     LONG_FIRED=false;
     clearTimeout(LONG_T);
     if(!reverse&&e.pointerType!=='mouse'){
       LONG_T=setTimeout(function(){
-        if(!STROKE) return;
+        if(!STROKE||STROKE.pid!==e.pointerId) return;
         LONG_FIRED=true;
         STROKE.reverse=true;
         const val=G.mode===1?0:1;
@@ -1939,7 +1964,7 @@ function bindBoard(){
     }
   });
   grid.addEventListener('pointermove',function(e){
-    if(!STROKE||!G||G.done||G.paused) return;
+    if(!STROKE||e.pointerId!==STROKE.pid||!G||G.done||G.paused) return;
     e.preventDefault();
     if(!LONG_FIRED&&e.pointerType!=='mouse'){ /* 拖动前取消长按 */ clearTimeout(LONG_T); }
     const i=cellFromPoint(e.clientX,e.clientY);
@@ -1949,13 +1974,13 @@ function bindBoard(){
       // 已进入拖动：起始格按普通填涂处理，取消连点循环
       if(STROKE.defer){ STROKE.defer=false; paintCell(STROKE.origin,G.mode); }
     }
-    paintCell(i,STROKE.reverse?(G.mode===1?0:1):G.mode);
+    paintCell(i,STROKE.desktop?STROKE.tapVal:(STROKE.reverse?(G.mode===1?0:1):G.mode));
   });
   function up(e){
     clearTimeout(LONG_T);
-    if(!STROKE) return;
-    // 纯点击（没拖到别的格子）：按“填涂 → 清空 → 打叉”循环前进一格
-    if(!STROKE.moved&&!STROKE.reverse&&!LONG_FIRED){
+    if(!STROKE||e.pointerId!==STROKE.pid) return;
+    // 触屏纯点击（没拖到别的格子）：按“填涂 → 清空 → 打叉”循环前进一格；电脑按下时已落子
+    if(!STROKE.moved&&!STROKE.reverse&&!LONG_FIRED&&!STROKE.desktop){
       const val=tapNextValue(STROKE.from,STROKE.fromSeq);
       paintCell(STROKE.origin,val,tapNextSeq(val));
     }
