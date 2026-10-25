@@ -5013,10 +5013,12 @@ const I18N_UI={
   '飞行小游戏':{en:'Flight Mini-game',ja:'フライトミニゲーム',ko:'비행 미니게임'},
   '黄金矿工':{en:'Gold Miner',ja:'ゴールドマイナー',ko:'골드 마이너'},
   '月巴数织':{en:'Banny Nonogram',ja:'バニー数織',ko:'배니 노노그램'},
+  '月巴大扫除':{en:'Banny Deep Clean',ja:'バニー大掃除',ko:'배니 대청소'},
   '月巴大战丧尸月巴':{en:'Banny vs. Zombanny',ja:'バニー vs ゾンバニー',ko:'배니 vs 좀비 배니'},
   '⛏ 黄金矿工 +{n} 🪙':{en:'⛏ Gold Miner +{n} 🪙',ja:'⛏ ゴールドマイナー +{n} 🪙',ko:'⛏ 골드 마이너 +{n} 🪙'},
   '🍅 月巴大战 +{n} 🪙':{en:'🍅 Banny Battle +{n} 🪙',ja:'🍅 バニーバトル +{n} 🪙',ko:'🍅 배니 배틀 +{n} 🪙'},
   '✦ 月巴数织 +{n} 🪙':{en:'✦ Banny Nonogram +{n} 🪙',ja:'✦ バニー数織 +{n} 🪙',ko:'✦ 배니 노노그램 +{n} 🪙'},
+  '🧹 月巴大扫除 +{n} 🪙':{en:'🧹 Banny Deep Clean +{n} 🪙',ja:'🧹 バニー大掃除 +{n} 🪙',ko:'🧹 배니 대청소 +{n} 🪙'},
   '🚇 隧道通行证已放入旅行仓库，可在行囊里带上出发':{en:'🚇 A Tunnel Pass was stored in the travel stash — pack it in your bag before departure',ja:'🚇 トンネル通行証を旅行倉庫に入れました。行囊に入れて出発できます',ko:'🚇 터널 통행증을 여행 창고에 넣었습니다. 배낭에 넣고 출발하세요'},
   '🚇 已有隧道通行证，不能叠加':{en:'🚇 You already have a Tunnel Pass — it does not stack',ja:'🚇 トンネル通行証をすでに所持しています。重ねて持てません',ko:'🚇 터널 통행증을 이미 보유하고 있어 중첩할 수 없습니다'},
   '装进行囊后出发：无论去哪里，5 分钟后都会带着一封信回来，且不需要便当；目的地仍由铃铛/油灯等道具决定':{en:'Pack it and depart: wherever you go, it returns with a letter in 5 minutes — no bento needed; direction items like the Bell still choose the destination',ja:'行囊に入れて出発：どこへ行っても5分で手紙を届けて戻ります。お弁当は不要。行き先は鈴やランプなどの道具が決めます',ko:'배낭에 넣고 출발: 어디로 가든 5분 만에 편지를 물고 돌아오며 도시락이 필요 없습니다. 목적지는 방울/램프 같은 아이템이 결정합니다'},
@@ -14698,6 +14700,8 @@ const GB_GAMES=[
   {id:'helix', codex:'mb_gungun', name:'月巴螺旋跳', sub:true, html:'helixjump.html', hidden:true},
   /* 月巴大战丧尸月巴入口暂时隐藏，实装完成后恢复：{id:'pvz', codex:'mb_tomato', name:'月巴大战丧尸月巴', html:'pvz.html'} */
   {id:'nonogram', codex:'mb_wenshi', name:'月巴数织', html:'nonogram.html'},
+  /* 月巴大扫除：实装期 hidden:true 不显示，M5 验收后删除该标记即上线 */
+  {id:'minesweeper', codex:'mb_zhoumo', name:'月巴大扫除', html:'minesweeper.html', hidden:true},
   /* 巴巴博弈入口暂时隐藏，恢复时取消注释即可：
   {id:'fight', codex:'m2_baboyi', name:'巴巴博弈', html:'fight.html'},
   */
@@ -14813,6 +14817,12 @@ window.addEventListener('message',function(e){
     addCoins(n);
     save();
     toast($tf('🍅 月巴大战 +{n} 🪙',{n:n}));
+  }else if(d.type==='yueba-minesweeper-coins'){
+    const n=Math.max(0,Math.min(5000,parseInt(d.coins,10)||0));
+    if(!n) return;
+    addCoins(n);
+    save();
+    toast($tf('🧹 月巴大扫除 +{n} 🪙',{n:n}));
   }else if(d.type==='yueba-helix-ready'){
     /* 月巴螺旋跳 iframe 就绪：下发已开启图鉴的全部月巴名册（父页负责本地化名称/立绘/SVG） */
     if(!e.source) return;
@@ -18448,7 +18458,7 @@ function ddSparkHTML(cum){
      进行中（含暂停、过关过渡）跳过，等这局打完再刷；读不到状态时按进行中处理。 */
   function gbBusy(){
     if(typeof gbFrameId==='undefined'||!gbFrameId) return false;
-    if(gbFrameId!=='gold'&&gbFrameId!=='nonogram') return false;
+    if(gbFrameId!=='gold'&&gbFrameId!=='nonogram'&&gbFrameId!=='minesweeper') return false;
     try{
       var fr=document.getElementById('gbGameFrame');
       var w=fr&&fr.contentWindow;
@@ -18456,6 +18466,10 @@ function ddSparkHTML(cum){
       if(gbFrameId==='gold'){
         var st=(typeof w.__gmState==='function')?w.__gmState():'';
         return st!=='start' && st!=='over';
+      }
+      if(gbFrameId==='minesweeper'){
+        var st3=(typeof w.__msState==='function')?w.__msState():'';
+        return st3==='play'||st3==='pause';
       }
       var st2=(typeof w.__NP_STATE==='function')?w.__NP_STATE():'';
       return st2==='play'||st2==='pause';
