@@ -1,0 +1,2250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>月巴数织 · Nonogram</title>
+<style>
+:root{
+  --bg:#eff1f8; --bg2:#e2e5f1; --paper:#34384c; --ink:#34384c; --mut:#868aa2;
+  --acc:#636c9e; --pink:#a08fc2; --ice:#7f9ec9; --gold:#b08a48;
+  --line:rgba(52,58,82,.18); --line2:rgba(52,58,82,.46);
+  --glass:rgba(255,255,255,.58); --glass2:rgba(255,255,255,.86);
+  --tint:rgba(99,108,158,.055); --glow:0 0 16px rgba(99,108,158,.16);
+  --mono:"SF Mono","Cascadia Mono",Consolas,ui-monospace,"PingFang SC","Microsoft YaHei",monospace;
+  --r1:#7d8aa5; --r2:#6e9d8a; --r3:#7f9ec9; --r4:#8c82c0; --r5:#b08a48; --r6:#a08fc2;
+  --safe:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{
+  background:
+    radial-gradient(1100px 700px at 18% -10%, #fbfbfe 0%, transparent 60%),
+    radial-gradient(900px 600px at 92% 108%, #eceef6 0%, transparent 55%),
+    linear-gradient(160deg, var(--bg) 0%, var(--bg2) 100%);
+  color:var(--paper);
+  font-family:var(--mono);
+  letter-spacing:.02em;
+  overflow:hidden;
+}
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; opacity:.55;
+  background:repeating-linear-gradient(0deg,rgba(52,58,82,.03) 0 1px,transparent 1px 3px),
+             repeating-linear-gradient(90deg,rgba(52,58,82,.024) 0 1px,transparent 1px 4px);
+}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+#app{position:relative;height:100%;display:flex;flex-direction:column;max-width:860px;margin:0 auto}
+/* ---------- 顶栏 ---------- */
+header#top{
+  flex:none;display:flex;align-items:center;gap:8px;padding:calc(11px + env(safe-area-inset-top,0px)) 14px 10px;
+  border-bottom:1px solid var(--line2);z-index:5;
+  background:linear-gradient(180deg,rgba(255,255,255,.88),rgba(234,238,248,.74));
+  backdrop-filter:blur(10px);
+  box-shadow:inset 0 -1px 0 rgba(255,255,255,.5);
+}
+.brand{font-family:var(--mono);font-size:15px;font-weight:900;letter-spacing:.2em;line-height:1.05}
+.brand small{display:block;font-family:inherit;font-size:8px;font-weight:700;letter-spacing:.32em;color:var(--mut);margin-top:4px}
+.brand small::before{content:"// ";color:var(--acc)}
+.topstat{margin-left:auto;font-size:10px;letter-spacing:.06em;color:var(--mut);text-align:right;line-height:1.4;white-space:nowrap;font-variant-numeric:tabular-nums}
+.topstat b{color:var(--paper);font-weight:800}
+.iconbtn{
+  width:34px;height:34px;flex:none;border-radius:0;display:grid;place-items:center;
+  font-size:13px;line-height:1;color:var(--ink);
+  border:1px solid var(--line);border-left:2px solid rgba(99,108,158,.48);
+  background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(228,232,244,.86));
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);
+  box-shadow:inset 0 0 12px rgba(99,108,158,.05);
+  transition:background .15s,transform .12s;
+}
+.iconbtn:active{transform:scale(.94)}
+.iconbtn.on{background:linear-gradient(180deg,rgba(99,108,158,.22),rgba(99,108,158,.1));border-color:rgba(99,108,158,.6);border-left-color:var(--acc)}
+/* ---------- 滚动区 ---------- */
+.scroll{flex:1;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:14px 14px calc(22px + var(--safe))}
+/* ---------- 目录 ---------- */
+.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}
+.stat{
+  position:relative;padding:8px 10px;border-radius:0;
+  border:1px solid var(--line);border-left:2px solid rgba(99,108,158,.55);
+  background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.38));
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);
+  box-shadow:inset 0 0 16px rgba(99,108,158,.04);
+}
+.stat i{display:block;font-style:normal;font-size:8.5px;font-weight:700;letter-spacing:.16em;color:var(--mut)}
+.stat b{display:block;font-size:18px;font-weight:800;margin-top:3px;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.stat b em{font-style:normal;font-size:10px;color:var(--mut);font-weight:400}
+.notice{
+  display:flex;gap:9px;align-items:flex-start;padding:9px 12px 9px 13px;margin-bottom:12px;
+  border:1px solid var(--line);border-left:2px solid rgba(160,143,194,.72);border-radius:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(160,143,194,.09));
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);
+  font-size:10.5px;line-height:1.6;color:#61667c;
+}
+.notice .ni{flex:none;font-size:13px;line-height:1.2;color:var(--pink)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:none;display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:0;
+  border:1px solid var(--line);border-left:2px solid rgba(99,108,158,.4);
+  background:rgba(255,255,255,.5);font-size:10.5px;letter-spacing:.06em;color:var(--mut);
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%);
+  transition:.16s;
+}
+.chip::before{content:"";width:4px;height:4px;flex:none;background:currentColor;opacity:.4}
+.chip.on{
+  background:linear-gradient(180deg,#7f88b8,var(--acc));color:#f7f9ff;
+  border-color:rgba(99,108,158,.85);border-left-color:#4d5588;font-weight:800;
+  box-shadow:0 0 12px rgba(99,108,158,.3);
+}
+.chip.on::before{opacity:1;box-shadow:0 0 6px #fff}
+.rgroup{margin-top:12px}
+.rhead{display:flex;align-items:center;gap:8px;font-size:9.5px;font-weight:700;letter-spacing:.2em;color:var(--mut);margin:0 2px 8px}
+.rhead::after{content:"";flex:1;height:1px;background:var(--line)}
+.rhead b{color:var(--paper);font-weight:900;letter-spacing:.08em}
+.rdot{width:6px;height:6px;background:var(--c);box-shadow:0 0 8px var(--c)}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tab{
+  flex:1;padding:9px 0;border-radius:0;
+  border:1px solid var(--line);border-left:2px solid rgba(99,108,158,.4);
+  background:rgba(255,255,255,.5);
+  font-family:var(--mono);font-size:11px;font-weight:800;letter-spacing:.16em;color:var(--mut);
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%);
+  transition:.16s;
+}
+.tab.on{
+  background:linear-gradient(180deg,#7f88b8,var(--acc));color:#f7f9ff;
+  border-color:rgba(99,108,158,.85);border-left-color:#4d5588;
+  box-shadow:0 0 12px rgba(99,108,158,.3);
+}
+#paneCodex.off,#paneRandom.off{display:none}
+.hero{
+  position:relative;padding:14px 14px 12px;
+  border:1px solid var(--line);border-left:2px solid rgba(99,108,158,.55);
+  background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.4));
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%);
+  box-shadow:inset 0 0 20px rgba(99,108,158,.04);
+}
+.heroart{
+  position:relative;width:min(58vw,230px);aspect-ratio:1/1;margin:0 auto 12px;
+  display:grid;place-items:center;overflow:hidden;
+  background:radial-gradient(circle at 50% 42%,rgba(255,255,255,.9),rgba(52,58,82,.05) 72%);
+  border:1px solid var(--line);
+}
+.heroart img,.heroart canvas{width:100%;height:100%;object-fit:contain;padding:9%;image-rendering:pixelated;filter:drop-shadow(0 6px 10px rgba(52,58,82,.22))}
+.heroart::after{
+  content:"";position:absolute;inset:5px;pointer-events:none;opacity:.55;
+  background:
+    linear-gradient(var(--acc),var(--acc)) left top/12px 2px no-repeat,
+    linear-gradient(var(--acc),var(--acc)) left top/2px 12px no-repeat,
+    linear-gradient(var(--acc),var(--acc)) right bottom/12px 2px no-repeat,
+    linear-gradient(var(--acc),var(--acc)) right bottom/2px 12px no-repeat;
+}
+.hero .wq{font-size:44px}
+.herotag{
+  display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:6px;
+  font-family:var(--mono);font-size:8.5px;font-weight:800;letter-spacing:.3em;color:var(--mut);
+}
+.herotag::before,.herotag::after{content:"";height:1px;flex:1;background:var(--line)}
+.herometa{text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--mut);margin-bottom:11px;font-variant-numeric:tabular-nums}
+.herobtn{
+  display:block;width:100%;padding:13px 0;border:0;border-radius:0;
+  background:linear-gradient(180deg,#7f88b8,var(--acc));color:#f7f9ff;
+  font-family:var(--mono);font-size:12px;font-weight:900;letter-spacing:.2em;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%);
+  box-shadow:0 0 18px rgba(99,108,158,.32);transition:transform .12s,filter .12s;
+}
+.herobtn:active{transform:translateY(1px);filter:brightness(.95)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media(min-width:560px){.cards{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:820px){.cards{grid-template-columns:repeat(5,1fr)}}
+.card{
+  position:relative;text-align:left;border-radius:0;
+  border:1px solid var(--line);border-left:2px solid rgba(99,108,158,.42);
+  background:linear-gradient(180deg,rgba(255,255,255,.66),rgba(255,255,255,.4));
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%);
+  overflow:hidden;transition:transform .14s,border-color .14s,background .14s;min-width:0;
+  box-shadow:inset 0 0 18px rgba(99,108,158,.035);
+}
+.card:hover{transform:translateY(-2px);border-color:var(--line2);background:rgba(255,255,255,.74)}
+.card:active{transform:scale(.985)}
+.card .cart{aspect-ratio:1/1;display:grid;place-items:center;position:relative;overflow:hidden;background:rgba(52,58,82,.05)}
+.card .cart img{width:100%;height:100%;object-fit:contain;padding:8%;filter:drop-shadow(0 4px 8px rgba(52,58,82,.22))}
+/* 未解救：统一灰色剪影（取微笑月巴外形）+ 牢门栏杆 + 锁/问号 */
+.sil{position:absolute;inset:13% 19% 9%;pointer-events:none;opacity:.2;
+  background:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAACgCAYAAACLz2ctAAAJJUlEQVR42u2dWWgdVRjHf3duEtNNY9WYtJaaxrrGNqjFpa1iNLUuuLWgUrBgUSxipSoiVH0QQVB8UBBfqoILuLzogwvuu4JCFVfQosS2atVia5ukTZv4MJ80rbm5470z955z5v+DwG1zk5z55nfnLHPm+wondPcgRL2IFAIhAYUEFEICCgkohAQUElAICSiCpyHnx98IzAaOAiYAe4AtwDfAryn/rTbgeGAqUAQGgB+A74EhCZgvpgAXAitNiskmxQiwyyR8FXgWeL8KQRqBhcAVwGKTrwkomOzbTfZHgJeAv/N2Igo5vBXXCTwEnAVMKvPev0yMW4DNJmiiuAKtwAMmekuZ9+8A3gVWAevzdDKKrW0deTreI4G1wCK7EpWjGZgDnGtXqr6E8i0Enra/05zgZ5psKNAFvGfiaxIS4HjvAaCSS3438IwJUo4ue293BX+nx9rYKAHD40ygt4qfbwfusnFcKabae9qr+Du91lYJGBiX2OSjGpYCy8b5/jJ7T7UTpEskYFg0A2en9LtuA44e4/+Ptu+lwdkJx44S0BNmV9ktjmY68fLN/qy076VBu7VZAgbCEcDElH5XwbrZTvZd2llq30uDidZmCRgIE4gXmtNiGrBk1L+X2P+lRdHaLAFFybhdSrxc0mivFUt0K64UQ8Bwyr9zLvFtvH9fp8lwXu4P50XAbXZCm1Pu1i8a9TrtD8w2CRgOfUA/1a8D7j8ZuSej9vYnvO2nMaAn/Ey8w8UXtlibJWAg7PbsitJnbZaAAfGx2ioB68mnwKAH7Ry0tkrAwPgO+M2Ddv5mbZWAAc6Ev/Wgnd/mZQacNwF3A6950M7X8jIByeOtuDeJn+1wlc3WRiRgmGywL7VPAtac04kfSJrrcBvnWhtPl4DhUADOI37G9zLS3ZaVNkVr47PW5oIE9J9e4HFghkdtnmFt7pWAfh/bAuBJ0tuOX0vara0LQj5PUcDd7hzi53NbPT6OVjuGOaF2x1HAuV/uI72HhOrJdDuWKRIQbzIg3B7Y+KnXjqlRArrPycDyAI9ruR2bBHSYFuLcKtMCFHCaHVuLBHSXq4B5Ac/s59kxSkAHOQa4MfDMUo12jMdIQPeO41rgOMLnODvWSALiVO6Xq8kPV4eSOyYKZNH5euCwHAl4mB1zQQLWnzZgBfljhR27BKwzqwn0LgHl7/asloD1ZRLVZyT1maUJMv1LwAzHfhcAHTkWsMNiUJCAtacpZzPf8WbETRKQutT86JF/9FgsJGCNu9/FpJd212cmWiwKErC2M8Alco/RKYKnSMDaMZMAtyZR3Ra0mRKwdixS9/ufbniRBKRma3+L5NyYH8pJEjB7DmdvcnCxl+MtNhIwY7oIc8czKeyY7pKA2bNQNTlKnsuFEjD7wfZJcq0kJ/k2OYs8fEa2U56VpNO3Z6EjD8c5bfKM8fZGTpOA2XEscIA8K8kBFiMJmBGnyLGwYhR5tgGhQ36RZI9gQQKSSdYDrf8lGye3SMBsZsAHy6+yHOzTTNgnAQ/B8+cfqN298kMkYPpMIOy0G6SYvmOCBCSTNa5m+VWWZp/WSiPPZncisFj5dgUUgcXKt0mICCxWPgk4WV6FF6vIs8G1CCxWPgnYIK/Ci5VPAmoXdICx8m0zgggsVj4JOCKvwouVBJSAEjAhe+RVeLHyScAheRVerHwScKe8Ci9WPgn4t7wKL1Y+CfinvAovVj4J+Ku8Ci9WPgnYJ6/Ci5VvV0BNRJJNQHQFJJulhd3yqyy7tQyT3cxOV8BkV0DNgjNgs5ZiEn9QN0vAbMaAW+RXWbZoDJgNg8Am+VWWTRYrCZgBf8ivsGLkm4DfyK+wYuSbgF+ipRjKLMF8KQHJ7Emv+UBRnpWkaDHy5qm4Ymtbhy/y3Qncip6Oo8yzIKcSJyj6yIfewgcBG4A1wG0oP3TSeJ1qMn4ADEvA6lgO3KfUbBV1xX3A5xoDVt6dzADuULdb8ZXwDothQQJW9im+F5gllypmlsWwKAGpqNzAMjlUNctcLt0QOZzneI3cSY01rubXjhy++vXKm9TodfUqGDmaZHsFWnIh5RJeK1xcSXBRwCNsCUGky3yLrQRM0P1q5pvNjPgUCUjZtb9z5EpmnOPammDkYJmpefIkM+a5Vu7MNQFn2pfISXxdFFDlGMi0fIMEHIcT5Ui+YuyagLPlR75i7OIkROQoxpFjSzDKhJ+zOEeO7V+bLj+oReX5BgnImPv/VIymNue8KAH/yzAqxUCNSjgMS0DGTL+2QX5kzgaX0rdFjn0yVQuEmtQQGZGAY/O7/MhXjF0T8Gv5ka8YuybgOmBAjmTGgMVYAlI6u/sv8iQzfnEtg37k4AztK3mSGV+5ttLgmoC7gJflSWa8bDGWgOPwOvCTXEmdnyy2SMDx2Qi8LV9S522LrQSkfJ2LtagkAymXbljrYp0VV2/+rwNelDep8aJryy+uCzgA3A/0y52q6bdYDkhA/veK/aPyp2oedfkOU+T4TfM1rnYdnrDOYrhHAlY+eL5YE5JwY+fDDuSNwHXADjmVmB0Ws42oTghp7BN8HlilK2HiK98qi9mIBExvPPgEcCOwVY6VZKvF6AlfNvdGnpWhegq4HHjHkaHBDfblQlf3jsXmKZ/KmflSKWl0d/wj8BZwFHEJgsY6XGWeB24mXuD9FHifuJrTkXUok9UPvApcC3zh24Ndvgn4L9uA54i3F80A2mvwqOEg8AqwGniYfffVbSLeafIxMJU4AVBDDR7i+oS4fNndwF8+nsjCCd09vo97JgOXAjeRXQbQZ4BH7ISX287UBJwGrASuzKg9nwEPAi8A230+eSEIOPrEzweuAc6nujRvQ8R11l4BnibeSTxSQQqMduI6HecDC6ocLvxp7XkM+NC1fX0ScO9JLwIHAd3AuUAX0AkcapIexL7rZYPWpa8HvieuMvmhSbczhTFVgThLfbt9QM4gzlDVCRxoY8ZJ+40xdxFXPl9vw4w3iGu+bXXtsUoJWP7kN1s33WRytpgQQybeLnu9wwb0wzVYeZho0jVauw601zttLLfH2rXdPiAjIRe0I/A0FAPsuxOkz4EUJNt9H7vlcR1QSEAhJKCQgEJIQCEBhZCAQgIKIQGFBBRCAgoJKEQy/gFv/HPG4sDRFwAAAABJRU5ErkJggg==") center bottom/contain no-repeat}
+.bars{position:absolute;inset:0;pointer-events:none;--gap:15px;
+  background:
+    repeating-linear-gradient(90deg,rgba(43,48,66,.46) 0 3px,transparent 3px var(--gap)),
+    linear-gradient(rgba(43,48,66,.42),rgba(43,48,66,.42)) center/100% 2px no-repeat,
+    linear-gradient(180deg,rgba(43,48,66,.10),transparent 24%,transparent 76%,rgba(43,48,66,.14));
+  box-shadow:inset 0 0 18px rgba(43,48,66,.20)}
+.heroart .sil{inset:14% 24% 10%}
+.heroart .bars{--gap:26px}
+.bars::before,.bars::after{content:"";position:absolute;left:0;right:0;height:4px;background:rgba(43,48,66,.5);box-shadow:0 1px 0 rgba(255,255,255,.35)}
+.bars::before{top:0}
+.bars::after{bottom:0;box-shadow:0 -1px 0 rgba(255,255,255,.35)}
+.wq{position:absolute;z-index:2;font-family:var(--mono);font-size:24px;color:rgba(52,58,82,.38);text-shadow:0 0 8px rgba(255,255,255,.95)}
+.card.locked .wq{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;
+  font-size:19px;line-height:1;opacity:1;
+  background:rgba(255,255,255,.9);box-shadow:0 0 0 1px rgba(43,48,66,.16),0 2px 8px rgba(43,48,66,.22)}
+.card.locked{opacity:.72}
+.card.locked:active{transform:none}
+.card.locked.deny{animation:deny .32s ease-out}
+@keyframes deny{0%,100%{transform:translateX(0)}20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+.card.locked .cart{background:rgba(52,58,82,.075)}
+.cdot{position:absolute;top:7px;left:7px;width:5px;height:5px;background:var(--pink);box-shadow:0 0 6px var(--pink)}
+/* ---------- 棋盘页 ---------- */
+#viewPuzzle{flex:1;display:none;flex-direction:column;min-height:0}
+#viewPuzzle.on{display:flex}
+#viewCatalog.off{display:none}
+.pbar{flex:none;display:flex;align-items:center;gap:8px;padding:9px 14px 5px}
+.pbar .ptitle{flex:1;text-align:center;font-size:9.5px;letter-spacing:.1em;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pbar .ptitle b{color:var(--paper);font-family:var(--mono);font-size:13px;font-weight:900;letter-spacing:.08em}
+.backbtn{
+  font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--mut);padding:8px 10px;border-radius:0;flex:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.86),rgba(228,232,244,.82));
+  border:1px solid var(--line);border-left:2px solid rgba(99,108,158,.45);
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%);
+}
+.pinfo{flex:none;display:flex;justify-content:center;gap:15px;font-size:10px;letter-spacing:.08em;color:var(--mut);padding:0 14px 4px;font-variant-numeric:tabular-nums}
+.pinfo b{color:var(--paper);font-weight:800}
+.pinfo .warn b{color:var(--acc)}
+#boardWrap{flex:1;display:grid;place-items:center;min-height:0;padding:8px 10px;overflow:auto;overscroll-behavior:contain}
+#board{display:grid;grid-template-columns:var(--leftw) calc(var(--cell) * var(--n));
+  grid-template-rows:var(--toph) calc(var(--cell) * var(--n));touch-action:none;user-select:none;-webkit-user-select:none}
+#corner{grid-column:1;grid-row:1;position:relative}
+#cluesTop{grid-column:2;grid-row:1;display:grid;grid-template-columns:repeat(var(--n),var(--cell));align-items:end}
+#cluesLeft{grid-column:1;grid-row:2;display:grid;grid-template-rows:repeat(var(--n),var(--cell))}
+#grid{grid-column:2;grid-row:2;display:grid;grid-template-columns:repeat(var(--n),var(--cell));grid-template-rows:repeat(var(--n),var(--cell));outline:1.5px solid var(--line2);outline-offset:0;position:relative}
+#grid::after{
+  content:"";position:absolute;inset:-6px;pointer-events:none;z-index:3;opacity:.7;
+  background:
+    linear-gradient(var(--acc),var(--acc)) left top/13px 2px no-repeat,
+    linear-gradient(var(--acc),var(--acc)) left top/2px 13px no-repeat,
+    linear-gradient(var(--acc),var(--acc)) right top/13px 2px no-repeat,
+    linear-gradient(var(--acc),var(--acc)) right top/2px 13px no-repeat,
+    linear-gradient(var(--acc),var(--acc)) left bottom/13px 2px no-repeat,
+    linear-gradient(var(--acc),var(--acc)) left bottom/2px 13px no-repeat,
+    linear-gradient(var(--acc),var(--acc)) right bottom/13px 2px no-repeat,
+    linear-gradient(var(--acc),var(--acc)) right bottom/2px 13px no-repeat;
+}
+.ctop{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:0;height:100%;padding-bottom:2px;overflow:hidden}
+.cleft{display:flex;align-items:center;justify-content:flex-end;gap:2px;height:100%;padding-right:4px;overflow:hidden}
+.num{font-size:var(--cluefs);line-height:1.06;color:rgba(38,42,58,.72);font-variant-numeric:tabular-nums;font-weight:600}
+.done .num{color:rgba(38,42,58,.24);text-decoration:line-through;text-decoration-thickness:1px}
+.bad .num{color:var(--acc);text-shadow:0 0 7px rgba(99,108,158,.35)}
+.cell{
+  --sh:inset -1px 0 0 var(--line),inset 0 -1px 0 var(--line);
+  background:rgba(255,255,255,.52);box-shadow:var(--sh);position:relative;
+  display:grid;place-items:center;border-radius:0;transition:background-color .1s;
+}
+.cell.br{--sh:inset -2px 0 0 var(--line2),inset 0 -1px 0 var(--line)}
+.cell.bb{--sh:inset -1px 0 0 var(--line),inset 0 -2px 0 var(--line2)}
+.cell.br.bb{--sh:inset -2px 0 0 var(--line2),inset 0 -2px 0 var(--line2)}
+.cell.fill{background:linear-gradient(160deg,#949cc0,#737ca6);box-shadow:var(--sh),inset 0 1px 0 rgba(255,255,255,.4),inset 0 -2px 0 rgba(0,0,0,.13)}
+.cell.cross::before{content:"✕";font-size:calc(var(--cell) * .48);color:rgba(38,42,58,.38);line-height:1}
+.cell.fill.cross::before{content:none}
+.cell.hm::after{content:"✦";position:absolute;right:1px;top:-1px;font-size:calc(var(--cell) * .4);color:rgba(255,255,255,.85);text-shadow:0 0 3px rgba(0,0,0,.6)}
+.cell.cur{outline:2px solid var(--ice);outline-offset:-2px;z-index:2}
+.cell.pop{animation:pop .12s ease-out}
+@keyframes pop{0%{transform:scale(.72)}100%{transform:scale(1)}}
+.cell.win{animation:cellwin .55s ease-out both;animation-delay:var(--d,0ms)}
+@keyframes cellwin{0%{transform:scale(1);filter:brightness(1)}45%{transform:scale(1.35);filter:brightness(1.7)}100%{transform:scale(1);filter:brightness(1.15)}}
+.toolbar{
+  flex:none;display:flex;gap:6px;padding:9px 11px calc(10px + var(--safe));border-top:1px solid var(--line2);
+  background:linear-gradient(180deg,rgba(255,255,255,.86),rgba(234,238,248,.92));backdrop-filter:blur(10px);
+}
+.tool{
+  flex:1;height:46px;border-radius:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  font-size:9px;letter-spacing:.06em;color:var(--mut);transition:.14s;min-width:0;position:relative;
+  border:1px solid var(--line);border-left:2px solid rgba(99,108,158,.4);
+  background:linear-gradient(180deg,rgba(255,255,255,.78),rgba(234,238,248,.82));
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);
+}
+.tool b{font-size:15px;font-weight:800;color:var(--paper);line-height:1}
+.tool.fillmode.on{background:linear-gradient(180deg,rgba(99,108,158,.16),rgba(99,108,158,.06));border-color:rgba(99,108,158,.6);border-left-color:var(--acc);box-shadow:inset 0 0 16px rgba(99,108,158,.12)}
+.tool.crossmode.on{background:linear-gradient(180deg,rgba(127,158,201,.2),rgba(127,158,201,.08));border-color:rgba(127,158,201,.62);border-left-color:var(--ice);box-shadow:inset 0 0 16px rgba(127,158,201,.14)}
+.tool.fillmode.on b{color:var(--acc)}
+.tool.crossmode.on b{color:var(--ice)}
+.tool.easymode.on{background:linear-gradient(180deg,rgba(127,158,201,.2),rgba(127,158,201,.08));border-color:rgba(127,158,201,.62);border-left-color:var(--ice);box-shadow:inset 0 0 16px rgba(127,158,201,.14)}
+.tool.easymode.on b{color:var(--ice)}
+.tool:active{transform:scale(.95)}
+.tool .cnt{position:absolute;transform:translate(14px,-11px);font-size:8px;color:var(--acc);font-weight:800}
+/* ---------- 遮罩 / 面板 ---------- */
+.overlay{
+  position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;padding:18px;
+  background:rgba(52,58,82,.34);backdrop-filter:blur(5px);
+}
+.overlay::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 4px)}
+.overlay.show{display:flex}
+.sheet{
+  position:relative;width:100%;max-width:430px;max-height:86vh;overflow-y:auto;border-radius:0;
+  border:1px solid var(--line2);background:linear-gradient(180deg,#fbfbfe,#eceff7);padding:18px 18px 16px;
+  clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));
+  box-shadow:0 24px 70px rgba(52,58,82,.28),inset 0 0 40px rgba(99,108,158,.035);
+}
+.sheet::before{content:"";position:absolute;inset:8px;pointer-events:none;opacity:.55;
+  background:
+    linear-gradient(var(--acc),var(--acc)) left top/14px 2px no-repeat,
+    linear-gradient(var(--acc),var(--acc)) left top/2px 14px no-repeat,
+    linear-gradient(var(--acc),var(--acc)) right bottom/14px 2px no-repeat,
+    linear-gradient(var(--acc),var(--acc)) right bottom/2px 14px no-repeat}
+.sheet h3{
+  margin:0 0 6px;display:flex;align-items:center;gap:8px;
+  font-family:var(--mono);font-size:15px;font-weight:900;letter-spacing:.16em;
+}
+.sheet h3::before{content:"";flex:none;width:3px;height:15px;background:var(--acc);box-shadow:0 0 8px rgba(99,108,158,.5)}
+.sheet .sub{font-size:10px;letter-spacing:.05em;line-height:1.6;color:var(--mut);margin-bottom:13px}
+.sheet .x{position:absolute;top:10px;right:10px}
+.row{
+  display:flex;align-items:center;gap:10px;padding:9px 10px;margin-bottom:7px;
+  border:1px solid var(--line);border-left:2px solid rgba(99,108,158,.42);
+  background:rgba(255,255,255,.42);
+}
+.row:last-child{margin-bottom:0}
+.row .rt{flex:1;font-size:11.5px;font-weight:700;letter-spacing:.03em}
+.row .rt small{display:block;color:var(--mut);font-size:9.5px;margin-top:2px;font-weight:400}
+.hrow{display:flex;gap:9px;padding:8px 2px;border-bottom:1px solid var(--line);font-size:11px;line-height:1.6;color:#565b70}
+.hrow:last-child{border-bottom:0}
+.hrow b{
+  flex:none;width:18px;height:18px;margin-top:1px;border-radius:0;display:grid;place-items:center;
+  background:rgba(99,108,158,.12);border:1px solid rgba(99,108,158,.35);color:var(--acc);
+  font-family:var(--mono);font-size:9px;font-weight:800;
+}
+.sw{
+  width:44px;height:24px;border-radius:0;background:rgba(52,58,82,.12);border:1px solid var(--line);
+  position:relative;flex:none;transition:.18s;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%);
+}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fbfbfe;box-shadow:0 1px 3px rgba(52,58,82,.25);transition:.18s}
+.sw.on{background:linear-gradient(180deg,#7f88b8,var(--acc));border-color:rgba(99,108,158,.7)}
+.sw.on::after{left:22px}
+/* ---------- 结算 ---------- */
+#result .sheet.cream{
+  background:linear-gradient(170deg,#fbfbfe,#eaeef6);color:var(--ink);border-color:var(--line2);max-width:440px;
+  position:relative;overflow:hidden;
+}
+#result .sheet.cream::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.6;
+  background:repeating-linear-gradient(0deg,rgba(92,98,124,.045) 0 1px,transparent 1px 3px),
+             repeating-linear-gradient(90deg,rgba(92,98,124,.035) 0 1px,transparent 1px 4px)}
+#result .sheet.cream::after{content:"";position:absolute;inset:8px;pointer-events:none;opacity:.6;
+  background:
+    linear-gradient(var(--acc),var(--acc)) left top/14px 2px no-repeat,
+    linear-gradient(var(--acc),var(--acc)) left top/2px 14px no-repeat,
+    linear-gradient(var(--acc),var(--acc)) right bottom/14px 2px no-repeat,
+    linear-gradient(var(--acc),var(--acc)) right bottom/2px 14px no-repeat}
+.rhead2{display:flex;align-items:center;gap:8px;font-size:8.5px;font-weight:800;letter-spacing:.3em;color:#9498ae;margin-bottom:10px}
+.rhead2::before,.rhead2::after{content:"";height:1px;flex:1;background:rgba(92,98,124,.22)}
+.artframe{
+  position:relative;width:min(64vw,236px);aspect-ratio:1/1;margin:0 auto 12px;border-radius:0;background:
+  radial-gradient(circle at 50% 42%,#fbfbfe,#e1e5f1 70%,#d3d8e8);
+  border:1px solid rgba(92,98,124,.3);box-shadow:inset 0 0 0 5px rgba(255,255,255,.5),0 14px 34px rgba(58,62,88,.18);
+  display:grid;place-items:center;overflow:hidden;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%);
+}
+.artframe::after{content:"";position:absolute;inset:8px;border:1px dashed rgba(92,98,124,.28);pointer-events:none}
+.artframe img{width:100%;height:100%;object-fit:contain;padding:7%;opacity:0;animation:revin .72s cubic-bezier(.2,.8,.2,1) .12s forwards;filter:drop-shadow(0 8px 12px rgba(48,52,76,.22))}
+.artframe canvas{width:100%;height:100%;image-rendering:pixelated;padding:7%}
+@keyframes revin{from{opacity:0;transform:scale(.88) rotate(-1.5deg);filter:blur(8px) drop-shadow(0 8px 12px rgba(48,52,76,.2))}to{opacity:1;transform:scale(1) rotate(0);filter:blur(0) drop-shadow(0 8px 12px rgba(48,52,76,.22))}}
+.stamp{position:absolute;right:10px;bottom:10px;width:62px;height:62px;border-radius:50%;border:2px solid rgba(99,108,158,.75);color:rgba(99,108,158,.85);display:grid;place-items:center;font-family:var(--mono);font-size:10px;font-weight:800;line-height:1.15;letter-spacing:.04em;text-align:center;opacity:0;animation:stamp .4s ease-out .7s forwards;background:rgba(255,255,255,.18)}
+@keyframes stamp{0%{opacity:0;transform:scale(1.7) rotate(-20deg)}65%{opacity:1;transform:scale(.92) rotate(-9deg)}100%{opacity:.92;transform:scale(1) rotate(-9deg)}}
+.rname{text-align:center;font-family:var(--mono);font-size:19px;font-weight:900;letter-spacing:.08em;margin:2px 0 3px}
+.raliasline{text-align:center;font-size:10px;letter-spacing:.05em;color:#868aa2;margin-bottom:3px}
+.rmeta{text-align:center;font-size:9.5px;letter-spacing:.06em;color:#868aa2;margin-bottom:10px}
+.rstars{text-align:center;font-size:20px;letter-spacing:5px;color:#d3ab63;margin-bottom:10px;line-height:1}
+.rstars .d{color:rgba(92,98,124,.16)}
+.rgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:0 0 10px}
+.rgrid div{background:rgba(92,98,124,.055);border:1px solid rgba(92,98,124,.16);border-top:2px solid rgba(99,108,158,.4);padding:7px 4px;text-align:center}
+.rgrid i{display:block;font-style:normal;font-size:8px;font-weight:700;letter-spacing:.14em;color:#9498ae}
+.rgrid b{display:block;font-size:13px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums}
+.rcoin{text-align:center;font-size:10.5px;letter-spacing:.05em;color:#98733a;background:rgba(208,174,110,.16);border:1px dashed rgba(208,174,110,.5);padding:7px;margin-bottom:12px}
+.rbtns{display:flex;gap:7px}
+.rbtns button{
+  flex:1;padding:12px 6px;border-radius:0;font-family:var(--mono);font-size:11px;font-weight:800;letter-spacing:.12em;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%);
+  transition:transform .12s,filter .12s;
+}
+.rbtns button:active{transform:translateY(1px);filter:brightness(.95)}
+.rbtns .pri{background:linear-gradient(180deg,#7f88b8,var(--acc));color:#f7f9ff;box-shadow:0 0 18px rgba(99,108,158,.32)}
+.rbtns .sec{background:rgba(92,98,124,.09);color:#565b70;border:1px solid rgba(92,98,124,.24);border-left:2px solid rgba(99,108,158,.4)}
+.rbtns .thi{background:transparent;color:#868aa2;border:1px solid rgba(92,98,124,.2)}
+/* ---------- 暂停 / toast / 成就横幅 ---------- */
+#pause .sheet{max-width:320px;text-align:center}
+#pause .sheet h3{justify-content:center;font-size:16px;letter-spacing:.22em;margin-bottom:10px}
+#pause .sheet h3::before{display:none}
+#pause .sheet .sub{font-size:10.5px;letter-spacing:.05em;color:var(--mut);line-height:1.7}
+#pause .pb{width:100%;margin-bottom:8px;padding:12px 0;border-radius:0;
+  font-family:var(--mono);font-size:11px;font-weight:900;letter-spacing:.16em;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%);
+  transition:transform .12s,filter .12s}
+#pause .pb:active{transform:translateY(1px);filter:brightness(.95)}
+#pause .pb.pri{background:linear-gradient(180deg,#7f88b8,var(--acc));color:#f7f9ff;
+  box-shadow:0 0 18px rgba(99,108,158,.32);border:0}
+#pause .pb.sec{background:rgba(92,98,124,.09);color:#565b70;
+  border:1px solid rgba(92,98,124,.24);border-left:2px solid rgba(99,108,158,.4)}
+#toast{position:fixed;left:50%;bottom:calc(84px + var(--safe));transform:translate(-50%,14px);z-index:40;
+  background:linear-gradient(180deg,#2b2f41,#1e2230);color:#fafbfe;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;line-height:1.5;
+  padding:9px 15px;border-radius:0;border:1px solid rgba(255,255,255,.14);
+  border-left:2px solid var(--acc);
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%);
+  box-shadow:0 10px 30px rgba(52,58,82,.34),0 0 18px rgba(99,108,158,.16);
+  opacity:0;pointer-events:none;transition:.22s;max-width:86vw;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#achbar{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translate(-50%,-140%);z-index:45;
+  background:linear-gradient(180deg,#7f88b8,var(--acc));color:#f7f9ff;
+  border:1px solid rgba(99,108,158,.9);
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);
+  padding:8px 16px;display:flex;gap:10px;align-items:center;
+  box-shadow:0 12px 34px rgba(52,58,82,.4),0 0 22px rgba(99,108,158,.34);
+  transition:transform .32s cubic-bezier(.2,.9,.3,1);max-width:88vw}
+#achbar.show{transform:translate(-50%,0)}
+#achbar .ab{font-size:15px;line-height:1;filter:drop-shadow(0 0 6px rgba(255,255,255,.5))}
+#achbar b{display:block;font-family:var(--mono);font-size:11.5px;font-weight:900;letter-spacing:.14em}
+#achbar small{display:block;font-family:var(--mono);font-size:8.5px;letter-spacing:.3em;color:rgba(247,249,255,.72);margin-top:3px}
+.achrow{display:flex;gap:10px;align-items:center;padding:9px 8px;margin-bottom:5px;
+  border:1px solid var(--line);border-left:2px solid rgba(52,58,82,.2);
+  background:rgba(255,255,255,.4);
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%)}
+.achrow:last-child{margin-bottom:0}
+.achrow .ai{width:30px;height:30px;border-radius:0;display:grid;place-items:center;font-size:14px;flex:none;
+  background:rgba(255,255,255,.7);border:1px solid var(--line);
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%)}
+.achrow.got{border-left-color:rgba(176,138,72,.85);background:rgba(208,174,110,.09)}
+.achrow.got .ai{background:rgba(208,174,110,.2);border-color:rgba(208,174,110,.6);color:var(--gold);
+  box-shadow:0 0 12px rgba(208,174,110,.22)}
+.achrow .at{flex:1;font-size:11.5px;font-weight:700;letter-spacing:.02em}
+.achrow .at small{display:block;font-size:9px;font-weight:400;letter-spacing:.04em;color:var(--mut);margin-top:2px}
+.achrow .ap{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;color:var(--mut);white-space:nowrap;font-variant-numeric:tabular-nums}
+.achrow.got .ap{color:var(--gold);font-weight:800}
+/* ---------- 粒子 ---------- */
+.fx{position:fixed;inset:0;pointer-events:none;z-index:35;overflow:hidden}
+.fx i{position:absolute;width:6px;height:9px;border-radius:1px;opacity:0;animation:fxfall 1.15s ease-out forwards}
+@keyframes fxfall{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rot))}}
+/* ---------- 解救成功：棋盘变立绘 ---------- */
+#reveal{
+  position:fixed;inset:0;z-index:28;display:grid;place-items:center;pointer-events:none;
+  opacity:0;visibility:hidden;transition:opacity .45s ease,visibility .45s;
+  background:radial-gradient(circle at 50% 46%,rgba(248,250,255,.94),rgba(234,238,248,.78) 46%,rgba(52,58,82,.46) 100%);
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+}
+#reveal.show{opacity:1;visibility:visible}
+.rvstage{
+  position:relative;width:min(70vw,300px);aspect-ratio:1/1;overflow:hidden;
+  background:radial-gradient(circle at 50% 42%,#fbfbfe,#e1e5f1 74%);
+  border:1px solid rgba(92,98,124,.3);
+  box-shadow:inset 0 0 0 5px rgba(255,255,255,.5),0 18px 42px rgba(58,62,88,.22);
+}
+#reveal.show .rvstage{animation:rvstage .72s cubic-bezier(.22,.8,.22,1) both}
+@keyframes rvstage{0%{opacity:0;transform:scale(.9)}100%{opacity:1;transform:scale(1)}}
+.rvstage::after{content:"";position:absolute;inset:7px;pointer-events:none;z-index:5;opacity:.7;
+  background:
+    linear-gradient(var(--acc),var(--acc)) left top/14px 2px no-repeat,
+    linear-gradient(var(--acc),var(--acc)) left top/2px 14px no-repeat,
+    linear-gradient(var(--acc),var(--acc)) right top/14px 2px no-repeat,
+    linear-gradient(var(--acc),var(--acc)) right top/2px 14px no-repeat,
+    linear-gradient(var(--acc),var(--acc)) left bottom/14px 2px no-repeat,
+    linear-gradient(var(--acc),var(--acc)) left bottom/2px 14px no-repeat,
+    linear-gradient(var(--acc),var(--acc)) right bottom/14px 2px no-repeat,
+    linear-gradient(var(--acc),var(--acc)) right bottom/2px 14px no-repeat}
+.rvboard{
+  position:absolute;inset:0;z-index:1;display:grid;overflow:hidden;
+  grid-template-columns:repeat(var(--n,10),1fr);grid-template-rows:repeat(var(--n,10),1fr);
+  gap:1px;background:rgba(52,58,82,.22);
+}
+.rvboard i{display:block;animation:rvcell .78s cubic-bezier(.4,0,.2,1) forwards;animation-delay:var(--d,0ms)}
+@keyframes rvcell{0%{opacity:1;transform:scale(1)}45%{opacity:1;transform:scale(1.04)}100%{opacity:0;transform:scale(.55)}}
+.rvart{
+  position:absolute;inset:0;z-index:2;opacity:0;
+  animation:rvpop 1.2s cubic-bezier(.22,.68,.18,1) .28s both;will-change:transform,opacity;
+}
+.rvpix{position:absolute;inset:0;width:100%;height:100%;padding:6%;image-rendering:pixelated}
+.rvimg{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:6%;opacity:0;
+  transition:opacity .5s ease;filter:drop-shadow(0 16px 26px rgba(52,58,82,.36));
+}
+.rvimg.ok{opacity:1}
+@keyframes rvpop{
+  0%{opacity:0;transform:scale(.84) rotate(-1.6deg)}
+  30%{opacity:1;transform:scale(1.095) rotate(.9deg)}
+  48%{transform:scale(.965) rotate(-.5deg)}
+  64%{transform:scale(1.035) rotate(.22deg)}
+  78%{transform:scale(.992) rotate(-.1deg)}
+  90%{transform:scale(1.008) rotate(.04deg)}
+  100%{opacity:1;transform:scale(1) rotate(0)}
+}
+.rvflash{
+  position:absolute;inset:-14%;z-index:3;pointer-events:none;opacity:0;
+  background:radial-gradient(circle,rgba(255,248,228,.5),rgba(255,238,196,.24) 44%,transparent 68%);
+  animation:rvflash 1.15s ease-out .34s both;
+}
+@keyframes rvflash{0%{opacity:0;transform:scale(.72)}38%{opacity:.55}100%{opacity:0;transform:scale(1.12)}}
+.rvring{position:absolute;inset:6px;z-index:3;border:2px solid rgba(99,108,158,.4);opacity:0;
+  animation:rvring 1.15s ease-out .42s both}
+.rvring.b{animation-delay:.66s;border-color:rgba(176,138,72,.36)}
+@keyframes rvring{0%{opacity:0;transform:scale(.62)}35%{opacity:.5}100%{opacity:0;transform:scale(1.38)}}
+/* ---------- 低功耗 ---------- */
+body.low-power #grid .cell.win{animation:none}
+body.low-power .cell.pop{animation:none}
+body.low-power .artframe img{animation-duration:.01s}
+body.low-power .stamp{animation-duration:.01s}
+body.low-power .fx{display:none}
+body.low-power #top,body.low-power .toolbar{backdrop-filter:none}
+body.low-power .overlay{backdrop-filter:none}
+body.low-power body::before{display:none}
+body.low-power .overlay::before{display:none}
+body.low-power #achbar,body.low-power #toast{box-shadow:none}
+body.low-power #reveal{-webkit-backdrop-filter:none;backdrop-filter:none}
+body.low-power .rvboard,body.low-power .rvflash,body.low-power .rvring{display:none}
+body.low-power .rvart{animation-duration:.5s;animation-delay:.05s}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="top">
+    <div class="brand"><span id="brandT">月巴数织</span><small>NONOGRAM · RESCUE</small></div>
+    <div class="topstat" id="topstat"></div>
+    <button class="iconbtn" id="btnHelp" title="玩法说明">?</button>
+    <button class="iconbtn" id="btnAch" title="成就">✦</button>
+    <button class="iconbtn" id="btnSet" title="设置">⚙</button>
+  </header>
+
+  <section class="scroll" id="viewCatalog">
+    <div class="statgrid">
+      <div class="stat"><i id="stL1">已解救</i><b id="stSolved">0<em>/94</em></b></div>
+      <div class="stat"><i id="stL2">收集星数</i><b id="stStars">0<em>★</em></b></div>
+      <div class="stat"><i id="stL3">累计用时</i><b id="stTime">0:00</b></div>
+    </div>
+    <div class="tabs" id="tabs">
+      <button class="tab on" data-tab="random" id="tabRandom">随机</button>
+      <button class="tab" data-tab="codex" id="tabCodex">图鉴</button>
+    </div>
+    <div id="paneRandom">
+      <div class="hero" id="hero"></div>
+    </div>
+    <div id="paneCodex" class="off">
+      <div class="notice"><span class="ni">✎</span><span id="noticeT"></span></div>
+      <div class="chips" id="chips"></div>
+      <div id="catalog"></div>
+    </div>
+  </section>
+
+  <section id="viewPuzzle">
+    <div class="pbar">
+      <button class="backbtn" id="btnBack">← 目录</button>
+      <div class="ptitle" id="pTitle"></div>
+      <button class="iconbtn" id="btnPause" title="暂停">⏸</button>
+    </div>
+    <div class="pinfo">
+      <span id="pTime">00:00</span>
+      <span id="pMist">失误 <b>0</b></span>
+      <span id="pHint">提示 <b>3</b></span>
+    </div>
+    <div id="boardWrap">
+      <div id="board">
+        <div id="corner"></div>
+        <div id="cluesTop"></div>
+        <div id="cluesLeft"></div>
+        <div id="grid"></div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="tool fillmode on" id="modeFill"><b>■</b><span id="lblFill">涂黑</span></button>
+      <button class="tool crossmode" id="modeCross"><b>✕</b><span id="lblCross">打叉</span></button>
+      <button class="tool" id="btnUndo"><b>↶</b><span id="lblUndo">撤销</span></button>
+      <button class="tool" id="btnClear"><b>⌫</b><span id="lblClear">清空</span></button>
+      <button class="tool" id="btnHint"><b>✦</b><span id="lblHint">提示</span></button>
+      <button class="tool easymode" id="btnEasy"><b>↓</b><span id="lblEasy">降难度</span></button>
+    </div>
+  </section>
+</div>
+
+<div id="reveal"><div class="rvstage" id="rvStage"></div></div>
+<div class="overlay" id="result"><div class="sheet cream" id="resultSheet"></div></div>
+<div class="overlay" id="pause"><div class="sheet">
+  <h3 id="pauseTitle">已暂停</h3>
+  <div class="sub" id="pauseSub" style="margin-bottom:12px"></div>
+  <button class="pb pri" id="pauseResume">继续</button>
+  <button class="pb sec" id="pauseBack">返回目录</button>
+</div></div>
+<div class="overlay" id="ach"><div class="sheet">
+  <button class="iconbtn x" id="achClose">✕</button>
+  <h3 id="achTitle">本地成就</h3>
+  <div class="sub" id="achSub"></div>
+  <div id="achList"></div>
+</div></div>
+<div class="overlay" id="set"><div class="sheet">
+  <button class="iconbtn x" id="setClose">✕</button>
+  <h3 id="setTitle">设置</h3>
+  <div class="sub" id="setSub"></div>
+  <div class="row"><div class="rt" id="setSoundT">音效</div><button class="sw on" id="setSound"></button></div>
+  <div class="row"><div class="rt" id="setAutoT">自动划叉<small id="setAutoS"></small></div><button class="sw on" id="setAuto"></button></div>
+  <div class="row"><div class="rt" id="setLowT">低功耗<small id="setLowS"></small></div><button class="sw" id="setLow"></button></div>
+  <div class="row"><div class="rt" id="setDataT">题池</div><span class="ap" id="setDataV"></span></div>
+</div></div>
+<div class="overlay" id="help"><div class="sheet">
+  <button class="iconbtn x" id="helpClose">✕</button>
+  <h3 id="helpTitle">玩法说明</h3>
+  <div class="sub" id="helpSub"></div>
+  <div id="helpList"></div>
+</div></div>
+<div id="toast"></div>
+<div id="achbar"><span class="ab">✦</span><div><b id="achbarT"></b><small id="achbarS"></small></div></div>
+<div class="fx" id="fx"></div>
+
+<!-- ===== 题目数据（由 tools/nonogram/gen.py 生成） ===== -->
+<script>
+/*NP_DATA_START*/
+const NP=[{"id":"bairixuan","n":"白日宣巴","nm":{"en":"Sunward Banny","ja":"白日バニー","ko":"백일배니"},"img":"https://origin.picgo.net/2026/10/22/1aaddaa947c51b53b8f61b776ecf86e331d724a72b40ec07.th.png","r":1,"sz":10,"bits":"0001110000011101101101111100000001111000000101100000001010000001111000000111010000011111001001111100","pal":["#d25023","#c08546","#eab3a0","#ecd4c5","#f6ebe5","#fbfaf6"],"col":"0002220000010305201101035500000003343000000404500000005050000004545000000520040000052025001004202300","uniq":1,"logic":1,"by":"影子生物"},{"id":"m2_dou","n":"豆月巴","nm":{"en":"Bean Banny","ja":"豆バニー","ko":"콩배니"},"img":"https://origin.picgo.net/2026/10/23/308a1b31062d7f87283f644cf4d74d71f1a7c076db6cdd2d.th.png","r":1,"sz":10,"bits":"0011000000011110000001011000000111110000001111100000100101000011111010101101111100011011000000011000","pal":["#1f2230","#414555","#6d7080","#9d9ba7","#c7cedf","#f2ecf1"],"col":"0000000000011210000003042000000244310000004553100000300201000012234020201205531200013053000000012000","uniq":1,"logic":1,"by":"Suwa"},{"id":"m2_dundun","n":"墩墩月巴","nm":{"en":"Chubby Banny","ja":"ぷにバニー","ko":"통통배니"},"img":"https://origin.picgo.net/2026/10/22/chubby-bannyb70ce7f942be59f2.th.png","r":1,"sz":10,"bits":"0010000000001101110000111110000011111000000111100001111011000110110110111101111111111011100111011100","pal":["#5e5c57","#8a7577","#b5b6bc","#d2d3d6","#f2f2f2","#fbfbfa"],"col":"0000000000001102000000543510000035553000000554500003323053000430320410355203552135511055200331033200","uniq":1,"logic":1,"by":"hellomelody"},{"id":"m2_mao","n":"猫月巴","nm":{"en":"Cat Banny","ja":"猫バニー","ko":"고양이배니"},"img":"https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li578400427d700c6a.th.png","r":1,"sz":10,"bits":"0000011000000011111000001111100000101110000011011000000110000000111100010110111011111011101110111101","pal":["#898091","#aeaebe","#c9c9d9","#d6d7e7","#e3e4f2","#f5f5fd"],"col":"0000042000000035331000004335200000404520000024032000000340000000355100000450343001034035201110322200","uniq":1,"logic":1,"by":"Nyaomi"},{"id":"m2_men","n":"萌月巴","nm":{"en":"Cute Banny","ja":"萌えバニー","ko":"귀요미배니"},"img":"https://origin.picgo.net/2026/10/23/a8cee4c77e6970bf2821d353c3feffbaa138951bc8498773.th.png","r":1,"sz":10,"bits":"0000001100000001111100001111100001110000011110111110111101110001111010000001111000001111100000011100","pal":["#2c313f","#515562","#808594","#b6b8c2","#d2d6e0","#eff1f8"],"col":"0000001000000003410000001545300000230000020110421020122301100003554020000004552000004555200000034200","uniq":1,"logic":1,"by":"Suwa"},{"id":"m2_zuoqi","n":"坐骑月巴","nm":{"en":"Mount Banny","ja":"乗り物バニー","ko":"탈것배니"},"img":"https://origin.picgo.net/2026/10/21/c78c4be6d1ad05b71428d20e99d80e43ef4bf36af33cc07a.th.png","r":1,"sz":10,"bits":"0001000000001011000011011100001100111100111110011111110011111011101110011110111001110110100000100000","pal":["#8c6162","#ec4c4e","#cec7cb","#fad2d2","#e6e5ea","#fdfcfc"],"col":"0000000000000011000024011100005500111000444310002424450035542055505550045550554002440440400000000000","uniq":1,"logic":1,"by":"影子生物"},{"id":"mb_chi","n":"进食月巴","nm":{"en":"Munching Banny","ja":"もぐもぐバニー","ko":"냠냠배니"},"img":"https://origin.picgo.net/2026/09/03/15b077f9364349ae92.th.png","r":1,"sz":10,"bits":"0000001000000110000000101011001101010010101110110110111110011000000011010111110000001000000001000000","pal":["#ce484d","#ca797a","#f2b4b4","#e9e0e2","#f5f5f7","#fcfbfc"],"col":"0000001000000330000000504044000105050050004450550400125550040000000054000321540000001000000001000000","uniq":1,"logic":1,"by":""},{"id":"mb_shui","n":"睡觉月巴","nm":{"en":"Sleepy Banny","ja":"すやすやバニー","ko":"잠자는배니"},"img":"https://origin.picgo.net/2026/09/29/4d2c34425dd356082928e5e796a603fcd01d1cbc5324c06f.gif","r":1,"sz":10,"bits":"0011110000001001100000100000000010000000001001000000000100000000010000000101010000100100000001100000","pal":["#303030","#6e6e6e","#aba9a9","#cbcbcb","#d9d9d9","#fafafa"],"col":"0000110000003005100000500000000020000000003004000000000400000000010000000202010000300200000004300000","uniq":1,"logic":1,"by":""},{"id":"mb_xian","n":"尴尬月巴","nm":{"en":"Awkward Banny","ja":"きまずバニー","ko":"어색배니"},"img":"https://origin.picgo.net/2026/09/03/4059f70dff59ca4a4.th.png","r":1,"sz":10,"bits":"0000110000010111110000011111000010111000001100110000111011000011100100000111100000101111001011110111","pal":["#787878","#c4d4e3","#eef1f3","#eefcfe","#f7f8f6","#fefefd"],"col":"0000110000000555310000052231000050112000004500540000455052000025500200000555500000405554000024440200","uniq":1,"logic":1,"by":""},{"id":"mb_xiaoyue","n":"小月巴","nm":{"en":"Little Banny","ja":"ちびバニー","ko":"꼬마배니"},"img":"https://origin.picgo.net/2026/09/03/1512e4bde4713ba02.th.png","r":1,"sz":10,"bits":"0001110000000101000000111110000011111000011110010001101111000101111100111101111101111101000011111000","pal":["#787878","#dbd0d9","#eaeaef","#f8f6f7","#fdfcfe","#fefffe"],"col":"0001110000000505000000234320000032123000025530020002505552000205355200035404530003555503000033233000","uniq":1,"logic":1,"by":"","alias":[{"id":"mb_wan","n":"微笑月巴","nm":{"en":"Smiling Banny","ja":"にこにこバニー","ko":"미소배니"}}]},{"id":"yinxiang","n":"音响月巴","nm":{"en":"Speaker Banny","ja":"スピーカーバニー","ko":"스피커배니"},"img":"https://origin.picgo.net/2026/10/23/-16ec08b0ad53bd48c.th.png","r":1,"sz":10,"bits":"0001100000011110000011111000000111110000111001010101011100000010111110001111010000111011000011110100","pal":["#464644","#845758","#8b8a89","#bebfc1","#e0e0e0","#f2f2f2"],"col":"0002200000033340000002544000000353430000034002010200042000000020201110000330000000335021000045250100","uniq":1,"logic":1,"by":"落白"},{"id":"m2_hei","n":"黑月巴","nm":{"en":"Black Banny","ja":"黒バニー","ko":"검은배니"},"img":"https://origin.picgo.net/2026/10/23/6a0b54faa9b43d05a7365ff404ff7c63b834626b88cbfb9f.th.png","r":2,"sz":10,"bits":"0001110000001110100001111100000011111000001001000000111110000101111100111110111011110111110111101100","pal":["#5d5a56","#595652","#4d4b48","#393939","#747474","#a8a8a8"],"col":"0000000000003320200000354500000000000000000000000000000000000000100000000210000000020000040000100000","uniq":1,"logic":1,"by":"鲸弑"},{"id":"m2_qingchun","n":"青春败犬立体巴","nm":{"en":"Youth Underdog 3D Banny","ja":"青春負け犬立体バニー","ko":"청춘 패배견 입체 배니"},"img":"https://origin.picgo.net/2026/10/21/cfbed82590fddf492012ef5aa1349f983ae998abddf56193.th.png","r":2,"sz":10,"bits":"0001110000001111100000111110000010110000001101000000011010000111110100111011111001111101010011011000","pal":["#5c545b","#897787","#a19ba1","#bcbbbe","#d7d7d7","#edeeef"],"col":"0000210000000234300000133540000010230000000204000000024020000013440300103043541001452204010034024000","uniq":1,"logic":1,"by":"鲸弑"},{"id":"m2_rainy","n":"雨伞月巴","nm":{"en":"Rainy Banny","ja":"雨傘バニー","ko":"우산배니"},"img":"https://origin.picgo.net/2026/10/22/umbrella-bunny0f0ec74e10bac4fc.th.png","r":2,"sz":10,"bits":"0000111100000111110000111011000111011010101111011101111001010100110110001111011000111110000000010000","pal":["#af3350","#87777c","#89c09e","#afadc7","#c9d7ed","#e6f2fb"],"col":"0000313100000554530000553045000454034050301133045500000002040000010210001312012000131220000000010000","uniq":1,"logic":1,"by":"Feyy"},{"id":"m2_yinan","n":"阴暗巴","nm":{"en":"Gloomy Banny","ja":"陰気バニー","ko":"음침배니"},"img":"https://origin.picgo.net/2026/10/21/7b935eb5528f9cc67c194fe5d47c4a367229b91b95e86400.th.png","r":2,"sz":10,"bits":"0011100000001110000000111100000010110000001110100000010110000001111100100111110000011101000000111001","pal":["#787878","#ac9dbd","#c0b7d1","#d8bedc","#d8d7eb","#e8f4ff"],"col":"0013200000002430000000234200000020420000001220100000020140000004444200000444420000025402000000242000","uniq":1,"logic":1,"by":""},{"id":"mb_gao","n":"高月巴","nm":{"en":"Tall Banny","ja":"たかバニー","ko":"키큰배니"},"img":"https://origin.picgo.net/2026/09/29/849e3c845e52aac2178af913058025cdd214e98968e45101.gif","r":2,"sz":10,"bits":"0001110000000111000101001100000001110000000101000000001011000001110000001111000000001100000000111000","pal":["#7c7c7c","#a0a0a0","#b5b5b5","#cbcbcb","#ededed","#fcfcfc"],"col":"0000100000000454000000005300000003330000000303000000005020000001440000001144000000005300000000222000","uniq":1,"logic":1,"by":""},{"id":"mb_huang","n":"黄月巴","nm":{"en":"Yellow Banny","ja":"黄バニー","ko":"노랑배니"},"img":"https://origin.picgo.net/2026/10/23/485bfcabf6eaea8ea294ead8e520a0ada29d48a19c9197d6.th.png","r":2,"sz":10,"bits":"0000001000000011100000001110000001110000000101000000011010000011111010111011110000011111000001111101","pal":["#787878","#ba9f75","#ebb151","#f5c468","#f4d18d","#ffdc7b"],"col":"0000002000000023200000005320000003550000000302000000022020000015333000001044420000043232000004444200","uniq":1,"logic":1,"by":"影子生物"},{"id":"mb_ku","n":"背头月巴","nm":{"en":"Slick-Back Banny","ja":"オールバックバニー","ko":"올백배니"},"img":"https://origin.picgo.net/2026/09/29/19daf98c7a185e7e0c3d529a5f921058d74092d7a8ab4c37.gif","r":2,"sz":10,"bits":"0001110000000111000000011110000001111000010101000000001000000001110000001111000000111101001011111011","pal":["#5b5955","#323131","#606060","#a9a8a8","#d2d2d2","#f8f8f8"],"col":"0001220000000445000000045400000002320000020304000000001000000000100000000000000000000002002000000022","uniq":1,"logic":1,"by":""},{"id":"mb_lan","n":"休闲月巴","nm":{"en":"Lounging Banny","ja":"ごろごろバニー","ko":"느긋배니"},"img":"https://origin.picgo.net/2026/09/03/10a99395fea8f81ac7.th.png","r":2,"sz":10,"bits":"1111011000111110111101111011110011000111000111101100001111000000101111000011110100001111100000000100","pal":["#787878","#bdb3b8","#d1bec5","#f0dee4","#f8f6f6","#fdfcfc"],"col":"2555035000355520511105554021220055000111000455501100005555000000405555000045550400004555500000000000","uniq":1,"logic":1,"by":""},{"id":"mb_pang","n":"胖月巴","nm":{"en":"Chubby Banny","ja":"ぷくぷくバニー","ko":"뚱뚱배니"},"img":"https://origin.picgo.net/2026/10/21/62bc9b437f18c5e1f6f712a8e7a58ecbb2356f889dde89eb.th.png","r":2,"sz":10,"bits":"0000110000001101110001001110001011100111111110111111110111111110011111011101111000011110000010000000","pal":["#787878","#e1bcc0","#e7e7f0","#f4f4f8","#f8fcfe","#fdfefe"],"col":"0000210000002302220002002350002033500552353550555234350555522550055552024105532000011320000000000000","uniq":1,"logic":1,"by":"影子生物"},{"id":"mb_powa","n":"抛瓦月巴","nm":{"en":"Power Banny","ja":"パワーバニー","ko":"파워배니"},"img":"https://origin.picgo.net/2026/10/24/bbe23930e0a5236e05eca1b6bef4230a8a7078b7a228f913.th.png","r":2,"sz":10,"bits":"0000000000000001100010001111000000101111000011110000001101000000011111000000101100000011000000001000","pal":["#75635f","#b8987c","#aab5c8","#ddcecd","#e9e0df","#fcfbfb"],"col":"0000000000000002200010004441000000405300000045510000003501000000045433000000304400000034000000000000","uniq":1,"logic":1,"by":"hellomelody"},{"id":"mb_qiezhi","n":"茄汁月巴","nm":{"en":"Tomato-Juice Banny","ja":"トマト汁バニー","ko":"토마토주스배니"},"img":"https://origin.picgo.net/2026/10/21/07de58ae22de5c368964182b7b78934969a8e2ed84c5ab60.th.png","r":2,"sz":10,"bits":"0001100000000111100001010110000011111000001010100001011110000011110100001101111010111101110001111000","pal":["#e6403a","#b88a89","#bab7bd","#d4d0d4","#ece7ea","#fefdfd"],"col":"0002200000000343200000040520000034443000003030300002054540000055540300004505313010255500210002331000","uniq":1,"logic":1,"by":"影子生物"},{"id":"mb_tan","n":"一坨月巴","nm":{"en":"Blob Banny","ja":"ひとつらバニー","ko":"한덩어리배니"},"img":"https://origin.picgo.net/2026/10/21/41befbe6b2be042271d7ae7805b64f598d5d887397481fdf.th.png","r":2,"sz":10,"bits":"1110000000111011000000011100000011011000011110100001011110000111101101111011111001000001000000000100","pal":["#7c7c82","#c29b9c","#c6bec2","#d5d5d8","#eeeeef","#fcfcfd"],"col":"2130000000212030000000045100000055052000023340100004033300000455504400354055552003000002000000000200","uniq":1,"logic":1,"by":"影子生物"},{"id":"mb_tangyuan","n":"汤圆月巴","nm":{"en":"Tangyuan Banny","ja":"湯円バニー","ko":"탕위안배니"},"img":"https://origin.picgo.net/2026/09/21/e0a73ec5f90f4b1d90fd1ce444e15c18df5827ccea2e46c6.th.png","r":2,"sz":10,"bits":"0000110000000101111000111011100111101101111101111101110110110010110110000101111000011111000000101000","pal":["#5a617c","#8895b0","#b2b0c2","#c0c2d0","#d4d7e2","#f8f7fa"],"col":"0000550000000503455000531023500554503005132303401501120240250010450240000300034000041001000000000000","uniq":1,"logic":1,"by":"三重彩"},{"id":"mb_tomato","n":"番茄大战月巴","nm":{"en":"Tomato-War Banny","ja":"トマト大戦バニー","ko":"토마토대전배니"},"img":"https://origin.picgo.net/2026/09/20/fanqiedazhan9861d01c9113a3f3.th.png","r":2,"sz":10,"bits":"0000100000001100000000111110000101100100111011111001110111100110111110011101111100111000000001111100","pal":["#4d4d5c","#ab514e","#d0513e","#cf685e","#dd5743","#eebab4"],"col":"0000000000000000000000011110000103300400044022242002220222200220222220044202242000222000000003325500","uniq":1,"logic":1,"by":""},{"id":"mb_xiba","n":"西巴","nm":{"en":"West Banny","ja":"西バニー","ko":"서배니"},"img":"https://origin.picgo.net/2026/10/23/c4de9f2c487932b531a8b80294b7d5512139e617afc6aa6c.th.png","r":2,"sz":10,"bits":"0000110000000011100000011100000001110000111110000001010000000011100000001010000001111100100111100000","pal":["#625b5c","#a49e9f","#c4c1c5","#e9e6ec","#f5f4f6","#fefeff"],"col":"0000100000000032000000044400000003320000023440000001050000000045200000005040000004343200000212100000","uniq":1,"logic":1,"by":"軟管"},{"id":"mb_xin","n":"wink月巴","nm":{"en":"Winking Banny","ja":"ウィンクバニー","ko":"윙크배니"},"img":"https://origin.picgo.net/2026/09/03/37e1be2540efa2177.th.png","r":2,"sz":10,"bits":"0001110000000111000000111110000011111000001000100010111110000011111000010111010001111101110011111000","pal":["#787878","#d4cdce","#f2ecf0","#fafafb","#faf5f3","#fffefe"],"col":"0001110000000545000000455540000033523000002000400000342430000055555000040353040003555503000033233000","uniq":1,"logic":1,"by":""},{"id":"mojing","n":"墨镜笑巴","nm":{"en":"Smiling Shades Banny","ja":"笑顔サングラスバニー","ko":"미소선글라스배니"},"img":"https://origin.picgo.net/2026/09/27/4d64284ab6f23425f9dda44f0fc540bef12552ef47074e5e.th.png","r":2,"sz":10,"bits":"0001010000000111000000011101000001110000000101000001001000000001110000001111100000111110001011111011","pal":["#7c7c7c","#d3d3d5","#ededef","#f3f3f5","#f7f7f9","#fdfdfd"],"col":"0000000000000232000000045300000001110000000101000000005000000003540000002555200000455550000024242000","uniq":1,"logic":1,"by":""},{"id":"niaoba","n":"鸟巴","nm":{"en":"Bird Banny","ja":"鳥バニー","ko":"새배니"},"img":"https://origin.picgo.net/2026/09/29/5333d8fdca76c3b083802650fd853975e1e6162696fd5812.th.png","r":2,"sz":10,"bits":"0001100100010110000000011100000001110000000101000000101110000011101000101111101100001000000000100000","pal":["#666666","#b19ea2","#bebebe","#d4d2d2","#eceaea","#fcfcfc"],"col":"0001100000000340000000045200000002410000000102000000303530000045504000003424200000002000000000000000","uniq":1,"logic":1,"by":""},{"id":"xinba","n":"心巴","nm":{"en":"Heartbanny","ja":"ハートバニー","ko":"하트배니"},"img":"https://origin.picgo.net/2026/10/21/3f4dfef1286bc40c7002f3d2e220cb36f63b0332ebc9acd3.th.png","r":2,"sz":10,"bits":"0000001110111101111111111010111111100101110000111100110111100111011100000011110000001110000000000100","pal":["#787878","#d6d5e3","#e6e6ef","#f0f0f5","#f6f6fa","#fdfdfe"],"col":"0000002430144303555235553030533533400402250000245100520155300152042500000015310000001210000000000000","uniq":1,"logic":1,"by":"影子生物"},{"id":"bazong","n":"巴总","nm":{"en":"Boss Banny","ja":"バニー社長","ko":"배니사장"},"img":"https://origin.picgo.net/2026/10/21/8ff3d46600bd7fcfb5dcab98f93cbd9bbeef26b25b073ec3.th.png","r":3,"sz":12,"bits":"000011100000000011100000000011100001000011100000001101111000000110011000000111011000000101110000000011110000000111101000000111011000000010111000","pal":["#343231","#413e3f","#974440","#828282","#d4d3d4","#eeeeef"],"col":"000033300000000045400000000045400003000045400000003105522000000030022000000033011000000003310000000001100000000000000000000111011000000030013000","uniq":1,"logic":1,"by":""},{"id":"dabus","n":"大巴车","nm":{"en":"Bus Banny","ja":"バスバニー","ko":"버스배니"},"img":"https://origin.picgo.net/2026/10/21/f696279cfe514001d304e826c68f44f3596857784003a73a.th.png","r":3,"sz":12,"bits":"001000000000010000000000011100000000011100000000111101111100101111011111111100111011010011011111011111000111001111011011000000010000000000010000","pal":["#ba4d4c","#c8c7d4","#ebc0c3","#e1e1e9","#f6e3e4","#f7fafc"],"col":"000000000000000000000000011100000000055500000000133300000000301354022233455500515025050030002005035554000555003313031011000000000000000000000000","uniq":1,"logic":1,"by":"影子生物"},{"id":"huaba","n":"花巴","nm":{"en":"Flowerbanny","ja":"花バニー","ko":"꽃배니"},"img":"https://origin.picgo.net/2026/10/23/46597ef9da8ed5c1d86cce52418c84d57c6da995fbc68f8c.th.png","r":3,"sz":12,"bits":"000011000000000011100000000011100000111011110010111110101111011101011111000110111100001011101000001111100000011110111000001100011000000010000000","pal":["#2f3444","#685866","#937b84","#9ea0b1","#c6becc","#ebecf4"],"col":"000011000000000035300000000034400000143032430010244410105140025301025221000320134300001053401000003243400000015310452000001300010000000020000000","uniq":1,"logic":1,"by":"Suwa"},{"id":"jieba","n":"戒巴","nm":{"en":"Quit Banny","ja":"禁バニー","ko":"금단배니"},"img":"https://origin.picgo.net/2026/10/23/8a2dd3078a8a2c919d0a8fa208ec9dfdfba03c4be9bcfa05.th.png","r":3,"sz":12,"bits":"000011110000000111001000000110111000000101111000001110111100111110111110010011010100001111001010011110111110011101011110011111011111000111011000","pal":["#313131","#801411","#8a6b69","#d7928d","#cdc6c9","#f5f5f6"],"col":"000002000000000125003000000120225000000103333000000140442000200250454000000055050000000455005010022550555220022405054230032044050232000244043000","uniq":1,"logic":1,"by":"匿名"},{"id":"m2_bingqilin","n":"冰淇淋月巴","nm":{"en":"Ice Cream Banny","ja":"アイスクリームバニー","ko":"아이스크림배니"},"img":"https://origin.picgo.net/2026/10/21/756357abf125a8cd0c6f532836a233717fd3a810900d0252.th.png","r":3,"sz":12,"bits":"100110000000000111110000000111110101000100111000000011101000000011111000000011011000000010111000000011110000000001110000000001100000000001100000","pal":["#3c3728","#8071a6","#b07e43","#cd8b32","#e290b6","#dcd39a"],"col":"100020000000000555110000000554110101000500411000000044401000000044444000000024042000000030332000000023330000000003320000000003300000000002200000","uniq":1,"logic":1,"by":""},{"id":"m2_fanqie","n":"番茄月巴","nm":{"en":"Tomato Banny","ja":"トマトバニー","ko":"토마토배니"},"img":"https://origin.picgo.net/2026/10/23/3dece9cc3c952ea2b0615a90ddc71dd43132a85a21517244.th.png","r":3,"sz":12,"bits":"000000000000000010000000000001000000000010000000000011100000001110111100011111011111111001110111011111010000000000100000000010000000000000000000","pal":["#5e1b14","#872915","#804101","#bc2e22","#7f7119","#97c600"],"col":"000000000000000040000000000004000000000000000000000033000000000330301000033333013355441002220244022222020000000000400000000040000000000000000000","uniq":1,"logic":1,"by":""},{"id":"m2_she","n":"蛇月巴","nm":{"en":"Snake Banny","ja":"蛇バニー","ko":"뱀배니"},"img":"https://origin.picgo.net/2026/10/22/snake-banny1537e823f87200c1.th.png","r":3,"sz":12,"bits":"111101111101111110111110100000000110110000000110111000000110011111011010001111010100000000000110000000000110000000000110001111101110001101100000","pal":["#7a2221","#646472","#b2b3c1","#c0c1cc","#ced0d8","#d8dae1"],"col":"234303343401434320342430300000000230420000000330253000000230024122000030005452000300000000000330000000000450000000000230002534503530002302200000","uniq":1,"logic":1,"by":"hellomelody"},{"id":"m2_tracker","n":"追踪器月巴","nm":{"en":"Tracker Banny","ja":"トラッカーバニー","ko":"추적기 배니"},"img":"https://origin.picgo.net/2026/10/21/acf7a9ec0fbe767f840a205e24730017da0d83a3264ec36f.th.png","r":3,"sz":12,"bits":"000000000000000000001000000000000000000000011000001111100101011000001011101111100100000000011000000000000000000000000000000000000000000000001000","pal":["#323a3a","#5d494a","#777777","#a7a6a8","#c3c3c3","#e8e8e8"],"col":"000000000000000000002000000000000000000000045000002344500301003000004001101221200400000000023000000000000000000000000000000000000000000000002000","uniq":1,"logic":1,"by":""},{"id":"m2_wo","n":"蜗牛月巴","nm":{"en":"Snail Banny","ja":"カタツムリバニー","ko":"달팽이배니"},"img":"https://origin.picgo.net/2026/10/23/2ffd65af799fc8080d8a9b2af57ac89782a5d6d5f70cda63.th.png","r":3,"sz":12,"bits":"000000000100000000000100000000000001000000111100011101111100011101111100011111011111111110100110011111011010000000000110000000000000000000000100","pal":["#4e5278","#b24d78","#8a8aa2","#d2d4df","#e2e4eb","#eeeff4"],"col":"000000000200000000000300000000000002000000200000033402211200045500111200045350011024432240000240044444044050000000000430000000000000000000000200","uniq":1,"logic":1,"by":"鲸弑"},{"id":"m3_cangshu","n":"仓鼠月巴","nm":{"en":"Hamster Banny","ja":"ハムスターバニー","ko":"햄스터배니"},"img":"https://origin.picgo.net/2026/10/23/22cdbf9144b586bf272c4cb61f533bc853372133deea585a.th.png","r":3,"sz":12,"bits":"000011111000000111011100000110111110001111101110011111011111011101010101111010101010111100101111110111011111001111011111111110110110011111011100","pal":["#9d4d4e","#7c7c7d","#919191","#a09fa2","#a9a9aa","#b5b5b4"],"col":"000043243000000455055300000440434420004433303320035444033331044400040301354030404020354400404321340434044321003444044221353450440210033333021100","uniq":1,"logic":1,"by":"番凩-FFANMER"},{"id":"m3_eluosi","n":"俄罗斯巴块","nm":{"en":"Tetris Banny","ja":"テトリスバニー","ko":"테트리스배니"},"img":"https://origin.picgo.net/2026/10/25/5184c509e7017738e29c29fd93540a98dc98667d5767b52a.th.png","r":3,"sz":12,"bits":"000011100000000011100000000011100000000000100000000001000000000010100000000011100010000011100000001101111000011101111100011111011100111110111101","pal":["#9c282f","#9c899c","#c2bcd5","#dedeef","#e5e7f7","#f0f3ff"],"col":"000035300000000034300000000034300000000000100000000002000000000030300000000035300010000045400000003501253000023400034300023200024300143100013301","uniq":1,"logic":1,"by":"Nyaomi"},{"id":"mb_chun","n":"春月巴","nm":{"en":"Spring Banny","ja":"春バニー","ko":"봄배니"},"img":"https://origin.picgo.net/2026/10/22/d7b3e18460b8e44f1964d75b983ef69ac589f56a2b9a3392.th.webp","r":3,"sz":12,"bits":"000001100000000001011000000011110000000011111000000111110000000100110000011011100100011111011111011111011110101111011111011011111000000000000100","pal":["#8e8c95","#e2bccb","#c8c6d0","#dcd4e2","#eae4f0","#f7f4fc"],"col":"000000000000000004020000000025430000000045411000000243330000000300530000011034500100012234053211022445054320203455034322022023222000000000000000","uniq":1,"logic":1,"by":"Nyaomi"},{"id":"mb_dong","n":"冬月巴","nm":{"en":"Winter Banny","ja":"冬バニー","ko":"겨울배니"},"img":"https://origin.picgo.net/2026/10/23/720cc39489c1fe7d040a16a0a74e5492adb703c20326203b.th.png","r":3,"sz":12,"bits":"000011000000000011110010000011110000000001110000000011110000000010111000000101001000000011111000000111110000111110111101001011111000001111100000","pal":["#763a64","#8b74aa","#a996d5","#b9b5de","#c8c7e7","#dfdff9"],"col":"000022000000000022000010000014540000000004330000000032240000000020221000000302002000000054212000000453340000120140455201000004553000000003400000","uniq":1,"logic":1,"by":"mari"},{"id":"mb_fanzhuan","n":"反转月巴","nm":{"en":"Flip Banny","ja":"反転バニー","ko":"반전배니"},"img":"https://origin.picgo.net/2026/10/11/c81c459acde3c23c8697414890a13e0ca4b5043931a9a27e.th.png","r":3,"sz":12,"bits":"011100000000111100000000110100000000111010000000111101000000101111000000011011000000000110001100001111101110011111011111011101111100011111000000","pal":["#4b3e6b","#931f21","#c54a4f","#f24643","#f9615f","#b5b5d4"],"col":"000000000000002200000000140400000000144040000000242202000000104441000000013042000000000440005000003444205550013334055550013303205500011111000000","uniq":1,"logic":1,"by":""},{"id":"mb_jian","n":"健身月巴","nm":{"en":"Workout Banny","ja":"筋トレバニー","ko":"헬스배니"},"img":"https://origin.picgo.net/2026/09/03/9935aafd50857466b.th.png","r":3,"sz":12,"bits":"000011110000000011101000000111110000000110011010000011011000000101111000001111001100001101111100001111100100111110111101000011111000000011110000","pal":["#787878","#d5cfd8","#f1f1f3","#fef5f2","#fbfafa","#fefefe"],"col":"000011110000000054402000000455550000000510015000000011014000000305553000002555005200004305553400004433300400002550355200000055552000000024420000","uniq":1,"logic":1,"by":""},{"id":"mb_jinju","n":"进局子巴","nm":{"en":"Locked-Up Banny","ja":"拘留バニー","ko":"구치소배니"},"img":"https://origin.picgo.net/2026/10/21/---akai0255d6362d123bd3.th.png","r":3,"sz":12,"bits":"000000010100000000011000000000011000000010011100000000111100000000101100000000110100000000001000000000111100111000111100111101011111011001111100","pal":["#1d1046","#b4545b","#ececee","#f2f1f5","#f8f8f9","#fefefe"],"col":"000000010100000000044000000000033000000010044200000000233200000000405300000000420400000000004000000000345300011000345300111102055531011002433400","uniq":1,"logic":1,"by":"ak"},{"id":"mb_jiu","n":"酒巴","nm":{"en":"Bar Banny","ja":"酒場バニー","ko":"술집배니"},"img":"https://origin.picgo.net/2026/09/20/jiuba7578b776f8c4c528.th.png","r":3,"sz":12,"bits":"000011000000000111000000000111000000001101111000011011111000011110110010001001111000000111101100001110011100111101111101011111011000000000110000","pal":["#787878","#dea089","#c9bccd","#eabfa7","#fbd6b3","#eae3f0"],"col":"000022000000000255000000000255000000004105344000034025554000033110310000001001311000000222501100001110031100043202221100041111031000000000130000","uniq":1,"logic":1,"by":"三重彩"},{"id":"mb_laba","n":"拉巴","nm":{"en":"Lah Banny","ja":"ラーバニー","ko":"라배니"},"img":"https://origin.picgo.net/2026/09/20/laba8ce98439c56d3f6d.th.png","r":3,"sz":12,"bits":"000001100000000001100010000011100000000111100000000110100000001011000000001110100000001101000000000111100000001111100000111101111101000001111100","pal":["#9f6178","#db9fab","#c8c8c8","#e2dee3","#f6f5f6","#fcfcfc"],"col":"000002000000000004400000000011100000000224200000000230300000002054000000002450400000002405000000000455300000005555500000004505500000000004311000","uniq":1,"logic":1,"by":""},{"id":"mb_lba","n":"喇巴","nm":{"en":"Horn Banny","ja":"ラッパバニー","ko":"나팔배니"},"img":"https://origin.picgo.net/2026/10/11/7f08d97c6eb3a1eac43b80c797216c3893370759f78d1666.th.png","r":3,"sz":12,"bits":"000000011000000000011100000000111100000000111100000000111000000001100000000011111000000111010000001101110000001011110000000110110000000111000000","pal":["#9ab74b","#bcd279","#e0e9c3","#e7ebe0","#fafce9","#fdfdfb"],"col":"000000000000000000010000000000110000000000221100000000432000000002500000000034353000000455030000002405530000002045530000000250520000000242000000","uniq":1,"logic":1,"by":""},{"id":"mb_long","n":"long～long～巴～","nm":{"en":"Long-Long Banny","ja":"ロングロングバニー","ko":"롱롱배니"},"img":"https://origin.picgo.net/2026/10/23/longlongd4f08c948bb96bfa.th.png","r":3,"sz":12,"bits":"001000000000011000001110011000001110110001011111101011101111111010101011111101100101011110111110001111011110000110111100000111110100000011110000","pal":["#6e4167","#aaafcb","#c8cfe2","#dfe2ea","#eff2f8","#fcfcfe"],"col":"000000000000011000002410041000001350110000013143305000005223355000105023255501300202045550553150004555021340000220113500000122450200000033330000","uniq":1,"logic":1,"by":"Suwa"},{"id":"mb_pingguo","n":"吃茄月巴","nm":{"en":"Tomato-Eater Banny","ja":"トマト食いバニー","ko":"토마토먹는배니"},"img":"https://origin.picgo.net/2026/09/03/1618abd45272691005.th.png","r":3,"sz":12,"bits":"000011110000000011111000001101111100011110111110011111000110011001011010011111011110000111011100001111101100011110111110111000000111110000000011","pal":["#e54c4b","#d1afb1","#f3e5e6","#f6f2f1","#f9f7f5","#fefdfd"],"col":"000034430000000055555000005503355500045530135540055521000550055001045050055553055550000510015500005200002500045100001540354000000453340000000043","uniq":1,"logic":1,"by":""},{"id":"mb_qiu","n":"秋月巴","nm":{"en":"Autumn Banny","ja":"秋バニー","ko":"가을배니"},"img":"https://origin.picgo.net/2026/10/23/---Yidi-Nyaomi-Li085363c8afe0790e.th.png","r":3,"sz":12,"bits":"000000100000000000100000000000100000001111100000011111011100011111010100111110111100111000111010100111011111111110101110001111101100000000000000","pal":["#75757e","#bea797","#d1b09f","#d9bcb1","#d8d2db","#ecebf5"],"col":"000000000000000000000000000000000000002214400000023344055400022254050400221350555300222000333010200111011132332220102220003333203300000000000000","uniq":1,"logic":1,"by":"Nyaomi"},{"id":"mb_senlin","n":"森系月巴","nm":{"en":"Woodland Banny","ja":"森バニー","ko":"숲배니"},"img":"https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li6e93cacca933846d.th.png","r":3,"sz":12,"bits":"000100000000000111110000001000001100010111110010010111011010010111101101010111011101010101111101100000000001011111011111000000100000000000000000","pal":["#738136","#83924e","#828b82","#93a771","#9ea79e","#adbf7b"],"col":"000200000000000011330000000000001000010113330000030155053000010155304001010132032301010204434401200000000002044233053331000000200000000000000000","uniq":1,"logic":1,"by":"Nyaomi"},{"id":"mb_shilaimu","n":"史莱姆巴","nm":{"en":"Slime Banny","ja":"スライムバニー","ko":"슬라임배니"},"img":"https://origin.picgo.net/2026/10/21/75dd505aa51f9864c2dc215b349253592891b6d6ef024a79.th.png","r":3,"sz":12,"bits":"000110110000000110100000000111100100000111100000000111000000000000100000000111110000000111110000000111110000111011111011001111001000000100111000","pal":["#706376","#b18fab","#abafcc","#bfc0d6","#d2d8eb","#ecf2f9"],"col":"000000100000000220400000000243300000000222200000000334000000000000400000000324520000000315540000000453130000003051014000003555003000000300432000","uniq":1,"logic":1,"by":"紫凌（むらさき）"},{"id":"mb_wen","n":"蚊月巴","nm":{"en":"Mosquito Banny","ja":"蚊バニー","ko":"모기배니"},"img":"https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li5760b9af6a34d812.th.png","r":3,"sz":12,"bits":"000111100000011101110000111110111000101011011000111101111100111101111101110110101111011111010111001111101001000000001110000000001111000000001111","pal":["#623e63","#bd6f64","#bfcade","#e6e4d1","#fdf6d1","#e2e8eb"],"col":"000444400000044404440000443330444000403022034000443202234400432202255500450520405200035534040100003444401000000000001110000000001111000000000111","uniq":1,"logic":1,"by":"Nyaomi"},{"id":"mb_wenshi","n":"温室月巴","nm":{"en":"Greenhouse Banny","ja":"温室バニー","ko":"온실배니"},"img":"https://origin.picgo.net/2026/10/25/a4de870a23ff1f883c8454cb72ef80d762cde2ab6de81042.th.png","r":3,"sz":12,"bits":"000001100000000001100000000001100000000100000000001111101100000111110000001111100000000111100000001001000100001110111100101101111101011110111110","pal":["#787878","#898aa5","#9394ae","#a5a4b8","#cbcbda","#dfe2f0"],"col":"000001100000000002200000000002200000000100000000002221102200000313430000003434500000000224500000001004000400002330544400003405555400022120333220","uniq":1,"logic":1,"by":"Nyaomi"},{"id":"mb_wuding","n":"屋顶月巴","nm":{"en":"Rooftop Banny","ja":"屋上バニー","ko":"옥상배니"},"img":"https://origin.picgo.net/2026/10/24/ddb838b24b14c9bc66c93f3e145393e1f054aa99f643d304.th.png","r":3,"sz":12,"bits":"001101000000001110110000001110110000001011110000000111000000000111000000000100000000000011001110000111101110110111011111000111001110000011001100","pal":["#673f3a","#c72637","#ae542b","#90838a","#bab0b6","#edecef"],"col":"003303000000003440330000003340430000000054430000000454000000000455000000000400000000000055001000000455501110330222002223000222002220000022002200","uniq":1,"logic":1,"by":"hellomelody"},{"id":"mb_xia","n":"夏月巴","nm":{"en":"Summer Banny","ja":"夏バニー","ko":"여름배니"},"img":"https://origin.picgo.net/2026/10/22/---Yidi-Nyaomi-Lia67b10aba5615cbe.th.png","r":3,"sz":12,"bits":"000001101000000011011100000110111110011111011111111001010011101110101100110110111110111110111110111110111110011111011110000000100000000000010000","pal":["#8e8f97","#d4d1d0","#f9e7c3","#e3e9f4","#eef8fc","#fcfdfc"],"col":"000001002000000035012200000330333120025333033322343004030044403340303300450440433440454430334440454440444450044444044440000000400000000000000000","uniq":1,"logic":1,"by":"Nyaomi"},{"id":"mb_xiaoma","n":"小马月巴","nm":{"en":"Pony Banny","ja":"ポニーバニー","ko":"조랑말배니"},"img":"https://origin.picgo.net/2026/09/19/xiaoma59a91dd50534ac93.th.png","r":3,"sz":12,"bits":"000001100000000111100000000011100000000011100000000010100000000011010000000001110001000011100000100010110000000011110000000011110000000011010000","pal":["#787878","#cbcacb","#e2e2e3","#eeeeee","#f6f6f7","#fefefe"],"col":"000002100000000132300000000043400000000045400000000040400000000023010000000003210000000014200000000020510000000035510000000034410000000034010000","uniq":1,"logic":1,"by":""},{"id":"mb_yun","n":"云月巴","nm":{"en":"Cloudy Banny","ja":"雲バニー","ko":"구름배니"},"img":"https://origin.picgo.net/2026/10/21/087c43501b9bd20deb354672a8a79e4ae6b8b7c2a0cfba2c.th.png","r":3,"sz":12,"bits":"000001000000000000100000000011100000000011100000011111011100110111011111111100111110001111101111001111101011000001000000000000100000000001000000","pal":["#787878","#d0d0e2","#dbdbe8","#e9e9f0","#f5f5f9","#fdfdff"],"col":"000000000000000000000000000012100000000055300000043343043300350432055532213500555550002545505551001134302011000000000000000000000000000000000000","uniq":1,"logic":1,"by":"影子生物"},{"id":"mb_zhongyi","n":"中意月巴","nm":{"en":"Fond Banny","ja":"気に入りバニー","ko":"마음에든배니"},"img":"https://origin.picgo.net/2026/10/11/b8ab7bdd789538f043b260d47e4181c4c7feca6cf8eb591c.th.png","r":3,"sz":12,"bits":"000011100000000011100000000111100000000100110000000111010000000111100000000110100000010011100000000101100000001111010100101111011011000111110000","pal":["#1c1c39","#63627e","#9492a8","#bfbdd4","#d5d4e7","#f5f5fc"],"col":"000011100000000045300000000254500000000200420000000333030000000255400000000250000000010051000000000203200000001343040100101243052011000111220000","uniq":1,"logic":1,"by":""},{"id":"xitong","n":"系统月巴","nm":{"en":"System Banny","ja":"システムバニー","ko":"시스템배니"},"img":"https://origin.picgo.net/2026/09/22/xitong3fa4bdcf7695b190.th.png","r":3,"sz":12,"bits":"001011000000010111100000011101110000011110111000011111011000010101101100101010111110111110111110111110110110111101111101011111011000000111100000","pal":["#787878","#97bdfe","#adcbfe","#bdd5fd","#ccdffd","#e8f1ff"],"col":"004021000000020121100000011101120000011110224000021233033000020304403200203040454210113450454120113440330240311202323300032222023000000333400000","uniq":1,"logic":1,"by":""},{"id":"youling","n":"幽灵月巴","nm":{"en":"Ghost Banny","ja":"ゴーストバニー","ko":"유령배니"},"img":"https://origin.picgo.net/2026/10/23/9e6b571fe9657417f255527bf3c34cc1963ee4f0f46e3e06.th.png","r":3,"sz":12,"bits":"000000011000000111011000000110111110000111110110000101111100000011100110011111011111110111110000111000110000001111100000001111100000001111000000","pal":["#787878","#cbc9cc","#d3d3d2","#dcdadd","#e5e5e4","#edeeed"],"col":"000000023000000123043000000120342420000133110410000205531300000034500310022123041110250355530000255000220000005444200000003145200000001122000000","uniq":1,"logic":1,"by":"鲸弑"},{"id":"bukeming","n":"不可名状巴","nm":{"en":"Unnamable Banny","ja":"名状しがたきバニー","ko":"형언불가배니"},"img":"https://origin.picgo.net/2026/09/27/20c78b17ef4b3fa235abaad68362f4b3e9cd9e87eb7bc133.th.png","r":4,"sz":15,"bits":"000000100000000000000011000000000000111000000000000111100000000001110100000000001111100000000011101110000100010011110000111110111010111011101011100111000111110111110011011100111100011111011111000000000111110000000000010000000","pal":["#72658c","#9080b0","#a091bf","#aea1c9","#b9afd0","#dbd6e4"],"col":"000000000000000000000000000000000000111000000000000333100000000001430200000000002222300000000022202320000100030022320000112230110030531022202021200121000232440244430053042300245500055532023355000000000123450000000000000000000","uniq":1,"logic":1,"by":""},{"id":"canglong","n":"苍龙月巴","nm":{"en":"Azure Dragon Banny","ja":"蒼竜バニー","ko":"창룡배니"},"img":"https://origin.picgo.net/2026/09/29/cfdcb713bec9bd6b5307fd8a9edfc1fb421e9a1529506bb0.th.png","r":4,"sz":15,"bits":"000000001111000000000111110100000000001101100000000011011000000111011111000011111000111000111110111101100011101011110010011011011011111011111001111011000111011110000000001110011000000000111101000000001110111000000011011111000","pal":["#757474","#a8a6a5","#bebcb9","#cdcbc7","#dcdcdb","#f7f7f8"],"col":"000000001121000000000000110500000000001105400000000011055000000334013444000044223000341000251110112505100014201031540020011011052024452023412004251024000203052250000000002550054000000000553204000000004550354000000035051553000","uniq":1,"logic":1,"by":""},{"id":"m2_baboyi","n":"巴巴博弈","nm":{"en":"Babo Gambit","ja":"ババゲーム","ko":"바바 겜블"},"img":"https://origin.picgo.net/2026/10/22/67415055497e212216f64fbf52efd52849aeb4517d115733.th.png","r":4,"sz":15,"bits":"000100001000000010110011000000000011110000000000001110000000000011111000000000011111000000000001001100000000010111110000000011111011000000001110100000000000011100000000000111000000000011101110100000011111010000000001111100000","pal":["#646464","#cdcbe0","#e0e0e8","#ebebed","#f4f4f3","#fbfbfb"],"col":"000000000000000000140055000000000043340000000000005550000000000032213000000000021322000000000004004300000000030554230000000033545020000000001550200000000000045400000000000455000000000034404320000000035555040000000004334400000","uniq":1,"logic":1,"by":"ak"},{"id":"m2_baqi","n":"巴岐大蛇","nm":{"en":"Baqi Orochi","ja":"バ岐大蛇","ko":"바치 오로치"},"img":"https://origin.picgo.net/2026/10/21/00ad700c36c3d7131ffe4fcfae4e5a0cee3d2f4e74eec9cd.th.png","r":4,"sz":15,"bits":"000100000000000000000000000000000100000000000000100000000000000000000010000000111101110000001111011111000011111011111000100111011110110111100100001110111001011011110111101111101110111101110111011011110111011100000111110110000","pal":["#787878","#c1c1cd","#d6d5e0","#e4e4ea","#f0f0f6","#fdfcfc"],"col":"000000000000000000000000000000000000000000000000500000000000000000000050000000212202120000002212042122000011413043141000300424034240330522500500002250514005055054150533505555503350553405550543050055550555055500000555550550000","uniq":1,"logic":1,"by":""},{"id":"m2_teatime","n":"下午茶月巴","nm":{"en":"Tea-Time Banny","ja":"ティータイムバニー","ko":"티타임배니"},"img":"https://origin.picgo.net/2026/10/21/teatime-buny---Felimika490cd7af24e32b96.th.png","r":4,"sz":15,"bits":"000000111000000000001111100000000010111110000000110111011000000100000011000011111011111011000111101111000000111011101000000001110110000100110011101100000111110011000000111101111000000111110111000000111101111000000001111100000","pal":["#736276","#a99baa","#daa1a4","#c2c1d1","#d4e0f2","#e9f0f7"],"col":"000000111000000000001121300000000030222430000000330212033000000100000031000000115033523000000145403233000000354033203000000004540340000000100033201000000135330021000000341302023000000441330223000000455404543000000004544400000","uniq":1,"logic":1,"by":"Feyy"},{"id":"m2_xianyi","n":"嫌疑月巴","nm":{"en":"Suspect Banny","ja":"容疑バニー","ko":"용의배니"},"img":"https://origin.picgo.net/2026/10/21/71e32b7a3e54e6bba0d145f9b63d36bc6b5a368bce3d301e.th.png","r":4,"sz":15,"bits":"000110111000000000111110000000110111011000000111011100000000111011111000000011101111100000001110111110000000110111110000000111011111000000010100011110000001111010111000011111001111000011111011011000001011101110000011111001100","pal":["#555350","#3f3f3e","#292c2f","#33363e","#43474f","#787878"],"col":"000000555000000000000550000000000000055000000000000000000000000001200000000000004410000000000440100000000000220000110000000000011111000000010100022230000001222030333000022233003344000033333044044000003044404440000054444004400","uniq":1,"logic":1,"by":""},{"id":"m2_zuochen","n":"佐臣月巴","nm":{"en":"Courtier Banny","ja":"佐臣バニー","ko":"좌신배니"},"img":"https://origin.picgo.net/2026/10/21/8b6b66f067f39adb13298d8927fbd7eae7f9ab72fac6c4c6.th.png","r":4,"sz":15,"bits":"000011110000000001111101000010001111100000000001001110000000000011010000000000010110000000000011110000000000111110000000000011101000000000001011000000000011111000000000010111100000000111110100000000011101111000010000011111000","pal":["#72747d","#80859c","#989cb2","#c3c5d0","#d9dbea","#eef1f9"],"col":"000023440000000002333304000000002335500000000000005540000000000045020000000000010000000000000010210000000000113200000000000023301000000000003012000000000035411000000000050500000000000455520100000000055500110000000000022211000","uniq":1,"logic":1,"by":""},{"id":"m3_you","n":"鱿巴","nm":{"en":"Squid Banny","ja":"イカバニー","ko":"오징어배니"},"img":"https://origin.picgo.net/2026/10/25/fa99573013c8914358ccc065c6cb7bf3d161a11cf298572f.th.png","r":4,"sz":15,"bits":"000001000100000000011000110000000011011110000000111110111000000110011111000001101101011100011111011101010011111011011110110010111110111111101110101111111110111011111001111101111000001111101111100001111001111100000011010110000","pal":["#61595b","#756d98","#a29e9f","#b8b5ba","#cdcccc","#dddede"],"col":"000000000000000000011000110000000032043340000000255550552000000450053254000003300303013300025234023402020044211051012440250010353110352355205550502553255420323024552003543303345000002445505545200001122002221100000000000000000","uniq":1,"logic":1,"by":"番凩"},{"id":"mb_bashan","n":"巴山","nm":{"en":"Mt. Banny","ja":"バニー山","ko":"배니산"},"img":"https://origin.picgo.net/2026/09/21/shanbf57ea8c56a98c78.th.png","r":4,"sz":15,"bits":"000000010000000000001000000000000000111100000000001000100000000001011010000000010111010000000101110101000000101101100100001011111010100010111011111010010111011111010100000000000001111011111011111000000000010000000000000000000","pal":["#313131","#a19eb9","#cbcaca","#d0d0cb","#f1f1f1","#f9f9f9"],"col":"000000010000000000001000000000000000000000000000004000300000000004022040000000040322040000000401110104000000501101100400005023322020500040222022222040050222022222050400000000000004442022222022245000000000010000000000000000000","uniq":1,"logic":1,"by":""},{"id":"mb_bing","n":"冰冷月巴","nm":{"en":"Frosty Banny","ja":"ひんやりバニー","ko":"차가운배니"},"img":"https://origin.picgo.net/2026/10/23/434e565b3ade1792842da6c6e5e0778552a35682cf6024b1.th.png","r":4,"sz":15,"bits":"000000000000000000000111100000010000111100000000000111100000000011110100000000011001100000000011111000000000010111100000000111010100000000000111100000000011011100000000011101010000000011011111000000111110111011000111100000000","pal":["#606c81","#798fad","#9eb3c7","#b2cfe6","#cee5f6","#edf8fd"],"col":"000000000000000000000010200000000000111000000000000234000000000003340100000000011001300000000023311000000000040234300000000033040500000000000455300000000024044200000000025403010000000024043441000000254310430000000122100000000","uniq":1,"logic":1,"by":"Suwa"},{"id":"mb_caihong","n":"彩虹月巴","nm":{"en":"Rainbow Banny","ja":"虹バニー","ko":"무지개배니"},"img":"https://origin.picgo.net/2026/10/21/9895b41be4c58da373fcc95f6d8cc5ba0883411035f2a8d7.th.png","r":4,"sz":15,"bits":"000000001000000000000000000000000000000010000000000000011000001000000011001001110111101111110111110100111110000000000110110000000000011111110000000001111110110111110000000110111100000000100000000000000100000000000000001000000","pal":["#e76967","#b998f7","#dad0b2","#e3bfe5","#eadfef","#faf9f8"],"col":"000000000000000000000000000000000000000000000000000000044000000000000045004000000022205245520200040300354520000000000550540000000000054431220000000003431110130344440000000340233300000000000000000000000000000000000000000000000","uniq":1,"logic":1,"by":""},{"id":"mb_chao","n":"超巨月巴","nm":{"en":"Colossal Banny","ja":"超巨バニー","ko":"초거대배니"},"img":"https://origin.picgo.net/2026/10/22/6e242d94aa9b07b9117479ec78fd53985fd887bb68d8fa62.th.png","r":4,"sz":15,"bits":"000000111000000000100011000000001110110000000000010111100000000011101111000000111101111000001111101111100001101000110100001010101001100101111101111101001111101111100000111110111000010111011111010000001111100000000000111000000","pal":["#c0607b","#c898a9","#dfc2cb","#eedce1","#f6ebee","#fcf8f9"],"col":"000000000000000000000000000000000000320000000000000553200000000035505541000000252402254000001521203345200002503000440200002040303005200001543303345200001543303335100000253330343000000034033441000000001333200000000000110000000","uniq":1,"logic":1,"by":"影子生物"},{"id":"mb_fanben","n":"墨镜月巴","nm":{"en":"Sunglasses Banny","ja":"サングラスバニー","ko":"선글라스배니"},"img":"https://origin.picgo.net/2026/09/03/1115555fb4ab3b2731.th.png","r":4,"sz":15,"bits":"101111101111101001111101111100001101101101100001111101111100011011010111100010010111010000011011110111110001100101111100001111101101100001111101111100001111011111000000011110010000000011111000000000000111000000000000011000000","pal":["#5e6470","#7c7d85","#bdb3b8","#d9d6d8","#edeced","#fcfcfc"],"col":"100000000014501000000000004500003302202301400004555505552000022055050335300020040534020000033035540235410004400505455500005555505505400004555505555400003555055554000000044430040000000001211000000000000444000000000000012000000","uniq":1,"logic":1,"by":""},{"id":"mb_guai","n":"奇怪月巴","nm":{"en":"Odd Banny","ja":"へんてこバニー","ko":"이상배니"},"img":"https://origin.picgo.net/2026/10/23/4a09ea559862b2830f46cc64b0f4211487bfa91c46fddbcf.th.png","r":4,"sz":15,"bits":"000001101100000000001111100000000001111100000000011101000000000111011100000000110110110000000101011010000001111101111010000111110111000000010101110000001111011101000011101111011100111110110111101001111011111000000111101110000","pal":["#787878","#d6d6e2","#e0dfea","#e7e7ef","#f2f2f6","#fbfbfe"],"col":"000001102100000000004315200000000003325200000000014405000000000143022400000000130120410000000103033010000001544404451000000444440441000000040304410000003445025402000025405224045200025440330445200002555025453000000124104220000","uniq":1,"logic":1,"by":"鲸弑"},{"id":"mb_jin","n":"金月巴","nm":{"en":"Golden Banny","ja":"金バニー","ko":"황금배니"},"img":"https://origin.picgo.net/2026/10/23/1396cf3c90108f3f96217f2c35d5092323f3425ef247f9cb.th.png","r":4,"sz":15,"bits":"000000011110000000000011110000000000111110000000000000100000000001111000000000101111100000000001111100000000011101110000000011011110000000010110110011000011111001000000001110111100010011101111100000011110111000000011011100000","pal":["#753e25","#ad8454","#e6b975","#b6ad93","#f0db98","#fef8ad"],"col":"000000000000000000000021100000000000444510000000000000300000000003555000000000103545200000000002212400000000035404410000000045055410000000030440520011000012225001000000001120552300010011002554400000044220541000000031014400000","uniq":1,"logic":1,"by":"Suwa"},{"id":"mb_ju","n":"巨月巴","nm":{"en":"Giant Banny","ja":"巨バニー","ko":"거대배니"},"img":"https://origin.picgo.net/2026/10/23/7445849475a1a67a9510637d9dd722c0ce1589688044ee9c.th.png","r":4,"sz":15,"bits":"000000101000000000001111000000000001110100000000110111110000000111000111100011110111101110111110111110111111110111011111111000111101111111101011001010000111100110100001111101111100001111101111100000111101111100000000001100110","pal":["#bc4a5a","#ae968a","#c2cfbf","#dddde1","#eaeaed","#f5f4f6"],"col":"000000305000000000004435000000000004330500000000340333330000000334000334400045530114504440354340005330443344340234044553355000444303453355504034002030000345400200100003344403100000003554401000000000554300000000000000000100000","uniq":1,"logic":1,"by":"鲸弑"},{"id":"mb_kafei","n":"咖啡月巴","nm":{"en":"Coffee Banny","ja":"コーヒーバニー","ko":"커피배니"},"img":"https://origin.picgo.net/2026/10/21/coffee-yue---KoTofu4bfeb46ff6179820.th.png","r":4,"sz":15,"bits":"000000000000000000000111100000000001101110000000011110010000000111101111000001111010111110001110111110111001111011101011001001100011110111101111011100110101111011110111110111110100001111101111000000000000000100000000100000000","pal":["#aa5954","#e5b9a4","#f7d9c7","#f6eae4","#feeedd","#fdf7f0"],"col":"000000000000000000000000000000000005505200000000053550030000000531101352000001555020352120002330333210222002533033204022000005500022120420005422022100450202222022420244220224540400002224402212000000000000000000000000000000000","uniq":1,"logic":1,"by":"VVisteria"},{"id":"mb_lian","n":"幸运月巴","nm":{"en":"Lucky Banny","ja":"ラッキーバニー","ko":"행운배니"},"img":"https://origin.picgo.net/2026/10/23/f18fc86039bab18c60f2e5a640a82994256efe02bbe849d2.th.png","r":4,"sz":15,"bits":"000001000000000000000000000000000010000000000000111110001100011110111101100011110111011111011110110011111001100011100111110010101011010111110111110100011110111110100001111101111000000010000000000000000000000000000000000001000","pal":["#9a342f","#a0696f","#da635b","#d6a3a0","#dfdce0","#fdfdfe"],"col":"000001000000000000000000000000000010000000000000222220004100032220222204400023120222020033021230220034113002200033300400440030505044000455550555550400045550555550400004444404444000000010000000000000000000000000000000000001000","uniq":1,"logic":1,"by":"影子生物"},{"id":"mb_liti","n":"立体月巴","nm":{"en":"3D Banny","ja":"立体バニー","ko":"입체배니"},"img":"https://origin.picgo.net/2026/09/19/litiyueba0f6fd2bd28b7cc83.th.png","r":4,"sz":15,"bits":"000000111011000000000111101100000000111011110000000110111110000000011011110000000101110100000001010111000000111101101000011111011111000011101011111000110111101011101011010111100100010111110111100001111101111100000000011111000","pal":["#4d4f60","#6b6b6c","#8a8a8a","#a5a5a5","#c9c9ca","#ebebeb"],"col":"000000211023000000000111203400000000100022450000000110110450000000012033540000000102230500000001010335000000111102305000021121022355000011102023344000110222203034401011020223200500010233320234500002234302335500000000022345000","uniq":1,"logic":1,"by":""},{"id":"mb_wanou","n":"玩偶月巴","nm":{"en":"Doll Banny","ja":"ぬいぐるみバニー","ko":"인형배니"},"img":"https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Lib2c078bd058ef48c.th.png","r":4,"sz":15,"bits":"000001111100000000001111100000000011111000000000010011100000000001100100000000011111000000000001111100000000011110100000000000111100000000001011000000000111100111000011111011111010101111101111101001111011100000000010111000000","pal":["#6c7285","#aeb4cc","#cccfde","#dde0ee","#ebedf7","#f8f8fe"],"col":"000000000000000000000100000000000015534000000000010034300000000004300100000000013333000000000001112300000000024340200000000000445100000000005045000000000255500322000003545034234000004533404432000002553055200000000020132000000","uniq":1,"logic":1,"by":"Nyaomi"},{"id":"mb_xing","n":"巴中月巴","nm":{"en":"Banny Among Bannies","ja":"バニーの中のバニー","ko":"배니 중의 배니"},"img":"https://origin.picgo.net/2026/09/03/127d7a0746c5de2434.th.png","r":4,"sz":15,"bits":"000000000011000000000111011000000000011111000000000011110000000000011111000000010011101100000011100111000000011111010100000001110111100111011111011100011110110111100011111011101011001111101110000001111011110000000000111100000","pal":["#88878a","#bdb8be","#dfdce2","#ebece9","#f3f4f3","#fcfcfb"],"col":"000000000011000000000154045000000000055555000000000032410000000000032214000000010035505300000011500555000000001555050500000001440555400044021334055400045410130355300035522035305000005555505450000003435055530000000000444400000","uniq":1,"logic":1,"by":""},{"id":"mb_xue","n":"雪月巴","nm":{"en":"Snowy Banny","ja":"雪バニー","ko":"눈배니"},"img":"https://origin.picgo.net/2026/10/23/e978b592d6dc67debfa6782c325544cbd87a36af9154021a.th.png","r":4,"sz":15,"bits":"000000001100000000000011111000000000011110100000000111100000000001111100000000001110000000000011101100000000111110111000001111011111010001010011111000001101100110000001111011011000001111011101000000111011111000110111101111101","pal":["#46303e","#7b7586","#a5a5b7","#cccad5","#e7e9f1","#fcfcfe"],"col":"000000000000000000000033100000000000053520500000000143200000000001221100000000004430000000000013404100000000255450310000001552035541010003010015552000003500000550000003531025052000002555055502000000455055542000110244403332101","uniq":1,"logic":1,"by":"Suwa"},{"id":"mb_yunduan","n":"会飞月巴","nm":{"en":"Flying Banny","ja":"空飛ぶバニー","ko":"나는배니"},"img":"https://origin.picgo.net/2026/10/25/0c49c146c2e1b0322b58ede6c45ace220be030c873f439d5.th.png","r":4,"sz":15,"bits":"000000010000000000000111000000000010111100000000011111010000000001101100000011111011111010111010110011111011111011110110000111100111000000001111100000000001111100000000001111100000000000010000000000000001000000000000001000000","pal":["#747892","#beb6ad","#d6d6d8","#e6e6e7","#ede2ca","#f4f4f4"],"col":"000000000000000000000434000000000000444100000000002444000000000002203100000022211033022020255050330053552022353032530220000222300222000000003333300000000005333500000000003225300000000000000000000000000000000000000000000000000","uniq":1,"logic":1,"by":"鲸弑"},{"id":"mb_zhengdian","n":"整点月巴","nm":{"en":"On-the-Hour Banny","ja":"定時バニー","ko":"정각배니"},"img":"https://origin.picgo.net/2026/10/25/444672cea81dc05a5326f57baf4a41062d4fd68fc76f8de6.th.png","r":4,"sz":15,"bits":"000000001000000000000110001000001111011111000000111101111000000011110111110101111101110111001111101111100011100110001100000111011100000010010111110000011111011110000001111100011100001111101111100000001000000000000000001000000","pal":["#5d558b","#6f789c","#8c8eb5","#8a92d3","#a3abcf","#c6cbdf"],"col":"000000000000000000000330003000003334044433000000454404454000000052140244330103452000240431004444202442400003400000004200000334002400000030040444430000033345033430000002322100022200001111000111100000001000000000000000001000000","uniq":1,"logic":1,"by":"鲸弑"},{"id":"mb_zhoumo","n":"双休月巴","nm":{"en":"Weekend Banny","ja":"週末バニー","ko":"주말배니"},"img":"https://origin.picgo.net/2026/10/22/---a60a7636bd80eb9e.th.png","r":4,"sz":15,"bits":"000001110000000000011111000000000011100100000000011100101000000111001011100000100110011000000111110000000000011100000000000011110110000000011110011000001101001111000011110111110000011111011110000011110111100000001011110000000","pal":["#9e3635","#97868e","#c1b0b7","#d7ccce","#eae3e4","#faf5f5"],"col":"000002420000000000033242000000000045300100000000055200101000000332001002100000200310000000000234310000000000054200000000000042440230000000023550053000002203005442000035540354520000034444034520000023540553200000001032330000000","uniq":1,"logic":1,"by":""},{"id":"m2_chuqian","n":"出千月巴","nm":{"en":"Cheater Banny","ja":"イカサマバニー","ko":"사기꾼배니"},"img":"https://origin.picgo.net/2026/10/21/6f0a351bc37096a61e980e6e5d6da80446da29ffafa7a5b8.th.png","r":5,"sz":15,"bits":"001111101111100001000000000100001011101110100001011101110000001010111110100000011111010100001011011010100001000110100100001011101110000000011110010100001011110110100001011101110100111011011110111001000000000100001111101111000","pal":["#a95755","#1fcc8c","#e8b4b4","#89e3c3","#f1d2d2","#f9f5f4"],"col":"001111101111100001000000000100001055505550100003054505550000003050424550100000054444050100003052024020100003000240000100003044502040000000025540050100003045550450100003022404550100003055045550100003000000000100001133303311000","uniq":1,"logic":1,"by":""},{"id":"m2_guowang","n":"执政王月巴","nm":{"en":"Reigning King Banny","ja":"執政王バニー","ko":"집정왕배니"},"img":"https://origin.picgo.net/2026/10/21/e878f7fde5e72bfa6bad2f681dca742eef9b8997548df54a.th.png","r":5,"sz":15,"bits":"000000010000011000000010000000000000000000000000000111100000000001011100000000001111100000000001110100000000001111100000000001101000000001000110100000000011011000000000011011100000000001111100000000011101110000110111101111100","pal":["#66676b","#797679","#8f867f","#898cb8","#9ba8ec","#bdc0d6"],"col":"000000050000011000000020000000000000000000000000000121100000000001011100000000002010100000000000020000000000001555000000000001505000000001000120100000000011033000000000003055300000000005535400000000035404430000110345505443100","uniq":1,"logic":1,"by":""},{"id":"m2_tanwu","n":"贪污月巴","nm":{"en":"Corrupt Banny","ja":"汚職バニー","ko":"횡령배니"},"img":"https://origin.picgo.net/2026/10/22/ab151905162c9192567261cab1173c3d9475509a44cc77a9.th.png","r":5,"sz":15,"bits":"000001100001100000011110011100000110110000100000101100000000001111101100110001111011101111011110111110101011011111011011001011011011110010101100010111111110111101111111110110111110111101111011100011011100000000000000000000100","pal":["#2a4039","#732530","#566d7f","#9b9fa2","#c8cad1","#f5f8f9"],"col":"000000000002200000044320022200000350540000200000405500000000005544401100110002543011101111023550412230202020032022022032002022000002320030505200000200455550520000020455550540000000355505540000000044044400000000000000000000200","uniq":1,"logic":1,"by":"三重彩"},{"id":"mb_chaos","n":"混沌月巴","nm":{"en":"Chaos Banny","ja":"混沌バニー","ko":"혼돈배니"},"img":"https://origin.picgo.net/2026/10/24/8f4ccf5a7a4813d86478b59c05bd7c80e45b28cbcfd280ec.th.png","r":5,"sz":15,"bits":"000000101110000000001011010000000001011100000000000011100000000001100000000000001011110000000011110110000000001011110000000001101110000000000000100000000001011010000000001011110000000011101110110001101010001110000110111110010","pal":["#3f433e","#0e5544","#367468","#4aa08e","#b3d8d4","#f0fcfb"],"col":"000000504550000000005014040000000005012000000000000022200000000004400000000000005032010000000054220110000000004022210000000004303120000000000000100000000004011010000000004021110000000043303330330004402020001330000320421230040","uniq":1,"logic":1,"by":"軟管"},{"id":"mb_shenlian","n":"神运月巴","nm":{"en":"Divine-Luck Banny","ja":"神運バニー","ko":"신운배니"},"img":"https://origin.picgo.net/2026/10/23/75cb6c3c872e0ab0ae24ad2a1d4d16217560c98278e9c3c2.th.png","r":5,"sz":15,"bits":"000000000000000000000001100000000000011111000000000111110100000001110111100000011101011100010111001101000010010111011000110101111100000001111010111101001010111100100011011110000000000001100000000000000000000000000000000000000","pal":["#3c127d","#bd6341","#776db1","#afa5d1","#c2c0e7","#dcdef6"],"col":"000000000000000000000002200000000000043342000000000455540300000002530554300000022301054100010453000103000010040550053000110303443200000004342040331102004030455300100002012540000000000000200000000000000000000000000000000000000","uniq":1,"logic":1,"by":"mari"},{"id":"mb_shizhe","n":"归家月巴","nm":{"en":"Homebound Banny","ja":"帰りバニー","ko":"귀가배니"},"img":"https://origin.picgo.net/2026/09/03/2b384c6d07a3d397b.th.png","r":5,"sz":15,"bits":"000111110110000001111101111000001111001111000000011011110000000111011100000001100010011000001111011111000001111011111000000111101110000000010110010000000110111100000001101101111000001111101111000010111011110000000110111110101","pal":["#61646e","#8e929b","#bdbabe","#dcdadc","#f3f0f0","#fcfbfb"],"col":"000355440530000002555505552000002555005552000000050010540000000452031500000000300050030000000155055510000000145055410000000135505310000000020550010000000440555400000004505505554000004555505554000000555055550000000440445440000","uniq":1,"logic":1,"by":""}];
+/*NP_DATA_END*/
+</script>
+
+<script>
+(function(){
+'use strict';
+
+/* ================= 语言 ================= */
+const LANGS=['zh','en','ja','ko'];
+const I18N={
+  zh:{
+    brand:'月巴数织', catalog:'待解救月巴', rand:'随机', codex:'图鉴', randP:'随机解救', start:'开始解救', solved:'已解救', stars:'收集星数', totalTime:'累计用时',
+    replay:'重玩', resume:'继续',
+    all:'全部', unsolved:'未解', solvedF:'已解救',
+    common:'普通', uncommon:'常见', rare:'稀有', epic:'史诗', legend:'传说', event:'活动',
+    unsolvedShort:'未解救', collected:'已收',
+    puzzleNo:'解救 #{n}', size:'{n}×{n}', mistakes:'失误', hints:'提示', time:'用时',
+    fill:'涂黑', cross:'打叉', undo:'撤销', clear:'清空', hint:'提示', pause:'暂停',
+    easy:'降难度', easyOn:'降难度：开（自动划叉、实时判错）', easyOff:'降难度：关（自己划叉，填满才判错）',
+    fillWrong:'填满了，但和答案不一致，撤销几格检查一下',
+    paused:'已暂停', pauseSub:'计时已停止，棋盘会保留。', back:'← 名册', backCatalog:'返回名册',
+    win:'解救成功', author:'画作者', rank:'稀有度', resultTime:'用时', resultMist:'失误', resultHint:'提示',
+    next:'下一只待解救', close:'关闭',
+    hintNone:'当前没有可确定的格子，先试填一格', hintOut:'提示已用完', cleared:'已清空，可撤销',
+    resumed:'已恢复上次进度，计时已暂停，点「继续」接着玩',
+    ach:'本地成就', achSub:'共 {a}/{b} 项达成', achUnlocked:'已达成', achLocked:'未达成',
+    set:'设置', setSub:'只影响本页面，不改动主游戏存档', sound:'音效', auto:'自动划叉',
+    autoSub:'一整行/列满足后，自动把剩余未知格打叉（仅「降难度」开启时生效）', low:'低功耗', lowSub:'关闭震动、粒子与扫光',
+    data:'温室', dataSub:'{n} 个笼位 · {m} 只月巴', soundOn:'开', soundOff:'关', on:'开', off:'关',
+    best:'最佳 {t}', progress:'已解救 {a}/{b}',
+    pauseTip:'点此继续', stamp:'已获救', newBest:'刷新纪录', none:'—',
+    achGot:'成就达成', achFirst:'初次解救', achFirstD:'解救 1 只月巴',
+    achTen:'十只月巴', achTenD:'解救 10 只月巴', achThirty:'三十只月巴', achThirtyD:'解救 30 只月巴',
+    achAll:'温室清空', achAllD:'解救全部 94 只月巴',
+    achNoHint:'徒手', achNoHintD:'10 次解救 0 提示',
+    achNoMist:'一笔不错', achNoMistD:'15×15 0 失误解救',
+    achSpeed:'速救', achSpeedD:'10×10 题 2:00 内解救',
+    firstTip:'第一只月巴获救',
+    aliasLine:'与「{n}」关在同一间温室',
+    notice:'温室还在扩建：有新立绘的月巴会定期加入待解救名单。',
+    locked:'未解锁', lockedTip:'先在主游戏图鉴收集这只月巴，才能在温室里解救它。',
+    howto:'玩法说明', howtoSub:'数织（Nonogram）：从行列数字推理出笼中的月巴，把它解救出来。',
+    hw1:'每行/每列外侧的数字，表示该线连续涂黑格的长度与顺序。',
+    hw2:'例如「3 1」表示先涂 3 格、至少空 1 格、再涂 1 格。',
+    hw3:'点格涂黑，再点一次清空，第三次打叉。也可切到「打叉」模式；长按或右键直接标反。',
+    hw4:'一条线的数字全部满足时会变灰划线。开启「降难度」时，行/列不成立会标红并计一次失误；关闭后不实时判错，填满才检查。可随时撤销。',
+    hw5:'「提示」按行列逻辑填入必然格，每个笼位 3 次，卡住时使用。',
+    hw6:'所有行列线索满足即解救成功并揭晓立绘；只有图鉴已收集的月巴可以解救。',
+    selftestOk:'自检通过', selftestFail:'自检失败：{s}',
+    selftest:'自检'
+  },
+  en:{
+    brand:'Banny Nonogram', catalog:'Rescue List', rand:'Random', codex:'Codex', randP:'Random Rescue', start:'Start Rescue', solved:'Rescued', stars:'Stars', totalTime:'Total time',
+    replay:'Replay', resume:'Resume',
+    all:'All', unsolved:'Unsolved', solvedF:'Rescued',
+    common:'Common', uncommon:'Uncommon', rare:'Rare', epic:'Epic', legend:'Legend', event:'Event',
+    unsolvedShort:'Caged', collected:'Owned',
+    puzzleNo:'Rescue #{n}', size:'{n}×{n}', mistakes:'Mistakes', hints:'Hints', time:'Time',
+    fill:'Fill', cross:'Cross', undo:'Undo', clear:'Clear', hint:'Hint', pause:'Pause',
+    easy:'Easier', easyOn:'Easier: ON (auto-cross + live mistakes)', easyOff:'Easier: OFF (cross manually, errors only when full)',
+    fillWrong:'Board is full but not correct — undo a few cells and check again',
+    paused:'Paused', pauseSub:'The timer is stopped. Your board is kept.', back:'← List', backCatalog:'Back to list',
+    win:'Rescue Complete', author:'Artist', rank:'Rarity', resultTime:'Time', resultMist:'Mistakes', resultHint:'Hints',
+    next:'Next caged', close:'Close',
+    hintNone:'No certain cell right now. Try a guess first.', hintOut:'No hints left', cleared:'Cleared — undo available',
+    resumed:'Progress restored — timer paused. Tap Resume to continue.',
+    ach:'Local Achievements', achSub:'{a}/{b} unlocked', achUnlocked:'Unlocked', achLocked:'Locked',
+    set:'Settings', setSub:'Only affects this page; the main save is untouched', sound:'Sound', auto:'Auto-cross',
+    autoSub:'When a line is complete, cross the remaining unknown cells (only while Easier is on)', low:'Low power', lowSub:'Disable vibration, particles and sweeps',
+    data:'Greenhouse', dataSub:'{n} cages · {m} Bannies', soundOn:'On', soundOff:'Off', on:'On', off:'Off',
+    best:'Best {t}', progress:'Rescued {a}/{b}',
+    pauseTip:'Tap to resume', stamp:'RESCUED', newBest:'New record', none:'—',
+    achGot:'Achievement', achFirst:'First Rescue', achFirstD:'Rescue 1 Banny',
+    achTen:'Ten Rescues', achTenD:'Rescue 10 Bannies', achThirty:'Halfway', achThirtyD:'Rescue 30 Bannies',
+    achAll:'Greenhouse Cleared', achAllD:'Rescue all 94 Bannies',
+    achNoHint:'Bare Hands', achNoHintD:'Rescue 10 Bannies with 0 hints',
+    achNoMist:'Flawless', achNoMistD:'Rescue a 15×15 Banny with 0 mistakes',
+    achSpeed:'Quick Rescue', achSpeedD:'Rescue a 10×10 Banny within 2:00',
+    firstTip:'First Banny rescued',
+    aliasLine:'Shares a greenhouse with “{n}”',
+    notice:'The greenhouse keeps growing — Bannies with new artwork join the rescue list regularly.',
+    locked:'Locked', lockedTip:'Collect this Banny in the main game catalog to rescue it.',
+    howto:'How to Play', howtoSub:'Nonogram: read the row and column numbers to free the Banny inside the cage.',
+    hw1:'The numbers beside each row and column give the lengths of consecutive filled blocks, in order.',
+    hw2:'For example, “3 1” means 3 filled, at least 1 empty, then 1 filled.',
+    hw3:'Tap a cell to fill it, tap again to clear, and a third tap marks an ×. You can also switch to Cross mode; long-press or right-click marks the opposite.',
+    hw4:'A line greys out when its clues are satisfied. With "Easier" on, an impossible line turns red and counts as a mistake; with it off, errors are only checked when the board is full. Undo any time.',
+    hw5:'Hint fills logically certain cells, 3 per rescue. Use it when stuck.',
+    hw6:'Satisfy every row and column clue to free the Banny and reveal the artwork. Only collected Bannies can be rescued.',
+    selftestOk:'Self-test passed', selftestFail:'Self-test failed: {s}',
+    selftest:'Self-test'
+  },
+  ja:{
+    brand:'バニー数織', catalog:'救助リスト', rand:'ランダム', codex:'図鑑', randP:'ランダム救助', start:'救助開始', solved:'救助済み', stars:'スター', totalTime:'合計時間',
+    replay:'もう一度', resume:'再開',
+    all:'すべて', unsolved:'未解', solvedF:'救助済み',
+    common:'普通', uncommon:'よくある', rare:'レア', epic:'エピック', legend:'伝説', event:'イベント',
+    unsolvedShort:'未救助', collected:'収集済',
+    puzzleNo:'救助 #{n}', size:'{n}×{n}', mistakes:'ミス', hints:'ヒント', time:'時間',
+    fill:'塗る', cross:'×', undo:'戻す', clear:'消す', hint:'ヒント', pause:'一時停止',
+    easy:'易しく', easyOn:'易しく：オン（自動×・即時ミス判定）', easyOff:'易しく：オフ（×は手動、満杯時のみ判定）',
+    fillWrong:'盤面は埋まりましたが正解と違います。何マスか戻して確認してください',
+    paused:'一時停止中', pauseSub:'タイマーは停止しました。盤面は保持されます。', back:'← リスト', backCatalog:'リストへ',
+    win:'救助成功', author:'絵師', rank:'レア度', resultTime:'時間', resultMist:'ミス', resultHint:'ヒント',
+    next:'次の未救助', close:'閉じる',
+    hintNone:'確定できるマスがありません。まず一マス試してください', hintOut:'ヒントを使い切りました', cleared:'消去しました（戻せます）',
+    resumed:'前回の続きを復元しました（タイマー停止中）。「再開」で続けられます',
+    ach:'ローカル実績', achSub:'{a}/{b} 達成', achUnlocked:'達成', achLocked:'未達成',
+    set:'設定', setSub:'このページのみに適用。メインセーブは変更しません', sound:'効果音', auto:'自動×',
+    autoSub:'行/列が完成したら残りの未知マスに自動で×を付けます（「易しく」オン時のみ）', low:'省電力', lowSub:'振動・粒子・光の掃引を停止',
+    data:'温室', dataSub:'{n} の檻 · {m} 体', soundOn:'オン', soundOff:'オフ', on:'オン', off:'オフ',
+    best:'最速 {t}', progress:'{a}/{b} 救助',
+    pauseTip:'タップで再開', stamp:'救助済み', newBest:'記録更新', none:'—',
+    achGot:'実績達成', achFirst:'最初の救助', achFirstD:'1 体救助',
+    achTen:'十の救助', achTenD:'10 体救助', achThirty:'三十の救助', achThirtyD:'30 体救助',
+    achAll:'温室解放', achAllD:'94 体すべて救助',
+    achNoHint:'素手', achNoHintD:'ヒント 0 で 10 体救助',
+    achNoMist:'ミスなし', achNoMistD:'15×15 をミス 0 で救助',
+    achSpeed:'速救助', achSpeedD:'10×10 を 2:00 以内に救助',
+    firstTip:'最初のバニーを救助',
+    aliasLine:'「{n}」と同じ温室にいます',
+    notice:'温室は拡充中です。新しい立ち絵のバニーが定期的に救助リストへ追加されます。',
+    locked:'未解放', lockedTip:'メインゲームの図鑑でこのバニーを集めると救助できます。',
+    howto:'遊び方', howtoSub:'数織（ノノグラム）：行と列の数字から檻の中のバニーを推理して助け出します。',
+    hw1:'各行・各列の数字は、連続して塗るマスの長さと順番を表します。',
+    hw2:'例：「3 1」は 3 マス塗る、1 マス以上空ける、1 マス塗る。',
+    hw3:'マスをタップで塗る。もう一度タップで消去、三度目のタップで×。×モードも使えます。長押し／右クリックで逆の印。',
+    hw4:'手がかりを満たすと数字が灰色になり取り消し線。「易しく」オンのとき成立しない線は赤くなりミス＋1、オフのときは盤面が埋まるまで判定しません。いつでも戻せます。',
+    hw5:'ヒントは論理的に確定するマスを埋めます（1 回の救助につき 3 回）。詰まったら使いましょう。',
+    hw6:'すべての行と列の手がかりを満たすと救助成功。立ち絵が現れます。救助できるのは図鑑で収集済みのバニーだけです。',
+    selftestOk:'セルフテスト合格', selftestFail:'セルフテスト失敗：{s}',
+    selftest:'セルフテスト'
+  },
+  ko:{
+    brand:'배니 노노그램', catalog:'구출 목록', rand:'랜덤', codex:'도감', randP:'랜덤 구출', start:'구출 시작', solved:'구출 완료', stars:'별', totalTime:'총 시간',
+    replay:'다시', resume:'계속',
+    all:'전체', unsolved:'미해결', solvedF:'구출 완료',
+    common:'보통', uncommon:'흔함', rare:'희귀', epic:'에픽', legend:'전설', event:'이벤트',
+    unsolvedShort:'미구출', collected:'수집됨',
+    puzzleNo:'구출 #{n}', size:'{n}×{n}', mistakes:'실수', hints:'힌트', time:'시간',
+    fill:'칠하기', cross:'×', undo:'되돌리기', clear:'지우기', hint:'힌트', pause:'일시정지',
+    easy:'쉬움', easyOn:'쉬움: 켜짐 (자동 ×, 실시간 오류 판정)', easyOff:'쉬움: 꺼짐 (× 수동, 다 채워야 판정)',
+    fillWrong:'다 채웠지만 정답과 다릅니다. 몇 칸 되돌리고 확인하세요',
+    paused:'일시정지', pauseSub:'타이머가 멈췄습니다. 판은 유지됩니다.', back:'← 목록', backCatalog:'목록으로',
+    win:'구출 성공', author:'작가', rank:'희귀도', resultTime:'시간', resultMist:'실수', resultHint:'힌트',
+    next:'다음 미구출', close:'닫기',
+    hintNone:'확정할 수 있는 칸이 없습니다. 먼저 한 칸 시도하세요', hintOut:'힌트를 모두 썼습니다', cleared:'지웠습니다 — 되돌릴 수 있어요',
+    resumed:'이전 진행 상황을 복원했습니다 (타이머 정지). 「계속」을 눌러 이어서 하세요',
+    ach:'로컬 업적', achSub:'{a}/{b} 달성', achUnlocked:'달성', achLocked:'미달성',
+    set:'설정', setSub:'이 페이지만 적용되며 메인 저장은 건드리지 않습니다', sound:'효과음', auto:'자동 ×',
+    autoSub:'줄/열이 완성되면 남은 미확정 칸에 자동으로 ×를 표시 (쉬움 켜짐일 때만)', low:'저전력', lowSub:'진동·입자·빛 효과 끄기',
+    data:'온실', dataSub:'{n} 우리 · {m} 마리', soundOn:'켬', soundOff:'끔', on:'켬', off:'끔',
+    best:'최고 {t}', progress:'{a}/{b} 구출',
+    pauseTip:'탭하여 계속', stamp:'구출 완료', newBest:'기록 갱신', none:'—',
+    achGot:'업적 달성', achFirst:'첫 구출', achFirstD:'1마리 구출',
+    achTen:'열 번 구출', achTenD:'10마리 구출', achThirty:'서른 마리', achThirtyD:'30마리 구출',
+    achAll:'온실 해방', achAllD:'94마리 모두 구출',
+    achNoHint:'맨손', achNoHintD:'힌트 0으로 10마리 구출',
+    achNoMist:'무실수', achNoMistD:'15×15를 실수 0으로 구출',
+    achSpeed:'속구출', achSpeedD:'10×10을 2:00 안에 구출',
+    firstTip:'첫 배니 구출',
+    aliasLine:'「{n}」와 같은 온실에 있습니다',
+    notice:'온실은 계속 확장 중입니다. 새 일러스트가 추가된 배니가 정기적으로 구출 목록에 등록됩니다.',
+    locked:'잠김', lockedTip:'메인 게임 도감에서 이 배니를 수집하면 구출할 수 있습니다.',
+    howto:'플레이 방법', howtoSub:'노노그램: 행과 열의 숫자로 우리 안의 배니를 추리해 구출합니다.',
+    hw1:'각 행/열의 숫자는 연속으로 칠하는 칸의 길이와 순서를 나타냅니다.',
+    hw2:'예: 「3 1」은 3칸 칠하고, 1칸 이상 띄운 뒤 1칸 칠한다는 뜻입니다.',
+    hw3:'칸을 탭하면 칠하고, 한 번 더 탭하면 지우며, 세 번째 탭에 ×가 표시됩니다. × 모드도 사용할 수 있고, 길게 누르거나 우클릭하면 반대로 표시됩니다.',
+    hw4:'단서가 모두 만족되면 숫자가 회색으로 바뀌고 취소선이 그어집니다. 「쉬움」이 켜지면 불가능한 줄이 빨갛게 변하고 실수 +1, 꺼지면 판이 다 채워질 때만 판정합니다. 언제든 되돌릴 수 있습니다.',
+    hw5:'힌트는 논리적으로 확정된 칸을 채웁니다(구출당 3회). 막히면 사용하세요.',
+    hw6:'모든 행과 열의 단서를 만족하면 구출 성공, 일러스트가 나타납니다. 구출할 수 있는 것은 도감에서 수집한 배니뿐입니다.',
+    selftestOk:'셀프 테스트 통과', selftestFail:'셀프 테스트 실패: {s}',
+    selftest:'셀프 테스트'
+  }
+};
+const QS=new URLSearchParams(location.search);
+function detectLang(){
+  const q=(QS.get('lang')||'').toLowerCase();
+  if(LANGS.indexOf(q)>=0) return q;
+  try{
+    const raw=localStorage.getItem('idle-yueba-save-v2');
+    if(raw){
+      const s=JSON.parse(raw);
+      if(s&&LANGS.indexOf(s.lang)>=0) return s.lang;
+    }
+  }catch(e){}
+  const nav=(navigator.language||'').toLowerCase();
+  if(nav.indexOf('ja')===0) return 'ja';
+  if(nav.indexOf('ko')===0) return 'ko';
+  if(nav.indexOf('zh')===0) return 'zh';
+  return 'en';
+}
+const LANG=detectLang();
+document.documentElement.lang=LANG==='zh'?'zh-CN':LANG;
+function t(k,v){
+  const d=I18N[LANG]||I18N.zh;
+  let s=(d[k]!=null?d[k]:I18N.zh[k]);
+  if(s==null) return k;
+  if(v) s=s.replace(/\{(\w+)\}/g,function(m,kk){ return v[kk]!=null?v[kk]:m; });
+  return s;
+}
+const RAR=[null,t('common'),t('uncommon'),t('rare'),t('epic'),t('legend'),t('event')];
+const RCOL=['','var(--r1)','var(--r2)','var(--r3)','var(--r4)','var(--r5)','var(--r6)'];
+function nameOf(p){ if(LANG==='zh') return p.n; const nm=p.nm||{}; return nm[LANG]||p.n; }
+function nameOfAlias(a){ if(LANG==='zh') return a.n; const nm=a.nm||{}; return nm[LANG]||a.n; }
+
+/* ================= 主存档只读 ================= */
+const MAIN_KEY='idle-yueba-save-v2';
+let MAIN=null;
+try{ MAIN=JSON.parse(localStorage.getItem(MAIN_KEY)||'null'); }catch(e){ MAIN=null; }
+function isCollected(id){
+  if(!MAIN) return false;
+  const all=[MAIN.collection,MAIN.collection2,MAIN.collection3];
+  for(let i=0;i<all.length;i++){
+    const c=all[i]&&all[i][id];
+    if(c&&((typeof c==='number'&&c>0)||(c.count||0)>0)) return true;
+  }
+  return false;
+}
+function puzzleUnlocked(p){
+  if(isCollected(p.id)) return true;
+  const al=p.alias||[];
+  for(let i=0;i<al.length;i++) if(isCollected(al[i].id)) return true;
+  return false;
+}
+
+/* ================= 本地存档 ================= */
+const SKEY='yueba-nonogram-v1';
+function defSave(){
+  return {v:1,solved:{},plays:0,totalMs:0,lastId:'',
+    ach:{},muted:!!(MAIN&&MAIN.muted),autoCross:true,lowPower:!!(MAIN&&MAIN.lowPower),easy:false};
+}
+let S=defSave();
+(function loadSave(){
+  try{
+    const raw=localStorage.getItem(SKEY);
+    if(!raw) return;
+    const d=JSON.parse(raw);
+    if(!d||typeof d!=='object') return;
+    S.v=1;
+    S.solved=(d.solved&&typeof d.solved==='object')?d.solved:{};
+    S.plays=parseInt(d.plays,10)||0;
+    S.totalMs=parseInt(d.totalMs,10)||0;
+    S.lastId=typeof d.lastId==='string'?d.lastId:'';
+    S.ach=(d.ach&&typeof d.ach==='object')?d.ach:{};
+    if(typeof d.muted==='boolean') S.muted=d.muted;
+    if(typeof d.autoCross==='boolean') S.autoCross=d.autoCross;
+    if(typeof d.lowPower==='boolean') S.lowPower=d.lowPower;
+    if(typeof d.easy==='boolean') S.easy=d.easy;
+  }catch(e){ S=defSave(); }
+})();
+function saveGame(){
+  try{
+    const out={v:1,solved:S.solved,plays:S.plays,totalMs:S.totalMs,lastId:S.lastId,
+      ach:S.ach,muted:S.muted,autoCross:S.autoCross,lowPower:S.lowPower,easy:!!S.easy};
+    localStorage.setItem(SKEY,JSON.stringify(out));
+  }catch(e){}
+}
+
+/* ================= 对局续存：页面刷新 / 版本更新不丢进度 =================
+   进行中的棋盘单独存一个键，任何原因导致重新载入（首页版本检查刷新、手动刷新、
+   切后台被回收）都能原样恢复；通关或主动返回名册时清除。 */
+const LIVE_KEY='yueba-nonogram-live-v1';
+function packCells(arr){
+  let s='';
+  for(let i=0;i<arr.length;i++) s+=arr[i]===1?'2':(arr[i]===0?'1':'0');
+  return s;
+}
+function unpackCells(str,n,fill){
+  const a=new (fill===1?Uint8Array:Int8Array)(n*n);
+  for(let i=0;i<n*n;i++){
+    const c=str.charAt(i);
+    if(fill===1) a[i]=c==='1'?1:0;
+    else a[i]=c==='2'?1:(c==='1'?0:-1);
+  }
+  return a;
+}
+function saveLive(){
+  if(!G||G.done) return;
+  try{
+    const touched=G.base>1000||Array.prototype.some.call(G.marks,function(v){ return v!==-1; });
+    if(!touched){ clearLive(); return; }
+    localStorage.setItem(LIVE_KEY,JSON.stringify({
+      v:1,id:G.p.id,ms:Math.round(elapsedNow()),m:G.mistakes,h:G.hintsLeft,mode:G.mode,
+      marks:packCells(G.marks),seq:packCells(G.seq),hint:packCells(G.hintM)
+    }));
+  }catch(e){}
+}
+function clearLive(){
+  try{ localStorage.removeItem(LIVE_KEY); }catch(e){}
+}
+function restoreLive(){
+  let d=null;
+  try{ d=JSON.parse(localStorage.getItem(LIVE_KEY)||'null'); }catch(e){ d=null; }
+  if(!d||d.v!==1) return false;
+  const p=NP.find(function(x){ return x.id===d.id; });
+  const n=p?p.sz:0;
+  if(!p||typeof d.marks!=='string'||d.marks.length!==n*n){ clearLive(); return false; }
+  startPuzzle(p);
+  G.marks=unpackCells(d.marks,n,0);
+  G.seq=unpackCells(d.seq||'',n,0);
+  G.hintM=unpackCells(d.hint||'',n,1);
+  if(G.marks.length!==n*n||G.seq.length!==n*n||G.hintM.length!==n*n){ clearLive(); backToCatalog(); return false; }
+  G.base=Math.max(0,parseInt(d.ms,10)||0);
+  G.t0=0; G.running=false;
+  G.mistakes=Math.max(0,parseInt(d.m,10)||0);
+  G.hintsLeft=Math.max(0,Math.min(3,parseInt(d.h,10)||0));
+  G.mode=d.mode===0?0:1;
+  setMode(G.mode,true);
+  renderBoard();
+  saveLive();
+  pauseGame();
+  toast(t('resumed'),2400);
+  return true;
+}
+
+/* ================= 日期 ================= */
+function pad2(n){ return (n<10?'0':'')+n; }
+function dayKey(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+function todayKey(){ return dayKey(new Date()); }
+
+/* ================= 题目预处理 ================= */
+const B36='0123456789abcdefghijklmnopqrstuvwxyz';
+function runsOf(arr){
+  const out=[]; let n=0;
+  for(let i=0;i<arr.length;i++){ if(arr[i]===1){n++;} else if(n){out.push(n);n=0;} }
+  if(n) out.push(n);
+  return out;
+}
+function sameClue(a,b){
+  if(a.length!==b.length) return false;
+  for(let i=0;i<a.length;i++) if(a[i]!==b[i]) return false;
+  return true;
+}
+function rowStates(p,marks,r){
+  const n=p.sz, a=new Array(n);
+  for(let c=0;c<n;c++) a[c]=marks[r*n+c];
+  return a;
+}
+function colStates(p,marks,c){
+  const n=p.sz, a=new Array(n);
+  for(let r=0;r<n;r++) a[r]=marks[r*n+c];
+  return a;
+}
+function clueOfStates(a){ const b=new Array(a.length); for(let i=0;i<a.length;i++) b[i]=a[i]===1?1:0; return runsOf(b); }
+function buildClues(p){
+  const n=p.sz, rows=[], cols=[];
+  for(let r=0;r<n;r++){
+    const b=new Array(n);
+    for(let c=0;c<n;c++) b[c]=p.bits.charCodeAt(r*n+c)===49?1:0;
+    rows.push(runsOf(b));
+  }
+  for(let c=0;c<n;c++){
+    const b=new Array(n);
+    for(let r=0;r<n;r++) b[r]=p.bits.charCodeAt(r*n+c)===49?1:0;
+    cols.push(runsOf(b));
+  }
+  p._rows=rows; p._cols=cols;
+  p._maxR=Math.max.apply(null,rows.map(function(x){return x.length;}).concat([1]));
+  p._maxC=Math.max.apply(null,cols.map(function(x){return x.length;}).concat([1]));
+}
+const PATC=new Map();
+function patterns(n,clue){
+  clue=clue.filter(function(x){return x>0;});
+  const key=n+'|'+clue.join(',');
+  if(PATC.has(key)) return PATC.get(key);
+  const L=clue.length;
+  if(!L){ const a=[0]; PATC.set(key,a); return a; }
+  let total=L-1;
+  for(let i=0;i<L;i++) total+=clue[i];
+  if(total>n){ const a=[]; PATC.set(key,a); return a; }
+  const out=[];
+  (function rec(i,pos,bits){
+    if(i===L){ out.push(bits); return; }
+    const seg=clue[i];
+    let rem=0;
+    for(let j=i+1;j<L;j++) rem+=clue[j];
+    rem+=Math.max(0,L-i-2);
+    const maxstart=n-rem-seg-(i<L-1?1:0);
+    for(let st=pos;st<=maxstart;st++){
+      rec(i+1,st+seg+1,bits|(((1<<seg)-1)<<st));
+    }
+  })(0,0,0);
+  PATC.set(key,out);
+  return out;
+}
+function stateMasks(states){
+  let fill=0,cross=0;
+  for(let i=0;i<states.length;i++){
+    if(states[i]===1) fill|=1<<i;
+    else if(states[i]===0) cross|=1<<i;
+  }
+  return [fill,cross];
+}
+function compatible(pat,fill,cross){ return (pat&cross)===0 && (fill&~pat)===0; }
+function lineCands(p,kind,idx,marks){
+  const n=p.sz;
+  const states=kind==='r'?rowStates(p,marks,idx):colStates(p,marks,idx);
+  const clue=kind==='r'?p._rows[idx]:p._cols[idx];
+  const pats=patterns(n,clue);
+  let f=0,x=0;
+  if(kind==='r'){
+    for(let c=0;c<n;c++){ const v=states[c]; if(v===1) f|=1<<c; else if(v===0) x|=1<<c; }
+  }else{
+    for(let r=0;r<n;r++){ const v=states[r]; if(v===1) f|=1<<r; else if(v===0) x|=1<<r; }
+  }
+  const out=[];
+  for(let i=0;i<pats.length;i++) if(compatible(pats[i],f,x)) out.push(pats[i]);
+  return out;
+}
+const allPatCache=new Map();
+function allPatterns(p,kind,idx){
+  const key=p.id+kind+idx;
+  if(allPatCache.has(key)) return allPatCache.get(key);
+  const n=p.sz, clue=kind==='r'?p._rows[idx]:p._cols[idx];
+  const a=patterns(n,clue);
+  allPatCache.set(key,a);
+  return a;
+}
+
+/* ================= 音效 ================= */
+let AC=null;
+function audio(){
+  if(S.muted) return null;
+  try{
+    if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended') AC.resume();
+    return AC;
+  }catch(e){ return null; }
+}
+function tone(freq,dur,type,vol,delay){
+  const ac=audio(); if(!ac) return;
+  try{
+    const o=ac.createOscillator(), g=ac.createGain();
+    const t0=ac.currentTime+(delay||0);
+    o.type=type||'sine'; o.frequency.setValueAtTime(freq,t0);
+    g.gain.setValueAtTime(0,t0);
+    g.gain.linearRampToValueAtTime(vol||.05,t0+.008);
+    g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+    o.connect(g); g.connect(ac.destination);
+    o.start(t0); o.stop(t0+dur+.02);
+  }catch(e){}
+}
+const SFX={
+  fill:function(){ tone(620,.05,'sine',.045); },
+  cross:function(){ tone(380,.04,'triangle',.035); },
+  line:function(){ tone(880,.08,'sine',.06); tone(1046,.09,'sine',.045,.05); },
+  err:function(){ tone(150,.10,'sawtooth',.055); tone(110,.12,'sine',.045,.05); },
+  win:function(){ [523,659,784,1046].forEach(function(f,i){ tone(f,.14,'triangle',.09,i*.08); }); },
+  reveal:function(){ [1046,1318,1568,2093].forEach(function(f,i){ tone(f,.16,'sine',.06,i*.07); }); },
+  click:function(){ tone(720,.04,'square',.035); }
+};
+function buzz(ms){ if(S.lowPower) return; try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){} }
+
+/* ================= 工具 ================= */
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function fmtTime(ms){
+  if(!ms||ms<0) ms=0;
+  const s=Math.floor(ms/1000), m=Math.floor(s/60);
+  return m+':'+pad2(s%60);
+}
+function toast(msg,ms){
+  const el=$('toast'); if(!el) return;
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t=setTimeout(function(){ el.classList.remove('show'); }, ms||1700);
+}
+
+/* ================= 状态 ================= */
+let G=null;
+let CURSOR=0;
+let filter='all';
+let tab='random';
+let heroPid=null;
+const STD={10:180000,12:360000,15:600000};
+function starsFor(p,ms,mist,hint){
+  const okT=ms<=STD[p.sz], okM=mist===0, okH=hint===0;
+  const k=(okT?1:0)+(okM?1:0)+(okH?1:0);
+  return Math.max(1,k);
+}
+function puzzlesSolved(){ return Object.keys(S.solved).length; }
+function totalStars(){
+  let n=0; for(const k in S.solved) n+=(S.solved[k].s||0);
+  return n;
+}
+function stdTimeText(ms){ return fmtTime(ms); }
+
+/* ================= 目录 ================= */
+const ENTRIES=[];
+NP.forEach(function(p){
+  ENTRIES.push({id:p.id,n:p.n,nm:p.nm,p:p,alias:null});
+  (p.alias||[]).forEach(function(a){ ENTRIES.push({id:a.id,n:a.n,nm:a.nm,p:p,alias:a}); });
+});
+
+function renderStats(){
+  const n=puzzlesSolved();
+  $('stSolved').innerHTML=n+'<em>/'+NP.length+'</em>';
+  $('stStars').innerHTML=totalStars()+'<em>★</em>';
+  $('stTime').textContent=fmtTime(S.totalMs);
+  $('topstat').innerHTML=t('progress',{a:n,b:NP.length})+'<br><b>'+totalStars()+' ★</b>';
+  $('setDataV').textContent=t('dataSub',{n:NP.length,m:ENTRIES.length});
+}
+const FILTERS=[
+  {k:'all',l:'all'},{k:'unsolved',l:'unsolved'},{k:'solved',l:'solved'}
+];
+function renderChips(){
+  $('chips').innerHTML=FILTERS.map(function(f){
+    return '<button class="chip'+(filter===f.k?' on':'')+'" data-filter="'+f.k+'">'+esc(t(f.l))+'</button>';
+  }).join('');
+}
+function starHTML(s){
+  let out='';
+  for(let i=1;i<=3;i++) out+='<span class="'+(i<=s?'':'d')+'">★</span>';
+  return out;
+}
+function pixelCanvas(p,cls){
+  const n=p.sz;
+  return '<canvas class="'+(cls||'')+'" width="'+n+'" height="'+n+'" data-pix="'+p.id+'"></canvas>';
+}
+function lightInk(hex){
+  const m=/^#([0-9a-fA-F]{6})$/.exec(hex||'');
+  if(!m) return hex;
+  const r=parseInt(m[1].slice(0,2),16), g=parseInt(m[1].slice(2,4),16), b=parseInt(m[1].slice(4,6),16);
+  const lum=(0.299*r+0.587*g+0.114*b)/255;
+  if(lum<=0.72) return hex;
+  const k=0.72/lum;
+  return 'rgb('+Math.round(r*k)+','+Math.round(g*k)+','+Math.round(b*k)+')';
+}
+function drawPix(cv,p){
+  const n=p.sz, ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,n,n);
+  for(let i=0;i<n*n;i++){
+    if(p.bits.charCodeAt(i)!==49) continue;
+    const ci=B36.indexOf(p.col.charAt(i));
+    ctx.fillStyle=lightInk(p.pal[ci]||'#34384c');
+    ctx.fillRect(i%n,Math.floor(i/n),1,1);
+  }
+}
+function renderCatalog(){
+  const wrap=$('catalog');
+  let html='';
+  let lastR=-1;
+  let open=false;
+  const list=NP.slice().sort(function(a,b){ return a.r-b.r || (a.id<b.id?-1:a.id>b.id?1:0); });
+  const vis=list.filter(function(p){
+    const sv=S.solved[p.id];
+    if(filter==='unsolved'&&sv) return false;
+    if(filter==='solved'&&!sv) return false;
+    return true;
+  });
+  vis.forEach(function(p){
+    const sv=S.solved[p.id];
+    const locked=!puzzleUnlocked(p);
+    if(p.r!==lastR){
+      if(open) html+='</div></div>';
+      lastR=p.r; open=true;
+      html+='<div class="rgroup"><div class="rhead"><span class="rdot" style="--c:'+(RCOL[p.r]||'#9aa0b8')+'"></span><b>'+esc(RAR[p.r]||'')+'</b><span>R'+p.r+'</span></div><div class="cards">';
+    }
+    let art;
+    const cage='<i class="sil" aria-hidden="true"></i><div class="bars" aria-hidden="true"></div>';
+    if(locked){
+      art=cage+'<span class="wq">🔒</span>';
+    }else if(sv){
+      art='<img loading="lazy" decoding="async" src="'+esc(p.img)+'">';
+    }else{
+      art=cage+'<span class="wq">?</span>';
+    }
+    const owned=isCollected(p.id)||(p.alias||[]).some(function(a){ return isCollected(a.id); });
+    html+='<button class="card'+(locked?' locked':'')+'" data-pid="'+esc(p.id)+'"'
+      +' aria-label="'+esc(t('puzzleNo',{n:NP.indexOf(p)+1}))+'"'+(locked?' data-lock="1"':'')+'>'
+      +'<div class="cart">'+art
+      +(locked||!owned?'':'<span class="cdot"></span>')
+      +'</div></button>';
+  });
+  if(open) html+='</div></div>';
+  if(!vis.length) html='<div style="text-align:center;color:var(--mut);font-size:12px;padding:34px 0">'+esc(t('none'))+'</div>';
+  wrap.innerHTML=html;
+  // 懒绘制缺图回退
+  wrap.querySelectorAll('canvas[data-pix]').forEach(function(cv){
+    const p=NP.find(function(x){ return x.id===cv.getAttribute('data-pix'); });
+    if(p) drawPix(cv,p);
+  });
+  wrap.querySelectorAll('img').forEach(function(im){
+    im.addEventListener('error',function(){
+      const card=im.closest('.card'); if(!card) return;
+      const p=NP.find(function(x){ return x.id===card.getAttribute('data-pid'); });
+      if(!p) return;
+      const cv=document.createElement('canvas'); cv.className=''; cv.width=p.sz; cv.height=p.sz;
+      cv.style.width='100%'; cv.style.height='100%'; cv.style.objectFit='contain'; cv.style.padding='14%'; cv.style.imageRendering='pixelated';
+      drawPix(cv,p); im.replaceWith(cv);
+    },{once:true});
+  });
+}
+function unlockedPuzzles(){
+  return NP.filter(function(p){ return puzzleUnlocked(p); });
+}
+function pickHero(){
+  const un=unlockedPuzzles();
+  if(!un.length) return null;
+  const fresh=un.filter(function(p){ return !S.solved[p.id]; });
+  const pool=fresh.length?fresh:un;
+  let pick=pool[Math.floor(Math.random()*pool.length)];
+  if(pool.length>1&&heroPid&&pick.id===heroPid){
+    pick=pool[(pool.indexOf(pick)+1)%pool.length];
+  }
+  return pick;
+}
+function renderHero(){
+  const wrap=$('hero'); if(!wrap) return;
+  let p=null;
+  if(heroPid){
+    p=NP.find(function(x){ return x.id===heroPid; });
+    if(p&&(!puzzleUnlocked(p)||S.solved[p.id])) p=null;
+  }
+  if(!p){ p=pickHero(); heroPid=p?p.id:null; }
+  if(!p){
+    wrap.innerHTML='<div class="herotag">'+esc(t('randP'))+'</div>'
+      +'<div class="herometa">'+esc(t('none'))+'</div>';
+    return;
+  }
+  const sv=S.solved[p.id];
+  const art=sv
+    ? '<img loading="lazy" decoding="async" src="'+esc(p.img)+'">'
+    : '<i class="sil" aria-hidden="true"></i><div class="bars" aria-hidden="true"></div><span class="wq">?</span>';
+  wrap.innerHTML='<div class="heroart">'+art+'</div>'
+    +'<div class="herotag">'+esc(t('randP'))+'</div>'
+    +'<div class="herometa">R'+p.r+' · '+p.sz+'×'+p.sz+'</div>'
+    +'<button class="herobtn" data-pid="'+esc(p.id)+'">'+esc(t('start'))+'</button>';
+  wrap.querySelectorAll('img').forEach(function(im){
+    im.addEventListener('error',function(){
+      const cv=document.createElement('canvas'); cv.width=p.sz; cv.height=p.sz;
+      cv.style.width='100%'; cv.style.height='100%'; cv.style.padding='9%'; cv.style.imageRendering='pixelated';
+      drawPix(cv,p); im.replaceWith(cv);
+    },{once:true});
+  });
+}
+function setTab(k){
+  tab=k;
+  $('tabRandom').classList.toggle('on',k==='random');
+  $('tabCodex').classList.toggle('on',k==='codex');
+  $('paneRandom').classList.toggle('off',k!=='random');
+  $('paneCodex').classList.toggle('off',k!=='codex');
+}
+function refreshCatalog(){
+  renderStats(); renderChips(); renderCatalog(); renderHero();
+}
+
+/* ================= 棋盘构建 ================= */
+function buildBoard(p){
+  const n=p.sz;
+  const board=$('board');
+  board.style.setProperty('--n',n);
+  // 线索 DOM
+  const top=$('cluesTop'), left=$('cluesLeft');
+  let th='';
+  for(let c=0;c<n;c++){
+    th+='<div class="ctop" data-line="c'+c+'">'+p._cols[c].map(function(v){ return '<span class="num">'+v+'</span>'; }).join('')+'</div>';
+  }
+  top.innerHTML=th;
+  let lh='';
+  for(let r=0;r<n;r++){
+    lh+='<div class="cleft" data-line="r'+r+'">'+p._rows[r].map(function(v){ return '<span class="num">'+v+'</span>'; }).join('')+'</div>';
+  }
+  left.innerHTML=lh;
+  // 格
+  let gh='';
+  for(let r=0;r<n;r++){
+    for(let c=0;c<n;c++){
+      const i=r*n+c;
+      const cls='cell'+(c%5===4?' br':'')+(r%5===4?' bb':'');
+      gh+='<div class="'+cls+'" data-i="'+i+'"></div>';
+    }
+  }
+  $('grid').innerHTML=gh;
+  $('grid').classList.remove('win');
+  G.cellEls=[];
+  $('grid').querySelectorAll('.cell').forEach(function(el){ G.cellEls[+el.getAttribute('data-i')]=el; });
+  G.rowEls=[]; G.colEls=[];
+  left.querySelectorAll('.cleft').forEach(function(el,idx){ G.rowEls[idx]=el; });
+  top.querySelectorAll('.ctop').forEach(function(el,idx){ G.colEls[idx]=el; });
+  layoutBoard();
+  renderBoard();
+}
+function layoutBoard(){
+  if(!G) return;
+  const n=G.p.sz;
+  const vw=Math.min(window.innerWidth,860);
+  const vh=window.innerHeight;
+  const availW=vw-20;
+  const availH=vh-190;
+  const maxR=G.p._maxR, maxC=G.p._maxC;
+  const wUnit=n+maxR*0.62+0.4;
+  const hUnit=n+maxC*0.78+0.6;
+  let cell=Math.floor(Math.min(availW/wUnit,availH/hUnit,28));
+  cell=Math.max(11,Math.min(30,cell));
+  const leftw=Math.ceil(maxR*cell*0.62+6);
+  const toph=Math.ceil(maxC*cell*0.74+4);
+  const board=$('board');
+  board.style.setProperty('--cell',cell+'px');
+  board.style.setProperty('--leftw',leftw+'px');
+  board.style.setProperty('--toph',toph+'px');
+  board.style.setProperty('--cluefs',Math.max(7,Math.round(cell*0.52))+'px');
+}
+function renderBoard(){
+  if(!G) return;
+  const p=G.p,n=p.sz;
+  for(let i=0;i<n*n;i++){
+    const el=G.cellEls[i]; if(!el) continue;
+    const v=G.marks[i];
+    applyCell(el,i,v,false);
+  }
+  updateLines(true);
+  updateHUD();
+}
+function applyCell(el,i,v,anim){
+  el.classList.toggle('fill',v===1);
+  el.classList.toggle('cross',v===0);
+  el.classList.toggle('hm',!!(G.hintM[i]&&v===1));
+  if(anim){ el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+}
+function updateHUD(){
+  if(!G) return;
+  $('pTime').textContent=fmtTime(elapsedNow());
+  $('pMist').innerHTML=t('mistakes')+' <b>'+G.mistakes+'</b>';
+  $('pHint').innerHTML=t('hints')+' <b>'+G.hintsLeft+'</b>';
+  $('pMist').classList.toggle('warn',G.mistakes>0);
+  $('btnHint').innerHTML='<b>✦</b><span>'+esc(t('hint'))+'</span>';
+}
+
+/* ================= 线索状态 ================= */
+function updateLines(silent){
+  if(!G) return;
+  const p=G.p,n=p.sz,easy=!!S.easy;
+  const newBad=new Set();
+  let allSolved=true;
+  for(let r=0;r<n;r++){
+    const info=lineInfo('r',r);
+    if(!info.solved) allSolved=false;
+    if(!info.ok) newBad.add('r'+r);
+    paintClue(G.rowEls[r],info,easy);
+  }
+  for(let c=0;c<n;c++){
+    const info=lineInfo('c',c);
+    if(!info.solved) allSolved=false;
+    if(!info.ok) newBad.add('c'+c);
+    paintClue(G.colEls[c],info,easy);
+  }
+  if(easy){
+    // 失误：从未解状态进入无解状态时 +1
+    newBad.forEach(function(k){
+      if(!G.bad.has(k)){
+        G.bad.add(k);
+        if(!silent){ G.mistakes++; SFX.err(); buzz(18); shakeBoard(); }
+        if(!silent) updateHUD();
+      }
+    });
+    G.bad.forEach(function(k){ if(!newBad.has(k)) G.bad.delete(k); });
+  }else{
+    // 非降难度：玩家自己划叉，填错不提示；整盘填满仍不对才判一次错
+    G.bad.clear();
+    if(!allSolved&&!G.done&&!silent&&boardFull()){
+      G.mistakes++; updateHUD(); SFX.err(); buzz(18); shakeBoard();
+      toast(t('fillWrong'));
+    }
+  }
+  if(allSolved&&!G.done) finish();
+}
+function boardFull(){
+  if(!G) return false;
+  for(let i=0;i<G.marks.length;i++) if(G.marks[i]===-1) return false;
+  return true;
+}
+function lineInfo(kind,idx){
+  const p=G.p,n=p.sz;
+  const states=kind==='r'?rowStates(p,G.marks,idx):colStates(p,G.marks,idx);
+  const clue=kind==='r'?p._rows[idx]:p._cols[idx];
+  const cands=lineCands(p,kind,idx,G.marks);
+  const solved=sameClue(clueOfStates(states),clue);
+  return {solved:solved,ok:cands.length>0,count:cands.length,cands:cands};
+}
+function paintClue(el,info,showBad){
+  if(!el) return;
+  el.classList.toggle('done',info.solved);
+  el.classList.toggle('bad',!!showBad&&!info.ok);
+}
+let _shakeT=0;
+function shakeBoard(){
+  if(S.lowPower) return;
+  const b=$('board');
+  b.style.transition='transform .08s';
+  const seq=[-3,3,-2,2,-1,0];
+  let i=0;
+  clearInterval(_shakeT);
+  _shakeT=setInterval(function(){
+    b.style.transform='translateX('+(seq[i]||0)+'px)';
+    i++;
+    if(i>=seq.length){ clearInterval(_shakeT); b.style.transform=''; }
+  },50);
+}
+
+/* ================= 计时 ================= */
+function elapsedNow(){
+  if(!G) return 0;
+  if(G.running&&G.t0) return G.base+(performance.now()-G.t0);
+  return G.base;
+}
+function startTimer(){
+  if(!G||G.running||G.done) return;
+  G.running=true; G.t0=performance.now();
+  G.tick=setInterval(function(){
+    $('pTime').textContent=fmtTime(elapsedNow());
+  },500);
+}
+function pauseTimer(){
+  if(!G||!G.running) return;
+  G.base+=performance.now()-G.t0;
+  G.t0=0; G.running=false;
+  clearInterval(G.tick); G.tick=null;
+}
+function stopTimer(){
+  if(!G) return;
+  if(G.running) pauseTimer();
+  clearInterval(G.tick); G.tick=null;
+}
+
+/* ================= 落子 ================= */
+let STROKE=null;
+let LONG_T=null, LONG_FIRED=false;
+function markStart(){
+  if(G&&!G.done&&!G.running) startTimer();
+}
+function paintCell(i,val,nseq){
+  if(!G||G.done||G.paused) return false;
+  if(G.marks[i]===val) return false;
+  const from=G.marks[i];
+  const fs=G.seq[i];
+  G.marks[i]=val;
+  G.seq[i]=(nseq===undefined)?seqOfVal(val):nseq;
+  if(!G.hintM[i]||val!==1) G.hintM[i]=0;
+  STROKE.changes.push({i:i,from:from,to:val,fs:fs});
+  applyCell(G.cellEls[i],i,val,true);
+  if(val===1) SFX.fill(); else if(val===0) SFX.cross(); else SFX.click();
+  return true;
+}
+/* 连点循环：填涂 → 清空 → 打叉（打叉模式下顺序为 打叉 → 清空 → 填涂）
+   seq 记录该格的进度：0 未点过 / 1 刚填涂 / 2 刚清空 / 3 刚打叉 */
+function seqOfVal(v){ return v===1?1:(v===0?3:0); }
+function tapNextSeq(val){ return val===1?1:(val===0?3:2); }
+function tapNextValue(from,fromSeq){
+  if(from===G.mode) return -1;
+  if(from===-1&&fromSeq===2) return G.mode===1?0:1;
+  return G.mode;
+}
+function cellFromPoint(x,y){
+  const rect=$('grid').getBoundingClientRect();
+  if(x<rect.left||y<rect.top||x>=rect.right||y>=rect.bottom) return -1;
+  const n=G.p.sz;
+  const c=Math.floor((x-rect.left)/(rect.width/n));
+  const r=Math.floor((y-rect.top)/(rect.height/n));
+  if(r<0||c<0||r>=n||c>=n) return -1;
+  return r*n+c;
+}
+function beginStroke(i,reverse){
+  if(!G||G.done||G.paused) return;
+  markStart();
+  const from=G.marks[i], fromSeq=G.seq[i];
+  STROKE={changes:[],reverse:!!reverse,origin:i,from:from,fromSeq:fromSeq,moved:false,defer:false};
+  if(STROKE.reverse){
+    paintCell(i,G.mode===1?0:1);
+  }else{
+    const val=tapNextValue(from,fromSeq);
+    // 填涂立即落下；清空/打叉等抬手再落，拖动时不会误伤起始格
+    if(val===G.mode) paintCell(i,val,tapNextSeq(val));
+    else STROKE.defer=true;
+  }
+}
+function endStroke(){
+  if(!STROKE) return;
+  const rec=STROKE; STROKE=null;
+  if(!rec.changes.length) return;
+  autoCross(rec);
+  G.undo.push(rec.changes);
+  if(G.undo.length>50) G.undo.shift();
+  updateLines(false);
+  updateHUD();
+  saveLive();
+}
+function autoCross(rec){
+  if(!S.easy||!S.autoCross||!G||G.done) return;
+  const p=G.p,n=p.sz;
+  for(let r=0;r<n;r++){
+    if(!sameClue(clueOfStates(rowStates(p,G.marks,r)),p._rows[r])) continue;
+    for(let c=0;c<n;c++){
+      const i=r*n+c;
+      if(G.marks[i]===-1){ const fs=G.seq[i]; G.marks[i]=0; G.seq[i]=3; rec.changes.push({i:i,from:-1,to:0,fs:fs}); applyCell(G.cellEls[i],i,0,false); }
+    }
+  }
+  for(let c=0;c<n;c++){
+    const states=colStates(p,G.marks,c);
+    if(!sameClue(clueOfStates(states),p._cols[c])) continue;
+    for(let r=0;r<n;r++){
+      const i=r*n+c;
+      if(G.marks[i]===-1){ const fs=G.seq[i]; G.marks[i]=0; G.seq[i]=3; rec.changes.push({i:i,from:-1,to:0,fs:fs}); applyCell(G.cellEls[i],i,0,false); }
+    }
+  }
+}
+function undo(){
+  if(!G||G.done||G.paused) return;
+  const rec=G.undo.pop();
+  if(!rec||!rec.length){ toast(t('none')); return; }
+  for(let k=rec.length-1;k>=0;k--){
+    const ch=rec[k];
+    G.marks[ch.i]=ch.from;
+    G.seq[ch.i]=(ch.fs===undefined)?seqOfVal(ch.from):ch.fs;
+    if(ch.from!==1) G.hintM[ch.i]=0;
+    applyCell(G.cellEls[ch.i],ch.i,ch.from,false);
+  }
+  SFX.click();
+  G.bad=new Set();
+  updateLines(true);
+  updateHUD();
+  saveLive();
+}
+function clearBoard(){
+  if(!G||G.done||G.paused) return;
+  const rec=[];
+  for(let i=0;i<G.marks.length;i++){
+    if(G.marks[i]!==-1){
+      rec.push({i:i,from:G.marks[i],to:-1,fs:G.seq[i]});
+      G.marks[i]=-1;
+      G.seq[i]=0;
+      G.hintM[i]=0;
+      applyCell(G.cellEls[i],i,-1,false);
+    }
+  }
+  if(rec.length){
+    G.undo.push(rec);
+    if(G.undo.length>50) G.undo.shift();
+  }
+  G.bad=new Set();
+  updateLines(true);
+  updateHUD();
+  saveLive();
+  toast(t('cleared'));
+  SFX.click();
+}
+function useHint(){
+  if(!G||G.done||G.paused) return;
+  if(G.hintsLeft<=0){ toast(t('hintOut')); return; }
+  const p=G.p,n=p.sz;
+  let forced=[];
+  // 先找唯一排布的线
+  for(let r=0;r<n&&!forced.length;r++){
+    const info=lineInfo('r',r);
+    if(info.solved||!info.ok) continue;
+    if(info.cands.length===1){
+      const pat=info.cands[0];
+      for(let c=0;c<n;c++){
+        if(((pat>>c)&1)&&G.marks[r*n+c]===-1) forced.push(r*n+c);
+      }
+    }
+  }
+  for(let c=0;c<n&&!forced.length;c++){
+    const info=lineInfo('c',c);
+    if(info.solved||!info.ok) continue;
+    if(info.cands.length===1){
+      const pat=info.cands[0];
+      for(let r=0;r<n;r++){
+        if(((pat>>r)&1)&&G.marks[r*n+c]===-1) forced.push(r*n+c);
+      }
+    }
+  }
+  // 再找所有排布共同格
+  if(!forced.length){
+    let best=[];
+    for(let r=0;r<n;r++){
+      const info=lineInfo('r',r);
+      if(info.solved||!info.ok||!info.cands.length) continue;
+      let andv=(1<<n)-1;
+      info.cands.forEach(function(pt){ andv&=pt; });
+      const cells=[];
+      for(let c=0;c<n;c++) if(((andv>>c)&1)&&G.marks[r*n+c]===-1) cells.push(r*n+c);
+      if(cells.length>best.length) best=cells;
+    }
+    for(let c=0;c<n;c++){
+      const info=lineInfo('c',c);
+      if(info.solved||!info.ok||!info.cands.length) continue;
+      let andv=(1<<n)-1;
+      info.cands.forEach(function(pt){ andv&=pt; });
+      const cells=[];
+      for(let r=0;r<n;r++) if(((andv>>r)&1)&&G.marks[r*n+c]===-1) cells.push(r*n+c);
+      if(cells.length>best.length) best=cells;
+    }
+    forced=best;
+  }
+  if(!forced.length){ toast(t('hintNone')); return; }
+  markStart();
+  const rec=[];
+  forced.forEach(function(i){
+    const from=G.marks[i];
+    if(from!==-1) return;
+    const fs=G.seq[i];
+    G.marks[i]=1; G.seq[i]=1; G.hintM[i]=1;
+    rec.push({i:i,from:from,to:1,fs:fs});
+    applyCell(G.cellEls[i],i,1,true);
+  });
+  if(!rec.length){ toast(t('hintNone')); return; }
+  G.hintsLeft--;
+  autoCross({changes:rec});
+  G.undo.push(rec);
+  if(G.undo.length>50) G.undo.shift();
+  G.bad=new Set();
+  updateLines(true);
+  updateHUD();
+  saveLive();
+  SFX.line();
+}
+
+/* ================= 开始 / 结束 ================= */
+function startPuzzle(p){
+  if(!p) return;
+  cancelReveal();
+  stopTimer();
+  clearLive();
+  S.lastId=p.id;
+  const n=p.sz;
+  if(p.img){ try{ const pre=new Image(); pre.src=p.img; }catch(e){} }
+  G={
+    p:p,marks:new Int8Array(n*n),seq:new Int8Array(n*n),hintM:new Uint8Array(n*n),
+    undo:[],mistakes:0,hintsLeft:3,base:0,t0:0,running:false,tick:null,
+    done:false,paused:false,bad:new Set(),mode:1
+  };
+  G.marks.fill(-1); G.hintM.fill(0);
+  CURSOR=0;
+  $('viewCatalog').classList.add('off');
+  $('viewPuzzle').classList.add('on');
+  $('pTitle').innerHTML='<b>'+esc(t('puzzleNo',{n:NP.indexOf(p)+1}))+'</b> · R'+p.r+' · '+p.sz+'×'+p.sz;
+  setMode(1,true);
+  buildBoard(p);
+  updateHUD();
+  renderBoard();
+  updateHUD();
+  try{ saveGame(); }catch(e){}
+  setTimeout(layoutBoard,60);
+}
+function setMode(m,silent){
+  if(!G) return;
+  G.mode=m;
+  $('modeFill').classList.toggle('on',m===1);
+  $('modeCross').classList.toggle('on',m===0);
+  if(!silent) SFX.click();
+}
+/* ================= 解救成功：棋盘 → 立绘 ================= */
+let RVT1=0, RVT2=0, RVT3=0, RVSEQ=0;
+function cancelReveal(){
+  RVSEQ++;
+  clearTimeout(RVT1); clearTimeout(RVT2); clearTimeout(RVT3);
+  const rv=$('reveal'); if(rv) rv.classList.remove('show');
+}
+function revealPuzzle(p,done){
+  const rv=$('reveal'), stage=$('rvStage');
+  if(!rv||!stage){ done(); return; }
+  clearTimeout(RVT1); clearTimeout(RVT2); clearTimeout(RVT3);
+  const seq=++RVSEQ;
+  const n=p.sz, c0=(n-1)/2;
+  stage.style.setProperty('--n',n);
+  const gr=$('grid');
+  if(gr){
+    const w=Math.round(gr.getBoundingClientRect().width);
+    if(w>120) stage.style.width=Math.min(340,Math.max(190,w))+'px';
+  }
+  let cells='';
+  for(let i=0;i<n*n;i++){
+    let bg='#fbfbfe';
+    if(p.bits.charCodeAt(i)===49){
+      const ci=B36.indexOf(p.col.charAt(i));
+      bg=lightInk(p.pal[ci]||'#34384c');
+    }
+    const d=Math.abs(i%n-c0)+Math.abs(Math.floor(i/n)-c0);
+    cells+='<i style="background:'+bg+';--d:'+(150+Math.round(d*20))+'ms"></i>';
+  }
+  stage.innerHTML='<div class="rvboard">'+cells+'</div>'
+    +'<div class="rvart"><canvas class="rvpix" width="'+n+'" height="'+n+'"></canvas>'
+    +'<img class="rvimg" alt=""></div>'
+    +'<div class="rvflash"></div><div class="rvring"></div><div class="rvring b"></div>';
+  const pix=stage.querySelector('.rvpix');
+  if(pix) drawPix(pix,p);
+  const im=stage.querySelector('.rvimg');
+  if(im){
+    im.addEventListener('load',function(){ im.classList.add('ok'); },{once:true});
+    im.addEventListener('error',function(){ im.remove(); },{once:true});
+    im.src=p.img;
+    if(im.complete&&im.naturalWidth>0) im.classList.add('ok');
+  }
+  rv.classList.add('show');
+  RVT1=setTimeout(function(){
+    if(seq!==RVSEQ) return;
+    SFX.reveal(); buzz(30);
+  },520);
+  RVT3=setTimeout(function(){
+    if(seq!==RVSEQ) return;
+    particles();
+  },860);
+  const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  RVT2=setTimeout(function(){
+    if(seq!==RVSEQ) return;
+    rv.classList.remove('show');
+    RVT2=setTimeout(function(){ if(seq===RVSEQ) done(); },340);
+  },(S.lowPower||reduce)?800:1500);
+}
+function finish(){
+  if(!G||G.done) return;
+  G.done=true;
+  clearLive();
+  stopTimer();
+  const p=G.p, ms=Math.max(0,Math.round(G.base)), m=G.mistakes, h=3-G.hintsLeft;
+  const stars=starsFor(p,ms,m,h);
+  const prev=S.solved[p.id];
+  const first=!prev;
+  const oldBest=prev?prev.t:0;
+  const rec={t:prev?Math.min(prev.t,ms):ms,m:prev?Math.min(prev.m,m):m,h:prev?Math.min(prev.h,h):h,s:prev?Math.max(prev.s,stars):stars,d:prev?prev.d:todayKey()};
+  if(!prev) rec.d=todayKey();
+  S.solved[p.id]=rec;
+  S.plays++; S.totalMs+=ms;
+  saveGame();
+  unlockAchievements(p,ms,m,h);
+  saveGame();
+  renderStats();
+  // 棋盘显影脉冲
+  const n=p.sz, cx=(n-1)/2, cy=(n-1)/2;
+  $('grid').classList.add('win');
+  for(let i=0;i<n*n;i++){
+    const el=G.cellEls[i]; if(!el) continue;
+    if(G.marks[i]===1){
+      const d=Math.abs(i%n-cx)+Math.abs(Math.floor(i/n)-cy);
+      el.style.setProperty('--d',Math.round(d*26)+'ms');
+    }
+  }
+  SFX.win(); buzz(40);
+  setTimeout(function(){
+    if(!G||G.p!==p) return;
+    revealPuzzle(p,function(){
+      showResult({mode:'win',p:p,ms:ms,m:m,h:h,stars:stars,first:first,
+        newBest:!!(oldBest&&ms<oldBest)});
+    });
+  },300);
+}
+
+/* ================= 成就 ================= */
+const ACHS=[
+  {id:'np_first',icon:'✦',n:'achFirst',d:'achFirstD',test:function(){ return puzzlesSolved()>=1; }},
+  {id:'np_ten',icon:'十',n:'achTen',d:'achTenD',test:function(){ return puzzlesSolved()>=10; }},
+  {id:'np_thirty',icon:'半',n:'achThirty',d:'achThirtyD',test:function(){ return puzzlesSolved()>=30; }},
+  {id:'np_all',icon:'全',n:'achAll',d:'achAllD',test:function(){ return puzzlesSolved()>=NP.length; }},
+  {id:'np_no_hint_10',icon:'手',n:'achNoHint',d:'achNoHintD',test:function(){
+    let k=0; for(const id in S.solved) if((S.solved[id].h||0)===0&&(S.solved[id].m||0)>=0) k++;
+    return k>=10;
+  }},
+  {id:'np_no_mistake_15',icon:'笔',n:'achNoMist',d:'achNoMistD',test:function(){ return !!S.ach._noM15; }},
+  {id:'np_speed',icon:'速',n:'achSpeed',d:'achSpeedD',test:function(){ return !!S.ach._speed; }}
+];
+function unlockAchievements(p,ms,m,h){
+  if(p.sz===15&&m===0) S.ach._noM15=Date.now();
+  if(p.sz===10&&ms<=120000&&m>=0) S.ach._speed=Date.now();
+  ACHS.forEach(function(a){
+    if(S.ach[a.id]) return;
+    if(a.test()){
+      S.ach[a.id]=Date.now();
+      showAch(a);
+    }
+  });
+}
+let achQueue=[];
+function showAch(a){
+  achQueue.push(a);
+  if(achQueue.length===1) nextAch();
+}
+function nextAch(){
+  const a=achQueue[0]; if(!a) return;
+  const bar=$('achbar');
+  $('achbarT').textContent=t('achGot')+' · '+t(a.n);
+  $('achbarS').textContent=t(a.d);
+  bar.classList.add('show');
+  setTimeout(function(){
+    bar.classList.remove('show');
+    setTimeout(function(){ achQueue.shift(); nextAch(); },340);
+  },1400);
+}
+function renderAch(){
+  const total=ACHS.length;
+  let got=0;
+  ACHS.forEach(function(a){ if(S.ach[a.id]) got++; });
+  $('achSub').textContent=t('achSub',{a:got,b:total});
+  $('achList').innerHTML=ACHS.map(function(a){
+    const g=!!S.ach[a.id];
+    return '<div class="achrow'+(g?' got':'')+'"><div class="ai">'+a.icon+'</div>'
+      +'<div class="at">'+esc(t(a.n))+'<small>'+esc(t(a.d))+'</small></div>'
+      +'<div class="ap">'+(g?esc(t('achUnlocked')):esc(t('achLocked')))+'</div></div>';
+  }).join('');
+}
+
+/* ================= 结算 / 图鉴详情 ================= */
+function pixelArtHTML(p){
+  return '<canvas width="'+p.sz+'" height="'+p.sz+'" data-pix="'+p.id+'"></canvas>';
+}
+function showResult(o){
+  const p=o.p;
+  const win=o.mode==='win';
+  let art='';
+  if(win){
+    art='<div class="artframe"><img src="'+esc(p.img)+'" alt="'+esc(nameOf(p))+'">'
+      +'<div class="stamp">'+esc(t('stamp'))+'</div></div>';
+  }else{
+    art='<div class="artframe"><img src="'+esc(p.img)+'" alt="'+esc(nameOf(p))+'"></div>';
+  }
+  let aliasLine='';
+  if(p.alias&&p.alias.length){
+    aliasLine='<div class="raliasline">'+esc(t('aliasLine',{n:nameOfAlias(p.alias[0])}))+'</div>';
+  }
+  let stats='';
+  if(win){
+    stats='<div class="rstars">'+starHTML(o.stars)+'</div>'
+      +'<div class="rgrid">'
+      +'<div><i>'+esc(t('resultTime'))+'</i><b>'+fmtTime(o.ms)+'</b></div>'
+      +'<div><i>'+esc(t('resultMist'))+'</i><b>'+o.m+'</b></div>'
+      +'<div><i>'+esc(t('resultHint'))+'</i><b>'+o.h+'</b></div>'
+      +'</div>';
+  }else{
+    const sv=S.solved[p.id]||{t:0,m:0,h:0,s:0};
+    stats='<div class="rstars">'+starHTML(sv.s)+'</div>'
+      +'<div class="rgrid">'
+      +'<div><i>'+esc(t('time'))+'</i><b>'+fmtTime(sv.t)+'</b></div>'
+      +'<div><i>'+esc(t('resultMist'))+'</i><b>'+sv.m+'</b></div>'
+      +'<div><i>'+esc(t('resultHint'))+'</i><b>'+sv.h+'</b></div>'
+      +'</div>';
+  }
+  const buttons=win
+    ? '<button class="pri" data-act="next">'+esc(t('next'))+'</button>'
+      +'<button class="sec" data-act="replay">'+esc(t('replay'))+'</button>'
+      +'<button class="thi" data-act="close">'+esc(t('backCatalog'))+'</button>'
+    : '<button class="pri" data-act="replay">'+esc(t('replay'))+'</button>'
+      +'<button class="sec" data-act="close">'+esc(t('close'))+'</button>';
+  const title=win?t('win'):'';
+  $('resultSheet').innerHTML=
+    '<div class="rhead2">'+(win?esc(title):esc(t('catalog')))+'</div>'
+    +art
+    +'<div class="rname">'+esc(nameOf(p))+'</div>'
+    +aliasLine
+    +'<div class="rmeta">R'+p.r+' · '+esc(RAR[p.r]||'')+' · '+p.sz+'×'+p.sz+(p.by?' · '+esc(t('author'))+': '+esc(p.by):'')+'</div>'
+    +stats
+    +(win&&o.newBest&&o.first===false?'<div class="rcoin" style="color:#98733a">'+esc(t('newBest'))+'</div>':'')
+    +'<div class="rbtns">'+buttons+'</div>';
+  // 像素回退
+  const im=$('resultSheet').querySelector('.artframe img');
+  $('resultSheet').querySelectorAll('canvas[data-pix]').forEach(function(cv){
+    const pp=NP.find(function(x){ return x.id===cv.getAttribute('data-pix'); }); if(pp) drawPix(cv,pp);
+  });
+  if(im){
+    im.addEventListener('error',function(){
+      const cv=pixelArtHTML(p);
+      const holder=im.parentNode;
+      const tmp=document.createElement('div'); tmp.innerHTML=cv;
+      const cvEl=tmp.firstChild; cvEl.style.width='100%'; cvEl.style.height='100%';
+      cvEl.style.imageRendering='pixelated';
+      drawPix(cvEl,p);
+      im.replaceWith(cvEl);
+    },{once:true});
+  }
+  $('result').classList.add('show');
+  if(!win) SFX.reveal();
+  $('resultSheet').onclick=function(e){
+    const btn=e.target.closest('[data-act]'); if(!btn) return;
+    const act=btn.getAttribute('data-act');
+    SFX.click();
+    $('result').classList.remove('show');
+    if(act==='replay'){ startPuzzle(p); }
+    else if(act==='next'){ goNextUnsolved(p); }
+    else if(act==='close'){ backToCatalog(); }
+  };
+}
+function goNextUnsolved(from){
+  const idx=NP.indexOf(from);
+  for(let k=1;k<=NP.length;k++){
+    const p=NP[(idx+k)%NP.length];
+    if(!S.solved[p.id]&&puzzleUnlocked(p)){ startPuzzle(p); return; }
+  }
+  backToCatalog();
+  toast(t('achAll'));
+}
+function backToCatalog(){
+  cancelReveal();
+  stopTimer();
+  clearLive();
+  $('result').classList.remove('show');
+  $('pause').classList.remove('show');
+  $('viewPuzzle').classList.remove('on');
+  $('viewCatalog').classList.remove('off');
+  G=null;
+  refreshCatalog();
+}
+
+/* ================= 指针 / 键盘 ================= */
+function bindBoard(){
+  const grid=$('grid');
+  grid.addEventListener('contextmenu',function(e){ e.preventDefault(); });
+  grid.addEventListener('pointerdown',function(e){
+    if(!G||G.done||G.paused) return;
+    if(e.button!==undefined&&e.button!==0&&e.button!==2) return;
+    const i=cellFromPoint(e.clientX,e.clientY);
+    if(i<0) return;
+    e.preventDefault();
+    try{ grid.setPointerCapture(e.pointerId); }catch(err){}
+    const reverse=(e.button===2)||e.shiftKey;
+    beginStroke(i,reverse);
+    LONG_FIRED=false;
+    clearTimeout(LONG_T);
+    if(!reverse&&e.pointerType!=='mouse'){
+      LONG_T=setTimeout(function(){
+        if(!STROKE) return;
+        LONG_FIRED=true;
+        STROKE.reverse=true;
+        const val=G.mode===1?0:1;
+        // 翻转起始格
+        const changes=STROKE.changes;
+        if(changes.length){
+          const ch=changes[0];
+          if(ch.to===G.mode){
+            G.marks[ch.i]=ch.from;
+            G.seq[ch.i]=ch.fs;
+            applyCell(G.cellEls[ch.i],ch.i,ch.from,false);
+            changes.length=0;
+          }
+        }
+        paintCell(i,val);
+        buzz(10);
+      },350);
+    }
+  });
+  grid.addEventListener('pointermove',function(e){
+    if(!STROKE||!G||G.done||G.paused) return;
+    e.preventDefault();
+    if(!LONG_FIRED&&e.pointerType!=='mouse'){ /* 拖动前取消长按 */ clearTimeout(LONG_T); }
+    const i=cellFromPoint(e.clientX,e.clientY);
+    if(i<0) return;
+    if(i!==STROKE.origin&&!STROKE.moved){
+      STROKE.moved=true;
+      // 已进入拖动：起始格按普通填涂处理，取消连点循环
+      if(STROKE.defer){ STROKE.defer=false; paintCell(STROKE.origin,G.mode); }
+    }
+    paintCell(i,STROKE.reverse?(G.mode===1?0:1):G.mode);
+  });
+  function up(e){
+    clearTimeout(LONG_T);
+    if(!STROKE) return;
+    // 纯点击（没拖到别的格子）：按“填涂 → 清空 → 打叉”循环前进一格
+    if(!STROKE.moved&&!STROKE.reverse&&!LONG_FIRED){
+      const val=tapNextValue(STROKE.from,STROKE.fromSeq);
+      paintCell(STROKE.origin,val,tapNextSeq(val));
+    }
+    endStroke();
+  }
+  grid.addEventListener('pointerup',up);
+  grid.addEventListener('pointercancel',up);
+  grid.addEventListener('pointerleave',function(e){ /* 不结束，拖出再拖回仍连续 */ });
+  // 光标
+  document.addEventListener('keydown',function(e){
+    if(!G||G.paused||G.done) return;
+    if($('set').classList.contains('show')||$('ach').classList.contains('show')||$('result').classList.contains('show')||$('help').classList.contains('show')) return;
+    const n=G.p.sz;
+    let r=Math.floor(CURSOR/n), c=CURSOR%n;
+    let handled=true;
+    if(e.key==='ArrowLeft') c=Math.max(0,c-1);
+    else if(e.key==='ArrowRight') c=Math.min(n-1,c+1);
+    else if(e.key==='ArrowUp') r=Math.max(0,r-1);
+    else if(e.key==='ArrowDown') r=Math.min(n-1,r+1);
+    else if(e.key===' '||e.key==='Spacebar'){
+      e.preventDefault(); markStart();
+      STROKE={changes:[],reverse:false};
+      paintCell(r*n+c,1); endStroke();
+      return;
+    }else if(e.key==='x'||e.key==='X'){
+      STROKE={changes:[],reverse:false};
+      paintCell(r*n+c,0); endStroke();
+      return;
+    }else if((e.ctrlKey||e.metaKey)&&(e.key==='z'||e.key==='Z')){ e.preventDefault(); undo(); return; }
+    else if(e.key==='h'||e.key==='H'){ useHint(); return; }
+    else if(e.key==='Escape'){ togglePause(); return; }
+    else handled=false;
+    if(!handled) return;
+    e.preventDefault();
+    const old=G.cellEls[CURSOR];
+    if(old) old.classList.remove('cur');
+    CURSOR=r*n+c;
+    G.cellEls[CURSOR].classList.add('cur');
+    if(e.key===' '||e.key==='x'||e.key==='X'){}
+  });
+  // 点击格：把光标也移过去
+  grid.addEventListener('pointerup',function(e){
+    if(!G||G.done) return;
+    const i=cellFromPoint(e.clientX,e.clientY);
+    if(i>=0){ if(G.cellEls[CURSOR]) G.cellEls[CURSOR].classList.remove('cur'); CURSOR=i; }
+  });
+}
+
+/* ================= 暂停 ================= */
+function togglePause(){
+  if(!G||G.done) return;
+  if(G.paused) resumeGame(); else pauseGame();
+}
+function pauseGame(){
+  if(!G||G.done||G.paused) return;
+  G.paused=true;
+  pauseTimer();
+  saveLive();
+  $('pause').classList.add('show');
+}
+function resumeGame(){
+  if(!G||!G.paused) return;
+  G.paused=false;
+  $('pause').classList.remove('show');
+  if(!G.done) startTimer();
+}
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden){
+    if(G&&!G.done&&!G.paused) pauseGame();
+  }
+});
+window.addEventListener('pagehide',function(){
+  stopTimer();
+  saveLive();     /* 刷新/版本更新前把当前棋盘落盘，重载后可续玩 */
+  try{ if(AC&&AC.state==='running') AC.suspend(); }catch(e){}
+});
+
+/* ================= 设置 ================= */
+function syncEasyBtn(){
+  const b=$('btnEasy');
+  if(b) b.classList.toggle('on',!!S.easy);
+}
+function renderSettings(){
+  $('setSound').classList.toggle('on',!S.muted);
+  $('setAuto').classList.toggle('on',!!S.autoCross);
+  $('setLow').classList.toggle('on',!!S.lowPower);
+  document.body.classList.toggle('low-power',!!S.lowPower);
+  $('setDataV').textContent=t('dataSub',{n:NP.length,m:ENTRIES.length});
+  $('setSoundT').firstChild.nodeValue=t('sound');
+  $('setAutoT').firstChild.nodeValue=t('auto');
+  $('setLowT').firstChild.nodeValue=t('low');
+  $('setAutoS').textContent=t('autoSub');
+  $('setLowS').textContent=t('lowSub');
+  $('setDataT').textContent=t('data');
+}
+function bindSettings(){
+  $('setSound').onclick=function(){
+    S.muted=!S.muted; saveGame();
+    this.classList.toggle('on',!S.muted);
+    if(!S.muted) SFX.click();
+  };
+  $('setAuto').onclick=function(){
+    S.autoCross=!S.autoCross; saveGame();
+    this.classList.toggle('on',S.autoCross);
+    toast(S.autoCross?t('on'):t('off'));
+  };
+  $('setLow').onclick=function(){
+    S.lowPower=!S.lowPower; saveGame();
+    this.classList.toggle('on',S.lowPower);
+    document.body.classList.toggle('low-power',S.lowPower);
+    toast(S.lowPower?t('on'):t('off'));
+  };
+  $('setClose').onclick=function(){ $('set').classList.remove('show'); };
+  $('set').onclick=function(e){ if(e.target===$('set')) $('set').classList.remove('show'); };
+}
+
+/* ================= 静态文案 ================= */
+function applyStaticText(){
+  document.title=t('brand')+' · Nonogram';
+  $('brandT').textContent=t('brand');
+  $('btnAch').title=t('ach');
+  $('btnSet').title=t('set');
+  $('btnPause').title=t('pause');
+  $('btnHelp').title=t('howto');
+  $('noticeT').textContent=t('notice');
+  $('tabRandom').textContent=t('rand');
+  $('tabCodex').textContent=t('codex');
+  $('helpTitle').textContent=t('howto');
+  $('helpSub').textContent=t('howtoSub');
+  $('helpList').innerHTML=[1,2,3,4,5,6].map(function(i){
+    return '<div class="hrow"><b>'+i+'</b><span>'+esc(t('hw'+i))+'</span></div>';
+  }).join('');
+  $('stL1').textContent=t('solved');
+  $('stL2').textContent=t('stars');
+  $('stL3').textContent=t('totalTime');
+  $('btnBack').textContent=t('back');
+  $('lblFill').textContent=t('fill');
+  $('lblCross').textContent=t('cross');
+  $('lblUndo').textContent=t('undo');
+  $('lblClear').textContent=t('clear');
+  $('lblHint').textContent=t('hint');
+  $('lblEasy').textContent=t('easy');
+  syncEasyBtn();
+  $('pauseTitle').textContent=t('paused');
+  $('pauseSub').textContent=t('pauseSub');
+  $('pauseResume').textContent=t('resume');
+  $('pauseBack').textContent=t('backCatalog');
+  $('achTitle').textContent=t('ach');
+  $('setTitle').textContent=t('set');
+  $('setSub').textContent=t('setSub');
+}
+
+/* ================= 粒子 ================= */
+function particles(){
+  if(S.lowPower) return;
+  const box=$('fx');
+  const colors=['#636c9e','#a08fc2','#7f9ec9','#b08a48','#34384c'];
+  let html='';
+  const max=38;
+  for(let i=0;i<max;i++){
+    const x=20+Math.random()*60;
+    const dx=(Math.random()*2-1)*120;
+    const dy=80+Math.random()*180;
+    const rot=(Math.random()*2-1)*360;
+    html+='<i style="left:'+x+'%;top:-10px;background:'+colors[i%colors.length]
+      +';--dx:'+dx+'px;--dy:'+dy+'px;--rot:'+rot+'deg;animation-delay:'+(Math.random()*.35)+'s"></i>';
+  }
+  box.innerHTML=html;
+  setTimeout(function(){ box.innerHTML=''; },2000);
+}
+
+/* ================= 自检 ================= */
+function selftest(){
+  const errs=[];
+  if(NP.length!==88) errs.push('NP='+NP.length);
+  let aliasCount=0;
+  NP.forEach(function(p){
+    aliasCount+=1+(p.alias?p.alias.length:0);
+    if(p.bits.length!==p.sz*p.sz) errs.push(p.id+' bits');
+    if(p.col.length!==p.sz*p.sz) errs.push(p.id+' col');
+    if(!p._rows) buildClues(p);
+    if(p._rows.some(function(c){ return patterns(p.sz,c).length===0; })) errs.push(p.id+' row clue');
+    if(p._cols.some(function(c){ return patterns(p.sz,c).length===0; })) errs.push(p.id+' col clue');
+    for(let i=0;i<p.sz*p.sz;i++){
+      if(p.bits.charCodeAt(i)===49){
+        const ci=B36.indexOf(p.col.charAt(i));
+        if(ci<0||ci>=p.pal.length) errs.push(p.id+' colidx@'+i);
+      }
+    }
+  });
+  if(aliasCount!==89) errs.push('ids='+aliasCount);
+  // 线解算器干跑：官方解必须全部满足、且不出现无解线
+  NP.forEach(function(p){
+    const n=p.sz;
+    const marks=new Int8Array(n*n);
+    for(let i=0;i<n*n;i++) marks[i]=p.bits.charCodeAt(i)===49?1:0;
+    for(let r=0;r<n;r++){
+      if(!sameClue(clueOfStates(rowStates(p,marks,r)),p._rows[r])) errs.push(p.id+' row'+r);
+    }
+    for(let c=0;c<n;c++){
+      if(!sameClue(clueOfStates(colStates(p,marks,c)),p._cols[c])) errs.push(p.id+' col'+c);
+    }
+  });
+  const msg=errs.length?t('selftestFail',{s:errs.slice(0,4).join(', ')}):t('selftestOk');
+  console.log('[nonogram selftest]',msg,errs);
+  toast(msg);
+  return errs;
+}
+
+/* ================= 初始化 ================= */
+function init(){
+  applyStaticText();
+  NP.forEach(buildClues);
+  renderChips();
+  refreshCatalog();
+  renderSettings();
+  // 顶栏
+  $('btnAch').onclick=function(){ renderAch(); $('ach').classList.add('show'); SFX.click(); };
+  $('achClose').onclick=function(){ $('ach').classList.remove('show'); };
+  $('ach').onclick=function(e){ if(e.target===$('ach')) $('ach').classList.remove('show'); };
+  $('btnHelp').onclick=function(){ $('help').classList.add('show'); SFX.click(); };
+  $('helpClose').onclick=function(){ $('help').classList.remove('show'); };
+  $('help').onclick=function(e){ if(e.target===$('help')) $('help').classList.remove('show'); };
+  $('btnSet').onclick=function(){ renderSettings(); $('set').classList.add('show'); SFX.click(); };
+  $('btnBack').onclick=function(){ SFX.click(); backToCatalog(); };
+  $('btnPause').onclick=function(){ SFX.click(); togglePause(); };
+  $('pauseResume').onclick=function(){ SFX.click(); resumeGame(); };
+  $('pauseBack').onclick=function(){ backToCatalog(); };
+  $('modeFill').onclick=function(){ setMode(1); };
+  $('modeCross').onclick=function(){ setMode(0); };
+  $('btnUndo').onclick=function(){ undo(); };
+  $('btnClear').onclick=function(){ clearBoard(); };
+  $('btnHint').onclick=function(){ useHint(); };
+  $('btnEasy').onclick=function(){
+    S.easy=!S.easy; saveGame();
+    syncEasyBtn();
+    SFX.click();
+    toast(S.easy?t('easyOn'):t('easyOff'),2200);
+    if(G&&!G.done){ G.bad=new Set(); updateLines(true); updateHUD(); }
+  };
+  $('tabs').addEventListener('click',function(e){
+    const b=e.target.closest('[data-tab]'); if(!b) return;
+    setTab(b.getAttribute('data-tab')); SFX.click();
+  });
+  $('hero').addEventListener('click',function(e){
+    const b=e.target.closest('[data-pid]'); if(!b) return;
+    const p=NP.find(function(x){ return x.id===b.getAttribute('data-pid'); }); if(!p) return;
+    if(!puzzleUnlocked(p)){ toast(t('lockedTip'),2800); return; }
+    SFX.click();
+    if(S.solved[p.id]) showResult({mode:'detail',p:p});
+    else startPuzzle(p);
+  });
+  $('chips').addEventListener('click',function(e){
+    const b=e.target.closest('[data-filter]'); if(!b) return;
+    filter=b.getAttribute('data-filter'); SFX.click();
+    renderChips(); renderCatalog();
+  });
+  $('catalog').addEventListener('click',function(e){
+    const card=e.target.closest('.card'); if(!card) return;
+    const pid=card.getAttribute('data-pid');
+    const p=NP.find(function(x){ return x.id===pid; }); if(!p) return;
+    SFX.click();
+    if(card.getAttribute('data-lock')==='1'){
+      toast(t('lockedTip'),2800);
+      card.classList.remove('deny');
+      void card.offsetWidth;
+      card.classList.add('deny');
+      setTimeout(function(){ card.classList.remove('deny'); },400);
+      return;
+    }
+    if(S.solved[p.id]) showResult({mode:'detail',p:p});
+    else startPuzzle(p);
+  });
+  bindBoard(); bindSettings();
+  layoutBoard();
+  window.addEventListener('resize',function(){
+    if(G&&!G.done){ layoutBoard(); }
+  });
+  window.addEventListener('orientationchange',function(){ setTimeout(layoutBoard,220); });
+  /* 刷新或首页自动更新后重开页面：把上一次进行中的棋盘原样接回来（暂停态，点继续即可） */
+  if(QS.get('selftest')!=='1') restoreLive();
+  if(QS.get('selftest')==='1') setTimeout(selftest,120);
+  // 暴露给自动化测试
+  window.__NP_TEST={NP:NP,patterns:patterns,buildClues:buildClues,sameClue:sameClue,
+    clueOfStates:clueOfStates,rowStates:rowStates,colStates:colStates,S:S,startPuzzle:startPuzzle,finish:finish,selftest:selftest};
+  window.__NP_STATE=function(){ return G?(G.done?'win':(G.paused?'pause':'play')):'catalog'; };
+}
+init();
+})();
+</script>
+</body>
+</html>
