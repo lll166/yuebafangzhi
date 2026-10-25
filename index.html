@@ -257,6 +257,55 @@
     position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:5;
     border-radius:99px;padding:6px 14px;font-size:12px;color:var(--dim);font-weight:600;white-space:nowrap;
   }
+  /* 电脑端右下角：木头缩放滑杆（手机屏幕窄，不显示）
+     配色全部走皮肤令牌（--panel/--panel2/--line/--purple2），深浅皮肤自动适配 */
+  .szoom{
+    position:absolute;right:12px;bottom:12px;z-index:6;border-radius:99px;
+    display:flex;align-items:center;gap:6px;padding:6px 10px;
+    background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--line);box-shadow:0 6px 18px rgba(0,0,0,.18);
+  }
+  .szoom .zb{
+    width:22px;height:22px;border-radius:50%;border:1px solid var(--line);
+    background:var(--panel2);color:var(--purple2);font-size:13px;font-weight:800;line-height:1;padding:0;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s;
+  }
+  .szoom .zb:hover{background:var(--panel);border-color:var(--purple);}
+  .szoom input[type=range]{
+    width:96px;height:4px;border-radius:99px;outline:none;cursor:pointer;
+    -webkit-appearance:none;appearance:none;background:linear-gradient(90deg,var(--line),var(--purple2));
+  }
+  .szoom input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:14px;height:14px;border-radius:50%;
+    background:var(--panel);border:2px solid var(--purple2);box-shadow:0 2px 6px rgba(0,0,0,.3);
+  }
+  .szoom input[type=range]::-moz-range-thumb{
+    width:12px;height:12px;border-radius:50%;background:var(--panel);border:2px solid var(--purple2);
+  }
+  /* 各皮肤造型微调：像素森屿/拓本碑铭直角、极光冷峻、狂乱墨线不规则、人鱼琉璃紫边、王庭银蓝点缀 */
+  html[data-skin="cursed"] .szoom,
+  html[data-skin="sunkcity"] .szoom{border-radius:0;border-width:2px;}
+  html[data-skin="cursed"] .szoom .zb,
+  html[data-skin="sunkcity"] .szoom .zb,
+  html[data-skin="cursed"] .szoom input[type=range],
+  html[data-skin="sunkcity"] .szoom input[type=range],
+  html[data-skin="cursed"] .szoom input[type=range]::-webkit-slider-thumb,
+  html[data-skin="sunkcity"] .szoom input[type=range]::-webkit-slider-thumb,
+  html[data-skin="cursed"] .szoom input[type=range]::-moz-range-thumb,
+  html[data-skin="sunkcity"] .szoom input[type=range]::-moz-range-thumb{border-radius:0;}
+  html[data-skin="aurora"] .szoom{border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.10);}
+  html[data-skin="aurora"] .szoom .zb{border-radius:3px;}
+  html[data-skin="relic"] .szoom{border-radius:3px;}
+  html[data-skin="dreamink"] .szoom{border-radius:2px;}
+  html[data-skin="dreamink"] .szoom input[type=range]::-webkit-slider-thumb{border-radius:45% 55% 48% 52%;}
+  html[data-skin="mermaidsea"] .szoom{border-color:var(--accent);box-shadow:0 6px 18px rgba(111,224,224,.28);}
+  html[data-skin="mermaidsea"] .szoom input[type=range]{background:linear-gradient(90deg,var(--accent),var(--purple2));}
+  html[data-skin="mermaidsea"] .szoom input[type=range]::-webkit-slider-thumb{border-color:var(--accent);}
+  html[data-skin="court"] .szoom{border-radius:6px;box-shadow:inset 0 0 0 1px rgba(184,192,204,.22),0 6px 20px rgba(0,0,0,.65);}
+  html[data-skin="court"] .szoom .zb{border-radius:3px;}
+  html[data-skin="court"] .szoom .zb:hover{border-color:#3155b8;box-shadow:0 0 8px rgba(30,58,138,.6);}
+  html[data-skin="court"] .szoom input[type=range]::-webkit-slider-thumb{border-color:#3155b8;box-shadow:0 0 8px rgba(30,58,138,.55);}
+  @media (max-width:819px){ .szoom{display:none;} }
 
   /* ---------- 按钮 ---------- */
   .btn{
@@ -3593,6 +3642,11 @@
   </div>
   <div id="sceneWoods"></div>
   <div class="scenefoot frost" data-i18n="🌱 月巴需经过 幼年 → 成长 → 成熟 才能收获，成熟后才会露出真面目">🌱 月巴需经过 幼年 → 成长 → 成熟 才能收获，成熟后才会露出真面目</div>
+  <div class="szoom" id="sceneZoom">
+    <button class="zb" id="zoomOut" title="缩小" data-i18n-title="缩小">−</button>
+    <input type="range" id="zoomRange" min="65" max="135" step="5" value="100" aria-label="木头缩放">
+    <button class="zb" id="zoomIn" title="放大" data-i18n-title="放大">＋</button>
+  </div>
 </div>
 
 <div id="travel">
@@ -4975,6 +5029,7 @@ const I18N_UI={
   '⛏ 黄金矿工':{en:'⛏ Gold Miner',ja:'⛏ ゴールドマイナー',ko:'⛏ 골드 마이너'},
   '⛏ 进入黄金矿工':{en:'⛏ Enter Gold Miner',ja:'⛏ ゴールドマイナーへ',ko:'⛏ 골드 마이너 입장'},
   '俄罗斯巴块':{en:'Tetris Banny',ja:'テトリスバニー',ko:'테트리스배니'},
+  '月巴螺旋跳':{en:'Helix Banny',ja:'ヘリックスバニー',ko:'헬릭스 배니'},
   '🧱 俄罗斯巴块':{en:'🧱 Tetris Banny',ja:'🧱 テトリスバニー',ko:'🧱 테트리스배니'},
   '🧱 进入俄罗斯巴块':{en:'🧱 Enter Tetris Banny',ja:'🧱 テトリスバニーへ',ko:'🧱 테트리스배니 시작'},
   '✕ 返回图鉴':{en:'✕ Back to Codex',ja:'✕ 図鑑に戻る',ko:'✕ 도감으로 돌아가기'},
@@ -8151,7 +8206,7 @@ const OFFLINE_CAP=12*3600*1000;
 let S;
 function defaultState(){
   return {
-    coins:0, totalCoins:null, accelLv:0, boughtItems:[], collection:{}, collection2:{}, collection3:{}, dex2Celebrated:false, totalHarvest:0, lastFast:0, lowPower:false,
+    coins:0, totalCoins:null, accelLv:0, boughtItems:[], collection:{}, collection2:{}, collection3:{}, dex2Celebrated:false, totalHarvest:0, lastFast:0, lowPower:false, sceneZoom:1,
     artPick:{},   // 多立绘：{月巴id: 选中的立绘序号}，同一只月巴被画了多次时用
     flyTop:[], flyPick:null, flySel:1, flyClear:0, flyLvBest:{}, flyLvTime:{},
     survivor:{v:3, clears:0, bestTime:0, bestKills:0, unlocked:{}, read:{}, lastReward:null,
@@ -8947,6 +9002,7 @@ function openScene(z){
   $('sceneBg').style.backgroundImage=`url('${ZONES[z].bg}')`;
   $('scene').classList.add('show');
   $('sceneWoods').scrollLeft=0;
+  const zr=$('zoomRange'); if(zr) zr.value=Math.round(sceneZoomVal()*100);
   renderSceneWoods();
   updateSceneBar();
   sfx.click();
@@ -8964,28 +9020,46 @@ function mixHash(n){
   n=Math.imul(n,0x27d4eb2d); n^=n>>>15;
   return n>>>0;
 }
+/* 电脑端木头缩放（右下角滑杆），0.65~1.35，默认 1 */
+function sceneZoomVal(){
+  const v=+S.sceneZoom;
+  return isFinite(v)&&v>0?Math.max(0.65,Math.min(1.35,v)):1;
+}
+function setSceneZoom(v){
+  S.sceneZoom=Math.max(0.65,Math.min(1.35,Math.round(v*20)/20));
+  const zr=$('zoomRange'); if(zr) zr.value=Math.round(S.sceneZoom*100);
+  if(currentZone>=0) renderSceneWoods();
+}
 function sceneWoodLayout(z){
   const wrap=$('sceneWoods');
   const W=Math.max(300, (wrap&&wrap.clientWidth)||innerWidth||360);
   const H=Math.max(280, (wrap&&wrap.clientHeight)||innerHeight||640);
-  // 屏幕越窄木头越小：手机上能同时看到更多根，槽位仍够点
-  const scale=W<520?0.82:(W<820?0.92:1);
+  // 屏幕越窄木头越小：手机上能同时看到更多根，槽位仍够点；电脑端再叠加手动缩放
+  const wide=W>=820;
+  const scale=(W<520?0.82:(wide?1:0.92))*(wide?sceneZoomVal():1);
   const vh=150*scale;
   const bar=document.querySelector('#scene .sbar');
   const barBottom=bar?bar.getBoundingClientRect().bottom:56;         // 顶部工具栏下沿，木头不压住它
-  const topLimit=Math.max(58, barBottom+8);
-  const bottomLimit=H-42;                                            // 底部提示条上方
+  const topLimit=Math.max(58, barBottom+8);                          // 整块竖向可用区域：工具栏下方 → 底部提示条上方
+  const bottomLimit=H-42;
   const band=Math.max(vh*1.4, bottomLimit-topLimit);
   const woods=S.zones[z].woods, out=[];
-  // 排数：先按「所有木头横向铺开需要几排」估，再用可用高度兜住上限
+  // 排数：优先填满可用高度，再参考「横向铺开需要几排」，避免一根木头占一排
   let visTotal=0;
   for(let i=0;i<woods.length;i++) visTotal+=(110+woods[i].cells.length*22)*scale+20;
   const rowsH=Math.max(2, Math.floor((band-vh)/(vh*0.62))+1);
-  let rows=Math.min(6, rowsH, Math.max(2, Math.ceil(visTotal/Math.max(220, W-WOOD_MARGIN*2))));
+  const rowsW=Math.ceil(visTotal/Math.max(220, W*0.9));
+  // 排数上限取「高度可容纳」「每排至少约 2 根」「最多 6 排」三者最小值
+  const rowsCap=Math.min(6, rowsH, Math.max(2, Math.ceil(woods.length/2)));
+  const rows=Math.min(rowsCap, Math.max(2, Math.round(rowsH*0.75), rowsW));
   let step=rows>1?(band-vh)/(rows-1):0;
-  step=Math.max(vh*0.62, Math.min(step, vh*0.98));                   // 排间距：允许轻微搭接，但不糊成一团
-  const jyRange=Math.max(4, Math.min(26, (step-vh*0.62)/2));         // 排间距越大，纵向抖动越放开（打破「排成一条线」）
-  const frontTop=bottomLimit-vh/2-75;                                // 最前排排版框 top（缩放围绕中心）
+  step=Math.max(vh*0.62, Math.min(step, vh*1.25));                   // 排间距：允许轻微搭接，也不留大片空白
+  // 木头排不满整块高度时上下居中，避免上半屏空、木头全挤在底部
+  const pad=Math.max(0, (band-(rows-1)*step-vh)/2);
+  const underfull=pad>vh*0.3;                                        // 数量不足以铺满时，允许更松散的错落
+  const jyRange=underfull?Math.max(10, Math.min(Math.round(vh*0.3), (step-vh*0.62)/2))
+                         :Math.max(4, Math.min(26, (step-vh*0.62)/2)); // 排间距越大，纵向抖动越放开（打破「排成一条线」）
+  const frontTop=bottomLimit-vh/2-75-pad;                            // 最前排排版框 top（缩放围绕中心）
   const backMinTop=topLimit+vh/2-75;                                 // 最上排排版框 top 的下限（不压工具栏）
   const startSpread=Math.min(64, W*0.12);                            // 每排起点随机错开，避免竖向连成列
   // 每排起点错开，避免木头竖向排成一列
@@ -9002,7 +9076,8 @@ function sceneWoodLayout(z){
     const row=counts[r1]<=counts[r2]?r1:r2;
     counts[row]++;
     const visW=baseW*scale;
-    const jx=((h>>>8)%11)-5;
+    const jxMax=underfull?Math.min(26, Math.round(W*0.02)):5;          // 木头少时横向再错开一点，散得更自然
+    const jx=((h>>>8)%(jxMax*2+1))-jxMax;
     const visLeft=cursor[row]+jx;
     const gap=WOOD_GAP_MIN+((h>>>13)%(WOOD_GAP_MAX-WOOD_GAP_MIN+1));
     cursor[row]=Math.max(cursor[row], visLeft+visW+gap);              // 同排按实际落点推进，不重叠太多
@@ -9012,6 +9087,18 @@ function sceneWoodLayout(z){
       left:visLeft-baseW*(1-scale)/2,                                 // transform-origin 居中，换算成排版框 left
       top, w:baseW, s:scale, z:40-row*6
     });
+  }
+  // 木头不满整屏时整组水平居中：不再都挤在左半边，而是散落在画面中心区域
+  let minL=Infinity, maxR=-Infinity;
+  for(const p of out){
+    const vl=p.left+p.w*(1-p.s)/2, vr=vl+p.w*p.s;
+    if(vl<minL) minL=vl;
+    if(vr>maxR) maxR=vr;
+  }
+  const span=maxR-minL;
+  if(out.length && span<W*0.94){
+    const shift=(W-span)/2-minL;
+    if(shift>2) for(const p of out) p.left+=shift;
   }
   return {out, width:Math.ceil(Math.max(W, ...cursor.map(c=>c+WOOD_MARGIN))), height:H};
 }
@@ -9027,7 +9114,9 @@ function scrollWoodIntoView(z,w){
 function renderSceneWoods(){
   const wrap=$('sceneWoods'), z=currentZone;
   if(!wrap||z<0) return;
-  const keep=wrap.scrollLeft;
+  // 缩放/换屏后按相对位置保持视野，避免突然跳回最左边
+  const oldMax=Math.max(1, wrap.scrollWidth-wrap.clientWidth);
+  const keepRatio=Math.min(1, Math.max(0, wrap.scrollLeft/oldMax));
   const lay=sceneWoodLayout(z);
   let html=`<div class="swinner" style="width:${lay.width}px;height:${lay.height}px">`;
   for(let w=0;w<S.zones[z].woods.length;w++){
@@ -9056,8 +9145,9 @@ function renderSceneWoods(){
       if(el){ cellEls[`${z}-${w}-${i}`]=el; renderCell(z,w,i); }
     }
   }
-  // 尽量保持当前横向滚动位置（买木头后由 scrollWoodIntoView 滚到新木头）
-  wrap.scrollLeft=Math.min(keep, Math.max(0, lay.width-wrap.clientWidth));
+  // 尽量保持当前横向视野（买木头后由 scrollWoodIntoView 滚到新木头）
+  const newMax=Math.max(0, lay.width-wrap.clientWidth);
+  wrap.scrollLeft=Math.min(newMax, Math.round(keepRatio*newMax));
   // 新木头入场动画
   const last=wrap.querySelectorAll('.wood'); if(last.length) last[last.length-1].classList.add('pop');
 }
@@ -14599,6 +14689,8 @@ const GB_GAMES=[
   {id:'dd', codex:'m2_chuqian', name:'🃏 斗月巴', game:'dd', lock:true},
   {id:'gold', codex:'mb_jin', name:'黄金矿工', html:'goldminer.html'},
   {id:'tetris', codex:'m3_eluosi', name:'俄罗斯巴块', sub:true, html:'tetris.html'},
+  /* 月巴螺旋跳：开发期 hidden:true 不显示，验收后删除该标记即上线 */
+  {id:'helix', codex:'mb_gungun', name:'月巴螺旋跳', sub:true, html:'helixjump.html', hidden:true},
   /* 月巴大战丧尸月巴入口暂时隐藏，实装完成后恢复：{id:'pvz', codex:'mb_tomato', name:'月巴大战丧尸月巴', html:'pvz.html'} */
   /* 月巴数织 / 巴巴博弈入口暂时隐藏，恢复时取消注释即可：
   {id:'nonogram', codex:'mb_wenshi', name:'月巴数织', html:'nonogram.html'},
@@ -14612,6 +14704,7 @@ function gbRender(){
   let out='';
   for(let i=0;i<GB_GAMES.length;i++){
     const g=GB_GAMES[i];
+    if(g.hidden) continue;   /* 开发期隐藏入口：验收后删掉卡片上的 hidden:true */
     const t=typeById(g.codex);
     if(!t) continue;
     const lk=!!(g.lock&&!dex2Unlocked());
@@ -14715,6 +14808,13 @@ window.addEventListener('message',function(e){
     addCoins(n);
     save();
     toast($tf('🍅 月巴大战 +{n} 🪙',{n:n}));
+  }else if(d.type==='yueba-helix-ready'){
+    /* 月巴螺旋跳 iframe 就绪：下发已开启图鉴的全部月巴名册（父页负责本地化名称/立绘/SVG） */
+    if(!e.source) return;
+    const list=fgAllTypes().filter(function(t){ return colCount(t.id)>0; }).map(function(t){
+      return {id:t.id,name:t.name,color:t.color||'#8fd0de',scale:picScale(t),art:artURL(t)||'',svg:fatSVG(t)};
+    });
+    e.source.postMessage({type:'yueba-helix-roster',list:list,muted:!!S.muted,lowPower:!!S.lowPower},'*');
   }else if(d.type==='yueba-gold-item'){
     if(String(d.item||'')!=='goldletter') return;
     const t=tvFresh();
@@ -15565,6 +15665,14 @@ function init(){
   $('sceneFast').onclick=useFast;
   $('sceneWeather').onclick=useWeather;
   $('slotBtn').onclick=openSlotMenu;
+  /* 电脑端右下角：木头放大/缩小滑杆 */
+  const zoomEl=$('zoomRange');
+  if(zoomEl){
+    zoomEl.oninput=function(){ setSceneZoom(this.value/100); };
+    zoomEl.onchange=function(){ save(); };
+  }
+  $('zoomOut').onclick=function(){ setSceneZoom(sceneZoomVal()-0.05); sfx.click(); save(); };
+  $('zoomIn').onclick=function(){ setSceneZoom(sceneZoomVal()+0.05); sfx.click(); save(); };
   save();
   /* 恢复上一局：等脚本全部执行完（顶层 let 已初始化）再进牌桌，避开暂死区 */
   setTimeout(function(){ try{ ddRestore(); }catch(e){} },0);
