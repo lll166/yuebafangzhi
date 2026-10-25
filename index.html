@@ -203,6 +203,11 @@
   .dock-badge{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;border-radius:999px;
     background:linear-gradient(180deg,#ff8a80,#e53935);color:#fff;font-size:11px;font-weight:800;
     display:flex;align-items:center;justify-content:center;padding:0 4px;box-shadow:0 2px 6px rgba(229,57,53,.4);}
+  /* 百巴箱日常奖励未领完：入口右上角亮起 🎁（只是角标，不显示数字） */
+  .dock-badge.gbbadge{min-width:0;width:20px;height:20px;padding:0;font-size:12px;font-weight:400;
+    background:var(--panel);color:inherit;border:1px solid var(--line);
+    box-shadow:0 2px 6px rgba(0,0,0,.18);animation:gbbap 1.8s ease-in-out infinite;}
+  @keyframes gbbap{0%,100%{transform:scale(1);}50%{transform:scale(1.12);}}
 
   /* ========== 场地场景视图 ========== */
   #scene{position:fixed;inset:0;z-index:55;display:none;}
@@ -3630,7 +3635,7 @@
   <button class="dockbtn" id="btnStats"><b>📊</b><small data-i18n="统计">统计</small></button>
   <button class="dockbtn" id="btnShop"><b>🛒</b><small data-i18n="商店">商店</small></button>
   <button class="dockbtn" id="btnTravel" onclick="travelEntry()"><b>🧳</b><small data-i18n="旅行">旅行</small></button>
-  <button class="dockbtn" id="btnGameBox" onclick="gbBoxEntry()" title="百巴箱"><b>🎁</b><small data-i18n="百巴箱">百巴箱</small></button>
+  <button class="dockbtn hasbadge" id="btnGameBox" onclick="gbBoxEntry()" title="百巴箱"><b>🎁</b><small data-i18n="百巴箱">百巴箱</small><span class="dock-badge gbbadge" id="gbBadge" style="display:none">🎁</span></button>
   <button class="dockbtn" id="btnSurvivor" style="display:none" onclick="survivorEntry()" title="番茄幸存者"><b>🍅⚔️</b><small data-i18n="幸存者">幸存者</small></button>
 </div>
 
@@ -4051,7 +4056,8 @@ const TYPES=[
   {id:'mb_yanjiang',name:'滚烫月巴',   r:4, v:90, t:600, cond:{t:'zone',z:7}, color:'#d15852', shape:'spike'},
   {id:'mb_yunduan', name:'会飞月巴',   img:'https://origin.picgo.net/2026/10/25/0c49c146c2e1b0322b58ede6c45ace220be030c873f439d5.th.png',
     imgs:[{url:'https://origin.picgo.net/2026/10/25/0c49c146c2e1b0322b58ede6c45ace220be030c873f439d5.th.png', by:'鲸弑', note:'月巴会飞。'},
-          {url:'https://origin.picgo.net/2026/10/25/230fb576b0a523a89.th.png', by:'匿名', note:'小飞棍来咯。'}], r:4, v:110,t:720, cond:{t:'zone',z:8}, color:'#b39ddb', shape:'rainbow'},
+          {url:'https://origin.picgo.net/2026/10/25/230fb576b0a523a89.th.png', by:'匿名', note:'小飞棍来咯。'},
+          {url:'https://origin.picgo.net/2026/10/26/a29dd628925e342a2742a4064029e1f763ece61d3e2ad6d2.th.png', by:'hellomelody'}], r:4, v:110,t:720, cond:{t:'zone',z:8}, color:'#b39ddb', shape:'rainbow'},
 
   {id:'mb_kafei', name:'咖啡月巴', img:'https://origin.picgo.net/2026/10/21/coffee-yue---KoTofu4bfeb46ff6179820.th.png', r:4, v:80,  t:540,  cond:{t:'item',i:'coffee'},    color:'#b98a76', shape:'cube'},
   {id:'mb_wanou', name:'玩偶月巴', img:'https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Lib2c078bd058ef48c.th.png', r:4, v:90,  t:600,  cond:{t:'item',i:'doll'},      color:'#e88aa8', shape:'heart'},
@@ -4130,7 +4136,8 @@ const TYPES=[
   {id:'mb_faguan',  name:'法官月巴',    r:3, v:45, t:460, cond:null, color:'#4a4a5a', shape:'cube'},
   {id:'mb_lvshi',   name:'律师月巴',    r:3, v:45, t:460, cond:null, color:'#5a7a8a', shape:'tall'},
   {id:'mb_jinju',   name:'进局子巴',  r:3, v:40, t:400, cond:null, img:'https://origin.picgo.net/2026/10/21/---akai0255d6362d123bd3.th.png', color:'#8a8a8a', shape:'squish', artScale:1.45},
-  {id:'mb_zuanshi', name:'钻石月巴',  r:3, v:260, t:1250, cond:null, color:'#9be7ff', shape:'cube'},
+  {id:'mb_zuanshi', name:'钻石月巴',  img:'https://origin.picgo.net/2026/10/26/23b4e2cfd09ac95577efbd3a4d646cbba0bd6b5198a6a674.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/26/23b4e2cfd09ac95577efbd3a4d646cbba0bd6b5198a6a674.th.png', by:'hellomelody', note:'LOVE & PEACE!!!'}], r:3, v:260, t:1250, cond:null, color:'#9be7ff', shape:'cube'},
   {id:'mb_huang',   name:'黄月巴',    img:'https://origin.picgo.net/2026/10/23/485bfcabf6eaea8ea294ead8e520a0ada29d48a19c9197d6.th.png',
     imgs:[{url:'https://origin.picgo.net/2026/10/23/485bfcabf6eaea8ea294ead8e520a0ada29d48a19c9197d6.th.png', by:'影子生物'}], r:2, v:24, t:220, cond:null, color:'#ffd94a', shape:'round'},
   {id:'mb_qiezhi',  name:'茄汁月巴',  r:2, v:22, t:200, cond:null, img:'https://origin.picgo.net/2026/10/21/07de58ae22de5c368964182b7b78934969a8e2ed84c5ab60.th.png',
@@ -4345,6 +4352,7 @@ const YB_PIC_AUTHOR={
   m3_egg:'hellomelody',
   m3_badaba:'Nyaomi',
   mb_wansheng:'Nyaomi',
+  mb_zuanshi:'hellomelody',
 };
 /* 每种月巴的「简介(文字)作者」by ID，图鉴详情弹窗简介末尾展示；未填则不显示文字作者 */
 const YB_TXT_AUTHOR={};
@@ -14558,7 +14566,7 @@ function tick(){
       }
     }
   }
-  if(now()-_achT>1500){ _achT=now(); checkAch(); ddAchTick(); }   // 成就判定节流（约 1.5 秒一次，只算未达成的）
+  if(now()-_achT>1500){ _achT=now(); checkAch(); ddAchTick(); updateGbDailyBadge(); }   // 成就判定节流（约 1.5 秒一次，只算未达成的）
   updateStatus();
   updateWeatherHold();
   if(now()-S.lastSave>5000) save();
@@ -14812,6 +14820,8 @@ const GB_GAMES=[
   {id:'helix', codex:'mb_gungun', name:'月巴螺旋跳', sub:true, html:'helixjump.html', hidden:true},
   /* 月巴大战丧尸月巴入口暂时隐藏，实装完成后恢复：{id:'pvz', codex:'mb_tomato', name:'月巴大战丧尸月巴', html:'pvz.html'} */
   {id:'nonogram', codex:'mb_wenshi', name:'月巴数织', html:'nonogram.html'},
+  /* 月巴蛋：开发期 hidden:true 不显示，M5 验收后删除该标记即上线 */
+  {id:'tamago', codex:'mb_xiaoyue', name:'🥚 月巴蛋', html:'tamago.html', hidden:true},
   /* 巴巴博弈入口暂时隐藏，恢复时取消注释即可：
   {id:'fight', codex:'m2_baboyi', name:'巴巴博弈', html:'fight.html'},
   */
@@ -14846,6 +14856,19 @@ function gbDailyBadge(id){
   }
   return null;
 }
+/* 首页百巴箱入口：箱内还有今日没拿完的日常奖励时，右上角亮起 🎁
+   判定与箱内卡片的亮/灰角标完全同一口径（只看实际会渲染出来的卡片） */
+function updateGbDailyBadge(){
+  const b=$('gbBadge'); if(!b) return;
+  let any=false;
+  for(let i=0;i<GB_GAMES.length;i++){
+    const g=GB_GAMES[i];
+    if(g.hidden||!typeById(g.codex)) continue;
+    const dl=gbDailyBadge(g.id);
+    if(dl&&!dl.done){ any=true; break; }
+  }
+  b.style.display=any?'':'none';
+}
 function gbRender(){
   const grid=$('gbGrid'); if(!grid) return;
   let out='';
@@ -14865,6 +14888,7 @@ function gbRender(){
   }
   grid.innerHTML=out;
   const em=$('gbEmpty'); if(em) em.style.display=out?'none':'block';
+  updateGbDailyBadge();
 }
 let _gbLockTipT=null;
 function gbLockTipShow(name){
@@ -14972,6 +14996,23 @@ window.addEventListener('message',function(e){
       return {id:t.id,name:t.name,color:t.color||'#8fd0de',scale:picScale(t),art:artURL(t)||'',svg:fatSVG(t)};
     });
     e.source.postMessage({type:'yueba-helix-roster',list:list,muted:!!S.muted,lowPower:!!S.lowPower},'*');
+  }else if(d.type==='yueba-tamago-ready'){
+    /* 月巴蛋 iframe 就绪：下发已开启图鉴名册 + 庭院当前 3 只 + 番茄数（只读，不写主存档） */
+    if(!e.source) return;
+    const list=fgAllTypes().filter(function(t){ return colCount(t.id)>0; }).map(function(t){
+      return {id:t.id,name:t.name,color:t.color||'#8fb3a6',shape:t.shape||'round',r:t.r||1};
+    });
+    const tv=S.travel||{};
+    const yard=(tv.yardIds||[]).filter(function(id){ return !!typeById(id); });
+    e.source.postMessage({
+      type:'yueba-tamago-roster',
+      list:list,
+      yard:yard,
+      tomato:Math.max(0,parseInt(tv.tomato,10)||0),
+      muted:!!S.muted,
+      lowPower:!!S.lowPower,
+      lang:curLang()
+    },'*');
   }else if(d.type==='yueba-gold-item'){
     if(String(d.item||'')!=='goldletter') return;
     const t=tvFresh();
@@ -15740,7 +15781,7 @@ function init(){
   applySkin(S.skins.active);
   renderOverview(); updateHeader(); updateStatus(); updatePomoUI(); updateSceneBar(); updateWeatherHold();
   applyI18n();   // 静态文案/顶栏语言按钮按当前语言刷新（P0 无译文时显示中文原文）
-  updateTravelIcon(); updateCodeIcon(); updateCodeIcon2(); updateSurvivorIcon();
+  updateTravelIcon(); updateCodeIcon(); updateCodeIcon2(); updateSurvivorIcon(); updateGbDailyBadge();
   svBuffRender();   // 幸存者装备增幅胶囊（无装备时自动隐藏）
   checkAch(true); updateAchBtn();   // 读档后静默结算一次已满足的成就（只登记、不弹提示）
   /* 正式版上线后：测试入口下线，测试存档整键清空（以后不会再产生） */
