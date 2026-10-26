@@ -784,6 +784,8 @@ function go(){
 document.getElementById('enter').addEventListener('click',go);
 
 /* ================= 启动 ================= */
+/* 内嵌在百巴箱里时，向父页回报开场页色系，让顶部功能栏同色 */
+try{ if(window.top!==window.self) parent.postMessage({gbTheme:'crow'},'*'); }catch(e){}
 layout();
 requestAnimationFrame(function(){
   document.body.classList.remove('boot');

@@ -2550,6 +2550,8 @@ function selftest(){
 
 /* ================= 初始化 ================= */
 function init(){
+  /* 内嵌在百巴箱里时，回报本页色系，让顶部功能栏与数织同色 */
+  try{ if(window.top!==window.self) parent.postMessage({gbTheme:'nono'},'*'); }catch(e){}
   applyStaticText();
   NP.forEach(buildClues);
   renderChips();

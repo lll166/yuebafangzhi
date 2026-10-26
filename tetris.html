@@ -2160,6 +2160,8 @@
     TH = LIGHT ? THEMES.light : THEMES.dark;
     document.documentElement.classList.toggle('light', LIGHT);
     document.body.classList.toggle('light', LIGHT);
+    /* 内嵌在百巴箱里时，回报当前深浅主题，让顶部功能栏同色 */
+    try{ if(window.top!==window.self) parent.postMessage({gbTheme:LIGHT?'tet':'tetd'},'*'); }catch(e){}
     var meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', LIGHT ? '#eef0f8' : '#0a0c16');
     if (repaint !== false) { redrawStatic(); renderPreviews(); }

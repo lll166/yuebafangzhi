@@ -2339,6 +2339,8 @@ window.addEventListener('pagehide',function(){
 });
 
 /* ================= 启动 ================= */
+/* 内嵌在百巴箱里时，向父页回报矿区色系，让顶部功能栏同色 */
+try{ if(window.top!==window.self) parent.postMessage({gbTheme:'gold'},'*'); }catch(e){}
 /* 供首页「新版本自动刷新」判断：一局进行中（含暂停、过关过渡）不刷新，避免半途打断 */
 window.__gmState=function(){ return gm.phase; };
 function applyLangStatic(){

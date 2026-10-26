@@ -3583,7 +3583,69 @@
   #gbGameClose{appearance:none;border:1px solid rgba(70,230,242,.32);background:rgba(70,230,242,.08);
     color:#bfe9f2;border-radius:99px;padding:5px 11px;font-size:12px;font-weight:800;cursor:pointer;}
   #gbGameClose:active{transform:scale(.95);}
+  /* 主题条：内嵌页各自回报色系，功能栏不再固定青色
+     t-nono = 月巴数织（浅紫纸面）· t-crow = 群鸦筑笼开场（夜紫） */
+  #gbGameBar{transition:background .3s ease,border-color .3s ease,color .3s ease;}
+  #gbGameOverlay.t-nono{background:#eff1f8;}
+  #gbGameOverlay.t-nono #gbGameBar{
+    background:linear-gradient(180deg,rgba(255,255,255,.94),rgba(234,238,248,.88));
+    border-bottom:1px solid rgba(52,58,82,.46);color:#34384c;letter-spacing:.14em;
+    font-family:"SF Mono","Cascadia Mono",Consolas,ui-monospace,"PingFang SC","Microsoft YaHei",monospace;
+    box-shadow:inset 0 -1px 0 rgba(255,255,255,.5);}
+  #gbGameOverlay.t-nono #gbGameClose{
+    border:1px solid rgba(52,58,82,.18);border-left:2px solid rgba(99,108,158,.48);border-radius:0;
+    background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(228,232,244,.86));color:#34384c;
+    letter-spacing:.1em;font-weight:800;
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);
+    box-shadow:inset 0 0 12px rgba(99,108,158,.05);}
+  #gbGameOverlay.t-crow{background:#131124;}
+  #gbGameOverlay.t-crow #gbGameBar{
+    background:linear-gradient(160deg,#201d35 0%,#131124 100%);
+    border-bottom:1px solid rgba(185,174,230,.28);color:#ebe9f7;letter-spacing:.14em;
+    font-family:"SF Mono","Cascadia Mono",Consolas,ui-monospace,"PingFang SC","Microsoft YaHei",monospace;}
+  #gbGameOverlay.t-crow #gbGameClose{
+    border:1px solid rgba(185,174,230,.55);border-radius:0;background:transparent;color:#eeecfa;
+    letter-spacing:.1em;font-weight:800;}
+  /* 黄金矿工：深青矿区配色（与 goldminer.html 的 HUD 同族） */
+  #gbGameOverlay.t-gold{background:#031019;}
+  #gbGameOverlay.t-gold #gbGameBar{
+    background:linear-gradient(180deg,#071f2a,#031019);
+    border-bottom:1px solid rgba(90,222,238,.22);color:#ddf6fb;letter-spacing:.14em;
+    font-family:"SF Mono","Cascadia Mono",Consolas,ui-monospace,"PingFang SC","Microsoft YaHei",monospace;
+    box-shadow:inset 0 0 18px rgba(70,230,242,.06);}
+  #gbGameOverlay.t-gold #gbGameClose{
+    border:1px solid rgba(90,222,238,.22);border-left:2px solid rgba(99,234,247,.48);border-radius:0;
+    background:linear-gradient(180deg,rgba(8,34,46,.88),rgba(4,18,26,.94));color:#ddf6fb;
+    letter-spacing:.1em;font-weight:800;
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);}
+  /* 俄罗斯巴块：浅色主题（默认） */
+  #gbGameOverlay.t-tet{background:#eef0f8;}
+  #gbGameOverlay.t-tet #gbGameBar{
+    background:linear-gradient(180deg,#ffffff,#eaedf9);
+    border-bottom:1px solid rgba(72,78,120,.45);color:#2b2f4a;letter-spacing:.14em;
+    font-family:"SF Mono","Cascadia Mono",Consolas,ui-monospace,"PingFang SC","Microsoft YaHei",monospace;}
+  #gbGameOverlay.t-tet #gbGameClose{
+    border:1px solid rgba(72,78,120,.22);border-left:2px solid rgba(72,78,120,.45);border-radius:0;
+    background:linear-gradient(180deg,#ffffff,#e7eaf7);color:#262b4d;
+    letter-spacing:.1em;font-weight:800;
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%);}
+  /* 俄罗斯巴块：深色主题 */
+  #gbGameOverlay.t-tetd{background:#0a0c16;}
+  #gbGameOverlay.t-tetd #gbGameBar{
+    background:linear-gradient(180deg,#151830,#0a0c16);
+    border-bottom:1px solid rgba(185,191,230,.20);color:#e9ebf8;letter-spacing:.14em;
+    font-family:"SF Mono","Cascadia Mono",Consolas,ui-monospace,"PingFang SC","Microsoft YaHei",monospace;}
+  #gbGameOverlay.t-tetd #gbGameClose{
+    border:1px solid rgba(185,191,230,.20);border-left:2px solid rgba(185,191,230,.48);border-radius:0;
+    background:linear-gradient(180deg,rgba(24,27,48,.9),rgba(12,14,28,.94));color:#eef0ff;
+    letter-spacing:.1em;font-weight:800;
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%);}
   #gbGameFrame{flex:1 1 auto;width:100%;min-height:0;border:0;display:block;background:#04060a;}
+  #gbGameOverlay.t-nono #gbGameFrame{background:#eff1f8;}
+  #gbGameOverlay.t-crow #gbGameFrame{background:#131124;}
+  #gbGameOverlay.t-gold #gbGameFrame{background:#031019;}
+  #gbGameOverlay.t-tet #gbGameFrame{background:#eef0f8;}
+  #gbGameOverlay.t-tetd #gbGameFrame{background:#0a0c16;}
   body.gb-lock{overflow:hidden;}
 </style>
 </head>
@@ -14936,10 +14998,27 @@ function gbPlay(id){
   if(g.game==='dd'){ ddEnter(); return; }
   if(g.game==='snake'){ snakeEntry(); return; }
 }
+const GB_FRAME_THEMES=['nono','crow','gold','tet','tetd'];
+function gbFrameTheme(name){
+  const ov=$('gbGameOverlay'); if(!ov) return;
+  for(let i=0;i<GB_FRAME_THEMES.length;i++) ov.classList.toggle('t-'+GB_FRAME_THEMES[i],name===GB_FRAME_THEMES[i]);
+}
+/* 内嵌页载入后自行回报色系（含俄罗斯巴块深浅主题切换），功能栏跟着换色 */
+window.addEventListener('message',function(e){
+  if(!gbFrameId) return;
+  const fr=$('gbGameFrame'); if(!fr||e.source!==fr.contentWindow) return;
+  const d=e.data;
+  if(!d||GB_FRAME_THEMES.indexOf(d.gbTheme)<0) return;
+  gbFrameTheme(d.gbTheme);
+});
+/* 打开时先按内嵌首页的色系铺好，避免青色一闪 */
+const GB_FRAME_SEED={nonogram:'crow',gold:'gold',tetris:'tet'};
 function gbFrameOpen(g,back){
   gbFrameId=g.id;
   gbFrameBack=(back==='dex')?'dex':'box';
   const ov=$('gbGameOverlay'), fr=$('gbGameFrame'), ttl=$('gbGameTitle');
+  /* 数织每次都先播「群鸦筑笼」开场，功能栏先按开场页配色 */
+  gbFrameTheme(GB_FRAME_SEED[g.id]||'');
   if(ttl) ttl.textContent=(gbFrameBack==='dex'?((DEX_GAME[g.codex]&&DEX_GAME[g.codex].icon||'⛏')+' '):'🎁 ')+$t(g.name);
   const bc=$('gbGameClose');
   if(bc){
@@ -14964,6 +15043,7 @@ function gbFrameClose(){
   const ov=$('gbGameOverlay'), fr=$('gbGameFrame');
   try{ if(fr) fr.src='about:blank'; }catch(e){}
   if(ov) ov.classList.remove('show');
+  gbFrameTheme('');
   document.body.classList.remove('gb-lock');
   if(back==='box') gbBoxEntry();
 }
