@@ -93,13 +93,46 @@ body.used .hint{opacity:0}
     radial-gradient(1100px 700px at 18% -10%, #fbfbfe 0%, transparent 60%),
     radial-gradient(900px 600px at 92% 108%, #eceef6 0%, transparent 55%),
     linear-gradient(160deg, #eff1f8 0%, #e2e5f1 100%);
-  transition:opacity 1.15s ease 1.05s;
+  transition:opacity 4.63s cubic-bezier(.42,.02,.58,1) 3.88s;
 }
 body.leaving .veil{opacity:1}
 /* 离场时整片鸦群缓慢淡出，配合更长的飞散时间 */
-body.leaving #stage{opacity:0;transition:opacity 1.7s ease .4s}
+body.leaving #stage{opacity:0;transition:opacity 1.15s ease .3s}
 body.leaving .top,body.leaving .bot{
   opacity:0;transform:translateY(-4px);transition:opacity .45s ease,transform .45s ease;
+}
+/* ---- 离场留言：两行字先清晰浮现，随后迅速被浓雾模糊、淡去，最后随白场一起消失 ---- */
+.whisper{
+  position:fixed;inset:0;z-index:6;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:1.15em;padding:0 26px;text-align:center;
+}
+.whisper p{
+  margin:0;opacity:0;font-size:13px;font-weight:700;
+  letter-spacing:.20em;line-height:1.9;color:#f3f0ff;
+  text-shadow:0 0 9px rgba(9,6,22,.95),0 0 20px rgba(9,6,22,.8),0 0 34px rgba(9,6,22,.55);
+  will-change:opacity,filter,transform;
+}
+body.leaving .whisper p{
+  animation:whisperLine 8s cubic-bezier(.32,.08,.42,1) .88s forwards;
+}
+body.leaving .whisper p:nth-child(2){animation-delay:2.13s}
+@keyframes whisperLine{
+  0%{opacity:0;filter:blur(0);transform:translate3d(0,8px,0)}
+  14%{opacity:0;filter:blur(.2px);transform:translate3d(0,6px,0)}
+  26%{opacity:1;filter:blur(.35px);transform:translate3d(0,0,0)}
+  36%{opacity:1;filter:blur(1.6px);transform:translate3d(0,0,0)}
+  46%{opacity:.98;filter:blur(3.6px);transform:translate3d(0,0,0)}
+  56%{opacity:.9;filter:blur(6.2px);transform:translate3d(0,0,0)}
+  66%{opacity:.72;filter:blur(8.6px);transform:translate3d(0,0,0)}
+  76%{opacity:.46;filter:blur(11px);transform:translate3d(0,0,0)}
+  88%{opacity:.16;filter:blur(13px);transform:translate3d(0,0,0)}
+  100%{opacity:0;filter:blur(15px);transform:translate3d(0,0,0)}
+}
+@keyframes whisperLineFade{
+  0%{opacity:0}
+  22%,62%{opacity:1}
+  100%{opacity:0}
 }
 @media (max-width:420px){
   .brand b{font-size:10px;letter-spacing:.30em}
@@ -107,6 +140,8 @@ body.leaving .top,body.leaving .bot{
   .sub{font-size:6.6px;letter-spacing:.20em}
   .enter{padding:13px 28px;font-size:9.5px;letter-spacing:.26em;text-indent:.26em}
   .bot{gap:15px}
+  .whisper{gap:1em}
+  .whisper p{font-size:11.5px;letter-spacing:.16em;line-height:1.95}
 }
 @media (max-height:560px){
   .hint{display:none}
@@ -115,6 +150,11 @@ body.leaving .top,body.leaving .bot{
 }
 @media (prefers-reduced-motion:reduce){
   #stage,.hud,.veil{transition-duration:.01s}
+  body.leaving .whisper p{
+    animation:whisperLineFade 6.5s ease .5s forwards;
+    color:#2b2647;text-shadow:none;filter:none;
+  }
+  body.leaving .whisper p:nth-child(2){animation-delay:1.5s}
 }
 </style>
 </head>
@@ -132,16 +172,21 @@ body.leaving .top,body.leaving .bot{
 </footer>
 
 <div class="veil" aria-hidden="true"></div>
+<div class="whisper" id="whisper" aria-hidden="true"><p></p><p></p></div>
 
 <script>
 (function(){
 'use strict';
 /* ================= 文案 ================= */
 var TXT={
-  zh:{brand:'月巴数织',brandSub:'NONOGRAM',sub:'序 · 群鸦筑笼',hint:'轻触或滑过乌鸦，让它们飞起',enter:'进入数织',title:'群鸦筑笼 · 月巴数织'},
-  en:{brand:'Banny Nonogram',brandSub:'CAGE OF CROWS',sub:'Prologue · A Cage of Crows',hint:'Touch or sweep the crows — they take flight, then return to the cage',enter:'Enter Nonogram',title:'A Cage of Crows · Banny Nonogram'},
-  ja:{brand:'バニー数織',brandSub:'烏の籠',sub:'序・烏の籠',hint:'カラスに触れると飛び立ち、やがて籠へ戻ります',enter:'数織へ',title:'烏の籠 · バニー数織'},
-  ko:{brand:'배니 노노그램',brandSub:'CAGE OF CROWS',sub:'서장 · 까마귀의 새장',hint:'까마귀를 만지면 날아올랐다가 곧 새장으로 돌아옵니다',enter:'노노그램 시작',title:'까마귀의 새장 · 배니 노노그램'}
+  zh:{brand:'月巴数织',brandSub:'NONOGRAM',sub:'序 · 群鸦筑笼',hint:'轻触或滑过乌鸦，让它们飞起',enter:'进入数织',title:'群鸦筑笼 · 月巴数织',
+      whisper:['我从一开始就在外面。','一直待在笼子里的人是你。']},
+  en:{brand:'Banny Nonogram',brandSub:'CAGE OF CROWS',sub:'Prologue · A Cage of Crows',hint:'Touch or sweep the crows — they take flight, then return to the cage',enter:'Enter Nonogram',title:'A Cage of Crows · Banny Nonogram',
+      whisper:['I have been outside from the very beginning.','You are the one who has always been in the cage.']},
+  ja:{brand:'バニー数織',brandSub:'烏の籠',sub:'序・烏の籠',hint:'カラスに触れると飛び立ち、やがて籠へ戻ります',enter:'数織へ',title:'烏の籠 · バニー数織',
+      whisper:['私は最初からずっと、外にいた。','ずっと籠の中にいたのは、あなたの方。']},
+  ko:{brand:'배니 노노그램',brandSub:'CAGE OF CROWS',sub:'서장 · 까마귀의 새장',hint:'까마귀를 만지면 날아올랐다가 곧 새장으로 돌아옵니다',enter:'노노그램 시작',title:'까마귀의 새장 · 배니 노노그램',
+      whisper:['나는 처음부터 밖에 있었어.','계속 새장 안에 있던 사람은 너야.']}
 };
 var QS=new URLSearchParams(location.search||'');
 var rawLang=(QS.get('lang')||'').toLowerCase();
@@ -166,6 +211,10 @@ document.getElementById('brandSub').textContent=T.brandSub;
 document.getElementById('sub').textContent=T.sub;
 document.getElementById('hint').textContent=T.hint;
 document.getElementById('enterTxt').textContent=T.enter;
+(function(){
+  var wp=document.getElementById('whisper').children,i;
+  for(i=0;i<wp.length&&i<T.whisper.length;i++) wp[i].textContent=T.whisper[i];
+})();
 
 /* ================= 设计坐标 ================= */
 var W=760,H=1040;
@@ -779,7 +828,7 @@ function go(){
   var url=targetURL();
   setTimeout(function(){
     try{ location.href=url; }catch(e){}
-  },2400);
+  },reduceMotion?8000:10700);
 }
 document.getElementById('enter').addEventListener('click',go);
 
