@@ -5119,6 +5119,8 @@ const I18N_UI={
   '🧩 进入月巴数织':{en:'🧩 Enter Banny Nonogram',ja:'🧩 バニー数織へ',ko:'🧩 배니 노노그램 시작'},
   '✕ 返回图鉴':{en:'✕ Back to Codex',ja:'✕ 図鑑に戻る',ko:'✕ 도감으로 돌아가기'},
   '巴巴博弈':{en:'Baba Gambit',ja:'ババゲーム',ko:'바바 겜블'},
+  '🥊 巴巴博弈':{en:'🥊 Baba Gambit',ja:'🥊 ババゲーム',ko:'🥊 바바 겜블'},
+  '🥊 进入巴巴博弈':{en:'🥊 Enter Baba Gambit',ja:'🥊 ババゲームへ',ko:'🥊 바바 겜블 시작'},
   /* C. 场地工具条 */
   '← 返回':{en:'← Back',ja:'← 戻る',ko:'← 뒤로'},
   '🪵 新木头':{en:'🪵 New Log',ja:'🪵 新しい木材',ko:'🪵 새 나무'},
@@ -9943,6 +9945,7 @@ const DEX_GAME={
   mb_jin:{icon:'⛏', label:'⛏ 黄金矿工', enter:'⛏ 进入黄金矿工', game:'gold'},
   m3_eluosi:{icon:'🧱', label:'🧱 俄罗斯巴块', enter:'🧱 进入俄罗斯巴块', game:'tetris'},
   mb_wenshi:{icon:'🧩', label:'🧩 月巴数织', enter:'🧩 进入月巴数织', game:'nonogram'},
+  m2_baboyi:{icon:'🥊', label:'🥊 巴巴博弈', enter:'🥊 进入巴巴博弈', game:'fight'},
 };
 function dexGameOf(id){ return DEX_GAME[id]||null; }
 /* 第二图鉴解锁条件文案（对赌 / 斗月巴 共用） */
@@ -9960,6 +9963,7 @@ function dexGameEntry(id){
   if(g.game==='gold'){ dexGoldEntry(); return; }
   if(g.game==='tetris'){ dexTetrisEntry(); return; }
   if(g.game==='nonogram'){ dexNonogramEntry(); return; }
+  if(g.game==='fight'){ dexFightEntry(); return; }
 }
 function bookRowsHTML(list,quiet){
   let rows=''; let i=0;
@@ -14899,9 +14903,7 @@ const GB_GAMES=[
   {id:'nonogram', codex:'mb_wenshi', name:'月巴数织', html:'nonogram.html'},
   /* 月巴蛋：开发期 hidden:true 不显示，M5 验收后删除该标记即上线 */
   {id:'tamago', codex:'mb_xiaoyue', name:'🥚 月巴蛋', html:'tamago.html', hidden:true},
-  /* 巴巴博弈入口暂时隐藏，恢复时取消注释即可：
   {id:'fight', codex:'m2_baboyi', name:'巴巴博弈', html:'fight.html'},
-  */
 ];
 let gbFrameId=null;
 let gbFrameBack='box';   /* box=百巴箱进入；dex=图鉴进入（关闭后回到图鉴，不弹百巴箱） */
@@ -15071,6 +15073,14 @@ function dexNonogramEntry(){
   sfx.click();
   gbFrameOpen(g,'dex');
 }
+/* 图鉴入口：巴巴博弈 → 格斗小游戏。关闭后同样回到图鉴 */
+function dexFightEntry(){
+  const g=GB_GAMES.filter(function(x){ return x.id==='fight'; })[0];
+  if(!g) return;
+  try{ save(); }catch(e){}
+  sfx.click();
+  gbFrameOpen(g,'dex');
+}
 _i18nRepaint.push(function(){ if($('gbBox')&&$('gbBox').classList.contains('show')) gbRender(); });
 /* 黄金矿工回传：金币（每关达标）与每日挑战道具（隧道通行证） */
 window.addEventListener('message',function(e){
@@ -15100,7 +15110,8 @@ window.addEventListener('message',function(e){
     /* 月巴蛋 iframe 就绪：下发已开启图鉴名册 + 庭院当前 3 只 + 番茄数（只读，不写主存档） */
     if(!e.source) return;
     const list=fgAllTypes().filter(function(t){ return colCount(t.id)>0; }).map(function(t){
-      return {id:t.id,name:t.name,color:t.color||'#8fb3a6',shape:t.shape||'round',r:t.r||1};
+      return {id:t.id,name:t.name,color:t.color||'#8fb3a6',shape:t.shape||'round',r:t.r||1,
+        art:artURL(t)||''};
     });
     const tv=S.travel||{};
     const yard=(tv.yardIds||[]).filter(function(id){ return !!typeById(id); });
