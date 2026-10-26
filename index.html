@@ -3640,12 +3640,25 @@
     background:linear-gradient(180deg,rgba(24,27,48,.9),rgba(12,14,28,.94));color:#eef0ff;
     letter-spacing:.1em;font-weight:800;
     clip-path:polygon(0 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%);}
+  /* 月巴食堂：浅纸单色（与 diner.html 默认奶油纸同族） */
+  #gbGameOverlay.t-diner{background:#F5F0E6;}
+  #gbGameOverlay.t-diner #gbGameBar{
+    background:linear-gradient(180deg,#FBF7EE,#EFE8DA);
+    border-bottom:1px solid rgba(43,39,35,.45);color:#2B2723;letter-spacing:.14em;
+    font-family:"SF Mono","Cascadia Mono",Consolas,ui-monospace,"PingFang SC","Microsoft YaHei",monospace;
+    box-shadow:inset 0 -1px 0 rgba(255,255,255,.55);}
+  #gbGameOverlay.t-diner #gbGameClose{
+    border:1px solid rgba(43,39,35,.22);border-left:2px solid rgba(43,39,35,.55);border-radius:0;
+    background:linear-gradient(180deg,rgba(255,253,247,.96),rgba(237,229,213,.94));color:#2B2723;
+    letter-spacing:.1em;font-weight:800;
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%);}
   #gbGameFrame{flex:1 1 auto;width:100%;min-height:0;border:0;display:block;background:#04060a;}
   #gbGameOverlay.t-nono #gbGameFrame{background:#eff1f8;}
   #gbGameOverlay.t-crow #gbGameFrame{background:#131124;}
   #gbGameOverlay.t-gold #gbGameFrame{background:#031019;}
   #gbGameOverlay.t-tet #gbGameFrame{background:#eef0f8;}
   #gbGameOverlay.t-tetd #gbGameFrame{background:#0a0c16;}
+  #gbGameOverlay.t-diner #gbGameFrame{background:#F5F0E6;}
   body.gb-lock{overflow:hidden;}
 </style>
 </head>
@@ -4087,8 +4100,10 @@ const TYPES=[
   {id:'mb_tan',    name:'一坨月巴', img:'https://origin.picgo.net/2026/10/21/41befbe6b2be042271d7ae7805b64f598d5d887397481fdf.th.png', r:2, v:20, t:240, cond:null, color:'#a5c3e8', shape:'wide'},
   {id:'mb_jian',   name:'健身月巴', img:'https://origin.picgo.net/2026/09/03/9935aafd50857466b.th.png', r:3, v:30, t:300, cond:{t:'day'}, color:'#9ec48f', shape:'tall'},
 
-  {id:'mb_zao',  name:'晨月巴', r:3, v:25, t:300, cond:{t:'time',a:6,b:10},  color:'#e8c39e', shape:'round'},
-  {id:'mb_lu',   name:'露月巴', r:3, v:40, t:360, cond:{t:'time',a:4,b:8},   color:'#9fd4e8', shape:'drop'},
+  {id:'mb_zao',  name:'晨月巴', img:'https://origin.picgo.net/2026/10/27/c77a0c0f38f6185cc62fb344b3dd306ff1b4d124e037e6ac.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/27/c77a0c0f38f6185cc62fb344b3dd306ff1b4d124e037e6ac.th.png', by:'影子生物'}], r:3, v:25, t:300, cond:{t:'time',a:6,b:10},  color:'#e8c39e', shape:'round'},
+  {id:'mb_lu',   name:'露月巴', img:'https://origin.picgo.net/2026/10/27/47f37ba2b22b037038cc10f1e10b819287b3aabf07476a9b.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/27/47f37ba2b22b037038cc10f1e10b819287b3aabf07476a9b.th.png', by:'平瀨葵', note:'並非露珠。'}], r:3, v:40, t:360, cond:{t:'time',a:4,b:8},   color:'#9fd4e8', shape:'drop'},
   {id:'mb_wu',   name:'午月巴', r:3, v:28, t:300, cond:{t:'time',a:11,b:14}, color:'#f2b87a', shape:'round'},
   {id:'mb_hun',  name:'昏月巴', r:3, v:30, t:300, cond:{t:'time',a:16,b:19}, color:'#e8a0bc', shape:'round'},
   {id:'mb_ye',   name:'夜月巴', r:3, v:35, t:360, cond:{t:'night'},          color:'#8f74c9', shape:'moon'},
@@ -4299,7 +4314,8 @@ const TYPES2=[
   {id:'m2_wailaizhe',name:'外来者月巴', r:5, v:250, t:1450, cond:{t:'travel', d:'ancient', n:5}, weight:0.01, color:'#9ed8ce', shape:'rainbow'},
   /* —— 枯寂幻境（森林第四图）主题月巴 —— */
   {id:'m2_kuji',     name:'枯寂月巴',  r:4, v:76,  t:750,  cond:{t:'travel', d:'cursed', n:3}, color:'#9b7fb0', shape:'round'},
-  {id:'m2_xinsheng', name:'新生月巴',  r:4, v:82,  t:780,  cond:{t:'travel', s:'新生芽'}, color:'#7ec98a', shape:'round'},
+  {id:'m2_xinsheng', name:'新生月巴',  img:'https://origin.picgo.net/2026/10/27/4bbe6aedc42df8f9eb240155538bedc9b64b287a006dfd45.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/27/4bbe6aedc42df8f9eb240155538bedc9b64b287a006dfd45.th.png'}], r:4, v:82,  t:780,  cond:{t:'travel', s:'新生芽'}, color:'#7ec98a', shape:'round'},
   {id:'m2_shouhu',   name:'守护月巴',  r:4, v:88,  t:800,  cond:{t:'travel', s:'守护勋章'}, color:'#8fa8d8', shape:'big'},
   {id:'m2_huanmeng', name:'幻梦月巴',  r:5, v:260, t:1500, cond:{t:'travel', d:'cursed', n:5}, weight:0.01, color:'#c9a6d8', shape:'rainbow'},
   /* —— 无月之夜（小镇第三图）主题月巴 —— */
@@ -4355,6 +4371,8 @@ const TYPES3=[
     imgs:[{url:'https://origin.picgo.net/2026/10/25/new-banny---Phuong-Uyen-Nguyenf4a2e131c7ef8d69.th.png', by:'hellomelody'}], r:2, v:20, t:200, cond:null, color:'#a8c8b8', shape:'round'},
   {id:'m3_badaba',   name:'巴拉巴巴巴', img:'https://origin.picgo.net/2026/10/25/---Yidi-Nyaomi-Li343d957950ab0548.th.png',
     imgs:[{url:'https://origin.picgo.net/2026/10/25/---Yidi-Nyaomi-Li343d957950ab0548.th.png', by:'Nyaomi'}], r:4, v:80, t:760, cond:null, color:'#9a8fa8', shape:'wide'},
+  {id:'m3_guzhang',  name:'故障月巴',  img:'https://origin.picgo.net/2026/10/27/cef136c721e61caa1e6e045fd49dae0f098040d960280d80.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/27/cef136c721e61caa1e6e045fd49dae0f098040d960280d80.th.png'}], r:3, v:45, t:450, cond:null, color:'#5b6ee8', shape:'cube'},
 ];
 const RAR_NAME={1:'普通',2:'常见',3:'稀有',4:'史诗',5:'传说',6:'活动'};
 const R_H={1:[2,5],2:[4,8],3:[6,12],4:[10,20],5:[16,30],6:[22,40]};   // 身高 cm 范围
@@ -4388,6 +4406,8 @@ const YB_PIC_AUTHOR={
   m3_cangshu:'番凩-FFANMER',
   m3_eluosi:'Nyaomi',
   m3_you:'番凩',
+  mb_zao:'影子生物',
+  mb_lu:'平瀨葵',
   mb_dong:'mari',
   mb_shenlian:'mari',
   bairixuan:'影子生物',
@@ -4639,6 +4659,7 @@ const FAT_INTRO={
   m3_eluosi:'这个游戏好像bug了，永远不会出现第11个巴块。',
   m3_you:'鱿鱼鱿鱼。',
   m3_egg:'总有一天会变成乖孩子（？）',
+  m3_guzhang:'404显示……错误……',
   m3_badaba:'很不高兴为您服务。',
 };
 
@@ -5091,6 +5112,8 @@ const I18N_UI={
   '飞行小游戏':{en:'Flight Mini-game',ja:'フライトミニゲーム',ko:'비행 미니게임'},
   '黄金矿工':{en:'Gold Miner',ja:'ゴールドマイナー',ko:'골드 마이너'},
   '月巴数织':{en:'Banny Nonogram',ja:'バニー数織',ko:'배니 노노그램'},
+  '月巴食堂':{en:'Banny Diner',ja:'バニー食堂',ko:'배니 식당'},
+  '🍅 月巴食堂':{en:'🍅 Banny Diner',ja:'🍅 バニー食堂',ko:'🍅 배니 식당'},
   '月巴大战丧尸月巴':{en:'Banny vs. Zombanny',ja:'バニー vs ゾンバニー',ko:'배니 vs 좀비 배니'},
   '⛏ 黄金矿工 +{n} 🪙':{en:'⛏ Gold Miner +{n} 🪙',ja:'⛏ ゴールドマイナー +{n} 🪙',ko:'⛏ 골드 마이너 +{n} 🪙'},
   '🍅 月巴大战 +{n} 🪙':{en:'🍅 Banny Battle +{n} 🪙',ja:'🍅 バニーバトル +{n} 🪙',ko:'🍅 배니 배틀 +{n} 🪙'},
@@ -7272,6 +7295,7 @@ const I18N_BANNY={
   m3_eluosi:{n:{en:'Tetris Banny',ja:'テトリスバニー',ko:'테트리스배니'}},
   m3_you:{n:{en:'Squid Banny',ja:'イカバニー',ko:'오징어배니'}},
   m3_egg:{n:{en:'Egg Banny',ja:'エッグバニー',ko:'에그배니'}},
+  m3_guzhang:{n:{en:'Glitch Banny',ja:'グリッチバニー',ko:'글리치배니'}},
   m3_badaba:{n:{en:'Badabababa',ja:'バダバババ',ko:'바다바바바'}},
 
   dest_forest:{n:{en:'Forest Edge',ja:'森のほとり',ko:'숲의 가장자리'}},
@@ -7753,6 +7777,7 @@ const I18N_BANNY={
   m3_eluosi_intro:{d:{en:'This game seems to be bugged, the 11th banny never appears.',ja:'このゲームはバグっているようで、11 番目のバニーが永遠に現れない。',ko:'이 게임은 버그가 난 것 같아서, 11번째 배니는 영원히 나타나지 않는다.'}},
   m3_you_intro:{d:{en:'Squid, squid.',ja:'イカ、イカ。',ko:'오징어, 오징어.'}},
   m3_egg_intro:{d:{en:'It will become a good boy someday(?)',ja:'いつかきっといい子になる（？）',ko:'언젠가는 좋은 아이가 될 거야(?)'}},
+  m3_guzhang_intro:{d:{en:'404: displayed… error…',ja:'404 表示……エラー……',ko:'404 표시……오류……'}},
   m3_badaba_intro:{d:{en:'You are not welcome.',ja:'喜んでご案内する気はありません。',ko:'기분 좋게 응대해 드릴 생각은 없습니다.'}},
   /* ---------- P5：成就描述 ach_<id>_desc（字段 d） ---------- */
   ach_h1_desc:{d:{en:'Harvest your first Banny',ja:'初めてバニーを収穫する',ko:'첫 배니를 수확하기'}},
@@ -14903,6 +14928,8 @@ const GB_GAMES=[
   {id:'nonogram', codex:'mb_wenshi', name:'月巴数织', html:'nonogram.html'},
   /* 月巴蛋：开发期 hidden:true 不显示，M5 验收后删除该标记即上线 */
   {id:'tamago', codex:'mb_xiaoyue', name:'🥚 月巴蛋', html:'tamago.html', hidden:true},
+  /* 月巴食堂：开发期 hidden:true 不显示，M5 验收后删除该标记即上线 */
+  {id:'diner', codex:'m3_badaba', name:'🍅 月巴食堂', sub:true, html:'diner.html', hidden:true},
   {id:'fight', codex:'m2_baboyi', name:'巴巴博弈', html:'fight.html'},
 ];
 let gbFrameId=null;
@@ -15000,7 +15027,7 @@ function gbPlay(id){
   if(g.game==='dd'){ ddEnter(); return; }
   if(g.game==='snake'){ snakeEntry(); return; }
 }
-const GB_FRAME_THEMES=['nono','crow','gold','tet','tetd'];
+const GB_FRAME_THEMES=['nono','crow','gold','tet','tetd','diner'];
 function gbFrameTheme(name){
   const ov=$('gbGameOverlay'); if(!ov) return;
   for(let i=0;i<GB_FRAME_THEMES.length;i++) ov.classList.toggle('t-'+GB_FRAME_THEMES[i],name===GB_FRAME_THEMES[i]);
@@ -15014,7 +15041,7 @@ window.addEventListener('message',function(e){
   gbFrameTheme(d.gbTheme);
 });
 /* 打开时先按内嵌首页的色系铺好，避免青色一闪 */
-const GB_FRAME_SEED={nonogram:'crow',gold:'gold',tetris:'tet'};
+const GB_FRAME_SEED={nonogram:'crow',gold:'gold',tetris:'tet',diner:'diner'};
 function gbFrameOpen(g,back){
   gbFrameId=g.id;
   gbFrameBack=(back==='dex')?'dex':'box';
@@ -15119,6 +15146,25 @@ window.addEventListener('message',function(e){
       type:'yueba-tamago-roster',
       list:list,
       yard:yard,
+      tomato:Math.max(0,parseInt(tv.tomato,10)||0),
+      muted:!!S.muted,
+      lowPower:!!S.lowPower,
+      lang:curLang()
+    },'*');
+  }else if(d.type==='yueba-diner-ready'){
+    /* 月巴食堂 iframe 就绪：只下发已解锁名册（优先有外链立绘），不写主存档 */
+    if(!e.source) return;
+    const all=fgAllTypes().filter(function(t){ return colCount(t.id)>0; });
+    const withArt=all.filter(function(t){ return !!artURL(t); });
+    const pool=(withArt.length>=4?withArt:all).map(function(t){
+      const nm=I18N_BANNY[t.id]&&I18N_BANNY[t.id].n;
+      return {id:t.id,name:t.name,names:nm||null,color:t.color||'#2B2723',shape:t.shape||'round',
+        r:t.r||1,art:artURL(t)||'',svg:fatSVG(t)};
+    });
+    const tv=S.travel||{};
+    e.source.postMessage({
+      type:'yueba-diner-roster',
+      list:pool,
       tomato:Math.max(0,parseInt(tv.tomato,10)||0),
       muted:!!S.muted,
       lowPower:!!S.lowPower,
@@ -18806,6 +18852,17 @@ function ddSparkHTML(cum){
       return st!=='title';
     }catch(e){ return true; }
   }
+  /* 月巴食堂是否营业中：只有准备 / 菜单 / 结算允许刷新首页；营业中跳过 */
+  function dnBusy(){
+    if(typeof gbFrameId==='undefined'||gbFrameId!=='diner') return false;
+    try{
+      var fr=document.getElementById('gbGameFrame');
+      var w=fr&&fr.contentWindow;
+      if(!w) return true;
+      if(typeof w.__dnState!=='function') return true;   // 内嵌页还没加载完：先别刷
+      return w.__dnState()==='run';
+    }catch(e){ return true; }
+  }
   function check(){
     if(reloading) return;
     if(svBusy()) return;
@@ -18813,6 +18870,7 @@ function ddSparkHTML(cum){
     if(fbBusy()) return;                        // 月巴拳魂一局进行中不打断
     if(snBusy()) return;                        // 蛇月巴一局进行中不打断
     if(tbBusy()) return;                        // 俄罗斯巴块一局进行中不打断
+    if(dnBusy()) return;                        // 月巴食堂营业中不打断
     fetch(location.href,{method:'HEAD',cache:'no-store'}).then(sig).then(function(s){
       if(!s) return;                          // 该环境不返回版本标识时静默跳过
       if(base===null){ base=s; return; }       // 首次：记录基线
