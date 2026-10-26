@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>群鸦筑笼 · 月巴数织</title>
+<style>
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden}
+body{
+  font-family:"SF Mono","Cascadia Mono",Consolas,ui-monospace,"PingFang SC","Microsoft YaHei",monospace;
+  color:#ebe9f7;
+  background:
+    radial-gradient(1100px 700px at 18% -10%, #3b3566 0%, transparent 60%),
+    radial-gradient(900px 620px at 92% 108%, #251f40 0%, transparent 55%),
+    linear-gradient(160deg, #201d35 0%, #131124 100%);
+  -webkit-tap-highlight-color:transparent;
+  touch-action:none;
+  -webkit-user-select:none;user-select:none;
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    repeating-linear-gradient(0deg,rgba(226,222,255,.045) 0 1px,transparent 1px 3px),
+    repeating-linear-gradient(90deg,rgba(226,222,255,.032) 0 1px,transparent 1px 4px);
+}
+body::after{
+  content:"";position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(122% 102% at 50% 44%,transparent 56%,rgba(6,4,16,.46) 100%);
+}
+#stage{
+  position:fixed;inset:0;z-index:2;display:block;width:100%;height:100%;
+  opacity:0;transition:opacity 1.05s cubic-bezier(.2,.8,.2,1);
+  touch-action:none;cursor:default;
+}
+body.ready #stage{opacity:1}
+.hud{
+  position:fixed;z-index:3;left:0;right:0;pointer-events:none;
+  transition:opacity .7s ease .12s,transform .9s cubic-bezier(.2,.8,.2,1) .12s;
+}
+.top{
+  top:0;display:flex;justify-content:space-between;align-items:flex-start;
+  padding:calc(18px + env(safe-area-inset-top)) 20px 0;
+  transform:translateY(-7px);
+}
+.brand{display:block;line-height:1}
+.brand b{display:block;font-size:11px;font-weight:900;letter-spacing:.36em;white-space:nowrap}
+.brand span{
+  display:block;margin-top:7px;font-size:7px;font-weight:700;letter-spacing:.30em;
+  color:#9d97bd;white-space:nowrap;
+}
+.brand span::before{content:"// ";color:#b9aee6}
+.sub{
+  margin:2px 0 0;font-size:7.5px;letter-spacing:.24em;line-height:1.75;
+  color:#9d97bd;text-align:right;
+}
+.bot{
+  bottom:0;display:flex;flex-direction:column;align-items:center;gap:18px;
+  padding:0 20px calc(26px + env(safe-area-inset-bottom));
+  transform:translateY(9px);
+}
+body.boot .top,body.boot .bot{opacity:0}
+body.ready .top,body.ready .bot{opacity:1;transform:none}
+.hint{
+  margin:0;padding:0 12px;text-align:center;
+  font-size:9px;letter-spacing:.14em;line-height:1.7;color:#b2abcf;
+  text-shadow:0 0 7px #191630,0 0 14px #191630,0 0 20px #191630;
+  transition:opacity .55s ease;
+}
+body.used .hint{opacity:0}
+.enter{
+  pointer-events:auto;position:relative;
+  padding:14px 36px;border:1px solid #b9aee6;background:transparent;color:#eeecfa;
+  font-family:inherit;font-size:10px;font-weight:800;letter-spacing:.30em;text-indent:.30em;
+  cursor:pointer;transition:background .22s ease,color .22s ease,transform .22s ease;
+}
+.enter::before,.enter::after{
+  content:"";position:absolute;width:5px;height:5px;background:#b9aee6;
+  transition:background .22s ease;
+}
+.enter::before{left:-1px;top:-1px}
+.enter::after{right:-1px;bottom:-1px}
+.enter:hover,.enter:focus-visible{background:#b9aee6;color:#1b1832;outline:none}
+.enter:hover::before,.enter:hover::after,
+.enter:focus-visible::before,.enter:focus-visible::after{background:#1b1832}
+.enter:active{transform:translateY(1px)}
+.enter i{display:inline-block;margin-left:10px;font-style:normal;text-indent:0;transition:transform .22s ease}
+.enter:hover i,.enter:focus-visible i{transform:translateX(4px)}
+.veil{
+  position:fixed;inset:0;z-index:5;pointer-events:none;opacity:0;
+  /* 与月巴数织同款浅紫底：后半段由深紫渐渐发白，避免明暗骤变刺眼 */
+  background:
+    radial-gradient(1100px 700px at 18% -10%, #fbfbfe 0%, transparent 60%),
+    radial-gradient(900px 600px at 92% 108%, #eceef6 0%, transparent 55%),
+    linear-gradient(160deg, #eff1f8 0%, #e2e5f1 100%);
+  transition:opacity 1.15s ease 1.05s;
+}
+body.leaving .veil{opacity:1}
+/* 离场时整片鸦群缓慢淡出，配合更长的飞散时间 */
+body.leaving #stage{opacity:0;transition:opacity 1.7s ease .4s}
+body.leaving .top,body.leaving .bot{
+  opacity:0;transform:translateY(-4px);transition:opacity .45s ease,transform .45s ease;
+}
+@media (max-width:420px){
+  .brand b{font-size:10px;letter-spacing:.30em}
+  .brand span{font-size:6.5px;letter-spacing:.26em}
+  .sub{font-size:6.6px;letter-spacing:.20em}
+  .enter{padding:13px 28px;font-size:9.5px;letter-spacing:.26em;text-indent:.26em}
+  .bot{gap:15px}
+}
+@media (max-height:560px){
+  .hint{display:none}
+  .bot{gap:10px;padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+  .brand span{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  #stage,.hud,.veil{transition-duration:.01s}
+}
+</style>
+</head>
+<body class="boot">
+<canvas id="stage" aria-hidden="true"></canvas>
+
+<header class="hud top">
+  <div class="brand"><b id="brand">月巴数织</b><span id="brandSub">NONOGRAM</span></div>
+  <p class="sub" id="sub">序 · 群鸦筑笼</p>
+</header>
+
+<footer class="hud bot">
+  <p class="hint" id="hint">轻触或滑过乌鸦，让它们飞起</p>
+  <button class="enter" id="enter" type="button"><span id="enterTxt">进入数织</span><i>→</i></button>
+</footer>
+
+<div class="veil" aria-hidden="true"></div>
+
+<script>
+(function(){
+'use strict';
+/* ================= 文案 ================= */
+var TXT={
+  zh:{brand:'月巴数织',brandSub:'NONOGRAM',sub:'序 · 群鸦筑笼',hint:'轻触或滑过乌鸦，让它们飞起',enter:'进入数织',title:'群鸦筑笼 · 月巴数织'},
+  en:{brand:'Banny Nonogram',brandSub:'CAGE OF CROWS',sub:'Prologue · A Cage of Crows',hint:'Touch or sweep the crows — they take flight, then return to the cage',enter:'Enter Nonogram',title:'A Cage of Crows · Banny Nonogram'},
+  ja:{brand:'バニー数織',brandSub:'烏の籠',sub:'序・烏の籠',hint:'カラスに触れると飛び立ち、やがて籠へ戻ります',enter:'数織へ',title:'烏の籠 · バニー数織'},
+  ko:{brand:'배니 노노그램',brandSub:'CAGE OF CROWS',sub:'서장 · 까마귀의 새장',hint:'까마귀를 만지면 날아올랐다가 곧 새장으로 돌아옵니다',enter:'노노그램 시작',title:'까마귀의 새장 · 배니 노노그램'}
+};
+var QS=new URLSearchParams(location.search||'');
+var rawLang=(QS.get('lang')||'').toLowerCase();
+function detectLang(){
+  if(TXT[rawLang]) return rawLang;
+  try{
+    var s=JSON.parse(localStorage.getItem('idle-yueba-save-v2')||'null');
+    if(s&&TXT[s.lang]) return s.lang;
+  }catch(e){}
+  var nav=(navigator.language||'').toLowerCase();
+  if(nav.indexOf('ja')===0) return 'ja';
+  if(nav.indexOf('ko')===0) return 'ko';
+  if(nav.indexOf('en')===0) return 'en';
+  return 'zh';
+}
+var LANG=detectLang();
+var T=TXT[LANG];
+document.documentElement.lang=(LANG==='zh')?'zh-CN':LANG;
+document.title=T.title;
+document.getElementById('brand').textContent=T.brand;
+document.getElementById('brandSub').textContent=T.brandSub;
+document.getElementById('sub').textContent=T.sub;
+document.getElementById('hint').textContent=T.hint;
+document.getElementById('enterTxt').textContent=T.enter;
+
+/* ================= 设计坐标 ================= */
+var W=760,H=1040;
+var CX=380,BASE_Y=424,RY=330,RX=338;
+var BAR_BOTTOM=886,MID_Y=722;
+
+/* ================= 手感参数（自行调节） =================
+   size        乌鸦整体尺寸倍率：1=当前大小
+   flyPower    起飞力度倍率：越大飞得越远
+   flyDur      留空时长倍率：越大飞得越久、飞得更远
+   returnSpeed 归笼速度倍率：越大回笼越快（1≈当前速度）
+*/
+var FEEL={
+  size:0.6,
+  flyPower:2,
+  flyDur:2,
+  returnSpeed:0.4
+};
+
+var birds=[];
+function rnd(a,b){ return a+Math.random()*(b-a); }
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function rollPhase(){
+  var r=Math.random();
+  return r<.12?0:(r<.34?1:(r<.66?2:(r<.86?3:4)));
+}
+function rotCol(rot){
+  return clamp(Math.round((rot+.315)/.105),0,6);
+}
+/* ---- 重叠剔除：按墨迹包围盒做椭圆碰撞，已有的先占位 ---- */
+var OCC={},OCC_CELL=56;
+function occAdd(x,y,hw,hh){
+  var k=(x/OCC_CELL|0)+'_'+(y/OCC_CELL|0);
+  (OCC[k]||(OCC[k]=[])).push({x:x,y:y,hw:hw,hh:hh});
+}
+function occHit(x,y,ds){
+  var hw=.40*ds,hh=.17*ds;
+  var cx=x/OCC_CELL|0,cy=y/OCC_CELL|0,gx,gy,i,o;
+  for(gx=cx-1;gx<=cx+1;gx++) for(gy=cy-1;gy<=cy+1;gy++){
+    var arr=OCC[gx+'_'+gy];
+    if(!arr) continue;
+    for(i=0;i<arr.length;i++){
+      o=arr[i];
+      var ex=hw+o.hw,ey=hh+o.hh;
+      var nx=(x-o.x)/ex,ny=(y-o.y)/ey;
+      if(nx*nx+ny*ny<1) return true;
+    }
+  }
+  return false;
+}
+/* 越靠笼顶越允许重叠：y=100 完全放开，y=300 以下完全不重叠 */
+function topOverlap(y){
+  var t=(300-y)/250;
+  if(t<=0) return 0;
+  if(t>=1) return 1;
+  return Math.pow(t,1.6);
+}
+function addBird(x,y,size,structural){
+  /* 骨架（顶饰、经线、横圈、竖栏）不随机淘汰；填充与散鸟仍减半 */
+  if(!structural && Math.random()<.5) return;
+  var mul=2.5*FEEL.size;
+  var ds=size*mul*1.16;
+  var hit=occHit(x,y,ds);
+  if(hit && !structural && Math.random()>=topOverlap(y)) return; /* 重叠的只有顶部按渐变保留 */
+  occAdd(x,y,.40*ds,.17*ds);
+  var rot=rnd(-.17,.17);
+  birds.push({
+    hx:x,hy:y,x:x,y:y,size:size*mul,
+    baseRot:rot,idleCol:rotCol(rot),idlePh:rollPhase(),
+    mirror:Math.random()<.5?1:0,phase:rnd(0,6.28),
+    state:0,t:0,delay:0,dur:0,launched:false,
+    vx:0,vy:0,pvx:0,pvy:0,rot:rot,
+    sx:0,sy:0,rsx:0,rsy:0,rot0:0,rdur:.5,
+    cool:0
+  });
+}
+
+/* ---- 顶饰：小提环 + 颈 + 鸦结（骨架，不淘汰） ---- */
+(function(){
+  var i,a;
+  /* 提环：小而密，保证环形轮廓完整可辨 */
+  for(i=0;i<22;i++){
+    a=(i/22)*Math.PI*20;
+    addBird(CX+Math.cos(a)*30+rnd(-.7,.7),34+Math.sin(a)*30+rnd(-.7,.7),rnd(5,10),true);
+  }
+  /* 颈部：三只鸟连成一节，把提环与鸦结接上 */
+  addBird(CX+rnd(-2,2),50,rnd(7,9),true);
+  addBird(CX+rnd(-2,2),56,rnd(7,9),true);
+  addBird(CX+rnd(-2,2),62,rnd(7,9),true);
+  /* 鸦结：数量减半、体型加大，静态仍是一团，飞散时不显拥挤 */
+  for(i=0;i<16;i++){
+    a=Math.random()*Math.PI*2;
+    var rr=Math.sqrt(Math.random())*33;
+    addBird(CX+Math.cos(a)*rr,84+Math.sin(a)*rr*.8,rnd(12,18),true);
+  }
+})();
+
+/* ================= 横杆（横向栏杆）乌鸦参数 =================
+   三处横圈共用这套参数，改这里即可调节横向鸦群的重叠密度。
+   step       同一排相邻乌鸦的水平间距（↑更稀 / ↓更密）
+   size       主排乌鸦尺寸范围
+   jitterX/Y  主排位置抖动
+   row2       第二排（贴着主排、形成重叠的那排）出现概率 0~1
+   row2Dy     第二排相对主排的垂直偏移范围（越小越贴、越重叠）
+   row2Jx     第二排水平抖动
+   row2Size   第二排尺寸范围
+   注意：第二排仍会经过 addBird 的 50% 随机淘汰与重叠剔除，实际比 row2 稀疏。
+*/
+var RAIL={
+  dome:{ half:1.00, step:14, size:[9,14],   jitterX:1.8, jitterY:2.6,
+         row2:.3, row2Dy:[4,8], row2Jx:3,   row2Size:[7.5,12] },
+  mouth:{half:.98, step:12, size:[9.5,14], jitterX:1.5, jitterY:2.2,
+         row2:.5, row2Dy:[5,8], row2Jx:2.5, row2Size:[8,12.5] },
+  waist:{half:.93, step:9, size:[9,13.5], jitterX:1.6, jitterY:2.6,
+         row2:.70, row2Dy:[5,8], row2Jx:3,   row2Size:[7.5,12] }
+};
+function railRing(cfg,y,half){
+  var x0=CX-half*RX,x1=CX+half*RX;
+  for(var x=x0;x<=x1;x+=cfg.step){
+    addBird(x+rnd(-cfg.jitterX,cfg.jitterX),y+rnd(-cfg.jitterY,cfg.jitterY),
+            rnd(cfg.size[0],cfg.size[1]),true);
+    if(Math.random()<cfg.row2)
+      addBird(x+rnd(-cfg.row2Jx,cfg.row2Jx),y+rnd(cfg.row2Dy[0],cfg.row2Dy[1]),
+              rnd(cfg.row2Size[0],cfg.row2Size[1]));
+  }
+}
+
+/* ---- 穹顶：经线（由顶到底散开；顶部减量放大） ---- */
+(function(){
+  var ribs=15,steps=30,i,s;
+  for(i=0;i<ribs;i++){
+    var u=(i/(ribs-1))*2-1;
+    for(s=1;s<=steps;s++){
+      var a=(Math.PI/2)*(1-s/steps);
+      var x=CX+RX*Math.cos(a)*u;
+      var y=BASE_Y-RY*Math.sin(a);
+      var tp=topOverlap(y);                 /* 0=笼口以下，1=最顶 */
+      if(tp>0 && Math.random()<tp*.5) continue;  /* 越靠顶数量越少 */
+      addBird(x+rnd(-2.4,2.4),y+rnd(-2.8,2.8),rnd(9.5,15.5)*(1+.45*tp),true);
+    }
+  }
+  /* 穹顶内部：上密下疏的鸦群，越靠顶越大越少，打散过于规整的经线 */
+  var fy,fx;
+  for(fy=BASE_Y-RY+6;fy<=BASE_Y-8;fy+=8.6){
+    var ty=(BASE_Y-fy)/RY;
+    if(ty>1) continue;
+    var hw1=RX*Math.sqrt(Math.max(0,1-ty*ty));
+    var k=1+.45*ty;
+    var p=(.11+.52*Math.pow(ty,.85))/(k*k);
+    for(fx=CX-hw1+5;fx<=CX+hw1-5;fx+=8){
+      if(Math.random()<p) addBird(fx+rnd(-3,3),fy+rnd(-3,3),rnd(8,13)*k);
+    }
+  }
+})();
+
+/* ---- 穹顶纬圈 ---- */
+(function(){
+  var arcs=[.26,.58,.90,1],i;
+  for(i=0;i<arcs.length;i++){
+    var a=arcs[i];
+    railRing(RAIL.dome,BASE_Y-RY*Math.sin(a),Math.cos(a)*RAIL.dome.half);
+  }
+})();
+
+/* ---- 笼口横圈 ---- */
+railRing(RAIL.mouth,BASE_Y,RAIL.mouth.half);
+
+/* ---- 竖栏 ---- */
+var barXs=[];
+(function(){
+  var bars=10,i,y;
+  for(i=0;i<bars;i++) barXs.push(CX+RX*(i/(bars-1)*1.90-.95));
+  for(i=0;i<bars;i++){
+    var x=barXs[i];
+    var bottom=BAR_BOTTOM+(i%3)*18-18;
+    var wob=Math.random()*Math.PI*2;
+    for(y=BASE_Y+6;y<=bottom;y+=14){
+      if(Math.random()<.05) continue;
+      var bx=x+Math.sin(y*.013+wob)*2.4;
+      addBird(bx+rnd(-2.6,2.6),y+rnd(-3.4,3.4),rnd(9.5,15.5),true);
+      if(Math.random()<.26) addBird(bx+rnd(-7,7),y+rnd(-4,4),rnd(8,13));
+    }
+  }
+})();
+
+/* ---- 笼腰横圈：与笼口呼应 ---- */
+railRing(RAIL.waist,MID_Y,RAIL.waist.half);
+
+/* ---- 栏底垂落的鸦链 ---- */
+(function(){
+  var i,j,y,maxY;
+  for(i=0;i<barXs.length;i++){
+    var x=barXs[i];
+    y=BAR_BOTTOM+(i%3)*18-18;
+    maxY=970+(i%3)*30+rnd(-12,34);
+    while(y<maxY){
+      y+=rnd(9,17);
+      if(y>maxY) break;
+      addBird(x+rnd(-3,3),y,rnd(8,13));
+      if(Math.random()<.2) addBird(x+rnd(-5,5),y+rnd(-4,4),rnd(6.5,10.5));
+    }
+  }
+  /* 补充链只占用竖栏位置，保证底部是一列一列的 */
+  for(i=0;i<5;i++){
+    var sx=barXs[(Math.random()*barXs.length)|0];
+    y=880;
+    maxY=rnd(960,1024);
+    while(y<maxY){
+      y+=rnd(11,20);
+      addBird(sx+rnd(-2.2,2.2),y,rnd(7,11));
+    }
+  }
+})();
+
+/* ---- 零星几只，压出疏密 ---- */
+(function(){
+  var i;
+  for(i=0;i<20;i++){
+    var side=Math.random()<.5?-1:1;
+    addBird(CX+side*rnd(RX*.75,RX*1.02)+rnd(-6,6),rnd(260,860),rnd(4.5,7.5));
+  }
+})();
+
+/* ---- 穹顶冠部：更少更大的乌鸦，保住圆顶轮廓 ---- */
+(function(){
+  var i,y,ty,hw,spread;
+  for(i=0;i<28;i++){
+    y=BASE_Y-RY+5+Math.pow(Math.random(),1.6)*60;
+    ty=(BASE_Y-y)/RY;
+    hw=RX*Math.sqrt(Math.max(0,1-ty*ty));
+    spread=Math.max(0,hw-6);
+    addBird(CX+rnd(-spread,spread),y,rnd(12.5,18.5));
+  }
+})();
+
+/* ================= 乌鸦贴图 ================= */
+var SPR=[],PHASES=5,ROTS=7,SZ=80;
+function inkCrow(c,phase){
+  var q=phase/(PHASES-1),k=66;
+  var nearTipY=-.36*k+.44*k*q,nearCtrlY=-.30*k+.32*k*q;
+  var farTipY=-.24*k+.34*k*q,farCtrlY=-.20*k+.28*k*q;
+  /* 白鸦：亮白填充 + 深紫投影勾边，重叠时仍能分辨个体 */
+  c.fillStyle='#f7f6ff';
+  c.shadowColor='rgba(8,6,20,.62)';
+  c.shadowBlur=3.4;
+  /* 近侧翅膀 */
+  c.beginPath();
+  c.moveTo(-.02*k,.02*k);
+  c.quadraticCurveTo(-.24*k,nearCtrlY,-.42*k,nearTipY);
+  c.quadraticCurveTo(-.22*k,nearCtrlY+.22*k,-.02*k,.16*k);
+  c.closePath();c.fill();
+  /* 远侧翅膀 */
+  c.beginPath();
+  c.moveTo(.04*k,0);
+  c.quadraticCurveTo(.28*k,farCtrlY,.46*k,farTipY);
+  c.quadraticCurveTo(.26*k,farCtrlY+.20*k,.06*k,.14*k);
+  c.closePath();c.fill();
+  /* 尾羽 */
+  c.beginPath();
+  c.moveTo(-.16*k,.03*k);c.lineTo(-.35*k,.13*k);c.lineTo(-.13*k,.11*k);
+  c.closePath();c.fill();
+  /* 身体 */
+  c.save();
+  c.translate(.02*k,.03*k);
+  c.rotate(-.12);
+  c.beginPath();
+  c.ellipse(0,0,.20*k,.086*k,0,0,Math.PI*2);
+  c.fill();
+  c.restore();
+  /* 头与喙 */
+  c.beginPath();c.arc(.205*k,-.052*k,.078*k,0,Math.PI*2);c.fill();
+  c.beginPath();
+  c.moveTo(.268*k,-.086*k);c.lineTo(.372*k,-.052*k);c.lineTo(.262*k,-.018*k);
+  c.closePath();c.fill();
+}
+function buildSprites(){
+  var m,p,r;
+  for(m=0;m<2;m++){
+    var bm=[];
+    for(p=0;p<PHASES;p++){
+      var bp=[];
+      for(r=0;r<ROTS;r++){
+        var cv=document.createElement('canvas');
+        cv.width=cv.height=SZ;
+        var c=cv.getContext('2d');
+        c.translate(SZ/2,SZ/2);
+        c.rotate((r-(ROTS-1)/2)*.105);
+        if(m) c.scale(-1,1);
+        inkCrow(c,p);
+        bp.push(cv);
+      }
+      bm.push(bp);
+    }
+    SPR.push(bm);
+  }
+}
+buildSprites();
+/* ================= 画布 ================= */
+var cvs=document.getElementById('stage');
+var ctx=cvs.getContext('2d',{alpha:true,desynchronized:true});
+var dpr=1,vw=0,vh=0,scale=1,ox=0,oy=0,ready=false;
+var reduceMotion=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+function layout(){
+  vw=window.innerWidth;
+  vh=window.innerHeight;
+  dpr=Math.min(window.devicePixelRatio||1,2);
+  cvs.width=Math.max(1,Math.round(vw*dpr));
+  cvs.height=Math.max(1,Math.round(vh*dpr));
+  cvs.style.width=vw+'px';
+  cvs.style.height=vh+'px';
+  var narrow=vw<600,short=vh<560;
+  var topPad=short?52:(narrow?68:66);
+  var botPad=short?74:(narrow?122:104);
+  var aw=vw-(narrow?28:120);
+  var ah=vh-topPad-botPad;
+  scale=Math.min(aw/W,ah/H);
+  ox=(vw-W*scale)/2;
+  oy=topPad+Math.max(0,(ah-H*scale)/2);
+  draw(performance.now()/1000);
+}
+
+function draw(now){
+  var s=scale*dpr;
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+  ctx.setTransform(s,0,0,s,ox*dpr,oy*dpr);
+  /* 番茄先画，位于笼子/鸦群的后面 */
+  drawTomato();
+  for(var i=0;i<birds.length;i++){
+    var b=birds[i];
+    var x=b.hx,y=b.hy,ph=b.idlePh,col=b.idleCol;
+    if(b.state===1&&b.launched){
+      x=b.x;y=b.y;
+      ph=((Math.sin(now*30+b.phase)*.5+.5)*4.999)|0;
+      col=rotCol(b.rot);
+    }else if(b.state===2){
+      x=b.x;y=b.y;
+      ph=((Math.sin(now*24+b.phase)*.5+.5)*4.999)|0;
+      col=rotCol(b.rot);
+    }
+    var grow=0;
+    if(b.state===1) grow=.26;
+    else if(b.state===2) grow=.26*Math.max(0,1-b.rt/b.rdur);
+    var ds=b.size*(1.16+grow);
+    ctx.drawImage(SPR[b.mirror][ph][col],x-ds/2,y-ds/2,ds,ds);
+  }
+}
+
+/* ---- 笼下的番茄：粒子剪影（离屏预渲染，绘制时只贴一张图） ---- */
+var TOM_Y=950;
+var TOM_SPR=null;
+/* ================= 番茄刘海：黑色「捺」笔画 =================
+   坐标以番茄中心为原点，单位=设计像素（页面里的实际大小）
+   ax/ay       起笔位置（左上，细）
+   cx/cy       控制点，决定这一捺的弧度
+   bx/by       收笔位置（右下，粗）
+   w0/w1       起笔、收笔的半宽（越大笔画越粗）
+   n           粒子数量（越大越实）
+   r           粒子半径范围
+   color       粒子颜色
+*/
+var BANG={
+  ax:-0, ay:-22,
+  cx:-12, cy:-30,
+  bx:16,  by:-4,
+  w0:.5,  w1:3.4,
+  n:90,
+  r:[.55,1.1],
+  color:'#141411'
+};
+(function(){
+  var LW=178,LH=170,S=3,ox=89,oy=102;
+  var cv=document.createElement('canvas');
+  cv.width=LW*S;cv.height=LH*S;
+  var c=cv.getContext('2d');
+
+  /* 果实轮廓（坐标已平移到贴图内） */
+  var body=new Path2D();
+  body.moveTo(ox,oy-50);
+  body.bezierCurveTo(ox-30,oy-64,ox-64,oy-54,ox-75,oy-22);
+  body.bezierCurveTo(ox-85,oy+6,ox-72,oy+42,ox-40,oy+55);
+  body.bezierCurveTo(ox-16,oy+64,ox+16,oy+64,ox+40,oy+55);
+  body.bezierCurveTo(ox+72,oy+42,ox+85,oy+6,ox+75,oy-22);
+  body.bezierCurveTo(ox+64,oy-54,ox+30,oy-64,ox,oy-50);
+  body.closePath();
+
+  /* 萼片 */
+  var calyx=new Path2D(),i,a,rr,px,py;
+  for(i=0;i<12;i++){
+    a=Math.PI*2*(i/12)-Math.PI/2;
+    rr=(i%2)?12:34;
+    px=ox+Math.cos(a)*rr*1.12;py=oy-56+Math.sin(a)*rr*.8;
+    if(i) calyx.lineTo(px,py); else calyx.moveTo(px,py);
+  }
+  calyx.closePath();
+
+  /* 梗 */
+  var stem=new Path2D();
+  stem.moveTo(ox-5,oy-70);
+  stem.quadraticCurveTo(ox+1,oy-90,ox+12,oy-98);
+  stem.lineTo(ox+17,oy-90);
+  stem.quadraticCurveTo(ox+7,oy-80,ox+6,oy-67);
+  stem.closePath();
+
+  /* 在轮廓内撒粒子：间距大、颗粒粗，保留可辨的颗粒感 */
+  function scatter(path,x0,x1,y0,y1,step,minR,maxR,cols){
+    var x,y,px,py,rad;
+    for(x=x0;x<=x1;x+=step){
+      for(y=y0;y<=y1;y+=step){
+        px=x+rnd(-step*.34,step*.34);
+        py=y+rnd(-step*.34,step*.34);
+        if(!c.isPointInPath(path,px+ox,py+oy)) continue;
+        c.fillStyle=cols[(Math.random()*cols.length)|0];
+        rad=rnd(minR,maxR)*(Math.random()<.18?1.4:1);
+        c.beginPath();
+        c.arc((px+ox)*S,(py+oy)*S,rad*S,0,6.2832);
+        c.fill();
+      }
+    }
+  }
+  scatter(body,-86,86,-66,66,7,2.4,3.8,['#c0392b','#c0392b','#c0392b','#b63327','#cc4636']);
+  scatter(calyx,-40,40,-86,-28,4.6,1.8,3.4,['#7f1c13','#7f1c13','#6f1710']);
+  scatter(stem,-8,20,-100,-64,3.4,1.7,3.0,['#7f1c13','#6f1710']);
+
+  /* 塔库咪刘海*/
+  (function(){
+    var i,t,u,px,py,tx,ty,len,nx,ny,hw,rad;
+    for(i=0;i<BANG.n;i++){
+      t=Math.random();u=1-t;
+      px=(u*u*BANG.ax+2*u*t*BANG.cx+t*t*BANG.bx)*2;
+      py=(u*u*BANG.ay+2*u*t*BANG.cy+t*t*BANG.by)*2;
+      tx=2*u*(BANG.cx-BANG.ax)+2*t*(BANG.bx-BANG.cx);
+      ty=2*u*(BANG.cy-BANG.ay)+2*t*(BANG.by-BANG.cy);
+      len=Math.sqrt(tx*tx+ty*ty)||1;
+      nx=-ty/len;ny=tx/len;
+      hw=(BANG.w0+(BANG.w1-BANG.w0)*t)*(Math.random()*2-1)*2;
+      rad=rnd(BANG.r[0],BANG.r[1])*2;
+      c.fillStyle=BANG.color;
+      c.beginPath();
+      c.arc((px+nx*hw+ox)*S,(py+ny*hw+oy)*S,rad*S,0,6.2832);
+      c.fill();
+    }
+  })();
+
+  TOM_SPR=cv;
+})();
+function drawTomato(){
+  if(!TOM_SPR) return;
+  ctx.drawImage(TOM_SPR,CX-44.5,TOM_Y-42.5,89,85);
+}
+
+/* ================= 动画循环 ================= */
+var raf=0,running=false,lastT=0,ambT=0,leaving=false;
+
+function anyActive(){
+  for(var i=0;i<birds.length;i++){ if(birds[i].state) return true; }
+  return false;
+}
+
+function update(dt){
+  var active=false;
+  for(var i=0;i<birds.length;i++){
+    var b=birds[i];
+    if(b.cool>0) b.cool-=dt;
+    if(b.state===1){
+      active=true;
+      if(!b.launched){
+        if(b.t<b.delay){ b.t+=dt; continue; }
+        b.launched=true;b.t=0;
+        b.x=b.hx;b.y=b.hy;
+        b.vx=b.pvx;b.vy=b.pvy;b.rot=b.baseRot;
+      }
+      b.t+=dt;
+      b.vy+=460*dt;
+      b.vx*=Math.max(0,1-1.5*dt);
+      b.x+=b.vx*dt;
+      b.y+=b.vy*dt;
+      b.rot=clamp(b.vx*.0032,-.34,.34);
+      if(b.t>=b.dur){
+        b.state=2;b.rt=0;b.rdur=(.5+Math.random()*.45)/FEEL.returnSpeed;
+        b.rsx=b.x;b.rsy=b.y;b.rot0=b.rot;
+      }
+    }else if(b.state===2){
+      active=true;
+      b.rt+=dt;
+      var k=Math.min(1,b.rt/b.rdur);
+      var e=1-Math.pow(1-k,3);
+      b.x=b.rsx+(b.hx-b.rsx)*e;
+      b.y=b.rsy+(b.hy-b.rsy)*e-Math.sin(Math.PI*k)*2.2;
+      b.rot=b.rot0*(1-k);
+      if(k>=1){
+        b.state=0;b.x=b.hx;b.y=b.hy;b.launched=false;b.t=0;
+        b.cool=.35+Math.random()*.45;
+      }
+    }
+  }
+  return active;
+}
+
+function tick(now){
+  raf=0;
+  var dt=Math.min(.05,(now-lastT)/1000);
+  if(!(dt>0)) dt=.016;
+  lastT=now;
+  var active=update(dt);
+  draw(now/1000);
+  if(active||leaving){
+    raf=requestAnimationFrame(tick);
+  }else{
+    running=false;
+    scheduleAmbient();
+  }
+}
+function kick(){
+  clearTimeout(ambT);
+  if(raf) return;
+  running=true;
+  lastT=performance.now();
+  raf=requestAnimationFrame(tick);
+}
+function scheduleAmbient(){
+  clearTimeout(ambT);
+  if(reduceMotion||leaving) return;
+  ambT=setTimeout(function(){
+    if(leaving) return;
+    var idle=[];
+    for(var i=0;i<birds.length;i++){ if(birds[i].state===0) idle.push(birds[i]); }
+    if(!idle.length) return;
+    var b=idle[(Math.random()*idle.length)|0];
+    startleAt(b.hx+rnd(-8,8),b.hy+rnd(-8,8),30,.5,true);
+  },2200+Math.random()*2800);
+}
+
+/* ================= 互动 ================= */
+function startleAt(px,py,radius,power,quiet){
+  var r2=radius*radius,n=0;
+  for(var i=0;i<birds.length;i++){
+    var b=birds[i];
+    if(b.state!==0||b.cool>0) continue;
+    var dx=b.hx-px,dy=b.hy-py,d2=dx*dx+dy*dy;
+    if(d2>r2) continue;
+    if(d2<.0001) d2=.0001;
+    var d=Math.sqrt(d2),f=1-d/radius;
+    var ang=Math.atan2(dy,dx)+rnd(-.35,.35);
+    b.state=1;b.launched=false;b.t=0;
+    b.delay=rnd(0,.08)+(d/radius)*.13;
+    b.dur=(.42+Math.random()*.34)*FEEL.flyDur;
+    b.pvx=(Math.cos(ang)*(50+180*f)*power+rnd(-20,20))*FEEL.flyPower;
+    b.pvy=(-(180+230*f)*power-rnd(0,50))*FEEL.flyPower;
+    b.cool=.55+Math.random()*.4;
+    n++;
+  }
+  if(n){
+    if(!quiet) markUsed();
+    kick();
+  }
+  return n;
+}
+var used=false;
+function markUsed(){
+  if(used) return;
+  used=true;
+  document.body.classList.add('used');
+}
+var lastPX=-9999,lastPY=-9999;
+function pointOf(e){
+  var r=cvs.getBoundingClientRect();
+  return {x:(e.clientX-r.left-ox)/scale,y:(e.clientY-r.top-oy)/scale};
+}
+cvs.addEventListener('pointerdown',function(e){
+  if(leaving) return;
+  e.preventDefault();
+  var p=pointOf(e),touch=e.pointerType!=='mouse';
+  startleAt(p.x,p.y,touch?100:82,touch?1.1:.95,false);
+  lastPX=p.x;lastPY=p.y;
+},{passive:false});
+cvs.addEventListener('pointermove',function(e){
+  if(leaving) return;
+  var p=pointOf(e);
+  var dx=p.x-lastPX,dy=p.y-lastPY;
+  if(dx*dx+dy*dy<36) return;
+  lastPX=p.x;lastPY=p.y;
+  var touch=e.pointerType!=='mouse';
+  startleAt(p.x,p.y,touch?76:62,touch?.88:.65,false);
+},{passive:true});
+
+/* ================= 进入数织 ================= */
+function targetURL(){
+  var next='nonogram.html';
+  var v=(QS.get('next')||'').trim();
+  if(/^[A-Za-z0-9_.-]+\.html$/.test(v)) next=v;
+  return next+'?intro=0&lang='+encodeURIComponent(LANG);
+}
+function go(){
+  if(leaving) return;
+  leaving=true;
+  document.body.classList.add('leaving');
+  clearTimeout(ambT);
+  for(var i=0;i<birds.length;i++){
+    var b=birds[i];
+    b.state=1;b.launched=false;b.t=0;
+    /* 起飞时间拉长成梯队：笼底先走、笼顶后走，一共约 0.95s 内陆续起飞 */
+    b.delay=(1-b.hy/H)*.5+Math.random()*.45;
+    b.dur=10;
+    b.pvx=rnd(-140,140);
+    b.pvy=-560-rnd(0,340);
+    b.cool=0;
+  }
+  kick();
+  var url=targetURL();
+  setTimeout(function(){
+    try{ location.href=url; }catch(e){}
+  },2400);
+}
+document.getElementById('enter').addEventListener('click',go);
+
+/* ================= 启动 ================= */
+layout();
+requestAnimationFrame(function(){
+  document.body.classList.remove('boot');
+  document.body.classList.add('ready');
+});
+scheduleAmbient();
+window.addEventListener('resize',function(){
+  layout();
+  if(anyActive()) kick();
+});
+})();
+</script>
+</body>
+</html>

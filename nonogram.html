@@ -4,6 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>月巴数织 · Nonogram</title>
+<script>
+/* 每次直接打开数织时，先播放「群鸦筑笼」开场；由开场页带 intro=0 进入则跳过。
+   百巴箱内嵌窗口由 gbFrameOpen 负责开场；selftest 等调试入口不受影响。 */
+(function(){
+  try{
+    if(window.top!==window.self) return;
+    if(/[?&](intro=0|selftest=1)(?:&|$)/.test(location.search)) return;
+    var lang='';
+    try{ lang=new URLSearchParams(location.search).get('lang')||''; }catch(e){}
+    location.replace('crow-cage.html?next=nonogram.html'+(lang?'&lang='+encodeURIComponent(lang):''));
+  }catch(e){}
+})();
+</script>
 <style>
 :root{
   --bg:#eff1f8; --bg2:#e2e5f1; --paper:#34384c; --ink:#34384c; --mut:#868aa2;
@@ -14,6 +27,7 @@
   --mono:"SF Mono","Cascadia Mono",Consolas,ui-monospace,"PingFang SC","Microsoft YaHei",monospace;
   --r1:#7d8aa5; --r2:#6e9d8a; --r3:#7f9ec9; --r4:#8c82c0; --r5:#b08a48; --r6:#a08fc2;
   --safe:env(safe-area-inset-bottom,0px);
+  --ease-out:cubic-bezier(.2,.8,.2,1);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%}
@@ -214,8 +228,8 @@ header#top{
 .pinfo{flex:none;display:flex;justify-content:center;gap:15px;font-size:10px;letter-spacing:.08em;color:var(--mut);padding:0 14px 4px;font-variant-numeric:tabular-nums}
 .pinfo b{color:var(--paper);font-weight:800}
 .pinfo .warn b{color:var(--acc)}
-#boardWrap{flex:1;display:grid;place-items:center;min-height:0;padding:8px 10px;overflow:auto;overscroll-behavior:contain}
-#board{display:grid;grid-template-columns:var(--leftw) calc(var(--cell) * var(--n));
+#boardWrap{position:relative;flex:1;display:grid;place-items:center;min-height:0;padding:8px 10px;overflow:auto;overscroll-behavior:contain}
+#board{position:relative;display:grid;grid-template-columns:var(--leftw) calc(var(--cell) * var(--n));
   grid-template-rows:var(--toph) calc(var(--cell) * var(--n));touch-action:none;user-select:none;-webkit-user-select:none}
 #corner{grid-column:1;grid-row:1;position:relative}
 #cluesTop{grid-column:2;grid-row:1;display:grid;grid-template-columns:repeat(var(--n),var(--cell));align-items:end}
@@ -233,11 +247,23 @@ header#top{
     linear-gradient(var(--acc),var(--acc)) right bottom/13px 2px no-repeat,
     linear-gradient(var(--acc),var(--acc)) right bottom/2px 13px no-repeat;
 }
-.ctop{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:0;height:100%;padding-bottom:2px;overflow:hidden}
-.cleft{display:flex;align-items:center;justify-content:flex-end;gap:2px;height:100%;padding-right:4px;overflow:hidden}
+.ctop{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:0;height:100%;padding-bottom:2px;overflow:hidden;position:relative}
+.cleft{display:flex;align-items:center;justify-content:flex-end;gap:2px;height:100%;padding-right:4px;overflow:hidden;position:relative}
 .num{font-size:var(--cluefs);line-height:1.06;color:rgba(38,42,58,.72);font-variant-numeric:tabular-nums;font-weight:600}
 .done .num{color:rgba(38,42,58,.24);text-decoration:line-through;text-decoration-thickness:1px}
 .bad .num{color:var(--acc);text-shadow:0 0 7px rgba(99,108,158,.35)}
+.cleft.fx-done .num,.ctop.fx-done .num{animation:clueNum .2s var(--ease-out) both;animation-delay:calc(var(--i,0) * 22ms)}
+@keyframes clueNum{0%{transform:translateY(0) scale(1);opacity:1}45%{transform:translateY(-2px) scale(1.08);opacity:.9}100%{transform:translateY(0) scale(.92);opacity:.55}}
+.cleft.fx-done::after,.ctop.fx-done::after{content:"✓";position:absolute;font-size:9px;line-height:1;color:rgba(99,108,158,.75);opacity:0;animation:clueCheck .26s ease-out .1s both}
+.cleft.fx-done::after{left:2px;top:calc(50% - 5px)}
+.ctop.fx-done::after{left:calc(50% - 4px);top:1px}
+@keyframes clueCheck{0%{opacity:0}60%{opacity:.9}100%{opacity:.55}}
+.cleft.fx-bad,.ctop.fx-bad{animation:clueBad .18s ease-out}
+@keyframes clueBad{0%,100%{transform:translateX(0)}25%{transform:translateX(-2px)}50%{transform:translateX(2px)}75%{transform:translateX(-1px)}}
+.cleft.fx-bad::after,.ctop.fx-bad::after{content:"";position:absolute;height:1px;background:rgba(99,108,158,.7);opacity:0;animation:badLine .28s ease-out both}
+.cleft.fx-bad::after{left:3px;bottom:2px;width:14px}
+.ctop.fx-bad::after{left:50%;bottom:1px;width:10px;margin-left:-5px}
+@keyframes badLine{0%{opacity:0;transform:scaleX(0)}30%{opacity:.85}100%{opacity:0;transform:scaleX(1)}}
 .cell{
   --sh:inset -1px 0 0 var(--line),inset 0 -1px 0 var(--line);
   background:rgba(255,255,255,.52);box-shadow:var(--sh);position:relative;
@@ -258,14 +284,23 @@ header#top{
 .cell.fill.cross::before{content:none}
 .cell.hm::after{content:"✦";position:absolute;right:1px;top:-1px;font-size:calc(var(--cell) * .4);color:rgba(255,255,255,.85);text-shadow:0 0 3px rgba(0,0,0,.6)}
 .cell.cur{outline:2px solid var(--ice);outline-offset:-2px;z-index:2}
-.cell.pop{animation:pop .12s ease-out}
-@keyframes pop{0%{transform:scale(.72)}100%{transform:scale(1)}}
+.cell.fx-fill{animation:cellFill .11s var(--ease-out) both;animation-delay:var(--fd,0ms)}
+@keyframes cellFill{0%{transform:scale(.7);opacity:.55}65%{transform:scale(1.04);opacity:1}100%{transform:scale(1);opacity:1}}
+.cell.fx-cross{animation:cellCross .12s var(--ease-out) both;animation-delay:var(--fd,0ms)}
+@keyframes cellCross{0%{transform:scale(.5) rotate(-9deg);opacity:.35}65%{transform:scale(1.06) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
+.cell.fx-tent{animation:cellTent .13s var(--ease-out) both;animation-delay:var(--fd,0ms)}
+@keyframes cellTent{0%{transform:scale(.8);opacity:.3}70%{transform:scale(1.03);opacity:1}100%{transform:scale(1);opacity:1}}
+.cell.fx-erase{animation:cellErase .1s ease-out both;animation-delay:var(--fd,0ms)}
+@keyframes cellErase{0%{transform:translateY(0) scale(1);opacity:1}45%{transform:translateY(1px) scale(.86);opacity:.35}100%{transform:translateY(0) scale(1);opacity:1}}
 .cell.win{animation:cellwin .55s ease-out both;animation-delay:var(--d,0ms)}
 @keyframes cellwin{0%{transform:scale(1);filter:brightness(1)}45%{transform:scale(1.35);filter:brightness(1.7)}100%{transform:scale(1);filter:brightness(1.15)}}
 .toolbar{
-  flex:none;display:flex;gap:6px;padding:9px 11px calc(10px + var(--safe));border-top:1px solid var(--line2);
+  position:relative;flex:none;display:flex;gap:6px;padding:9px 11px calc(10px + var(--safe));border-top:1px solid var(--line2);
   background:linear-gradient(180deg,rgba(255,255,255,.86),rgba(234,238,248,.92));backdrop-filter:blur(10px);
 }
+#brushBar{position:absolute;bottom:calc(6px + var(--safe));height:3px;border-radius:2px;pointer-events:none;opacity:0;
+  background:linear-gradient(90deg,var(--acc),#8fb3e8);box-shadow:0 0 6px rgba(99,108,158,.35);
+  transition:left .18s var(--ease-out),width .18s var(--ease-out),opacity .12s;z-index:2}
 .tool{
   flex:1;height:46px;border-radius:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
   font-size:9px;letter-spacing:.06em;color:var(--mut);transition:.14s;min-width:0;position:relative;
@@ -432,6 +467,58 @@ header#top{
 .achrow .at small{display:block;font-size:9px;font-weight:400;letter-spacing:.04em;color:var(--mut);margin-top:2px}
 .achrow .ap{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;color:var(--mut);white-space:nowrap;font-variant-numeric:tabular-nums}
 .achrow.got .ap{color:var(--gold);font-weight:800}
+/* ---------- P0 动效 ---------- */
+.cell.fx-autocross{animation:acIn .18s var(--ease-out) both;animation-delay:var(--ad,0ms)}
+@keyframes acIn{0%{opacity:.2;transform:scale(.55)}70%{opacity:1;transform:scale(1.04)}100%{opacity:1;transform:scale(1)}}
+.cell.fx-undo{animation:undoIn .13s var(--ease-out) both}
+@keyframes undoIn{0%{opacity:.45;transform:scale(.9)}100%{opacity:1;transform:scale(1)}}
+.cell.fx-hint{animation:hintRing .38s ease-out both;animation-delay:var(--hd,0ms)}
+@keyframes hintRing{
+  0%{box-shadow:var(--sh),inset 0 0 0 1px rgba(176,138,72,.9),0 0 0 0 rgba(176,138,72,.32)}
+  65%{box-shadow:var(--sh),inset 0 0 0 1px rgba(176,138,72,.5),0 0 0 6px rgba(176,138,72,0)}
+  100%{box-shadow:var(--sh),inset 0 0 0 1px rgba(176,138,72,0),0 0 0 8px rgba(176,138,72,0)}
+}
+.cell.fx-fill.fx-hint{animation:cellFill .11s var(--ease-out) 0ms both,hintRing .38s ease-out var(--hd,0ms) both}
+.pinfo b,.stat b{display:inline-block}
+.fx-bump{animation:bumpNum .16s var(--ease-out)}
+@keyframes bumpNum{0%{transform:translateY(0);color:inherit}35%{transform:translateY(-3px);color:var(--acc)}100%{transform:translateY(0);color:inherit}}
+.linefx{position:absolute;z-index:4;pointer-events:none;opacity:0}
+.linefx.h{height:1px;background:linear-gradient(90deg,transparent,rgba(99,108,158,.85),transparent);transform-origin:left center}
+.linefx.v{width:1px;background:linear-gradient(180deg,transparent,rgba(99,108,158,.85),transparent);transform-origin:center top}
+.linefx.fx-sweep-h{animation:sweepH .24s ease-out both}
+@keyframes sweepH{0%{transform:scaleX(0);opacity:0}15%{opacity:.8}75%{opacity:.55}100%{transform:scaleX(1);opacity:0}}
+.linefx.fx-sweep-v{animation:sweepV .24s ease-out both}
+@keyframes sweepV{0%{transform:scaleY(0);opacity:0}15%{opacity:.8}75%{opacity:.55}100%{transform:scaleY(1);opacity:0}}
+.scanfx{position:absolute;height:34px;pointer-events:none;z-index:6;opacity:0;
+  background:linear-gradient(180deg,transparent,rgba(99,108,158,.18) 42%,rgba(255,255,255,.52) 50%,rgba(99,108,158,.18) 58%,transparent)}
+.scanfx.fx-scan{animation:scanDown .24s ease-out both}
+@keyframes scanDown{0%{transform:translateY(-34px);opacity:0}20%{opacity:1}100%{transform:translateY(var(--scanh,600px));opacity:0}}
+/* ---------- P1 动效 ---------- */
+#grid.scan-in .cell{animation:gridIn .16s var(--ease-out) both;animation-delay:calc(var(--r,0) * 4ms)}
+@keyframes gridIn{0%{opacity:0;transform:scale(.94)}100%{opacity:1;transform:scale(1)}}
+.cell.fx-final{animation:finalCell .42s var(--ease-out) both}
+@keyframes finalCell{
+  0%{transform:scale(1);box-shadow:var(--sh),0 0 0 0 rgba(176,138,72,0)}
+  30%{transform:scale(1.2);box-shadow:var(--sh),0 0 0 5px rgba(176,138,72,.45)}
+  65%{transform:scale(1.05);box-shadow:var(--sh),0 0 0 10px rgba(176,138,72,.12)}
+  100%{transform:scale(1);box-shadow:var(--sh),0 0 0 12px rgba(176,138,72,0)}
+}
+.rstars span{display:inline-block}
+.rstars span:not(.d){animation:starDrop .34s var(--ease-out) both;animation-delay:calc(var(--i,0) * 90ms)}
+@keyframes starDrop{0%{opacity:0;transform:translateY(-10px) scale(.6) rotate(-12deg)}70%{opacity:1;transform:translateY(1px) scale(1.12) rotate(3deg)}100%{opacity:1;transform:none}}
+.rcoin{position:relative;overflow:hidden}
+.rcoin::after{content:"";position:absolute;inset:-40% -20%;pointer-events:none;background:linear-gradient(115deg,transparent 34%,rgba(255,255,255,.72) 48%,transparent 62%);transform:translateX(-130%);animation:coinShine 1s ease-out .15s both}
+@keyframes coinShine{to{transform:translateX(130%)}}
+.card.unlock .bars{animation:barsUp .42s var(--ease-out) both}
+@keyframes barsUp{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-112%);opacity:0}}
+.card.unlock .sil{animation:silFade .42s ease-out both}
+@keyframes silFade{0%{opacity:.2}100%{opacity:0}}
+.card.unlock .wq{animation:wqPop .42s var(--ease-out) both}
+@keyframes wqPop{0%{opacity:0;transform:scale(.4)}62%{opacity:1;transform:scale(1.16)}100%{opacity:1;transform:scale(1)}}
+.card.unlock .cart>img,.card.unlock .cart>canvas{animation:artPop .42s var(--ease-out) both}
+@keyframes artPop{0%{opacity:0;transform:scale(.72)}62%{opacity:1;transform:scale(1.05)}100%{opacity:1;transform:scale(1)}}
+#catalog.cat-in{animation:catIn .1s ease-out both}
+@keyframes catIn{0%{opacity:.35;transform:translateY(3px)}100%{opacity:1;transform:none}}
 /* ---------- 粒子 ---------- */
 .fx{position:fixed;inset:0;pointer-events:none;z-index:35;overflow:hidden}
 .fx i{position:absolute;width:6px;height:9px;border-radius:1px;opacity:0;animation:fxfall 1.15s ease-out forwards}
@@ -500,7 +587,19 @@ header#top{
 @keyframes rvring{0%{opacity:0;transform:scale(.62)}35%{opacity:.5}100%{opacity:0;transform:scale(1.38)}}
 /* ---------- 低功耗 ---------- */
 body.low-power #grid .cell.win{animation:none}
-body.low-power .cell.pop{animation:none}
+body.low-power .cell.fx-fill,body.low-power .cell.fx-cross,body.low-power .cell.fx-tent,body.low-power .cell.fx-erase,
+body.low-power .cell.fx-autocross,body.low-power .cell.fx-undo,body.low-power .cell.fx-hint{animation:none!important}
+body.low-power .linefx,body.low-power .scanfx{display:none!important}
+body.low-power #grid.scan-in .cell,body.low-power .cell.fx-final,
+body.low-power .rstars span,body.low-power .rcoin::after,
+body.low-power .card.unlock .bars,body.low-power .card.unlock .sil,body.low-power .card.unlock .wq,
+body.low-power .card.unlock .cart>img,body.low-power .card.unlock .cart>canvas,
+body.low-power #catalog.cat-in{animation:none!important}
+body.low-power #brushBar{transition:none}
+body.low-power .cleft.fx-done .num,body.low-power .ctop.fx-done .num,
+body.low-power .cleft.fx-bad,body.low-power .ctop.fx-bad{animation:none!important}
+body.low-power .cleft.fx-done::after,body.low-power .ctop.fx-done::after,
+body.low-power .cleft.fx-bad::after,body.low-power .ctop.fx-bad::after{display:none}
 body.low-power .artframe img{animation-duration:.01s}
 body.low-power .stamp{animation-duration:.01s}
 body.low-power .fx{display:none}
@@ -574,6 +673,7 @@ body.low-power .rvart{animation-duration:.5s;animation-delay:.05s}
       <button class="tool" id="btnClear"><b>⌫</b><span id="lblClear">清空</span></button>
       <button class="tool" id="btnHint"><b>✦</b><span id="lblHint">提示</span></button>
       <button class="tool easymode" id="btnEasy"><b>↓</b><span id="lblEasy">降难度</span></button>
+      <i id="brushBar" aria-hidden="true"></i>
     </div>
   </section>
 </div>
@@ -1050,14 +1150,15 @@ function audio(){
     return AC;
   }catch(e){ return null; }
 }
-function tone(freq,dur,type,vol,delay){
+function tone(freq,dur,type,vol,delay,attack){
   const ac=audio(); if(!ac) return;
   try{
     const o=ac.createOscillator(), g=ac.createGain();
     const t0=ac.currentTime+(delay||0);
+    const at=attack||.008;
     o.type=type||'sine'; o.frequency.setValueAtTime(freq,t0);
     g.gain.setValueAtTime(0,t0);
-    g.gain.linearRampToValueAtTime(vol||.05,t0+.008);
+    g.gain.linearRampToValueAtTime(vol||.05,t0+at);
     g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
     o.connect(g); g.connect(ac.destination);
     o.start(t0); o.stop(t0+dur+.02);
@@ -1067,13 +1168,49 @@ const SFX={
   fill:function(){ tone(620,.05,'sine',.045); },
   cross:function(){ tone(380,.04,'triangle',.035); },
   tent:function(){ tone(520,.035,'triangle',.03); },
-  line:function(){ tone(880,.08,'sine',.06); tone(1046,.09,'sine',.045,.05); },
+  line:function(){ tone(392,.20,'sine',.05,0,.03); tone(523,.26,'sine',.032,.06,.035); },
   err:function(){ tone(150,.10,'sawtooth',.055); tone(110,.12,'sine',.045,.05); },
   win:function(){ [523,659,784,1046].forEach(function(f,i){ tone(f,.14,'triangle',.09,i*.08); }); },
   reveal:function(){ [1046,1318,1568,2093].forEach(function(f,i){ tone(f,.16,'sine',.06,i*.07); }); },
   click:function(){ tone(720,.04,'square',.035); }
 };
 function buzz(ms){ if(S.lowPower) return; try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){} }
+
+/* ================= 动效 ================= */
+const FX=(function(){
+  const cellCls=['fx-fill','fx-cross','fx-tent','fx-erase'];
+  const seq=new WeakMap();
+  const mq=(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)'))||null;
+  function on(){ return !S.lowPower && !(mq&&mq.matches); }
+  function play(el,cls,ms,delay,varName){
+    if(!el||!on()) return false;
+    let map=seq.get(el);
+    if(!map){ map={}; seq.set(el,map); }
+    const token=(map[cls]||0)+1; map[cls]=token;
+    const v=varName||'--d';
+    el.classList.remove(cls);
+    if(delay) el.style.setProperty(v,delay+'ms'); else el.style.removeProperty(v);
+    el.classList.add(cls);
+    setTimeout(function(){
+      if(map[cls]!==token) return;
+      el.classList.remove(cls);
+      el.style.removeProperty(v);
+    },(ms||160)+(delay||0)+40);
+    return true;
+  }
+  function cell(el,v,ms){
+    if(!el||!on()) return;
+    const cls=v===1?'fx-fill':(v===0?'fx-cross':(v===2?'fx-tent':'fx-erase'));
+    cellCls.forEach(function(c){ if(c!==cls) el.classList.remove(c); });
+    play(el,cls,ms||150,0,'--fd');
+  }
+  function clear(el){
+    if(!el) return;
+    cellCls.concat(['fx-autocross','fx-hint','fx-undo']).forEach(function(c){ el.classList.remove(c); });
+    ['--fd','--ad','--hd'].forEach(function(v){ el.style.removeProperty(v); });
+  }
+  return {on:on,play:play,cell:cell,clear:clear};
+})();
 
 /* ================= 工具 ================= */
 function $(id){ return document.getElementById(id); }
@@ -1096,6 +1233,8 @@ let CURSOR=0;
 let filter='all';
 let tab='random';
 let heroPid=null;
+const HUD_PREV={m:null,h:null};
+const STATS_PREV={solved:null,stars:null,time:null};
 const STD={10:180000,12:360000,15:600000};
 function starsFor(p,ms,mist,hint){
   const okT=ms<=STD[p.sz], okM=mist===0, okH=hint===0;
@@ -1111,18 +1250,28 @@ function stdTimeText(ms){ return fmtTime(ms); }
 
 /* ================= 目录 ================= */
 const ENTRIES=[];
+const UNLOCK_SEEN=new Set();
+let CATALOG_INITED=false, CATALOG_SEQ=0, CATALOG_T=0;
 NP.forEach(function(p){
   ENTRIES.push({id:p.id,n:p.n,nm:p.nm,p:p,alias:null});
   (p.alias||[]).forEach(function(a){ ENTRIES.push({id:a.id,n:a.n,nm:a.nm,p:p,alias:a}); });
 });
 
+function bumpStat(el,key,v){
+  if(!el) return;
+  if(STATS_PREV[key]!==null&&STATS_PREV[key]!==v) FX.play(el,'fx-bump',180);
+  STATS_PREV[key]=v;
+}
 function renderStats(){
-  const n=puzzlesSolved();
+  const n=puzzlesSolved(), stars=totalStars();
   $('stSolved').innerHTML=n+'<em>/'+NP.length+'</em>';
-  $('stStars').innerHTML=totalStars()+'<em>★</em>';
+  $('stStars').innerHTML=stars+'<em>★</em>';
   $('stTime').textContent=fmtTime(S.totalMs);
-  $('topstat').innerHTML=t('progress',{a:n,b:NP.length})+'<br><b>'+totalStars()+' ★</b>';
+  $('topstat').innerHTML=t('progress',{a:n,b:NP.length})+'<br><b>'+stars+' ★</b>';
   $('setDataV').textContent=t('dataSub',{n:NP.length,m:ENTRIES.length});
+  bumpStat($('stSolved'),'solved',n);
+  bumpStat($('stStars'),'stars',stars);
+  bumpStat($('stTime'),'time',S.totalMs);
 }
 const FILTERS=[
   {k:'all',l:'all'},{k:'unsolved',l:'unsolved'},{k:'solved',l:'solved'}
@@ -1134,7 +1283,7 @@ function renderChips(){
 }
 function starHTML(s){
   let out='';
-  for(let i=1;i<=3;i++) out+='<span class="'+(i<=s?'':'d')+'">★</span>';
+  for(let i=1;i<=3;i++) out+='<span class="'+(i<=s?'':'d')+'" style="--i:'+(i-1)+'">★</span>';
   return out;
 }
 function pixelCanvas(p,cls){
@@ -1162,6 +1311,10 @@ function drawPix(cv,p){
 }
 function renderCatalog(){
   const wrap=$('catalog');
+  if(!CATALOG_INITED){
+    CATALOG_INITED=true;
+    NP.forEach(function(p){ if(puzzleUnlocked(p)) UNLOCK_SEEN.add(p.id); });
+  }
   let html='';
   let lastKey='';
   let open=false;
@@ -1179,6 +1332,8 @@ function renderCatalog(){
   vis.forEach(function(p){
     const sv=S.solved[p.id];
     const locked=!puzzleUnlocked(p);
+    const isNewUnlock=!locked&&!UNLOCK_SEEN.has(p.id);
+    if(isNewUnlock) UNLOCK_SEEN.add(p.id);
     const gkey=p.rep?'rep':'r'+p.r;
     if(gkey!==lastKey){
       if(open) html+='</div></div>';
@@ -1200,7 +1355,7 @@ function renderCatalog(){
       art=cage+'<span class="wq">?</span>';
     }
     const owned=isCollected(p.id)||(p.base&&isCollected(p.base))||(p.alias||[]).some(function(a){ return isCollected(a.id); });
-    html+='<button class="card'+(locked?' locked':'')+'" data-pid="'+esc(p.id)+'"'
+    html+='<button class="card'+(locked?' locked':'')+(isNewUnlock&&FX.on()?' unlock':'')+'" data-pid="'+esc(p.id)+'"'
       +' aria-label="'+esc(t('puzzleNo',{n:NP.indexOf(p)+1}))+'"'+(locked?' data-lock="1"':'')+'>'
       +'<div class="cart">'+art
       +(locked||!owned?'':'<span class="cdot"></span>')
@@ -1224,6 +1379,17 @@ function renderCatalog(){
       drawPix(cv,p); im.replaceWith(cv);
     },{once:true});
   });
+  CATALOG_SEQ++;
+  const cseq=CATALOG_SEQ;
+  clearTimeout(CATALOG_T);
+  wrap.classList.remove('cat-in');
+  if(FX.on()){
+    requestAnimationFrame(function(){
+      if(cseq!==CATALOG_SEQ) return;
+      wrap.classList.add('cat-in');
+      CATALOG_T=setTimeout(function(){ wrap.classList.remove('cat-in'); },160);
+    });
+  }
 }
 function unlockedPuzzles(){
   return NP.filter(function(p){ return puzzleUnlocked(p); });
@@ -1306,7 +1472,7 @@ function buildBoard(p){
     }
   }
   $('grid').innerHTML=gh;
-  $('grid').classList.remove('win');
+  $('grid').classList.remove('win','scan-in');
   G.cellEls=[];
   $('grid').querySelectorAll('.cell').forEach(function(el){ G.cellEls[+el.getAttribute('data-i')]=el; });
   G.rowEls=[]; G.colEls=[];
@@ -1334,6 +1500,7 @@ function layoutBoard(){
   board.style.setProperty('--leftw',leftw+'px');
   board.style.setProperty('--toph',toph+'px');
   board.style.setProperty('--cluefs',Math.max(7,Math.round(cell*0.52))+'px');
+  moveBrushBar();
 }
 function renderBoard(){
   if(!G) return;
@@ -1351,7 +1518,12 @@ function applyCell(el,i,v,anim){
   el.classList.toggle('cross',v===0);
   el.classList.toggle('tent',v===2);
   el.classList.toggle('hm',!!(G.hintM[i]&&v===1));
-  if(anim){ el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+  if(anim){ FX.clear(el); FX.cell(el,v,150); }
+}
+function bumpHud(el,key,v){
+  if(!el) return;
+  if(HUD_PREV[key]!==null&&HUD_PREV[key]!==v) FX.play(el,'fx-bump',180);
+  HUD_PREV[key]=v;
 }
 function updateHUD(){
   if(!G) return;
@@ -1360,32 +1532,39 @@ function updateHUD(){
   $('pHint').innerHTML=t('hints')+' <b>'+G.hintsLeft+'</b>';
   $('pMist').classList.toggle('warn',G.mistakes>0);
   $('btnHint').innerHTML='<b>✦</b><span>'+esc(t('hint'))+'</span>';
+  bumpHud($('pMist').querySelector('b'),'m',G.mistakes);
+  bumpHud($('pHint').querySelector('b'),'h',G.hintsLeft);
 }
 
 /* ================= 线索状态 ================= */
 function updateLines(silent){
   if(!G) return;
-  const p=G.p,n=p.sz,easy=!!S.easy;
-  const newBad=new Set();
+  const n=G.p.sz,easy=!!S.easy;
+  const newBad=new Set(), newlyDone=[];
   let allSolved=true;
-  for(let r=0;r<n;r++){
-    const info=lineInfo('r',r);
+  function scan(kind,idx,el){
+    const info=lineInfo(kind,idx);
     if(!info.solved) allSolved=false;
-    if(!info.ok) newBad.add('r'+r);
-    paintClue(G.rowEls[r],info,easy);
+    const key=kind+idx;
+    if(!info.ok) newBad.add(key);
+    paintClue(el,info,easy);
+    if(info.solved){
+      if(!G.lineDone.has(key)){
+        G.lineDone.add(key);
+        if(!silent) newlyDone.push([kind,idx]);
+      }
+    }else{
+      G.lineDone.delete(key);
+    }
   }
-  for(let c=0;c<n;c++){
-    const info=lineInfo('c',c);
-    if(!info.solved) allSolved=false;
-    if(!info.ok) newBad.add('c'+c);
-    paintClue(G.colEls[c],info,easy);
-  }
+  for(let r=0;r<n;r++) scan('r',r,G.rowEls[r]);
+  for(let c=0;c<n;c++) scan('c',c,G.colEls[c]);
   if(easy){
     // 失误：从未解状态进入无解状态时 +1
     newBad.forEach(function(k){
       if(!G.bad.has(k)){
         G.bad.add(k);
-        if(!silent){ G.mistakes++; SFX.err(); buzz(18); shakeBoard(); }
+        if(!silent){ G.mistakes++; SFX.err(); buzz(18); shakeBoard(); fxBadClue(k); }
         if(!silent) updateHUD();
       }
     });
@@ -1398,6 +1577,7 @@ function updateLines(silent){
       toast(t('fillWrong'));
     }
   }
+  if(!silent&&newlyDone.length&&!allSolved) fxLineDone(newlyDone);
   if(allSolved&&!G.done) finish();
 }
 function boardFull(){
@@ -1418,12 +1598,90 @@ function paintClue(el,info,showBad){
   el.classList.toggle('done',info.solved);
   el.classList.toggle('bad',!!showBad&&!info.ok);
 }
+function fxBadClue(key){
+  if(!G||!FX.on()) return;
+  const idx=+key.slice(1);
+  const el=key.charAt(0)==='r'?G.rowEls[idx]:G.colEls[idx];
+  if(el) FX.play(el,'fx-bad',280,0,'--bd');
+}
+function fxSweep(kind,idx){
+  if(!FX.on()||!G) return;
+  const board=$('board'), grid=$('grid');
+  if(!board||!grid) return;
+  const n=G.p.sz;
+  const gr=grid.getBoundingClientRect(), br=board.getBoundingClientRect();
+  if(!gr.width||!gr.height) return;
+  const cw=gr.width/n, ch=gr.height/n;
+  const el=document.createElement('div');
+  el.className='linefx '+(kind==='r'?'h':'v');
+  if(kind==='r'){
+    el.style.left=(gr.left-br.left)+'px';
+    el.style.top=(gr.top-br.top+idx*ch+ch/2)+'px';
+    el.style.width=gr.width+'px';
+    el.classList.add('fx-sweep-h');
+  }else{
+    el.style.left=(gr.left-br.left+idx*cw+cw/2)+'px';
+    el.style.top=(gr.top-br.top)+'px';
+    el.style.height=gr.height+'px';
+    el.classList.add('fx-sweep-v');
+  }
+  board.appendChild(el);
+  setTimeout(function(){ el.remove(); },340);
+}
+function scanBoard(){
+  if(!FX.on()) return;
+  const wrap=$('boardWrap'), grid=$('grid');
+  if(!wrap||!grid) return;
+  const gr=grid.getBoundingClientRect(), wr=wrap.getBoundingClientRect();
+  if(!gr.width||!gr.height) return;
+  const el=document.createElement('div');
+  el.className='scanfx';
+  el.style.left=(gr.left-wr.left+wrap.scrollLeft)+'px';
+  el.style.top=(gr.top-wr.top+wrap.scrollTop)+'px';
+  el.style.width=gr.width+'px';
+  el.style.setProperty('--scanh',gr.height+'px');
+  wrap.appendChild(el);
+  el.classList.add('fx-scan');
+  setTimeout(function(){ el.remove(); },360);
+}
+let _scanT=0;
+function clearScanIn(){
+  clearTimeout(_scanT);
+  const grid=$('grid');
+  if(grid) grid.classList.remove('scan-in');
+  if(G) G.cellEls.forEach(function(el){ if(el) el.style.removeProperty('--r'); });
+}
+function playScanIn(){
+  if(!FX.on()||!G) return;
+  const grid=$('grid');
+  if(!grid) return;
+  const n=G.p.sz;
+  G.cellEls.forEach(function(el,i){ if(el) el.style.setProperty('--r',Math.floor(i/n)); });
+  clearTimeout(_scanT);
+  grid.classList.remove('scan-in');
+  grid.classList.add('scan-in');
+  _scanT=setTimeout(clearScanIn,240);
+  scanBoard();
+}
+function fxLineDone(list){
+  if(!FX.on()) return;
+  list.slice(0,3).forEach(function(item){
+    const kind=item[0], idx=item[1];
+    const el=kind==='r'?G.rowEls[idx]:G.colEls[idx];
+    if(el){
+      el.querySelectorAll('.num').forEach(function(sp,i){ sp.style.setProperty('--i',i); });
+      FX.play(el,'fx-done',300);
+    }
+    fxSweep(kind,idx);
+  });
+  SFX.line();
+}
 let _shakeT=0;
 function shakeBoard(){
   if(S.lowPower) return;
   const b=$('board');
   b.style.transition='transform .08s';
-  const seq=[-3,3,-2,2,-1,0];
+  const seq=[-1,1,-1,1,0];
   let i=0;
   clearInterval(_shakeT);
   _shakeT=setInterval(function(){
@@ -1473,6 +1731,8 @@ function paintCell(i,val,nseq){
   G.seq[i]=(nseq===undefined)?seqOfVal(val):nseq;
   if(!G.hintM[i]||val!==1) G.hintM[i]=0;
   STROKE.changes.push({i:i,from:from,to:val,fs:fs});
+  if(val===1) G.lastCell=i;
+  if($('grid').classList.contains('scan-in')) clearScanIn();
   applyCell(G.cellEls[i],i,val,true);
   if(val===1) SFX.fill(); else if(val===0) SFX.cross(); else if(val===2) SFX.tent(); else SFX.click();
   return true;
@@ -1531,7 +1791,13 @@ function autoCross(rec){
     if(!sameClue(clueOfStates(rowStates(p,G.marks,r)),p._rows[r])) continue;
     for(let c=0;c<n;c++){
       const i=r*n+c;
-      if(G.marks[i]===-1||G.marks[i]===2){ const from=G.marks[i], fs=G.seq[i]; G.marks[i]=0; G.seq[i]=3; rec.changes.push({i:i,from:from,to:0,fs:fs}); applyCell(G.cellEls[i],i,0,false); }
+      if(G.marks[i]===-1||G.marks[i]===2){
+        const from=G.marks[i], fs=G.seq[i];
+        G.marks[i]=0; G.seq[i]=3;
+        rec.changes.push({i:i,from:from,to:0,fs:fs});
+        applyCell(G.cellEls[i],i,0,false);
+        FX.play(G.cellEls[i],'fx-autocross',190,70+c*8,'--ad');
+      }
     }
   }
   for(let c=0;c<n;c++){
@@ -1539,7 +1805,13 @@ function autoCross(rec){
     if(!sameClue(clueOfStates(states),p._cols[c])) continue;
     for(let r=0;r<n;r++){
       const i=r*n+c;
-      if(G.marks[i]===-1||G.marks[i]===2){ const from=G.marks[i], fs=G.seq[i]; G.marks[i]=0; G.seq[i]=3; rec.changes.push({i:i,from:from,to:0,fs:fs}); applyCell(G.cellEls[i],i,0,false); }
+      if(G.marks[i]===-1||G.marks[i]===2){
+        const from=G.marks[i], fs=G.seq[i];
+        G.marks[i]=0; G.seq[i]=3;
+        rec.changes.push({i:i,from:from,to:0,fs:fs});
+        applyCell(G.cellEls[i],i,0,false);
+        FX.play(G.cellEls[i],'fx-autocross',190,70+r*8,'--ad');
+      }
     }
   }
 }
@@ -1552,7 +1824,9 @@ function undo(){
     G.marks[ch.i]=ch.from;
     G.seq[ch.i]=(ch.fs===undefined)?seqOfVal(ch.from):ch.fs;
     if(ch.from!==1) G.hintM[ch.i]=0;
+    FX.clear(G.cellEls[ch.i]);
     applyCell(G.cellEls[ch.i],ch.i,ch.from,false);
+    FX.play(G.cellEls[ch.i],'fx-undo',140);
   }
   SFX.click();
   G.bad=new Set();
@@ -1569,12 +1843,14 @@ function clearBoard(){
       G.marks[i]=-1;
       G.seq[i]=0;
       G.hintM[i]=0;
+      FX.clear(G.cellEls[i]);
       applyCell(G.cellEls[i],i,-1,false);
     }
   }
   if(rec.length){
     G.undo.push(rec);
     if(G.undo.length>50) G.undo.shift();
+    scanBoard();
   }
   G.bad=new Set();
   updateLines(true);
@@ -1635,13 +1911,14 @@ function useHint(){
   if(!forced.length){ toast(t('hintNone')); return; }
   markStart();
   const rec=[];
-  forced.forEach(function(i){
+  forced.forEach(function(i,hi){
     const from=G.marks[i];
     if(from!==-1) return;
     const fs=G.seq[i];
     G.marks[i]=1; G.seq[i]=1; G.hintM[i]=1;
     rec.push({i:i,from:from,to:1,fs:fs});
     applyCell(G.cellEls[i],i,1,true);
+    FX.play(G.cellEls[i],'fx-hint',380,Math.min(hi*30,180),'--hd');
   });
   if(!rec.length){ toast(t('hintNone')); return; }
   G.hintsLeft--;
@@ -1667,9 +1944,10 @@ function startPuzzle(p){
   G={
     p:p,marks:new Int8Array(n*n),seq:new Int8Array(n*n),hintM:new Uint8Array(n*n),
     undo:[],mistakes:0,hintsLeft:3,base:0,t0:0,running:false,tick:null,
-    done:false,paused:false,bad:new Set(),mode:1
+    done:false,paused:false,bad:new Set(),lineDone:new Set(),mode:1,lastCell:-1
   };
   G.marks.fill(-1); G.hintM.fill(0);
+  HUD_PREV.m=0; HUD_PREV.h=3;
   CURSOR=0;
   $('viewCatalog').classList.add('off');
   $('viewPuzzle').classList.add('on');
@@ -1681,6 +1959,7 @@ function startPuzzle(p){
   updateHUD();
   try{ saveGame(); }catch(e){}
   setTimeout(layoutBoard,60);
+  setTimeout(function(){ if(G&&G.p===p) playScanIn(); },80);
 }
 function setMode(m,silent){
   if(!G) return;
@@ -1688,7 +1967,20 @@ function setMode(m,silent){
   $('modeFill').classList.toggle('on',m===1);
   $('modeCross').classList.toggle('on',m===0);
   $('modeTent').classList.toggle('on',m===2);
+  moveBrushBar();
   if(!silent) SFX.click();
+}
+function moveBrushBar(){
+  const bar=$('brushBar');
+  if(!bar||!G) return;
+  const btn=G.mode===1?$('modeFill'):(G.mode===0?$('modeCross'):$('modeTent'));
+  if(!btn) return;
+  const w=btn.offsetWidth;
+  if(!w){ bar.style.opacity='0'; return; }
+  const bw=Math.max(18,Math.round(w*.46));
+  bar.style.opacity='1';
+  bar.style.width=bw+'px';
+  bar.style.left=Math.round(btn.offsetLeft+(w-bw)/2)+'px';
 }
 /* ================= 解救成功：棋盘 → 立绘 ================= */
 let RVT1=0, RVT2=0, RVT3=0, RVSEQ=0;
@@ -1746,7 +2038,7 @@ function revealPuzzle(p,done){
     if(seq!==RVSEQ) return;
     rv.classList.remove('show');
     RVT2=setTimeout(function(){ if(seq===RVSEQ) done(); },340);
-  },(S.lowPower||reduce)?800:1500);
+  },(S.lowPower||reduce)?800:1250);
 }
 function finish(){
   if(!G||G.done) return;
@@ -1770,24 +2062,35 @@ function finish(){
   unlockAchievements(p,ms,m,h);
   saveGame();
   renderStats();
-  // 棋盘显影脉冲
+  // P1-2 终局定格：最后落子先亮起，再启动全盘脉冲
   const n=p.sz, cx=(n-1)/2, cy=(n-1)/2;
-  $('grid').classList.add('win');
-  for(let i=0;i<n*n;i++){
-    const el=G.cellEls[i]; if(!el) continue;
-    if(G.marks[i]===1){
-      const d=Math.abs(i%n-cx)+Math.abs(Math.floor(i/n)-cy);
-      el.style.setProperty('--d',Math.round(d*26)+'ms');
-    }
+  const animate=FX.on();
+  let last=G.lastCell;
+  if(!(last>=0&&G.marks[last]===1)){
+    last=-1;
+    for(let i=0;i<G.marks.length;i++){ if(G.marks[i]===1){ last=i; break; } }
   }
-  SFX.win(); buzz(40);
+  if(animate&&last>=0) FX.play(G.cellEls[last],'fx-final',420);
+  const lead=animate?160:0;
+  setTimeout(function(){
+    if(!G||G.p!==p) return;
+    $('grid').classList.add('win');
+    for(let i=0;i<n*n;i++){
+      const el=G.cellEls[i]; if(!el) continue;
+      if(G.marks[i]===1){
+        const d=Math.abs(i%n-cx)+Math.abs(Math.floor(i/n)-cy);
+        el.style.setProperty('--d',Math.round(d*26)+'ms');
+      }
+    }
+    SFX.win(); buzz(40);
+  },lead);
   setTimeout(function(){
     if(!G||G.p!==p) return;
     revealPuzzle(p,function(){
       showResult({mode:'win',p:p,ms:ms,m:m,h:h,stars:stars,first:first,
         newBest:!!(oldBest&&ms<oldBest)});
     });
-  },300);
+  },lead+300);
 }
 
 /* ================= 成就 ================= */
@@ -1847,6 +2150,24 @@ function renderAch(){
 function pixelArtHTML(p){
   return '<canvas width="'+p.sz+'" height="'+p.sz+'" data-pix="'+p.id+'"></canvas>';
 }
+let RESULT_RAF=0;
+function rollResultNums(){
+  const els=$('resultSheet').querySelectorAll('.rgrid b[data-to]');
+  if(!els.length) return;
+  cancelAnimationFrame(RESULT_RAF);
+  if(!FX.on()) return;
+  els.forEach(function(el){ el.textContent=el.getAttribute('data-fmt')==='time'?'0:00':'0'; });
+  const t0=performance.now();
+  function step(now){
+    const k=Math.min(1,(now-t0)/360), e=1-Math.pow(1-k,3);
+    els.forEach(function(el){
+      const to=+el.getAttribute('data-to'), v=Math.round(to*e);
+      el.textContent=el.getAttribute('data-fmt')==='time'?fmtTime(v):String(v);
+    });
+    if(k<1) RESULT_RAF=requestAnimationFrame(step);
+  }
+  RESULT_RAF=requestAnimationFrame(step);
+}
 function showResult(o){
   const p=o.p;
   const win=o.mode==='win';
@@ -1865,17 +2186,17 @@ function showResult(o){
   if(win){
     stats='<div class="rstars">'+starHTML(o.stars)+'</div>'
       +'<div class="rgrid">'
-      +'<div><i>'+esc(t('resultTime'))+'</i><b>'+fmtTime(o.ms)+'</b></div>'
-      +'<div><i>'+esc(t('resultMist'))+'</i><b>'+o.m+'</b></div>'
-      +'<div><i>'+esc(t('resultHint'))+'</i><b>'+o.h+'</b></div>'
+      +'<div><i>'+esc(t('resultTime'))+'</i><b data-to="'+o.ms+'" data-fmt="time">'+fmtTime(o.ms)+'</b></div>'
+      +'<div><i>'+esc(t('resultMist'))+'</i><b data-to="'+o.m+'" data-fmt="int">'+o.m+'</b></div>'
+      +'<div><i>'+esc(t('resultHint'))+'</i><b data-to="'+o.h+'" data-fmt="int">'+o.h+'</b></div>'
       +'</div>';
   }else{
     const sv=S.solved[p.id]||{t:0,m:0,h:0,s:0};
     stats='<div class="rstars">'+starHTML(sv.s)+'</div>'
       +'<div class="rgrid">'
-      +'<div><i>'+esc(t('time'))+'</i><b>'+fmtTime(sv.t)+'</b></div>'
-      +'<div><i>'+esc(t('resultMist'))+'</i><b>'+sv.m+'</b></div>'
-      +'<div><i>'+esc(t('resultHint'))+'</i><b>'+sv.h+'</b></div>'
+      +'<div><i>'+esc(t('time'))+'</i><b data-to="'+sv.t+'" data-fmt="time">'+fmtTime(sv.t)+'</b></div>'
+      +'<div><i>'+esc(t('resultMist'))+'</i><b data-to="'+sv.m+'" data-fmt="int">'+sv.m+'</b></div>'
+      +'<div><i>'+esc(t('resultHint'))+'</i><b data-to="'+sv.h+'" data-fmt="int">'+sv.h+'</b></div>'
       +'</div>';
   }
   const buttons=win
@@ -1911,6 +2232,7 @@ function showResult(o){
     },{once:true});
   }
   $('result').classList.add('show');
+  rollResultNums();
   if(!win) SFX.reveal();
   $('resultSheet').onclick=function(e){
     const btn=e.target.closest('[data-act]'); if(!btn) return;
@@ -1935,6 +2257,7 @@ function backToCatalog(){
   cancelReveal();
   stopTimer();
   clearLive();
+  clearScanIn();
   $('result').classList.remove('show');
   $('pause').classList.remove('show');
   $('viewPuzzle').classList.remove('on');
