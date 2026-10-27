@@ -5531,6 +5531,9 @@ const I18N_UI={
   '旅行到达「{a}」{b} 次':{en:'Reached "{a}" on trips {b} times',ja:'旅先「{a}」に{b}回到達',ko:'여행으로 "{a}" {b}회 도착'},
   '旅行收获特产「{n}」':{en:'Souvenir found on a trip: "{n}"',ja:'旅先で特産品「{n}」を入手',ko:'여행에서 특산품 "{n}" 획득'},
   '收到「{a}」来信（{b}）':{en:'Letter received from "{a}" ({b})',ja:'「{a}」からの手紙（{b}）',ko:'"{a}"에게서 온 편지 ({b})'},
+  '需开启「{a}」· 到达 {b} 次':{en:'Open "{a}" first · reach {b} times',ja:'「{a}」を解放後・{b}回到達',ko:'"{a}" 개방 후 · {b}회 도착'},
+  '需开启「{a}」· 收获特产「{b}」':{en:'Open "{a}" first · collect souvenir "{b}"',ja:'「{a}」を解放後・特産品「{b}」入手',ko:'"{a}" 개방 후 · 특산품 "{b}" 획득'},
+  '需开启「{a}」· 收到来信（{b}）':{en:'Open "{a}" first · receive a letter ({b})',ja:'「{a}」を解放後・手紙を受け取る（{b}）',ko:'"{a}" 개방 후 · 편지 수령 ({b})'},
   '旅行相关':{en:'Travel-related',ja:'旅関連',ko:'여행 관련'},
   '解锁第一图鉴 {n} 个月巴':{en:'Unlock {n} Bannies in Codex I',ja:'第一図鑑でバニー{n}体を解放',ko:'도감 1에서 배니 {n}마리 해금'},
   /* H16. 番茄钟统计 / 打卡弹层 */
@@ -8616,6 +8619,12 @@ function condOk(c){
 }
 const FESTIVALS=[[1,1],[2,14],[5,1],[6,1],[10,1],[10,31],[12,24],[12,25]];
 function isFestival(d){ const m=d.getMonth()+1, day=d.getDate(); return FESTIVALS.some(function(f){return f[0]===m&&f[1]===day;}); }
+/* 旅行目的地是否需先开启（地图道具门槛或图四信件进度） */
+function tvDestNeedsOpen(id){
+  const d=TV_DESTS.find(function(x){return x.id===id;}); if(!d)return false;
+  if(d.need==='lamp'||d.need==='bell'||d.need==='charm')return true;
+  return tvIsFourth(d.id);
+}
 function condText(c){
   if(!c)return $t('随时可长');
   switch(c.t){
@@ -8630,7 +8639,21 @@ function condText(c){
     case 'harvest': return $tf('累计收获 {n} 次',{n:c.n});
     case 'count': { const t=typeById(c.id); return $tf('收获「{a}」{b} 次',{a:t.name,b:c.n}); }
     case 'festival': return $t('节日限定');
-    case 'travel': { if(c.d){ const dv=TV_DESTS.find(x=>x.id===c.d); return $tf('旅行到达「{a}」{b} 次',{a:dv?dv.n:c.d,b:c.n||1}); } if(c.s)return $tf('旅行收获特产「{n}」',{n:$sp(c.s)}); if(c.c){ const dp=TV_DESTS.find(x=>x.cards.indexOf(c.c)>=0); return $tf('收到「{a}」来信（{b}）',{a:dp?dp.n:'',b:c.c}); } return $t('旅行相关'); }
+    case 'travel': {
+      if(c.d){
+        const dv=TV_DESTS.find(x=>x.id===c.d), nm=dv?dv.n:c.d;
+        return tvDestNeedsOpen(c.d)?$tf('需开启「{a}」· 到达 {b} 次',{a:nm,b:c.n||1}):$tf('旅行到达「{a}」{b} 次',{a:nm,b:c.n||1});
+      }
+      if(c.s){
+        const dd=TV_DESTS.find(x=>x.specials.indexOf(c.s)>=0);
+        return (dd&&tvDestNeedsOpen(dd.id))?$tf('需开启「{a}」· 收获特产「{b}」',{a:dd.n,b:$sp(c.s)}):$tf('旅行收获特产「{n}」',{n:$sp(c.s)});
+      }
+      if(c.c){
+        const dp=TV_DESTS.find(x=>x.cards.indexOf(c.c)>=0);
+        return (dp&&tvDestNeedsOpen(dp.id))?$tf('需开启「{a}」· 收到来信（{b}）',{a:dp.n,b:c.c}):$tf('收到「{a}」来信（{b}）',{a:dp?dp.n:'',b:c.c});
+      }
+      return $t('旅行相关');
+    }
     case 'dexfirst': return $tf('解锁第一图鉴 {n} 个月巴',{n:c.n||1});
   }
   return '';
@@ -10038,7 +10061,7 @@ function bookRowsHTML(list,quiet){
       <div class="nm">${c?t.name:'???'}</div>
       <div class="cnt">${c?$tf('收获 x{n}',{n:c}):$t('未发现')} <span class="rar-tag ${rcl}">${$t(RAR_NAME[t.r])}</span></div>
       ${stats}
-      <div class="cd">${t.id==='bairi'||weightOf(t)>=1?$tf('条件：{n}',{n:condText(t.cond)}):$t('✨ 概率极低 · 永久可遇')}</div>
+      <div class="cd">${t.cond||weightOf(t)>=1?$tf('条件：{n}',{n:condText(t.cond)}):$t('✨ 概率极低 · 永久可遇')}</div>
       ${gm?`<button class="bc-game" title="${esc(gmLk?$tf('🔒 需集齐第一图鉴 {n} 个月巴开启第二图鉴',{n:DEX1_MIN}):$t('即使还没收集到这只月巴，也可以先玩这个游戏'))}" onclick="event.stopPropagation();dexGameEntry('${t.id}')">${esc($t(gm.label))}${gmLk?' 🔒':''}</button>`:''}
     </div>`; i++;
   }
@@ -10348,7 +10371,7 @@ function openFatDetail(id){ // 图鉴点开某月巴：悬浮层放大图 + 记�
   const gW=rec.heaviest&&rec.heaviest.v>=wHi-0.001, gL=rec.lightest&&rec.lightest.v<=wLo+0.001;
   const ss=(e,k,unit)=>e?(k?`<span class="gold">${e.v+unit}</span>`:e.v+unit):'--';
   const ts=e=>e?`<span class="t">${fmtTS(e.t)}</span>`:'';
-  const cd=t.id==='bairi'||weightOf(t)>=1?$tf('条件：{n}',{n:condText(t.cond)}):$t('✨ 概率极低 · 永久可遇');
+  const cd=t.cond||weightOf(t)>=1?$tf('条件：{n}',{n:condText(t.cond)}):$t('✨ 概率极低 · 永久可遇');
   const ov=$('fdOverlay');
   ov.innerHTML=`<div class="fd-back" onclick="closeFatDetail()"></div>
     <div class="fd-card">
@@ -14947,7 +14970,7 @@ const GB_GAMES=[
   {id:'tamago', codex:'mb_xiaoyue', name:'🥚 月巴蛋', html:'tamago.html', hidden:true},
   /* 月巴食堂：开发期 hidden:true 不显示，M5 验收后删除该标记即上线 */
   {id:'diner', codex:'m3_badaba', name:'🍅 月巴食堂', sub:true, html:'diner.html', hidden:true},
-  {id:'fight', codex:'m2_baboyi', name:'巴巴博弈', html:'fight.html'},
+  {id:'fight', codex:'m2_baboyi', name:'巴巴博弈', sub:true, html:'fight.html'},
 ];
 let gbFrameId=null;
 let gbFrameBack='box';   /* box=百巴箱进入；dex=图鉴进入（关闭后回到图鉴，不弹百巴箱） */
