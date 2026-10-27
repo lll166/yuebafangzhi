@@ -8992,15 +8992,24 @@ function availableTypes(){
 }
 function weightOf(t){
   let w=t.weight!=null?t.weight:({1:100,2:45,3:14,4:4,5:1.2,6:0.9}[t.r]||1);
-  /* 第二图鉴整体掉率 ÷10；但传说（r5）与第一图鉴同权，统一按 1.2 计算，不再打折 */
-  if(isDex2(t.id)&&t.r===5) w=1.2;
-  else if(isDex2(t.id)) w/=10;
+  if(isDex2(t.id)) w/=10;
   return w;
 }
+/* 第二图鉴按稀有度整体控概率：传说合计 0.05%，史诗合计 1%（按当前可用种类动态分摊） */
+const DEX2_R5_RATE=0.0005, DEX2_R4_RATE=0.01;
 function weightedPick(list){
-  let sum=0; for(const t of list) sum+=weightOf(t);
+  let rest=0,n5=0,n4=0;
+  for(const t of list){
+    if(isDex2(t.id)&&t.r===5)n5++;
+    else if(isDex2(t.id)&&t.r===4)n4++;
+    else rest+=weightOf(t);
+  }
+  const target=(n5?DEX2_R5_RATE:0)+(n4?DEX2_R4_RATE:0);
+  const sum=target?rest/(1-target):rest;
+  const w5=n5?sum*DEX2_R5_RATE/n5:0, w4=n4?sum*DEX2_R4_RATE/n4:0;
+  const w=t=>(isDex2(t.id)&&t.r===5)?w5:((isDex2(t.id)&&t.r===4)?w4:weightOf(t));
   let r=Math.random()*sum;
-  for(const t of list){ r-=weightOf(t); if(r<=0)return t; }
+  for(const t of list){ r-=w(t); if(r<=0)return t; }
   return list[list.length-1];
 }
 const BASE_SPEED=0.3; // 全部月巴基础生长速度（倍）：0.5 倍时间，即生长时长翻倍
