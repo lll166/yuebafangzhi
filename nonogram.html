@@ -248,9 +248,15 @@ header#top{
     linear-gradient(var(--acc),var(--acc)) right bottom/13px 2px no-repeat,
     linear-gradient(var(--acc),var(--acc)) right bottom/2px 13px no-repeat;
 }
-.ctop{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:0;height:100%;padding-bottom:calc(2px + var(--supLaneC,0px));overflow:hidden;position:relative}
-.cleft{display:flex;align-items:center;justify-content:flex-end;gap:2px;height:100%;padding-right:calc(4px + var(--supLane,0px));overflow:hidden;position:relative}
+.ctop{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:0;height:100%;padding-bottom:2px;overflow:hidden;position:relative}
+.cleft{display:flex;align-items:center;justify-content:flex-end;gap:2px;height:100%;padding-right:4px;overflow:hidden;position:relative}
 .num{font-size:var(--cluefs);line-height:1.06;color:rgba(38,42,58,.72);font-variant-numeric:tabular-nums;font-weight:600}
+/* v3：大数字和相邻两行/两列的小数字排在同一条线索带里，小数字用 margin 让位，
+   margin 不参与裁剪也不会和 clueNum/clueBad 的 transform 动画打架 */
+.cleft.sup-up .num{margin-bottom:calc(var(--cell) * .3)}
+.cleft.sup-dn .num{margin-top:calc(var(--cell) * .3)}
+.ctop.sup-l .num{margin-right:calc(var(--cell) * .5)}
+.ctop.sup-r .num{margin-left:calc(var(--cell) * .5)}
 .done .num{color:rgba(38,42,58,.24);text-decoration:line-through;text-decoration-thickness:1px}
 .bad .num{color:var(--acc);text-shadow:0 0 7px rgba(99,108,158,.35)}
 .cleft.fx-done .num,.ctop.fx-done .num{animation:clueNum .2s var(--ease-out) both;animation-delay:calc(var(--i,0) * 22ms)}
@@ -605,7 +611,8 @@ body.low-power .cell.wbad::after{animation:none}
 .msup.done{background:rgba(43,47,66,.26);color:rgba(255,255,255,.5);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);text-decoration:line-through;
   text-decoration-thickness:1px}
-/* v3：大数字不参与小数字排序，单独放在贴近棋盘一侧的泳道里，跨两行/两列居中 */
+/* v3：大数字不参与小数字的先后排序，而是立在与小数字同一条线索带里，
+   纵向骑在两行分界（行向）/ 横向骑在两列分界（列向），归属一眼可见 */
 /* ---------- 行/列引导：防止看错行 ---------- */
 #cluesLeft>.cleft,#cluesTop>.ctop{transition:background .16s var(--ease-out),box-shadow .16s var(--ease-out)}
 #cluesLeft>.cleft:nth-child(2n),#cluesTop>.ctop:nth-child(2n){background:rgba(99,108,158,.028)}
@@ -1709,7 +1716,7 @@ function buildBoard(p){
   const board=$('board');
   board.style.setProperty('--n',n);
   board.querySelectorAll('.msup').forEach(function(el){ el.remove(); });
-  /* v3：大数字不进小数字序列，单独放进线索区贴近棋盘一侧的泳道 */
+  /* v3：大数字不进小数字序列，和相邻两行/两列共用同一条线索带 */
   // 线索 DOM
   const top=$('cluesTop'), left=$('cluesLeft');
   let th='';
@@ -1760,14 +1767,28 @@ function buildBoard(p){
   /* 超级带的两行/两列打上常驻底色，和徽章一起提示「这是一组」 */
   if(p.mega){
     const sr0=p._sr||[], sc0=p._sc||[];
+    const inl=!!(p.v===3);
     for(let a=0;a<n-1;a++){
       if(sr0[a]&&sr0[a].length){
-        if(G.rowEls[a]) G.rowEls[a].classList.add('band');
-        if(G.rowEls[a+1]) G.rowEls[a+1].classList.add('band');
+        if(G.rowEls[a]){
+          G.rowEls[a].classList.add('band');
+          /* v3：上排数字向上、下排数字向下让开骑在两行分界上的大数字 */
+          if(inl) G.rowEls[a].classList.add('sup-up');
+        }
+        if(G.rowEls[a+1]){
+          G.rowEls[a+1].classList.add('band');
+          if(inl) G.rowEls[a+1].classList.add('sup-dn');
+        }
       }
       if(sc0[a]&&sc0[a].length){
-        if(G.colEls[a]) G.colEls[a].classList.add('band');
-        if(G.colEls[a+1]) G.colEls[a+1].classList.add('band');
+        if(G.colEls[a]){
+          G.colEls[a].classList.add('band');
+          if(inl) G.colEls[a].classList.add('sup-l');
+        }
+        if(G.colEls[a+1]){
+          G.colEls[a+1].classList.add('band');
+          if(inl) G.colEls[a+1].classList.add('sup-r');
+        }
       }
     }
   }
@@ -1802,24 +1823,27 @@ function layoutBoard(){
   const availW=vw-20;
   const availH=vh-190;
   const maxR=G.p._maxR, maxC=G.p._maxC;
-  /* v3：大数字走专属泳道，要按徽章数量给线索区预留一条贴棋盘的长条空间 */
-  const lane=!!(G.p.mega&&G.p.v===3);
+  /* v3：大数字和小数字排在同一条线索带里，不再单开泳道，线索区尺寸照旧算，
+     只需保证徽章本身放得下 */
+  const inl=!!(G.p.mega&&G.p.v===3);
   let MR=0, MC=0;
   if(G.p.mega && G.supEls){
     G.supEls.r.forEach(function(l){ MR=Math.max(MR,l.length); });
     G.supEls.c.forEach(function(l){ MC=Math.max(MC,l.length); });
   }
-  const wUnit=n+maxR*0.62+0.4+(MR?MR*(lane?0.72:0.58)+(MR-1)*0.06+0.22:0);
-  const hUnit=n+maxC*0.78+0.6+(MC?MC*(lane?0.72:0.58)+(MC-1)*0.06+0.22:0);
+  const wUnit=n+maxR*0.62+0.4+(inl?0:(MR?MR*0.58+(MR-1)*0.06+0.22:0));
+  const hUnit=n+maxC*0.78+0.6+(inl?0:(MC?MC*0.58+(MC-1)*0.06+0.22:0));
   let cell=Math.floor(Math.min(availW/wUnit,availH/hUnit,28));
   cell=Math.max(11,Math.min(30,cell));
   const ms=Math.max(10,Math.round(cell*0.54));
-  /* v3 泳道里的徽章是长条：横跨两行/两列，宽边不小于 0.72 格，保证数字清楚 */
-  const msw=lane?Math.max(ms,Math.round(cell*0.72)):ms;
-  const laneW=lane&&MR?MR*msw+(MR-1)*2+4:0;
-  const laneH=lane&&MC?MC*msw+(MC-1)*2+4:0;
-  const leftw=Math.ceil(maxR*cell*0.62+6+(lane?laneW:(MR?MR*msw+(MR-1)*2+4:0)));
-  const toph=Math.ceil(maxC*cell*0.74+4+(lane?laneH:(MC?MC*msw+(MC-1)*2+4:0)));
+  /* v3 的徽章是个方格，边长不小于 0.72 格，保证数字清楚 */
+  const msw=inl?Math.max(ms,Math.round(cell*0.72)):ms;
+  const leftw=inl
+    ? Math.ceil(Math.max(maxR*cell*0.62+6, MR?msw+6:0))
+    : Math.ceil(maxR*cell*0.62+6+(MR?MR*msw+(MR-1)*2+4:0));
+  const toph=inl
+    ? Math.ceil(Math.max(maxC*cell*0.74+4, MC?msw+6:0))
+    : Math.ceil(maxC*cell*0.74+4+(MC?MC*msw+(MC-1)*2+4:0));
   const board=$('board');
   G.cell=cell;
   board.style.setProperty('--cell',cell+'px');
@@ -1827,25 +1851,26 @@ function layoutBoard(){
   board.style.setProperty('--toph',toph+'px');
   board.style.setProperty('--cluefs',Math.max(7,Math.round(cell*0.52))+'px');
   board.style.setProperty('--msup',ms+'px');
-  board.style.setProperty('--msupfs',Math.max(7,Math.round(ms*0.62))+'px');
-  board.style.setProperty('--supLane',laneW+'px');
-  board.style.setProperty('--supLaneC',laneH+'px');
+  /* v3 的大数字和小线索同级字号，其余形态保持原来的比例 */
+  board.style.setProperty('--msupfs',(inl?Math.max(7,Math.round(cell*0.52)):Math.max(7,Math.round(ms*0.62)))+'px');
   if(G.p.mega && G.supEls){
-    if(lane){
-      /* v3：徽章占满带内两行/两列，居中放在泳道里，和小数字不共用任何槽位，
-         小数字保持真实先后顺序，大数字属于哪两行/两列也不会看错 */
+    if(inl){
+      /* v3 行向：徽章立在小数字的右对齐列上（同一条竖列），纵向骑在第 a、a+1 行的分界线上；
+         上排数字向上、下排数字向下让位（见 .cleft.sup-up/.sup-dn） */
       G.supEls.r.forEach(function(list,a){
         list.forEach(function(el,k){
-          el.style.width=msw+'px'; el.style.height=(cell*2)+'px';
-          el.style.left=(leftw-2-(k+1)*msw-k*2)+'px';
-          el.style.top=(toph+a*cell)+'px';
+          el.style.width=msw+'px'; el.style.height=msw+'px';
+          el.style.left=Math.round(leftw-4-msw-k*(msw+2))+'px';
+          el.style.top=Math.round(toph+(a+1)*cell-msw/2)+'px';
         });
       });
+      /* v3 列向：徽章立在列线索最下沿（紧贴棋盘），横向骑在第 a、a+1 列的分界线上；
+         左列数字向左、右列数字向右让位（见 .ctop.sup-l/.sup-r） */
       G.supEls.c.forEach(function(list,a){
         list.forEach(function(el,k){
-          el.style.width=(cell*2)+'px'; el.style.height=msw+'px';
-          el.style.left=(leftw+a*cell)+'px';
-          el.style.top=(toph-2-(k+1)*msw-k*2)+'px';
+          el.style.width=msw+'px'; el.style.height=msw+'px';
+          el.style.left=Math.round(leftw+(a+1)*cell-msw/2)+'px';
+          el.style.top=(toph-2-msw-k*(msw+2))+'px';
         });
       });
     }else{
