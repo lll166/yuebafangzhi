@@ -86,6 +86,21 @@ body.used .hint{opacity:0}
 .enter:active{transform:translateY(1px)}
 .enter i{display:inline-block;margin-left:10px;font-style:normal;text-indent:0;transition:transform .22s ease}
 .enter:hover i,.enter:focus-visible i{transform:translateX(4px)}
+/* 右下角跳过：直接进入数织，不播离场动画 */
+.skip{
+  position:fixed;z-index:4;
+  right:calc(16px + env(safe-area-inset-right));
+  bottom:calc(16px + env(safe-area-inset-bottom));
+  pointer-events:auto;padding:8px 15px;border-radius:2px;
+  border:1px solid rgba(185,174,230,.42);background:rgba(22,18,42,.42);
+  color:#b2abcf;font-family:inherit;font-size:9px;line-height:1;font-weight:700;
+  letter-spacing:.22em;text-indent:.22em;cursor:pointer;
+  transition:opacity .7s ease .12s,background .2s ease,color .2s ease,border-color .2s ease,transform .2s ease;
+}
+.skip:hover,.skip:focus-visible{background:#b9aee6;border-color:#b9aee6;color:#1b1832;outline:none}
+.skip:active{transform:translateY(1px)}
+body.boot .skip{opacity:0}
+body.leaving .skip{opacity:0;pointer-events:none;transform:translateY(4px);transition:opacity .35s ease}
 .veil{
   position:fixed;inset:0;z-index:5;pointer-events:none;opacity:0;
   /* 与月巴数织同款浅紫底：后半段由深紫渐渐发白，避免明暗骤变刺眼 */
@@ -171,6 +186,8 @@ body.leaving .whisper p:nth-child(2){animation-delay:2.13s}
   <button class="enter" id="enter" type="button"><span id="enterTxt">进入数织</span><i>→</i></button>
 </footer>
 
+<button class="skip" id="skip" type="button">跳过</button>
+
 <div class="veil" aria-hidden="true"></div>
 <div class="whisper" id="whisper" aria-hidden="true"><p></p><p></p></div>
 
@@ -179,13 +196,13 @@ body.leaving .whisper p:nth-child(2){animation-delay:2.13s}
 'use strict';
 /* ================= 文案 ================= */
 var TXT={
-  zh:{brand:'月巴数织',brandSub:'NONOGRAM',sub:'序 · 群鸦筑笼',hint:'轻触或滑过乌鸦，让它们飞起',enter:'进入数织',title:'群鸦筑笼 · 月巴数织',
+  zh:{brand:'月巴数织',brandSub:'NONOGRAM',sub:'序 · 群鸦筑笼',hint:'轻触或滑过乌鸦，让它们飞起',enter:'进入数织',skip:'跳过',title:'群鸦筑笼 · 月巴数织',
       whisper:['我从一开始就在外面。','一直待在笼子里的人是你。']},
-  en:{brand:'Banny Nonogram',brandSub:'CAGE OF CROWS',sub:'Prologue · A Cage of Crows',hint:'Touch or sweep the crows — they take flight, then return to the cage',enter:'Enter Nonogram',title:'A Cage of Crows · Banny Nonogram',
+  en:{brand:'Banny Nonogram',brandSub:'CAGE OF CROWS',sub:'Prologue · A Cage of Crows',hint:'Touch or sweep the crows — they take flight, then return to the cage',enter:'Enter Nonogram',skip:'Skip',title:'A Cage of Crows · Banny Nonogram',
       whisper:['I have been outside from the very beginning.','You are the one who has always been in the cage.']},
-  ja:{brand:'バニー数織',brandSub:'烏の籠',sub:'序・烏の籠',hint:'カラスに触れると飛び立ち、やがて籠へ戻ります',enter:'数織へ',title:'烏の籠 · バニー数織',
+  ja:{brand:'バニー数織',brandSub:'烏の籠',sub:'序・烏の籠',hint:'カラスに触れると飛び立ち、やがて籠へ戻ります',enter:'数織へ',skip:'スキップ',title:'烏の籠 · バニー数織',
       whisper:['私は最初からずっと、外にいた。','ずっと籠の中にいたのは、あなたの方。']},
-  ko:{brand:'배니 노노그램',brandSub:'CAGE OF CROWS',sub:'서장 · 까마귀의 새장',hint:'까마귀를 만지면 날아올랐다가 곧 새장으로 돌아옵니다',enter:'노노그램 시작',title:'까마귀의 새장 · 배니 노노그램',
+  ko:{brand:'배니 노노그램',brandSub:'CAGE OF CROWS',sub:'서장 · 까마귀의 새장',hint:'까마귀를 만지면 날아올랐다가 곧 새장으로 돌아옵니다',enter:'노노그램 시작',skip:'건너뛰기',title:'까마귀의 새장 · 배니 노노그램',
       whisper:['나는 처음부터 밖에 있었어.','계속 새장 안에 있던 사람은 너야.']}
 };
 var QS=new URLSearchParams(location.search||'');
@@ -211,6 +228,7 @@ document.getElementById('brandSub').textContent=T.brandSub;
 document.getElementById('sub').textContent=T.sub;
 document.getElementById('hint').textContent=T.hint;
 document.getElementById('enterTxt').textContent=T.enter;
+document.getElementById('skip').textContent=T.skip;
 (function(){
   var wp=document.getElementById('whisper').children,i;
   for(i=0;i<wp.length&&i<T.whisper.length;i++) wp[i].textContent=T.whisper[i];
@@ -831,6 +849,13 @@ function go(){
   },reduceMotion?8000:10700);
 }
 document.getElementById('enter').addEventListener('click',go);
+/* 跳过：立刻进入数织，不播离场动画 */
+document.getElementById('skip').addEventListener('click',function(){
+  if(leaving) return;
+  leaving=true;
+  clearTimeout(ambT);
+  try{ location.href=targetURL(); }catch(e){}
+});
 
 /* ================= 启动 ================= */
 /* 内嵌在百巴箱里时，向父页回报开场页色系，让顶部功能栏同色 */
