@@ -248,8 +248,8 @@ header#top{
     linear-gradient(var(--acc),var(--acc)) right bottom/13px 2px no-repeat,
     linear-gradient(var(--acc),var(--acc)) right bottom/2px 13px no-repeat;
 }
-.ctop{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:0;height:100%;padding-bottom:2px;overflow:hidden;position:relative}
-.cleft{display:flex;align-items:center;justify-content:flex-end;gap:2px;height:100%;padding-right:4px;overflow:hidden;position:relative}
+.ctop{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:0;height:100%;padding-bottom:calc(2px + var(--supLaneC,0px));overflow:hidden;position:relative}
+.cleft{display:flex;align-items:center;justify-content:flex-end;gap:2px;height:100%;padding-right:calc(4px + var(--supLane,0px));overflow:hidden;position:relative}
 .num{font-size:var(--cluefs);line-height:1.06;color:rgba(38,42,58,.72);font-variant-numeric:tabular-nums;font-weight:600}
 .done .num{color:rgba(38,42,58,.24);text-decoration:line-through;text-decoration-thickness:1px}
 .bad .num{color:var(--acc);text-shadow:0 0 7px rgba(99,108,158,.35)}
@@ -284,6 +284,10 @@ header#top{
 .cell.cross::before{content:"✕";font-size:calc(var(--cell) * .48);color:rgba(38,42,58,.38);line-height:1}
 .cell.fill.cross::before{content:none}
 .cell.hm::after{content:"✦";position:absolute;right:1px;top:-1px;font-size:calc(var(--cell) * .4);color:rgba(255,255,255,.85);text-shadow:0 0 3px rgba(0,0,0,.6)}
+/* 点提示后标出的填错格：红色描边呼吸 */
+.cell.wbad::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:2;box-shadow:inset 0 0 0 2px rgba(214,73,63,.95);animation:wbadPulse 1.15s ease-in-out infinite}
+@keyframes wbadPulse{0%,100%{opacity:.95}50%{opacity:.38}}
+body.low-power .cell.wbad::after{animation:none}
 .cell.cur{outline:2px solid var(--ice);outline-offset:-2px;z-index:2}
 .cell.fx-fill{animation:cellFill .11s var(--ease-out) both;animation-delay:var(--fd,0ms)}
 @keyframes cellFill{0%{transform:scale(.7);opacity:.55}65%{transform:scale(1.04);opacity:1}100%{transform:scale(1);opacity:1}}
@@ -601,10 +605,7 @@ header#top{
 .msup.done{background:rgba(43,47,66,.26);color:rgba(255,255,255,.5);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);text-decoration:line-through;
   text-decoration-thickness:1px}
-/* v3：大数字按它在行/列线索序列里的先后顺序内联摆放（跨两行/两列的边界） */
-.msup.inl{position:relative;left:auto;top:auto;flex:none;margin:0 1px;
-  font-size:var(--cluefs,11px)}
-.cleft.sup-host,.ctop.sup-host{overflow:visible;z-index:6}
+/* v3：大数字不参与小数字排序，单独放在贴近棋盘一侧的泳道里，跨两行/两列居中 */
 /* ---------- 行/列引导：防止看错行 ---------- */
 #cluesLeft>.cleft,#cluesTop>.ctop{transition:background .16s var(--ease-out),box-shadow .16s var(--ease-out)}
 #cluesLeft>.cleft:nth-child(2n),#cluesTop>.ctop:nth-child(2n){background:rgba(99,108,158,.028)}
@@ -844,7 +845,7 @@ const I18N={
     paused:'已暂停', pauseSub:'计时已停止，棋盘会保留。', back:'← 名册', backCatalog:'返回名册',
     win:'解救成功', author:'画作者', rank:'稀有度', resultTime:'用时', resultMist:'失误', resultHint:'提示',
     next:'下一只待解救', close:'关闭',
-    hintNone:'当前没有可确定的格子，先试填一格', hintOut:'提示已用完', cleared:'已清空，可撤销',
+    hintNone:'当前没有可确定的格子，先试填一格', hintOut:'提示已用完', hintWrong:'✦ 发现 {n} 处填错了，红框标出的格子需要改', cleared:'已清空，可撤销',
     resumed:'已恢复上次进度，计时已暂停，点「继续」接着玩',
     ach:'本地成就', achSub:'共 {a}/{b} 项达成', achUnlocked:'已达成', achLocked:'未达成',
     set:'设置', setSub:'只影响本页面，不改动主游戏存档', sound:'音效', auto:'自动划叉',
@@ -891,7 +892,7 @@ const I18N={
     paused:'Paused', pauseSub:'The timer is stopped. Your board is kept.', back:'← List', backCatalog:'Back to list',
     win:'Rescue Complete', author:'Artist', rank:'Rarity', resultTime:'Time', resultMist:'Mistakes', resultHint:'Hints',
     next:'Next caged', close:'Close',
-    hintNone:'No certain cell right now. Try a guess first.', hintOut:'No hints left', cleared:'Cleared — undo available',
+    hintNone:'No certain cell right now. Try a guess first.', hintOut:'No hints left', hintWrong:'✦ {n} cell(s) are wrong — the red-outlined cells need fixing', cleared:'Cleared — undo available',
     resumed:'Progress restored — timer paused. Tap Resume to continue.',
     ach:'Local Achievements', achSub:'{a}/{b} unlocked', achUnlocked:'Unlocked', achLocked:'Locked',
     set:'Settings', setSub:'Only affects this page; the main save is untouched', sound:'Sound', auto:'Auto-cross',
@@ -938,7 +939,7 @@ const I18N={
     paused:'一時停止中', pauseSub:'タイマーは停止しました。盤面は保持されます。', back:'← リスト', backCatalog:'リストへ',
     win:'救助成功', author:'絵師', rank:'レア度', resultTime:'時間', resultMist:'ミス', resultHint:'ヒント',
     next:'次の未救助', close:'閉じる',
-    hintNone:'確定できるマスがありません。まず一マス試してください', hintOut:'ヒントを使い切りました', cleared:'消去しました（戻せます）',
+    hintNone:'確定できるマスがありません。まず一マス試してください', hintOut:'ヒントを使い切りました', hintWrong:'✦ {n} マス間違っています。赤枠のマスを直してください', cleared:'消去しました（戻せます）',
     resumed:'前回の続きを復元しました（タイマー停止中）。「再開」で続けられます',
     ach:'ローカル実績', achSub:'{a}/{b} 達成', achUnlocked:'達成', achLocked:'未達成',
     set:'設定', setSub:'このページのみに適用。メインセーブは変更しません', sound:'効果音', auto:'自動×',
@@ -985,7 +986,7 @@ const I18N={
     paused:'일시정지', pauseSub:'타이머가 멈췄습니다. 판은 유지됩니다.', back:'← 목록', backCatalog:'목록으로',
     win:'구출 성공', author:'작가', rank:'희귀도', resultTime:'시간', resultMist:'실수', resultHint:'힌트',
     next:'다음 미구출', close:'닫기',
-    hintNone:'확정할 수 있는 칸이 없습니다. 먼저 한 칸 시도하세요', hintOut:'힌트를 모두 썼습니다', cleared:'지웠습니다 — 되돌릴 수 있어요',
+    hintNone:'확정할 수 있는 칸이 없습니다. 먼저 한 칸 시도하세요', hintOut:'힌트를 모두 썼습니다', hintWrong:'✦ 잘못된 칸이 {n}개 있습니다. 빨간 테두리 칸을 고쳐 주세요', cleared:'지웠습니다 — 되돌릴 수 있어요',
     resumed:'이전 진행 상황을 복원했습니다 (타이머 정지). 「계속」을 눌러 이어서 하세요',
     ach:'로컬 업적', achSub:'{a}/{b} 달성', achUnlocked:'달성', achLocked:'미달성',
     set:'설정', setSub:'이 페이지만 적용되며 메인 저장은 건드리지 않습니다', sound:'효과음', auto:'자동 ×',
@@ -1144,7 +1145,7 @@ function saveLive(){
     if(!touched){ clearLive(); return; }
     localStorage.setItem(liveKey(),JSON.stringify({
       v:1,id:G.p.id,ms:Math.round(elapsedNow()),m:G.mistakes,h:G.hintsLeft,mode:G.mode,
-      marks:packCells(G.marks),seq:packCells(G.seq),hint:packCells(G.hintM)
+      marks:packCells(G.marks),seq:packCells(G.seq),hint:packCells(G.hintM),wb:packCells(G.wrongM)
     }));
   }catch(e){}
 }
@@ -1180,6 +1181,7 @@ function restoreLiveOf(m){
   G.mistakes=Math.max(0,parseInt(d.m,10)||0);
   G.hintsLeft=Math.max(0,Math.min(3,parseInt(d.h,10)||0));
   G.mode=(d.mode===0||d.mode===2)?d.mode:1;
+  G.wrongM=unpackCells(d.wb||'',n,0);
   setMode(G.mode,true);
   renderBoard();
   saveLive();
@@ -1707,9 +1709,7 @@ function buildBoard(p){
   const board=$('board');
   board.style.setProperty('--n',n);
   board.querySelectorAll('.msup').forEach(function(el){ el.remove(); });
-  /* v3：大数字按它在小线索序列中的真实先后位置内联摆放（跨两行/两列边界） */
-  const inl=(p.v===3&&p.mega)?supHosts(p):null;
-  G.inlSup=!!inl;
+  /* v3：大数字不进小数字序列，单独放进线索区贴近棋盘一侧的泳道 */
   // 线索 DOM
   const top=$('cluesTop'), left=$('cluesLeft');
   let th='';
@@ -1717,14 +1717,11 @@ function buildBoard(p){
     const toks=[];
     (p._cols[c]||[]).forEach(function(v,i){
       const r=(p._cruns[c]||[])[i]||{c0:0};
-      toks.push({sup:0,v:v,key:r.c0});
+      toks.push({v:v,key:r.c0});
     });
-    if(inl) inl.c[c].forEach(function(b){ toks.push({sup:1,v:b.val,key:b.lo,a:b.a,k:b.k,tail:b.tail}); });
-    toks.sort(function(x,y){ return x.key-y.key||(x.sup-y.sup); });
-    th+='<div class="ctop'+(inl&&inl.c[c].length?' sup-host':'')+'" data-line="c'+c+'">'+
-      toks.map(function(o){ return o.sup
-        ? '<span class="msup inl" data-band="c'+o.a+'" data-k="'+o.k+'" data-a="'+o.a+'" data-h="'+c+'"'+(o.tail?' data-tail="1"':'')+'>'+o.v+'</span>'
-        : '<span class="num">'+o.v+'</span>'; }).join('')+'</div>';
+    toks.sort(function(x,y){ return x.key-y.key; });
+    th+='<div class="ctop" data-line="c'+c+'">'+
+      toks.map(function(o){ return '<span class="num">'+o.v+'</span>'; }).join('')+'</div>';
   }
   top.innerHTML=th;
   let lh='';
@@ -1732,14 +1729,11 @@ function buildBoard(p){
     const toks=[];
     (p._rows[r]||[]).forEach(function(v,i){
       const q=(p._rruns[r]||[])[i]||{c0:0};
-      toks.push({sup:0,v:v,key:q.c0});
+      toks.push({v:v,key:q.c0});
     });
-    if(inl) inl.r[r].forEach(function(b){ toks.push({sup:1,v:b.val,key:b.lo,a:b.a,k:b.k,tail:b.tail}); });
-    toks.sort(function(x,y){ return x.key-y.key||(x.sup-y.sup); });
-    lh+='<div class="cleft'+(inl&&inl.r[r].length?' sup-host':'')+'" data-line="r'+r+'">'+
-      toks.map(function(o){ return o.sup
-        ? '<span class="msup inl" data-band="r'+o.a+'" data-k="'+o.k+'" data-a="'+o.a+'" data-h="'+r+'"'+(o.tail?' data-tail="1"':'')+'>'+o.v+'</span>'
-        : '<span class="num">'+o.v+'</span>'; }).join('')+'</div>';
+    toks.sort(function(x,y){ return x.key-y.key; });
+    lh+='<div class="cleft" data-line="r'+r+'">'+
+      toks.map(function(o){ return '<span class="num">'+o.v+'</span>'; }).join('')+'</div>';
   }
   left.innerHTML=lh;
   // 格
@@ -1781,29 +1775,20 @@ function buildBoard(p){
   G.supEls={r:[],c:[]};
   for(let a=0;a<n-1;a++){ G.supEls.r[a]=[]; G.supEls.c[a]=[]; }
   if(p.mega){
-    if(inl){
-      /* v3：徽章已内联在线索行内，这里只收集引用（用于完成态着色） */
-      board.querySelectorAll('.msup').forEach(function(el){
-        const band=el.getAttribute('data-band')||'';
-        const a=+band.slice(1);
-        (band.charAt(0)==='r'?G.supEls.r:G.supEls.c)[a].push(el);
+    const sr=p._sr||[], sc=p._sc||[];
+    for(let a=0;a<n-1;a++){
+      (sr[a]||[]).forEach(function(v,k){
+        const el=document.createElement('span');
+        el.className='msup'; el.textContent=String(v);
+        el.setAttribute('data-band','r'+a); el.setAttribute('data-k',k);
+        board.appendChild(el); G.supEls.r[a].push(el);
       });
-    }else{
-      const sr=p._sr||[], sc=p._sc||[];
-      for(let a=0;a<n-1;a++){
-        (sr[a]||[]).forEach(function(v,k){
-          const el=document.createElement('span');
-          el.className='msup'; el.textContent=String(v);
-          el.setAttribute('data-band','r'+a); el.setAttribute('data-k',k);
-          board.appendChild(el); G.supEls.r[a].push(el);
-        });
-        (sc[a]||[]).forEach(function(v,k){
-          const el=document.createElement('span');
-          el.className='msup'; el.textContent=String(v);
-          el.setAttribute('data-band','c'+a); el.setAttribute('data-k',k);
-          board.appendChild(el); G.supEls.c[a].push(el);
-        });
-      }
+      (sc[a]||[]).forEach(function(v,k){
+        const el=document.createElement('span');
+        el.className='msup'; el.textContent=String(v);
+        el.setAttribute('data-band','c'+a); el.setAttribute('data-k',k);
+        board.appendChild(el); G.supEls.c[a].push(el);
+      });
     }
   }
   layoutBoard();
@@ -1817,20 +1802,24 @@ function layoutBoard(){
   const availW=vw-20;
   const availH=vh-190;
   const maxR=G.p._maxR, maxC=G.p._maxC;
+  /* v3：大数字走专属泳道，要按徽章数量给线索区预留一条贴棋盘的长条空间 */
+  const lane=!!(G.p.mega&&G.p.v===3);
   let MR=0, MC=0;
   if(G.p.mega && G.supEls){
     G.supEls.r.forEach(function(l){ MR=Math.max(MR,l.length); });
     G.supEls.c.forEach(function(l){ MC=Math.max(MC,l.length); });
   }
-  const wUnit=n+maxR*0.62+0.4+(MR?MR*(G.inlSup?0.74:0.58)+(MR-1)*0.06+0.22:0);
-  const hUnit=n+maxC*0.78+0.6+(MC?MC*(G.inlSup?0.74:0.58)+(MC-1)*0.06+0.22:0);
+  const wUnit=n+maxR*0.62+0.4+(MR?MR*(lane?0.72:0.58)+(MR-1)*0.06+0.22:0);
+  const hUnit=n+maxC*0.78+0.6+(MC?MC*(lane?0.72:0.58)+(MC-1)*0.06+0.22:0);
   let cell=Math.floor(Math.min(availW/wUnit,availH/hUnit,28));
   cell=Math.max(11,Math.min(30,cell));
   const ms=Math.max(10,Math.round(cell*0.54));
-  /* v3：内联徽章的宽边 —— 行向加宽、列向加高，让大数字和小数字一样大 */
-  const msw=G.inlSup?Math.max(ms,Math.round(cell*0.72)):ms;
-  const leftw=Math.ceil(maxR*cell*0.62+6+(MR?MR*msw+(MR-1)*2+4:0));
-  const toph=Math.ceil(maxC*cell*0.74+4+(MC?MC*msw+(MC-1)*2+4:0));
+  /* v3 泳道里的徽章是长条：横跨两行/两列，宽边不小于 0.72 格，保证数字清楚 */
+  const msw=lane?Math.max(ms,Math.round(cell*0.72)):ms;
+  const laneW=lane&&MR?MR*msw+(MR-1)*2+4:0;
+  const laneH=lane&&MC?MC*msw+(MC-1)*2+4:0;
+  const leftw=Math.ceil(maxR*cell*0.62+6+(lane?laneW:(MR?MR*msw+(MR-1)*2+4:0)));
+  const toph=Math.ceil(maxC*cell*0.74+4+(lane?laneH:(MC?MC*msw+(MC-1)*2+4:0)));
   const board=$('board');
   G.cell=cell;
   board.style.setProperty('--cell',cell+'px');
@@ -1839,26 +1828,24 @@ function layoutBoard(){
   board.style.setProperty('--cluefs',Math.max(7,Math.round(cell*0.52))+'px');
   board.style.setProperty('--msup',ms+'px');
   board.style.setProperty('--msupfs',Math.max(7,Math.round(ms*0.62))+'px');
+  board.style.setProperty('--supLane',laneW+'px');
+  board.style.setProperty('--supLaneC',laneH+'px');
   if(G.p.mega && G.supEls){
-    if(G.inlSup){
-      /* v3：徽章随线索行/列排版；底色纵向盖住这两行（横向盖住这两列），
-         再挪半格压在分界上，一眼就能看出这个数字属于哪两行/两列 */
+    if(lane){
+      /* v3：徽章占满带内两行/两列，居中放在泳道里，和小数字不共用任何槽位，
+         小数字保持真实先后顺序，大数字属于哪两行/两列也不会看错 */
       G.supEls.r.forEach(function(list,a){
-        list.forEach(function(el){
-          const host=+el.getAttribute('data-h');
-          const dy=(host===a?cell/2:-cell/2);
+        list.forEach(function(el,k){
           el.style.width=msw+'px'; el.style.height=(cell*2)+'px';
-          el.style.transform='translateY('+Math.round(dy)+'px)';
-          el.style.marginRight=el.getAttribute('data-tail')==='1'?Math.round(cell*0.34)+'px':'';
+          el.style.left=(leftw-2-(k+1)*msw-k*2)+'px';
+          el.style.top=(toph+a*cell)+'px';
         });
       });
       G.supEls.c.forEach(function(list,a){
-        list.forEach(function(el){
-          const host=+el.getAttribute('data-h');
-          const dx=(host===a?cell/2:-cell/2);
+        list.forEach(function(el,k){
           el.style.width=(cell*2)+'px'; el.style.height=msw+'px';
-          el.style.transform='translateX('+Math.round(dx)+'px)';
-          el.style.marginBottom=el.getAttribute('data-tail')==='1'?Math.round(cell*0.34)+'px':'';
+          el.style.left=(leftw+a*cell)+'px';
+          el.style.top=(toph-2-(k+1)*msw-k*2)+'px';
         });
       });
     }else{
@@ -1940,6 +1927,7 @@ function applyCell(el,i,v,anim){
   el.classList.toggle('cross',v===0);
   el.classList.toggle('tent',v===2);
   el.classList.toggle('hm',!!(G.hintM[i]&&v===1));
+  el.classList.toggle('wbad',!!(G.wrongM&&G.wrongM[i]>0)&&v!==2);
   if(anim){ FX.clear(el); FX.cell(el,v,150); }
 }
 function bumpHud(el,key,v){
@@ -2172,88 +2160,6 @@ function clueOfMask(n,m){
     else if(run){ out.push(run); run=0; }
   }
   if(run) out.push(run);
-  return out;
-}
-/* ---------- 超级块在图中的真实位置（决定大数字与小数字的先后顺序） ---------- */
-/* 两行/两列带里「跨两行/两列」的极大连通块：大小 + 垂直于带方向的区间 [lo,hi] */
-function bandSpanComps(n,fa,fb){
-  const seen=[new Set(),new Set()];
-  const out=[];
-  for(let sy=0;sy<2;sy++) for(let sx=0;sx<n;sx++){
-    if(seen[sy].has(sx)||!(sy?fb(sx):fa(sx))) continue;
-    const st=[[sy,sx]]; seen[sy].add(sx);
-    let size=0,ta=false,tb=false,lo=n,hi=-1;
-    while(st.length){
-      const cur=st.pop(), cy=cur[0], cx=cur[1];
-      size++;
-      if(cy===0) ta=true; else tb=true;
-      if(cx<lo) lo=cx;
-      if(cx>hi) hi=cx;
-      const nb=[[cy-1,cx],[cy+1,cx],[cy,cx-1],[cy,cx+1]];
-      for(let q=0;q<4;q++){
-        const ny=nb[q][0], nx=nb[q][1];
-        if(ny>=0&&ny<2&&nx>=0&&nx<n&&!seen[ny].has(nx)&&(ny?fb(nx):fa(nx))){ seen[ny].add(nx); st.push([ny,nx]); }
-      }
-    }
-    if(ta&&tb) out.push({size:size,lo:lo,hi:hi});
-  }
-  out.sort(function(x,y){ return x.size-y.size||x.lo-y.lo; });
-  return out;
-}
-/* 每题超级线索的实际位置：meta.r[a][k] / meta.c[a][k] 与 sr[a] / sc[a] 同序 */
-function supMeta(p){
-  if(p._supMeta) return p._supMeta;
-  const n=p.sz;
-  const bit=function(r,c){ return p.bits.charCodeAt(r*n+c)===49?1:0; };
-  const meta={r:[],c:[]};
-  for(let a=0;a<n-1;a++){
-    const sr=(p._sr||[])[a]||[], sc=(p._sc||[])[a]||[];
-    if(sr.length){
-      const cs=bandSpanComps(n,function(i){ return bit(a,i); },function(i){ return bit(a+1,i); });
-      meta.r[a]=sr.map(function(v,k){ const o=cs[k]; return {size:v,lo:o?o.lo:0,hi:o?o.hi:n-1}; });
-    }else meta.r[a]=[];
-    if(sc.length){
-      const cs=bandSpanComps(n,function(i){ return bit(i,a); },function(i){ return bit(i,a+1); });
-      meta.c[a]=sc.map(function(v,k){ const o=cs[k]; return {size:v,lo:o?o.lo:0,hi:o?o.hi:n-1}; });
-    }else meta.c[a]=[];
-  }
-  p._supMeta=meta;
-  return meta;
-}
-/* 每个超级徽章挂到哪一条线索行/列上：优先有相邻小线索的那一行，返回 host 归属 */
-function supHosts(p){
-  if(p._supHosts) return p._supHosts;
-  const n=p.sz, meta=supMeta(p);
-  const out={r:[],c:[]};
-  for(let i=0;i<n;i++){ out.r.push([]); out.c.push([]); }
-  const place=function(axis,a,list,vals){
-    list.forEach(function(m,k){
-      const side=function(i){
-        const runs=(axis==='r'?p._rruns[i]:p._cruns[i])||[];
-        let L=0,R=0;
-        for(let q=0;q<runs.length;q++){
-          if(runs[q].c1<m.lo) L++;
-          else if(runs[q].c0>m.hi) R++;
-        }
-        return {L:L,R:R,total:runs.length};
-      };
-      const A=side(a), B=side(a+1);
-      /* 只有一边有小线索时挂在有线索的那行；两边都有时挂在「右侧线索更多」的那行，
-         这样徽章会落在更靠左的位置，不会压住相邻行右对齐的数字 */
-      let host=a;
-      if(A.total===0&&B.total>0) host=a+1;
-      else if(B.total===0) host=a;
-      else if(B.R>A.R) host=a+1;
-      else if(B.R===A.R&&A.total>0&&(B.L-B.R)>(A.L-A.R)) host=a+1;
-      const hs=host===a?A:B, ps=host===a?B:A;
-      /* tail：徽章是该行最右的一个线索 token，且相邻行也有数字 —— 排版时让出一点空隙 */
-      (axis==='r'?out.r:out.c)[host].push({a:a,k:k,val:vals[k],lo:m.lo,hi:m.hi,
-        tail:(hs.R===0&&ps.total>0)?1:0});
-    });
-  };
-  for(let a=0;a<n-1;a++) if(meta.r[a].length) place('r',a,meta.r[a],p._sr[a]);
-  for(let a=0;a<n-1;a++) if(meta.c[a].length) place('c',a,meta.c[a],p._sc[a]);
-  p._supHosts=out;
   return out;
 }
 /* cl 去掉恰好一段后等于 target（去掉的那段就是超级块） */
@@ -2618,6 +2524,7 @@ function paintCell(i,val,nseq){
   G.marks[i]=val;
   G.seq[i]=(nseq===undefined)?seqOfVal(val):nseq;
   if(!G.hintM[i]||val!==1) G.hintM[i]=0;
+  if(G.wrongM[i]) G.wrongM[i]=0;
   STROKE.changes.push({i:i,from:from,to:val,fs:fs});
   if(val===1) G.lastCell=i;
   if($('grid').classList.contains('scan-in')) clearScanIn();
@@ -2714,6 +2621,7 @@ function undo(){
     G.marks[ch.i]=ch.from;
     G.seq[ch.i]=(ch.fs===undefined)?seqOfVal(ch.from):ch.fs;
     if(ch.from!==1) G.hintM[ch.i]=0;
+    if(G.wrongM[ch.i]) G.wrongM[ch.i]=0;
     FX.clear(G.cellEls[ch.i]);
     applyCell(G.cellEls[ch.i],ch.i,ch.from,false);
     FX.play(G.cellEls[ch.i],'fx-undo',140);
@@ -2733,6 +2641,7 @@ function clearBoard(){
       G.marks[i]=-1;
       G.seq[i]=0;
       G.hintM[i]=0;
+      G.wrongM[i]=0;
       FX.clear(G.cellEls[i]);
       applyCell(G.cellEls[i],i,-1,false);
     }
@@ -2753,6 +2662,28 @@ function useHint(){
   if(!G||G.done||G.paused) return;
   if(G.hintsLeft<=0){ toast(t('hintOut')); return; }
   const p=G.p,n=p.sz;
+  /* 玩家已经填错/划错时，提示优先把错误格标红（消耗 1 次） */
+  const wrong=[];
+  for(let i=0;i<n*n;i++){
+    const v=G.marks[i];
+    if(v===1&&p.bits.charAt(i)==='0') wrong.push(i);
+    else if(v===0&&p.bits.charAt(i)==='1') wrong.push(i);
+  }
+  if(wrong.length){
+    for(let k=0;k<wrong.length;k++){
+      const el=G.cellEls[wrong[k]];
+      if(!el) continue;
+      G.wrongM[wrong[k]]=1;
+      applyCell(el,wrong[k],G.marks[wrong[k]],false);
+      FX.play(el,'fx-hint',380,Math.min(k*30,180),'--hd');
+    }
+    G.hintsLeft--;
+    updateHUD();
+    saveLive();
+    SFX.err();
+    toast(t('hintWrong',{n:wrong.length}),2200);
+    return;
+  }
   let forced=[],forcedX=[];
   // 先找唯一排布的线
   for(let r=0;r<n&&!forced.length;r++){
@@ -2850,9 +2781,9 @@ function startPuzzle(p){
   G={
     p:p,marks:new Int8Array(n*n),seq:new Int8Array(n*n),hintM:new Uint8Array(n*n),
     undo:[],mistakes:0,hintsLeft:3,base:0,t0:0,running:false,tick:null,
-    done:false,paused:false,bad:new Set(),lineDone:new Set(),mode:1,lastCell:-1
+    done:false,paused:false,bad:new Set(),lineDone:new Set(),mode:1,lastCell:-1,wrongM:new Uint8Array(n*n)
   };
-  G.marks.fill(-1); G.hintM.fill(0);
+  G.marks.fill(-1); G.hintM.fill(0); G.wrongM.fill(0);
   HUD_PREV.m=0; HUD_PREV.h=3;
   CURSOR=0;
   $('viewCatalog').classList.add('off');
