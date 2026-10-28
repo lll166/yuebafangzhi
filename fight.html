@@ -899,10 +899,16 @@ const POOL_RAW = [
   ['m3_cangshu','仓鼠月巴','https://origin.picgo.net/2026/10/23/22cdbf9144b586bf272c4cb61f533bc853372133deea585a.th.png',3,'round',1,'#d8b17a',35],
 ];
 const POOL = POOL_RAW.map(a => ({ id:a[0], name:a[1], img:a[2], r:a[3], shape:a[4], size:a[5], color:a[6], v:a[7] }));
-const TOMATO = { id:'mb_tomato', name:'厉害番茄', img:'https://origin.picgo.net/2026/10/22/8972a81ecea59da5668b010802d3bfcb1c75cde7c34bfa6e.th.png', r:2, shape:'round', size:1, color:'#e05b4f', v:16, tomato:true, hero:true, scale:0.56 };
-const ALL_DEFS = POOL.concat([TOMATO]);
+/* 常驻番茄（不占 10 名额）：厉害番茄为均衡型，入学番茄为波动型，大统领番茄为力量型 */
+const TOMATO = { id:'mb_tomato', name:'厉害番茄', img:'https://origin.picgo.net/2026/10/22/8972a81ecea59da5668b010802d3bfcb1c75cde7c34bfa6e.th.png', r:2, shape:'round', size:1, color:'#e05b4f', v:16, tomato:true, hero:true, arch:'balance', scale:0.56, stats:{ hp:100, speed:228, atk:1.00, reach:161 } };
+/* crop = 图片内实际画面裁切比例 [x0,y0,x1,y1]，新番茄边缘留白较多，裁掉后可和厉害番茄保持同样大 */
+const RUXUE = { id:'mb_tomato_ruxue', name:'入学番茄', img:'https://origin.picgo.net/2026/10/28/-e8736be82f9e5aab.th.png', r:2, shape:'round', size:1, color:'#4a6fd6', v:16, tomato:true, hero:true, arch:'wave', scale:0.56, crop:[0.19, 0.15, 0.82, 0.83], stats:{ hp:92, speed:214, atk:0.97, reach:161 } };
+const DATONGLING = { id:'mb_tomato_daton', name:'大统领番茄', img:'https://origin.picgo.net/2026/10/28/-0069d74542c563812aa.th.png', r:2, shape:'round', size:1, color:'#b03a2e', v:16, tomato:true, hero:true, arch:'power', scale:0.56, crop:[0.17, 0.14, 0.82, 0.82], stats:{ hp:126, speed:166, atk:1.12, reach:174 } };
+const HEROES = [TOMATO, RUXUE, DATONGLING];
+const ALL_DEFS = POOL.concat(HEROES);
 const DEF = new Map(ALL_DEFS.map(d => [d.id, d]));
 function defById(id){ return DEF.get(id) || null; }
+function isHeroId(id){ const d = DEF.get(id); return !!(d && d.hero); }
 /* 选手名本地化（中文名见 POOL_RAW / TOMATO） */
 const NAMES = {
   en:{
@@ -921,7 +927,8 @@ const NAMES = {
     m2_mao:'Cat Moonba', m2_she:'Snake Moonba', m2_bingqilin:'Ice Cream Moonba', m2_tanwu:'Graft Moonba', m2_xianyi:'Suspect Moonba',
     m2_fanqie:'Tomato Moonba', m2_guowang:'Ruling King Moonba', m2_zuochen:'Chancellor Moonba', m2_chuqian:'Cheat Moonba', m2_tracker:'Tracker Moonba',
     m2_baqi:'Baqi Orochi', m2_qingchun:'Teenage Loser 3D Ba', m2_yinan:'Gloomy Ba', m2_zuoqi:'Mount Moonba', m2_teatime:'Teatime Moonba',
-    m2_baboyi:'Ba Ba Gambit', m2_rainy:'Umbrella Moonba', m3_cangshu:'Hamster Moonba', mb_tomato:'Awesome Tomato'
+    m2_baboyi:'Ba Ba Gambit', m2_rainy:'Umbrella Moonba', m3_cangshu:'Hamster Moonba', mb_tomato:'Awesome Tomato',
+    mb_tomato_ruxue:'Freshman Tomato', mb_tomato_daton:'Consul Tomato'
   },
   ja:{
     mb_xiaoyue:'小月バ', mb_xian:'気まずい月バ', mb_chi:'たべる月バ', mb_shui:'ねむい月バ', mb_wan:'ほほえみ月バ',
@@ -939,7 +946,8 @@ const NAMES = {
     m2_mao:'猫月バ', m2_she:'蛇月バ', m2_bingqilin:'アイスクリーム月バ', m2_tanwu:'汚職月バ', m2_xianyi:'容疑月バ',
     m2_fanqie:'トマト月バ', m2_guowang:'執政王月バ', m2_zuochen:'佐臣月バ', m2_chuqian:'イカサマ月バ', m2_tracker:'トラッカー月バ',
     m2_baqi:'バ岐大蛇', m2_qingchun:'青春負け犬立体バ', m2_yinan:'陰気バ', m2_zuoqi:'乗り物月バ', m2_teatime:'アフタヌーン月バ',
-    m2_baboyi:'ババ博弈', m2_rainy:'傘月バ', m3_cangshu:'ハムスター月バ', mb_tomato:'凄いトマト'
+    m2_baboyi:'ババ博弈', m2_rainy:'傘月バ', m3_cangshu:'ハムスター月バ', mb_tomato:'凄いトマト',
+    mb_tomato_ruxue:'入学トマト', mb_tomato_daton:'大統領トマト'
   },
   ko:{
     mb_xiaoyue:'꼬마 월바', mb_xian:'어색 월바', mb_chi:'먹방 월바', mb_shui:'졸린 월바', mb_wan:'미소 월바',
@@ -957,7 +965,8 @@ const NAMES = {
     m2_mao:'고양이 월바', m2_she:'뱀 월바', m2_bingqilin:'아이스크림 월바', m2_tanwu:'횡령 월바', m2_xianyi:'용의자 월바',
     m2_fanqie:'토마토 월바', m2_guowang:'집정왕 월바', m2_zuochen:'좌신 월바', m2_chuqian:'사기 월바', m2_tracker:'추적기 월바',
     m2_baqi:'바기 대사', m2_qingchun:'청춘 패배자 입체바', m2_yinan:'음침바', m2_zuoqi:'탈것 월바', m2_teatime:'애프터눈 월바',
-    m2_baboyi:'바바 대결', m2_rainy:'우산 월바', m3_cangshu:'햄스터 월바', mb_tomato:'굉장 토마토'
+    m2_baboyi:'바바 대결', m2_rainy:'우산 월바', m3_cangshu:'햄스터 월바', mb_tomato:'굉장 토마토',
+    mb_tomato_ruxue:'입학 토마토', mb_tomato_daton:'대통령 토마토'
   }
 };
 function defName(d){
@@ -973,10 +982,12 @@ const ARCH = {
   wave:   { hp:95,  speed:210, atk:0.96, reach:161, label:'arch_wave',    sig:'sig_wave' }
 };
 function archOf(id){
-  if(id==='mb_tomato') return 'balance';
+  const d = DEF.get(id);
+  if(d && d.arch) return d.arch;
   return ARCHS[hashStr(id) % 4];
 }
 function statsOf(def){
+  if(def.stats) return def.stats;
   const base = ARCH[archOf(def.id)];
   const h = hashStr(def.id + ':v1');
   const j = n => 1 + (((h >>> n) % 17) - 8) / 100;
@@ -1023,7 +1034,7 @@ function sanitizeGroup(g){
   if(!g || typeof g!=='object') return false;
   if(!Array.isArray(g.ids) || g.ids.length!==10) return false;
   const seen = new Set();
-  for(const id of g.ids){ if(typeof id!=='string' || !DEF.has(id) || id==='mb_tomato' || seen.has(id)) return false; seen.add(id); }
+  for(const id of g.ids){ if(typeof id!=='string' || !DEF.has(id) || isHeroId(id) || seen.has(id)) return false; seen.add(id); }
   const cnt = {power:0,speed:0,balance:0,wave:0};
   for(const id of g.ids) cnt[archOf(id)]++;
   return ARCHS.every(a => cnt[a] >= 2);
@@ -1062,13 +1073,19 @@ function ensureSprite(def){
   const img = new Image();
   img.onload = function(){
     try{
-      const ar = (img.width && img.height) ? (img.width/img.height) : 1;
       e.img = img; e.imgW = img.naturalWidth || img.width; e.imgH = img.naturalHeight || img.height;
+      /* crop：先按比例裁掉外部图片边缘的留白，再统一缩放到同一高度 */
+      const cr = def.crop;
+      const sx = cr ? Math.round(e.imgW*cr[0]) : 0;
+      const sy = cr ? Math.round(e.imgH*cr[1]) : 0;
+      const sw = cr ? Math.max(1, Math.round(e.imgW*(cr[2]-cr[0]))) : e.imgW;
+      const sh = cr ? Math.max(1, Math.round(e.imgH*(cr[3]-cr[1]))) : e.imgH;
+      const ar = sw/sh;
       let h = H0, w = Math.max(12, Math.round(h*ar));
       if(w > 168){ w = 168; h = Math.max(24, Math.round(w/ar)); }
       const c = makeCanvas(w,h), g = c.getContext('2d');
       g.imageSmoothingEnabled = true;
-      g.drawImage(img, 0, 0, w, h);
+      g.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
       e.cv = c; e.w = w; e.h = h; e.ok = true;
       const r = makeCanvas(w,h), rg = r.getContext('2d');
       rg.drawImage(c,0,0); rg.globalCompositeOperation='source-in'; rg.fillStyle='#f6c98f'; rg.fillRect(0,0,w,h);
@@ -1416,13 +1433,18 @@ function makeFighter(def, isBoss, isPlayer){
   return f;
 }
 
-/* 厉害番茄专属刀术：轻击双连斩、重击横斩、投掷蓝焰番茄、超必杀「苍焰终击」 */
+/* 番茄系专属刀术：轻击双连斩、重击按流派分化、投掷蓝焰番茄、超必杀「苍焰终击」 */
 function heroSpec(f, type){
   const r = f.reach;
   if(type === 'light'){
+    /* 力量型起手更慢、收招更久 */
+    if(f.arch === 'power') return { kind:'melee', hitFrames:[7,11], recovery:11, dmg:4.2, reach:r*1.05, h:214, kb:48, stun:11, hitstop:3, meter:4, sfx:'light', slash:'light' };
+    if(f.arch === 'wave') return { kind:'melee', hitFrames:[5,9], recovery:9, dmg:3.0, reach:r*1.05, h:214, kb:36, stun:9, hitstop:2, meter:4, sfx:'light', slash:'light' };
     return { kind:'melee', hitFrames:[5,9], recovery:9, dmg:3.2, reach:r*1.05, h:214, kb:38, stun:9, hitstop:2, meter:4, sfx:'light', slash:'light' };
   }
   if(type === 'heavy'){
+    if(f.arch === 'power') return { kind:'melee', hitFrames:[19,23], recovery:23, dmg:11, reach:r*1.55, h:268, kb:220, stun:26, hitstop:9, meter:10, lunge:240, armor:true, heavy:true, sfx:'heavy', slash:'wide' };
+    if(f.arch === 'wave') return { kind:'proj', hitFrames:[14], recovery:18, dmg:5.2, count:3, kb:96, hitstop:6, meter:8, heavy:true, sfx:'coin' };
     return { kind:'melee', hitFrames:[14,18], recovery:18, dmg:7.5, reach:r*1.7, h:268, kb:168, stun:22, hitstop:7, meter:9, lunge:250, heavy:true, sfx:'heavy', slash:'wide' };
   }
   if(type === 'tomato'){
@@ -1886,7 +1908,7 @@ function startRun(){
   ensureGroup();
   resetRun();
   const defs = groupDefs();
-  preloadDefs(defs.concat([TOMATO]));
+  preloadDefs(defs.concat(HEROES));
   G.selectedId = null;
   G.previewId = TOMATO.id;
   G.state = 'select';
@@ -1897,7 +1919,7 @@ function startRun(){
 function selectFighter(id){
   const d = defById(id);
   if(!d) return;
-  if(id !== TOMATO.id && !SV.group.ids.includes(id)) return;
+  if(!isHeroId(id) && !SV.group.ids.includes(id)) return;
   G.selectedId = id; G.playerDef = d;
   SV.usedFighters[id] = 1;
   const n = Object.keys(SV.usedFighters).length;
@@ -3322,8 +3344,14 @@ function drawSpriteHD(cv, d){
   const hd = hdSprite(d);
   const src = (hd.ok && hd.img) || e.img || e.cv;
   if(!src) return;
-  const sw = hd.ok ? hd.w : (e.img ? e.imgW : e.cv.width);
-  const sh = hd.ok ? hd.h : (e.img ? e.imgH : e.cv.height);
+  const fullW = hd.ok ? hd.w : (e.img ? e.imgW : e.cv.width);
+  const fullH = hd.ok ? hd.h : (e.img ? e.imgH : e.cv.height);
+  /* 只有还在用原图时才需要裁切，e.cv 已经裁好了 */
+  const cr = (src !== e.cv) ? d.crop : null;
+  const sx = cr ? Math.round(fullW*cr[0]) : 0;
+  const sy = cr ? Math.round(fullH*cr[1]) : 0;
+  const sw = cr ? Math.max(1, Math.round(fullW*(cr[2]-cr[0]))) : fullW;
+  const sh = cr ? Math.max(1, Math.round(fullH*(cr[3]-cr[1]))) : fullH;
   const s = Math.min(cv.width*0.84/sw, cv.height*0.84/sh);
   const w = sw*s, h = sh*s;
   const cx = cv.width/2, cy = cv.height*0.52;
@@ -3336,7 +3364,7 @@ function drawSpriteHD(cv, d){
   g.beginPath(); g.arc(cx, cy, R, 0, Math.PI*2); g.fill();
   g.imageSmoothingEnabled = true;
   g.imageSmoothingQuality = 'high';
-  g.drawImage(src, cx - w/2, cy - h/2, w, h);
+  g.drawImage(src, sx, sy, sw, sh, cx - w/2, cy - h/2, w, h);
 }
 
 function paintCards(){
@@ -3379,7 +3407,7 @@ function updateTop(){
 function renderSelect(){
   const grid = $('selGrid');
   if(!grid) return;
-  const defs = [TOMATO].concat(groupDefs());
+  const defs = HEROES.concat(groupDefs());
   if(!G.previewId || !defById(G.previewId)) G.previewId = defs[0].id;
   grid.innerHTML = '';
   defs.forEach(function(d){
@@ -3839,7 +3867,7 @@ function loop(ts){
 function init(){
   if(location.hash.indexOf('debug') >= 0) G.debug = true;
   ensureGroup();
-  preloadDefs(groupDefs().concat([TOMATO]));
+  preloadDefs(groupDefs().concat(HEROES));
   applyStaticText();
   renderSelect();
   showScreen('title');
