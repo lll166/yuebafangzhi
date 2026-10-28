@@ -4383,6 +4383,8 @@ const TYPES3=[
     imgs:[{url:'https://origin.picgo.net/2026/10/25/---Yidi-Nyaomi-Li343d957950ab0548.th.png', by:'Nyaomi'}], r:4, v:80, t:760, cond:null, color:'#9a8fa8', shape:'wide'},
   {id:'m3_guzhang',  name:'故障月巴',  img:'https://origin.picgo.net/2026/10/27/cef136c721e61caa1e6e045fd49dae0f098040d960280d80.th.png',
     imgs:[{url:'https://origin.picgo.net/2026/10/27/cef136c721e61caa1e6e045fd49dae0f098040d960280d80.th.png'}], r:3, v:45, t:450, cond:null, color:'#5b6ee8', shape:'cube'},
+  {id:'m3_candy',    name:'大巴兔奶糖',  img:'https://origin.picgo.net/2026/10/29/c027b30582384fdcb49c1a29a8a9e6e089134f5b0e68d115.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/10/29/c027b30582384fdcb49c1a29a8a9e6e089134f5b0e68d115.th.png', by:'Nyaomi'}], r:3, v:45, t:450, cond:null, color:'#f2e6c9', shape:'round'},
 ];
 const RAR_NAME={1:'普通',2:'常见',3:'稀有',4:'史诗',5:'传说',6:'活动'};
 const R_H={1:[2,5],2:[4,8],3:[6,12],4:[10,20],5:[16,30],6:[22,40]};   // 身高 cm 范围
@@ -4454,6 +4456,7 @@ const YB_PIC_AUTHOR={
   m2_bai:'Nyaomi',
   m3_egg:'hellomelody',
   m3_badaba:'Nyaomi',
+  m3_candy:'Nyaomi',
   mb_wansheng:'Nyaomi',
   mb_zuanshi:'hellomelody',
   mb_qingren:'鲸弑',
@@ -4677,6 +4680,7 @@ const FAT_INTRO={
   m3_egg:'总有一天会变成乖孩子（？）',
   m3_guzhang:'404显示……错误……',
   m3_badaba:'很不高兴为您服务。',
+  m3_candy:'大巴兔自己做的糖，仅专供给番茄。据说原材料是某种白色的液体，具体是什么你别管。',
 };
 
 /* ---------------- 界面皮肤（图鉴解锁） ---------------- */
@@ -7320,6 +7324,7 @@ const I18N_BANNY={
   m3_egg:{n:{en:'Egg Banny',ja:'エッグバニー',ko:'에그배니'}},
   m3_guzhang:{n:{en:'Glitch Banny',ja:'グリッチバニー',ko:'글리치배니'}},
   m3_badaba:{n:{en:'Badabababa',ja:'バダバババ',ko:'바다바바바'}},
+  m3_candy:{n:{en:'Candy Banny',ja:'キャンディバニー',ko:'캔디배니'}},
 
   dest_forest:{n:{en:'Forest Edge',ja:'森のほとり',ko:'숲의 가장자리'}},
   dest_fairy:{n:{en:'Fairy Hideaway',ja:'桃源郷',ko:'무릉도원'}},
@@ -7802,6 +7807,7 @@ const I18N_BANNY={
   m3_egg_intro:{d:{en:'It will become a good boy someday(?)',ja:'いつかきっといい子になる（？）',ko:'언젠가는 좋은 아이가 될 거야(?)'}},
   m3_guzhang_intro:{d:{en:'404: displayed… error…',ja:'404 表示……エラー……',ko:'404 표시……오류……'}},
   m3_badaba_intro:{d:{en:'You are not welcome.',ja:'喜んでご案内する気はありません。',ko:'기분 좋게 응대해 드릴 생각은 없습니다.'}},
+  m3_candy_intro:{d:{en:'Candy made by Candy Banny himself, supplied only to Tomato. Rumor has it that it’s made from some kind of white liquid, but don’t worry about what exactly it is.',ja:'キャンディバニーが自分で作った飴で、トマト専用の特別供給品。原材料はある種の白い液体らしいが、それが何なのかは気にしないでおこう。',ko:'캔디배니가 직접 만든 사탕으로, 토마토에게만 특별 공급된다. 원료는 어떤 하얀 액체라고 하는데, 그게 뭔지는 신경 쓰지 말자.'}},
   /* ---------- P5：成就描述 ach_<id>_desc（字段 d） ---------- */
   ach_h1_desc:{d:{en:'Harvest your first Banny',ja:'初めてバニーを収穫する',ko:'첫 배니를 수확하기'}},
   ach_d1_desc:{d:{en:'Unlock 10 Banny species in the Codex',ja:'図鑑で 10 種のバニーを解放する',ko:'도감에서 배니 10종 해금하기'}},
