@@ -2686,10 +2686,12 @@ const view = {dpr:1, s:1, ox:0, oy:0, cw:0, ch:0, vx:0, vy:0, portrait:false};
 function resize(){
   const dpr = Math.min(window.devicePixelRatio || 1, PERF.dprCap);
   const winW = Math.max(1, window.innerWidth), winH = Math.max(1, window.innerHeight);
-  // 电脑端（鼠标/触控板精确指针）统一使用与手机一致的 9:16 竖屏游戏窗口
+  // 电脑端（精确指针）或平板横屏统一使用与手机一致的 9:16 竖屏游戏窗口；
+  // 手机横屏（短边 < 560）保持原有铺满行为
   const pcFrame = window.matchMedia('(hover:hover) and (pointer:fine)').matches;
+  const framed = pcFrame || (winW > winH && Math.min(winW, winH) >= 560);
   let vx = 0, vy = 0, cw = winW, ch = winH;
-  if(pcFrame){
+  if(framed){
     ch = Math.min(Math.round(winH - Math.max(16, winH * 0.04)), 960);
     cw = Math.round(ch * 9 / 16);
     if(cw > winW){ cw = winW; ch = Math.round(cw * 16 / 9); }
@@ -2704,7 +2706,7 @@ function resize(){
   cv.style.bottom = 'auto';
   cv.style.width = cw + 'px';
   cv.style.height = ch + 'px';
-  document.body.classList.toggle('pcframe', pcFrame);
+  document.body.classList.toggle('pcframe', framed);
   document.body.classList.toggle('compactHud', cw <= 720);
   // 画布/游戏层在窗口中的位置，供 HUD、弹层、提示定位
   const root = document.documentElement.style;
