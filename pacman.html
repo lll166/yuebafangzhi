@@ -1679,8 +1679,11 @@
       var pMove = !!(player.hold && (player.want.x || player.want.y));
       var sk = curSkin();
       var pa = bounceAnim(animScale('player', pMove, 0), player);
-      pa.rot = tiltAngle(player) + leanAngle(player);
-      pa.flip = player.facing || 1;
+      /* 省电/减少动效下 animScale 直接返回 null：不能再往 null 上挂旋转/翻转字段 */
+      if(pa){
+        pa.rot = tiltAngle(player) + leanAngle(player);
+        pa.flip = player.facing || 1;
+      }
       drawSprite(sk.face, player.x, player.y, th.tomato, 1.35 * (sk.zoom || 1), false, false, pa);
       if(powerT > 0) drawPowerRing(th);
     }
