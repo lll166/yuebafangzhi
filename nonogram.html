@@ -249,14 +249,11 @@ header#top{
     linear-gradient(var(--acc),var(--acc)) right bottom/2px 13px no-repeat;
 }
 .ctop{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:0;height:100%;padding-bottom:2px;overflow:hidden;position:relative}
-.cleft{display:flex;align-items:center;justify-content:flex-end;gap:2px;height:100%;padding-right:4px;overflow:hidden;position:relative}
+.cleft{display:flex;align-items:center;justify-content:flex-end;gap:0;height:100%;padding-right:4px;overflow:hidden;position:relative}
+.slot{flex:none;width:var(--slotw,16px);height:100%;display:flex;align-items:center;justify-content:center}
+.cslot{flex:none;height:var(--sloth,14px);width:100%;display:flex;align-items:center;justify-content:center}
+.slot.asup,.cslot.asup{visibility:hidden}
 .num{font-size:var(--cluefs);line-height:1.06;color:rgba(38,42,58,.72);font-variant-numeric:tabular-nums;font-weight:600}
-/* v3：大数字和相邻两行/两列的小数字排在同一条线索带里，小数字用 margin 让位，
-   margin 不参与裁剪也不会和 clueNum/clueBad 的 transform 动画打架 */
-.cleft.sup-up .num{margin-bottom:calc(var(--cell) * .3)}
-.cleft.sup-dn .num{margin-top:calc(var(--cell) * .3)}
-.ctop.sup-l .num{margin-right:calc(var(--cell) * .5)}
-.ctop.sup-r .num{margin-left:calc(var(--cell) * .5)}
 .done .num{color:rgba(38,42,58,.24);text-decoration:line-through;text-decoration-thickness:1px}
 .bad .num{color:var(--acc);text-shadow:0 0 7px rgba(99,108,158,.35)}
 .cleft.fx-done .num,.ctop.fx-done .num{animation:clueNum .2s var(--ease-out) both;animation-delay:calc(var(--i,0) * 22ms)}
@@ -611,8 +608,7 @@ body.low-power .cell.wbad::after{animation:none}
 .msup.done{background:rgba(43,47,66,.26);color:rgba(255,255,255,.5);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);text-decoration:line-through;
   text-decoration-thickness:1px}
-/* v3：大数字不参与小数字的先后排序，而是立在与小数字同一条线索带里，
-   纵向骑在两行分界（行向）/ 横向骑在两列分界（列向），归属一眼可见 */
+/* v3：大数字按黑格顺序在线索序列里占独立一槽，纵向跨两行（列向跨两列） */
 /* ---------- 行/列引导：防止看错行 ---------- */
 #cluesLeft>.cleft,#cluesTop>.ctop{transition:background .16s var(--ease-out),box-shadow .16s var(--ease-out)}
 #cluesLeft>.cleft:nth-child(2n),#cluesTop>.ctop:nth-child(2n){background:rgba(99,108,158,.028)}
@@ -1716,33 +1712,88 @@ function buildBoard(p){
   const board=$('board');
   board.style.setProperty('--n',n);
   board.querySelectorAll('.msup').forEach(function(el){ el.remove(); });
-  /* v3：大数字不进小数字序列，和相邻两行/两列共用同一条线索带 */
+  /* v3：大数字按黑格顺序占独立一槽，左右/上下两侧的小线索保持真实先后顺序 */
+  const meta=(p.mega&&p.v===3)?supMeta(p):{r:[],c:[]};
+  const sr0=p._sr||[], sc0=p._sc||[];
   // 线索 DOM
   const top=$('cluesTop'), left=$('cluesLeft');
-  let th='';
-  for(let c=0;c<n;c++){
-    const toks=[];
-    (p._cols[c]||[]).forEach(function(v,i){
-      const r=(p._cruns[c]||[])[i]||{c0:0};
-      toks.push({v:v,key:r.c0});
-    });
-    toks.sort(function(x,y){ return x.key-y.key; });
-    th+='<div class="ctop" data-line="c'+c+'">'+
-      toks.map(function(o){ return '<span class="num">'+o.v+'</span>'; }).join('')+'</div>';
+  /* ---- 行 ---- */
+  const rowPlan=[];
+  for(let r=0;r<n;r++){
+    let a=-1;
+    if(r>0&&(sr0[r-1]||[]).length) a=r-1;
+    else if((sr0[r]||[]).length) a=r;
+    const mt=(a>=0&&meta.r[a]&&meta.r[a][0])?meta.r[a][0]:null;
+    const runs=[];
+    (p._rows[r]||[]).forEach(function(v,i){ const q=(p._rruns[r]||[])[i]||{c0:0}; runs.push({v:v,c0:q.c0}); });
+    if(!mt){ rowPlan.push({a:a,m:null,left:[],right:runs,LMAX:0,RMAX:runs.length}); continue; }
+    rowPlan.push({a:a,m:mt,
+      left:runs.filter(function(o){ return o.c0<mt.lo; }),
+      right:runs.filter(function(o){ return o.c0>mt.hi; }),
+      LMAX:0,RMAX:0});
+    rowPlan[r].LMAX=rowPlan[r].left.length; rowPlan[r].RMAX=rowPlan[r].right.length;
   }
-  top.innerHTML=th;
+  /* 同一带的两行共用左右区宽度：大数字槽才会落在同一列 */
+  for(let a=0;a<n-1;a++){
+    const A=rowPlan[a], B=rowPlan[a+1];
+    if(A&&B&&A.m&&B.m){
+      const L=Math.max(A.left.length,B.left.length), R=Math.max(A.right.length,B.right.length);
+      A.LMAX=B.LMAX=L; A.RMAX=B.RMAX=R;
+    }
+  }
   let lh='';
   for(let r=0;r<n;r++){
-    const toks=[];
-    (p._rows[r]||[]).forEach(function(v,i){
-      const q=(p._rruns[r]||[])[i]||{c0:0};
-      toks.push({v:v,key:q.c0});
-    });
-    toks.sort(function(x,y){ return x.key-y.key; });
-    lh+='<div class="cleft" data-line="r'+r+'">'+
-      toks.map(function(o){ return '<span class="num">'+o.v+'</span>'; }).join('')+'</div>';
+    const q=rowPlan[r];
+    let h='';
+    for(let i=q.left.length;i<q.LMAX;i++) h+='<span class="slot"></span>';
+    q.left.forEach(function(o){ h+='<span class="slot num">'+o.v+'</span>'; });
+    if(q.m) h+='<span class="slot asup" data-band="r'+q.a+'"></span>';
+    q.right.forEach(function(o){ h+='<span class="slot num">'+o.v+'</span>'; });
+    for(let i=q.right.length;i<q.RMAX;i++) h+='<span class="slot"></span>';
+    lh+='<div class="cleft" data-line="r'+r+'">'+h+'</div>';
+    q.slots=q.LMAX+(q.m?1:0)+q.RMAX;
   }
   left.innerHTML=lh;
+  /* ---- 列 ---- */
+  const colPlan=[];
+  for(let c=0;c<n;c++){
+    let a=-1;
+    if(c>0&&(sc0[c-1]||[]).length) a=c-1;
+    else if((sc0[c]||[]).length) a=c;
+    const mt=(a>=0&&meta.c[a]&&meta.c[a][0])?meta.c[a][0]:null;
+    const runs=[];
+    (p._cols[c]||[]).forEach(function(v,i){ const q=(p._cruns[c]||[])[i]||{c0:0}; runs.push({v:v,c0:q.c0}); });
+    if(!mt){ colPlan.push({a:a,m:null,above:[],below:runs,UMAX:0,DMAX:runs.length}); continue; }
+    colPlan.push({a:a,m:mt,
+      above:runs.filter(function(o){ return o.c0<mt.lo; }),
+      below:runs.filter(function(o){ return o.c0>mt.hi; }),
+      UMAX:0,DMAX:0});
+    colPlan[c].UMAX=colPlan[c].above.length; colPlan[c].DMAX=colPlan[c].below.length;
+  }
+  for(let a=0;a<n-1;a++){
+    const A=colPlan[a], B=colPlan[a+1];
+    if(A&&B&&A.m&&B.m){
+      const U=Math.max(A.above.length,B.above.length), D=Math.max(A.below.length,B.below.length);
+      A.UMAX=B.UMAX=U; A.DMAX=B.DMAX=D;
+    }
+  }
+  let th='';
+  for(let c=0;c<n;c++){
+    const q=colPlan[c];
+    let h='';
+    for(let i=q.above.length;i<q.UMAX;i++) h+='<span class="cslot"></span>';
+    q.above.forEach(function(o){ h+='<span class="cslot num">'+o.v+'</span>'; });
+    if(q.m) h+='<span class="cslot asup" data-band="c'+q.a+'"></span>';
+    q.below.forEach(function(o){ h+='<span class="cslot num">'+o.v+'</span>'; });
+    for(let i=q.below.length;i<q.DMAX;i++) h+='<span class="cslot"></span>';
+    th+='<div class="ctop" data-line="c'+c+'">'+h+'</div>';
+    q.slots=q.UMAX+(q.m?1:0)+q.DMAX;
+  }
+  top.innerHTML=th;
+  p._slotR=rowPlan.map(function(q){ return q.slots; });
+  p._slotC=colPlan.map(function(q){ return q.slots; });
+  p._slotRmax=Math.max.apply(null,p._slotR.concat([1]));
+  p._slotCmax=Math.max.apply(null,p._slotC.concat([1]));
   // 格
   let gh='';
   for(let r=0;r<n;r++){
@@ -1767,28 +1818,14 @@ function buildBoard(p){
   /* 超级带的两行/两列打上常驻底色，和徽章一起提示「这是一组」 */
   if(p.mega){
     const sr0=p._sr||[], sc0=p._sc||[];
-    const inl=!!(p.v===3);
     for(let a=0;a<n-1;a++){
       if(sr0[a]&&sr0[a].length){
-        if(G.rowEls[a]){
-          G.rowEls[a].classList.add('band');
-          /* v3：上排数字向上、下排数字向下让开骑在两行分界上的大数字 */
-          if(inl) G.rowEls[a].classList.add('sup-up');
-        }
-        if(G.rowEls[a+1]){
-          G.rowEls[a+1].classList.add('band');
-          if(inl) G.rowEls[a+1].classList.add('sup-dn');
-        }
+        if(G.rowEls[a]) G.rowEls[a].classList.add('band');
+        if(G.rowEls[a+1]) G.rowEls[a+1].classList.add('band');
       }
       if(sc0[a]&&sc0[a].length){
-        if(G.colEls[a]){
-          G.colEls[a].classList.add('band');
-          if(inl) G.colEls[a].classList.add('sup-l');
-        }
-        if(G.colEls[a+1]){
-          G.colEls[a+1].classList.add('band');
-          if(inl) G.colEls[a+1].classList.add('sup-r');
-        }
+        if(G.colEls[a]) G.colEls[a].classList.add('band');
+        if(G.colEls[a+1]) G.colEls[a+1].classList.add('band');
       }
     }
   }
@@ -1822,73 +1859,49 @@ function layoutBoard(){
   const vh=window.innerHeight;
   const availW=vw-20;
   const availH=vh-190;
-  const maxR=G.p._maxR, maxC=G.p._maxC;
-  /* v3：大数字和小数字排在同一条线索带里，不再单开泳道，线索区尺寸照旧算，
-     只需保证徽章本身放得下 */
-  const inl=!!(G.p.mega&&G.p.v===3);
-  let MR=0, MC=0;
-  if(G.p.mega && G.supEls){
-    G.supEls.r.forEach(function(l){ MR=Math.max(MR,l.length); });
-    G.supEls.c.forEach(function(l){ MC=Math.max(MC,l.length); });
-  }
-  const wUnit=n+maxR*0.62+0.4+(inl?0:(MR?MR*0.58+(MR-1)*0.06+0.22:0));
-  const hUnit=n+maxC*0.78+0.6+(inl?0:(MC?MC*0.58+(MC-1)*0.06+0.22:0));
+  const maxSR=G.p._slotRmax||G.p._maxR||1;
+  const maxSC=G.p._slotCmax||G.p._maxC||1;
+  const wUnit=n+maxSR*0.76+0.55;
+  const hUnit=n+maxSC*0.84+0.75;
   let cell=Math.floor(Math.min(availW/wUnit,availH/hUnit,28));
   cell=Math.max(11,Math.min(30,cell));
-  const ms=Math.max(10,Math.round(cell*0.54));
-  /* v3 的徽章是个方格，边长不小于 0.72 格，保证数字清楚 */
-  const msw=inl?Math.max(ms,Math.round(cell*0.72)):ms;
-  const leftw=inl
-    ? Math.ceil(Math.max(maxR*cell*0.62+6, MR?msw+6:0))
-    : Math.ceil(maxR*cell*0.62+6+(MR?MR*msw+(MR-1)*2+4:0));
-  const toph=inl
-    ? Math.ceil(Math.max(maxC*cell*0.74+4, MC?msw+6:0))
-    : Math.ceil(maxC*cell*0.74+4+(MC?MC*msw+(MC-1)*2+4:0));
+  const slotW=Math.max(10,Math.round(cell*0.76));
+  const slotH=Math.max(9,Math.round(cell*0.84));
+  const leftw=Math.ceil(maxSR*slotW+8);
+  const toph=Math.ceil(maxSC*slotH+6);
   const board=$('board');
   G.cell=cell;
   board.style.setProperty('--cell',cell+'px');
   board.style.setProperty('--leftw',leftw+'px');
   board.style.setProperty('--toph',toph+'px');
-  board.style.setProperty('--cluefs',Math.max(7,Math.round(cell*0.52))+'px');
-  board.style.setProperty('--msup',ms+'px');
-  /* v3 的大数字和小线索同级字号，其余形态保持原来的比例 */
-  board.style.setProperty('--msupfs',(inl?Math.max(7,Math.round(cell*0.52)):Math.max(7,Math.round(ms*0.62)))+'px');
+  board.style.setProperty('--slotw',slotW+'px');
+  board.style.setProperty('--sloth',slotH+'px');
+  board.style.setProperty('--cluefs',Math.max(7,Math.round(cell*0.5))+'px');
+  board.style.setProperty('--msupfs',Math.max(7,Math.round(cell*0.5))+'px');
+  board.style.setProperty('--msup',slotW+'px');
+  /* 大数字徽章贴合它在线索序列里的那个独立槽，纵向跨带内两行（列向跨两列） */
   if(G.p.mega && G.supEls){
-    if(inl){
-      /* v3 行向：徽章立在小数字的右对齐列上（同一条竖列），纵向骑在第 a、a+1 行的分界线上；
-         上排数字向上、下排数字向下让位（见 .cleft.sup-up/.sup-dn） */
-      G.supEls.r.forEach(function(list,a){
-        list.forEach(function(el,k){
-          el.style.width=msw+'px'; el.style.height=msw+'px';
-          el.style.left=Math.round(leftw-4-msw-k*(msw+2))+'px';
-          el.style.top=Math.round(toph+(a+1)*cell-msw/2)+'px';
-        });
+    const br=board.getBoundingClientRect();
+    G.supEls.r.forEach(function(list,a){
+      list.forEach(function(el,k){
+        const ph=board.querySelector('.cleft[data-line="r'+a+'"] .asup');
+        const rx=ph?ph.getBoundingClientRect():null;
+        el.style.width=slotW+'px'; el.style.height=(cell*2)+'px';
+        el.style.left=Math.round(rx?rx.left-br.left:leftw-slotW-4)+'px';
+        el.style.top=Math.round(toph+a*cell)+'px';
+        el.style.fontSize=Math.max(7,Math.round(cell*0.5))+'px';
       });
-      /* v3 列向：徽章立在列线索最下沿（紧贴棋盘），横向骑在第 a、a+1 列的分界线上；
-         左列数字向左、右列数字向右让位（见 .ctop.sup-l/.sup-r） */
-      G.supEls.c.forEach(function(list,a){
-        list.forEach(function(el,k){
-          el.style.width=msw+'px'; el.style.height=msw+'px';
-          el.style.left=Math.round(leftw+(a+1)*cell-msw/2)+'px';
-          el.style.top=(toph-2-msw-k*(msw+2))+'px';
-        });
+    });
+    G.supEls.c.forEach(function(list,a){
+      list.forEach(function(el,k){
+        const ph=board.querySelector('.ctop[data-line="c'+a+'"] .asup');
+        const ry=ph?ph.getBoundingClientRect():null;
+        el.style.width=(cell*2)+'px'; el.style.height=slotH+'px';
+        el.style.left=Math.round(leftw+a*cell)+'px';
+        el.style.top=Math.round(ry?ry.top-br.top:toph-slotH-2)+'px';
+        el.style.fontSize=Math.max(7,Math.round(cell*0.5))+'px';
       });
-    }else{
-      G.supEls.r.forEach(function(list,a){
-        list.forEach(function(el,k){
-          el.style.width=ms+'px'; el.style.height=ms+'px';
-          el.style.left=(2+k*(ms+2))+'px';
-          el.style.top=Math.round(toph+(a+1)*cell-ms/2)+'px';
-        });
-      });
-      G.supEls.c.forEach(function(list,a){
-        list.forEach(function(el,k){
-          el.style.width=ms+'px'; el.style.height=ms+'px';
-          el.style.left=Math.round(leftw+(a+1)*cell-ms/2)+'px';
-          el.style.top=(2+k*(ms+2))+'px';
-        });
-      });
-    }
+    });
   }
   moveBrushBar();
   applyGuidePos();
@@ -2186,6 +2199,52 @@ function clueOfMask(n,m){
   }
   if(run) out.push(run);
   return out;
+}
+/* ---------- 超级块在图中的真实区间（决定大数字在小线索里的先后位置） ---------- */
+/* 带内跨两行/两列的极大连通块：大小 + 带方向的区间 [lo,hi] */
+function bandSpanComps(n,fa,fb){
+  const seen=[new Set(),new Set()];
+  const out=[];
+  for(let sy=0;sy<2;sy++) for(let sx=0;sx<n;sx++){
+    if(seen[sy].has(sx)||!(sy?fb(sx):fa(sx))) continue;
+    const st=[[sy,sx]]; seen[sy].add(sx);
+    let size=0,ta=false,tb=false,lo=n,hi=-1;
+    while(st.length){
+      const cur=st.pop(), cy=cur[0], cx=cur[1];
+      size++;
+      if(cy===0) ta=true; else tb=true;
+      if(cx<lo) lo=cx;
+      if(cx>hi) hi=cx;
+      const nb=[[cy-1,cx],[cy+1,cx],[cy,cx-1],[cy,cx+1]];
+      for(let q=0;q<4;q++){
+        const ny=nb[q][0], nx=nb[q][1];
+        if(ny>=0&&ny<2&&nx>=0&&nx<n&&!seen[ny].has(nx)&&(ny?fb(nx):fa(nx))){ seen[ny].add(nx); st.push([ny,nx]); }
+      }
+    }
+    if(ta&&tb) out.push({size:size,lo:lo,hi:hi});
+  }
+  out.sort(function(x,y){ return x.size-y.size||x.lo-y.lo; });
+  return out;
+}
+/* 每题超级线索的真实区间：meta.r[a][k] / meta.c[a][k] 与 sr[a] / sc[a] 同序 */
+function supMeta(p){
+  if(p._supMeta) return p._supMeta;
+  const n=p.sz;
+  const bit=function(r,c){ return p.bits.charCodeAt(r*n+c)===49?1:0; };
+  const meta={r:[],c:[]};
+  for(let a=0;a<n-1;a++){
+    const sr=(p._sr||[])[a]||[], sc=(p._sc||[])[a]||[];
+    if(sr.length){
+      const cs=bandSpanComps(n,function(i){ return bit(a,i); },function(i){ return bit(a+1,i); });
+      meta.r[a]=sr.map(function(v,k){ const o=cs[k]; return {size:v,lo:o?o.lo:0,hi:o?o.hi:n-1}; });
+    }else meta.r[a]=[];
+    if(sc.length){
+      const cs=bandSpanComps(n,function(i){ return bit(i,a); },function(i){ return bit(i,a+1); });
+      meta.c[a]=sc.map(function(v,k){ const o=cs[k]; return {size:v,lo:o?o.lo:0,hi:o?o.hi:n-1}; });
+    }else meta.c[a]=[];
+  }
+  p._supMeta=meta;
+  return meta;
 }
 /* cl 去掉恰好一段后等于 target（去掉的那段就是超级块） */
 function minusOneClue(cl,target){
