@@ -1,0 +1,4283 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="pumpkin">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0B0714">
+<title>月巴追茄 · 万圣夜</title>
+<style>
+  :root{
+    --bg:#0B0714; --bg2:#151021;
+    --wall:#241736; --wall2:#3A2755;
+    --line:rgba(255,170,120,.22); --line2:rgba(255,170,120,.5);
+    --text:#F2ECFF; --dim:#9C90B8;
+    --accent:#FF8A3D; --accent2:#FFD166;
+    --pellet:#F1D9A8; --power:#FFA94D; --tomato:#E5484D;
+    --good:#7BD389; --danger:#E5484D;
+    --onAccent:#190B04;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;}
+  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);}
+  body{font-family:"SF Mono","Cascadia Mono",Consolas,system-ui,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    touch-action:none;overscroll-behavior:none;}
+  /* 夜色、雾与月亮：全部静态渐变，不做逐帧滤镜 */
+  body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(46% 34% at 78% 8%,rgba(255,209,102,.10),transparent 70%),
+      radial-gradient(70% 54% at 50% 44%,rgba(255,138,61,.055),transparent 72%),
+      radial-gradient(120% 82% at 50% 8%,transparent 44%,rgba(0,0,0,.62) 100%);}
+  body::after{content:'';position:fixed;left:0;right:0;bottom:0;height:42%;z-index:0;pointer-events:none;
+    background:linear-gradient(180deg,transparent,rgba(255,138,61,.045));
+    animation:fog 9s ease-in-out infinite alternate;}
+  @keyframes fog{from{opacity:.55}to{opacity:1}}
+  body.lp::after{animation:none;opacity:.7}
+  @media (prefers-reduced-motion: reduce){body::after{animation:none}}
+
+  #stage{position:fixed;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;
+    padding:calc(10px + env(safe-area-inset-top)) 12px calc(10px + env(safe-area-inset-bottom));}
+  #wrap{display:flex;flex-direction:column;gap:8px;width:min(460px,100%);height:100%;justify-content:center;}
+
+  /* ---------- 顶部 HUD ---------- */
+  #topbar{display:flex;align-items:center;gap:6px;height:34px;flex:0 0 auto;}
+  .brand{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    font-size:13px;font-weight:900;letter-spacing:3px;}
+  .brand .bpre{font-style:normal;margin-right:4px;}
+  .brand span{color:var(--accent2);}
+  .stats{display:flex;align-items:center;gap:5px;margin-left:auto;flex:0 0 auto;}
+  .stat{display:flex;align-items:baseline;gap:4px;padding:4px 6px;height:28px;
+    border:1px solid var(--line);border-left:2px solid var(--line2);
+    background:linear-gradient(180deg,rgba(21,16,33,.88),rgba(11,7,20,.94));
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%);}
+  .stat span{font-size:8px;font-weight:800;letter-spacing:1.2px;color:var(--dim);}
+  .stat b{display:inline-block;min-width:18px;font-size:13px;text-align:right;color:var(--accent2);
+    font-variant-numeric:tabular-nums;}
+  #hudLives{display:flex;align-items:center;gap:2px;font-size:11px;line-height:1;padding:4px 6px;color:var(--tomato);}
+  #btnPause{flex:0 0 auto;width:32px;height:28px;font-size:11px;color:var(--accent2);cursor:pointer;
+    border:1px solid var(--line);background:linear-gradient(180deg,rgba(21,16,33,.92),rgba(11,7,20,.95));
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%);}
+  #btnPause:active{transform:translateY(1px)}
+
+  /* ---------- 迷宫 ---------- */
+  #frame{position:relative;flex:0 0 auto;margin:0 auto;line-height:0;}
+  #cv{display:block;border-radius:8px;
+    box-shadow:0 0 0 1px var(--line),0 14px 40px rgba(0,0,0,.55),inset 0 0 40px rgba(0,0,0,.4);}
+  .corner{position:absolute;width:12px;height:12px;pointer-events:none;opacity:.85;}
+  .corner::before,.corner::after{content:'';position:absolute;background:var(--accent);}
+  .corner::before{width:12px;height:2px;}
+  .corner::after{width:2px;height:12px;}
+  .corner.tl{left:-2px;top:-2px}
+  .corner.tr{right:-2px;top:-2px;transform:scaleX(-1)}
+  .corner.bl{left:-2px;bottom:-2px;transform:scaleY(-1)}
+  .corner.br{right:-2px;bottom:-2px;transform:scale(-1,-1)}
+
+  #nightChip{position:absolute;left:50%;top:8px;transform:translateX(-50%);z-index:4;
+    display:none;align-items:center;gap:7px;padding:4px 10px;line-height:1;
+    border:1px solid var(--line2);border-left:2px solid var(--accent);
+    background:rgba(11,7,20,.82);border-radius:2px;
+    font-size:10px;font-weight:900;letter-spacing:2px;color:var(--accent2);pointer-events:none;}
+  #nightChip.show{display:flex}
+  #nightChip em{font-style:normal;font-size:9px;font-weight:700;letter-spacing:1px;color:var(--dim);}
+
+  /* 开局 3-2-1 倒计时：压在迷宫正中，够大才看得见 */
+  #cdown{position:absolute;left:50%;top:50%;z-index:6;display:none;pointer-events:none;
+    transform:translate(-50%,-50%);font-size:clamp(52px,20vmin,92px);line-height:1;
+    font-weight:900;letter-spacing:2px;color:var(--accent2);font-variant-numeric:tabular-nums;
+    text-shadow:0 0 22px rgba(255,138,61,.65),0 0 46px rgba(255,138,61,.28),0 8px 26px rgba(0,0,0,.85);
+    -webkit-text-stroke:2px rgba(11,7,20,.55);}
+  #cdown.show{display:block}
+  #cdown.pop{animation:cdpop .5s cubic-bezier(.2,1.5,.4,1)}
+  @keyframes cdpop{
+    0%{transform:translate(-50%,-50%) scale(.42);opacity:0;}
+    62%{transform:translate(-50%,-50%) scale(1.16);opacity:1;}
+    100%{transform:translate(-50%,-50%) scale(1);opacity:1;}
+  }
+  body.lp #cdown.pop,body.lp #cdown{animation:none;transform:translate(-50%,-50%);}
+  @media (prefers-reduced-motion: reduce){
+    #cdown.pop{animation:none}
+  }
+
+  /* ---------- 台词常驻位（固定高度，不塌陷） ---------- */
+  #dlgBar{flex:0 0 auto;height:52px;display:flex;align-items:center;gap:8px;
+    padding:6px 8px;border:1px solid var(--line);border-radius:8px;
+    background:linear-gradient(180deg,rgba(21,16,33,.82),rgba(11,7,20,.9));}
+  .ava{flex:0 0 auto;width:34px;height:34px;border-radius:50%;overflow:hidden;position:relative;
+    border:1px solid var(--line2);background:radial-gradient(circle at 50% 40%,#2A1020,#12060C);
+    box-shadow:0 0 12px rgba(229,72,77,.18);}
+  .ava img{width:100%;height:100%;object-fit:cover;display:block;}
+  .ava .fb{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-size:16px;}
+  .ava.none img{display:none}
+  .ava.none .fb{display:flex}
+  .say{flex:1 1 auto;min-width:0;font-size:11.5px;line-height:1.5;color:var(--text);
+    padding:0 10px;border-left:2px solid var(--accent);max-height:40px;overflow:hidden;}
+  #sayTxt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  #dlgBar.off .say{opacity:.18;border-left-color:var(--line2)}
+
+  /* ---------- 底部操作条 ---------- */
+  #bottombar{flex:0 0 auto;height:22px;display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:0 2px;font-size:9px;letter-spacing:1px;color:var(--dim);}
+  #tip{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+  /* ---------- 手机 / 平板：屏幕虚拟方向键 ---------- */
+  #pad{display:none;flex:0 0 auto;margin:2px auto 0;grid-template-columns:repeat(3,46px);
+    grid-template-rows:repeat(3,46px);gap:4px;
+    grid-template-areas:". up ." "left . right" ". down .";}
+  body.touch #pad{display:grid;}
+  .pbtn{display:flex;align-items:center;justify-content:center;padding:0;touch-action:none;
+    font-size:15px;line-height:1;font-weight:900;color:var(--accent2);cursor:pointer;
+    border:1px solid var(--line2);border-radius:10px;
+    background:linear-gradient(180deg,rgba(36,23,54,.92),rgba(11,7,20,.95));
+    box-shadow:0 2px 0 rgba(0,0,0,.45);}
+  .pbtn:active,.pbtn.on{transform:translateY(1px);color:var(--onAccent);background:var(--accent);
+    border-color:var(--accent);box-shadow:none;}
+  .pbtn[data-dir="up"]{grid-area:up}
+  .pbtn[data-dir="left"]{grid-area:left}
+  .pbtn[data-dir="right"]{grid-area:right}
+  .pbtn[data-dir="down"]{grid-area:down}
+  /* 横屏时棋盘左右留白宽，方向键浮在左侧空白里，不挤占棋盘高度 */
+  body.padFloat #pad{position:fixed;left:calc(10px + env(safe-area-inset-left));top:50%;
+    transform:translateY(-50%);z-index:5;margin:0;opacity:.94;}
+
+  /* ---------- 叠层：标题 / 暂停 ---------- */
+  .overlay{position:fixed;inset:0;z-index:30;display:none;align-items:flex-start;justify-content:center;
+    overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;
+    padding:calc(14px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));
+    background:radial-gradient(80% 60% at 50% 40%,rgba(11,7,20,.72),rgba(5,3,9,.92));}
+  .overlay.show{display:flex;}
+  .panel{width:min(340px,100%);padding:22px 20px 18px;position:relative;margin:auto;
+    background:linear-gradient(180deg,rgba(24,18,38,.98),rgba(11,7,20,.99));
+    border:1px solid var(--line);border-left:2px solid var(--accent);
+    border-radius:14px;box-shadow:0 24px 70px rgba(0,0,0,.65);}
+  .panel::after{content:'';position:absolute;inset:7px;border:1px solid rgba(255,255,255,.035);border-radius:9px;pointer-events:none;}
+  .kicker{font-size:9px;font-weight:900;letter-spacing:4px;color:var(--accent);opacity:.9;}
+  h1{font-size:27px;font-weight:900;letter-spacing:6px;margin:7px 0 4px;color:var(--accent2);}
+  .sub{font-size:11px;line-height:1.6;color:var(--dim);letter-spacing:.3px;}
+  .bestRow{display:flex;align-items:baseline;gap:8px;margin:13px 0 12px;padding:8px 10px;
+    border:1px solid var(--line);border-radius:6px;background:rgba(0,0,0,.18);
+    font-size:9px;letter-spacing:1.5px;color:var(--dim);}
+  .bestRow b{margin-left:auto;font-size:17px;color:var(--accent2);font-variant-numeric:tabular-nums;}
+  .themes{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;}
+  .thm{display:flex;align-items:center;gap:7px;padding:7px 8px;font-size:10px;font-weight:800;letter-spacing:1px;
+    color:var(--dim);cursor:pointer;border:1px solid var(--line);border-radius:4px;
+    background:rgba(0,0,0,.18);transition:color .15s,border-color .15s;text-align:left;}
+  .thm i{width:12px;height:12px;border-radius:50%;flex:0 0 auto;box-shadow:0 0 0 1px rgba(255,255,255,.14) inset;}
+  .thm.on{color:var(--text);border-color:var(--accent);background:rgba(255,138,61,.10);}
+  /* 暂停页：番茄皮肤切换 */
+  .skinHead{font-size:9px;font-weight:900;letter-spacing:1.5px;color:var(--dim);margin:2px 0 6px;}
+  .skins{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px;}
+  .skinBtn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:7px 4px;cursor:pointer;
+    font-size:9px;font-weight:800;letter-spacing:.5px;line-height:1.2;text-align:center;color:var(--dim);
+    border:1px solid var(--line);border-radius:6px;background:rgba(0,0,0,.18);
+    transition:color .15s,border-color .15s;}
+  .skinPic{position:relative;width:26px;height:26px;border-radius:50%;overflow:hidden;display:block;
+    border:1px solid var(--line2);background:rgba(0,0,0,.25);}
+  /* 未选中的皮肤只做轻度灰化：压太狠会让主体看起来比选中的小，破坏「三个一样大」的观感 */
+  .skinPic img{width:100%;height:100%;object-fit:cover;display:block;
+    filter:grayscale(1) brightness(.82);transition:filter .15s;}
+  .skinBtn small{font-size:8px;font-weight:700;letter-spacing:0;opacity:.8;}
+  .skinBtn.on{color:var(--text);border-color:var(--accent);background:rgba(255,138,61,.10);}
+  .skinBtn.on .skinPic img{filter:none;}
+  .skinBtn.lock{cursor:not-allowed;}
+  .skinBtn.lock .skinPic img{filter:grayscale(1) brightness(.5);}
+  .primary{width:100%;height:46px;margin-top:2px;font-size:14px;font-weight:900;letter-spacing:5px;
+    color:var(--onAccent);cursor:pointer;border:0;border-radius:6px;
+    background:linear-gradient(180deg,var(--accent2),var(--accent));
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%);}
+  .primary:active{transform:translateY(1px);filter:brightness(.94)}
+  .ghostBtn{width:100%;height:40px;margin-top:8px;font-size:11px;font-weight:800;letter-spacing:2px;
+    color:var(--accent2);cursor:pointer;border:1px solid var(--line2);border-radius:4px;
+    background:rgba(0,0,0,.2);}
+  .ghostBtn:active{transform:translateY(1px)}
+  .swRow{display:flex;align-items:center;gap:8px;margin:12px 0 0;font-size:10px;letter-spacing:1px;color:var(--dim);cursor:pointer;}
+  .swRow input{appearance:none;width:32px;height:18px;border-radius:9px;border:1px solid var(--line2);
+    background:rgba(0,0,0,.35);position:relative;cursor:pointer;transition:background .18s;}
+  .swRow input::after{content:'';position:absolute;left:2px;top:2px;width:12px;height:12px;border-radius:50%;
+    background:var(--dim);transition:transform .18s,background .18s;}
+  .swRow input:checked{background:rgba(255,138,61,.28);border-color:var(--accent);}
+  .swRow input:checked::after{transform:translateX(14px);background:var(--accent2);}
+  .hint{margin-top:13px;padding-top:11px;border-top:1px solid var(--line);
+    font-size:9px;line-height:1.7;letter-spacing:.6px;color:var(--dim);}
+  .hint b{color:var(--accent2);font-weight:800;}
+  html[lang="ko"] .hint{word-break:keep-all;}
+
+  /* ---------- 语言切换 ---------- */
+  .accRow{display:flex;align-items:center;gap:8px;margin:-4px 0 10px;font-size:10px;letter-spacing:1px;color:var(--dim);}
+  .accRow span{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .miniBtn{flex:0 0 auto;height:24px;padding:0 9px;font-size:9px;font-weight:800;letter-spacing:1px;
+    color:var(--accent2);cursor:pointer;border:1px solid var(--line);border-radius:4px;background:rgba(0,0,0,.2);}
+  .miniBtn:active{transform:translateY(1px)}
+  .langBtn{min-width:30px;padding:0 7px;letter-spacing:.5px;}
+  .langBtn.on{color:var(--onAccent);background:var(--accent);border-color:var(--accent);}
+
+  /* ---------- 成就层 ---------- */
+  .achHead{display:flex;align-items:baseline;gap:8px;margin:12px 0 2px;
+    font-size:9px;letter-spacing:1.5px;color:var(--dim);}
+  .achHead b{margin-left:auto;font-size:13px;color:var(--accent2);font-variant-numeric:tabular-nums;}
+  .achList{display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto;padding:6px 1px;}
+  .achRow{display:flex;align-items:flex-start;gap:8px;padding:7px 9px;font-size:10.5px;letter-spacing:.6px;
+    border:1px solid var(--line);border-radius:5px;background:rgba(0,0,0,.18);color:var(--dim);}
+  .achRow i{font-style:normal;flex:0 0 auto;line-height:1.35;color:var(--line2);}
+  .achTxt{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px;}
+  .achTxt>span{line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .achTxt em{font-style:normal;font-size:9px;line-height:1.45;letter-spacing:.2px;color:var(--dim);
+    overflow-wrap:break-word;word-break:normal;}
+  .achRow b{flex:0 0 auto;line-height:1.35;font-size:8.5px;font-weight:800;letter-spacing:1px;color:var(--dim);}
+  html[lang="ko"] .achTxt em{word-break:keep-all;}
+  .achRow.on{color:var(--text);border-color:var(--accent);}
+  .achRow.on i{color:var(--accent2);}
+  .achRow.on b{color:var(--good);}
+  #achToast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));z-index:40;
+    transform:translate(-50%,-8px);padding:7px 14px;font-size:10px;font-weight:800;letter-spacing:1px;
+    color:var(--accent2);background:rgba(11,7,20,.94);border:1px solid var(--accent);border-radius:6px;
+    box-shadow:0 10px 30px rgba(0,0,0,.5);opacity:0;pointer-events:none;
+    transition:opacity .2s,transform .2s;white-space:nowrap;max-width:86vw;overflow:hidden;text-overflow:ellipsis;}
+  #achToast.on{opacity:1;transform:translate(-50%,0)}
+
+  /* ---------- 月巴跟头气泡 ---------- */
+  #gSay{position:absolute;left:0;top:0;transform:translate(-50%,-100%);max-width:150px;
+    padding:3px 7px;font-size:9.5px;line-height:1.4;letter-spacing:.3px;color:var(--text);
+    background:linear-gradient(180deg,rgba(24,18,38,.96),rgba(11,7,20,.96));
+    border:1px solid var(--line2);border-radius:7px;pointer-events:none;opacity:0;
+    transition:opacity .18s;white-space:normal;text-align:center;z-index:3;}
+  #gSay.on{opacity:1}
+  #gSay::after{content:'';position:absolute;left:50%;bottom:-5px;width:8px;height:8px;
+    margin-left:-4px;background:rgba(11,7,20,.96);border-right:1px solid var(--line2);
+    border-bottom:1px solid var(--line2);transform:rotate(45deg);}
+
+  /* ---------- M6-A：反吃白闪 / 受击红闪 / 撞墙轻推 ---------- */
+  #flash{position:fixed;inset:0;z-index:25;pointer-events:none;background:#fff;opacity:0;}
+  #flash.on{animation:pmFlash .15s ease-out}
+  @keyframes pmFlash{0%{opacity:.18}100%{opacity:0}}
+  #hurtFx{position:fixed;inset:0;z-index:25;pointer-events:none;opacity:0;
+    background:radial-gradient(ellipse 76% 70% at 50% 50%,transparent 50%,rgba(229,72,77,.6) 100%);}
+  #hurtFx.on{animation:pmHurt .35s ease-out}
+  @keyframes pmHurt{0%{opacity:.5}100%{opacity:0}}
+  body.lp #hurtFx.on{animation:pmHurtLow .18s ease-out}
+  @keyframes pmHurtLow{0%{opacity:.18}100%{opacity:0}}
+  body.lp #flash.on{animation:none}
+  #cv.bump{animation:pmBump .12s linear}
+  @keyframes pmBump{0%,100%{transform:translate(0,0)}
+    35%{transform:translate(var(--bx,0px),var(--by,0px))}}
+  body.lp #cv.bump{animation:none}
+  #cv.punch{animation:pmPunch .18s ease-out}
+  @keyframes pmPunch{0%{transform:scale(1.006)}100%{transform:scale(1)}}
+  body.lp #cv.punch{animation:none}
+
+  /* ---------- 轻震（低功耗 / 减动效时关闭） ---------- */
+  #cv.shake{animation:pmShake .22s linear}
+  @keyframes pmShake{0%{transform:translate(0,0)}25%{transform:translate(-2px,1px)}
+    50%{transform:translate(2px,-1px)}75%{transform:translate(-1px,-2px)}100%{transform:translate(0,0)}}
+  body.lp #cv.shake{animation:none}
+
+  @media (prefers-reduced-motion: reduce){
+    #cv.shake,#cv.bump,#cv.punch,#flash.on{animation:none}
+    #hurtFx.on{animation:none}
+  }
+
+  /* ---------- P2：低血量心跳（静态渐变 + 只动 opacity） ---------- */
+  #lowHp{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:0;
+    background:radial-gradient(ellipse 88% 84% at 50% 50%,transparent 50%,rgba(229,72,77,.85) 100%);}
+  body.lowhp #lowHp{animation:pmBeat 1.15s ease-in-out infinite}
+  @keyframes pmBeat{0%{opacity:.09}12%{opacity:.30}26%{opacity:.13}40%{opacity:.26}100%{opacity:.09}}
+  body.lp #lowHp{animation:none;opacity:.16}
+  @media (prefers-reduced-motion: reduce){
+    #lowHp{animation:none !important;opacity:.14}
+  }
+
+  /* ---------- P3：新纪录星芒（结算页） ---------- */
+  #newBestTag{position:relative}
+  #newBestTag.star{color:var(--accent2);
+    text-shadow:0 0 12px rgba(255,209,102,.55),0 0 30px rgba(255,138,61,.3);
+    animation:pmBestPop .85s cubic-bezier(.2,1.5,.4,1) 1 both;}
+  @keyframes pmBestPop{0%{transform:scale(.72);opacity:0}62%{transform:scale(1.12);opacity:1}100%{transform:scale(1);opacity:1}}
+  #newBestTag.star::before,#newBestTag.star::after{content:'✦';position:absolute;top:50%;font-size:13px;
+    animation:pmTwinkle 1.4s ease-in-out infinite;}
+  #newBestTag.star::before{left:4px}
+  #newBestTag.star::after{right:4px;animation-delay:.35s}
+  @keyframes pmTwinkle{
+    0%,100%{opacity:.22;transform:translateY(-50%) scale(.7) rotate(0deg)}
+    50%{opacity:1;transform:translateY(-50%) scale(1.15) rotate(22deg)}
+  }
+  @media (prefers-reduced-motion: reduce){
+    #newBestTag.star,#newBestTag.star::before,#newBestTag.star::after{animation:none}
+    #newBestTag.star::before,#newBestTag.star::after{transform:translateY(-50%);opacity:.8}
+  }
+  body.lp #newBestTag.star,body.lp #newBestTag.star::before,body.lp #newBestTag.star::after{animation:none}
+
+  /* ---------- M6-C：场景氛围（萤火 / 雾带 / 月亮 / 酸番茄） ---------- */
+  /* C2 漂浮萤火：6 个光点，纯 CSS 平移 + 闪烁；低功耗 / 减动效直接隐藏 */
+  .flies{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden;border-radius:8px;}
+  .fly{position:absolute;width:3px;height:3px;border-radius:50%;opacity:0;
+    background:var(--accent2);box-shadow:0 0 6px var(--accent2);
+    animation:flyFloat var(--d,11s) ease-in-out infinite alternate,
+              flyBlink calc(var(--d,11s) * .42) ease-in-out infinite;}
+  .fly:nth-child(1){left:12%;top:66%;--dx:16px;--dy:-20px;--d:11s;animation-delay:0s,-.4s}
+  .fly:nth-child(2){left:31%;top:38%;--dx:-14px;--dy:-26px;--d:13s;animation-delay:-2.5s,-1.6s}
+  .fly:nth-child(3){left:48%;top:74%;--dx:20px;--dy:-14px;--d:9s;animation-delay:-4s,-2.2s}
+  .fly:nth-child(4){left:66%;top:56%;--dx:-18px;--dy:-22px;--d:12s;animation-delay:-1.2s,-3.1s}
+  .fly:nth-child(5){left:82%;top:34%;--dx:-12px;--dy:18px;--d:10s;animation-delay:-5.2s,-.9s}
+  .fly:nth-child(6){left:22%;top:18%;--dx:14px;--dy:22px;--d:14s;animation-delay:-3.4s,-2.6s}
+  @keyframes flyFloat{from{transform:translate(0,0)}to{transform:translate(var(--dx),var(--dy))}}
+  @keyframes flyBlink{0%,100%{opacity:0}38%{opacity:.85}72%{opacity:.18}}
+  body.lp .flies{display:none}
+  @media (prefers-reduced-motion: reduce){.flies{display:none}}
+
+  /* C6 酸番茄氛围：棋盘四周一层橙红内阴影，末段随剩余时间闪烁 */
+  #frame::after{content:'';position:absolute;inset:0;z-index:2;pointer-events:none;
+    border-radius:8px;opacity:0;transition:opacity .18s linear;
+    background:radial-gradient(ellipse 82% 76% at 50% 50%,transparent 48%,rgba(255,90,60,.16) 100%);
+    box-shadow:inset 0 0 30px rgba(255,90,60,.35);}
+  #frame.sour::after{opacity:.18}
+  #frame.sourHurry::after{animation:pmSour .5s steps(1,end) infinite}
+  @keyframes pmSour{0%,49%{opacity:.18}50%,100%{opacity:.05}}
+  body.lp #frame::after{transition:none}
+  body.lp #frame.sour::after{opacity:.12}
+  body.lp #frame.sourHurry::after{animation:none}
+  @media (prefers-reduced-motion: reduce){#frame.sourHurry::after{animation:none}}
+
+  /* ---------- M6-D：生命碎裂 / 成就盖章 / 夜数翻页 / 台词上浮 / 标题呼吸 ---------- */
+  /* D1 生命：逐颗渲染，掉命时那一颗炸开（.32s，1.3→.9 + 淡出 + 两片碎屑） */
+  #livesIcons{display:inline-flex;align-items:center;gap:2px;}
+  #livesIcons i{position:relative;display:inline-block;font-style:normal;line-height:1;}
+  #livesIcons i.crack{animation:lifeCrack .32s ease-out both}
+  @keyframes lifeCrack{
+    0%{transform:scale(1.3);opacity:1}
+    38%{transform:scale(.94);opacity:.82}
+    100%{transform:scale(.88);opacity:0}
+  }
+  #livesIcons i.crack::before,#livesIcons i.crack::after{content:'';position:absolute;left:50%;top:50%;
+    width:3px;height:3px;border-radius:1px;background:var(--tomato);opacity:0;
+    animation:lifeShard .32s ease-out both;}
+  #livesIcons i.crack::before{--sx:-8px;--sy:-6px}
+  #livesIcons i.crack::after{--sx:8px;--sy:-3px}
+  @keyframes lifeShard{
+    0%{opacity:.95;transform:translate(-50%,-50%) scale(1)}
+    100%{opacity:0;transform:translate(calc(-50% + var(--sx)),calc(-50% + var(--sy))) rotate(40deg) scale(.35)}
+  }
+  body.lp #livesIcons i.crack{animation:lifeCrackLow .28s ease-out both}
+  @keyframes lifeCrackLow{0%{opacity:1}100%{opacity:0}}
+  body.lp #livesIcons i.crack::before,body.lp #livesIcons i.crack::after{animation:none;opacity:0}
+  @media (prefers-reduced-motion: reduce){
+    #livesIcons i.crack{animation:lifeCrackLow .28s ease-out both}
+    #livesIcons i.crack::before,#livesIcons i.crack::after{animation:none;opacity:0}
+  }
+
+  /* D3 成就盖章：1.35 倍 + 逆时针 4° 落章 */
+  #achToast.on{animation:stampIn .42s cubic-bezier(.2,1.5,.4,1) both}
+  @keyframes stampIn{
+    0%{transform:translate(-50%,0) scale(1.35) rotate(-4deg);opacity:0}
+    62%{transform:translate(-50%,0) scale(.97) rotate(1deg);opacity:1}
+    100%{transform:translate(-50%,0) scale(1) rotate(0)}
+  }
+  body.lp #achToast.on{animation:none}
+  @media (prefers-reduced-motion: reduce){#achToast.on{animation:none}}
+
+  /* D4 夜数翻页：新值自下 6px 淡入 */
+  .flip{animation:flipIn .28s cubic-bezier(.2,1.2,.4,1) both}
+  @keyframes flipIn{0%{opacity:.15;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
+  body.lp .flip{animation:none}
+  @media (prefers-reduced-motion: reduce){.flip{animation:none}}
+
+  /* D5 台词上浮 + 头像弹 + 月巴气泡轻浮 */
+  #sayTxt.riseIn{animation:sayRise .22s ease-out both}
+  @keyframes sayRise{0%{opacity:.2;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
+  #ava.bop{animation:avaBop .3s cubic-bezier(.2,1.5,.4,1) both}
+  @keyframes avaBop{0%{transform:scale(1)}42%{transform:scale(1.12)}100%{transform:scale(1)}}
+  #gSay.on{animation:gSayIn .3s ease-out both}
+  @keyframes gSayIn{0%{opacity:0;transform:translate(-50%,calc(-100% + 3px))}
+    100%{opacity:1;transform:translate(-50%,-100%)}}
+  body.lp #sayTxt.riseIn,body.lp #ava.bop,body.lp #gSay.on{animation:none}
+  @media (prefers-reduced-motion: reduce){
+    #sayTxt.riseIn,#ava.bop,#gSay.on{animation:none}
+  }
+
+  /* D6 标题呼吸（常驻 7s 极缓）+ 暂停压暗 */
+  #title.show #ttl,#pause.show h1{animation:ttlBreathe 7s ease-in-out infinite}
+  @keyframes ttlBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.015)}}
+  #cv{transition:opacity .2s linear}
+  #cv.dim{opacity:.55}
+  body.lp #title.show #ttl,body.lp #pause.show h1{animation:none}
+  body.lp #cv{transition:none}
+  @media (prefers-reduced-motion: reduce){
+    #title.show #ttl,#pause.show h1{animation:none}
+    #cv{transition:none}
+  }
+
+  /* ---------- 浅色 UI：打开「浅色」开关后整站换肤色（html[data-light="1"]） ---------- */
+  html[data-light="1"] body::before{background:
+      radial-gradient(46% 34% at 78% 8%,rgba(255,196,88,.32),transparent 70%),
+      radial-gradient(70% 54% at 50% 44%,rgba(255,138,61,.10),transparent 72%),
+      radial-gradient(120% 82% at 50% 8%,transparent 54%,rgba(120,90,60,.10) 100%);}
+  html[data-light="1"] body::after{background:linear-gradient(180deg,transparent,rgba(255,138,61,.07));}
+  html[data-light="1"] .stat,
+  html[data-light="1"] #btnPause{background:linear-gradient(180deg,rgba(255,253,247,.94),rgba(242,233,218,.96));}
+  html[data-light="1"] #cv{box-shadow:0 0 0 1px var(--line),0 14px 40px rgba(90,64,40,.20),inset 0 0 40px rgba(90,64,40,.08);}
+  html[data-light="1"] #nightChip{background:rgba(255,253,247,.9);}
+  html[data-light="1"] #flash{background:#2B2038;}
+  html[data-light="1"] #cdown{
+    text-shadow:0 0 20px rgba(194,65,12,.35),0 0 44px rgba(194,65,12,.18),0 6px 20px rgba(255,255,255,.7);
+    -webkit-text-stroke-color:rgba(255,255,255,.7);}
+  html[data-light="1"] #dlgBar{background:linear-gradient(180deg,rgba(255,253,247,.9),rgba(242,233,218,.94));}
+  html[data-light="1"] .ava{background:radial-gradient(circle at 50% 40%,#FFE4DE,#F7CAC4);
+    box-shadow:0 0 12px rgba(229,72,77,.12);}
+  html[data-light="1"] .pbtn{background:linear-gradient(180deg,rgba(255,253,247,.96),rgba(240,231,215,.96));
+    box-shadow:0 2px 0 rgba(90,64,40,.18);}
+  html[data-light="1"] .pbtn:active,html[data-light="1"] .pbtn.on{background:var(--accent);box-shadow:none;}
+  html[data-light="1"] .overlay{background:radial-gradient(80% 60% at 50% 40%,rgba(251,246,236,.76),rgba(238,229,212,.94));}
+  html[data-light="1"] .panel{background:linear-gradient(180deg,#FFFCF6,#F5ECDD);box-shadow:0 24px 70px rgba(90,64,40,.22);}
+  html[data-light="1"] .panel::after{border-color:rgba(74,59,99,.06);}
+  html[data-light="1"] .bestRow,
+  html[data-light="1"] .thm,
+  html[data-light="1"] .skinBtn,
+  html[data-light="1"] .achRow{background:rgba(255,255,255,.68);}
+  html[data-light="1"] .thm.on,
+  html[data-light="1"] .skinBtn.on{background:rgba(194,65,12,.10);}
+  html[data-light="1"] .themes{opacity:.78;}
+  html[data-light="1"] .ghostBtn,
+  html[data-light="1"] .miniBtn{background:rgba(255,255,255,.72);}
+  /* 选中项必须保持主色实底：否则 --onAccent 的浅色字会压在被改白的背景上 */
+  html[data-light="1"] .langBtn.on{background:var(--accent);border-color:var(--accent);color:var(--onAccent);}
+  html[data-light="1"] .swRow input{background:rgba(120,96,70,.16);}
+  html[data-light="1"] .swRow input:checked{background:rgba(194,65,12,.22);}
+  html[data-light="1"] .skinPic{background:rgba(120,96,70,.10);}
+  html[data-light="1"] #achToast{background:rgba(255,253,247,.97);box-shadow:0 10px 30px rgba(90,64,40,.22);}
+  html[data-light="1"] #gSay{background:linear-gradient(180deg,rgba(255,253,247,.97),rgba(245,236,221,.97));}
+  html[data-light="1"] #gSay::after{background:rgba(245,236,221,.97);}
+  html[data-light="1"] #newBestTag.star{text-shadow:0 0 10px rgba(194,65,12,.35),0 0 24px rgba(194,65,12,.18);}
+  html[data-light="1"] #hurtFx{background:radial-gradient(ellipse 76% 70% at 50% 50%,transparent 50%,rgba(198,40,40,.45) 100%);}
+  html[data-light="1"] #lowHp{background:radial-gradient(ellipse 88% 84% at 50% 50%,transparent 50%,rgba(198,40,40,.5) 100%);}
+  /* M6-C：浅色下萤火与酸番茄都换成暖棕，避免在浅底上过曝 */
+  html[data-light="1"] .fly{background:#B4470D;box-shadow:0 0 5px rgba(180,71,13,.45);}
+  html[data-light="1"] #frame::after{
+    background:radial-gradient(ellipse 82% 76% at 50% 50%,transparent 48%,rgba(198,40,40,.12) 100%);
+    box-shadow:inset 0 0 30px rgba(198,40,40,.26);}
+
+  @media (max-height: 640px){
+    h1{font-size:23px;letter-spacing:4px}
+    .panel{padding:18px 16px 14px}
+    .bestRow{margin:10px 0 10px}
+    .thm{padding:6px 7px}
+    #dlgBar{height:48px}
+  }
+
+  /* ---------- 开场互动（月巴追茄）：每次打开都显示，关闭即从 DOM 移除 ---------- */
+  #introWrap{position:fixed;inset:0;z-index:10000;background:var(--bg);
+    opacity:1;transition:opacity .46s ease;}
+  #introWrap iframe{position:absolute;inset:0;display:block;width:100%;height:100%;border:0;
+    background:var(--bg);opacity:1;}
+  #introWrap.ready iframe{opacity:1;}
+  #introWrap.out{opacity:0;pointer-events:none;}
+  #introLoading{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;
+    font-size:10px;font-weight:800;letter-spacing:.2em;color:var(--dim);pointer-events:none;
+    animation:introPulse 1.6s ease-in-out infinite;}
+  @keyframes introPulse{0%,100%{opacity:.45}50%{opacity:1}}
+  body.lp #introLoading{animation:none;opacity:.8;}
+  #introWrap.ready #introLoading{display:none;}
+  #introFallback{position:absolute;right:calc(14px + env(safe-area-inset-right));
+    bottom:calc(14px + env(safe-area-inset-bottom));z-index:3;display:none;
+    padding:9px 14px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;
+    letter-spacing:.16em;color:var(--onAccent);
+    background:linear-gradient(180deg,var(--accent2),var(--accent));
+    border:1px solid var(--line2);border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.55);}
+  #introFallback:active{transform:translateY(2px);}
+  #introWrap.slow #introFallback{display:block;}
+</style>
+</head>
+<body>
+<div id="introWrap">
+  <iframe id="introFrame" title="月巴追茄 · 开场"></iframe>
+  <span id="introLoading">正在点亮南瓜灯…</span>
+  <button id="introFallback" type="button">直接进入 ›</button>
+</div>
+<script>
+/* 开场页接口协议（pacman-intro.html）
+   iframe → 父页：pacman-intro-ready（首帧已绘制，可淡入）
+                  pacman-intro-done （用户已进入，父页淡出并移除）
+   父页 → iframe：pacman-intro-close（强制关闭，兜底按钮使用） */
+(function(){
+  var wrap=document.getElementById('introWrap');
+  var frame=document.getElementById('introFrame');
+  var fallback=document.getElementById('introFallback');
+  var ready=false, closed=false, started=false;
+  function close(){
+    if(closed) return;
+    closed=true;
+    try{ frame.contentWindow.postMessage({type:'pacman-intro-close'}, '*'); }catch(err){}
+    wrap.classList.add('out');
+    setTimeout(function(){ if(wrap.parentNode) wrap.parentNode.removeChild(wrap); },470);
+  }
+  function start(src){
+    if(started || closed || !src) return;
+    started=true;
+    frame.src=src;
+    setTimeout(function(){ if(!ready && !closed) wrap.classList.add('slow'); },4200);
+  }
+  window.__pmIntroStart=start;
+  window.__pmIntroActive=function(){ return !closed; };
+  window.addEventListener('message',function(e){
+    if(!frame || e.source!==frame.contentWindow) return;
+    var d=e.data||{};
+    if(d.type==='pacman-intro-ready'){ ready=true; wrap.classList.add('ready'); }
+    else if(d.type==='pacman-intro-done'){ close(); }
+  });
+  frame.addEventListener('error',function(){
+    wrap.classList.add('slow');
+    setTimeout(function(){ if(!ready) close(); },1200);   /* 开场页加载失败：别把游戏挡在黑屏后面 */
+  });
+  /* iframe load 兜底：即使 postMessage 被环境拦截（部分 WebView / file://），也解除遮罩显示开场页 */
+  frame.addEventListener('load',function(){
+    if(!started) return;   /* 初始 about:blank 的那次 load 不算 */
+    ready=true; wrap.classList.add('ready');
+  });
+  fallback.addEventListener('click',close);
+})();
+</script>
+<div id="stage">
+  <div id="wrap">
+    <header id="topbar">
+      <div class="brand"><span class="bpre">🎃</span><span id="brandName">月巴追茄</span></div>
+      <div class="stats">
+        <div class="stat"><span data-i18n="score">分数</span><b id="hudScore">0</b></div>
+        <div class="stat"><span data-i18n="night">夜</span><b id="hudNight">1</b></div>
+        <div id="hudLives"><span id="livesIcons"></span></div>
+      </div>
+      <button id="btnPause" aria-label="暂停">❚❚</button>
+    </header>
+
+    <div id="frame">
+      <canvas id="cv"></canvas>
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <span class="flies" aria-hidden="true"><i class="fly"></i><i class="fly"></i><i class="fly"></i><i class="fly"></i><i class="fly"></i><i class="fly"></i></span>
+      <div id="nightChip"><b id="nightChipT">第 1 夜</b><em id="chipEm" data-i18n="preparing">准备中</em></div>
+      <div id="cdown" aria-hidden="true"></div>
+      <div id="gSay"></div>
+    </div>
+
+    <div id="dlgBar">
+      <div class="ava none" id="ava"><img id="avaImg" alt=""><span class="fb">🍅</span></div>
+      <div class="say"><span id="sayTxt"></span></div>
+    </div>
+
+    <div id="bottombar">
+      <span id="tip">// 南瓜灯已点亮 //</span>
+    </div>
+
+    <div id="pad">
+      <button class="pbtn" type="button" data-dir="up" aria-label="上">▲</button>
+      <button class="pbtn" type="button" data-dir="left" aria-label="左">◀</button>
+      <button class="pbtn" type="button" data-dir="right" aria-label="右">▶</button>
+      <button class="pbtn" type="button" data-dir="down" aria-label="下">▼</button>
+    </div>
+  </div>
+</div>
+<div id="flash" aria-hidden="true"></div>
+<div id="hurtFx" aria-hidden="true"></div>
+<div id="lowHp" aria-hidden="true"></div>
+
+<div id="title" class="overlay show">
+  <div class="panel">
+    <div class="kicker">// HALLOWEEN NIGHT //</div>
+    <h1 id="ttl">月巴追茄</h1>
+    <p class="sub" data-i18n="sub">万圣夜，一只番茄，和月巴们。</p>
+    <div class="bestRow"><span data-i18n="best">最高分</span><b id="bestVal">0</b></div>
+    <div class="themes" id="themes"></div>
+    <label class="swRow"><input type="checkbox" id="chkLight"><span data-i18n="light">浅色</span></label>
+    <div class="accRow" id="langRow">
+      <span data-i18n="langLabel">语言</span>
+      <button class="miniBtn langBtn" type="button" data-lang="zh">中文</button>
+      <button class="miniBtn langBtn" type="button" data-lang="en">EN</button>
+      <button class="miniBtn langBtn" type="button" data-lang="ja">日本語</button>
+      <button class="miniBtn langBtn" type="button" data-lang="ko">한국어</button>
+    </div>
+    <div class="skinHead" data-i18n="skin">番茄皮肤</div>
+    <div class="skins" id="skinListTitle"></div>
+    <button class="primary" id="btnStart" data-i18n="start">开始</button>
+    <label class="swRow"><input type="checkbox" id="chkDlg" checked><span data-i18n="dialogue">台词</span></label>
+    <label class="swRow"><input type="checkbox" id="chkSfx" checked><span data-i18n="sound">音效</span></label>
+    <label class="swRow"><input type="checkbox" id="chkMusic" checked><span data-i18n="music">音乐</span></label>
+    <button class="ghostBtn" id="btnAch" data-i18n="achTitle">夜之成就</button>
+    <div class="hint" id="hint"></div>
+  </div>
+</div>
+
+<div id="pause" class="overlay">
+  <div class="panel">
+    <div class="kicker">// PAUSED //</div>
+    <h1 data-i18n="paused">已暂停</h1>
+    <p class="sub" data-i18n="pauseSub">番茄也需要喘口气。</p>
+    <div style="height:14px"></div>
+    <div class="skinHead" data-i18n="skin">番茄皮肤</div>
+    <div class="skins" id="skinList"></div>
+    <button class="primary" id="btnResume" data-i18n="resume">继续</button>
+    <button class="ghostBtn" id="btnQuit" data-i18n="backTitle">返回标题</button>
+  </div>
+</div>
+
+<div id="over" class="overlay">
+  <div class="panel">
+    <div class="kicker">// NIGHT LOG //</div>
+    <h1 data-i18n="over">这一夜结束了</h1>
+    <p class="sub" data-i18n="overSub">番茄汁洒了一地，但天一亮就会恢复。</p>
+    <div class="bestRow"><span data-i18n="score">分数</span><b id="overScore">0</b></div>
+    <div class="bestRow"><span data-i18n="bestNight">最高纪录</span><b id="overNight">1</b></div>
+    <div class="bestRow"><span data-i18n="runGhosts">本局榨干</span><b id="overGhosts">0</b></div>
+    <div id="newBestTag" class="kicker" style="display:none;text-align:center;margin:6px 0 10px" data-i18n="newBest">新纪录</div>
+    <button class="primary" id="btnAgain" data-i18n="restart">再来一次</button>
+    <button class="ghostBtn" id="btnOverAch" data-i18n="achTitle">夜之成就</button>
+    <button class="ghostBtn" id="btnOverQuit" data-i18n="backTitle">返回标题</button>
+  </div>
+</div>
+
+<div id="ach" class="overlay">
+  <div class="panel">
+    <div class="kicker">// NIGHT BADGES //</div>
+    <h1 data-i18n="achTitle">夜之成就</h1>
+    <div class="achHead"><span data-i18n="achProgress">已解锁</span><b id="achCount">0 / 8</b></div>
+    <div class="achList" id="achList"></div>
+    <button class="primary" id="btnAchClose" data-i18n="close">关闭</button>
+  </div>
+</div>
+
+<div id="achToast"></div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* =========================================================
+     1. 常量与基础数据
+     ========================================================= */
+  var MAIN_SAVE = 'idle-yueba-save-v2';   /* 主存档：只读 */
+  var SAVE_KEY  = 'yueba-pacman-v1';      /* 本作独立存档 */
+  var COLS = 19, ROWS = 21;
+
+  /* 迷宫字符： # 墙  . 南瓜籽  o 南瓜糖  空格 月巴窝  H 窝门
+     每行 19 个字符，共 21 行；左右镜像；第 10 行两端为隧道。
+     3 张手写迷宫，第 4 夜起循环（(夜数-1) % 3）。 */
+  var MAZES = [
+    [
+    "###################",
+    "#........#........#",
+    "#.##.###.#.###.##.#",
+    "#o##.###.#.###.##o#",
+    "#.................#",
+    "#.##.#.#####.#.##.#",
+    "#....#...#...#....#",
+    "####.###.#.###.####",
+    "#......#...#......#",
+    "#.####.##H##.####.#",
+    " ......#   #...... ",
+    "#.####.#####.####.#",
+    "#......#...#......#",
+    "####.###.#.###.####",
+    "#....#...#...#....#",
+    "#.##.#.#####.#.##.#",
+    "#.................#",
+    "#o##.###.#.###.##o#",
+    "#.##.###.#.###.##.#",
+    "#........#........#",
+    "###################"
+    ],
+    /* 迷宫二：两条横贯中庭的大通道 */
+    [
+    "###################",
+    "#........#........#",
+    "#.##.###.#.###.##.#",
+    "#o##.###.#.###.##o#",
+    "#.................#",
+    "#.##.#.#####.#.##.#",
+    "#.................#",
+    "####.###.#.###.####",
+    "#......#...#......#",
+    "#.####.##H##.####.#",
+    " ......#   #...... ",
+    "#.####.#####.####.#",
+    "#......#...#......#",
+    "####.###.#.###.####",
+    "#.................#",
+    "#.##.#.#####.#.##.#",
+    "#.................#",
+    "#o##.###.#.###.##o#",
+    "#.##.###.#.###.##.#",
+    "#........#........#",
+    "###################"
+    ],
+    /* 迷宫三：立柱走廊 + 宽通道 */
+    [
+    "###################",
+    "#........#........#",
+    "#.##.###.#.###.##.#",
+    "#o##.###.#.###.##o#",
+    "#.................#",
+    "#.#.#.#.#.#.#.#.#.#",
+    "#.#.#.#.#.#.#.#.#.#",
+    "#.................#",
+    "#......#...#......#",
+    "#.####.##H##.####.#",
+    " ......#   #...... ",
+    "#.####.#####.####.#",
+    "#......#...#......#",
+    "####.###.#.###.####",
+    "#....#...#...#....#",
+    "#.##.#.#####.#.##.#",
+    "#.................#",
+    "#o##.###.#.###.##o#",
+    "#.##.###.#.###.##.#",
+    "#........#........#",
+    "###################"
+    ]
+  ];
+  var MAZE = MAZES[0];
+
+  var START = {x:9, y:16};                                  /* 番茄出生点 */
+  var GHOSTS = [                                            /* 月巴出窝点 */
+    {x:8,  y:10},
+    {x:10, y:10},
+    {x:9,  y:10},
+    {x:9,  y:9},                                              /* 窝门口的迎宾位 */
+    {x:9,  y:10}                                              /* 第 3 夜起：万圣月巴 */
+  ];
+
+  var ART_SRC = {
+    tomato:     'https://origin.picgo.net/2026/10/22/8972a81ecea59da5668b010802d3bfcb1c75cde7c34bfa6e.th.png',
+    tomatoGreen:'https://origin.picgo.net/2026/10/28/-e8736be82f9e5aab.th.png',
+    tomatoRipe: 'https://origin.picgo.net/2026/10/28/-0069d74542c563812aa.th.png',
+    mb_pingguo: 'https://origin.picgo.net/2026/09/03/1618abd45272691005.th.png',
+    mb_fanben:  'https://origin.picgo.net/2026/09/03/1115555fb4ab3b2731.th.png',
+    mb_chi:     'https://origin.picgo.net/2026/09/03/15b077f9364349ae92.th.png',
+    mb_xiaoyue: 'https://origin.picgo.net/2026/09/03/1512e4bde4713ba02.th.png',
+    mb_wansheng:'https://origin.picgo.net/2026/10/25/---Yidi-Nyaomi-Lib4ec70c5a69d6d5a.th.png'
+  };
+  /* 番茄皮肤：默认青涩番茄；进入第 3 夜解锁队长番茄；拿到「反客为主」解锁成熟番茄。
+     box = 主体内容的归一化包围盒（左 / 上 / 右 / 下，0–1，按原图宽高取比例）。
+     三张立绘的留白不一样，烘焙时统一按这个框缩放到同一大小，换皮肤时番茄不会忽大忽小；
+     用比例而不是像素，原图尺寸变了也不用改。
+     zoom = 整体倍率（连圆形裁切框一起放大），目前只有成熟番茄用 1.2。 */
+  var SKIN_FILL = 208;                     /* 主体在 224 画布里的目标边长，留边不裁切 */
+  var SKINS = [
+    {id:'green',   face:'tomatoGreen', need:null,       box:[.2125, .16875, .80625, .81875]},
+    {id:'captain', face:'tomato',      need:'night3',   box:[0, 0, 1, 1]},
+    {id:'ripe',    face:'tomatoRipe',  need:'ghosts50', box:[.1875, .15625, .8, .8], zoom:1.2}
+  ];
+  /* 追兵：吃茄 / 墨镜 / 进食 / 小月巴；万圣月巴第 3 夜起加入 */
+  var CAST = [
+    {id:'mb_pingguo', ring:'#C96A73', color:'#C96A73'},
+    {id:'mb_fanben',  ring:'#B79BD8', color:'#B79BD8'},
+    {id:'mb_chi',     ring:'#7FCFB1', color:'#7FCFB1'},
+    {id:'mb_xiaoyue', ring:'#C9B2E8', color:'#C9B2E8'},
+    {id:'mb_wansheng',ring:'#8F74C9', color:'#8F74C9'}
+  ];
+
+  /* 图鉴全量立绘：id → [外链, 主色]。本作里除万圣月巴外的月巴立绘会从
+     「图鉴中已解锁的月巴」里随机取，单文件离线也要画得出来，故内联于此
+     （由 index.html 的 TYPES / TYPES2 / TYPES3 抽取生成，勿手改）。 */
+  var DEX_ART = {
+    'mb_xiaoyue':['https://origin.picgo.net/2026/09/03/1512e4bde4713ba02.th.png','#c9b2e8'],
+    'mb_xian':['https://origin.picgo.net/2026/09/03/4059f70dff59ca4a4.th.png','#d9c7f2'],
+    'mb_chi':['https://origin.picgo.net/2026/09/03/15b077f9364349ae92.th.png','#e8c39e'],
+    'mb_shui':['https://origin.picgo.net/2026/09/29/4d2c34425dd356082928e5e796a603fcd01d1cbc5324c06f.gif','#e3b8c9'],
+    'mb_wan':['https://origin.picgo.net/2026/09/03/1512e4bde4713ba02.th.png','#c9b2e8'],
+    'mb_pang':['https://origin.picgo.net/2026/10/21/62bc9b437f18c5e1f6f712a8e7a58ecbb2356f889dde89eb.th.png','#e7a3b8'],
+    'mb_xin':['https://origin.picgo.net/2026/09/03/37e1be2540efa2177.th.png','#f0a8c0'],
+    'mb_gao':['https://origin.picgo.net/2026/09/29/849e3c845e52aac2178af913058025cdd214e98968e45101.gif','#b8a9e0'],
+    'mb_ku':['https://origin.picgo.net/2026/09/29/19daf98c7a185e7e0c3d529a5f921058d74092d7a8ab4c37.gif','#a9c7ea'],
+    'mb_lan':['https://origin.picgo.net/2026/09/03/10a99395fea8f81ac7.th.png','#c3a7c9'],
+    'mb_tan':['https://origin.picgo.net/2026/10/21/41befbe6b2be042271d7ae7805b64f598d5d887397481fdf.th.png','#a5c3e8'],
+    'mb_jian':['https://origin.picgo.net/2026/09/03/9935aafd50857466b.th.png','#9ec48f'],
+    'mb_zao':['https://origin.picgo.net/2026/10/27/c77a0c0f38f6185cc62fb344b3dd306ff1b4d124e037e6ac.th.png','#e8c39e'],
+    'mb_lu':['https://origin.picgo.net/2026/10/27/47f37ba2b22b037038cc10f1e10b819287b3aabf07476a9b.th.png','#9fd4e8'],
+    'mb_yun':['https://origin.picgo.net/2026/10/21/087c43501b9bd20deb354672a8a79e4ae6b8b7c2a0cfba2c.th.png','#b9b2c9'],
+    'mb_xue':['https://origin.picgo.net/2026/10/23/e978b592d6dc67debfa6782c325544cbd87a36af9154021a.th.png','#eef1f7'],
+    'mb_caihong':['https://origin.picgo.net/2026/10/21/9895b41be4c58da373fcc95f6d8cc5ba0883411035f2a8d7.th.png','#e06b9c'],
+    'mb_chun':['https://origin.picgo.net/2026/10/22/d7b3e18460b8e44f1964d75b983ef69ac589f56a2b9a3392.th.webp','#8fc48a'],
+    'mb_xia':['https://origin.picgo.net/2026/10/22/---Yidi-Nyaomi-Lia67b10aba5615cbe.th.png','#f0857f'],
+    'mb_qiu':['https://origin.picgo.net/2026/10/23/---Yidi-Nyaomi-Li085363c8afe0790e.th.png','#e89b52'],
+    'mb_dong':['https://origin.picgo.net/2026/10/23/720cc39489c1fe7d040a16a0a74e5492adb703c20326203b.th.png','#7fa0b8'],
+    'mb_wenshi':['https://origin.picgo.net/2026/10/25/a4de870a23ff1f883c8454cb72ef80d762cde2ab6de81042.th.png','#6fbe7a'],
+    'mb_wuding':['https://origin.picgo.net/2026/10/24/ddb838b24b14c9bc66c93f3e145393e1f054aa99f643d304.th.png','#5f9ed1'],
+    'mb_senlin':['https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li6e93cacca933846d.th.png','#5c8a64'],
+    'mb_bing':['https://origin.picgo.net/2026/10/23/434e565b3ade1792842da6c6e5e0778552a35682cf6024b1.th.png','#7cc4e8'],
+    'mb_yunduan':['https://origin.picgo.net/2026/10/25/0c49c146c2e1b0322b58ede6c45ace220be030c873f439d5.th.png','#b39ddb'],
+    'mb_kafei':['https://origin.picgo.net/2026/10/21/coffee-yue---KoTofu4bfeb46ff6179820.th.png','#b98a76'],
+    'mb_wanou':['https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Lib2c078bd058ef48c.th.png','#e88aa8'],
+    'mb_jin':['https://origin.picgo.net/2026/10/23/1396cf3c90108f3f96217f2c35d5092323f3425ef247f9cb.th.png','#e6c44c'],
+    'mb_xing':['https://origin.picgo.net/2026/09/03/127d7a0746c5de2434.th.png','#c9a8ea'],
+    'mb_ju':['https://origin.picgo.net/2026/10/23/7445849475a1a67a9510637d9dd722c0ce1589688044ee9c.th.png','#d98a86'],
+    'mb_chao':['https://origin.picgo.net/2026/10/22/6e242d94aa9b07b9117479ec78fd53985fd887bb68d8fa62.th.png','#e0a34e'],
+    'mb_lian':['https://origin.picgo.net/2026/10/23/f18fc86039bab18c60f2e5a640a82994256efe02bbe849d2.th.png','#e8a8c4'],
+    'mb_shenlian':['https://origin.picgo.net/2026/10/23/75cb6c3c872e0ab0ae24ad2a1d4d16217560c98278e9c3c2.th.png','#b54b7e'],
+    'mb_fanben':['https://origin.picgo.net/2026/09/03/1115555fb4ab3b2731.th.png','#d9b45a'],
+    'mb_guai':['https://origin.picgo.net/2026/10/23/4a09ea559862b2830f46cc64b0f4211487bfa91c46fddbcf.th.png','#b89a55'],
+    'mb_shizhe':['https://origin.picgo.net/2026/09/03/2b384c6d07a3d397b.th.png','#5f44a6'],
+    'mb_zhoumo':['https://origin.picgo.net/2026/10/22/---a60a7636bd80eb9e.th.png','#8fc9c9'],
+    'mb_zhengdian':['https://origin.picgo.net/2026/10/25/444672cea81dc05a5326f57baf4a41062d4fd68fc76f8de6.th.png','#e0d24e'],
+    'mb_qingren':['https://origin.picgo.net/2026/10/26/69714dc9fe002189c5f15a53b29ca57ace1060194b60a47b.th.png','#e06b9c'],
+    'mb_wansheng':['https://origin.picgo.net/2026/10/25/---Yidi-Nyaomi-Lib4ec70c5a69d6d5a.th.png','#8f74c9'],
+    'mb_wen':['https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li5760b9af6a34d812.th.png','#8fb4c9'],
+    'mb_pingguo':['https://origin.picgo.net/2026/09/03/1618abd45272691005.th.png','#c96a73'],
+    'mb_chaos':['https://origin.picgo.net/2026/10/24/8f4ccf5a7a4813d86478b59c05bd7c80e45b28cbcfd280ec.th.png','#5a5470'],
+    'mb_jiu':['https://origin.picgo.net/2026/09/20/jiuba7578b776f8c4c528.th.png','#b08a6a'],
+    'mb_shilaimu':['https://origin.picgo.net/2026/10/21/75dd505aa51f9864c2dc215b349253592891b6d6ef024a79.th.png','#8fce7f'],
+    'mb_liti':['https://origin.picgo.net/2026/09/19/litiyueba0f6fd2bd28b7cc83.th.png','#8e9baf'],
+    'mb_xiaoma':['https://origin.picgo.net/2026/09/19/xiaoma59a91dd50534ac93.th.png','#e6c9f0'],
+    'mb_tomato':['https://origin.picgo.net/2026/09/20/fanqiedazhan9861d01c9113a3f3.th.png','#e05b4f'],
+    'mb_powa':['https://origin.picgo.net/2026/10/24/bbe23930e0a5236e05eca1b6bef4230a8a7078b7a228f913.th.png','#e0a64e'],
+    'mb_laba':['https://origin.picgo.net/2026/09/20/laba8ce98439c56d3f6d.th.png','#dbb3e8'],
+    'mb_tangyuan':['https://origin.picgo.net/2026/09/21/e0a73ec5f90f4b1d90fd1ce444e15c18df5827ccea2e46c6.th.png','#f5e6ee'],
+    'mb_bashan':['https://origin.picgo.net/2026/09/21/shanbf57ea8c56a98c78.th.png','#5c8a64'],
+    'mb_xiba':['https://origin.picgo.net/2026/10/23/c4de9f2c487932b531a8b80294b7d5512139e617afc6aa6c.th.png','#a5c8e8'],
+    'xitong':['https://origin.picgo.net/2026/09/22/xitong3fa4bdcf7695b190.th.png','#8fd0de'],
+    'huaba':['https://origin.picgo.net/2026/10/23/46597ef9da8ed5c1d86cce52418c84d57c6da995fbc68f8c.th.png','#f8a8c8'],
+    'dabus':['https://origin.picgo.net/2026/10/21/f696279cfe514001d304e826c68f44f3596857784003a73a.th.png','#f2b639'],
+    'youling':['https://origin.picgo.net/2026/10/23/9e6b571fe9657417f255527bf3c34cc1963ee4f0f46e3e06.th.png','#beb5e6'],
+    'xinba':['https://origin.picgo.net/2026/10/21/3f4dfef1286bc40c7002f3d2e220cb36f63b0332ebc9acd3.th.png','#ff6f91'],
+    'yinxiang':['https://origin.picgo.net/2026/10/23/-16ec08b0ad53bd48c.th.png','#6b7280'],
+    'jieba':['https://origin.picgo.net/2026/10/23/8a2dd3078a8a2c919d0a8fa208ec9dfdfba03c4be9bcfa05.th.png','#4e9f8d'],
+    'bazong':['https://origin.picgo.net/2026/10/21/8ff3d46600bd7fcfb5dcab98f93cbd9bbeef26b25b073ec3.th.png','#c68a3a'],
+    'mojing':['https://origin.picgo.net/2026/09/27/4d64284ab6f23425f9dda44f0fc540bef12552ef47074e5e.th.png','#8a97a8'],
+    'bukeming':['https://origin.picgo.net/2026/09/27/20c78b17ef4b3fa235abaad68362f4b3e9cd9e87eb7bc133.th.png','#5d4a7a'],
+    'canglong':['https://origin.picgo.net/2026/09/29/cfdcb713bec9bd6b5307fd8a9edfc1fb421e9a1529506bb0.th.png','#8e9aa8'],
+    'bairixuan':['https://origin.picgo.net/2026/10/22/1aaddaa947c51b53b8f61b776ecf86e331d724a72b40ec07.th.png','#f2c14e'],
+    'niaoba':['https://origin.picgo.net/2026/09/29/5333d8fdca76c3b083802650fd853975e1e6162696fd5812.th.png','#7fa8c8'],
+    'mb_fanzhuan':['https://origin.picgo.net/2026/10/11/c81c459acde3c23c8697414890a13e0ca4b5043931a9a27e.th.png','#8f8fce'],
+    'mb_zhongyi':['https://origin.picgo.net/2026/10/11/b8ab7bdd789538f043b260d47e4181c4c7feca6cf8eb591c.th.png','#e88aa8'],
+    'mb_lba':['https://origin.picgo.net/2026/10/11/7f08d97c6eb3a1eac43b80c797216c3893370759f78d1666.th.png','#dbb3e8'],
+    'mb_jinju':['https://origin.picgo.net/2026/10/21/---akai0255d6362d123bd3.th.png','#8a8a8a'],
+    'mb_zuanshi':['https://origin.picgo.net/2026/10/26/23b4e2cfd09ac95577efbd3a4d646cbba0bd6b5198a6a674.th.png','#9be7ff'],
+    'mb_huang':['https://origin.picgo.net/2026/10/23/485bfcabf6eaea8ea294ead8e520a0ada29d48a19c9197d6.th.png','#ffd94a'],
+    'mb_qiezhi':['https://origin.picgo.net/2026/10/21/07de58ae22de5c368964182b7b78934969a8e2ed84c5ab60.th.png','#e5533d'],
+    'mb_long':['https://origin.picgo.net/2026/10/23/longlongd4f08c948bb96bfa.th.png','#f0a868'],
+    'm2_dou':['https://origin.picgo.net/2026/10/23/308a1b31062d7f87283f644cf4d74d71f1a7c076db6cdd2d.th.png','#aed581'],
+    'm2_men':['https://origin.picgo.net/2026/10/23/a8cee4c77e6970bf2821d353c3feffbaa138951bc8498773.th.png','#f8bbd0'],
+    'm2_dundun':['https://origin.picgo.net/2026/10/22/chubby-bannyb70ce7f942be59f2.th.png','#c9c9f0'],
+    'm2_mao':['https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li578400427d700c6a.th.png','#b0bec5'],
+    'm2_bai':['https://origin.picgo.net/2026/10/25/---Yidi-Nyaomi-Li4119506dc8fd2b36.th.png','#eceff1'],
+    'm2_hei':['https://origin.picgo.net/2026/10/23/6a0b54faa9b43d05a7365ff404ff7c63b834626b88cbfb9f.th.png','#5d6670'],
+    'm2_she':['https://origin.picgo.net/2026/10/22/snake-banny1537e823f87200c1.th.png','#ff8a65'],
+    'm2_xiongmao':['https://origin.picgo.net/2026/10/26/f38a329f6c5cf9c790e8ceb26ca786f4e2e3376ee50e1c03.th.png','#a1887f'],
+    'm2_wo':['https://origin.picgo.net/2026/10/23/2ffd65af799fc8080d8a9b2af57ac89782a5d6d5f70cda63.th.png','#b0bec5'],
+    'm2_bingqilin':['https://origin.picgo.net/2026/10/21/756357abf125a8cd0c6f532836a233717fd3a810900d0252.th.png','#e1bee7'],
+    'm2_tanwu':['https://origin.picgo.net/2026/10/22/ab151905162c9192567261cab1173c3d9475509a44cc77a9.th.png','#6d4c41'],
+    'm2_zhangyu':['https://origin.picgo.net/2026/10/25/c4f8a236ca6bb1f1573ece00b879665a74de6380444e8b58.th.png','#7e57c2'],
+    'm2_xianyi':['https://origin.picgo.net/2026/10/21/71e32b7a3e54e6bba0d145f9b63d36bc6b5a368bce3d301e.th.png','#546e7a'],
+    'm2_fanqie':['https://origin.picgo.net/2026/10/23/3dece9cc3c952ea2b0615a90ddc71dd43132a85a21517244.th.png','#e57373'],
+    'm2_zanmei':['https://origin.picgo.net/2026/10/25/350d1a2f432db9855a59e819d8f01a925cf17eb669228ca4.th.png','#fff176'],
+    'm2_bingling':['https://origin.picgo.net/2026/10/25/cd0ab132ab8fadac2558f031c9ad1ccf28fe2f886155509e.th.png','#bfe8f2'],
+    'm2_guowang':['https://origin.picgo.net/2026/10/21/e878f7fde5e72bfa6bad2f681dca742eef9b8997548df54a.th.png','#c9a227'],
+    'm2_zuochen':['https://origin.picgo.net/2026/10/21/8b6b66f067f39adb13298d8927fbd7eae7f9ab72fac6c4c6.th.png','#7e6a9e'],
+    'm2_gulong':['https://origin.picgo.net/2026/10/27/6ec23650d9c4ccc4d7a65e0b71a57edb2ba0bd14acfd55de.th.png','#4f8f7a'],
+    'm2_xinsheng':['https://origin.picgo.net/2026/10/27/4bbe6aedc42df8f9eb240155538bedc9b64b287a006dfd45.th.png','#7ec98a'],
+    'm2_yingmeng':['https://origin.picgo.net/2026/10/26/---Yidi-Nyaomi-Li71ed6a1aadb0f706.th.png','#5a4a8a'],
+    'm2_chuqian':['https://origin.picgo.net/2026/10/21/6f0a351bc37096a61e980e6e5d6da80446da29ffafa7a5b8.th.png','#2f8f72'],
+    'm2_tracker':['https://origin.picgo.net/2026/10/21/acf7a9ec0fbe767f840a205e24730017da0d83a3264ec36f.th.png','#8bc34a'],
+    'm2_baqi':['https://origin.picgo.net/2026/10/21/00ad700c36c3d7131ffe4fcfae4e5a0cee3d2f4e74eec9cd.th.png','#5f8f6f'],
+    'm2_qingchun':['https://origin.picgo.net/2026/10/21/cfbed82590fddf492012ef5aa1349f983ae998abddf56193.th.png','#aea8ae'],
+    'm2_zuoqi':['https://origin.picgo.net/2026/10/21/c78c4be6d1ad05b71428d20e99d80e43ef4bf36af33cc07a.th.png','#c8a165'],
+    'm2_teatime':['https://origin.picgo.net/2026/10/21/teatime-buny---Felimika490cd7af24e32b96.th.png','#c9a77c'],
+    'm2_baboyi':['https://origin.picgo.net/2026/10/22/67415055497e212216f64fbf52efd52849aeb4517d115733.th.png','#c9c4dc'],
+    'm2_rainy':['https://origin.picgo.net/2026/10/22/umbrella-bunny0f0ec74e10bac4fc.th.png','#a9c7e8'],
+    'm3_cangshu':['https://origin.picgo.net/2026/10/23/22cdbf9144b586bf272c4cb61f533bc853372133deea585a.th.png','#d8b17a'],
+    'm2_yinan':['https://origin.picgo.net/2026/10/21/7b935eb5528f9cc67c194fe5d47c4a367229b91b95e86400.th.png','#b7b0cc'],
+    'm3_eluosi':['https://origin.picgo.net/2026/10/25/5184c509e7017738e29c29fd93540a98dc98667d5767b52a.th.png','#7ec8e3'],
+    'm3_you':['https://origin.picgo.net/2026/10/25/fa99573013c8914358ccc065c6cb7bf3d161a11cf298572f.th.png','#c98bd0'],
+    'm3_egg':['https://origin.picgo.net/2026/10/25/new-banny---Phuong-Uyen-Nguyenf4a2e131c7ef8d69.th.png','#a8c8b8'],
+    'm3_badaba':['https://origin.picgo.net/2026/10/25/---Yidi-Nyaomi-Li343d957950ab0548.th.png','#9a8fa8'],
+    'm3_guzhang':['https://origin.picgo.net/2026/10/27/cef136c721e61caa1e6e045fd49dae0f098040d960280d80.th.png','#5b6ee8'],
+    'mb_gaoya':['https://origin.picgo.net/2026/10/29/efe0df586c4c004111696f268f68aae61c403392db6a810a.th.png','#6b5b95'],
+    'm2_lan':['https://origin.picgo.net/2026/10/29/ef468ec9599397d2bf267adf7e751a91c7bfedd28f0f21ae.th.png','#90caf9'],
+    'm2_hudie':['https://origin.picgo.net/2026/10/29/6fd6fc08c6b78e151c3c1f910f91f0b230e86560c516c5e5.th.png','#f48fb1'],
+    'm2_buman':['https://origin.picgo.net/2026/10/28/051c12c0fb7af8c0266c5cc7cecfaee2c9ad91197e010d28.th.png','#9e9e9e'],
+    'm2_wangting':['https://origin.picgo.net/2026/10/29/e7f506a5124889278f9a50f018cf7d5919030e43e6d02f45.th.png','#8f7bb5'],
+    'm2_bingzang':['https://origin.picgo.net/2026/10/29/295ff96efd9113687e62b2cae3e6ad32b4286fc8948f9447.th.png','#a7d8e8'],
+    'm2_yizhao':['https://origin.picgo.net/2026/10/29/74e8b94867c706e828efe458f52b4627113d4e0517bbc535.th.png','#e8dcb0'],
+    'm2_kuji':['https://origin.picgo.net/2026/10/28/48bf5c5a3f40d87fa322d3660b325cf53bd45781a4814da5.th.png','#9b7fb0'],
+    'm2_island':['https://origin.picgo.net/2026/10/29/ca5dae8e8af396dead2e65a5f74e53629616550b183a98a8.th.png','#3fb5a6'],
+    'm3_candy':['https://origin.picgo.net/2026/10/29/c027b30582384fdcb49c1a29a8a9e6e089134f5b0e68d115.th.png','#f2e6c9'],
+    'm3_banini':['https://origin.picgo.net/2026/10/29/a171d47a19cba017dcac07b8277d861d7c5760f8595c52cd.th.png','#f5c4c9']
+  };
+
+  /* 已解锁月巴的立绘池：只读主存档 collection / collection2 / collection3 的键。
+     圆圈颜色依旧代表行动模式，只有立绘换脸，所以行为与难度不受影响。 */
+  var facePool = null;
+  function unlockedFaces(){
+    if(facePool) return facePool;
+    var seen = {}, pool = [];
+    ['collection', 'collection2', 'collection3'].forEach(function(k){
+      var c = mainSave[k];
+      if(!c || typeof c !== 'object') return;
+      for(var id in c){
+        if(seen[id] || !DEX_ART[id]) continue;      /* 只取有外链立绘的 */
+        if(id === CAST[4].id) continue;             /* 万圣月巴立绘固定，不参与随机 */
+        var e = c[id];
+        var n = (typeof e === 'number') ? e : (e && typeof e === 'object' ? (+e.count || 0) : 0);
+        if(!(n > 0)) continue;
+        seen[id] = 1;
+        pool.push(id);
+      }
+    });
+    facePool = pool;
+    return pool;
+  }
+
+  /* 本夜四只追兵的随机立绘（洗牌后取前 n 个；池子不够就循环复用）。
+     同一夜内保持稳定：掉命重生不换脸，进下一夜才重摇。 */
+  var runFaces = null, runFacesNight = 0;
+  function pickFaces(n){
+    if(runFaces && runFacesNight === night) return runFaces;
+    var pool = unlockedFaces().slice();
+    for(var j = pool.length - 1; j > 0; j--){
+      var k = Math.floor(Math.random() * (j + 1)), t = pool[j];   /* 真随机：每次进夜都可能换脸 */
+      pool[j] = pool[k]; pool[k] = t;
+    }
+    var out = [];
+    for(var i = 0; i < n; i++){
+      /* 没有图鉴数据（独立打开 / 全部未解锁）：回退到原本的四只 */
+      out.push(pool.length ? pool[i % pool.length] : CAST[i].id);
+    }
+    runFaces = out; runFacesNight = night;
+    return out;
+  }
+
+  var THEMES = {
+    pumpkin:{
+      name:{zh:'南瓜夜',en:'Pumpkin Night',ja:'カボチャの夜',ko:'호박의 밤'},
+      bg:'#0B0714', bg2:'#151021', wall:'#241736', wall2:'#3A2755',
+      line:'rgba(255,170,120,.22)', line2:'rgba(255,170,120,.5)',
+      text:'#F2ECFF', dim:'#9C90B8', accent:'#FF8A3D', accent2:'#FFD166',
+      pellet:'#F1D9A8', power:'#FFA94D', tomato:'#E5484D', good:'#7BD389', danger:'#E5484D'
+    },
+    blood:{
+      name:{zh:'血月',en:'Blood Moon',ja:'血の月',ko:'피의 달'},
+      bg:'#0F0609', bg2:'#1C0B10', wall:'#2B1119', wall2:'#451A24',
+      line:'rgba(229,72,77,.26)', line2:'rgba(229,72,77,.55)',
+      text:'#FBEFF0', dim:'#B08A90', accent:'#E5484D', accent2:'#FFB4A2',
+      pellet:'#F6C7C0', power:'#FF7A70', tomato:'#FF5A5F', good:'#8FD8B0', danger:'#E5484D'
+    },
+    forest:{
+      name:{zh:'幽森',en:'Haunted Wood',ja:'幽森',ko:'유령의 숲'},
+      bg:'#07110D', bg2:'#0E1D16', wall:'#142A1F', wall2:'#234534',
+      line:'rgba(123,211,137,.24)', line2:'rgba(123,211,137,.52)',
+      text:'#ECFBEE', dim:'#86A893', accent:'#7BD389', accent2:'#C9F27A',
+      pellet:'#DDEBB0', power:'#BDF07A', tomato:'#E5484D', good:'#7BD389', danger:'#E5484D'
+    },
+    frost:{
+      name:{zh:'冷月',en:'Frost Moon',ja:'冷たい月',ko:'차가운 달'},
+      bg:'#0A1018', bg2:'#111B26', wall:'#18293A', wall2:'#264158',
+      line:'rgba(159,216,255,.24)', line2:'rgba(159,216,255,.52)',
+      text:'#EDF6FF', dim:'#8CA3B8', accent:'#9FD8FF', accent2:'#E3F4FF',
+      pellet:'#CFE7F7', power:'#BFE9FF', tomato:'#E5484D', good:'#8EE0C0', danger:'#E5484D'
+    },
+    /* 浅色模式专用调色板：不参与「夜色」选择，由标题页的浅色开关切换 */
+    day:{
+      bg:'#FBF6EC', bg2:'#F5EBD9', wall:'#4A3B63', wall2:'#6A5A8C',
+      line:'rgba(74,59,99,.20)', line2:'rgba(74,59,99,.46)',
+      text:'#241C33', dim:'#5C5268', accent:'#C2410C', accent2:'#8F4A0E',
+      pellet:'#8A6438', power:'#B4470D', tomato:'#D93F35', good:'#2E7D5B', danger:'#C62828'
+    }
+  };
+  var THEME_ORDER = ['pumpkin','blood','forest','frost'];
+
+  var I18N = {
+    zh:{
+      title:'月巴追茄', sub:'万圣夜，一只番茄，和月巴们。',
+      start:'开始', best:'最高分', score:'分数', night:'夜',
+      dialogue:'台词', preparing:'准备中', go:'GO', paused:'已暂停', pauseAria:'暂停',
+      pauseSub:'番茄也需要喘口气。', resume:'继续', backTitle:'返回标题',
+      hint:'按住方向键 / WASD 才走 · 手机按住滑动 · <b>Esc</b> 暂停',
+      tip:'// 南瓜灯已点亮 //',
+      startLine:'今晚只想安安静静吃糖。',
+      chip:'第 {n} 夜', clear:'南瓜灯全亮了', over:'这一夜结束了',
+      overSub:'番茄酱洒了一地，但明天还会长出来。',
+      restart:'再来一次', newBest:'新纪录', bestNight:'最高纪录',
+      sound:'音效', music:'音乐',
+      light:'浅色', achTitle:'夜之成就', achProgress:'已解锁',
+      achGot:'已解锁', achLocked:'未解锁', achUnlocked:'成就解锁', close:'关闭',
+      langLabel:'语言',
+      dir:{up:'上',left:'左',right:'右',down:'下'},
+      runGhosts:'榨干月巴',
+      skin:'番茄皮肤',
+      skins:{green:'青涩番茄', captain:'队长番茄', ripe:'成熟番茄'},
+      ach:{
+        first:'初次夜逃', combo4:'一口四个', nohit:'毫发无伤', pellets1k:'千籽',
+        night3:'三夜不眠', score10k:'万分番茄', ghosts50:'反客为主', talker:'夜话'
+      },
+      achDesc:{
+        first:'完成任意一局夜逃',
+        combo4:'同一局里一口气吃掉 4 只月巴',
+        nohit:'一局内不掉命，撑过整夜',
+        pellets1k:'累计吃掉 1000 颗南瓜籽',
+        night3:'一路闯到第 3 夜',
+        score10k:'单局得分达到 10000',
+        ghosts50:'累计榨干 50 只月巴',
+        talker:'累计听满 60 句台词'
+      },
+      lines:{
+        start:['今晚只想安安静静吃糖。','这个迷宫我已经很熟。'],
+        power:['我好像变强了。','轮到我追你们了吧？'],
+        combo:['一口四个，今晚加餐！','一个一个来。'],
+        death:['就当是给月巴们加个餐。','番茄还会再长出来的。'],
+        clear:['收工。','终于赢了。'],
+        bonus:['终于活过来了。'],
+        near:['别跑呀，一口就好。','看见你了，小番茄。','今晚的番茄说好的会分我一半的。','番茄到底在哪里呢？','我不是你最喜欢的月巴了吗？','吃番茄，吃番茄。'],
+        flee:['等等，这剧本不对吧。','诶？','今天的番茄加了辣椒吗？'],
+        eaten:['我……被榨干了……','看来还需要锻炼……','怎么会……','可是番茄真的很可爱啊。']
+      }
+    },
+    en:{
+      title:'Banny Chase', sub:'Halloween night, one tomato, and the Bannies.',
+      start:'Start', best:'Best', score:'SCORE', night:'NIGHT',
+      dialogue:'Dialogue', preparing:'Getting ready', go:'GO', paused:'Paused', pauseAria:'Pause',
+      pauseSub:'Even a tomato needs a breather.', resume:'Resume', backTitle:'Back to title',
+      hint:'Hold arrows / WASD to move · hold and swipe on mobile · <b>Esc</b> to pause',
+      tip:'// The pumpkin lights are on //',
+      startLine:'Just here for the candy tonight.',
+      chip:'NIGHT {n}', clear:'Every pumpkin lamp is lit', over:'That night is over',
+      overSub:'Just a little ketchup spilled. It grows back tomorrow.',
+      restart:'Play again', newBest:'NEW BEST', bestNight:'Best record',
+      sound:'Sound', music:'Music',
+      light:'Light', achTitle:'Night Badges', achProgress:'UNLOCKED',
+      achGot:'UNLOCKED', achLocked:'LOCKED', achUnlocked:'ACHIEVEMENT', close:'Close',
+      langLabel:'Language',
+      dir:{up:'Up',left:'Left',right:'Right',down:'Down'},
+      runGhosts:'Bannies squeezed',
+      skin:'Tomato skin',
+      skins:{green:'Green Tomato', captain:'Captain Tomato', ripe:'Ripe Tomato'},
+      ach:{
+        first:'First Escape', combo4:'Four in One Bite', nohit:'Untouched', pellets1k:'Thousand Seeds',
+        night3:'Three Sleepless Nights', score10k:'Ten-K Tomato', ghosts50:'Turn the Tables', talker:'Night Talker'
+      },
+      achDesc:{
+        first:'Finish any night',
+        combo4:'Eat 4 Bannies in a single run',
+        nohit:'Clear a night without losing a life',
+        pellets1k:'Eat 1,000 pumpkin seeds in total',
+        night3:'Make it to Night 3',
+        score10k:'Score 10,000 in a single run',
+        ghosts50:'Squeeze 50 Bannies in total',
+        talker:'Hear 60 lines of dialogue in total'
+      },
+      lines:{
+        start:['Just here for the candy tonight.','I could walk this maze with my eyes closed.'],
+        power:['I feel a lot stronger now.','Now it is my turn to chase.'],
+        combo:['Four in one bite. Supper is served!','One at a time.'],
+        death:['Think of it as a snack for the Bannies.','Tomatoes grow back.'],
+        clear:['Every lamp is lit. Clocking out.','Finally, a win.'],
+        bonus:['I am alive again!'],
+        near:['Don\'t run — just one bite.','Found you, little tomato.','You promised me half tonight, tomato.','Where in the world is that tomato?','Aren\'t I your favorite Banny anymore?','Eat tomato, eat tomato.'],
+        flee:['Wait, this is not the script.','Huh?','Was there chili on the tomato tonight?'],
+        eaten:['I have been... squeezed dry...','Guess I need more training...','How could this be...','But that tomato is really cute.']
+      }
+    },
+    ja:{
+      title:'バニーチェイス', sub:'ハロウィンの夜、トマト1匹と、バニーたち。',
+      start:'スタート', best:'ベスト', score:'スコア', night:'夜',
+      dialogue:'セリフ', preparing:'準備中', go:'GO', paused:'一時停止', pauseAria:'一時停止',
+      pauseSub:'トマトにも一息つく時間が必要。', resume:'再開', backTitle:'タイトルへ',
+      hint:'矢印キー / WASD を押している間だけ移動 · スマホは押したままスワイプ · <b>Esc</b> で一時停止',
+      tip:'// カボチャの灯がともった //',
+      startLine:'今夜は静かに飴を食べたいだけ。',
+      chip:'第{n}夜', clear:'カボチャの灯が全部ついた', over:'今夜はここまで',
+      overSub:'トマトソースが少しこぼれただけ。明日にはまた生えてくる。', restart:'もう一度', newBest:'新記録', bestNight:'最高記録',
+      sound:'効果音', music:'音楽',
+      light:'ライト', achTitle:'夜の実績', achProgress:'達成',
+      achGot:'達成', achLocked:'未達成', achUnlocked:'実績解除', close:'閉じる',
+      langLabel:'言語',
+      dir:{up:'上',left:'左',right:'右',down:'下'},
+      runGhosts:'搾ったバニー',
+      skin:'トマトの見た目',
+      skins:{green:'青トマト', captain:'隊長トマト', ripe:'完熟トマト'},
+      ach:{
+        first:'初めての脱出', combo4:'一口で四匹', nohit:'無傷の夜', pellets1k:'千の種',
+        night3:'三夜不眠', score10k:'一万点トマト', ghosts50:'逆転', talker:'夜話'
+      },
+      achDesc:{
+        first:'1プレイを最後まで終える',
+        combo4:'同じプレイでバニーを4匹まとめて食べる',
+        nohit:'ライフを減らさずに一夜をクリア',
+        pellets1k:'カボチャの種を累計1000個食べる',
+        night3:'第3夜までたどり着く',
+        score10k:'1プレイで10000点を取る',
+        ghosts50:'バニーを累計50匹搾る',
+        talker:'セリフを累計60回聞く'
+      },
+      lines:{
+        start:['今夜は静かに飴を食べたいだけ。','この迷路、目をつぶっても歩ける。'],
+        power:['なんだか強くなった気がする。','今度はこっちが追う番だ。'],
+        combo:['一口で四匹、今夜はごちそう！','一匹ずつどうぞ。'],
+        death:['バニーたちの夜食ってことで。','トマトはまた生えてくる。'],
+        clear:['カボチャの灯が全部ついた、おしまい。','やっと勝てた。'],
+        bonus:['やっと生き返った。'],
+        near:['逃げないで、一口だけ。','見つけたよ、小さいトマト。','今夜は半分分けてくれるって言ったよね。','トマトはいったいどこにいるの？','もう僕、一番好きなバニーじゃないの？','トマトを食べる、トマトを食べる。'],
+        flee:['ちょっと、脚本と違うだろ。','え？','今夜のトマト、唐辛子入り？'],
+        eaten:['僕……搾られた……','まだ修行が足りないみたい……','そんな……','でもトマト、本当にかわいいんだよ。']
+      }
+    },
+    ko:{
+      title:'배니 체이스', sub:'핼러윈 밤, 토마토 하나와 배니들.',
+      start:'시작', best:'최고', score:'점수', night:'밤',
+      dialogue:'대사', preparing:'준비 중', go:'GO', paused:'일시정지', pauseAria:'일시정지',
+      pauseSub:'토마토도 잠깐 숨을 돌려야 해요.', resume:'계속', backTitle:'제목으로',
+      hint:'방향키 / WASD를 누르는 동안만 이동 · 모바일은 누른 채로 스와이프 · <b>Esc</b> 일시정지',
+      tip:'// 호박등이 켜졌다 //',
+      startLine:'오늘 밤은 조용히 사탕만 먹을래.',
+      chip:'{n}번째 밤', clear:'호박등이 모두 켜졌다', over:'오늘 밤은 여기까지',
+      overSub:'케첩이 조금 쏟아졌을 뿐이에요. 내일이면 다시 자라요.', restart:'다시 하기', newBest:'신기록', bestNight:'최고 기록',
+      sound:'효과음', music:'음악',
+      light:'라이트', achTitle:'밤의 업적', achProgress:'달성',
+      achGot:'달성', achLocked:'미달성', achUnlocked:'업적 달성', close:'닫기',
+      langLabel:'언어',
+      dir:{up:'위',left:'왼쪽',right:'오른쪽',down:'아래'},
+      runGhosts:'짜낸 배니',
+      skin:'토마토 스킨',
+      skins:{green:'풋토마토', captain:'대장 토마토', ripe:'완숙 토마토'},
+      ach:{
+        first:'첫 밤 탈출', combo4:'한 입에 넷', nohit:'무사 통과', pellets1k:'천 개의 씨',
+        night3:'사흘 밤샘', score10k:'1만 점 토마토', ghosts50:'역전', talker:'밤의 대화'
+      },
+      achDesc:{
+        first:'한 판을 끝까지 마치기',
+        combo4:'한 판에서 배니 4마리를 한꺼번에 먹기',
+        nohit:'목숨을 잃지 않고 한 밤을 통과',
+        pellets1k:'호박씨를 누적 1000개 먹기',
+        night3:'세 번째 밤까지 도달',
+        score10k:'한 판에서 10000점 달성',
+        ghosts50:'배니를 누적 50마리 짜내기',
+        talker:'대사를 누적 60번 듣기'
+      },
+      lines:{
+        start:['오늘 밤은 조용히 사탕만 먹을래.','이 미로는 눈 감고도 걸어.'],
+        power:['왠지 강해진 것 같아.','이제 내가 너희를 쫓을 차례야.'],
+        combo:['한 입에 넷, 오늘은 잔치!','한 마리씩 와.'],
+        death:['배니들 야식이라고 생각하자.','토마토는 다시 자라.'],
+        clear:['호박등이 모두 켜졌어, 끝.','드디어 이겼다.'],
+        bonus:['드디어 살아났어!'],
+        near:['도망가지 마, 한 입만.','찾았다, 작은 토마토.','오늘 밤은 반 나눠 주기로 했잖아.','토마토는 대체 어디 있지?','이제 네가 제일 좋아하는 배니 아니야?','토마토 먹자, 토마토 먹자.'],
+        flee:['잠깐, 대본이랑 다른데.','어?','오늘 토마토에 고추 들어갔어?'],
+        eaten:['나…… 짜였다……','아직 수련이 부족한가 봐……','말도 안 돼……','그래도 토마토 정말 귀여운걸.']
+      }
+    }
+  };
+
+  var $ = function(id){ return document.getElementById(id); };
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* =========================================================
+     2. 语言 / 存档 / 主题
+     ========================================================= */
+  function readMain(){
+    try{ return JSON.parse(localStorage.getItem(MAIN_SAVE) || '{}') || {}; }catch(e){ return {}; }
+  }
+  var mainSave = readMain();
+
+  function pickLang(){
+    var q = new URLSearchParams(location.search).get('lang');
+    if(q && I18N[q]) return q;
+    if(mainSave.lang && I18N[mainSave.lang]) return mainSave.lang;
+    var nav = (navigator.language || 'zh').toLowerCase();
+    if(nav.indexOf('ja') === 0) return 'ja';
+    if(nav.indexOf('ko') === 0) return 'ko';
+    if(nav.indexOf('en') === 0) return 'en';
+    return 'zh';
+  }
+  var lang = pickLang();
+
+  function defaultSave(){
+    return {
+      v:1, theme:'pumpkin', light:false, best:0, bestNight:0, skin:'green',
+      stats:{plays:0, nights:0, pellets:0, ghosts:0, maxCombo:0, talks:0},
+      ach:{}, ui:{dpad:true, dlg:true, sfx:true, music:true, tips:true}
+    };
+  }
+  function normalizeSave(raw){
+    var d = defaultSave(), s = (raw && typeof raw === 'object') ? raw : {};
+    if(THEMES[s.theme]) d.theme = s.theme;
+    if(typeof s.light === 'boolean') d.light = s.light;
+    d.best = (typeof s.best === 'number' && isFinite(s.best) && s.best >= 0) ? Math.floor(s.best) : 0;
+    d.bestNight = (typeof s.bestNight === 'number' && isFinite(s.bestNight)) ? Math.max(0, Math.floor(s.bestNight)) : 0;
+    for(var si = 0; si < SKINS.length; si++){ if(SKINS[si].id === s.skin){ d.skin = s.skin; break; } }
+    if(s.stats && typeof s.stats === 'object'){
+      ['plays','nights','pellets','ghosts','maxCombo','talks'].forEach(function(k){
+        var v = s.stats[k];
+        d.stats[k] = (typeof v === 'number' && isFinite(v) && v >= 0) ? Math.floor(v) : 0;
+      });
+    }
+    if(s.ach && typeof s.ach === 'object') d.ach = s.ach;
+    if(s.ui && typeof s.ui === 'object'){
+      if(typeof s.ui.dpad === 'boolean') d.ui.dpad = s.ui.dpad;
+      if(typeof s.ui.dlg === 'boolean') d.ui.dlg = s.ui.dlg;
+      if(typeof s.ui.sfx === 'boolean') d.ui.sfx = s.ui.sfx;
+      if(typeof s.ui.music === 'boolean') d.ui.music = s.ui.music;
+      if(typeof s.ui.tips === 'boolean') d.ui.tips = s.ui.tips;
+    }
+    return d;
+  }
+  function loadSave(){
+    var raw = null;
+    try{ raw = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); }catch(e){ raw = null; }
+    return normalizeSave(raw);
+  }
+  var save = loadSave();
+  function writeSave(){
+    try{ localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(e){}
+  }
+
+  /* ---- 番茄皮肤 ---- */
+  function skinOf(id){
+    for(var i = 0; i < SKINS.length; i++){ if(SKINS[i].id === id) return SKINS[i]; }
+    return SKINS[0];
+  }
+  /* 立绘 id → 皮肤（只有番茄皮肤走「统一大小」的烘焙） */
+  function skinByFace(id){
+    for(var i = 0; i < SKINS.length; i++){ if(SKINS[i].face === id) return SKINS[i]; }
+    return null;
+  }
+  /* 缩略图 / 头像用的倍数：把主体拉回与画布一致的占比 */
+  function skinZoom(s){
+    var b = s.box || [0, 0, 1, 1];
+    var m = Math.max(b[2] - b[0], b[3] - b[1]);
+    return m > 0 ? (SKIN_FILL / 224) / m : 1;
+  }
+  function skinUnlocked(s){ return !s.need || !!save.ach[s.need]; }
+  /* 选中的皮肤若未解锁（例如清过档），回退到默认的青涩番茄 */
+  function curSkin(){
+    var s = skinOf(save.skin);
+    return skinUnlocked(s) ? s : SKINS[0];
+  }
+  function curSkinFace(){ return curSkin().face; }
+
+  function renderSkins(){
+    var t = I18N[lang] || I18N.zh, names = t.skins || {}, cur = curSkin().id, html = '';
+    for(var i = 0; i < SKINS.length; i++){
+      var s = SKINS[i], ok = skinUnlocked(s), z = s.zoom || 1;
+      var px = Math.round(26 * z * 10) / 10;       /* 圆圈（含外框）和立绘一起放大 */
+      html += '<button class="skinBtn' + (s.id === cur ? ' on' : '') + (ok ? '' : ' lock') + '"'
+           +  ' data-skin="' + s.id + '"' + (ok ? '' : ' disabled') + '>'
+           +  '<span class="skinPic" style="width:' + px + 'px;height:' + px + 'px">'
+           +  '<img src="' + ART_SRC[s.face] + '" alt="" style="transform:scale('
+           +  skinZoom(s).toFixed(3) + ')"></span>'
+           +  '<span>' + (names[s.id] || s.id) + '</span>'
+           +  (ok ? '' : '<small>' + (t.achLocked || '') + '</small>')
+           +  '</button>';
+    }
+    /* 标题页和暂停页各有一份皮肤列表，内容一致 */
+    var boxes = ['skinList', 'skinListTitle'];
+    for(var b = 0; b < boxes.length; b++){
+      var box = $(boxes[b]);
+      if(box) box.innerHTML = html;
+    }
+  }
+
+  function applySkin(id){
+    var s = skinOf(id);
+    if(!skinUnlocked(s)) return;
+    save.skin = s.id;
+    writeSave();
+    $('avaImg').src = ART_SRC[s.face];
+    $('avaImg').style.transform = 'scale(' + skinZoom(s).toFixed(3) + ')';
+    $('ava').classList.remove('none');
+    ensureFace(s.face);
+    renderSkins();
+    draw();
+  }
+
+  /* ---- 主色文本对比度守卫（WCAG 4.5:1） ---- */
+  function hexToRgb(h){
+    h = String(h || '').replace('#', '');
+    if(h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    if(!/^[0-9a-fA-F]{6}$/.test(h)) h = 'FF8A3D';
+    var n = parseInt(h, 16);
+    return {r:(n >> 16) & 255, g:(n >> 8) & 255, b:n & 255};
+  }
+  function relLum(hex){
+    var c = hexToRgb(hex);
+    function ch(v){ v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }
+    return .2126 * ch(c.r) + .7152 * ch(c.g) + .0722 * ch(c.b);
+  }
+  function contrastRatio(a, b){
+    var la = relLum(a), lb = relLum(b);
+    return (Math.max(la, lb) + .05) / (Math.min(la, lb) + .05);
+  }
+  function onAccentColor(accent, accent2){
+    var dark = '#190B04', light = '#FFF8F0';
+    var cd = Math.min(contrastRatio(dark, accent), contrastRatio(dark, accent2 || accent));
+    var cl = Math.min(contrastRatio(light, accent), contrastRatio(light, accent2 || accent));
+    return cl > cd ? light : dark;
+  }
+  function activeTheme(){
+    return THEMES[save.light ? 'day' : save.theme] || THEMES.pumpkin;
+  }
+
+  function applyTheme(id){
+    save.theme = THEMES[id] ? id : 'pumpkin';
+    var th = activeTheme();
+    var root = document.documentElement;
+    for(var k in th){
+      if(k === 'name') continue;
+      root.style.setProperty('--' + k, th[k]);
+    }
+    root.style.setProperty('--onAccent', onAccentColor(th.accent, th.accent2));
+    root.setAttribute('data-theme', save.theme);
+    root.setAttribute('data-light', save.light ? '1' : '0');
+    var mc = document.querySelector('meta[name="theme-color"]');
+    if(mc) mc.setAttribute('content', th.bg);
+    var lc = $('chkLight');
+    if(lc) lc.checked = !!save.light;
+    renderThemes();
+    buildStatic();
+    draw();
+  }
+
+  function renderThemes(){
+    var box = $('themes'); if(!box) return;
+    var t = I18N[lang];
+    var html = '';
+    for(var i = 0; i < THEME_ORDER.length; i++){
+      var id = THEME_ORDER[i], th = THEMES[id];
+      html += '<button class="thm' + (id === save.theme && !save.light ? ' on' : '') + '" data-th="' + id + '">'
+           +  '<i style="background:linear-gradient(135deg,' + th.accent + ',' + th.accent2 + ')"></i>'
+           +  '<span>' + th.name[lang] + '</span></button>';
+    }
+    box.innerHTML = html;
+  }
+
+  function applyLang(){
+    var t = I18N[lang] || I18N.zh;
+    var nodes = document.querySelectorAll('[data-i18n]');
+    for(var i = 0; i < nodes.length; i++){
+      var k = nodes[i].getAttribute('data-i18n');
+      if(t[k] != null) nodes[i].innerHTML = t[k];
+    }
+    document.documentElement.lang = (lang === 'zh') ? 'zh-CN' : lang;
+    document.title = t.title + ' · ' + t.sub;
+    $('brandName').textContent = t.title;
+    $('ttl').textContent = t.title;
+    $('btnPause').setAttribute('aria-label', t.pauseAria || t.paused || 'Pause');
+    var dir = t.dir || {}, pads = document.querySelectorAll('#pad .pbtn');
+    for(var p = 0; p < pads.length; p++){
+      var dk = pads[p].getAttribute('data-dir');
+      if(dir[dk]) pads[p].setAttribute('aria-label', dir[dk]);
+    }
+    $('hint').innerHTML = t.hint || '';
+    $('nightChipT').textContent = chipText();
+    var lbs = document.querySelectorAll('#langRow .langBtn');
+    for(var l = 0; l < lbs.length; l++){
+      lbs[l].classList.toggle('on', lbs[l].getAttribute('data-lang') === lang);
+    }
+    $('bestVal').textContent = save.best || 0;
+    $('hudNight').textContent = night;
+    $('tip').textContent = t.tip;
+    renderThemes();
+    renderSkins();
+    if(state === 'title') setSay('');
+  }
+
+  /* 标题页切语言：只改主存档的 lang 字段，其余字段原样保留 */
+  function setLang(code){
+    if(!I18N[code] || code === lang) return;
+    lang = code;
+    try{
+      var raw = localStorage.getItem(MAIN_SAVE);
+      if(raw){
+        var d = JSON.parse(raw);
+        if(d && typeof d === 'object'){
+          d.lang = code;
+          localStorage.setItem(MAIN_SAVE, JSON.stringify(d));
+        }
+      }
+      mainSave.lang = code;
+    }catch(e){}
+    applyLang();
+    renderAch();
+    updateHUD();
+  }
+
+  /* =========================================================
+     M4：本地成就（8 条）· 夜记
+     ========================================================= */
+  var ACH_IDS = ['first','combo4','nohit','pellets1k','night3','score10k','ghosts50','talker'];
+  var achTimer = 0;
+
+  function renderAch(){
+    var t = I18N[lang] || I18N.zh, desc = t.achDesc || {};
+    var box = $('achList'), got = 0, html = '';
+    for(var i = 0; i < ACH_IDS.length; i++){
+      var id = ACH_IDS[i], on = !!save.ach[id];
+      if(on) got++;
+      html += '<div class="achRow' + (on ? ' on' : '') + '">'
+           +  '<i>' + (on ? '★' : '☆') + '</i>'
+           +  '<span class="achTxt"><span>' + ((t.ach && t.ach[id]) || id) + '</span>'
+           +  (desc[id] ? '<em>' + desc[id] + '</em>' : '')
+           +  '</span>'
+           +  '<b>' + (on ? (t.achGot || '') : (t.achLocked || '')) + '</b></div>';
+    }
+    if(box) box.innerHTML = html;
+    var cnt = $('achCount');
+    if(cnt) cnt.textContent = got + ' / ' + ACH_IDS.length;
+  }
+  function showAch(){
+    renderAch();
+    var el = $('ach'); if(el) el.classList.add('show');
+  }
+  function hideAch(){
+    var el = $('ach'); if(el) el.classList.remove('show');
+  }
+
+  function achToast(id){
+    var t = I18N[lang] || I18N.zh;
+    var box = $('achToast');
+    if(!box) return;
+    box.textContent = (t.achUnlocked || '') + ' · ' + ((t.ach && t.ach[id]) || id);
+    /* M6-D3：每次解锁重播一次落章（1.35→1 + -4°→0，.42s） */
+    box.classList.remove('on');
+    void box.offsetWidth;
+    box.classList.add('on');
+    if(achTimer) clearTimeout(achTimer);
+    achTimer = setTimeout(function(){ box.classList.remove('on'); }, 2600);
+  }
+
+  /* 解锁只写本作存档；自检（quiet）时只改内存，不写盘不弹 toast */
+  function unlock(id){
+    if(!id || save.ach[id]) return false;
+    save.ach[id] = 1;
+    if(quiet) return true;
+    writeSave();
+    achToast(id);
+    sfx('ach');
+    renderSkins();          /* 解锁成就可能带出新皮肤，暂停页按钮即时可点 */
+    return true;
+  }
+
+  function checkAch(){
+    if(score >= 10000) unlock('score10k');
+    if(save.stats.pellets >= 1000) unlock('pellets1k');
+    if(save.stats.ghosts >= 50) unlock('ghosts50');
+    if(save.stats.maxCombo >= 4) unlock('combo4');
+    if(save.stats.talks >= 60) unlock('talker');
+    if(night >= 3) unlock('night3');
+    if(save.stats.plays >= 1) unlock('first');
+  }
+
+  /* =========================================================
+     3. 迷宫绘制
+     ========================================================= */
+  var cv = $('cv'), ctx = cv.getContext('2d');
+  var dpr = Math.min(2, window.devicePixelRatio || 1);
+  var tile = 18, boardW = 0, boardH = 0;
+  var wallCv = null, wallEdgeCv = null, pelletCv = null;
+  var sprites = {};
+  var state = 'title';
+
+  window.__pmState = function(){ return state; };
+
+  function tileChar(x, y){
+    if(y < 0 || y >= ROWS || x < 0 || x >= COLS){
+      if(y === 10) return ' ';          /* 隧道两侧 */
+      return '#';
+    }
+    return MAZE[y].charAt(x);
+  }
+
+  /* 手机 / 平板才显示屏幕方向键；横屏（棋盘左右留白宽）时浮在左侧 */
+  function syncTouchUI(){
+    var coarse = !!(window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
+    document.body.classList.toggle('touch', coarse);
+    document.body.classList.toggle('padFloat', coarse && window.innerWidth > window.innerHeight);
+    return coarse;
+  }
+
+  function layout(){
+    var top = $('topbar').offsetHeight || 34;
+    var dlg = $('dlgBar').offsetHeight || 52;
+    var bot = $('bottombar').offsetHeight || 22;
+    /* 竖屏方向键在正常流里，要连间距一起扣掉；横屏是浮层，不占位 */
+    var inFlow = document.body.classList.contains('touch') && !document.body.classList.contains('padFloat');
+    var pad = inFlow ? ($('pad').offsetHeight || 0) + 8 : 0;
+    var gaps = 8 * (pad ? 4 : 3);
+    var stagePad = 20;
+    var availH = window.innerHeight - top - dlg - bot - pad - gaps - stagePad;
+    var availW = $('wrap').clientWidth || (window.innerWidth - 24);
+    var maxW = Math.min(availW, 460);
+    tile = Math.max(12, Math.floor(Math.min(maxW / COLS, availH / ROWS)));
+    boardW = tile * COLS;
+    boardH = tile * ROWS;
+    cv.style.width = boardW + 'px';
+    cv.style.height = boardH + 'px';
+    cv.width = Math.round(boardW * dpr);
+    cv.height = Math.round(boardH * dpr);
+    buildStatic();
+    draw();
+  }
+
+  function roundRectPath(c, x, y, w, h, r){
+    if(c.roundRect){ c.beginPath(); c.roundRect(x, y, w, h, r); return; }
+    var rr = Math.min(r, w / 2, h / 2);
+    c.beginPath();
+    c.moveTo(x + rr, y);
+    c.lineTo(x + w - rr, y);
+    c.quadraticCurveTo(x + w, y, x + w, y + rr);
+    c.lineTo(x + w, y + h - rr);
+    c.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+    c.lineTo(x + rr, y + h);
+    c.quadraticCurveTo(x, y + h, x, y + h - rr);
+    c.lineTo(x, y + rr);
+    c.quadraticCurveTo(x, y, x + rr, y);
+    c.closePath();
+  }
+
+  function buildStatic(){
+    if(!boardW || !boardH) return;
+    var th = curTheme();
+
+    /* 墙面层 */
+    wallCv = document.createElement('canvas');
+    wallCv.width = Math.round(boardW * dpr);
+    wallCv.height = Math.round(boardH * dpr);
+    var wc = wallCv.getContext('2d');
+    wc.setTransform(dpr, 0, 0, dpr, 0, 0);
+    wc.fillStyle = th.wall;
+    for(var y = 0; y < ROWS; y++){
+      for(var x = 0; x < COLS; x++){
+        if(tileChar(x, y) !== '#') continue;
+        roundRectPath(wc, x * tile - 0.5, y * tile - 0.5, tile + 1, tile + 1, Math.max(2, tile * 0.16));
+        wc.fill();
+      }
+    }
+    /* 墙面顶部暖光 + 底部压暗，一次性烘进静态层 */
+    wc.globalCompositeOperation = 'source-atop';
+    var g = wc.createLinearGradient(0, 0, 0, boardH);
+    g.addColorStop(0, 'rgba(255,190,130,.10)');
+    g.addColorStop(.55, 'rgba(0,0,0,0)');
+    g.addColorStop(1, 'rgba(0,0,0,.22)');
+    wc.fillStyle = g;
+    wc.fillRect(0, 0, boardW, boardH);
+    wc.globalCompositeOperation = 'source-over';
+
+    /* 豆层：只在尺寸变化与吃到籽时重绘 */
+    ensurePelletCanvas();
+    paintPellets();
+    buildWallEdge();
+  }
+
+  /* M6-C1：单独烘一层 1px 墙边（只画墙格与非墙格交界），供 draw 里叠呼吸 */
+  function buildWallEdge(){
+    wallEdgeCv = document.createElement('canvas');
+    wallEdgeCv.width = Math.round(boardW * dpr);
+    wallEdgeCv.height = Math.round(boardH * dpr);
+    var ec = wallEdgeCv.getContext('2d');
+    ec.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var th = curTheme();
+    ec.strokeStyle = hexA(th.accent2, .9);
+    ec.lineWidth = Math.max(1, Math.min(1.8, tile * .08));
+    ec.lineCap = 'butt';
+    ec.beginPath();
+    for(var y = 0; y < ROWS; y++){
+      for(var x = 0; x < COLS; x++){
+        if(tileChar(x, y) !== '#') continue;
+        var x0 = x * tile, y0 = y * tile;
+        if(tileChar(x, y - 1) !== '#'){ ec.moveTo(x0, y0); ec.lineTo(x0 + tile, y0); }
+        if(tileChar(x, y + 1) !== '#'){ ec.moveTo(x0, y0 + tile); ec.lineTo(x0 + tile, y0 + tile); }
+        if(tileChar(x - 1, y) !== '#'){ ec.moveTo(x0, y0); ec.lineTo(x0, y0 + tile); }
+        if(tileChar(x + 1, y) !== '#'){ ec.moveTo(x0 + tile, y0); ec.lineTo(x0 + tile, y0 + tile); }
+      }
+    }
+    ec.stroke();
+  }
+
+  function ensurePelletCanvas(){
+    var w = Math.round(boardW * dpr), h = Math.round(boardH * dpr);
+    if(pelletCv && pelletCv.width === w && pelletCv.height === h) return;
+    pelletCv = document.createElement('canvas');
+    pelletCv.width = w;
+    pelletCv.height = h;
+  }
+
+  function paintPellets(){
+    if(!pelletCv) return;
+    var th = curTheme();
+    var pc = pelletCv.getContext('2d');
+    pc.setTransform(dpr, 0, 0, dpr, 0, 0);
+    pc.clearRect(0, 0, boardW, boardH);
+
+    for(var y = 0; y < ROWS; y++){
+      for(var x = 0; x < COLS; x++){
+        var cx = (x + .5) * tile, cy = (y + .5) * tile;
+        if(tileChar(x, y) === ' '){
+          pc.fillStyle = 'rgba(255,190,120,.045)';
+          pc.fillRect(x * tile, y * tile, tile, tile);
+          continue;
+        }
+        var v = pellets[y] ? pellets[y][x] : 0;
+        if(!v) continue;
+        if(v === 1){
+          pc.fillStyle = th.pellet;
+          pc.globalAlpha = .9;
+          pc.beginPath();
+          pc.arc(cx, cy, Math.max(1.4, tile * .105), 0, Math.PI * 2);
+          pc.fill();
+          pc.globalAlpha = 1;
+        }else{
+          var rg = pc.createRadialGradient(cx, cy, 0, cx, cy, tile * .34);
+          rg.addColorStop(0, hexA(th.power, .95));
+          rg.addColorStop(.55, hexA(th.power, .55));
+          rg.addColorStop(1, hexA(th.power, 0));
+          pc.fillStyle = rg;
+          pc.beginPath();
+          pc.arc(cx, cy, tile * .34, 0, Math.PI * 2);
+          pc.fill();
+          pc.fillStyle = th.power;
+          pc.beginPath();
+          pc.arc(cx, cy, tile * .21, 0, Math.PI * 2);
+          pc.fill();
+        }
+      }
+    }
+
+    /* 窝门 */
+    var gateX = 9 * tile, gateY = 9 * tile;
+    pc.fillStyle = th.accent2;
+    pc.globalAlpha = .8;
+    pc.fillRect(gateX + tile * .12, gateY + tile * .42, tile * .76, Math.max(1.5, tile * .11));
+    pc.globalAlpha = 1;
+  }
+
+  function hexA(hex, a){
+    var h = hex.replace('#', '');
+    if(h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+    var n = parseInt(h, 16);
+    return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+  }
+
+  function draw(){
+    if(!boardW || !boardH || !wallCv) return;
+    var th = curTheme();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, boardW, boardH);
+
+    /* 迷宫底色 */
+    var bg = ctx.createRadialGradient(boardW / 2, boardH * .42, tile, boardW / 2, boardH * .42, boardH * .78);
+    bg.addColorStop(0, hexA(th.bg2, .96));
+    bg.addColorStop(1, hexA(th.bg, .99));
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, boardW, boardH);
+
+    ctx.drawImage(wallCv, 0, 0, boardW, boardH);
+    /* M6-C1：墙边随呼吸微微起伏（低功耗固定 .06） */
+    if(wallEdgeCv){
+      ctx.globalAlpha = lpMode() ? .06 : .05 + .04 * Math.sin(animT * .9);
+      ctx.drawImage(wallEdgeCv, 0, 0, boardW, boardH);
+      ctx.globalAlpha = 1;
+    }
+    if(pelletCv) ctx.drawImage(pelletCv, 0, 0, boardW, boardH);
+    drawPops(th);
+
+    if(bonus) drawBonus(th);
+    /* 最后 1.5 秒光晕闪烁 */
+    var flashOn = !(powerT > 0 && powerT < 1.5 && Math.floor(powerT * 8) % 2 === 0);
+    /* 死亡演出期间：番茄与被按住的月巴改由 drawDeath 绘制 */
+    var dying = state === 'dead' && deathFx;
+    if(player && !dying){
+      if(powerT > 0 && flashOn) drawGlow((player.x + .5) * tile, (player.y + .5) * tile, th);
+      var pMove = !!(player.hold && (player.want.x || player.want.y));
+      var sk = curSkin();
+      var pa = bounceAnim(animScale('player', pMove, 0), player);
+      pa.rot = tiltAngle(player) + leanAngle(player);
+      pa.flip = player.facing || 1;
+      drawSprite(sk.face, player.x, player.y, th.tomato, 1.35 * (sk.zoom || 1), false, false, pa);
+      if(powerT > 0) drawPowerRing(th);
+    }
+    for(var i = 0; i < ghosts.length; i++){
+      var g = ghosts[i];
+      if(dying && i === deathFx.idx) continue;
+      var eyes = g.mode === 'eaten' || g.mode === 'dried' || !!g.reviving;
+      /* 反吃吸入：0.18 秒缩向番茄 */
+      if(g.inhaleT > 0){
+        var ik = 1 - g.inhaleT / g.inhaleMax;
+        ctx.globalAlpha = Math.max(0, 1 - ik * .85);
+        drawSprite(g.face || g.id, g.inhaleX + (g.inhaleToX - g.inhaleX) * ik,
+                   g.inhaleY + (g.inhaleToY - g.inhaleY) * ik, g.ring,
+                   1.35 * (1 - ik * .78), false, false, null);
+        ctx.globalAlpha = 1;
+        continue;
+      }
+      /* 第 1 夜被榨干的小眼睛就地不动，所以不给它跳动动画 */
+      var ga = g.mode === 'dried' ? null : animScale('ghost', true, i);
+      if(ga){
+        ga.rot = tiltAngle(g);
+        ga.flip = g.facing || 1;
+        bounceAnim(ga, g);
+      }
+      if(g.trails && g.trails.length) drawTrails(g);
+      drawSprite(g.face || g.id, g.x, g.y, g.ring, 1.35, g.mode === 'flee', eyes, ga);
+      /* P3-N13：窝里待命的月巴打盹 Zzz */
+      if(g.mode === 'house') drawNapZ(g);
+    }
+    drawParticles();
+    drawDeath();
+    drawTunnelHints(th);
+    drawClearScan(th);
+    drawClearLamps(th);
+    drawRings();
+    drawPopTexts();
+    placeGSay();
+    syncSour();
+  }
+
+  /* M6-P1：死亡演出——月巴把番茄按在墙上挤三下（Q弹），随后摊平躺地不动 */
+  function drawDeath(){
+    var d = deathFx;
+    if(!d) return;
+    var th = curTheme();
+    var t = d.t;
+    var nx = d.wx, ny = d.wy;
+    var horiz = Math.abs(nx) >= Math.abs(ny);
+    /* 三次挤压：0.10s 开始，0.68s 结束 */
+    var sq = 0;
+    if(!d.calm && t >= .10 && t < .68) sq = Math.abs(Math.sin((t - .10) / .58 * Math.PI * 3));
+    var sx = 1, sy = 1, lift = 0, gsx = 1, gsy = 1;
+    if(d.calm || t >= .68){
+      /* 摊平：横向摊开、纵向压扁、贴到地面 */
+      var e = d.calm ? 1 : 1 - Math.pow(1 - Math.min(1, (t - .68) / .20), 3);
+      sx = 1 + .18 * e;
+      sy = 1 - .48 * e;
+      lift = tile * .11 * e;
+      gsx = 1 + .04 * e;
+    }else if(horiz){
+      sx = 1 - .22 * sq; sy = 1 + .11 * sq;
+      gsx = 1 + .10 * sq; gsy = 1 - .07 * sq;
+    }else{
+      sy = 1 - .22 * sq; sx = 1 + .11 * sq;
+      gsy = 1 + .10 * sq; gsx = 1 - .07 * sq;
+    }
+    /* 番茄沿墙面法线往里顶；月巴在身后同步压进去 */
+    var pin = .14 + sq * .05;
+    var px = d.px + nx * pin, py = d.py + ny * pin;
+    var off = -.68 + sq * .14 + (d.calm || t >= .68 ? .12 : 0);
+    drawSprite(d.gid, d.px + nx * off, d.py + ny * off, d.ring, 1.35, false, false,
+               {sx:gsx, sy:gsy, lift:0});
+    var sk = curSkin();
+    drawSprite(sk.face, px, py, th.tomato, 1.35 * (sk.zoom || 1), false, false,
+               {sx:sx, sy:sy, lift:lift});
+  }
+
+  /* 辣番茄：番茄外圈烛黄光晕 + 轻微脉冲 */
+  function drawGlow(cx, cy, th){
+    var pulse = 1 + Math.sin(animT * 9) * .07;
+    var r = tile * 1.25 * pulse;
+    var rg = ctx.createRadialGradient(cx, cy, tile * .18, cx, cy, r);
+    rg.addColorStop(0, hexA(th.accent2, .5));
+    rg.addColorStop(.45, hexA(th.accent2, .18));
+    rg.addColorStop(1, hexA(th.accent2, 0));
+    ctx.fillStyle = rg;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  /* 糖霜番茄：白色糖霜 + 冷光 */
+  function drawBonus(th){
+    var cx = (bonus.x + .5) * tile, cy = (bonus.y + .5) * tile;
+    var pulse = 1 + Math.sin(animT * 6) * .08;
+    var r = tile * .56 * pulse;
+    var rg = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 2.2);
+    rg.addColorStop(0, hexA(th.accent2, .5));
+    rg.addColorStop(1, hexA(th.accent2, 0));
+    ctx.fillStyle = rg;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 2.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = th.tomato;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.88)';
+    ctx.beginPath();
+    ctx.arc(cx - r * .30, cy - r * .26, r * .28, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx + r * .34, cy + r * .12, r * .17, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = th.good;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - r * .84, r * .34, r * .16, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* P2-N6：倒计时细弧；最后 1.5 秒闪一下提醒要消失了 */
+    var bt = bonus.max || 0;
+    if(bt > 0){
+      var k = Math.max(0, Math.min(1, bonus.t / bt));
+      ctx.globalAlpha = bonus.t < 1.5 ? .3 + .6 * Math.abs(Math.sin(animT * 9)) : .8;
+      ctx.strokeStyle = th.accent2;
+      ctx.lineWidth = Math.max(1.4, tile * .06);
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(cx, cy, tile * .72, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * k);
+      ctx.stroke();
+      ctx.restore();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  /* P2-N5：辣番茄剩余时间环，从 12 点走满一圈后结束 */
+  function drawPowerRing(th){
+    if(powerMax <= 0 || !player) return;
+    var k = Math.max(0, Math.min(1, powerT / powerMax));
+    var cx = (player.x + .5) * tile, cy = (player.y + .5) * tile;
+    var r = tile * .88;
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.globalAlpha = .20;
+    ctx.strokeStyle = th.accent2;
+    ctx.lineWidth = Math.max(1.4, tile * .06);
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = powerT < 1.5 ? .35 + .55 * Math.abs(Math.sin(animT * 9)) : .9;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * k);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  /* P2-N8：隧道边缘预警——贴近左右出口时，在对应边界亮起箭头 */
+  function drawTunnelHints(th){
+    hintTunnel(player);
+    for(var i = 0; i < ghosts.length; i++){
+      var g = ghosts[i];
+      if(g.mode === 'house' || g.mode === 'dried') continue;
+      hintTunnel(g);
+    }
+    function hintTunnel(e){
+      if(!e || Math.abs(e.y - 10) > .6) return;
+      var left = e.x < COLS / 2;
+      var dist = left ? e.x : COLS - 1 - e.x;
+      if(dist > 2.4) return;
+      var k = 1 - Math.max(0, dist) / 2.4;
+      var rowY = (10 + .5) * tile;
+      var dir = left ? -1 : 1;
+      var edge = left ? 0 : boardW;
+      var span = tile * 3.2;
+      var lg = ctx.createLinearGradient(edge, 0, edge - dir * span, 0);
+      lg.addColorStop(0, hexA(th.accent2, .5 * k + .12));
+      lg.addColorStop(1, hexA(th.accent2, 0));
+      ctx.fillStyle = lg;
+      ctx.fillRect(left ? 0 : boardW - span, rowY - tile, span, tile * 2);
+      var pulse = (reduceMotion || lpMode()) ? 0 : (Math.sin(animT * 6) * .5 + .5);
+      ctx.globalAlpha = .25 + .5 * k;
+      ctx.fillStyle = th.accent2;
+      for(var n = 0; n < 2; n++){
+        var ax = edge + dir * (tile * (.7 + n * .5) + pulse * tile * .26);
+        ctx.beginPath();
+        ctx.moveTo(ax, rowY);
+        ctx.lineTo(ax - dir * tile * .32, rowY - tile * .40);
+        ctx.lineTo(ax - dir * tile * .32, rowY + tile * .40);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  /* P3-N13：窝里打盹——头顶缓缓飘起的 Zzz */
+  function drawNapZ(g){
+    var th = curTheme();
+    var calm = lpMode() || reduceMotion;
+    var cx = (g.x + .5) * tile, cy = (g.y + .5) * tile - tile * .62;
+    ctx.save();
+    ctx.textAlign = 'center';
+    for(var n = 0; n < 2; n++){
+      var ph = calm ? 0 : (animT * .5 + n * .5) % 1;
+      ctx.globalAlpha = calm ? (.5 - n * .16) : Math.max(0, (1 - ph) * .7);
+      ctx.fillStyle = th.accent2;
+      ctx.font = '900 ' + Math.round(tile * (.36 - n * .08)) + 'px "SF Mono",Consolas,sans-serif';
+      ctx.fillText('Z', cx + tile * (.20 + n * .10), cy - ph * tile * .7 - n * tile * .26);
+    }
+    ctx.restore();
+  }
+
+  /* M6-B4：隧道段的半透明残影（最多 4 层，越旧越淡） */
+  function drawTrails(g){
+    if(!g.trails || !g.trails.length) return;
+    var size = tile * 1.35 * .44;
+    var col = faceColor(g.face || g.id, g.ring);
+    for(var i = g.trails.length - 1; i >= 0; i--){
+      var t = g.trails[i];
+      if(t.x < -1 || t.x > COLS) continue;        /* 环绕那一帧不画跨越半屏的影子 */
+      var k = Math.max(0, t.t / FX.trailLife);
+      ctx.fillStyle = hexA(col, .10 * k / (i + 1));
+      ctx.beginPath();
+      ctx.arc((t.x + .5) * tile, (t.y + .5) * tile, size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  /* P3-N10：过关扫描——1.4 秒内一道光带自左向右扫过整块迷宫 */
+  function drawClearScan(th){
+    if(!clearFx || lpMode() || reduceMotion) return;
+    var k = Math.max(0, Math.min(1, clearFx.t / clearFx.dur));
+    var x = (k * 1.14 - .07) * boardW;
+    var band = tile * 3.2;
+    var lg = ctx.createLinearGradient(x - band, 0, x + band * .16, 0);
+    lg.addColorStop(0, hexA(th.accent2, 0));
+    lg.addColorStop(.72, hexA(th.accent2, .15));
+    lg.addColorStop(1, hexA(th.accent2, .32));
+    ctx.fillStyle = lg;
+    ctx.fillRect(x - band, 0, band * 1.16, boardH);
+    ctx.fillStyle = hexA(th.accent2, .5);
+    ctx.fillRect(x, 0, Math.max(1, tile * .06), boardH);
+  }
+
+  /* M6-C5：过关点灯——四颗南瓜糖的位置自左向右依次亮起，约 1.2 秒走完 */
+  function drawClearLamps(th){
+    if(state !== 'clear' || !POWER_POS.length) return;
+    var calm = lpMode() || reduceMotion;
+    for(var i = 0; i < POWER_POS.length; i++){
+      var p = POWER_POS[i];
+      var t = lampT - i * FX.lampGap;
+      if(t <= 0) continue;
+      var k = Math.min(1, t / FX.lampLit);
+      var e = 1 - Math.pow(1 - k, 3);
+      var cx = (p.x + .5) * tile, cy = (p.y + .5) * tile;
+      var pulse = calm ? 0 : (Math.sin(animT * 5 + i * .8) * .5 + .5);
+      var r = tile * (.30 + .06 * pulse) * (.62 + .38 * e);
+      /* 光晕 */
+      var rg = ctx.createRadialGradient(cx, cy, 0, cx, cy, tile * 1.5);
+      rg.addColorStop(0, hexA(th.accent2, .5 * e));
+      rg.addColorStop(.42, hexA(th.accent2, .2 * e));
+      rg.addColorStop(1, hexA(th.accent2, 0));
+      ctx.fillStyle = rg;
+      ctx.beginPath();
+      ctx.arc(cx, cy, tile * 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      /* 灯芯 */
+      ctx.globalAlpha = e;
+      ctx.fillStyle = th.accent2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,250,224,.85)';
+      ctx.beginPath();
+      ctx.arc(cx, cy, r * .45, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  /* 月巴跟头气泡定位（#gSay 位于 #frame 内，坐标即棋盘像素） */
+  function placeGSay(){
+    if(gSayIdx < 0) return;
+    var g = ghosts[gSayIdx];
+    if(!g){ hideGSay(); return; }
+    var el = $('gSay');
+    el.style.left = Math.round((g.x + .5) * tile) + 'px';
+    el.style.top = Math.round((g.y + .5) * tile - tile * .70) + 'px';
+  }
+
+  /* Q 弹动效参数：底部挤压、空中回弹 + 起跳位移；低功耗 / 减弱动效时返回 null */
+  function animScale(kind, moving, phase){
+    if(reduceMotion || lpMode()) return null;
+    var t = animT, ph = phase * 1.7;
+    if(kind === 'player'){
+      /* 走动时小碎跳，站定时慢慢呼吸 */
+      var u = Math.abs(Math.sin(t * (moving ? 8.4 : 2.6) + ph));
+      var sq = (1 - u) * (moving ? .085 : .045);
+      return {sx:1 + sq, sy:1 - sq * 1.35, lift:-u * tile * (moving ? .16 : .05)};
+    }
+    var u2 = Math.abs(Math.sin(t * 4.6 + ph));
+    var sq2 = (1 - u2) * .10;
+    return {sx:1 + sq2, sy:1 - sq2 * 1.3, lift:-u2 * tile * .20};
+  }
+
+  /* ---- M6-B：朝向翻转 / 转弯侧倾 / 出窝弹跳 / 起步倾斜 / 隧道残影 ---- */
+  /* 只在真实方向变化时记一次：反向（cross=0）不侧倾，只翻朝向 */
+  function markFacing(e){
+    var d = e.dir;
+    if(!d || (!d.x && !d.y)) return;             /* 停住时保留上一次方向 */
+    if(e.pdir && (e.pdir.x !== d.x || e.pdir.y !== d.y)){
+      var cross = e.pdir.x * d.y - e.pdir.y * d.x;
+      if(cross){ e.tiltT = FX.tiltLife; e.tiltSign = cross > 0 ? 1 : -1; }
+    }
+    e.pdir = {x:d.x, y:d.y};
+    if(d.x) e.facing = d.x > 0 ? 1 : -1;
+  }
+
+  function decayFace(e, dt){
+    if(e.tiltT > 0) e.tiltT = Math.max(0, e.tiltT - dt);
+    if(e.leanT > 0) e.leanT = Math.max(0, e.leanT - dt);
+    if(e.popT > 0) e.popT = Math.max(0, e.popT - dt);
+    if(e.trails && e.trails.length){
+      for(var i = e.trails.length - 1; i >= 0; i--){
+        e.trails[i].t -= dt;
+        if(e.trails[i].t <= 0) e.trails.splice(i, 1);
+      }
+    }
+  }
+
+  function tiltAngle(e){
+    if(!e || lpMode() || reduceMotion || !(e.tiltT > 0)) return 0;
+    return (e.tiltSign || 1) * FX.tiltMax * (e.tiltT / FX.tiltLife);
+  }
+
+  function leanAngle(e){
+    if(!e || lpMode() || reduceMotion || !(e.leanT > 0)) return 0;
+    return (e.leanSign || 0) * FX.leanMax * (e.leanT / FX.leanLife);
+  }
+
+  /* 出窝弹跳：挤压 + 弹起，直接改 animScale 的返回值 */
+  function bounceAnim(an, e){
+    if(!an || !e || !(e.popT > 0) || lpMode() || reduceMotion) return an;
+    var s = Math.sin(Math.PI * (1 - e.popT / FX.bounceLife));
+    an.sx *= 1 + .10 * s;
+    an.sy *= 1 - .18 * s;
+    an.lift -= tile * FX.bounceJump * s;
+    return an;
+  }
+
+  /* 隧道段每 0.06s 采样一层残影（克制档最多 4 层） */
+  function sampleTrail(g, dt){
+    if(quiet || lpMode() || reduceMotion) return;
+    if(Math.abs(g.x - 9) <= 6.5) return;          /* 只在左右两端走廊留影 */
+    if(!g.trails) g.trails = [];
+    g.trT -= dt;
+    if(g.trT > 0) return;
+    g.trT = FX.trailGap;
+    g.trails.unshift({x:g.x, y:g.y, t:FX.trailLife});
+    if(g.trails.length > FX.trailMax) g.trails.pop();
+  }
+
+  function faceColor(id, fallback){
+    var d = DEX_ART[id];
+    return (d && d[1]) || fallback;
+  }
+
+  function drawSprite(id, gx, gy, ring, scale, flee, eaten, anim){
+    var th = curTheme();
+    var cx = (gx + .5) * tile, cy = (gy + .5) * tile;
+    var size = tile * (scale || 1.35);
+    var lift = anim ? anim.lift : 0;
+    ensureFace(id);
+
+    /* 落地阴影：起跳时缩小变淡，落回时最实 */
+    var k = anim ? Math.max(.55, 1 + lift / (tile * .55)) : 1;
+    ctx.fillStyle = 'rgba(0,0,0,' + (.34 * k).toFixed(3) + ')';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + size * .40, size * .30 * k, size * .10 * k, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.save();
+    ctx.translate(cx, cy + lift);
+    if(anim && anim.rot) ctx.rotate(anim.rot);
+    if(anim) ctx.scale(anim.sx, anim.sy);
+
+    /* 被榨干：只剩一双眼睛飘回窝 */
+    if(eaten){
+      ctx.fillStyle = hexA(th.text, .92);
+      var er = size * .085;
+      ctx.beginPath();
+      ctx.arc(-size * .17, -size * .04, er, 0, Math.PI * 2);
+      ctx.arc(size * .17, -size * .04, er, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      return;
+    }
+
+    var sp = sprites[id];
+    if(flee){
+      ctx.save();
+      if(!lpMode()) ctx.filter = 'grayscale(.85) brightness(1.35)';
+      ctx.save();                                   /* 只在立绘上翻转，圆环与「!」保持正向 */
+      if(anim && anim.flip < 0) ctx.scale(-1, 1);
+      if(sp && sp.ready){
+        ctx.drawImage(sp.c, -size / 2, -size / 2, size, size);
+      }else{
+        drawFallback(0, 0, size * .46, faceColor(id, ring));
+      }
+      ctx.restore();
+      ctx.restore();
+
+      /* 高对比描边 + 头顶「!」 */
+      ctx.lineWidth = Math.max(1.1, tile * .085);
+      ctx.strokeStyle = hexA(th.text, .85);
+      ctx.beginPath();
+      ctx.arc(0, 0, size * .455, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.font = '900 ' + Math.round(size * .62) + 'px "SF Mono",Consolas,sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.lineWidth = Math.max(2, size * .09);
+      ctx.strokeStyle = 'rgba(11,7,20,.9)';
+      ctx.strokeText('!', 0, -size * .78);
+      ctx.fillStyle = th.accent2;
+      ctx.fillText('!', 0, -size * .78);
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.restore();
+      return;
+    }
+
+    ctx.save();                                     /* 只在立绘上翻转，圆环保持正向 */
+    if(anim && anim.flip < 0) ctx.scale(-1, 1);
+    if(sp && sp.ready){
+      ctx.drawImage(sp.c, -size / 2, -size / 2, size, size);
+    }else{
+      drawFallback(0, 0, size * .46, faceColor(id, ring));
+    }
+    ctx.restore();
+
+    /* 行为圆环：颜色代表行动模式，跟着角色一起弹，不随立绘更换 */
+    if(ring){
+      ctx.lineWidth = Math.max(1.2, size * .033);
+      ctx.strokeStyle = ring;
+      ctx.beginPath();
+      ctx.arc(0, 0, size * .455, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawFallback(cx, cy, r, color){
+    /* 立绘加载失败时的程序化月巴/番茄 */
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(11,7,20,.85)';
+    ctx.beginPath();
+    ctx.arc(cx - r * .34, cy - r * .10, r * .11, 0, Math.PI * 2);
+    ctx.arc(cx + r * .34, cy - r * .10, r * .11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function loadSprites(){
+    ensureFace(curSkinFace());   /* 月巴立绘按需加载，见 makeGhosts 里的 ensureFace */
+  }
+
+  /* 立绘按需加载 + 224px 圆裁切缓存；同一个 id 只请求一次 */
+  function ensureFace(id){
+    if(!id || sprites[id]) return;
+    var url = ART_SRC[id] || (DEX_ART[id] && DEX_ART[id][0]);
+    if(!url){ sprites[id] = {ready:false, c:null}; return; }
+    var skin = skinByFace(id);
+    sprites[id] = {ready:false, c:null, loading:true};
+    var img = new Image();
+    img.decoding = 'async';
+    img.onload = function(){
+      sprites[id] = bakeSprite(img, skin ? skin.box : null, skin ? SKIN_FILL : 0);
+      if(id === curSkinFace()){
+        $('avaImg').src = url;
+        if(skin) $('avaImg').style.transform = 'scale(' + skinZoom(skin).toFixed(3) + ')';
+        $('ava').classList.remove('none');
+      }
+      draw();
+    };
+    img.onerror = function(){
+      sprites[id] = {ready:false, c:null};
+      if(id === curSkinFace()) $('ava').classList.add('none');
+      draw();
+    };
+    img.src = url;
+  }
+
+  /* 烘焙：默认整图 cover 裁到圆心；给了 box 时按「主体包围盒」缩放，
+     让不同留白的立绘在圆里显示成同样大小（fill = 主体目标边长） */
+  function bakeSprite(img, box, fill){
+    var S = 224;
+    var c = document.createElement('canvas');
+    c.width = S; c.height = S;
+    var g = c.getContext('2d');
+    g.beginPath();
+    g.arc(S / 2, S / 2, S / 2 - 4, 0, Math.PI * 2);
+    g.closePath();
+    g.save();
+    g.clip();
+    var iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+    var l = 0, t = 0, r = 1, b = 1;
+    if(box){ l = box[0]; t = box[1]; r = box[2]; b = box[3]; }
+    /* 取主体长边当基准，等比缩放并把主体中心压在圆心；无 box 时退回整图 cover */
+    var k = box ? (fill || S) / Math.max((r - l) * iw, (b - t) * ih) : Math.max(S / iw, S / ih);
+    var dw = iw * k, dh = ih * k;
+    g.drawImage(img, S / 2 - (l + r) / 2 * iw * k, S / 2 - (t + b) / 2 * ih * k, dw, dh);
+    g.restore();
+    return {ready:true, c:c};
+  }
+
+  /* =========================================================
+     4. 台词（M1 仅占位，M3 接入完整双通道系统）
+     ========================================================= */
+  function setSay(text){
+    var el = $('sayTxt');
+    if(!save.ui.dlg){ el.textContent = ''; $('dlgBar').classList.add('off'); return; }
+    $('dlgBar').classList.remove('off');
+    var t = text || '';
+    if(el.textContent === t) return;
+    el.textContent = t;
+    /* M6-D5：新台词上浮 6px，头像同步轻弹（低功耗 / 减动效只换字） */
+    if(!t || lpMode() || reduceMotion) return;
+    el.classList.remove('riseIn');
+    void el.offsetWidth;
+    el.classList.add('riseIn');
+    var ava = $('ava');
+    ava.classList.remove('bop');
+    void ava.offsetWidth;
+    ava.classList.add('bop');
+  }
+
+  /* 居中大字倒计时（3-2-1）：每换一个数就重播一次弹入 */
+  function setCountdown(v){
+    var el = $('cdown');
+    el.textContent = String(v);
+    el.classList.add('show');
+    el.classList.remove('pop');
+    void el.offsetWidth;
+    el.classList.add('pop');
+  }
+  function hideCountdown(){
+    var el = $('cdown');
+    if(!el) return;
+    el.classList.remove('show', 'pop');
+    el.textContent = '';
+  }
+
+  /* =========================================================
+     5. 核心玩法（M2）：固定步长、输入缓存、吃籽、月巴 AI、
+        碰撞掉命、过关、计分、暂停
+     ========================================================= */
+  var STEP = 1 / 120;
+  var DIR_UP = {x:0,y:-1}, DIR_DOWN = {x:0,y:1}, DIR_LEFT = {x:-1,y:0}, DIR_RIGHT = {x:1,y:0}, DIR_NONE = {x:0,y:0};
+  var KEY_DIR = {arrowup:DIR_UP, w:DIR_UP, arrowdown:DIR_DOWN, s:DIR_DOWN,
+                 arrowleft:DIR_LEFT, a:DIR_LEFT, arrowright:DIR_RIGHT, d:DIR_RIGHT};
+  /* 散开 7s → 追击 20s → 散开 7s → 追击 20s → 散开 5s → 追击常驻 */
+  var PHASES = [['scatter',7],['chase',20],['scatter',7],['chase',20],['scatter',5],['chase',1e9]];
+  var CORNERS = [{x:1,y:1},{x:COLS-2,y:1},{x:1,y:ROWS-2},{x:COLS-2,y:ROWS-2}];
+  var EXIT = {x:9, y:8};
+
+  var pellets = [];
+  var pelletsLeft = 0;
+  var score = 0, lives = 3, night = 1;
+  var readyT = 0, deadT = 0, clearT = 0;
+  var phaseIdx = 0, phaseT = 0;
+  var lastReadyN = -1;
+  var player = null;
+  var ghosts = [];
+  var rafId = 0, lastT = 0, acc = 0;
+  var rngSeed = 20261031;
+
+  /* M3：辣番茄 / 榨干 / 糖霜番茄 / 粒子 / 音效 / 台词 */
+  var POWER_BASE = 200, POWER_CAP = 3200;
+  var powerT = 0, powerChain = 0, powerMax = 0;
+  var pelletsTotal = 0;
+  var bonus = null, bonusUsed = false;
+  var particles = [];
+  var animT = 0;
+  var sayCd = 0, nearT = 8;
+  var lastLine = {};
+  var gSayIdx = -1, gSayT = 0, gSayCd = 0;
+  var audioCtx = null, quiet = false;
+  /* M6-A：飘字 / 吃籽微缩 / 反吃冲击环 / 撞墙节流 */
+  var FX = {txtLife:.7, txtLift:.9, ringLife:.35, popLife:.12, bumpCd:.35,
+            hitStop:.06, hurtStop:.09,
+            /* M6-B：转弯侧倾 / 出窝弹跳 / 起步倾斜 / 隧道残影 */
+            tiltLife:.16, tiltMax:.07, bounceLife:.34, bounceJump:.35,
+            leanLife:.18, leanMax:.10, trailGap:.06, trailLife:.24, trailMax:4,
+            /* M6-C：过关点灯 */
+            lampGap:.22, lampLit:.30};
+  var popTexts = [], pops = [], rings = [], lastBumpT = -1;
+  /* M6-P1：命中定格 / GO! 扩散环 / 死亡演出 */
+  var hitStop = 0, goT = 0, deathFx = null;
+  /* P3：过关扫描 / 落脚尘点 */
+  var clearFx = null, dustT = 0;
+  /* M6-C5：四颗南瓜糖的位置（自左向右）、点灯计时、已撒火星的盏数 */
+  var POWER_POS = [], lampT = 0, lampSparks = 0;
+  /* M6-C6：酸番茄氛围的 class 状态缓存，避免每帧写 DOM */
+  var sourOn = false, sourHurry = false;
+  /* M4：本局榨干数（夜记）、当前夜掉命数（毫发无伤成就） */
+  var runGhosts = 0, nightHits = 0;
+
+  /* 番茄改为「长按才走」：按住方向键才推进，松手立即停在原地。
+     dir 保留（便于半格内反向与到达格中心后继续转向），移动由 hold 门控。 */
+  var holdKeys = {}, holdOrder = [];
+  /* 屏幕方向键：按一下等同长按（锁定该方向持续走），再点同一方向或换方向才改变 */
+  var padDir = '';
+  function dropHold(k){
+    if(!holdKeys[k]) return;
+    delete holdKeys[k];
+    for(var i = holdOrder.length - 1; i >= 0; i--){
+      if(holdOrder[i] === k){ holdOrder.splice(i, 1); break; }
+    }
+  }
+  function clearPadLatch(){
+    if(padDir){ dropHold('pad-' + padDir); padDir = ''; }
+    var bs = document.querySelectorAll('#pad .pbtn.on');
+    for(var i = 0; i < bs.length; i++) bs[i].classList.remove('on');
+  }
+  function setPadDir(dir){
+    if(padDir === dir){ clearPadLatch(); syncHold(); return; }   /* 再点一下 = 停 */
+    clearPadLatch();
+    padDir = dir;
+    var key = 'pad-' + dir;
+    holdKeys[key] = KEY_DIR['arrow' + dir];
+    holdOrder.push(key);
+    var b = document.querySelector('#pad .pbtn[data-dir="' + dir + '"]');
+    if(b) b.classList.add('on');
+    syncHold();
+  }
+  function syncHold(){
+    if(!player) return;
+    var k = holdOrder.length ? holdOrder[holdOrder.length - 1] : '';
+    var was = !!player.hold;
+    player.want = k ? holdKeys[k] : DIR_NONE;
+    player.hold = !!k;
+    /* M6-B5：刚按下的那一帧记一次起步倾斜（松手即停，所以每次起步都会触发） */
+    if(!was && player.hold && player.want.x){
+      player.leanT = FX.leanLife;
+      player.leanSign = player.want.x > 0 ? 1 : -1;
+    }
+  }
+  function releaseHeld(){
+    holdKeys = {}; holdOrder.length = 0;
+    if(player){ player.hold = false; player.want = DIR_NONE; }
+    clearPadLatch();
+  }
+
+  function setMazeForNight(){
+    var m = MAZES[(night - 1) % MAZES.length] || MAZES[0];
+    if(m === MAZE) return;
+    MAZE = m;
+    fieldCache.key = ''; fieldCache.dist = null;
+  }
+
+  function rnd(){
+    rngSeed = (rngSeed * 1103515245 + 12345) % 2147483648;
+    return rngSeed / 2147483648;
+  }
+
+  /* 第 10 夜起：每关把 4 颗南瓜糖重新随机撒到可走的籽位上（总数不变，位置不再固定） */
+  function scatterPower(){
+    var cells = [], olds = [], x, y, i;
+    for(y = 0; y < ROWS; y++){
+      for(x = 0; x < COLS; x++){
+        var v = pellets[y][x];
+        if(v === 2) olds.push([x, y]);
+        else if(v === 1 && !(x === 9 && y === 8)
+                && Math.abs(x - START.x) + Math.abs(y - START.y) >= 4) cells.push([x, y]);
+      }
+    }
+    if(cells.length < 4) return;              /* 迷宫异常：保持原来的四角 */
+    for(i = 0; i < olds.length; i++) pellets[olds[i][1]][olds[i][0]] = 1;
+    for(i = cells.length - 1; i > 0; i--){    /* Fisher–Yates 洗牌 */
+      var j = Math.floor(rnd() * (i + 1)), tmp = cells[i]; cells[i] = cells[j]; cells[j] = tmp;
+    }
+    /* 先挑彼此隔得开的，避免四颗糖挤成一堆 */
+    var picks = [];
+    for(i = 0; i < cells.length && picks.length < 4; i++){
+      var c = cells[i], ok = true;
+      for(var k = 0; k < picks.length; k++){
+        if(Math.abs(c[0] - picks[k][0]) + Math.abs(c[1] - picks[k][1]) < 5){ ok = false; break; }
+      }
+      if(ok) picks.push(c);
+    }
+    if(picks.length < 4){                     /* 实在找不到就按洗牌顺序补满 */
+      picks = [];
+      for(i = 0; i < cells.length && picks.length < 4; i++) picks.push(cells[i]);
+    }
+    for(i = 0; i < picks.length; i++) pellets[picks[i][1]][picks[i][0]] = 2;
+  }
+
+  function resetPellets(){
+    pellets = []; pelletsLeft = 0;
+    for(var y = 0; y < ROWS; y++){
+      var row = [];
+      for(var x = 0; x < COLS; x++){
+        var ch = MAZE[y].charAt(x);
+        var v = (ch === '.') ? 1 : (ch === 'o' ? 2 : 0);
+        if(v) pelletsLeft++;
+        row.push(v);
+      }
+      pellets.push(row);
+    }
+    if(night >= 10) scatterPower();
+    pelletsTotal = pelletsLeft;
+    bonus = null; bonusUsed = false;
+    /* M6-C5：缓存四颗南瓜糖的位置（不管第几夜、随机还是固定），按 x 自左向右排序 */
+    POWER_POS = [];
+    for(var py = 0; py < ROWS; py++){
+      for(var px = 0; px < COLS; px++){
+        if(pellets[py][px] === 2) POWER_POS.push({x:px, y:py});
+      }
+    }
+    POWER_POS.sort(function(a, b){ return a.x - b.x; });
+  }
+
+  function ghostSpeed(g){
+    if(g && g.mode === 'dried') return 0;
+    if(g && g.mode === 'eaten') return 11;
+    if(g && g.mode === 'flee') return 3.8;
+    /* 第 10 夜后难度不再上涨 */
+    var n = Math.min(night, 10);
+    var v = Math.min(7.2, 5.6 + (n - 1) * 0.35);
+    if(g && g.idx === 4) v = Math.min(7.45, v + 0.25);
+    return v;
+  }
+
+  function makeGhosts(){
+    ghosts = [];
+    /* 第 3 夜起万圣月巴加入（第 5 只），出窝间隔随夜数收紧 */
+    var count = night >= 3 ? Math.min(CAST.length, 5) : 4;
+    var gap = Math.max(1.1, 2.0 - (Math.min(night, 10) - 1) * 0.09);
+    /* 除万圣月巴外，立绘从图鉴已解锁月巴里随机取；id/ring 仍是行为含义 */
+    var faces = pickFaces(Math.min(4, count));
+    for(var i = 0; i < count; i++){
+      var pos = GHOSTS[i] || GHOSTS[0];
+      var face = (i === 4) ? CAST[4].id : faces[i];
+      ensureFace(face);
+      ghosts.push({
+        idx:i, id:CAST[i].id, ring:CAST[i].ring, face:face,
+        x:pos.x, y:pos.y,
+        dir:DIR_NONE, want:DIR_NONE,
+        ghost:true, mode:'house', t:1.0 + i * gap,
+        speed:ghostSpeed({idx:i}),
+        /* M6-B：朝向 / 上一次真实方向 / 转弯侧倾 / 出窝弹跳 / 隧道残影 */
+        facing:1, pdir:null, tiltT:0, tiltSign:1, popT:0, trails:[], trT:0
+      });
+    }
+  }
+
+  function resetBoard(){
+    player = {x:START.x, y:START.y, dir:DIR_NONE, want:DIR_NONE, hold:false, speed:6.2, ghost:false,
+              facing:1, pdir:null, tiltT:0, tiltSign:1, leanT:0, leanSign:0, popT:0, trails:[]};
+    clearPadLatch();   /* 重生后停下：屏幕方向键的锁定不带到下一命 */
+    syncHold();   /* 掉命/过关后若玩家仍按着方向键，直接恢复移动 */
+    powerT = 0; powerMax = 0; powerChain = 0;
+    makeGhosts();
+    phaseIdx = 0; phaseT = 0;
+  }
+
+  function isAtCenter(e){
+    return Math.abs(e.x - Math.round(e.x)) < 1e-6 && Math.abs(e.y - Math.round(e.y)) < 1e-6;
+  }
+
+  function canDir(cx, cy, d, isGhost){
+    if(!d || (!d.x && !d.y)) return false;
+    var ch = tileChar(cx + d.x, cy + d.y);
+    if(ch === '#') return false;
+    if(ch === 'H') return !!isGhost;
+    return true;
+  }
+
+  function nextCenterDist(e){
+    if(e.dir.x > 0) return Math.ceil(e.x + 1e-6) - e.x;
+    if(e.dir.x < 0) return e.x - Math.floor(e.x - 1e-6);
+    if(e.dir.y > 0) return Math.ceil(e.y + 1e-6) - e.y;
+    if(e.dir.y < 0) return e.y - Math.floor(e.y - 1e-6);
+    return 0;
+  }
+
+  /* 岔路口转向容忍：番茄离格心 TURN_EPS 格内就能提前转，刚过格心 TURN_BACK 格内会吸附回中心。
+     只对玩家生效，月巴仍严格在格心选向，避免 AI 行为漂移。 */
+  var TURN_EPS = 0.20, TURN_BACK = 0.12;
+
+  function tryTurnAtJunction(e){
+    if(e.ghost) return false;
+    if(!e.want || (!e.want.x && !e.want.y)) return false;
+    if(!e.dir.x && !e.dir.y) return false;
+    if(e.want.x === e.dir.x && e.want.y === e.dir.y) return false;
+    if(e.want.x === -e.dir.x && e.want.y === -e.dir.y) return false;   /* 反向已在开头处理 */
+
+    var cx = Math.round(e.x), cy = Math.round(e.y);
+    /* 垂直于前进方向的那一维必须已经在格线上，斜走不处理 */
+    if(e.dir.x ? Math.abs(e.y - cy) > 1e-9 : Math.abs(e.x - cx) > 1e-9) return false;
+
+    var ahead = nextCenterDist(e);
+    var tx, ty;
+    if(ahead <= TURN_EPS){
+      tx = e.x + e.dir.x * ahead;
+      ty = e.y + e.dir.y * ahead;
+    }else if(ahead >= 1 - TURN_BACK){
+      var back = 1 - ahead;             /* 刚过中心多少，往回收这一点 */
+      tx = e.x - e.dir.x * back;
+      ty = e.y - e.dir.y * back;
+    }else{
+      return false;
+    }
+    if(tx < 0) tx += COLS; else if(tx >= COLS) tx -= COLS;
+    if(!canDir(Math.round(tx), Math.round(ty), e.want, false)) return false;
+    e.x = tx; e.y = ty;
+    e.dir = e.want;
+    return true;
+  }
+
+  function moveEntity(e, dt, decide){
+    var left = e.speed * dt, guard = 0;
+    if((e.dir.x || e.dir.y) && e.want && e.want.x === -e.dir.x && e.want.y === -e.dir.y){
+      e.dir = e.want;
+    }
+    while(left > 1e-9 && guard++ < 12){
+      var cx = Math.round(e.x), cy = Math.round(e.y);
+      if(isAtCenter(e)){
+        e.x = cx; e.y = cy;
+        /* 月巴的选向必须在「跨过格中心」时进行，而不是每帧开头；
+           否则整步落点几乎不可能正好停在中心，月巴会卡在走廊里 */
+        if(decide) decide(e, cx, cy);
+        if(e.want && canDir(cx, cy, e.want, e.ghost)) e.dir = e.want;
+        if(!canDir(cx, cy, e.dir, e.ghost)){
+          /* 玩家顶着墙按方向：停在格心时轻推一下棋盘（节流 0.35s） */
+          if(!e.ghost && e.want && (e.want.x || e.want.y) && !canDir(cx, cy, e.want, e.ghost)) wallBump(e.want);
+          e.dir = DIR_NONE;
+          break;
+        }
+      }else if(!e.ghost){
+        /* 差一点点也能转：提前 / 刚过一点都吸附到格心再转向 */
+        tryTurnAtJunction(e);
+      }
+      if(!e.dir.x && !e.dir.y) break;
+      var d = nextCenterDist(e);
+      if(d <= 1e-9) d = 1;
+      var take = Math.min(left, d);
+      e.x += e.dir.x * take;
+      e.y += e.dir.y * take;
+      left -= take;
+      if(e.x < 0) e.x += COLS;
+      else if(e.x >= COLS) e.x -= COLS;
+    }
+  }
+
+  function ghostTarget(g){
+    if(g.mode === 'eaten') return {x:9, y:10};       /* 被榨干后回窝 */
+    if(g.mode === 'exit') return EXIT;
+    if(g.mode === 'flee') return CORNERS[g.idx % CORNERS.length]; /* flee 实际走随机，这里只作保底 */
+    if(g.mode === 'scatter') return CORNERS[g.idx % CORNERS.length];
+    var px = player.x, py = player.y;
+    /* 万圣月巴：番茄当前格 ±2 随机器偏移，每 4 秒刷新一次 */
+    if(g.idx === 4){
+      var seed = Math.floor(animT / 4);
+      return {x:px + ((seed * 7 + 3) % 5) - 2, y:py + ((seed * 13 + 1) % 5) - 2};
+    }
+    if(g.idx === 0) return {x:px, y:py};
+    if(g.idx === 1) return {x:px + player.dir.x * 4, y:py + player.dir.y * 4};
+    if(g.idx === 2) return {x:COLS - 1 - px, y:ROWS - 1 - py};
+    var dx = px - g.x, dy = py - g.y;
+    if(dx * dx + dy * dy < 64){
+      return {x:px < COLS / 2 ? COLS - 2 : 0, y:py < ROWS / 2 ? ROWS - 2 : 0};
+    }
+    return CORNERS[g.idx % CORNERS.length];
+  }
+
+  /* ---- 距离场：从目标格 BFS 出全图步数 ----
+     纯贪心曼哈顿距离在迷宫里会绕圈（月巴会在走廊里来回撞），
+     改用 BFS 步数选向，保证月巴真的会朝番茄走过来。 */
+  var fieldCache = {key:'', dist:null};
+
+  function walkable(x, y){
+    if(y < 0 || y >= ROWS) return false;
+    if(x < 0 || x >= COLS){
+      if(y !== 10) return false;
+      x = (x + COLS) % COLS;
+    }
+    return MAZE[y].charAt(x) !== '#';
+  }
+
+  function snapTarget(tx, ty){
+    tx = Math.round(tx); ty = Math.round(ty);
+    if(tx < 0) tx = 0; else if(tx > COLS - 1) tx = COLS - 1;
+    if(ty < 0) ty = 0; else if(ty > ROWS - 1) ty = ROWS - 1;
+    if(walkable(tx, ty)) return {x:tx, y:ty};
+    for(var r = 1; r < 8; r++){
+      for(var dy = -r; dy <= r; dy++){
+        for(var dx = -r; dx <= r; dx++){
+          if(Math.abs(dx) !== r && Math.abs(dy) !== r) continue;
+          if(walkable(tx + dx, ty + dy)) return {x:tx + dx, y:ty + dy};
+        }
+      }
+    }
+    return {x:tx, y:ty};
+  }
+
+  function distField(tx, ty){
+    var t = snapTarget(tx, ty);
+    var key = t.x + ',' + t.y;
+    if(fieldCache.key === key) return fieldCache.dist;
+    var dist = new Array(ROWS * COLS);
+    for(var i = 0; i < dist.length; i++) dist[i] = 1e9;
+    var q = [t.y * COLS + t.x], head = 0;
+    dist[t.y * COLS + t.x] = 0;
+    var d4 = [[0,-1],[-1,0],[0,1],[1,0]];
+    while(head < q.length){
+      var cur = q[head++], cy = Math.floor(cur / COLS), cx = cur % COLS;
+      for(var k = 0; k < 4; k++){
+        var nx = cx + d4[k][0], ny = cy + d4[k][1];
+        if(ny < 0 || ny >= ROWS) continue;
+        if(nx < 0 || nx >= COLS){
+          if(ny !== 10) continue;
+          nx = (nx + COLS) % COLS;
+        }
+        if(!walkable(nx, ny)) continue;
+        var ni = ny * COLS + nx;
+        if(dist[ni] <= dist[cur] + 1) continue;
+        dist[ni] = dist[cur] + 1;
+        q.push(ni);
+      }
+    }
+    fieldCache = {key:key, dist:dist};
+    return dist;
+  }
+
+  function ghostDecide(g, cx, cy){
+    /* 到达出口格即进入当前相位，不需要在整步末尾正好落在中心 */
+    if(g.mode === 'exit' && cx === EXIT.x && cy === EXIT.y){
+      g.mode = (powerT > 0) ? 'flee' : curPhase();
+      g.dir = DIR_NONE; g.want = DIR_NONE;
+    }
+    /* 被榨干后回到窝中心，等 reviveDelay() 后再出窝；等待期间仍画成一双眼睛 */
+    if(g.mode === 'eaten' && cx === 9 && cy === 10){
+      g.mode = 'house'; g.t = reviveDelay(); g.reviving = true;
+      g.dir = DIR_NONE; g.want = DIR_NONE;
+      return;
+    }
+    var dirs = [DIR_UP, DIR_LEFT, DIR_DOWN, DIR_RIGHT];
+    var back = (g.dir.x || g.dir.y) ? {x:-g.dir.x, y:-g.dir.y} : DIR_NONE;
+    var target = ghostTarget(g);
+
+    /* 辣番茄：路口随机逃窜，越乱越好抓 */
+    if(g.mode === 'flee'){
+      var pf = [];
+      for(var q = 0; q < 4; q++){
+        var df = dirs[q];
+        if(!canDir(cx, cy, df, true)) continue;
+        if(back.x === df.x && back.y === df.y) continue;
+        pf.push(df);
+      }
+      if(pf.length){ g.want = pf[Math.floor(rnd() * pf.length)]; return; }
+    }
+
+    if(g.idx === 3 && g.mode === 'chase' && rnd() < .35){
+      var picks = [];
+      for(var p = 0; p < 4; p++){
+        var dp = dirs[p];
+        if(!canDir(cx, cy, dp, true)) continue;
+        if(back.x === dp.x && back.y === dp.y) continue;
+        picks.push(dp);
+      }
+      if(picks.length){ g.want = picks[Math.floor(rnd() * picks.length)]; return; }
+    }
+
+    var field = distField(target.x, target.y);
+    var best = null, bestD = 1e9;
+    for(var i = 0; i < 4; i++){
+      var d = dirs[i];
+      if(!canDir(cx, cy, d, true)) continue;
+      if(back.x === d.x && back.y === d.y) continue;
+      var nx = cx + d.x, ny = cy + d.y;
+      if(nx < 0) nx += COLS; else if(nx >= COLS) nx -= COLS;
+      var dd = field[ny * COLS + nx];
+      if(dd < bestD){ bestD = dd; best = d; }
+    }
+    if(!best && (back.x || back.y)) best = back;
+    if(best) g.want = best;
+  }
+
+  function curPhase(){ return PHASES[phaseIdx][0]; }
+
+  function updatePhase(dt){
+    if(powerT > 0) return;              /* 辣番茄期间暂停散开/追击节奏 */
+    if(phaseIdx >= PHASES.length - 1) return;
+    phaseT += dt;
+    if(phaseT < PHASES[phaseIdx][1]) return;
+    phaseT = 0;
+    phaseIdx++;
+    for(var i = 0; i < ghosts.length; i++){
+      var g = ghosts[i];
+      if(g.mode !== 'chase' && g.mode !== 'scatter') continue;
+      g.mode = curPhase();
+      if(g.dir.x || g.dir.y){ g.dir = {x:-g.dir.x, y:-g.dir.y}; g.want = g.dir; }
+    }
+  }
+
+  /* 计分入口：每跨过 10,000 分加 1 条命，上限 5 */
+  function addScore(v, gx, gy, color){
+    if(!v) return;
+    var before = Math.floor(score / 10000);
+    score += v;
+    popScore(typeof gx === 'number' ? gx : (player ? player.x : 0),
+             typeof gy === 'number' ? gy : (player ? player.y : 0), v, color);
+    var after = Math.floor(score / 10000);
+    if(after > before && lives < 5){
+      lives = Math.min(5, lives + (after - before));
+      updateHUD();
+      if(!quiet) sfx('tick');
+    }
+    checkAch();
+  }
+
+  function eatPellets(){
+    var cx = Math.round(player.x), cy = Math.round(player.y);
+    if(cy < 0 || cy >= ROWS || cx < 0 || cx >= COLS) return;
+    var v = pellets[cy][cx];
+    if(!v) return;
+    pellets[cy][cx] = 0;
+    pelletsLeft--;
+    if(v === 2){
+      addScore(50, cx, cy);
+      startPower();
+    }else{
+      save.stats.pellets++;
+      addScore(10, cx, cy);
+      /* 被吃掉的籽在原位缩成一个小点 */
+      if(pops.length >= 8) pops.shift();
+      pops.push({gx:cx, gy:cy, t:FX.popLife, max:FX.popLife});
+    }
+    paintPellets();
+    updateHUD();
+    if(pelletsLeft <= 0) levelClear();
+  }
+
+  function checkCollision(){
+    for(var i = 0; i < ghosts.length; i++){
+      var g = ghosts[i];
+      if(g.mode === 'house' || g.mode === 'eaten' || g.mode === 'dried') continue;
+      var dx = g.x - player.x, dy = g.y - player.y;
+      if(dx > COLS / 2) dx -= COLS; else if(dx < -COLS / 2) dx += COLS;
+      if(dx * dx + dy * dy < 0.55 * 0.55){
+        if(g.mode === 'flee'){ eatGhost(g); continue; }
+        hurt(g); return;
+      }
+    }
+  }
+
+  /* =========================================================
+     M3：辣番茄 · 反吃 · 糖霜番茄 · 粒子 · 音效 · 台词
+     ========================================================= */
+  function curTheme(){ return activeTheme(); }
+  function lpMode(){ return document.body.classList.contains('lp'); }
+
+  /* M6-C6：辣番茄氛围——只在开关变化时改 DOM 类，不逐帧写样式 */
+  function syncSour(){
+    var on = powerT > 0 && state === 'play';
+    var hurry = on && powerT < 1.5;
+    if(on !== sourOn){ sourOn = on; $('frame').classList.toggle('sour', on); }
+    if(hurry !== sourHurry){ sourHurry = hurry; $('frame').classList.toggle('sourHurry', hurry); }
+  }
+
+  /* 榨干后回窝的复活等待：第 1 夜不回窝（就地变成眼睛，不再复活）；第 2–3 夜 6 秒，
+     第 4–6 夜 5 秒，第 7 夜起逐夜变快，第 10 夜起固定 2 秒 */
+  function reviveDelay(){
+    if(night <= 1) return 0;            /* 第 1 夜不会走到这里：被榨干后留在原地，见 eatGhost */
+    if(night <= 3) return 6;
+    if(night <= 6) return 5;
+    if(night >= 10) return 2;
+    return 4 - (night - 7) * (2 / 3);   /* 7 夜 4s · 8 夜 3.3s · 9 夜 2.7s · 10 夜 2s */
+  }
+
+  function powerDur(){
+    if(night <= 2) return 8;
+    if(night <= 5) return 6;
+    return 5;
+  }
+
+  /* 吃到南瓜糖：番茄变辣，所有在外月巴强制掉头进入逃跑 */
+  function startPower(){
+    powerT = powerDur();
+    powerMax = powerT;
+    powerChain = 0;
+    for(var i = 0; i < ghosts.length; i++){
+      var g = ghosts[i];
+      if(g.mode !== 'chase' && g.mode !== 'scatter') continue;
+      g.mode = 'flee';
+      if(g.dir.x || g.dir.y){ g.dir = {x:-g.dir.x, y:-g.dir.y}; g.want = g.dir; }
+    }
+    burst(player.x, player.y, 16, curTheme().accent2);
+    sfx('power');
+    say('power', true);
+    ghostSay(0, 'flee', true);
+  }
+
+  function endPower(){
+    powerT = 0; powerMax = 0; powerChain = 0;
+    for(var i = 0; i < ghosts.length; i++){
+      var g = ghosts[i];
+      if(g.mode === 'flee'){ g.mode = curPhase(); }
+    }
+  }
+
+  /* 榨干：200 / 400 / 800 / 1600 / 3200，一次辣番茄内递增 */
+  function eatGhost(g){
+    var th = curTheme();
+    var val = Math.min(POWER_CAP, POWER_BASE * Math.pow(2, powerChain));
+    powerChain++;
+    addScore(val, g.x, g.y, th.accent2);
+    if(powerChain >= 2) popTag(player.x, player.y, '×' + powerChain, powerChain >= 4 ? th.text : th.accent2);
+    /* N2：反吃吸入——月巴被抽向番茄再消失 */
+    g.inhaleT = .18; g.inhaleMax = .18;
+    g.inhaleX = g.x; g.inhaleY = g.y;
+    g.inhaleToX = player.x; g.inhaleToY = player.y;
+    /* N1：命中定格 */
+    if(!quiet && !lpMode() && !reduceMotion) hitStop = FX.hitStop;
+    runGhosts++;
+    save.stats.ghosts++;
+    if(powerChain > (save.stats.maxCombo || 0)) save.stats.maxCombo = powerChain;
+    if(night <= 1){
+      /* 第 1 夜：榨干后化成一双小眼睛留在原地，本夜不再复活 */
+      g.mode = 'dried';
+      g.dir = DIR_NONE;
+      g.want = DIR_NONE;
+    }else{
+      g.mode = 'eaten';
+      /* 保留当前方向：月巴只在格心选向，半格清空方向会让它永远卡在原地不动 */
+      g.want = g.dir;
+    }
+    g.speed = ghostSpeed(g);
+    /* N3：连吃阶梯——环色递进、粒子 14/22/30/38、连吃时棋盘轻顶一下 */
+    var rc = powerChain >= 4 ? th.text : (powerChain >= 3 ? th.tomato : th.accent2);
+    burst(g.x, g.y, powerChain >= 2 ? Math.min(38, 14 + (powerChain - 1) * 8) : 14, rc);
+    ringAt(g.x, g.y, rc);
+    if(powerChain >= 2 && powerChain < 4) punch();
+    whiteFlash();
+    sfx('ghost');
+    ghostSay(g.idx, 'eaten', true);
+    if(powerChain === 4){
+      addScore(1000);
+      shake();
+      say('combo', true);
+    }
+    updateHUD();
+  }
+
+  /* ---- 糖霜番茄：吃掉一半籽后中央出现 6 秒 ---- */
+  function maybeSpawnBonus(){
+    if(bonusUsed || bonus || pelletsTotal <= 0) return;
+    if(pelletsLeft > Math.ceil(pelletsTotal * .55)) return;
+    bonusUsed = true;
+    bonus = {x:9, y:8, t:6, max:6};
+    sfx('bonus');
+  }
+
+  function updateBonus(dt){
+    maybeSpawnBonus();
+    if(!bonus) return;
+    bonus.t -= dt;
+    if(bonus.t <= 0){ bonus = null; return; }
+    if(Math.abs(player.x - bonus.x) < .6 && Math.abs(player.y - bonus.y) < .6){
+      addScore(300, bonus.x, bonus.y, curTheme().tomato);
+      bonus = null;
+      updateHUD();
+      burst(9, 8, 18, curTheme().tomato);
+      sfx('bonus');
+      say('bonus', true);
+    }
+  }
+
+  /* P3-N4：落脚尘点——走动时在脚边撒两粒短命灰尘 */
+  function puffDust(e){
+    var th = curTheme();
+    var cx = (e.x + .5) * tile, cy = (e.y + .5) * tile + tile * .40;
+    for(var i = 0; i < 2; i++){
+      if(particles.length >= 48) particles.shift();
+      var a = rnd() * Math.PI * 2;
+      var v = (.22 + rnd() * .5) * tile;
+      var life = .26 + rnd() * .16;
+      particles.push({
+        x:cx + (rnd() - .5) * tile * .34, y:cy,
+        vx:Math.cos(a) * v, vy:-Math.abs(Math.sin(a)) * tile * .22,
+        life:life, max:life, c:hexA(th.dim, .75), r:Math.max(1, tile * .045)
+      });
+    }
+  }
+
+  /* ---- 粒子池（上限 48，低功耗减半） ---- */
+  function burst(gx, gy, n, color){
+    if(lpMode()) n = Math.min(n, 6);
+    var cx = (gx + .5) * tile, cy = (gy + .5) * tile;
+    for(var i = 0; i < n; i++){
+      if(particles.length >= 48) particles.shift();
+      var a = rnd() * Math.PI * 2, v = (.5 + rnd() * 1.7) * tile;
+      var life = .45 + rnd() * .35;
+      particles.push({
+        x:cx, y:cy,
+        vx:Math.cos(a) * v, vy:Math.sin(a) * v - tile * .5,
+        life:life, max:life,
+        c:color, r:Math.max(1.2, tile * .085)
+      });
+    }
+  }
+  function updateParticles(dt){
+    for(var i = particles.length - 1; i >= 0; i--){
+      var p = particles[i];
+      p.life -= dt;
+      if(p.life <= 0){ particles.splice(i, 1); continue; }
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += tile * 2.4 * dt;
+    }
+  }
+  function drawParticles(){
+    for(var i = 0; i < particles.length; i++){
+      var p = particles[i];
+      ctx.globalAlpha = Math.max(0, p.life / p.max);
+      ctx.fillStyle = p.c;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /* ---- M6-A：飘字 / 吃籽微缩 / 反吃冲击环 / 撞墙轻推 / 受击红闪 ---- */
+  function pushPop(o){
+    if(popTexts.length >= 8) popTexts.shift();
+    popTexts.push(o);
+  }
+  function popScore(gx, gy, v, color){
+    if(quiet || !v) return;
+    if(v === 10){
+      /* 0.2 秒内的 10 分飘字直接累加，连吃籽不刷屏 */
+      for(var i = 0; i < popTexts.length; i++){
+        var p = popTexts[i];
+        if(p.kind === 'p' && p.max - p.t < .2){
+          p.v += v;
+          p.txt = '+' + p.v;
+          p.gx = gx; p.gy = gy;
+          p.t = p.max;
+          return;
+        }
+      }
+    }
+    pushPop({gx:gx, gy:gy, v:v, txt:'+' + v, kind: v === 10 ? 'p' : 'o',
+             t:FX.txtLife, max:FX.txtLife, color:color || curTheme().accent2, big:false});
+  }
+  function popTag(gx, gy, txt, color){
+    if(quiet) return;
+    pushPop({gx:gx, gy:gy, txt:txt, kind:'t', t:.55, max:.55,
+             color:color || curTheme().accent2, big:true});
+  }
+  function ringAt(gx, gy, color){
+    if(quiet || reduceMotion) return;
+    if(rings.length >= 4) rings.shift();
+    rings.push({gx:gx, gy:gy, r0:.3, r1:2.0, c:color || curTheme().accent2,
+                t:FX.ringLife, max:FX.ringLife});
+  }
+  function whiteFlash(){
+    if(quiet || reduceMotion || lpMode()) return;
+    var el = $('flash');
+    el.classList.remove('on');
+    void el.offsetWidth;
+    el.classList.add('on');
+  }
+  function hurtFlash(){
+    if(quiet || reduceMotion) return;
+    var el = $('hurtFx');
+    el.classList.remove('on');
+    void el.offsetWidth;
+    el.classList.add('on');
+  }
+  function wallBump(d){
+    if(quiet || reduceMotion || lpMode() || !d) return;
+    if(lastBumpT >= 0 && animT - lastBumpT < FX.bumpCd) return;
+    lastBumpT = animT;
+    var el = $('cv');
+    el.style.setProperty('--bx', (-d.x * 1.5) + 'px');
+    el.style.setProperty('--by', (-d.y * 1.5) + 'px');
+    el.classList.remove('bump');
+    void el.offsetWidth;
+    el.classList.add('bump');
+  }
+  /* N3：连吃时棋盘极轻微顶一下，强化"咬进去"的手感 */
+  function punch(){
+    if(quiet || reduceMotion || lpMode()) return;
+    var el = $('cv');
+    el.classList.remove('punch');
+    void el.offsetWidth;
+    el.classList.add('punch');
+  }
+  /* N9：3-2-1 结束后的 GO! 扩散字幕 */
+  function setGo(){
+    var el = $('cdown');
+    if(!el) return;
+    el.textContent = (I18N[lang].go || 'GO') + '!';
+    el.classList.add('show');
+    el.classList.remove('pop');
+    void el.offsetWidth;
+    el.classList.add('pop');
+    goT = .5;
+    if(!reduceMotion && !lpMode()){
+      if(rings.length >= 4) rings.shift();
+      rings.push({gx:player.x, gy:player.y, r0:.4, r1:3.4, c:curTheme().accent2, t:.45, max:.45});
+    }
+  }
+
+  function drawPops(th){
+    if(!pops.length || quiet || lpMode() || reduceMotion) return;
+    for(var i = 0; i < pops.length; i++){
+      var p = pops[i], k = 1 - p.t / p.max;
+      var cx = (p.gx + .5) * tile, cy = (p.gy + .5) * tile;
+      ctx.globalAlpha = 1 - k;
+      ctx.fillStyle = th.pellet;
+      ctx.beginPath();
+      ctx.arc(cx, cy, Math.max(.4, tile * .17 * (1 - k * .76)), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawRings(){
+    if(!rings.length) return;
+    for(var i = 0; i < rings.length; i++){
+      var r = rings[i], k = 1 - r.t / r.max;
+      var rad = Math.max(1, tile * (r.r0 + (r.r1 - r.r0) * k));
+      ctx.globalAlpha = (1 - k) * .8;
+      ctx.strokeStyle = r.c;
+      ctx.lineWidth = 3 + (.6 - 3) * k;
+      ctx.beginPath();
+      ctx.arc((r.gx + .5) * tile, (r.gy + .5) * tile, rad, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawPopTexts(){
+    if(!popTexts.length) return;
+    var calm = lpMode() || reduceMotion;
+    for(var i = 0; i < popTexts.length; i++){
+      var p = popTexts[i], k = 1 - p.t / p.max;
+      var size = Math.max(10, tile * (p.big ? 1.05 : .62));
+      var cx = (p.gx + .5) * tile, cy = (p.gy + .5) * tile;
+      var lift = calm ? 0 : FX.txtLift * tile * k;
+      var a = k > .6 ? 1 - (k - .6) / .4 : 1;
+      ctx.globalAlpha = Math.max(0, a);
+      ctx.font = '900 ' + Math.round(size) + 'px "SF Mono",Consolas,sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.lineWidth = Math.max(2, size * .14);
+      ctx.strokeStyle = 'rgba(11,7,20,.85)';
+      ctx.strokeText(p.txt, cx, cy - lift);
+      ctx.fillStyle = p.color;
+      ctx.fillText(p.txt, cx, cy - lift);
+    }
+    ctx.globalAlpha = 1;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  function updateFx(dt){
+    for(var i = popTexts.length - 1; i >= 0; i--){
+      popTexts[i].t -= dt;
+      if(popTexts[i].t <= 0) popTexts.splice(i, 1);
+    }
+    for(i = pops.length - 1; i >= 0; i--){
+      pops[i].t -= dt;
+      if(pops[i].t <= 0) pops.splice(i, 1);
+    }
+    for(i = rings.length - 1; i >= 0; i--){
+      rings[i].t -= dt;
+      if(rings[i].t <= 0) rings.splice(i, 1);
+    }
+  }
+
+  function shake(){
+    if(lpMode() || reduceMotion) return;
+    var el = $('cv');
+    el.classList.remove('shake');
+    void el.offsetWidth;
+    el.classList.add('shake');
+  }
+
+  /* ---- 音效：WebAudio 振荡器，零资源 ---- */
+  function ac(){
+    if(quiet) return null;
+    if(!audioCtx){
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC) return null;
+      try{ audioCtx = new AC(); }catch(e){ audioCtx = null; return null; }
+    }
+    if(audioCtx.state === 'suspended'){ try{ audioCtx.resume(); }catch(e){} }
+    return audioCtx;
+  }
+  function audio(){
+    if(!save.ui.sfx) return null;
+    return ac();
+  }
+  function tone(freq, dur, type, gain){
+    var ac = audio();
+    if(!ac) return;
+    try{
+      var o = ac.createOscillator(), g = ac.createGain();
+      var t0 = ac.currentTime;
+      o.type = type || 'square';
+      o.frequency.setValueAtTime(freq, t0);
+      g.gain.setValueAtTime(.0001, t0);
+      g.gain.exponentialRampToValueAtTime(gain || .05, t0 + .012);
+      g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+      o.connect(g); g.connect(ac.destination);
+      o.start(t0); o.stop(t0 + dur + .03);
+    }catch(e){}
+  }
+  function sfx(name){
+    if(quiet || !save.ui.sfx) return;
+    switch(name){
+      case 'power':
+        tone(480, .16, 'triangle', .08);
+        setTimeout(function(){ tone(740, .22, 'triangle', .06); }, 90);
+        break;
+      case 'ghost':
+        tone(880, .08, 'square', .05);
+        setTimeout(function(){ tone(1180, .12, 'square', .045); }, 70);
+        break;
+      case 'bonus':
+        tone(660, .09, 'triangle', .06);
+        setTimeout(function(){ tone(880, .09, 'triangle', .055); }, 80);
+        setTimeout(function(){ tone(1100, .14, 'triangle', .05); }, 160);
+        break;
+      case 'death':
+        tone(420, .16, 'sawtooth', .06);
+        setTimeout(function(){ tone(320, .18, 'sawtooth', .055); }, 140);
+        setTimeout(function(){ tone(220, .30, 'sawtooth', .05); }, 300);
+        break;
+      case 'clear':
+        tone(520, .12, 'triangle', .055);
+        setTimeout(function(){ tone(660, .12, 'triangle', .055); }, 110);
+        setTimeout(function(){ tone(780, .12, 'triangle', .055); }, 220);
+        setTimeout(function(){ tone(1040, .26, 'triangle', .05); }, 330);
+        break;
+      case 'tick':
+        tone(700, .07, 'triangle', .05);
+        break;
+      case 'ach':
+        tone(880, .09, 'triangle', .05);
+        setTimeout(function(){ tone(1174, .16, 'triangle', .05); }, 100);
+        break;
+    }
+  }
+
+  /* ---- 8-bit 背景音乐：万圣节追逐曲（A 小调，16 分音符网格，64 步循环） ---- */
+  var BGM_LEVEL = .9;
+  var BGM_BPM = 148;
+  var BGM_MEL = [
+    /* 第 1 小节 · Am：上行分解 */
+    69,0,72,0, 76,0,72,0, 69,0,72,0, 77,0,76,0,
+    /* 第 2 小节 · E7：月巴围上来的紧张感 */
+    68,0,71,0, 76,0,80,0, 76,0,71,0, 68,0,71,0,
+    /* 第 3 小节 · Dm：再爬一次高音 */
+    74,0,77,0, 81,0,77,0, 74,0,77,0, 81,0,77,0,
+    /* 第 4 小节 · E7：半音下行，咬回开头 */
+    76,0,74,0, 72,0,71,0, 68,0,71,0, 76,0,80,0
+  ];
+  var BGM_BASS = [
+    45,0,0,0, 40,0,0,0, 45,0,0,0, 48,0,0,0,
+    40,0,0,0, 47,0,0,0, 40,0,0,0, 44,0,0,0,
+    38,0,0,0, 45,0,0,0, 38,0,0,0, 41,0,0,0,
+    40,0,0,0, 47,0,0,0, 40,0,0,0, 47,0,0,0
+  ];
+  var BGM = {on:false, step:0, nextAt:0, timer:0, gain:null};
+
+  function midiHz(n){ return 440 * Math.pow(2, (n - 69) / 12); }
+  function bgmBus(){
+    var a = ac();
+    if(!a) return null;
+    if(!BGM.gain){
+      var g = a.createGain(), lp = a.createBiquadFilter();
+      g.gain.value = .0001;
+      lp.type = 'lowpass'; lp.frequency.value = 2200; lp.Q.value = .7;
+      g.connect(lp); lp.connect(a.destination);
+      BGM.gain = g;
+    }
+    return BGM.gain;
+  }
+  function bgmTone(midi, when, dur, type, vol){
+    var a = audioCtx;
+    if(!a || !BGM.gain) return;
+    try{
+      var o = a.createOscillator(), g = a.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(midiHz(midi), when);
+      g.gain.setValueAtTime(.0001, when);
+      g.gain.linearRampToValueAtTime(vol, when + .006);
+      g.gain.setValueAtTime(vol, when + Math.max(.02, dur - .03));
+      g.gain.exponentialRampToValueAtTime(.0001, when + dur);
+      o.connect(g); g.connect(BGM.gain);
+      o.onended = function(){ try{ o.disconnect(); g.disconnect(); }catch(e){} };
+      o.start(when); o.stop(when + dur + .02);
+    }catch(e){}
+  }
+  function bgmSchedule(step, when, sd){
+    var m = BGM_MEL[step], b = BGM_BASS[step];
+    if(m) bgmTone(m, when, sd * 1.6, 'square', .032);
+    if(b) bgmTone(b, when, sd * 3.3, 'triangle', .030);
+  }
+  function bgmKick(){
+    var a = audioCtx;
+    if(!a || !BGM.on) return;
+    /* 辣番茄时间：曲子加速，追逐感更急 */
+    var sd = 60 / (BGM_BPM * (powerT > 0 ? 1.18 : 1)) / 4;
+    if(BGM.nextAt < a.currentTime) BGM.nextAt = a.currentTime + .02;
+    while(BGM.nextAt < a.currentTime + .18){
+      bgmSchedule(BGM.step, BGM.nextAt, sd);
+      BGM.step = (BGM.step + 1) % 64;
+      BGM.nextAt += sd;
+    }
+  }
+  function bgmStart(){
+    if(BGM.on || quiet || !save.ui.music) return;
+    var bus = bgmBus();
+    if(!bus) return;
+    BGM.on = true;
+    BGM.step = 0;
+    BGM.nextAt = audioCtx.currentTime + .12;
+    try{
+      bus.gain.cancelScheduledValues(audioCtx.currentTime);
+      bus.gain.setValueAtTime(.0001, audioCtx.currentTime);
+      bus.gain.linearRampToValueAtTime(BGM_LEVEL, audioCtx.currentTime + .35);
+    }catch(e){}
+    BGM.timer = setInterval(bgmKick, 60);
+    bgmKick();
+  }
+  /* 淡出并把播放位置归零，下一局从头开始 */
+  function bgmStop(){
+    if(!BGM.on) return;
+    BGM.on = false;
+    BGM.step = 0;
+    if(BGM.timer){ clearInterval(BGM.timer); BGM.timer = 0; }
+    var a = audioCtx;
+    if(a && BGM.gain){
+      try{
+        BGM.gain.gain.cancelScheduledValues(a.currentTime);
+        BGM.gain.gain.setValueAtTime(BGM.gain.gain.value, a.currentTime);
+        BGM.gain.gain.linearRampToValueAtTime(.0001, a.currentTime + .22);
+      }catch(e){}
+    }
+  }
+
+  /* ---- 台词双通道：番茄常驻位 + 月巴跟头气泡 ---- */
+  function pickLine(kind){
+    var pool = (I18N[lang].lines && I18N[lang].lines[kind]) || [];
+    if(!pool.length) return '';
+    var i = Math.floor(rnd() * pool.length);
+    if(pool.length > 1 && pool[i] === lastLine[kind]) i = (i + 1) % pool.length;
+    lastLine[kind] = pool[i];
+    return pool[i];
+  }
+
+  function say(kind, force){
+    if(!save.ui.dlg) return;
+    if(sayCd > 0 && !force) return;
+    var line = pickLine(kind);
+    if(!line) return;
+    setSay(line);
+    sayCd = 5.5;
+    save.stats.talks++;
+    checkAch();
+  }
+
+  function ghostSay(idx, kind, force){
+    if(!save.ui.dlg) return;
+    if(idx < 0 || idx >= CAST.length) return;
+    if(!force && (gSayT > 0 || gSayCd > 0)) return;
+    var line = pickLine(kind);
+    if(!line) return;
+    var gs = $('gSay');
+    gs.textContent = line;
+    /* M6-D5：气泡每次重播 3px 上浮；低功耗 / 减动效直接淡入 */
+    gs.classList.remove('on');
+    void gs.offsetWidth;
+    gs.classList.add('on');
+    gSayIdx = idx;
+    gSayT = 2.2;
+    gSayCd = 7 + rnd() * 3;
+    save.stats.talks++;
+    checkAch();
+  }
+
+  function hideGSay(){
+    gSayIdx = -1; gSayT = 0;
+    $('gSay').classList.remove('on');
+  }
+
+  function updateSay(dt){
+    if(sayCd > 0) sayCd -= dt;
+    if(nearT > 0) nearT -= dt;
+    if(gSayCd > 0) gSayCd -= dt;
+    if(gSayT > 0){
+      gSayT -= dt;
+      if(gSayT <= 0) hideGSay();
+    }
+  }
+
+  /* 月巴贴近时随机搭话 */
+  function tryNearSay(){
+    if(nearT > 0 || !save.ui.dlg) return;
+    var best = -1, bd = 3.2 * 3.2;
+    for(var i = 0; i < ghosts.length; i++){
+      var g = ghosts[i];
+      if(g.mode !== 'chase' && g.mode !== 'scatter') continue;
+      var dx = g.x - player.x, dy = g.y - player.y;
+      if(dx * dx + dy * dy < bd){ bd = dx * dx + dy * dy; best = i; }
+    }
+    if(best < 0) return;
+    ghostSay(best, 'near');
+    nearT = 9 + rnd() * 6;
+  }
+
+  function resetFx(){
+    powerT = 0; powerMax = 0; powerChain = 0;
+    particles.length = 0;
+    popTexts.length = 0; pops.length = 0; rings.length = 0;
+    lastBumpT = -1;
+    hitStop = 0; deathFx = null;
+    clearFx = null; dustT = 0;
+    for(var ti = 0; ti < ghosts.length; ti++){ if(ghosts[ti].trails) ghosts[ti].trails.length = 0; }
+    if(goT > 0){ goT = 0; hideCountdown(); }
+    $('flash').classList.remove('on');
+    $('hurtFx').classList.remove('on');
+    lampT = 0; lampSparks = 0;
+    syncSour();
+    sayCd = 0; nearT = 8; gSayCd = 0;
+    hideGSay();
+  }
+
+  function update(dt){
+    animT += dt;
+    updateParticles(dt);
+    updateFx(dt);
+    updateSay(dt);
+    /* N9：GO! 扩散字幕，0.5 秒后收起 */
+    if(goT > 0){ goT -= dt; if(goT <= 0) hideCountdown(); }
+    if(state === 'clear'){
+      if(clearFx) clearFx.t += dt;
+      lampT += dt;
+      /* 每盏点亮到一半时在灯顶撒 3 颗火星（低功耗 / 减动效 / 自检都不撒） */
+      if(!quiet && !lpMode() && !reduceMotion){
+        while(lampSparks < POWER_POS.length &&
+              lampT >= lampSparks * FX.lampGap + FX.lampLit * .55){
+          var lampP = POWER_POS[lampSparks];
+          burst(lampP.x, lampP.y - .22, 3, curTheme().accent2);
+          lampSparks++;
+        }
+      }
+      clearT -= dt;
+      if(clearT <= 0) advanceNight();
+      return;
+    }
+    if(state === 'dead'){
+      if(deathFx){
+        deathFx.t += dt;
+        /* 摊平落地那一刻抖一点灰 */
+        if(!deathFx.landed && deathFx.t >= .68){
+          deathFx.landed = true;
+          burst(deathFx.px + deathFx.wx * .16, deathFx.py + deathFx.wy * .16, 6, curTheme().tomato);
+        }
+      }
+      deadT -= dt;
+      if(deadT <= 0) respawn();
+      return;
+    }
+    if(state !== 'play') return;
+
+    if(readyT > 0){
+      readyT -= dt;
+      var n = Math.ceil(readyT);
+      if(n !== lastReadyN){
+        lastReadyN = n;
+        if(n > 0) setCountdown(Math.min(3, n));   /* 开局 3-2-1 大字压在迷宫中心 */
+      }
+      if(readyT > 0) return;
+      if(quiet) hideCountdown(); else setGo();
+      $('chipEm').textContent = I18N[lang].go || '';
+      readyT = 0;
+    }
+
+    if(powerT > 0){
+      powerT -= dt;
+      if(powerT <= 0) endPower();
+    }
+    updateBonus(dt);
+    updatePhase(dt);
+    /* 长按才走：没有按住方向时番茄停在原地 */
+    if(player.hold && (player.want.x || player.want.y)) moveEntity(player, dt);
+    markFacing(player);
+    decayFace(player, dt);
+    /* N4：走动时落脚扬尘（约每 0.18s 一次；低功耗 / 减动效不撒） */
+    if(player.hold && (player.want.x || player.want.y) && !lpMode() && !reduceMotion){
+      dustT -= dt;
+      if(dustT <= 0){ dustT = .18; puffDust(player); }
+    }else{
+      dustT = 0;
+    }
+    eatPellets();
+    if(state !== 'play') return;
+
+    for(var i = 0; i < ghosts.length; i++){
+      var g = ghosts[i];
+      decayFace(g, dt);
+      if(g.inhaleT > 0) g.inhaleT = Math.max(0, g.inhaleT - dt);
+      if(g.mode === 'house'){
+        g.t -= dt;
+        if(g.t <= 0){ g.mode = 'exit'; g.reviving = false; g.popT = FX.bounceLife; }   /* B2：出窝弹一下 */
+        continue;
+      }
+      if(g.mode === 'dried') continue;      /* 第 1 夜：眼睛就地不动，不复活 */
+      g.speed = ghostSpeed(g);
+      moveEntity(g, dt, ghostDecide);
+      markFacing(g);
+      sampleTrail(g, dt);
+    }
+    checkCollision();
+    if(state === 'play') tryNearSay();
+  }
+
+  function startLoop(){
+    if(rafId) return;
+    lastT = 0; acc = 0;
+    rafId = requestAnimationFrame(tick);
+  }
+  function stopLoop(){
+    if(rafId){ cancelAnimationFrame(rafId); rafId = 0; }
+    lastT = 0; acc = 0;
+  }
+  function tick(t){
+    if(state !== 'play' && state !== 'dead' && state !== 'clear'){ stopLoop(); return; }
+    rafId = requestAnimationFrame(tick);
+    if(!lastT){ lastT = t; return; }
+    var dt = (t - lastT) / 1000;
+    lastT = t;
+    if(dt > 0.25) dt = 0.25;
+    /* N1：命中定格——几十毫秒内推进停住，只重绘 */
+    if(hitStop > 0){ hitStop -= dt; draw(); return; }
+    acc += dt;
+    var steps = 0;
+    while(acc >= STEP && steps < 4){ update(STEP); acc -= STEP; steps++; }
+    if(steps >= 4) acc = 0;
+    draw();
+  }
+
+  /* M6-D1：生命逐颗渲染；掉一条命时让那一颗裂开，.36s 后移除 */
+  var livesShown = -1;
+  function lifeIcon(){
+    var i = document.createElement('i');
+    i.textContent = '🍅';
+    return i;
+  }
+  function renderLives(){
+    var box = $('livesIcons');
+    if(!box) return;
+    var n = lives > 0 ? lives : 0;
+    if(livesShown < 0 || n > livesShown){
+      /* 首次 / 加命：清掉还没飘完的碎屑，再补齐到 n 颗 */
+      var old = box.querySelectorAll('i.crack');
+      for(var i = 0; i < old.length; i++){ if(old[i].parentNode) old[i].parentNode.removeChild(old[i]); }
+      for(var j = box.children.length; j < n; j++) box.appendChild(lifeIcon());
+    } else if(n < livesShown){
+      var cut = livesShown - n;
+      while(cut-- > 0){
+        var last = box.lastElementChild;
+        if(!last) break;
+        if(last.classList.contains('crack')){
+          if(last.parentNode) last.parentNode.removeChild(last);
+          continue;
+        }
+        last.classList.add('crack');
+        (function(el){
+          setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 360);
+        })(last);
+      }
+    }
+    livesShown = n;
+  }
+
+  function updateHUD(){
+    $('hudScore').textContent = score;
+    $('hudNight').textContent = night;
+    renderLives();
+    /* P2-N7：只剩一条命时，屏幕边缘开始心跳 */
+    document.body.classList.toggle('lowhp', lives === 1);
+  }
+
+  function chipText(){
+    return (I18N[lang].chip || '夜 {n}').replace('{n}', night);
+  }
+  function updateNightChip(){
+    $('nightChipT').textContent = chipText();
+    $('nightChip').classList.add('show');
+  }
+  /* M6-D4：夜数翻页——重播一次自下 6px 淡入（低功耗 / 减动效不做） */
+  function flipNight(el){
+    if(!el || lpMode() || reduceMotion) return;
+    el.classList.remove('flip');
+    void el.offsetWidth;
+    el.classList.add('flip');
+  }
+
+  function levelClear(){
+    addScore(1000 * night, player.x, player.y, curTheme().accent2);
+    if(nightHits === 0) unlock('nohit');
+    save.stats.nights++;
+    checkAch();
+    updateHUD();
+    state = 'clear';
+    clearT = 1.4;
+    clearFx = {t:0, dur:1.4};
+    lampT = 0; lampSparks = 0;
+    $('chipEm').textContent = I18N[lang].clear || '';
+    bgmStop();
+    sfx('clear');
+    say('clear', true);
+  }
+
+  function advanceNight(){
+    night++;
+    nightHits = 0;
+    setMazeForNight();
+    buildStatic();
+    resetPellets();
+    resetBoard();
+    resetFx();
+    paintPellets();
+    updateHUD();
+    updateNightChip();
+    flipNight($('hudNight'));
+    flipNight($('nightChipT'));
+    checkAch();
+    $('chipEm').textContent = I18N[lang].preparing || '';
+    state = 'play';
+    readyT = 2.0;
+    lastReadyN = -1;
+    bgmStart();
+    startLoop();
+    draw();
+  }
+
+  function hurt(g){
+    if(state !== 'play' || readyT > 0) return;
+    lives--;
+    nightHits++;
+    powerT = 0; powerMax = 0; powerChain = 0;
+    updateHUD();
+    bgmStop();
+    sfx('death');
+    hurtFlash();
+    say('death', true);
+    if(lives <= 0){ gameOver(); return; }
+    /* P1：死亡演出——番茄被月巴按在墙上挤三下，最后摊平躺地 */
+    var wd = deathWallDir(g);
+    var calm = quiet || reduceMotion || lpMode();
+    deathFx = {
+      t:0, dur: calm ? .9 : 1.25, calm: calm, landed:false,
+      idx: g ? g.idx : -1,
+      gid: g ? (g.face || g.id) : '',
+      ring: g ? g.ring : curTheme().accent2,
+      px: player.x, py: player.y, wx: wd.x, wy: wd.y
+    };
+    if(!calm) hitStop = FX.hurtStop;
+    state = 'dead';
+    deadT = deathFx.dur;
+    $('chipEm').textContent = I18N[lang].preparing || '';
+  }
+
+  /* 就死的墙：优先取「被撞飞方向」上的邻格；附近没贴墙就沿离心方向假想一堵 */
+  function deathWallDir(g){
+    var cx = Math.round(player.x), cy = Math.round(player.y);
+    var vx = 1, vy = 0;
+    if(g){
+      vx = player.x - g.x; vy = player.y - g.y;
+      var len = Math.sqrt(vx * vx + vy * vy) || 1;
+      vx /= len; vy /= len;
+    }
+    var ds = [{x:-1,y:0},{x:1,y:0},{x:0,y:-1},{x:0,y:1}];
+    var best = null, bd = -.35;
+    for(var i = 0; i < ds.length; i++){
+      var d = ds[i];
+      if(tileChar(cx + d.x, cy + d.y) !== '#') continue;
+      var dot = d.x * vx + d.y * vy;
+      if(dot > bd){ bd = dot; best = d; }
+    }
+    if(best) return {x:best.x, y:best.y};
+    return Math.abs(vx) >= Math.abs(vy)
+      ? {x: vx >= 0 ? 1 : -1, y:0}
+      : {x:0, y: vy >= 0 ? 1 : -1};
+  }
+
+  function respawn(){
+    resetBoard();
+    resetFx();
+    readyT = 1.8;
+    lastReadyN = -1;
+    state = 'play';
+    bgmStart();
+    updateNightChip();
+    $('chipEm').textContent = I18N[lang].preparing || '';
+  }
+
+  /* M6-D2：结算三行数字滚动——一次性 rAF，.6s 缓出，结束即停 */
+  var countRaf = 0;
+  function stopCountUp(){
+    if(countRaf){ cancelAnimationFrame(countRaf); countRaf = 0; }
+  }
+  function countUpRows(rows, dur){
+    stopCountUp();
+    var i;
+    if(quiet || lpMode() || reduceMotion){
+      for(i = 0; i < rows.length; i++) rows[i].el.textContent = rows[i].to;
+      return;
+    }
+    var t0 = (window.performance && performance.now) ? performance.now() : +new Date();
+    for(i = 0; i < rows.length; i++) rows[i].el.textContent = 0;
+    function step(now){
+      var k = Math.min(1, (now - t0) / (dur * 1000));
+      var e = 1 - Math.pow(1 - k, 3);
+      for(var j = 0; j < rows.length; j++){
+        rows[j].el.textContent = k >= 1 ? rows[j].to : Math.round(rows[j].to * e);
+      }
+      countRaf = k < 1 ? requestAnimationFrame(step) : 0;
+    }
+    countRaf = requestAnimationFrame(step);
+  }
+
+  function gameOver(){
+    state = 'over';
+    stopLoop();
+    bgmStop();
+    var isBest = score > (save.best || 0);
+    if(isBest) save.best = score;
+    if(night > (save.bestNight || 0)) save.bestNight = night;
+    save.stats.plays++;
+    checkAch();
+    writeSave();
+    countUpRows([
+      {el: $('overScore'), to: score},
+      {el: $('overNight'), to: night},
+      {el: $('overGhosts'), to: runGhosts}
+    ], .6);
+    /* P3-N12：破纪录时点亮星芒（每次结算重播一次） */
+    var tag = $('newBestTag');
+    tag.classList.remove('star');
+    void tag.offsetWidth;
+    tag.style.display = isBest ? 'block' : 'none';
+    if(isBest) tag.classList.add('star');
+    $('over').classList.add('show');
+    $('bestVal').textContent = save.best || 0;
+    draw();
+  }
+
+  /* =========================================================
+     6. 状态与界面
+     ========================================================= */
+  function showTitle(){
+    stopLoop();
+    stopCountUp();
+    bgmStop();
+    state = 'title';
+    releaseHeld();
+    hideCountdown();
+    $('cv').classList.remove('dim');
+    $('title').classList.add('show');
+    $('pause').classList.remove('show');
+    $('over').classList.remove('show');
+    $('newBestTag').classList.remove('star');
+    $('nightChip').classList.remove('show');
+    score = 0; lives = 3; night = 1;
+    runGhosts = 0; nightHits = 0;
+    setMazeForNight();
+    resetPellets();
+    resetBoard();
+    resetFx();
+    buildStatic();
+    paintPellets();
+    updateHUD();
+    $('bestVal').textContent = save.best || 0;
+    setSay('');
+    draw();
+  }
+
+  function beginRun(){
+    stopCountUp();
+    score = 0; lives = 3; night = 1;
+    runGhosts = 0; nightHits = 0;
+    setMazeForNight();
+    resetPellets();
+    resetBoard();
+    resetFx();
+    buildStatic();
+    paintPellets();
+    updateHUD();
+    $('title').classList.remove('show');
+    $('pause').classList.remove('show');
+    $('over').classList.remove('show');
+    updateNightChip();
+    $('chipEm').textContent = I18N[lang].preparing || '';
+    state = 'play';
+    readyT = 3.0; deadT = 0; clearT = 0; lastReadyN = -1;
+    say('start', true);
+    bgmStart();
+    startLoop();
+    draw();
+  }
+
+  function pauseGame(){
+    if(state !== 'play') return;
+    state = 'pause';
+    bgmStop();
+    releaseHeld();
+    renderSkins();
+    $('cv').classList.add('dim');
+    $('pause').classList.add('show');
+    stopLoop();
+  }
+  function resumeGame(){
+    if(state !== 'pause') return;
+    state = 'play';
+    $('pause').classList.remove('show');
+    $('cv').classList.remove('dim');
+    bgmStart();
+    startLoop();
+  }
+
+  function bind(){
+    $('btnStart').addEventListener('click', beginRun);
+    $('btnPause').addEventListener('click', function(){
+      if(state === 'play') pauseGame();
+      else if(state === 'pause') resumeGame();
+    });
+    $('btnResume').addEventListener('click', resumeGame);
+    $('btnQuit').addEventListener('click', showTitle);
+    $('btnAgain').addEventListener('click', beginRun);
+    $('btnOverQuit').addEventListener('click', showTitle);
+
+    $('themes').addEventListener('click', function(e){
+      var b = e.target.closest ? e.target.closest('.thm') : null;
+      if(!b) return;
+      save.light = false;               /* 选夜色即退出浅色模式 */
+      applyTheme(b.getAttribute('data-th'));
+      writeSave();
+    });
+
+    $('langRow').addEventListener('click', function(e){
+      var b = e.target.closest ? e.target.closest('.langBtn') : null;
+      if(!b) return;
+      setLang(b.getAttribute('data-lang'));
+    });
+
+    $('chkLight').addEventListener('change', function(){
+      save.light = !!this.checked;
+      applyTheme(save.theme);
+      writeSave();
+    });
+    function onSkinClick(e){
+      var b = e.target.closest ? e.target.closest('.skinBtn') : null;
+      if(!b) return;
+      applySkin(b.getAttribute('data-skin'));
+    }
+    $('skinList').addEventListener('click', onSkinClick);
+    $('skinListTitle').addEventListener('click', onSkinClick);
+
+    $('btnAch').addEventListener('click', showAch);
+    $('btnOverAch').addEventListener('click', showAch);
+    $('btnAchClose').addEventListener('click', hideAch);
+
+    $('chkDlg').addEventListener('change', function(){
+      save.ui.dlg = this.checked;
+      writeSave();
+      if(!this.checked) hideGSay();
+      if(state === 'play' && this.checked) say('start', true);
+      else setSay('');
+    });
+
+    $('chkSfx').addEventListener('change', function(){
+      save.ui.sfx = this.checked;
+      writeSave();
+      if(this.checked) sfx('tick');
+    });
+
+    $('chkMusic').addEventListener('change', function(){
+      save.ui.music = this.checked;
+      writeSave();
+      if(this.checked){
+        if(state === 'play') bgmStart();
+      }else{
+        bgmStop();
+      }
+    });
+
+    document.addEventListener('keydown', function(e){
+      var k = (e.key || '').toLowerCase();
+      if($('ach').classList.contains('show')){
+        if(k === 'escape' || k === 'enter' || k === ' '){ e.preventDefault(); hideAch(); }
+        return;
+      }
+      var d = KEY_DIR[k];
+      if(d){
+        e.preventDefault();
+        if(state === 'title') beginRun();
+        if(state === 'over') return;
+        if(state === 'pause') resumeGame();
+        clearPadLatch();   /* 改用键盘时取消屏幕方向键的锁定 */
+        if(!holdKeys[k]){ holdKeys[k] = d; holdOrder.push(k); }
+        syncHold();
+        return;
+      }
+      if(k === 'escape'){
+        if(state === 'play') pauseGame();
+        else if(state === 'pause') resumeGame();
+      }else if(k === 'enter'){
+        if(state === 'title' || state === 'over') beginRun();
+        else if(state === 'pause') resumeGame();
+      }
+    });
+
+    /* 松手即停：移除这个方向；若手上还按着别的方向，就继续那个方向 */
+    document.addEventListener('keyup', function(e){
+      var k = (e.key || '').toLowerCase();
+      if(!holdKeys[k]) return;
+      delete holdKeys[k];
+      for(var i = holdOrder.length - 1; i >= 0; i--){
+        if(holdOrder[i] === k){ holdOrder.splice(i, 1); break; }
+      }
+      syncHold();
+    });
+
+    /* 手机：按住屏幕并滑动定方向，手指抬起立即停 */
+    var touchId = null, tx0 = 0, ty0 = 0;
+    $('frame').addEventListener('touchstart', function(e){
+      var t = e.touches[0];
+      if(!t || touchId !== null) return;
+      touchId = t.identifier; tx0 = t.clientX; ty0 = t.clientY;
+      if(state === 'title') beginRun();
+      if(state === 'pause') resumeGame();
+      clearPadLatch();   /* 改用滑动手势时取消锁定 */
+      if(player){ player.hold = true; player.want = DIR_NONE; }
+    }, {passive:true});
+    $('frame').addEventListener('touchmove', function(e){
+      if(touchId === null) return;
+      var t = null, j;
+      for(j = 0; j < e.touches.length; j++){
+        if(e.touches[j].identifier === touchId){ t = e.touches[j]; break; }
+      }
+      if(!t) return;
+      var dx = t.clientX - tx0, dy = t.clientY - ty0;
+      if(Math.abs(dx) < 18 && Math.abs(dy) < 18) return;
+      var d = Math.abs(dx) > Math.abs(dy)
+        ? (dx > 0 ? DIR_RIGHT : DIR_LEFT)
+        : (dy > 0 ? DIR_DOWN : DIR_UP);
+      if(player){ player.want = d; player.hold = true; }
+    }, {passive:true});
+    function endTouch(){
+      touchId = null;
+      if(player){ player.hold = false; player.want = DIR_NONE; }
+    }
+    $('frame').addEventListener('touchend', endTouch, {passive:true});
+    $('frame').addEventListener('touchcancel', endTouch, {passive:true});
+
+    /* 虚拟方向键：点一下即锁定该方向持续前进（等同长按），再点同一方向停下 */
+    $('pad').addEventListener('pointerdown', function(e){
+      var b = e.target.closest ? e.target.closest('.pbtn') : null;
+      if(!b) return;
+      e.preventDefault();
+      var dir = b.getAttribute('data-dir');
+      if(dir) setPadDir(dir);
+    });
+
+    document.addEventListener('visibilitychange', function(){
+      if(document.hidden && state === 'play') pauseGame();
+    });
+
+    var rt = null;
+    function onViewport(){
+      if(rt) clearTimeout(rt);
+      rt = setTimeout(function(){ syncTouchUI(); layout(); }, 120);
+    }
+    window.addEventListener('resize', onViewport);
+    window.addEventListener('orientationchange', onViewport);
+  }
+
+  /* =========================================================
+     6. 自检（?selftest=1）
+     ========================================================= */
+  function selftest(){
+    var errs = [], i, j;
+    quiet = true;
+
+    /* M4：三张迷宫都要 21×19、左右对称、连通、恰好 4 颗南瓜糖 */
+    var pcnt = 0, power = 0, mzLog = [];
+    for(var mi = 0; mi < MAZES.length; mi++){
+      MAZE = MAZES[mi]; fieldCache.key = ''; fieldCache.dist = null;
+      var mc = 0, mp = 0;
+      if(MAZE.length !== ROWS) errs.push('maze ' + mi + ' row count ' + MAZE.length);
+      for(i = 0; i < MAZE.length; i++){
+        if(MAZE[i].length !== COLS) errs.push('maze ' + mi + ' row ' + i + ' length ' + MAZE[i].length);
+        if(MAZE[i] !== MAZE[i].split('').reverse().join('')) errs.push('maze ' + mi + ' row ' + i + ' not symmetric');
+      }
+      var seen = {};
+      var q = [[START.x, START.y]];
+      seen[START.y * COLS + START.x] = 1;
+      while(q.length){
+        var cur = q.shift();
+        var dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+        for(i = 0; i < 4; i++){
+          var nx = cur[0] + dirs[i][0], ny = cur[1] + dirs[i][1];
+          if(ny === 10 && (nx < 0 || nx >= COLS)){ nx = (nx + COLS) % COLS; }
+          if(nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS) continue;
+          var ch = tileChar(nx, ny);
+          if(ch === '#' || ch === 'H' || ch === ' ') continue;
+          var key = ny * COLS + nx;
+          if(seen[key]) continue;
+          seen[key] = 1;
+          q.push([nx, ny]);
+        }
+      }
+      for(i = 0; i < ROWS; i++){
+        for(j = 0; j < COLS; j++){
+          var c = MAZE[i].charAt(j);
+          if(c === '.'){ mc++; if(!seen[i * COLS + j]) errs.push('maze ' + mi + ' unreachable pellet ' + j + ',' + i); }
+          if(c === 'o'){ mp++; if(!seen[i * COLS + j]) errs.push('maze ' + mi + ' unreachable power ' + j + ',' + i); }
+        }
+      }
+      if(mp !== 4) errs.push('maze ' + mi + ' power pellets ' + mp);
+      if(mc < 100) errs.push('maze ' + mi + ' too few pellets ' + mc);
+      mzLog.push(mc + '/' + mp);
+      if(mi === 0){ pcnt = mc; power = mp; }
+    }
+
+    /* M4：夜数 → 迷宫轮换（第 1–3 夜换图，第 4 夜回到第一张） */
+    night = 1; MAZE = MAZES[0]; setMazeForNight();
+    if(MAZE !== MAZES[0]) errs.push('night 1 maze');
+    night = 3; setMazeForNight();
+    if(MAZE !== MAZES[2]) errs.push('night 3 maze');
+    night = 4; setMazeForNight();
+    if(MAZE !== MAZES[0]) errs.push('night 4 maze did not wrap');
+    night = 1; setMazeForNight();
+    if(MAZE !== MAZES[0]) errs.push('night reset maze');
+
+    /* 第 10 夜起：南瓜糖随机布置，数量仍是 4 颗、且不落在出生点上 */
+    night = 10; setMazeForNight(); resetPellets();
+    var rp = [], rpc = 0;
+    for(i = 0; i < ROWS; i++){
+      for(j = 0; j < COLS; j++){
+        if(pellets[i][j] === 2){ rpc++; rp.push(j + ',' + i); }
+      }
+    }
+    if(rpc !== 4) errs.push('random power count ' + rpc);
+    if(rp.join(';') === '1,3;17,3;1,17;17,17;') errs.push('random power did not move');
+    if(pellets[START.y][START.x] === 2) errs.push('random power on start');
+    night = 1; setMazeForNight(); resetPellets();
+
+    /* M4：第 3 夜第 5 只万圣月巴；速度 +0.25；目标 ±2 偏移 */
+    resetPellets(); resetBoard();
+    score = 0; lives = 3; night = 3; readyT = 0; deadT = 0; clearT = 0; state = 'play';
+    makeGhosts();
+    if(ghosts.length !== 5) errs.push('night 3 ghost count ' + ghosts.length);
+    if(ghosts[4] && ghosts[4].id !== 'mb_wansheng') errs.push('5th ghost id ' + (ghosts[4] && ghosts[4].id));
+    if(ghosts[4] && !(ghosts[4].speed >= ghosts[0].speed + .2)) errs.push('wansheng speed');
+    player.x = 9; player.y = 10;
+    var wt = ghostTarget(ghosts[4]);
+    if(Math.abs(wt.x - 9) > 2 || Math.abs(wt.y - 10) > 2) errs.push('wansheng target ' + wt.x + ',' + wt.y);
+
+    /* M4：第 10 夜后难度封顶 */
+    night = 10; var s10 = ghostSpeed();
+    night = 14; if(ghostSpeed() !== s10) errs.push('difficulty kept rising after night 10');
+
+    /* M4：每 10,000 分加 1 命，上限 5 */
+    night = 1; score = 0; lives = 3;
+    addScore(9999);
+    if(lives !== 3) errs.push('extra life too early');
+    addScore(1);
+    if(lives !== 4) errs.push('extra life not granted');
+    addScore(50000);
+    if(lives !== 5) errs.push('extra life cap ' + lives);
+    score = 0;
+
+    /* M4：成就判定（quiet 只改内存） */
+    night = 3;
+    delete save.ach.first; delete save.ach.night3; delete save.ach.nohit;
+    save.stats.plays = Math.max(1, save.stats.plays);
+    checkAch();
+    if(!save.ach.first) errs.push('ach first not unlocked');
+    if(!save.ach.night3) errs.push('ach night3 not unlocked');
+    night = 5; nightHits = 0; levelClear();
+    if(!save.ach.nohit) errs.push('ach nohit not unlocked');
+
+    /* M4：所有配色（含浅色 day）的按钮文字对比度 ≥ 4.5:1 */
+    var paletteIds = THEME_ORDER.concat(['day']);
+    for(i = 0; i < paletteIds.length; i++){
+      var thx = THEMES[paletteIds[i]];
+      var onc = onAccentColor(thx.accent, thx.accent2);
+      if(Math.min(contrastRatio(onc, thx.accent), contrastRatio(onc, thx.accent2)) < 4.5)
+        errs.push('theme contrast ' + paletteIds[i]);
+    }
+
+    /* 浅色开关：切换后 data-light / CSS 变量 / 开关状态都要跟上 */
+    var wasLight = save.light;
+    save.light = true; applyTheme(save.theme);
+    if(document.documentElement.getAttribute('data-light') !== '1') errs.push('light flag not applied');
+    if(curTheme().bg !== THEMES.day.bg) errs.push('light palette not active');
+    if(!$('chkLight').checked) errs.push('light switch not synced');
+    draw();
+    save.light = wasLight; applyTheme(save.theme);
+    try{ renderAch(); showAch(); hideAch(); }catch(e){ errs.push('ach ui threw: ' + e.message); }
+
+    /* M6-B：朝向翻转 / 转弯侧倾 / 出窝弹跳 / 隧道残影 */
+    var fe = {x:1, y:10, dir:{x:1,y:0}, pdir:null, facing:1, tiltT:0, tiltSign:1, popT:0, trails:[], trT:0};
+    markFacing(fe);
+    if(fe.facing !== 1) errs.push('facing right not set');
+    fe.dir = {x:-1,y:0}; markFacing(fe);
+    if(fe.facing !== -1) errs.push('facing flip failed');
+    if(fe.tiltT !== 0) errs.push('reverse should not tilt');
+    fe.dir = {x:0,y:1}; markFacing(fe);
+    if(!(fe.tiltT > 0)) errs.push('turn tilt not armed');
+    if(!lpMode() && !reduceMotion && tiltAngle(fe) === 0) errs.push('tilt angle is zero');
+    decayFace(fe, .5);
+    if(fe.tiltT !== 0) errs.push('tilt not decayed');
+    if(!lpMode() && !reduceMotion){
+      var ban = bounceAnim({sx:1, sy:1, lift:0}, {popT:FX.bounceLife * .5});
+      if(!(ban.lift < 0)) errs.push('bounce lift missing');
+    }
+    sampleTrail(fe, .1);
+    if(quiet && fe.trails.length) errs.push('trail should stay off in selftest');
+
+    /* M6-C：墙边层已烘好；南瓜糖坐标缓存为 4 颗且自左向右；点灯能在过关时长内走完 */
+    night = 1; setMazeForNight(); resetPellets();
+    if(!wallEdgeCv) errs.push('wall edge layer missing');
+    if(POWER_POS.length !== 4) errs.push('power pos cached ' + POWER_POS.length);
+    for(i = 1; i < POWER_POS.length; i++){
+      if(POWER_POS[i].x < POWER_POS[i - 1].x) errs.push('power pos not left-to-right');
+    }
+    if(POWER_POS.length === 4 && POWER_POS[0].x === POWER_POS[3].x) errs.push('power pos share same column');
+    if(!((POWER_POS.length - 1) * FX.lampGap + FX.lampLit < 1.4)) errs.push('lamp timing exceeds clearT');
+
+    night = 1; state = 'play';
+
+    /* M2 行为自检：玩家静止，月巴应出窝并至少追到一次 */
+    resetPellets(); resetBoard();
+    score = 0; lives = 3; night = 1; readyT = 0; deadT = 0; clearT = 0;
+    state = 'play';
+    console.log('[pacman selftest] faces=' + ghosts.map(function(g){ return g.face; }).join(',') +
+                ' rings=' + ghosts.map(function(g){ return g.ring; }).join(','));
+    var out = 0, hits = 0, prevLives = 3, steps = 0;
+    for(steps = 0; steps < 40 * 120; steps++){
+      update(1 / 120);
+      if(state === 'over') break;
+      for(var k = 0; k < ghosts.length; k++){
+        if(ghosts[k].mode !== 'house' && ghosts[k].mode !== 'exit'){ out++; break; }
+      }
+      if(lives !== prevLives){ hits += prevLives - lives; prevLives = lives; break; }
+    }
+    console.log('[pacman selftest] sim steps=' + steps + ' ghostsOut=' + out + ' hits=' + hits);
+    if(out < 120) errs.push('ghosts never left the den');
+    if(hits < 1) errs.push('no collision in 40s idle sim');
+
+    /* 掉命重生：月巴应回窝、番茄回出生点 */
+    resetPellets(); resetBoard();
+    score = 0; lives = 3; night = 1; readyT = 0; deadT = 0; clearT = 0; state = 'play';
+    ghosts[0].mode = 'chase';
+    ghosts[0].x = player.x; ghosts[0].y = player.y;
+    update(1 / 120);
+    if(state !== 'dead') errs.push('collision did not kill');
+    if(lives !== 2) errs.push('lives not decremented');
+    for(i = 0; i < 120; i++) update(1 / 120);
+    if(state !== 'play') errs.push('respawn failed');
+    if(Math.abs(player.x - START.x) > 1e-6 || Math.abs(player.y - START.y) > 1e-6) errs.push('player not back at start');
+    for(i = 0; i < ghosts.length; i++){
+      if(ghosts[i].mode !== 'house'){ errs.push('ghost not back in den'); break; }
+    }
+
+    /* 过关：吃光籽 → clear → 下一夜并重新铺籽 */
+    resetPellets(); resetBoard();
+    score = 0; lives = 3; night = 1; readyT = 0; deadT = 0; clearT = 0; state = 'play';
+    pellets[START.y][START.x] = 1;
+    pelletsLeft = 1;
+    update(1 / 120);
+    if(state !== 'clear') errs.push('level clear not triggered');
+    for(i = 0; i < 200; i++) update(1 / 120);
+    if(night !== 2) errs.push('night did not advance (' + night + ')');
+    if(pelletsLeft < 100) errs.push('pellets not refilled');
+
+    /* M3：南瓜糖 → 全体 flee；榨干 200/400/800/1600 + 连吃 1000，且不掉命 */
+    resetPellets(); resetBoard(); resetFx();
+    score = 0; lives = 3; night = 1; readyT = 0; deadT = 0; clearT = 0; state = 'play';
+    pellets[START.y][START.x] = 0;
+    pelletsLeft--;
+    for(i = 0; i < ghosts.length; i++){ ghosts[i].mode = 'chase'; ghosts[i].t = 0; }
+    startPower();
+    if(powerT <= 0) errs.push('power not started');
+    for(i = 0; i < ghosts.length; i++){
+      if(ghosts[i].mode !== 'flee'){ errs.push('ghost ' + i + ' not fleeing'); break; }
+    }
+
+    var s0 = score;
+    ghosts[0].x = player.x; ghosts[0].y = player.y;
+    update(1 / 120);
+    if(lives !== 3) errs.push('flee collision killed player');
+    if(score - s0 !== 200) errs.push('1st ghost score ' + (score - s0));
+    if(ghosts[0].mode !== 'dried') errs.push('night1 not dried in place: ' + ghosts[0].mode);
+    /* 第 1 夜被榨干：小眼睛就地不动、不复活、也不再伤到番茄 */
+    var dx0 = ghosts[0].x, dy0 = ghosts[0].y;
+    for(i = 1; i < ghosts.length; i++){ ghosts[i].x = 9; ghosts[i].y = 8; }
+    for(i = 0; i < 60; i++) update(1 / 120);
+    if(ghosts[0].x !== dx0 || ghosts[0].y !== dy0) errs.push('night1 dried ghost moved');
+    if(ghosts[0].mode !== 'dried') errs.push('night1 dried ghost revived');
+    if(lives !== 3) errs.push('night1 dried ghost hurt player');
+
+    s0 = score;
+    ghosts[1].x = player.x; ghosts[1].y = player.y;
+    update(1 / 120);
+    if(score - s0 !== 400) errs.push('2nd ghost score ' + (score - s0));
+
+    s0 = score;
+    ghosts[2].x = player.x; ghosts[2].y = player.y;
+    update(1 / 120);
+    if(score - s0 !== 800) errs.push('3rd ghost score ' + (score - s0));
+
+    s0 = score;
+    ghosts[3].x = player.x; ghosts[3].y = player.y;
+    update(1 / 120);
+    if(score - s0 !== 2600) errs.push('4th ghost score ' + (score - s0));
+
+    /* 辣番茄结束：flee 回到当前相位（先把月巴挪开，免得贴着番茄被再吃或反杀） */
+    for(i = 0; i < ghosts.length; i++){ ghosts[i].x = 9; ghosts[i].y = 8; }
+    ghosts[0].mode = 'flee';
+    powerT = 0.004;
+    update(1 / 120);
+    if(ghosts[0].mode === 'flee') errs.push('flee not cleared after power ends');
+
+    /* 复活等待曲线：1 夜不回窝；2–3 夜 6s；4–6 夜 5s；7 夜 4s；10 夜起 2s */
+    var nSave = night;
+    var curve = {1:0, 2:6, 3:6, 4:5, 6:5, 7:4, 10:2, 14:2};
+    for(var kn in curve){
+      night = +kn;
+      if(Math.abs(reviveDelay() - curve[kn]) > 1e-6) errs.push('reviveDelay night ' + kn + ' = ' + reviveDelay().toFixed(2));
+    }
+    ghosts[0].mode = 'eaten'; ghosts[0].x = 9; ghosts[0].y = 10;
+    night = 2;
+    ghostDecide(ghosts[0], 9, 10);
+    if(ghosts[0].mode !== 'house') errs.push('night2 revive mode ' + ghosts[0].mode);
+    if(Math.abs(ghosts[0].t - 6) > 1e-6) errs.push('night2 revive delay ' + ghosts[0].t);
+    night = nSave;
+
+    /* 完整复活流程：被榨干 → 自己走回窝 → 等 reviveDelay → 出窝 → 恢复相位
+       其它月巴钉在窝里、番茄不动，确保只观察 0 号月巴这一条路径 */
+    resetPellets(); resetBoard(); resetFx();
+    score = 0; lives = 3; night = 3; readyT = 0; deadT = 0; clearT = 0;
+    powerT = 0; powerMax = 0; powerChain = 0; state = 'play';
+    for(i = 1; i < ghosts.length; i++){ ghosts[i].mode = 'house'; ghosts[i].t = 1e9; }
+    var g0 = ghosts[0];
+    /* 真实场景：碰撞发生在半格位置。eatGhost 若把方向清零，月巴不在格心就永远选不了向、卡在原地 */
+    var md = canDir(START.x, START.y, DIR_LEFT, true) ? DIR_LEFT :
+             (canDir(START.x, START.y, DIR_RIGHT, true) ? DIR_RIGHT :
+             (canDir(START.x, START.y, DIR_UP, true) ? DIR_UP : DIR_DOWN));
+    g0.x = START.x - md.x * 0.3; g0.y = START.y - md.y * 0.3;
+    g0.dir = md; g0.want = DIR_NONE; g0.mode = 'flee';
+    eatGhost(g0);
+    if(!g0.dir.x && !g0.dir.y) errs.push('eatGhost cleared dir');
+    var tDen = -1, tExit = -1, tOut = -1, waitWant = reviveDelay();
+    for(var s2 = 0; s2 < 120 * 30; s2++){
+      update(1 / 120);
+      if(tExit >= 0 && (g0.mode === 'chase' || g0.mode === 'scatter' || g0.mode === 'flee')){ tOut = s2; break; }
+      if(tDen < 0 && g0.mode === 'house'){ tDen = s2; if(!g0.reviving) errs.push('revive: reviving flag missing'); }
+      else if(tDen >= 0 && tExit < 0 && g0.mode === 'exit'){ tExit = s2; }
+    }
+    if(tDen < 0) errs.push('revive: never reached den');
+    else if(tExit < 0) errs.push('revive: stuck in den t=' + g0.t.toFixed(2));
+    else if(tOut < 0) errs.push('revive: stuck at exit door');
+    else{
+      var wait = (tExit - tDen) / 120;
+      if(Math.abs(wait - waitWant) > 0.05) errs.push('revive wait ' + wait.toFixed(2) + ' want ' + waitWant);
+    }
+
+    /* 岔路口转向容忍：离格心 0.18 格时按垂直方向也应转过去并吸附到中心 */
+    var jx = -1, jy = -1;
+    for(var yy = 1; yy < ROWS - 1 && jx < 0; yy++){
+      for(var xx = 1; xx < COLS - 1; xx++){
+        if(walkable(xx, yy) && walkable(xx, yy - 1) && walkable(xx - 1, yy)){ jx = xx; jy = yy; break; }
+      }
+    }
+    if(jx < 0){ errs.push('no junction for turn test'); }
+    else{
+      player.x = jx - 0.18; player.y = jy;
+      player.dir = {x:1, y:0}; player.want = {x:0, y:-1};
+      moveEntity(player, 1 / 120);
+      if(!(player.dir.y === -1 && player.dir.x === 0)) errs.push('junction turn failed @' + jx + ',' + jy);
+      if(Math.abs(player.x - jx) > 1e-6) errs.push('junction turn snap x=' + player.x);
+      player.dir = DIR_NONE; player.want = DIR_NONE;
+    }
+
+    /* 糖霜番茄：吃掉一半籽后出现，吃到 +300 */
+    resetPellets(); resetBoard(); resetFx();
+    score = 0; lives = 3; night = 1; readyT = 0; state = 'play';
+    pellets[START.y][START.x] = 0;
+    pelletsLeft = Math.floor(pelletsTotal * .5);
+    updateBonus(1 / 120);
+    if(!bonus) errs.push('bonus not spawned');
+    player.x = 9; player.y = 8;
+    s0 = score;
+    updateBonus(1 / 120);
+    if(score - s0 !== 300) errs.push('bonus score ' + (score - s0));
+    if(bonus) errs.push('bonus not consumed');
+
+    /* 视觉回归：把 M3 的绘制路径都走一遍（光晕 / flee 描边 / 眼睛 / 粒子 / 糖霜番茄 / 气泡） */
+    try{
+      resetPellets(); resetBoard(); resetFx();
+      score = 0; lives = 3; night = 1; readyT = 0; state = 'play';
+      startPower();
+      burst(player.x, player.y, 10, '#FFD166');
+      updateParticles(1 / 120);
+      /* M6-A 绘制路径：飘字 / 吃籽微缩 / 冲击环 */
+      popTexts.push({gx:9, gy:8, v:10, txt:'+10', kind:'p', t:FX.txtLife, max:FX.txtLife, color:'#FFD166', big:false});
+      popTexts.push({gx:9, gy:8, txt:'×4', kind:'t', t:.55, max:.55, color:'#FFFFFF', big:true});
+      pops.push({gx:9, gy:8, t:FX.popLife, max:FX.popLife});
+      rings.push({gx:9, gy:8, r0:.3, r1:2.0, c:'#FFD166', t:FX.ringLife, max:FX.ringLife});
+      updateFx(1 / 120);
+      bonus = {x:9, y:8, t:3, max:3};
+      ghosts[0].mode = 'flee';
+      ghosts[1].mode = 'eaten';
+      draw();
+      /* P1 绘制路径：死亡演出（挤压中 / 摊平后） */
+      hurt(ghosts[2]);
+      if(!deathFx) errs.push('deathFx not created');
+      else{
+        deathFx.calm = false;
+        deathFx.t = .30; draw();
+        deathFx.t = .80; draw();
+        if(!(deathFx.wx || deathFx.wy)) errs.push('death wall dir empty');
+      }
+      /* P2 绘制路径：辣番茄时间环 / 糖霜倒计时 / 隧道预警 / 低血量心跳 */
+      state = 'play'; deathFx = null;
+      player.x = .5; player.y = 10;
+      powerT = 6.5; powerMax = 8;
+      lives = 1; updateHUD();
+      if(!document.body.classList.contains('lowhp')) errs.push('lowhp class missing');
+      draw();
+      /* P3 绘制路径：窝里打盹 Zzz / 过关扫描光带 / 落脚尘点 */
+      ghosts[3].mode = 'house'; ghosts[3].x = 9; ghosts[3].y = 9;
+      puffDust(player);
+      clearFx = {t:.6, dur:1.4};
+      draw();
+      clearFx = null;
+    }catch(e){ errs.push('draw threw: ' + e.message); }
+
+    showTitle();
+
+    console.log('[pacman selftest] pellets=' + pcnt + ' power=' + power + ' mazes=' + mzLog.join('|')
+      + ' theme=' + save.theme + ' light=' + (save.light ? 1 : 0) + ' lang=' + lang);
+    console.log(errs.length ? '[pacman selftest] FAIL: ' + errs.join('; ') : '[pacman selftest] OK');
+  }
+
+  /* =========================================================
+     7. 启动
+     ========================================================= */
+  resetPellets();
+  resetBoard();
+  applyTheme(save.theme);
+  applyLang();
+  $('chkDlg').checked = !!save.ui.dlg;
+  $('chkSfx').checked = !!save.ui.sfx;
+  $('chkMusic').checked = !!save.ui.music;
+  if(save.ui.dlg){ $('dlgBar').classList.remove('off'); }else{ $('dlgBar').classList.add('off'); }
+  if(mainSave.lowPower || reduceMotion){ document.body.classList.add('lp'); }
+  loadSprites();
+  syncTouchUI();
+  layout();
+  bind();
+  showTitle();
+  if(window.__pmIntroStart) window.__pmIntroStart('pacman-intro.html?lang=' + encodeURIComponent(lang));
+  if(new URLSearchParams(location.search).get('selftest') === '1') selftest();
+})();
+</script>
+</body>
+</html>
