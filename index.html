@@ -346,6 +346,28 @@
   .npager .npg:disabled{opacity:.32;cursor:not-allowed;}
   .npager span{min-width:34px;text-align:center;font-variant-numeric:tabular-nums;}
   #modal-body{padding:14px;overflow-y:auto;}
+  /* ---------- 万圣节口令弹窗主题（暗紫底 + 南瓜橙描边 + 漂浮小装饰） ---------- */
+  #modal.hallo-modal{
+    background:linear-gradient(165deg,#3a2058 0%,#241436 58%,#3d1b2e 100%);
+    border:1px solid rgba(255,166,74,.5);
+    box-shadow:0 14px 42px rgba(26,8,36,.55),0 0 26px rgba(255,140,50,.22);
+  }
+  #modal.hallo-modal #modal-head{border-bottom:1px solid rgba(255,166,74,.3);}
+  #modal.hallo-modal #modal-head h2{color:#ffd08a;}
+  #modal.hallo-modal #modal-head .iconbtn{background:rgba(255,255,255,.14);border-color:rgba(255,166,74,.38);color:#ffd08a;}
+  #modal.hallo-modal #modal-body{color:#f2e6ff;}
+  #modal.hallo-modal .btn.cta{background:linear-gradient(180deg,#ffc163,#e8722f);border-color:#d96a24;color:#4a1d00;}
+  /* 漂浮装饰：仅 transform+opacity，低功耗下整体关闭 */
+  #modal.hallo-modal .hallo-fx{position:absolute;inset:0;z-index:-1;pointer-events:none;}
+  #modal.hallo-modal .hallo-fx span{position:absolute;opacity:.8;will-change:transform;animation:halloFloat 4.6s ease-in-out infinite;}
+  #modal.hallo-modal .hallo-emoji{display:inline-block;animation:halloBob 2.6s ease-in-out infinite;}
+  /* 像素风装饰：crispEdges 让色块保持硬边，不随缩放糊掉 */
+  #modal.hallo-modal .px-deco{display:block;image-rendering:pixelated;}
+  @keyframes halloFloat{0%,100%{transform:translate3d(0,0,0) rotate(-6deg);opacity:.45;}50%{transform:translate3d(0,-9px,0) rotate(7deg);opacity:.9;}}
+  @keyframes halloBob{0%,100%{transform:translateY(0) rotate(-4deg);}50%{transform:translateY(-6px) rotate(4deg);}}
+  /* 省电模式：保留暗色底（否则浅底上浅字看不清），但停掉全部装饰动效 */
+  body.low-power #modal.hallo-modal{background-image:linear-gradient(165deg,#3a2058,#241436 58%,#3d1b2e)!important;background-color:#241436!important;}
+  body.low-power #modal.hallo-modal .hallo-fx span, body.low-power #modal.hallo-modal .hallo-emoji{animation:none!important;}
   /* 成熟月巴提醒：引导开启番茄钟 */
   .ripe-tip p{font-size:13px;line-height:1.85;color:var(--dim);margin:2px 0;text-align:center;}
   .ripe-tip p b{color:var(--purple2);}
@@ -1499,6 +1521,9 @@
   #dexBtn{position:relative;font-size:11px;font-weight:800;color:#fff;border:none;backdrop-filter:none;-webkit-backdrop-filter:none;background:linear-gradient(135deg,var(--danger),var(--purple2));border-radius:8px;padding:3px 10px;cursor:pointer;white-space:nowrap;transform-origin:center;animation:dexPulse 1.9s ease-in-out infinite;}
   #dexBtn::before{content:"";position:absolute;inset:0;border-radius:8px;pointer-events:none;background:linear-gradient(115deg,transparent 34%,rgba(255,255,255,.9) 50%,transparent 66%);background-size:250% 100%;background-position:180% 0;animation:dexShine 2.4s ease-in-out infinite;}
   #dexBtn::after{content:"";position:absolute;inset:-1px;border-radius:9px;border:2px solid var(--danger);pointer-events:none;opacity:0;animation:dexRing 1.9s ease-out infinite;}
+  /* 万圣节口令入口：天降事件旁，领取后隐藏 */
+  #halloBtn{font-size:11px;font-weight:800;color:#fff;border:none;background:linear-gradient(135deg,#f2a03c,#8e44ad);border-radius:8px;padding:3px 10px;cursor:pointer;white-space:nowrap;box-shadow:0 2px 6px rgba(142,68,173,.22);}
+  #halloBtn:active{transform:scale(.97);}
   @keyframes dexShine{0%{background-position:180% 0;}55%,100%{background-position:-90% 0;}}
   @keyframes dexRing{0%{opacity:.9;transform:scale(1);}70%,100%{opacity:0;transform:scale(1.6);}}
   @keyframes dexPulse{
@@ -3695,6 +3720,7 @@
     <span class="st frost" id="stPomo" style="display:none"></span>
     <button class="pip-open frost" id="pipOpenBtn" style="display:none" onclick="pomopipToggle()">📌 置顶小窗</button>
     <button class="dex-event frost" id="dexBtn" style="display:none" onclick="openDexEvent()" data-i18n="💫 天降事件！">💫 天降事件！</button>
+    <button class="frost" id="halloBtn" style="display:none" onclick="openCodeHallo()" data-i18n="🎃 万圣节口令">🎃 万圣节口令</button>
     <span class="st frost" id="stHint">点击场地查看月巴生长…</span>
   </div>
 
@@ -5165,6 +5191,7 @@ const I18N_UI={
   '🧱 进入俄罗斯巴块':{en:'🧱 Enter Tetris Banny',ja:'🧱 テトリスバニーへ',ko:'🧱 테트리스배니 시작'},
   '🧩 月巴数织':{en:'🧩 Banny Nonogram',ja:'🧩 バニー数織',ko:'🧩 배니 노노그램'},
   '🧩 进入月巴数织':{en:'🧩 Enter Banny Nonogram',ja:'🧩 バニー数織へ',ko:'🧩 배니 노노그램 시작'},
+  '🎃 进入月巴追茄':{en:'🎃 Enter Banny Chase',ja:'🎃 バニーチェイスへ',ko:'🎃 배니 체이스 입장'},
   '✕ 返回图鉴':{en:'✕ Back to Codex',ja:'✕ 図鑑に戻る',ko:'✕ 도감으로 돌아가기'},
   '巴巴博弈':{en:'Baba Gambit',ja:'ババゲーム',ko:'바바 겜블'},
   '🥊 巴巴博弈':{en:'🥊 Baba Gambit',ja:'🥊 ババゲーム',ko:'🥊 바바 겜블'},
@@ -6695,6 +6722,12 @@ const I18N_UI={
   '🎉 国庆快乐':{en:'🎉 Happy National Day',ja:'🎉 国慶節おめでとう',ko:'🎉 국경절 축하해요'},
   '🎑 中秋口令':{en:'🎑 Mid-Autumn code',ja:'🎑 中秋節口令',ko:'🎑 추석 코드'},
   '🎑 中秋快乐':{en:'🎑 Happy Mid-Autumn',ja:'🎑 中秋節おめでとう',ko:'🎑 추석 축하해요'},
+  /* 万圣节口令（4099） */
+  '口令就是 4099':{en:'The code is 4099',ja:'口令は 4099 です',ko:'코드는 4099예요'},
+  '🎃 万圣节口令':{en:'🎃 Halloween code',ja:'🎃 ハロウィン口令',ko:'🎃 핼러윈 코드'},
+  '🎃 万圣节快乐':{en:'🎃 Happy Halloween',ja:'🎃 ハッピーハロウィン',ko:'🎃 해피 할로윈'},
+  '输入口令，领取万圣节礼物（仅可领取一次）':{en:'Enter the code to claim the Halloween gift (one-time only)',ja:'口令を入力してハロウィンの贈り物を受け取る（1 回のみ）',ko:'코드를 입력해 할로윈 선물을 받으세요 (1회만)'},
+  '🎃 月巴和番茄祝大家万圣节快乐！🍬':{en:'🎃 Banny and Tomato wish everyone a happy Halloween! 🍬',ja:'🎃 バニーとトマトが、みなさまのハロウィンをお祝いします！🍬',ko:'🎃 배니와 토마토가 모두의 할로윈을 축하해요! 🍬'},
   '（开启第二图鉴后还能额外获得 500 🍅）':{en:'(unlock the second Codex to get 500 extra 🍅)',ja:'（第二図鑑を解放すると追加で 500 🍅）',ko:'(두 번째 도감을 열면 500 🍅 추가)'},
   '（第二图鉴已开启，附赠 500 🍅）':{en:'(second Codex unlocked — 500 🍅 bonus)',ja:'（第二図鑑は解放済み、おまけで 500 🍅）',ko:'(두 번째 도감 해금됨, 500 🍅 보너스)'},
   '<div class="empty">本期还没有打卡记录</div>':{en:'<div class="empty">No check-ins this period</div>',ja:'<div class="empty">今期のチェックインはまだありません</div>',ko:'<div class="empty">이번 기간 체크인 기록이 없어요</div>'},
@@ -8406,7 +8439,7 @@ function defaultState(){
     weather:'sunny', lastRainAt:-1e12, weatherHoldEnd:0,
     nextWeatherAt:now()+rand(2,4)*60000, muted:false, lastSave:now(),
     lang:null,   // 界面语言：null=尚未选择（首次进入按浏览器语言判定），之后以手动选择为准
-    seenHelp:false, starter:true, dexPending:null, code4099:false, code1001:false,
+    seenHelp:false, starter:true, dexPending:null, code4099:false, code1001:false, codeHallo:false,
     skins:{unlocked:[], active:null},
     galFirst:{},
     ach:{got:{}, seen:0},
@@ -9071,6 +9104,10 @@ function weightOf(t){
 }
 /* 第二图鉴按稀有度整体控概率：传说合计 0.05%，史诗合计 1%（按当前可用种类动态分摊） */
 const DEX2_R5_RATE=0.0005, DEX2_R4_RATE=0.01;
+/* 万圣节档期：2026-10-29 起到 11/1 24:00（即 11/2 00:00）止，万圣月巴掉率固定 1%，之后恢复原始权重 */
+const HALLOWEEN_END=new Date(2026,10,2,0,0,0).getTime();
+const HALLOWEEN_RATE=0.01;
+function halloweenActive(){ return Date.now()<HALLOWEEN_END; }
 function weightedPick(list){
   let rest=0,n5=0,n4=0;
   for(const t of list){
@@ -9082,8 +9119,13 @@ function weightedPick(list){
   const sum=target?rest/(1-target):rest;
   const w5=n5?sum*DEX2_R5_RATE/n5:0, w4=n4?sum*DEX2_R4_RATE/n4:0;
   const w=t=>(isDex2(t.id)&&t.r===5)?w5:((isDex2(t.id)&&t.r===4)?w4:weightOf(t));
-  let r=Math.random()*sum;
-  for(const t of list){ r-=w(t); if(r<=0)return t; }
+  let total=sum, hallW=-1;
+  if(halloweenActive()){
+    const h=list.find(t=>t.id==='mb_wansheng');
+    if(h){ const hw=w(h); const others=sum-hw; hallW=others*HALLOWEEN_RATE/(1-HALLOWEEN_RATE); total=others+hallW; }
+  }
+  let r=Math.random()*total;
+  for(const t of list){ r-=(hallW>=0&&t.id==='mb_wansheng')?hallW:w(t); if(r<=0)return t; }
   return list[list.length-1];
 }
 const BASE_SPEED=0.3; // 全部月巴基础生长速度（倍）：0.5 倍时间，即生长时长翻倍
@@ -9850,6 +9892,7 @@ function openModal(title,html,rebuild){
   closeFatDetail();
   document.body.classList.remove('gb-rolling');   // 任何新弹窗都解除对赌开骰锁定（兜底）
   $('modalTitle').textContent=title;
+  $('modal').classList.remove('hallo-modal');   // 万圣节口令专属外观，换弹窗即恢复默认
   const mb=$('modal-body');
   mb.innerHTML=html;
   $walkText(mb);            // P8：模板字符串里的静态中文按文本节点补译（不命中则原样保留）
@@ -10061,6 +10104,7 @@ const DEX_GAME={
   mb_jin:{icon:'⛏', label:'⛏ 黄金矿工', enter:'⛏ 进入黄金矿工', game:'gold'},
   m3_eluosi:{icon:'🧱', label:'🧱 俄罗斯巴块', enter:'🧱 进入俄罗斯巴块', game:'tetris'},
   mb_wenshi:{icon:'🧩', label:'🧩 月巴数织', enter:'🧩 进入月巴数织', game:'nonogram'},
+  mb_wansheng:{icon:'🎃', label:'🎃 月巴追茄', enter:'🎃 进入月巴追茄', game:'pacman'},
   m2_baboyi:{icon:'🥊', label:'🥊 巴巴博弈', enter:'🥊 进入巴巴博弈', game:'fight'},
 };
 function dexGameOf(id){ return DEX_GAME[id]||null; }
@@ -10079,6 +10123,7 @@ function dexGameEntry(id){
   if(g.game==='gold'){ dexGoldEntry(); return; }
   if(g.game==='tetris'){ dexTetrisEntry(); return; }
   if(g.game==='nonogram'){ dexNonogramEntry(); return; }
+  if(g.game==='pacman'){ dexPacmanEntry(); return; }
   if(g.game==='fight'){ dexFightEntry(); return; }
 }
 function bookRowsHTML(list,quiet){
@@ -15127,10 +15172,9 @@ function openFlyFromDex(id){
    卡片图标取图鉴月巴（有外链立绘则用外链，否则用 SVG）。
    game:'fly' -> 复用页内飞行浮层；html:'xxx.html' -> 内嵌 iframe（同幸存者）。 */
 const GB_GAMES=[
+  {id:'pacman', codex:'mb_wansheng', name:'🎃 月巴追茄', sub:true, html:'pacman.html'},
   {id:'fly', codex:'mb_yunduan', name:'飞行小游戏', game:'fly'},
   {id:'snake', codex:'m2_she', name:'（贪吃）蛇月巴', game:'snake'},
-  /* 月巴追茄：开发期 hidden:true 不显示，M5 验收后删除该标记即上线 */
-  {id:'pacman', codex:'mb_wansheng', name:'🎃 月巴追茄', sub:true, html:'pacman.html', hidden:true},
   {id:'gamble', codex:'jieba', name:'🎲 对赌', game:'gamble', lock:true},
   {id:'dd', codex:'m2_chuqian', name:'🃏 斗月巴', game:'dd', lock:true},
   {id:'gold', codex:'mb_jin', name:'黄金矿工', html:'goldminer.html'},
@@ -15308,6 +15352,14 @@ function dexTetrisEntry(){
 /* 图鉴入口：温室月巴 → 月巴数织小游戏。关闭后同样回到图鉴 */
 function dexNonogramEntry(){
   const g=GB_GAMES.filter(function(x){ return x.id==='nonogram'; })[0];
+  if(!g) return;
+  try{ save(); }catch(e){}
+  sfx.click();
+  gbFrameOpen(g,'dex');
+}
+/* 图鉴入口：万圣月巴 → 月巴追茄小游戏。关闭后同样回到图鉴 */
+function dexPacmanEntry(){
+  const g=GB_GAMES.filter(function(x){ return x.id==='pacman'; })[0];
   if(!g) return;
   try{ save(); }catch(e){}
   sfx.click();
@@ -15974,6 +16026,118 @@ function claimCode1001(){
     +'<div style="margin-top:12px"><button class="btn cta" onclick="closeModal()">'+$t('收下')+'</button></div>'
     +'</div>');
 }
+/* ---------------- 万圣节口令（4099） ---------------- */
+/* 未领取时在「天降事件」旁显示入口按钮，领取后隐藏 */
+function updateCodeHallo(){ const b=$('halloBtn'); if(b) b.style.display=S.codeHallo?'none':''; }
+function openCodeHallo(){
+  pomoModalOpen=false;
+  openModal($t('🎃 万圣节口令'), halloFxHTML()
+    +'<div style="text-align:center">'
+    +'<div class="hallo-emoji">'+pxDeco('pumpkin',4)+'</div>'
+    +'<p style="font-size:13px;font-weight:800;color:#ffb347;margin:6px 0 0">'+$t('口令就是 4099')+'</p>'
+    +'<p style="font-size:13px;color:#cbb8ea;margin:4px 0 10px">'+$t('输入口令，领取万圣节礼物（仅可领取一次）')+'</p>'
+    +'<input id="codeHalloIn" inputmode="numeric" maxlength="4" onkeydown="if(event.keyCode===13)claimCodeHallo()" placeholder="'+$t('请输入口令')+'" style="padding:8px;border:1px solid #f5a34a;border-radius:8px;width:62%;text-align:center;font-size:16px;letter-spacing:4px;background:#fffaf2;color:#3a2058;box-shadow:0 0 14px rgba(255,150,50,.35)">'
+    +'<div style="margin-top:12px"><button class="btn cta" onclick="claimCodeHallo()">'+$t('领取')+'</button></div>'
+    +'</div>');
+  $('modal').classList.add('hallo-modal');
+}
+/* 撒在弹窗里的像素漂浮装饰（蜘蛛/蝙蝠/糖果/棒棒糖），纯装饰、不吃点击 */
+function halloFxHTML(){
+  return '<div class="hallo-fx" aria-hidden="true">'
+    +'<span style="left:7%;top:34%;animation-delay:0s">'+pxDeco('spider',2)+'</span>'
+    +'<span style="right:8%;top:28%;animation-delay:1.1s">'+pxDeco('bat',2)+'</span>'
+    +'<span style="left:9%;bottom:16%;animation-delay:1.9s">'+pxDeco('candy',2)+'</span>'
+    +'<span style="right:10%;bottom:20%;animation-delay:2.6s">'+pxDeco('lolli',2)+'</span>'
+    +'</div>';
+}
+/* 像素字符画 → 内联 SVG：同一行同色合并成一个 rect，shape-rendering:crispEdges 保持硬边不糊 */
+const PX_DECO={
+  pumpkin:{cols:{a:'#ff9d3a',s:'#4ec06a',k:'#2a1430'},rows:[
+    '.....ss.....',
+    '...aaaaaa...',
+    '..aaaaaaaa..',
+    '.aaaaaaaaaa.',
+    '..kkaaaakk..',
+    '.aaaaaaaaaa.',
+    '..akkkkkka..',
+    '.aaaaaaaaaa.',
+    '..aaaaaaaa..',
+    '...aaaaaa...'
+  ]},
+  candy:{cols:{a:'#ff5f9e',b:'#ffe066'},rows:[
+    '..a......a..',
+    '.aa......aa.',
+    'aaaaaaaaaaaa',
+    'abbaabbaabba',
+    'aaaaaaaaaaaa',
+    '.aa......aa.',
+    '..a......a..'
+  ]},
+  spider:{cols:{a:'#c9b3ea',b:'#ffd166'},rows:[
+    '.a.a.a.a.',
+    '..aaaaa..',
+    '.aabbaaa.',
+    '.aabbaaa.',
+    '..aaaaa..',
+    '.a.a.a.a.'
+  ]},
+  bat:{cols:{a:'#9a6fe0'},rows:[
+    'a...........a',
+    'aa.........aa',
+    '.aa.......aa.',
+    '..aaaaaaaaa..',
+    '...aa...aa...',
+    '....aa.aa....'
+  ]},
+  lolli:{cols:{a:'#ff5f9e',b:'#ffe066',s:'#f3e8d8'},rows:[
+    '..aaaa..',
+    '.aabbaa.',
+    'aabbbbaa',
+    'aabbbbaa',
+    '.aabbaa.',
+    '..aaaa..',
+    '...ss...',
+    '...ss...',
+    '...ss...'
+  ]}
+};
+function pxDeco(name,px){
+  const d=PX_DECO[name]; if(!d) return '';
+  const w=d.rows[0].length, h=d.rows.length;
+  let rects='';
+  for(let y=0;y<h;y++){
+    const row=d.rows[y]; let x=0;
+    while(x<w){
+      const c=row[x]; let n=1;
+      while(x+n<w && row[x+n]===c) n++;
+      if(c!=='.'){ const col=d.cols[c]; if(col) rects+='<rect x="'+x+'" y="'+y+'" width="'+n+'" height="1" fill="'+col+'"/>'; }
+      x+=n;
+    }
+  }
+  return '<svg class="px-deco" viewBox="0 0 '+w+' '+h+'" width="'+(w*px)+'" height="'+(h*px)+'" shape-rendering="crispEdges" aria-hidden="true">'+rects+'</svg>';
+}
+function claimCodeHallo(){
+  const el=$('codeHalloIn');
+  const v=(el&&el.value?el.value:'').trim();
+  if(v!=='4099'){ sfx.error(); toast($t('口令不对哦～')); return; }
+  if(S.codeHallo){ toast($t('这个口令已经领过啦')); return; }
+  const gold=codeRewardGold();
+  const tomato=dex2Unlocked()?500:0;
+  S.codeHallo=true; addCoins(gold); if(tomato)tvTomato(tomato);
+  save(); updateCodeHallo();
+  if(sfx.dex)sfx.dex(); else sfx.coin();
+  openModal($t('🎃 万圣节快乐'), halloFxHTML()
+    +'<div style="text-align:center">'
+    +'<div class="hallo-emoji">'+pxDeco('candy',4)+'</div>'
+    +$t('<p style="font-size:13px;color:#f2e6ff;margin:6px 0 4px">按你现有的 <b>')+totalSlots()+$t('</b> 个槽位，收到了约 24 小时的金币产出</p>')
+    +'<p style="font-size:22px;font-weight:800;color:#ffc46b;margin:4px 0">+'+fmt(gold)+' <i class="cico"></i>'+(tomato?(' ＋ '+tomato+' 🍅'):'')+'</p>'
+    +'<p style="font-size:15px;font-weight:800;color:#ffa94d;margin:10px 0 4px">'+$t('🎃 月巴和番茄祝大家万圣节快乐！🍬')+'</p>'
+    +'<p style="font-size:12px;color:#cbb8ea">'+(tomato?$t('（第二图鉴已开启，附赠 500 🍅）'):$t('（开启第二图鉴后还能额外获得 500 🍅）'))+'</p>'
+    +'<div style="margin-top:12px"><button class="btn cta" onclick="closeModal()">'+$t('收下')+'</button></div>'
+    +'</div>');
+  $('modal').classList.add('hallo-modal');
+}
+
 /* ---------------- 口令机制（保留格式，暂无启用的口令） ----------------
    原「中秋 4099 / 国庆 1001」两个口令已下线：入口按钮不再渲染，openCode… / claimCode… 与弹窗格式保留。
    以后要上线新口令：在顶栏加一个按钮调用新的 openCodeXxx()，并在 claimCodeXxx() 里校验口令即可。 */
@@ -16151,7 +16315,7 @@ function init(){
   applySkin(S.skins.active);
   renderOverview(); updateHeader(); updateStatus(); updatePomoUI(); updateSceneBar(); updateWeatherHold();
   applyI18n();   // 静态文案/顶栏语言按钮按当前语言刷新（P0 无译文时显示中文原文）
-  updateTravelIcon(); updateCodeIcon(); updateCodeIcon2(); updateSurvivorIcon(); updateGbDailyBadge();
+  updateTravelIcon(); updateCodeIcon(); updateCodeIcon2(); updateCodeHallo(); updateSurvivorIcon(); updateGbDailyBadge();
   svBuffRender();   // 幸存者装备增幅胶囊（无装备时自动隐藏）
   checkAch(true); updateAchBtn();   // 读档后静默结算一次已满足的成就（只登记、不弹提示）
   /* 正式版上线后：测试入口下线，测试存档整键清空（以后不会再产生） */
@@ -19060,6 +19224,7 @@ function ddSparkHTML(cum){
       var w=fr&&fr.contentWindow;
       if(!w) return true;
       if(typeof w.__pmState!=='function') return true;   // 内嵌页还没加载完：先别刷
+      if(typeof w.__pmIntroActive==='function' && w.__pmIntroActive()) return true;   // 开场页还在：别打断
       var st=w.__pmState();
       return st!=='title';
     }catch(e){ return true; }
