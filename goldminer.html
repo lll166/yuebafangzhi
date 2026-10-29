@@ -79,6 +79,7 @@
   #minerTilt .av{width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center;
     filter:drop-shadow(0 3px 8px rgba(0,0,0,.5));}
   #minerTilt .av img,#minerTilt .av svg{width:100%;height:100%;object-fit:contain;}
+  #minerTilt .av canvas{max-width:100%;max-height:100%;width:auto;height:auto;display:block;}
   /* 矿帽：暗金属帽体 + 青蓝描边，和 HUD 面板同族 */
   .helmet{position:absolute;left:50%;top:-6px;width:34px;height:19px;margin-left:-17px;pointer-events:none;
     filter:drop-shadow(0 2px 5px rgba(0,0,0,.6));}
@@ -104,6 +105,52 @@
     font-size:9px;font-weight:800;letter-spacing:1px;color:var(--accent2);
     background:linear-gradient(180deg,rgba(8,34,46,.9),rgba(4,18,26,.95));
     box-shadow:0 0 10px rgba(70,230,242,.18);}
+
+  /* 矿工动效：收集闪光 / 金像金光 / 收工沮丧 */
+  #minerTilt.flash .av{animation:minerFlash .3s ease-out;}
+  @keyframes minerFlash{
+    0%{filter:drop-shadow(0 0 16px rgba(255,255,255,.95)) brightness(1.45);}
+    100%{filter:drop-shadow(0 3px 8px rgba(0,0,0,.5)) brightness(1);}
+  }
+  #minerTilt.glow .av{filter:drop-shadow(0 0 16px rgba(232,185,63,.95)) drop-shadow(0 0 34px rgba(232,185,63,.5));}
+  #minerTilt.sad .av{filter:drop-shadow(0 3px 8px rgba(0,0,0,.5)) brightness(.7) saturate(.7);}
+  body.lp #minerTilt.flash .av{animation:none;}
+  @media (prefers-reduced-motion: reduce){ #minerTilt.flash .av{animation:none;} }
+
+  /* P1：连击光晕 / 对话气泡 / 汗滴 / 帽灯呼吸 */
+  #minerBox{z-index:0;}
+  #minerTilt{z-index:1;}
+  #minerName{z-index:2;}
+  #minerAura{position:absolute;left:50%;top:64px;width:100px;height:100px;margin:-50px 0 0 -50px;
+    border-radius:50%;pointer-events:none;opacity:0;transform:scale(.75);
+    transition:opacity .28s ease,transform .28s ease;
+    background:radial-gradient(circle,rgba(70,230,242,.42),rgba(70,230,242,.12) 52%,rgba(70,230,242,0) 70%);}
+  #minerBubble{position:absolute;left:54px;top:-2px;z-index:3;min-width:18px;height:18px;padding:0 4px;
+    display:flex;align-items:center;justify-content:center;pointer-events:none;
+    font-size:11px;font-weight:900;color:#04141b;border-radius:9px;opacity:0;transform:scale(.6);
+    background:linear-gradient(180deg,#b0f9ff,#46e6f2);box-shadow:0 0 12px rgba(70,230,242,.5);}
+  #minerBubble::after{content:'';position:absolute;left:-4px;top:7px;
+    border:4px solid transparent;border-right-color:#46e6f2;}
+  #minerBubble.show{animation:bubblePop 1.1s ease-out;}
+  @keyframes bubblePop{0%{opacity:0;transform:scale(.5)}18%{opacity:1;transform:scale(1.1)}
+    30%{transform:scale(1)}75%{opacity:1}100%{opacity:0;transform:scale(.9) translateY(-6px)}}
+  #minerSweat{position:absolute;left:52px;top:8px;z-index:3;width:6px;height:8px;pointer-events:none;opacity:0;
+    border-radius:50% 50% 50% 50%/60% 60% 40% 40%;
+    background:linear-gradient(180deg,#eafeff,#46e6f2);box-shadow:0 0 6px rgba(70,230,242,.7);}
+  #minerSweat.on{animation:sweatDrop 1s ease-in forwards;}
+  @keyframes sweatDrop{0%{opacity:0;transform:translate(0,-2px) scale(.5)}
+    18%{opacity:1;transform:translate(0,0) scale(1)}
+    100%{opacity:0;transform:translate(6px,20px) scale(.8)}}
+  #minerTilt .helmet .lamp{animation:lampBreath 3.6s ease-in-out infinite;}
+  @keyframes lampBreath{0%,100%{opacity:1}50%{opacity:.55}}
+  body.lp #minerAura{transition:none;}
+  body.lp #minerSweat{display:none;}
+  body.lp #minerTilt .helmet .lamp{animation:none;}
+  @media (prefers-reduced-motion: reduce){
+    #minerAura{transition:none;}
+    #minerSweat{display:none;}
+    #minerTilt .helmet .lamp{animation:none;}
+  }
 
   /* 暂停按钮：与 HUD 同族的切角冷光块 */
   #pauseBtn{position:absolute;right:10px;top:10px;width:34px;height:34px;z-index:4;display:none;
@@ -335,7 +382,10 @@
         <div id="statusChip" class="gmchip"></div>
         <div id="statueBox"><img id="statueImg" alt=""><span class="ring"></span></div>
         <div id="minerBox">
+          <span id="minerAura"></span>
           <div id="minerTilt"><div class="av" id="minerAv"></div><div class="helmet"><span class="dome"></span><span class="brim"></span><span class="lamp"></span></div></div>
+          <span id="minerBubble"></span>
+          <span id="minerSweat"></span>
           <div id="minerName"></div>
         </div>
       </div>
@@ -462,6 +512,7 @@ const TXT={
     clear:'本关达标！', timeUp:'时间到 · 差一点',
     statueBanner:'番茄金像 · +888', plusTime:'+5s',
     paused:'已暂停', resume:'继续游戏', endBtn:'结束本局', pauseHint:'按 P / Esc 或点击按钮继续', pause:'暂停',
+    menuBtn:'← 回到菜单', musicOn:'♪ 音乐 开', musicOff:'♪ 音乐 关',
     q1:'{n} 戴上安全帽，下矿了。', q2:'这块番茄在发光！', q3:'这块土也太硬了……',
     q4:'这一层快挖空了。', q5:'番茄金像！今天手气不错。',
     combo:'连击 {n}', itemBomb:'炸药', itemGlue:'马达', itemLamp:'矿灯',
@@ -470,6 +521,7 @@ const TXT={
     achTitle:'成就', achBtn:'成就', codexBtn:'矿工图鉴', codexTitle:'矿工图鉴',
     codexEmpty:'还没遇见矿工，先下一趟矿吧。', achCount:'已达成 {n}/{m}',
     back:'← 返回', dailyBtn:'每日挑战', dailyBest:'今日最高 {n}', achToast:'🏆 成就达成 · {n}',
+    blockBanner:'月巴挡路了！',
     ach_first:'第一次达标', ach_first_d:'任意一关达到目标',
     ach_statue:'番茄金像', ach_statue_d:'挖到第一座番茄金像',
     ach_combo8:'八连击', ach_combo8_d:'一局内连击达到 8',
@@ -494,6 +546,7 @@ const TXT={
     clear:'Level clear!', timeUp:'Time up · so close',
     statueBanner:'Tomato Statue · +888', plusTime:'+5s',
     paused:'Paused', resume:'Resume', endBtn:'End run', pauseHint:'Press P / Esc or tap the button to continue', pause:'Pause',
+    menuBtn:'← Main menu', musicOn:'♪ Music ON', musicOff:'♪ Music OFF',
     q1:'{n} puts on a hard hat and heads down.', q2:'This tomato is glowing!', q3:'That lump is way too hard...',
     q4:'This layer is nearly empty.', q5:'A tomato statue! Lucky day.',
     combo:'Combo {n}', itemBomb:'Bomb', itemGlue:'Motor', itemLamp:'Lamp',
@@ -502,6 +555,7 @@ const TXT={
     achTitle:'Achievements', achBtn:'Achievements', codexBtn:'Miner Codex', codexTitle:'Miner Codex',
     codexEmpty:'No miners met yet. Go down and dig.', achCount:'Unlocked {n}/{m}',
     back:'← Back', dailyBtn:'Daily Run', dailyBest:'Today best {n}', achToast:'🏆 Achievement · {n}',
+    blockBanner:'A Banny blocked the hook!',
     ach_first:'First clear', ach_first_d:'Reach the target of any level',
     ach_statue:'Tomato statue', ach_statue_d:'Dig up your first tomato statue',
     ach_combo8:'Eight combo', ach_combo8_d:'Reach an 8 combo in one run',
@@ -527,6 +581,7 @@ const TXT={
     clear:'クリア！', timeUp:'時間切れ · あと少し',
     statueBanner:'トマト像 · +888', plusTime:'+5秒',
     paused:'一時停止', resume:'再開する', endBtn:'終了する', pauseHint:'P / Esc またはボタンで再開', pause:'一時停止',
+    menuBtn:'← メニューへ', musicOn:'♪ 音楽 ON', musicOff:'♪ 音楽 OFF',
     q1:'{n}はヘルメットをかぶって坑道へ。', q2:'このトマト、光ってる！', q3:'この土、固すぎる……',
     q4:'この層もそろそろ空っぽ。', q5:'トマト像！今日はついてる。',
     combo:'コンボ {n}', itemBomb:'爆弾', itemGlue:'モーター', itemLamp:'ランプ',
@@ -535,6 +590,7 @@ const TXT={
     achTitle:'実績', achBtn:'実績', codexBtn:'マイナー図鑑', codexTitle:'マイナー図鑑',
     codexEmpty:'まだ誰にも会っていない。まず坑道へ。', achCount:'達成 {n}/{m}',
     back:'← 戻る', dailyBtn:'デイリーチャレンジ', dailyBest:'今日の最高 {n}', achToast:'🏆 実績達成 · {n}',
+    blockBanner:'バニーが邪魔した！',
     ach_first:'初クリア', ach_first_d:'いずれかの面で目標達成',
     ach_statue:'トマト像', ach_statue_d:'初めてトマト像を掘る',
     ach_combo8:'8コンボ', ach_combo8_d:'1回で8コンボ達成',
@@ -559,6 +615,7 @@ const TXT={
     clear:'클리어!', timeUp:'시간 종료 · 아쉬워요',
     statueBanner:'토마토 조각상 · +888', plusTime:'+5초',
     paused:'일시정지', resume:'계속하기', endBtn:'게임 종료', pauseHint:'P / Esc 또는 버튼으로 계속', pause:'일시정지',
+    menuBtn:'← 메뉴로', musicOn:'♪ 음악 ON', musicOff:'♪ 음악 OFF',
     q1:'{n}가 안전모를 쓰고 광산으로 내려갑니다.', q2:'이 토마토 빛나고 있어!', q3:'이 흙덩이는 너무 단단해……',
     q4:'이 층도 거의 다 캤네.', q5:'토마토 조각상! 오늘 운이 좋아.',
     combo:'콤보 {n}', itemBomb:'폭탄', itemGlue:'모터', itemLamp:'랜턴',
@@ -567,6 +624,7 @@ const TXT={
     achTitle:'업적', achBtn:'업적', codexBtn:'광부 도감', codexTitle:'광부 도감',
     codexEmpty:'아직 만난 광부가 없어요. 먼저 갱도로.', achCount:'달성 {n}/{m}',
     back:'← 뒤로', dailyBtn:'일일 도전', dailyBest:'오늘 최고 {n}', achToast:'🏆 업적 달성 · {n}',
+    blockBanner:'배니가 길을 막았어요!',
     ach_first:'첫 클리어', ach_first_d:'아무 단계에서 목표 달성',
     ach_statue:'토마토 조각상', ach_statue_d:'첫 토마토 조각상 채굴',
     ach_combo8:'8콤보', ach_combo8_d:'한 판에서 8콤보 달성',
@@ -791,15 +849,134 @@ const SFX={
   statue(){ [523,784,1046,1568].forEach(function(f,i){ tone(f,0.18,'triangle',0.12,i*0.07); }); },
   clear(){ [523,659,784,1046].forEach(function(f,i){ tone(f,0.14,'triangle',0.12,i*0.08); }); },
   fail(){  tone(392,0.14,'sine',0.06); tone(294,0.18,'sine',0.05,0.1); },
-  click(){ tone(720,0.05,'square',0.05); }
+  click(){ tone(720,0.05,'square',0.05); },
+  boing(){
+    if(muted) return;
+    const a=ac(); if(!a) return;
+    try{
+      const t0=a.currentTime;
+      const o=a.createOscillator(), g=a.createGain();
+      o.type='square';
+      o.frequency.setValueAtTime(460,t0);
+      o.frequency.exponentialRampToValueAtTime(170,t0+0.16);
+      g.gain.setValueAtTime(0.0001,t0);
+      g.gain.linearRampToValueAtTime(0.07,t0+0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001,t0+0.18);
+      o.connect(g); g.connect(a.destination);
+      o.start(t0); o.stop(t0+0.2);
+    }catch(e){}
+  }
 };
+
+/* ================= 8-bit 背景音乐 ================= */
+/* 纯 WebAudio 合成，无外部音频文件；4 小节循环（Am–F–C–G），
+   用 setInterval 提前 0.12s 排程，避免主循环卡顿造成音符抖动 */
+const MUSIC_KEY='yueba-gold-music';
+let musicOn=(function(){
+  try{ const v=localStorage.getItem(MUSIC_KEY); return v===null?true:v==='1'; }catch(e){ return true; }
+})();
+function saveMusicPref(){
+  try{ localStorage.setItem(MUSIC_KEY, musicOn?'1':'0'); }catch(e){}
+}
+const BGM={
+  bpm:132, on:false, timer:0, step:0, next:0, master:null, noise:null,
+  /* MIDI 音高，0=休止；每 4 步为一拍 */
+  lead:[69,0,72,0, 76,0,79,76, 74,0,72,0, 74,0,72,69,
+        69,0,72,0, 76,0,79,76, 74,0,72,74, 69,0,0,0,
+        72,0,76,0, 79,0,76,79, 76,0,74,0, 72,0,74,76,
+        74,0,71,0, 74,0,76,74, 72,0,71,0, 69,0,0,0],
+  bass:[45,0,0,0, 45,0,0,0, 41,0,0,0, 41,0,0,0,
+        48,0,0,0, 48,0,0,0, 43,0,0,0, 43,0,0,0,
+        45,0,0,0, 45,0,0,0, 41,0,0,0, 41,0,0,0,
+        48,0,0,0, 48,0,0,0, 43,0,0,0, 43,0,0,0],
+  hat: [0,1,0,1, 0,1,0,1, 0,1,0,1, 0,1,0,1,
+        0,1,0,1, 0,1,0,1, 0,1,0,1, 0,1,0,1,
+        0,1,0,1, 0,1,0,1, 0,1,0,1, 0,1,0,1,
+        0,1,0,1, 0,1,0,1, 0,1,0,1, 0,1,0,1],
+  kick:[1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,1,0,
+        1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,1,0,
+        1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,1,0,
+        1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,1,0]
+};
+function mtof(m){ return 440*Math.pow(2,(m-69)/12); }
+function bgmMaster(a){
+  if(!BGM.master){
+    BGM.master=a.createGain();
+    BGM.master.gain.value=0.7;   // 整体压低，给音效让位
+    BGM.master.connect(a.destination);
+  }
+  return BGM.master;
+}
+function bgmNoise(a){
+  if(BGM.noise) return BGM.noise;
+  const len=Math.floor(a.sampleRate*0.05);
+  const buf=a.createBuffer(1,len,a.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2);
+  BGM.noise=buf;
+  return buf;
+}
+function bgmNote(a,t,freq,dur,type,vol,glideTo){
+  try{
+    const o=a.createOscillator(), g=a.createGain();
+    o.type=type;
+    o.frequency.setValueAtTime(freq,t);
+    if(glideTo) o.frequency.exponentialRampToValueAtTime(glideTo,t+dur*0.85);
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.linearRampToValueAtTime(vol,t+0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g); g.connect(bgmMaster(a));
+    o.start(t); o.stop(t+dur+0.02);
+  }catch(e){}
+}
+function bgmHat(a,t){
+  try{
+    const s=a.createBufferSource(), f=a.createBiquadFilter(), g=a.createGain();
+    s.buffer=bgmNoise(a);
+    f.type='highpass'; f.frequency.value=6500;
+    g.gain.setValueAtTime(0.025,t);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+0.035);
+    s.connect(f); f.connect(g); g.connect(bgmMaster(a));
+    s.start(t); s.stop(t+0.05);
+  }catch(e){}
+}
+function bgmStep(a,i,t,stepDur){
+  if(BGM.lead[i]) bgmNote(a,t,mtof(BGM.lead[i]),stepDur*1.7,'square',0.045);
+  if(BGM.bass[i]) bgmNote(a,t,mtof(BGM.bass[i]),stepDur*3.2,'triangle',0.05);
+  if(BGM.hat[i]) bgmHat(a,t);
+  if(BGM.kick[i]) bgmNote(a,t,150,0.09,'sine',0.08,48);
+}
+function bgmSchedule(){
+  const a=AC;
+  if(!a||!BGM.on) return;
+  const stepDur=60/BGM.bpm/4;
+  while(BGM.next<a.currentTime+0.12){
+    bgmStep(a,BGM.step,BGM.next,stepDur);
+    BGM.step=(BGM.step+1)%BGM.lead.length;
+    BGM.next+=stepDur;
+  }
+}
+function musicStart(){
+  if(BGM.on||!musicOn||muted) return;
+  const a=ac(); if(!a) return;
+  BGM.on=true;
+  BGM.next=a.currentTime+0.08;
+  if(!BGM.timer) BGM.timer=setInterval(bgmSchedule,25);
+  bgmSchedule();
+}
+function musicStop(){
+  BGM.on=false;
+  if(BGM.timer){ clearInterval(BGM.timer); BGM.timer=0; }
+}
+function musicReset(){ musicStop(); BGM.step=0; }
 
 /* ================= DOM ================= */
 const $=function(id){ return document.getElementById(id); };
 const stage=$('stage'), app=$('app'), frame=$('frame'), cv=$('cv');
 let ctx=cv.getContext('2d');
 const domLayer=$('domLayer'), minerBox=$('minerBox'), minerTilt=$('minerTilt'), minerAv=$('minerAv'),
-      minerName=$('minerName'), statueBox=$('statueBox'), statueImg=$('statueImg'),
+      minerName=$('minerName'), minerAura=$('minerAura'), minerBubble=$('minerBubble'), minerSweat=$('minerSweat'),
+      statueBox=$('statueBox'), statueImg=$('statueImg'),
       bannerEl=$('banner'), hintEl=$('hint'), overlay=$('overlay'), panel=$('panel'),
       lbLv=$('lbLv'), numTar=$('numTar'), lbTime=$('lbTime'), numTime=$('numTime'),
       lbScore=$('lbScore'), numScore=$('numScore'), foot=$('foot'),
@@ -818,14 +995,15 @@ let K=1;
 const gm={
   phase:'start', paused:false, raf:0, last:0,
   lv:1, target:400, lvScore:0, total:0, time:LV_TIME, timeMax:LV_TIME,
-  ores:[], parts:[], texts:[],
+  ores:[], critters:[], parts:[], texts:[],
   swing:0, period:2.4,
   hook:{state:'idle', a:0, len:MINLEN, ore:null},
   miner:null, statueOre:null, statueCount:0,
-  shake:0, spring:{s:0,vs:0,dy:0,vy:0}, springLast:0, shotAny:false, newRecord:false,
+  shake:0, spring:{s:0,vs:0,dy:0,vy:0,lean:0,leanV:0}, springLast:0, shotAny:false, newRecord:false,
+  minerFx:{pose:'idle', shake:0, lookT:0, lookDir:0, nextLook:5, nextHop:8, panic:false, sweatT:0},
   lastSec:LV_TIME,
   streak:0, bestStreak:0, glueT:0, lastGlueSec:0,
-  daily:false, coinEarned:0, boomDirt:0, fpsAcc:0, fpsN:0, dprSteps:0,
+  daily:false, blockHint:false, coinEarned:0, boomDirt:0, fpsAcc:0, fpsN:0, dprSteps:0,
   hitStop:0, band:0,
   quote:''
 };
@@ -912,7 +1090,7 @@ function placeStatue(){
   return null;
 }
 function genOres(lv){
-  gm.ores=[]; gm.statueOre=null;
+  gm.ores=[]; gm.critters=[]; gm.statueOre=null;
   if(lv%3===0) gm.statueOre=placeStatue();   // 每 3 关保底 1 座，先放避免被挤掉
   // 每关 1 个道具（炸药 / 马达 / 矿灯），第 2 关起偶尔混进一颗腐烂番茄
   tryPlace(['bomb','glue','lamp'][Math.floor(RNG()*3)]);
@@ -930,8 +1108,20 @@ function genOres(lv){
     for(let i=0;i<table.length;i++){ acc+=table[i][1]; if(rnd<=acc) return table[i][0]; }
     return 'small';
   };
-  for(let i=0;i<n;i++) tryPlace(pick());
+  for(let i=0;i<n;i++){
+    const k=pick();
+    // 每日挑战：原本会被钩走的月巴石块改成满地乱跳的障碍
+    if(gm.daily&&k==='dirt') spawnCritter();
+    else tryPlace(k);
+  }
   ensureValue();
+  // 保底：矿图里没抽到月巴时也保证有 2 只，随关卡最多 6 只；两种各至少一只
+  if(gm.daily){
+    const min=Math.min(6, 1+Math.ceil(lv/2));
+    while(gm.critters.length<min){ if(!spawnCritter()) break; }
+    if(!gm.critters.some(function(c){ return c.type==='heavy'; })) spawnCritter('heavy');
+    if(!gm.critters.some(function(c){ return c.type==='block'; })) spawnCritter('block');
+  }
 }
 /* 保底：场上总价值不足以覆盖目标时，把土块换成中/大番茄 */
 function ensureValue(){
@@ -958,6 +1148,124 @@ function ensureValue(){
   }
 }
 
+/* ================= 每日挑战 · 乱跳的月巴障碍 ================= */
+/* 两种月巴都会在矿区里蹦来蹦去：
+   block（红色 ✕）——钩子撞上会被弹回；
+   heavy（金色 ↓）——可以钩走，但非常沉，回收极慢。
+   生成用 RNG（每日矿图固定），移动用 Math.random（每局有变化）。 */
+function spawnCritter(type){
+  if(!DIRT_POOL.length) return null;
+  const t=type||(RNG()<0.34?'heavy':'block');
+  const p=DIRT_POOL[Math.floor(RNG()*DIRT_POOL.length)];
+  const r=t==='heavy'?rand(20,25):rand(16,21);
+  const spd=t==='heavy'?rand(18,30):rand(28,48);
+  const hopV=t==='heavy'?rand(160,210):rand(210,290);
+  const free=function(x,y){
+    if(Math.hypot(x-PIVOT.x,y-PIVOT.y)<140+r) return false;
+    for(let j=0;j<gm.critters.length;j++){
+      const c=gm.critters[j];
+      if(Math.hypot(c.x-x,c.y-y)<r+c.r+12) return false;
+    }
+    return true;
+  };
+  const add=function(x,y){
+    const c={
+      type:t, imgId:p.id, x:x, y:y, r:r,
+      tx:x, ty:y, retarget:0, speed:spd,
+      hop:0, hopV:hopV, sq:0, sqv:0, tilt:0, hitFlash:0, seed:RNG()*Math.PI*2
+    };
+    bannyImage(p.id);
+    gm.critters.push(c);
+    return c;
+  };
+  for(let i=0;i<70;i++){
+    const x=rand(MINE.x0+r+4, MINE.x1-r-4);
+    const y=rand(MINE.y0+r+18, MINE.y1-r-4);
+    if(!free(x,y)||!canPlace(x,y,r)) continue;
+    return add(x,y);
+  }
+  // 兜底：矿点太密时允许和矿点重叠，月巴会自己跳开
+  for(let i=0;i<40;i++){
+    const x=rand(MINE.x0+r+4, MINE.x1-r-4);
+    const y=rand(MINE.y0+r+18, MINE.y1-r-4);
+    if(free(x,y)) return add(x,y);
+  }
+  return null;
+}
+function critterRetarget(c){
+  for(let i=0;i<24;i++){
+    const x=MINE.x0+c.r+6+Math.random()*(MINE.x1-MINE.x0-c.r*2-12);
+    const y=MINE.y0+c.r+24+Math.random()*(MINE.y1-MINE.y0-c.r*2-30);
+    if(Math.hypot(x-PIVOT.x,y-PIVOT.y)<140) continue;
+    if(Math.hypot(x-c.x,y-c.y)<80) continue;
+    c.tx=x; c.ty=y; return;
+  }
+  c.tx=c.x; c.ty=c.y;
+}
+function updateCritters(dt){
+  const G=1500;
+  for(let i=0;i<gm.critters.length;i++){
+    const c=gm.critters[i];
+    if(c.hitFlash>0) c.hitFlash=Math.max(0,c.hitFlash-dt);
+    c.retarget-=dt;
+    let dx=c.tx-c.x, dy=c.ty-c.y;
+    let d=Math.hypot(dx,dy);
+    if(d<10||c.retarget<=0){
+      critterRetarget(c);
+      c.retarget=1.4+Math.random()*2.2;
+      dx=c.tx-c.x; dy=c.ty-c.y; d=Math.hypot(dx,dy)||1;
+    }
+    if(d>0.001){
+      const sp=c.speed;
+      c.x+=dx/d*sp*dt;
+      c.y+=dy/d*sp*dt;
+    }
+    // 往哪边走就往哪边歪一点
+    c.tilt+=((dx/d)*0.09-c.tilt)*Math.min(1,dt*6);
+    // 弹跳：落地立刻再起跳，形成连续的 Q 弹节奏
+    c.hop+=c.hopV*dt;
+    c.hopV-=G*dt;
+    if(c.hop<=0){
+      c.hop=0;
+      c.hopV=210+Math.random()*80;
+      c.sqv+=2.8;                 // 落地压扁
+    }
+    // 挤压弹簧：上升拉长、下落压扁，回弹留一点过冲
+    const target=clamp(-c.hopV*0.0009,-0.16,0.2);
+    c.sqv+=(-300*(c.sq-target)-18*c.sqv)*dt;
+    c.sq+=c.sqv*dt;
+    if(c.sq>0.32){ c.sq=0.32; if(c.sqv>0) c.sqv*=-0.25; }
+    if(c.sq<-0.2){ c.sq=-0.2; if(c.sqv<0) c.sqv*=-0.25; }
+  }
+}
+function bounceCritter(c,p){
+  const cy=c.y-c.hop;
+  let dx=c.x-p.x, dy=cy-p.y;
+  const d=Math.hypot(dx,dy)||1;
+  dx/=d; dy/=d;
+  c.tx=clamp(c.x+dx*90, MINE.x0+c.r+6, MINE.x1-c.r-6);
+  c.ty=clamp(c.y+dy*70, MINE.y0+c.r+24, MINE.y1-c.r-6);
+  c.retarget=1.3+Math.random()*1.4;
+  c.hopV=Math.max(c.hopV,320);
+  c.sqv+=3.6;
+  c.hitFlash=0.35;
+  gm.minerFx.shake=Math.max(gm.minerFx.shake,0.85);
+  showMinerBubble('?');
+  SFX.boing();
+  shake(3);
+  burst(c.x,cy,'#ff5468',10,150);
+  popText(c.x, cy-c.r-8, '!', '#b0f9ff', 18);
+  if(!gm.blockHint){ gm.blockHint=true; showBanner(t('blockBanner')); }
+}
+/* 极重的月巴：从障碍转成一颗慢速矿石，给 88 分但拖得很慢 */
+function makeHeavyOre(c){
+  return {
+    kind:'heavy', x:c.x, y:c.y-c.hop, r:c.r, imgId:c.imgId,
+    score:88, weight:7.5, bonus:0, pull:CARRY_MIN,
+    attached:true, seed:c.seed||0
+  };
+}
+
 /* ================= 关卡流程 ================= */
 function beginLevel(lv){
   gm.lv=lv;
@@ -969,9 +1277,11 @@ function beginLevel(lv){
   gm.hook={state:'idle', a:0, len:MINLEN, ore:null};
   gm.parts=[]; gm.texts=[];
   gm.shake=0; gm.spring.s=0; gm.spring.vs=0; gm.spring.dy=0; gm.spring.vy=0;
+  gm.spring.lean=0; gm.spring.leanV=0;
   gm.shotAny=false; gm.lastSec=LV_TIME;
   gm.streak=0; gm.glueT=0; gm.lastGlueSec=0;
   gm.hitStop=0;
+  resetMinerFx();
   const nb=Math.floor((lv-1)/5)%BANDS.length;
   if(nb!==gm.band){ gm.band=nb; bakeBg(); }   // 每 5 关换一层岩色
   updateComboChip(); updateStatusChip();
@@ -982,6 +1292,8 @@ function beginLevel(lv){
   setPauseBtn(true);
   hintEl.classList.remove('hide');
   overlay.classList.remove('show');
+  musicStart();
+  kickMiner(-2.0,-20);   // 入场：轻轻落地
   updateHUD();
   syncStatue();
   if(lv>=5) unlockAch('lv5');
@@ -995,6 +1307,7 @@ function startGame(){
   gm.total=0;
   gm.statueCount=0;
   gm.newRecord=false;
+  gm.blockHint=false;
   gm.coinEarned=0;
   gm.boomDirt=0;
   gm.bestStreak=0;
@@ -1048,6 +1361,7 @@ function shootHook(){
   if(gm.phase!=='play'||gm.hook.state!=='idle') return;
   gm.hook.state='shoot';
   gm.hook.ore=null;
+  gm.minerFx.lookT=0;
   kickMiner(-3.0, -42);   // 发射反冲：先拔高一截再回落
   SFX.shoot();
   if(!gm.shotAny){ gm.shotAny=true; hintEl.classList.add('hide'); }
@@ -1063,6 +1377,31 @@ function updateHook(dt){
   if(hk.state==='shoot'){
     hk.len+=SHOOT_SPD*dt;
     const p=tip();
+    // 每日挑战的月巴障碍：红色弹回，金色可钩但极重
+    for(let i=0;i<gm.critters.length;i++){
+      const c=gm.critters[i];
+      const cy=c.y-c.hop;
+      const dx=p.x-c.x, dy=p.y-cy;
+      const rr=c.r+HOOK_R+2;
+      if(dx*dx+dy*dy<=rr*rr){
+        if(c.type==='heavy'){
+          const idx=gm.critters.indexOf(c);
+          if(idx>=0) gm.critters.splice(idx,1);
+          const o=makeHeavyOre(c);
+          gm.ores.push(o);
+          hk.state='attach'; hk.ore=o; o.attached=true; oreDirty=true;
+          kickMiner(3.4,24);
+          SFX.grab(); tone(82,0.24,'sawtooth',0.07);
+          burst(o.x,o.y,'#e8b93f',8,120);
+          buzz(24);
+          return;
+        }
+        bounceCritter(c,p);
+        hk.state='retract';
+        gm.streak=0; updateComboChip();
+        return;
+      }
+    }
     let hit=null, bestD=1e9;
     for(let i=0;i<gm.ores.length;i++){
       const o=gm.ores[i];
@@ -1094,6 +1433,7 @@ function updateHook(dt){
     }else if(hk.len>=MAXLEN){
       hk.state='retract';
       gm.streak=0; updateComboChip();   // 空钩断连击
+      kickMiner(2.0, 10);               // 空钩：泄气地往下一沉
     }
     return;
   }
@@ -1117,14 +1457,25 @@ function comboMult(){
   return Math.min(COMBO_CAP, 1+Math.max(0,gm.streak-1)*COMBO_STEP);
 }
 function updateComboChip(){
-  if(gm.streak>=2){
+  const n=gm.streak;
+  if(n>=2){
     comboChip.classList.add('show');
     const m=comboMult();
-    comboChip.textContent=t('combo',{n:gm.streak})+' ×'+(Math.round(m*100)/100);
+    comboChip.textContent=t('combo',{n:n})+' ×'+(Math.round(m*100)/100);
     comboChip.classList.remove('pop'); void comboChip.offsetWidth; comboChip.classList.add('pop');
   }else{
     comboChip.classList.remove('show');
   }
+  // 连击光晕：3 连起亮，越高越亮越大；断连击淡出
+  if(n>=3&&!calmMode()){
+    const k=Math.min(1,(n-2)/6);
+    minerAura.style.opacity=(0.35+0.5*k).toFixed(2);
+    minerAura.style.transform='scale('+(0.9+0.35*k).toFixed(2)+')';
+  }else{
+    minerAura.style.opacity='0';
+    minerAura.style.transform='scale(.75)';
+  }
+  if(n===3||n===5||n===8||n===12) showMinerBubble('!');
 }
 function updateStatusChip(){
   if(gm.glueT>0){
@@ -1190,6 +1541,7 @@ function collect(o){
     popText(x,y-14,'+'+v,'#fff3b0',22);
     showBanner(t('statueBanner'));
     kickMiner(-3.2, -46);   // 金像到手：开心地蹦一下
+    flashMiner(true);
     gm.quote=t('q5');
     unlockAch('statue');
     updateComboChip();
@@ -1201,6 +1553,7 @@ function collect(o){
     burst(x,y,'#9be7ff',14,190);
     popText(x,y-10,'+'+v,'#d9f7ff',20);
     kickMiner(-2.4, -30);   // 宝石：小跳
+    flashMiner(false);
     gm.quote=t('q2');
     updateComboChip();
   }else if(kind==='dirt'){
@@ -1209,6 +1562,7 @@ function collect(o){
     SFX.dirt();
     const bp=o.imgId?POOL_BY_ID[o.imgId]:null;
     burst(x,y,bp?bp.color:'#6b6257',8,110);
+    burst(PIVOT.x, PIVOT.y-4, bp?bp.color:'#6b6257', 4, 45);
     popText(x,y-10,'+'+v,'#d9cdbb',16);
     kickMiner(2.6, 14);   // 泥土入手：轻轻一沉
     gm.quote=t('q3');
@@ -1218,6 +1572,7 @@ function collect(o){
     SFX.clock();
     burst(x,y,'#9be07a',10,150);
     popText(x,y-10,t('plusTime'),'#b8f08a',19);
+    kickMiner(-1.0, -16);
   }else if(kind==='small'||kind==='mid'||kind==='big'){
     gm.streak++;
     const v=addScore(o.score);
@@ -1228,6 +1583,15 @@ function collect(o){
     popText(x,y-10,'+'+v,'#ffe0b8',kind==='big'?22:18);
     kickMiner(kind==='big'?-2.0:-1.2, kind==='big'?-26:-12);   // 大番茄弹得更高
     updateComboChip();
+  }else if(kind==='heavy'){
+    gm.streak++;
+    const v=addScore(o.score);
+    gm.bestStreak=Math.max(gm.bestStreak,gm.streak);
+    SFX.grab(); tone(88,0.2,'sawtooth',0.06);
+    burst(x,y,'#e8b93f',10,150);
+    popText(x,y-10,'+'+v,'#ffe9a8',20);
+    kickMiner(3.0, 16);   // 很沉：接住时往下一沉
+    updateComboChip();
   }else if(kind==='rot'){
     gm.total=Math.max(0,gm.total+o.score);
     gm.lvScore=Math.max(0,gm.lvScore+o.score);
@@ -1235,6 +1599,7 @@ function collect(o){
     SFX.dirt();
     tone(180,0.18,'sawtooth',0.06);
     burst(x,y,'#7e6b4a',10,120);
+    burst(PIVOT.x, PIVOT.y-4, '#7e6b4a', 4, 45);
     popText(x,y-10,'−40','#c9a86a',18);
     kickMiner(3.4, 18);   // 吃到烂番茄：嫌弃地往下一缩
   }else if(kind==='glue'){
@@ -1249,6 +1614,7 @@ function collect(o){
     SFX.clock();
     burst(x,y,'#ffe9a8',12,180);
     showBanner(t('lampBanner'));
+    kickMiner(-1.0, -16);
   }
   saveStore();
   checkAch();
@@ -1344,6 +1710,10 @@ function levelClear(){
   saveStore();
   SFX.clear();
   unlockAch('first');
+  gm.minerFx.pose='win';
+  flashMiner(true);
+  kickMiner(-2.6,-36);
+  setTimeout(function(){ if(gm.minerFx.pose==='win') kickMiner(-1.8,-24); },180);
   // 每日挑战首次达标：送一张隧道通行证到旅行仓库（每天限 1 次，不可叠加）
   if(gm.daily){
     const dk=String(dailyKey());
@@ -1371,6 +1741,10 @@ function endRun(){
   gm.phase='over';
   gm.paused=false;
   setPauseBtn(false);
+  musicStop();
+  gm.minerFx.pose='lose';
+  minerTilt.classList.add('sad');
+  kickMiner(3.4,14);
   SFX.fail();
   gm.streak=0; updateComboChip();
   gm.glueT=0; updateStatusChip();
@@ -1396,6 +1770,8 @@ function showStart(){
   gm.daily=false;
   gm.paused=false;
   setPauseBtn(false);
+  resetMinerFx();
+  musicReset();
   gm.streak=0; updateComboChip(); gm.glueT=0; updateStatusChip();
   const m=gm.miner||POOL[0];
   const met=Object.keys(save.miners||{}).length;
@@ -1439,7 +1815,8 @@ function showSettle(){
     +'<div class="btnw">'
       +'<button class="primary" data-act="again">'+esc(t('again'))+'</button>'
       +'<button class="ghost" data-act="ach">'+esc(t('achBtn'))+'</button>'
-    +'</div>';
+    +'</div>'
+    +'<div class="btnw"><button class="ghost" data-act="back">'+esc(t('menuBtn'))+'</button></div>';
   overlay.classList.add('show');
   updateHUD();
   // 结算数字滚动
@@ -1519,6 +1896,9 @@ function showPause(){
     +'<div class="st">'+esc(t('pauseHint'))+'</div>'
     +'<div class="btnw">'
       +'<button class="primary" data-act="resume">'+esc(t('resume'))+'</button>'
+    +'</div>'
+    +'<div class="btnw half">'
+      +'<button class="ghost" data-act="music">'+esc(musicOn?t('musicOn'):t('musicOff'))+'</button>'
       +'<button class="ghost" data-act="end">'+esc(t('endBtn'))+'</button>'
     +'</div>';
   overlay.classList.add('show');
@@ -1558,6 +1938,11 @@ panel.addEventListener('click',function(e){
     showAch();
   }else if(act==='resume'){
     resumeGame();
+  }else if(act==='music'){
+    musicOn=!musicOn;
+    saveMusicPref();
+    if(musicOn) musicStart(); else musicStop();
+    showPause();
   }else if(act==='end'){
     endRun();
   }else if(act==='back'){
@@ -1965,6 +2350,22 @@ function drawClock(o){
   ctx.beginPath(); ctx.arc(x,y,1.8,0,Math.PI*2); ctx.fill();
 }
 
+function drawBannyMedal(im,r,accent,accent2,bg){
+  // 以 (0,0) 为圆心的立绘圆牌：静态石块、乱跳月巴、重月巴共用
+  ctx.save();
+  ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.clip();
+  ctx.fillStyle=bg||'#0e2b36';
+  ctx.fillRect(-r,-r,r*2,r*2);
+  const s=r*2.35;
+  ctx.drawImage(im,-s/2,-s/2,s,s);
+  ctx.restore();
+  ctx.strokeStyle=accent||'rgba(120,232,255,.5)';
+  ctx.lineWidth=Math.max(1,r*0.07);
+  ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke();
+  ctx.strokeStyle=accent2||'rgba(200,252,255,.55)';
+  ctx.lineWidth=Math.max(.8,r*0.04);
+  ctx.beginPath(); ctx.arc(0,0,r*0.94,Math.PI*1.12,Math.PI*1.72); ctx.stroke();
+}
 function drawDirt(o){
   const x=o.x, y=o.y, r=o.r;
   const im=o.imgId?bannyImage(o.imgId):null;
@@ -1973,19 +2374,7 @@ function drawDirt(o){
   ctx.beginPath(); ctx.ellipse(x,y+r*0.85,r*0.9,r*0.3,0,0,Math.PI*2); ctx.fill();
   if(im){
     // 圆形立绘牌：任意外链图都裁进冷光圆盘，观感统一
-    ctx.save();
-    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.clip();
-    ctx.fillStyle='#0e2b36';
-    ctx.fillRect(x-r,y-r,r*2,r*2);
-    const s=r*2.35;
-    ctx.drawImage(im,x-s/2,y-s/2,s,s);
-    ctx.restore();
-    ctx.strokeStyle='rgba(120,232,255,.5)';
-    ctx.lineWidth=Math.max(1,r*0.07);
-    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.stroke();
-    ctx.strokeStyle='rgba(200,252,255,.55)';
-    ctx.lineWidth=Math.max(.8,r*0.04);
-    ctx.beginPath(); ctx.arc(x,y,r*0.94,Math.PI*1.12,Math.PI*1.72); ctx.stroke();
+    ctx.save(); ctx.translate(x,y); drawBannyMedal(im,r); ctx.restore();
     return;
   }
   const pts=6, seed=o.seed;
@@ -2008,6 +2397,101 @@ function drawDirt(o){
     ctx.arc(x+Math.cos(a)*r*0.4, y+Math.sin(a)*r*0.35, r*0.11,0,Math.PI*2);
     ctx.fill();
   }
+}
+
+/* 每日挑战里乱跳的月巴：红色 ✕=弹回，金色 ↓=可钩但极重 */
+function drawCritterBadge(type,x,y,r,t){
+  const bx=x+r*0.78, by=y-r*0.78, br=Math.max(4,r*0.42);
+  const pulse=1+0.08*Math.sin(t*7);
+  ctx.save();
+  ctx.translate(bx,by);
+  ctx.scale(pulse,pulse);
+  ctx.beginPath(); ctx.arc(0,0,br,0,Math.PI*2);
+  ctx.fillStyle=type==='heavy'?'#e8b93f':'#ff5468';
+  ctx.fill();
+  ctx.strokeStyle='rgba(4,10,14,.85)';
+  ctx.lineWidth=Math.max(1,br*0.22);
+  ctx.stroke();
+  ctx.lineCap='round';
+  if(type==='heavy'){
+    ctx.strokeStyle='#3a2405';
+    ctx.lineWidth=Math.max(1.2,br*0.3);
+    ctx.beginPath(); ctx.moveTo(0,-br*0.45); ctx.lineTo(0,br*0.45); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-br*0.4,br*0.05); ctx.lineTo(0,br*0.45); ctx.lineTo(br*0.4,br*0.05); ctx.stroke();
+  }else{
+    ctx.strokeStyle='#2b0509';
+    ctx.lineWidth=Math.max(1.2,br*0.3);
+    ctx.beginPath();
+    ctx.moveTo(-br*0.38,-br*0.38); ctx.lineTo(br*0.38,br*0.38);
+    ctx.moveTo(br*0.38,-br*0.38); ctx.lineTo(-br*0.38,br*0.38);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawCritter(c){
+  const x=c.x, y=c.y, r=c.r, cy=y-c.hop;
+  const sq=clamp(c.sq,-0.2,0.32);
+  const sx=1+sq*0.55, sy=1-sq;
+  const sh=clamp(1-c.hop/150,0.35,1);
+  const heavy=c.type==='heavy';
+  const now=performance.now()/1000;
+  ctx.fillStyle='rgba(2,10,16,.55)';
+  ctx.beginPath(); ctx.ellipse(x,y+r*0.82,r*0.92*sh,r*0.3*sh,0,0,Math.PI*2); ctx.fill();
+  const im=bannyImage(c.imgId);
+  ctx.save();
+  ctx.translate(x,cy);
+  ctx.rotate(c.tilt);
+  ctx.scale(sx,sy);
+  if(im){
+    drawBannyMedal(im,r,
+      heavy?'rgba(232,185,63,.85)':'rgba(255,84,104,.78)',
+      heavy?'rgba(255,233,168,.9)':'rgba(255,180,190,.82)',
+      heavy?'#2a1c06':'#2a0a10');
+  }else{
+    const p=POOL_BY_ID[c.imgId];
+    ctx.fillStyle=heavy?'#8a6a3a':(p?p.color:'#6b6257');
+    ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#3b3654';
+    ctx.beginPath(); ctx.arc(-r*0.32,-r*0.1,r*0.11,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(r*0.32,-r*0.1,r*0.11,0,Math.PI*2); ctx.fill();
+  }
+  // 外圈：红色呼吸警示 / 金色重物环
+  if(heavy){
+    ctx.strokeStyle='rgba(232,185,63,.30)';
+    ctx.lineWidth=Math.max(1,r*0.07);
+    ctx.beginPath(); ctx.arc(0,0,r*1.16,0,Math.PI*2); ctx.stroke();
+  }else{
+    const pl=0.5+0.5*Math.sin(now*6+c.seed);
+    ctx.strokeStyle='rgba(255,84,104,'+(0.18+0.24*pl).toFixed(3)+')';
+    ctx.lineWidth=Math.max(1,r*0.08);
+    ctx.beginPath(); ctx.arc(0,0,r*1.16,0,Math.PI*2); ctx.stroke();
+  }
+  if(c.hitFlash>0){
+    const hf=c.hitFlash/0.35;
+    ctx.strokeStyle='rgba(255,84,104,'+(hf*0.85).toFixed(3)+')';
+    ctx.lineWidth=Math.max(1,3*hf);
+    ctx.beginPath(); ctx.arc(0,0,r*(1+0.55*(1-hf)),0,Math.PI*2); ctx.stroke();
+  }
+  drawCritterBadge(c.type,0,0,r,now);
+  ctx.restore();
+}
+
+/* 被钩住的极重月巴：保留金色圆牌和 ↓ 徽标，拖得很慢 */
+function drawHeavyOre(o){
+  const x=o.x, y=o.y, r=o.r;
+  const im=o.imgId?bannyImage(o.imgId):null;
+  ctx.fillStyle='rgba(2,10,16,.7)';
+  ctx.beginPath(); ctx.ellipse(x,y+r*0.85,r*0.9,r*0.3,0,0,Math.PI*2); ctx.fill();
+  if(im){
+    ctx.save(); ctx.translate(x,y);
+    drawBannyMedal(im,r,'rgba(232,185,63,.85)','rgba(255,233,168,.9)','#2a1c06');
+    ctx.restore();
+  }else{
+    const p=POOL_BY_ID[o.imgId];
+    ctx.fillStyle=p?p.color:'#8a6a3a';
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+  }
+  drawCritterBadge('heavy',x,y,r,performance.now()/1000);
 }
 
 /* ---------- 道具 / 腐烂番茄 ---------- */
@@ -2122,6 +2606,7 @@ function drawRot(o){
 
 function drawOre(o){
   if(o.kind==='dirt') drawDirt(o);
+  else if(o.kind==='heavy') drawHeavyOre(o);
   else if(o.kind==='gem') drawGem(o);
   else if(o.kind==='clock') drawClock(o);
   else if(o.kind==='bomb') drawBomb(o);
@@ -2257,6 +2742,7 @@ function render(){
     if(o.kind==='statue') continue;
     if(!isStaticOre(o)||o.attached) drawOre(o);
   }
+  for(let i=0;i<gm.critters.length;i++) drawCritter(gm.critters[i]);
   drawHook();
   drawParticles();
   drawTexts();
@@ -2264,27 +2750,113 @@ function render(){
   syncDom();
 }
 
-/* 月巴 Q 弹：挤压/拉伸与上下位移各一根弹簧，阻尼略欠一点以保留回弹 */
+/* 月巴 Q 弹：挤压/拉伸、上下位移、身体倾斜各一根弹簧 */
 const SQ_K=300, SQ_C=17;   // ω≈17.3、ζ≈0.49 → 一次明显回弹
 const DY_K=260, DY_C=19;
-function kickMiner(sq, dy){
+const LEAN_K=180, LEAN_C=14;
+const REDUCED=(function(){
+  try{ return !!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches); }
+  catch(e){ return false; }
+})();
+function calmMode(){ return document.body.classList.contains('lp')||REDUCED; }
+function kickMiner(sq, dy, lean){
   const S=gm.spring;
   if(sq) S.vs+=sq;
   if(dy) S.vy+=dy;
+  if(lean) S.leanV+=lean;
+}
+let minerGlowT=0;
+function flashMiner(gold){
+  if(calmMode()) return;
+  if(gold){
+    minerTilt.classList.remove('glow');
+    void minerTilt.offsetWidth;
+    minerTilt.classList.add('glow');
+    if(minerGlowT) clearTimeout(minerGlowT);
+    minerGlowT=setTimeout(function(){ minerTilt.classList.remove('glow'); },760);
+  }else{
+    minerTilt.classList.remove('flash');
+    void minerTilt.offsetWidth;
+    minerTilt.classList.add('flash');
+  }
+}
+let minerBubbleT=0;
+function showMinerBubble(txt){
+  if(calmMode()) return;
+  minerBubble.textContent=txt;
+  minerBubble.classList.remove('show');
+  void minerBubble.offsetWidth;
+  minerBubble.classList.add('show');
+  if(minerBubbleT) clearTimeout(minerBubbleT);
+  minerBubbleT=setTimeout(function(){ minerBubble.classList.remove('show'); },1150);
+}
+function sweatMiner(){
+  if(calmMode()) return;
+  minerSweat.classList.remove('on');
+  void minerSweat.offsetWidth;
+  minerSweat.classList.add('on');
+}
+function resetMinerFx(){
+  const fx=gm.minerFx;
+  fx.pose='idle'; fx.shake=0; fx.lookT=0; fx.lookDir=0;
+  fx.nextLook=5+Math.random()*4; fx.nextHop=7+Math.random()*5;
+  fx.panic=false; fx.sweatT=0;
+  minerTilt.classList.remove('glow','sad','flash');
+  minerAura.style.opacity='0';
+  minerAura.style.transform='scale(.75)';
+  minerBubble.classList.remove('show');
+  minerSweat.classList.remove('on');
+  if(minerGlowT){ clearTimeout(minerGlowT); minerGlowT=0; }
+  if(minerBubbleT){ clearTimeout(minerBubbleT); minerBubbleT=0; }
 }
 
 function syncDom(){
-  const a=gm.hook.a;
-  const rot=a*0.1;
-  const S=gm.spring;
   const now=performance.now();
   let dt=gm.springLast?(now-gm.springLast)/1000:1/60;
   gm.springLast=now;
   if(dt>0.05) dt=0.05;
+  const S=gm.spring, fx=gm.minerFx;
+  const calm=calmMode();
+  const a=gm.hook.a;
   // 拉重物时矿工被往下拽、轻微发抖，强化「沉」的手感
   let strain=0;
   if(gm.hook.state==='attach'&&gm.hook.ore) strain=Math.min(1, gm.hook.ore.weight/4.2);
-  const jit=(strain>0.4&&!document.body.classList.contains('lp'))?(Math.random()-0.5)*1.6*strain:0;
+  // 目标倾斜：待机跟随钩子，下钩探身，拉重物向后仰，胜负姿态覆盖
+  let targetLean;
+  if(fx.pose==='lose') targetLean=0.14;
+  else if(fx.pose==='win') targetLean=0;
+  else if(gm.hook.state==='attach') targetLean=-a*0.12*strain-0.02*strain;
+  else if(gm.hook.state==='shoot') targetLean=a*0.14;
+  else if(gm.hook.state==='retract') targetLean=a*0.07;
+  else targetLean=a*0.10;
+  // 待机看左右：每隔几秒偏一下头，再慢慢回正
+  if(!calm&&gm.phase==='play'&&!gm.paused&&gm.hook.state==='idle'){
+    fx.nextLook-=dt;
+    if(fx.nextLook<=0){
+      fx.lookT=0.9; fx.lookDir=Math.random()<0.5?-1:1;
+      fx.nextLook=5+Math.random()*4;
+    }
+  }
+  let look=0;
+  if(fx.lookT>0){
+    fx.lookT=Math.max(0,fx.lookT-dt);
+    look=Math.sin((1-fx.lookT/0.9)*Math.PI)*0.05*fx.lookDir;
+  }
+  // 待机小跳：隔很久来一次，避免一直抖
+  if(!calm&&gm.phase==='play'&&!gm.paused&&gm.hook.state==='idle'){
+    fx.nextHop-=dt;
+    if(fx.nextHop<=0){ fx.nextHop=7+Math.random()*5; S.vy-=14; S.vs+=0.5; }
+  }
+  // 受惊 / 爆炸晃头
+  const shk=fx.shake>0?Math.sin(now*0.055)*0.055*fx.shake:0;
+  if(fx.shake>0) fx.shake=Math.max(0,fx.shake-dt*2.2);
+  // 倾斜弹簧
+  S.leanV+=(-LEAN_K*(S.lean-targetLean)-LEAN_C*S.leanV)*dt;
+  S.lean+=S.leanV*dt;
+  if(S.lean>0.4){ S.lean=0.4; if(S.leanV>0) S.leanV*=-0.3; }
+  if(S.lean<-0.4){ S.lean=-0.4; if(S.leanV<0) S.leanV*=-0.3; }
+  const jit=(strain>0.4&&!calm)?(Math.random()-0.5)*1.6*strain:0;
+  const tremble=(fx.panic&&!calm)?Math.sin(now*0.06)*0.7:0;
   const tgtDy=strain*3.0;
   // 弹簧积分：s>0 压扁（矮胖）、s<0 拉长（瘦高），回弹留一点点过冲
   S.vs+=(-SQ_K*S.s-SQ_C*S.vs)*dt;
@@ -2293,11 +2865,15 @@ function syncDom(){
   if(S.s<-0.26){ S.s=-0.26; if(S.vs<0) S.vs*=-0.3; }
   S.vy+=(-DY_K*(S.dy-tgtDy)-DY_C*S.vy)*dt;
   S.dy+=S.vy*dt;
-  // 待机呼吸：极轻的竖向起伏，静止时也不僵
-  const br=Math.sin(now*0.0032)*0.006;
+  // 待机呼吸：每日挑战同样保留，收工时更弱；时间告急时更急促
+  let br;
+  if(calm) br=0;
+  else if(fx.pose==='lose') br=Math.sin(now*0.0022)*0.005;
+  else if(fx.panic) br=Math.sin(now*0.0075)*0.018;
+  else br=Math.sin(now*0.0032)*0.012;
   const sy=1-S.s+br;
   const sx=1+S.s*0.62-br*0.5;
-  minerTilt.style.transform='rotate('+rot.toFixed(4)+'rad) translate('+jit.toFixed(2)+'px,'
+  minerTilt.style.transform='rotate('+(S.lean+look+shk).toFixed(4)+'rad) translate('+(jit+tremble).toFixed(2)+'px,'
     +(S.dy+br*2.2).toFixed(2)+'px) scale('+sx.toFixed(3)+','+sy.toFixed(3)+')';
   syncStatue();
 }
@@ -2312,14 +2888,20 @@ function tick(dt){
     }
     gm.time-=dt;
     if(gm.time<=10){
+      gm.minerFx.panic=true;
+      gm.minerFx.sweatT-=dt;
+      if(gm.minerFx.sweatT<=0){ gm.minerFx.sweatT=1.3+Math.random()*0.8; sweatMiner(); }
       const sec=Math.ceil(gm.time);
       if(sec!==gm.lastSec){ gm.lastSec=sec; if(sec>0) tone(1046,0.035,'square',0.035); }
+    }else{
+      gm.minerFx.panic=false;
     }
     if(gm.time<=0){
       gm.time=0;
       updateHUD();
       endRun();
     }else{
+      updateCritters(dt);
       updateHook(dt);
       if(gm.phase==='play') updateHUD();
     }
@@ -2380,6 +2962,8 @@ window.addEventListener('keydown',function(e){
 });
 document.addEventListener('visibilitychange',function(){
   if(document.hidden&&gm.phase==='play'&&!gm.paused) pauseGame();
+  // 切到后台时挂起音频：BGM 排程随 AudioContext 时钟冻结，回来再继续
+  if(document.hidden){ try{ if(AC&&AC.state==='running') AC.suspend(); }catch(e){} }
   gm.last=0;
 });
 window.addEventListener('pagehide',function(){
@@ -2392,6 +2976,8 @@ window.addEventListener('pagehide',function(){
 try{ if(window.top!==window.self) parent.postMessage({gbTheme:'gold'},'*'); }catch(e){}
 /* 供首页「新版本自动刷新」判断：一局进行中（含暂停、过关过渡）不刷新，避免半途打断 */
 window.__gmState=function(){ return gm.phase; };
+/* 调试：?debug=1 时暴露内部状态，供自动化验收；正常游玩不启用 */
+if(/[?&]debug=1(?:&|$)/.test(location.search)) window.__gmDebug=function(){ return gm; };
 function applyLangStatic(){
   document.title=t('docTitle');
   hintEl.textContent=t('hint');
