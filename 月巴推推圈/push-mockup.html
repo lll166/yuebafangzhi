@@ -378,12 +378,59 @@ function resize(){
   cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
   ctx.setTransform(DPR,0,0,DPR,0,0);
   ctx.imageSmoothingEnabled=false;
-  /* 每帧先把画布状态归零：万一上一帧半路出错，残留的虚线/透明度/混合模式
-     不会把后面的帧一步步弄脏（手机上偶发的花屏就是这么来的） */
+  CX=W/2; CY=H*0.535; AR0=Math.min(W,H)*0.475; AR=AR0;
+}
+
+/* ---------- 每帧画布归零 ----------
+   以前这段状态重置写在 resize() 里（注释说是“每帧”，实际只在窗口尺寸变化时跑一次）。
+   只要有一帧画到一半抛错——手机上内存紧张、远端立绘刚加载完要重建贴图、iframe 刚挂载
+   尺寸还是 0、掉帧时补步进算坏一个数……都会偶发——被漏掉的 save 就把 globalAlpha /
+   混合模式 / 虚线留在上下文里。下一帧的背景 fillRect 于是变成半透明，旧画面擦不干净，
+   一帧叠一帧成了“拖影”，看起来就是随机重影，切一下窗口（触发 resize）又恢复正常。
+   所以这里每帧开头无条件做三件事：漏掉的 save 全部退栈、整块清屏、状态显式归位。 */
+let ctxDepth=0, ctxPatched=false, leakWarned=false;
+function patchCtxDepth(){
+  if(ctxPatched) return;
+  try{
+    const rawSave=ctx.save, rawRestore=ctx.restore;
+    ctx.save=function(){ ctxDepth++; rawSave.call(ctx); };
+    ctx.restore=function(){ if(ctxDepth>0) ctxDepth--; rawRestore.call(ctx); };
+    ctxPatched=true;
+  }catch(e){
+    /* 极少数环境不允许往上下文上挂属性：退化成只做清屏+状态复位，功能不受影响 */
+    ctxPatched=false;
+  }
+}
+function resetCanvas(){
+  if(!ctxPatched) patchCtxDepth();
+  /* 1) 把上一帧漏掉的 save 全部还原（空栈上 restore 是安全 no-op） */
+  if(ctxDepth>0){
+    if(!leakWarned){
+      leakWarned=true;
+      try{ console.warn('[月巴推推圈] 上一帧画布状态没还干净（save 泄漏 '+ctxDepth+' 层），已自动复位'); }catch(e){}
+    }
+    while(ctxDepth>0){ ctxDepth--; try{ ctx.restore(); }catch(e){ break; } }
+  }
+  /* 2) 用设备像素坐标整块清空：不依赖 W/H，也不受任何遗留变换影响 */
+  ctx.setTransform(1,0,0,1,0,0);
   ctx.globalAlpha=1; ctx.globalCompositeOperation='source-over';
   ctx.setLineDash([]); ctx.lineDashOffset=0;
+  ctx.lineCap='butt'; ctx.lineJoin='miter'; ctx.miterLimit=10;
+  ctx.shadowBlur=0; ctx.shadowColor='rgba(0,0,0,0)';
+  ctx.shadowOffsetX=0; ctx.shadowOffsetY=0;
   try{ ctx.filter='none'; }catch(e){}
-  CX=W/2; CY=H*0.535; AR0=Math.min(W,H)*0.475; AR=AR0;
+  ctx.clearRect(0,0,cv.width,cv.height);
+  /* 3) 回到 DPR 坐标系，继续按 CSS 像素画 */
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.imageSmoothingEnabled=false;
+}
+/* iframe 里的布局变化（父页面改高度、手机地址栏收起）不一定触发 window.resize；
+   clientWidth/clientHeight 是整数、读取很便宜，每帧对一下就能兜住 */
+function ensureCanvasSize(){
+  const cw=cv.clientWidth, ch=cv.clientHeight;
+  if(cw<=0||ch<=0) return;                       /* 被隐藏时不重算，等显示出来再补 */
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  if(dpr!==DPR||Math.abs(cw-W)>0.75||Math.abs(ch-H)>0.75) resize();
 }
 
 /* ================= 音效（软糯可爱） ================= */
@@ -1591,12 +1638,12 @@ function finishTimer(s){ finishT=s; }
 /* ================= 绘制 ================= */
 function draw(){
   const P=PAL[PALKEY];
+  ensureCanvasSize();                   /* 尺寸/DPR 变了先重建，别在半旧画布上画 */
   updateCamera();
   updateView();
-  ctx.setTransform(DPR,0,0,DPR,0,0);
-  ctx.imageSmoothingEnabled=false;
+  resetCanvas();                        /* 每帧强制归零：清屏 + 状态复位（重影修复的关键） */
   ctx.save();
-  ctx.fillStyle=P.paper; ctx.fillRect(-20,-20,W+40,H+40);
+  ctx.fillStyle=P.paper; ctx.fillRect(-24,-24,W+48,H+48);
   /* 撞击震屏：只晃锅和软糖，HUD 与倒计时不动 */
   ctx.save();
   if(shake>0.05) ctx.translate(Math.sin(T*57)*shake*0.55,Math.cos(T*43)*shake*0.45);
@@ -2485,7 +2532,12 @@ grabBtn.addEventListener('lostpointercapture',()=>{
 
 /* 初始化 */
 window.addEventListener('resize',resize);
+/* iframe 内嵌时父页面改尺寸不一定触发 window.resize，补一个观察者兜底 */
+if(window.ResizeObserver){
+  try{ new ResizeObserver(()=>{ if(!document.hidden) resize(); }).observe(cv); }catch(e){}
+}
 resize();
+patchCtxDepth();
 /* 菜单状态先摆一帧静态画面 */
 (function menuPreview(){
   const pick=shuffle(POOL.slice()).slice(0,NPLAY);
