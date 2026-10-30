@@ -1,0 +1,2442 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-pal="ink">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#f5f2e8">
+<title>月巴推推圈</title>
+<style>
+/* ============ 单色像素主题（浅色）· 四套配色 ============ */
+:root{
+  --ink:#2b3350; --ink2:#5d6684; --side:#c9c3b0; --line:#c6c0ae;
+  --paper:#f5f2e8; --paper2:#eae5d7; --hi:#fffdf6; --shade:rgba(43,51,80,.16);
+}
+html[data-pal="moss"]{
+  --ink:#33402e; --ink2:#67765f; --side:#c6c7b2; --line:#c4c5ae;
+  --paper:#f4f2e7; --paper2:#e7e6d6; --hi:#fffef4; --shade:rgba(51,64,46,.16);
+}
+html[data-pal="brick"]{
+  --ink:#4a2b25; --ink2:#8a6058; --side:#d3bfae; --line:#cdbcaa;
+  --paper:#f7f0e7; --paper2:#ecdfd1; --hi:#fffaef; --shade:rgba(74,43,37,.16);
+}
+html[data-pal="ash"]{
+  --ink:#303238; --ink2:#6b6e79; --side:#ccccc8; --line:#c4c4c0;
+  --paper:#f4f4f1; --paper2:#e6e6e2; --hi:#ffffff; --shade:rgba(48,50,56,.15);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;}
+html,body{height:100%;overflow:hidden;}
+body{
+  background:var(--paper); color:var(--ink); touch-action:none; overscroll-behavior:none;
+  font-family:"SF Mono","Cascadia Mono",Consolas,ui-monospace,"PingFang SC","Microsoft YaHei",monospace;
+  background-image:
+    repeating-linear-gradient(90deg,rgba(0,0,0,.022) 0 1px,transparent 1px 4px),
+    repeating-linear-gradient(0deg,rgba(0,0,0,.022) 0 1px,transparent 1px 4px);
+}
+#app{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:7px;padding:calc(6px + env(safe-area-inset-top)) 4px calc(6px + env(safe-area-inset-bottom));}
+
+/* ---------- 顶部 HUD ---------- */
+#hud{width:min(600px,97vw);display:flex;align-items:center;gap:6px;min-width:0;}
+.brand{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:1px;overflow:hidden;}
+.brand b{font-size:17px;font-weight:900;letter-spacing:4px;line-height:1;white-space:nowrap;}
+.brand i{font-style:normal;font-size:9px;font-weight:800;letter-spacing:2px;color:var(--ink2);white-space:nowrap;}
+.stats{display:flex;align-items:center;gap:4px;flex:0 0 auto;}
+.chip{
+  appearance:none;font-family:inherit;display:flex;align-items:baseline;gap:3px;padding:5px 7px 4px;
+  border:2px solid var(--ink);background:var(--paper2);color:var(--ink);cursor:pointer;
+  clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px));
+  box-shadow:2px 2px 0 var(--shade);
+}
+.chip span{font-size:8px;font-weight:800;letter-spacing:1px;color:var(--ink2);}
+.chip b{font-size:14px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;}
+.chip b.pop{animation:chipPop .26s ease-out;}
+@keyframes chipPop{0%{transform:scale(1);}38%{transform:scale(1.3);}100%{transform:scale(1);}}
+.chip.icon{font-size:14px;line-height:1;padding:6px 8px 5px;}
+.chip:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--shade);}
+
+/* ---------- 出拳按钮（舞台右下角，手机第二根拇指够得到） ---------- */
+#btnPunch{
+  position:absolute;right:80px;bottom:12px;z-index:5;display:none;
+  width:60px;height:60px;padding:0;appearance:none;cursor:pointer;
+  align-items:center;justify-content:center;flex-direction:column;gap:0;
+  font-family:inherit;font-weight:900;font-size:21px;line-height:1;letter-spacing:3px;
+  color:var(--paper);background:var(--ink);border:3px solid var(--ink);
+  clip-path:polygon(0 0,calc(100% - 11px) 0,100% 11px,100% 100%,11px 100%,0 calc(100% - 11px));
+  box-shadow:4px 4px 0 var(--shade);touch-action:manipulation;
+}
+#btnPunch i{font-style:normal;font-size:8px;font-weight:800;letter-spacing:1px;color:var(--paper2);opacity:.85;margin-top:2px;}
+#btnPunch:active,#btnPunch.hit{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--shade);}
+#btnPunch.cd{opacity:.38;filter:grayscale(.55);}
+
+/* 抓：按住不放抓住最近的对手，拖着走；松手放开 */
+#btnGrab{
+  position:absolute;right:12px;bottom:12px;z-index:5;display:none;
+  width:60px;height:60px;padding:0;appearance:none;cursor:pointer;
+  align-items:center;justify-content:center;flex-direction:column;gap:0;
+  font-family:inherit;font-weight:900;font-size:21px;line-height:1;letter-spacing:3px;
+  color:var(--ink);background:var(--paper);border:3px solid var(--ink);
+  clip-path:polygon(0 0,calc(100% - 11px) 0,100% 11px,100% 100%,11px 100%,0 calc(100% - 11px));
+  box-shadow:4px 4px 0 var(--shade);touch-action:manipulation;
+}
+#btnGrab i{font-style:normal;font-size:8px;font-weight:800;letter-spacing:1px;color:var(--ink2);opacity:.85;margin-top:2px;}
+#btnGrab:active,#btnGrab.on{background:var(--ink);color:var(--paper);}
+#btnGrab:active i,#btnGrab.on i{color:var(--paper2);}
+#btnGrab.rdy{background:var(--hi);box-shadow:0 0 0 3px var(--ink),4px 4px 0 var(--shade);}
+#btnGrab.cd{opacity:.38;filter:grayscale(.55);}
+#btnGrab.hit{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--shade);}
+@media (max-width:430px){
+  #btnPunch{width:54px;height:54px;font-size:19px;right:71px;bottom:9px;}
+  #btnGrab{width:54px;height:54px;font-size:19px;right:9px;bottom:9px;}
+}
+
+/* 开局操作指引：常驻在游戏方框下方，不挡画面 */
+.coach{
+  position:relative;z-index:1;display:block;flex:0 0 auto;
+  max-width:min(600px,97vw);margin:0 auto;
+  padding:7px 10px;background:var(--paper);border:2px solid var(--ink);
+  box-shadow:3px 3px 0 var(--shade);pointer-events:none;
+  font-size:10px;font-weight:700;line-height:1.7;color:var(--ink);white-space:nowrap;
+}
+.coach b{font-weight:900;}
+.coach em{font-style:normal;color:var(--ink2);font-size:9px;font-weight:800;letter-spacing:1px;}
+@media (max-width:430px){
+  .coach{font-size:9px;line-height:1.6;padding:6px 8px;}
+  .coach em{font-size:8px;}
+}
+
+/* ---------- 舞台 ---------- */
+#frame{
+  position:relative;flex:0 0 auto;
+  width:min(600px,97vw,calc(100vh - 192px));
+  width:min(600px,97vw,calc(100dvh - 192px));
+  aspect-ratio:1/1;
+  border:3px solid var(--ink);background:var(--paper2);
+  box-shadow:7px 7px 0 var(--shade),inset 0 0 0 3px var(--hi);
+  overflow:hidden;
+}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;
+  image-rendering:pixelated;image-rendering:crisp-edges;}
+.scan{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:.5;
+  background:repeating-linear-gradient(0deg,rgba(43,51,80,.055) 0 1px,transparent 1px 3px);}
+.corner{position:absolute;inset:6px;z-index:3;pointer-events:none;opacity:.85;
+  background:
+    linear-gradient(var(--ink),var(--ink)) left top/13px 2px no-repeat,
+    linear-gradient(var(--ink),var(--ink)) left top/2px 13px no-repeat,
+    linear-gradient(var(--ink),var(--ink)) right top/13px 2px no-repeat,
+    linear-gradient(var(--ink),var(--ink)) right top/2px 13px no-repeat,
+    linear-gradient(var(--ink),var(--ink)) left bottom/13px 2px no-repeat,
+    linear-gradient(var(--ink),var(--ink)) left bottom/2px 13px no-repeat,
+    linear-gradient(var(--ink),var(--ink)) right bottom/13px 2px no-repeat,
+    linear-gradient(var(--ink),var(--ink)) right bottom/2px 13px no-repeat;}
+
+/* ---------- 弹层 ---------- */
+.ov{position:absolute;inset:0;z-index:6;display:none;align-items:center;justify-content:center;
+  padding:16px;background:rgba(245,242,232,.72);}
+html[data-pal="moss"] .ov{background:rgba(244,242,231,.72);}
+html[data-pal="brick"] .ov{background:rgba(247,240,231,.74);}
+html[data-pal="ash"] .ov{background:rgba(244,244,241,.74);}
+.ov.show{display:flex;}
+.ov.show .panel{animation:panelIn .26s cubic-bezier(.2,1.35,.4,1);}
+@keyframes panelIn{0%{opacity:0;transform:translateY(10px) scale(.9);}100%{opacity:1;transform:none;}}
+.panel{position:relative;width:100%;max-width:330px;padding:16px 15px 14px;text-align:center;
+  background:var(--paper);border:3px solid var(--ink);box-shadow:6px 6px 0 var(--shade);
+  max-height:100%;overflow-y:auto;overscroll-behavior:contain;}
+.panel::before{content:'';position:absolute;inset:5px;pointer-events:none;
+  border:1px dashed rgba(43,51,80,.24);}
+.kick{font-size:9px;font-weight:900;letter-spacing:4px;color:var(--ink2);}
+.title{font-size:26px;font-weight:900;letter-spacing:5px;margin:7px 0 3px;}
+.sub{font-size:11px;font-weight:700;letter-spacing:.6px;line-height:1.7;color:var(--ink2);}
+.rule{list-style:none;margin:10px 0 11px;text-align:left;display:flex;flex-direction:column;gap:5px;}
+.rule li{font-size:11px;font-weight:700;line-height:1.5;color:var(--ink);
+  padding-left:13px;position:relative;}
+.rule li::before{content:'';position:absolute;left:0;top:5px;width:5px;height:5px;background:var(--ink);}
+.btn{width:100%;appearance:none;font-family:inherit;cursor:pointer;
+  font-size:13px;font-weight:900;letter-spacing:3px;padding:11px 0;margin-top:2px;
+  color:var(--paper);background:var(--ink);border:2px solid var(--ink);
+  clip-path:polygon(0 0,calc(100% - 9px) 0,100% 9px,100% 100%,9px 100%,0 calc(100% - 9px));}
+.btn:active{transform:translate(1px,1px);}
+/* 月巴排名：三列，第 1 名在最前；早出圈的排后面 */
+.rank-h{font-size:8px;font-weight:900;letter-spacing:3px;color:var(--ink2);margin:10px 0 5px;}
+.rank{list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:3px 8px;
+  margin:0 0 11px;text-align:left;max-height:96px;overflow-y:auto;}
+.rank li{display:flex;align-items:center;gap:3px;min-width:0;font-size:9px;font-weight:800;
+  line-height:1.3;color:var(--ink2);border-bottom:1px dashed rgba(43,51,80,.22);padding-bottom:2px;
+  animation:rowIn .28s both;}
+@keyframes rowIn{from{opacity:0;transform:translateX(-5px);}to{opacity:1;transform:none;}}
+.rank li b{flex:0 0 auto;font-size:9px;font-weight:900;color:var(--ink);min-width:11px;
+  font-variant-numeric:tabular-nums;}
+.rank li span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rank li .tag{flex:0 0 auto;font-style:normal;font-size:7px;font-weight:900;border:1px solid var(--ink);
+  padding:0 2px;margin-left:auto;line-height:1.5;}
+.rank li.top,.rank li.me{color:var(--ink);}
+.rank li.top .tag{background:var(--ink);color:var(--paper);}
+@media (max-width:430px){ .rank li{font-size:8.5px;} .rank li b{font-size:8.5px;} }
+/* 画框被挤得很小时（矮窗口 / 侧边栏里的浏览器）：弹层改为覆盖整个视口并按小号排版，
+   否则面板比画框还高，排名会被裁掉 */
+@media (max-height:700px){
+  #frame .ov{position:fixed;z-index:60;padding:12px;}
+  .panel{padding:12px 13px 11px;}
+  .kick{font-size:8px;letter-spacing:3px;}
+  .title{font-size:22px;letter-spacing:4px;margin:5px 0 2px;}
+  .sub{font-size:10px;line-height:1.6;}
+  .rank-h{margin:7px 0 4px;font-size:7px;letter-spacing:2px;}
+  .rank{max-height:86px;gap:2px 6px;margin-bottom:8px;}
+  .rank li{font-size:8.5px;padding-bottom:1px;}
+  .rank li b{font-size:8.5px;min-width:10px;}
+  .rank li .tag{font-size:6px;padding:0 1px;}
+  .btn{padding:9px 0;font-size:12px;letter-spacing:2px;}
+  .tomato{width:30px;height:30px;margin:0 auto 4px;}
+}
+/* 番茄：全场唯一的目标；单色剪影，用当前配色的墨色 */
+.tomato{display:block;width:40px;height:40px;margin:-2px auto 5px;background:var(--ink);
+  -webkit-mask:var(--tomato-mask) center/contain no-repeat;
+          mask:var(--tomato-mask) center/contain no-repeat;
+  animation:bob 2.6s ease-in-out infinite;}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-4deg);}50%{transform:translateY(-3px) rotate(4deg);}}
+@media (prefers-reduced-motion:reduce){
+  .tomato{animation:none;}
+  .ov.show .panel{animation:none;}
+  .chip b.pop{animation:none;}
+  .rank li{animation:none;}
+}
+
+/* ---------- 底部 ---------- */
+#foot{width:min(600px,97vw);display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:24px;}
+.who{font-size:10px;font-weight:800;letter-spacing:.5px;color:var(--ink2);white-space:nowrap;}
+.who b{color:var(--ink);font-size:11px;}
+.hint{flex:1 1 100%;text-align:center;font-size:9.5px;font-weight:700;letter-spacing:1px;color:var(--ink2);}
+@media (max-width:430px){
+  .brand b{font-size:15px;letter-spacing:3px;}
+  .brand i{font-size:8px;letter-spacing:1px;}
+  .chip{padding:4px 6px 3px;}
+  .chip b{font-size:13px;}
+  .hint{font-size:9px;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="hud">
+    <div class="brand"><b>月巴推推圈</b><i>PUSH RING · 抢番茄</i></div>
+    <div class="stats">
+      <div class="chip"><span>锅里</span><b id="sAlive">15</b></div>
+      <div class="chip"><span>出圈</span><b id="sOut">0</b></div>
+      <div class="chip"><span>时间</span><b id="sTime">0:00</b></div>
+      <button class="chip icon" id="btnSound" title="声音">🔊</button>
+      <button class="chip icon" id="btnPause" title="暂停">❚❚</button>
+    </div>
+  </header>
+
+  <div id="frame">
+    <canvas id="cv"></canvas>
+    <div class="scan"></div>
+    <div class="corner"></div>
+    <button id="btnPunch" title="推一把（J）">拳<i>J</i></button>
+    <button id="btnGrab" title="点按锁住 / 按住抓住并拖动（K）">抓<i>K</i></button>
+
+    <div class="ov show" id="ovStart">
+      <div class="panel">
+        <span class="tomato" aria-hidden="true"></span>
+        <div class="kick">CASUAL · 抢番茄</div>
+        <div class="title">月巴推推圈</div>
+        <div class="sub">十五块软糖月巴挤在一口圆锅里<br>番茄只有一个，谁赢了谁吃，所以大家都超努力～<br>被挤出去也没关系，软糖不会受伤啦</div>
+        <button class="btn" id="btnStart">去抢番茄！</button>
+      </div>
+    </div>
+
+    <div class="ov" id="ovEnd">
+      <div class="panel">
+        <span class="tomato" id="ePrize" style="display:none" aria-hidden="true"></span>
+        <div class="kick" id="eKick">RESULT</div>
+        <div class="title" id="eTitle">被挤出去啦～</div>
+        <div class="sub" id="eSub">软糖摔不坏啦～番茄先给别人，下次一定抢到！</div>
+        <div class="rank-h">月巴排名</div>
+        <ol class="rank" id="eRank"></ol>
+        <button class="btn" id="btnAgain">再抢一次！</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="coach" id="coach">
+    <div><b>手机：按住画面拖一拖</b> 软糖就跟着走～ · <em>电脑：拖动 / WASD</em></div>
+    <div><b>抓一下：点右下「抓」</b> 拖住旁边的软糖一起走～ · <em>电脑 K</em></div>
+    <div><b>推一把：点右下「拳」</b> 把别人顶出圈～ · <em>电脑 J</em></div>
+  </div>
+
+  <footer id="foot">
+    <div class="who">你是：<b id="sWho">—</b></div>
+    <div class="hint">带「!」的软糖超想要番茄，会专门来挤你 · 锅心的番茄在转，别靠太近哦</div>
+  </footer>
+</div>
+
+<script>
+/* ================= 立绘池（取自 index.html 已配置外链立绘的月巴） ================= */
+const POOL=[
+  {n:'小月巴',u:'https://origin.picgo.net/2026/09/03/1512e4bde4713ba02.th.png'},
+  {n:'尴尬月巴',u:'https://origin.picgo.net/2026/09/03/4059f70dff59ca4a4.th.png'},
+  {n:'进食月巴',u:'https://origin.picgo.net/2026/09/03/15b077f9364349ae92.th.png'},
+  {n:'胖月巴',u:'https://origin.picgo.net/2026/10/21/62bc9b437f18c5e1f6f712a8e7a58ecbb2356f889dde89eb.th.png'},
+  {n:'wink月巴',u:'https://origin.picgo.net/2026/09/03/37e1be2540efa2177.th.png'},
+  {n:'休闲月巴',u:'https://origin.picgo.net/2026/09/03/10a99395fea8f81ac7.th.png'},
+  {n:'一坨月巴',u:'https://origin.picgo.net/2026/10/21/41befbe6b2be042271d7ae7805b64f598d5d887397481fdf.th.png'},
+  {n:'健身月巴',u:'https://origin.picgo.net/2026/09/03/9935aafd50857466b.th.png'},
+  {n:'晨月巴',u:'https://origin.picgo.net/2026/10/27/c77a0c0f38f6185cc62fb344b3dd306ff1b4d124e037e6ac.th.png'},
+  {n:'露月巴',u:'https://origin.picgo.net/2026/10/27/47f37ba2b22b037038cc10f1e10b819287b3aabf07476a9b.th.png'},
+  {n:'云月巴',u:'https://origin.picgo.net/2026/10/21/087c43501b9bd20deb354672a8a79e4ae6b8b7c2a0cfba2c.th.png'},
+  {n:'雪月巴',u:'https://origin.picgo.net/2026/10/23/e978b592d6dc67debfa6782c325544cbd87a36af9154021a.th.png'},
+  {n:'彩虹月巴',u:'https://origin.picgo.net/2026/10/21/9895b41be4c58da373fcc95f6d8cc5ba0883411035f2a8d7.th.png'},
+  {n:'夏月巴',u:'https://origin.picgo.net/2026/10/22/---Yidi-Nyaomi-Lia67b10aba5615cbe.th.png'},
+  {n:'秋月巴',u:'https://origin.picgo.net/2026/10/23/---Yidi-Nyaomi-Li085363c8afe0790e.th.png'},
+  {n:'冬月巴',u:'https://origin.picgo.net/2026/10/23/720cc39489c1fe7d040a16a0a74e5492adb703c20326203b.th.png'},
+  {n:'温室月巴',u:'https://origin.picgo.net/2026/10/25/a4de870a23ff1f883c8454cb72ef80d762cde2ab6de81042.th.png'},
+  {n:'屋顶月巴',u:'https://origin.picgo.net/2026/10/24/ddb838b24b14c9bc66c93f3e145393e1f054aa99f643d304.th.png'},
+  {n:'森系月巴',u:'https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li6e93cacca933846d.th.png'},
+  {n:'冰冷月巴',u:'https://origin.picgo.net/2026/10/23/434e565b3ade1792842da6c6e5e0778552a35682cf6024b1.th.png'},
+  {n:'咖啡月巴',u:'https://origin.picgo.net/2026/10/21/coffee-yue---KoTofu4bfeb46ff6179820.th.png'},
+  {n:'玩偶月巴',u:'https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Lib2c078bd058ef48c.th.png'},
+  {n:'金月巴',u:'https://origin.picgo.net/2026/10/23/1396cf3c90108f3f96217f2c35d5092323f3425ef247f9cb.th.png'},
+  {n:'幸运月巴',u:'https://origin.picgo.net/2026/10/23/f18fc86039bab18c60f2e5a640a82994256efe02bbe849d2.th.png'},
+  {n:'巴中月巴',u:'https://origin.picgo.net/2026/09/03/127d7a0746c5de2434.th.png'},
+  {n:'幽灵月巴',u:'https://origin.picgo.net/2026/10/23/9e6b571fe9657417f255527bf3c34cc1963ee4f0f46e3e06.th.png'},
+  {n:'心巴',u:'https://origin.picgo.net/2026/10/21/3f4dfef1286bc40c7002f3d2e220cb36f63b0332ebc9acd3.th.png'},
+  {n:'巴总',u:'https://origin.picgo.net/2026/10/21/8ff3d46600bd7fcfb5dcab98f93cbd9bbeef26b25b073ec3.th.png'},
+];
+
+/* ================= 调色板（单色 · 浅色） ================= */
+const PAL={
+  ink:  {paper:'#f5f2e8',paper2:'#eae5d7',ink:'#2b3350',ink2:'#5d6684',side:'#c9c3b0',line:'#c6c0ae',hi:'#fffdf6',shade:'rgba(43,51,80,.16)'},
+  moss: {paper:'#f4f2e7',paper2:'#e7e6d6',ink:'#33402e',ink2:'#67765f',side:'#c6c7b2',line:'#c4c5ae',hi:'#fffef4',shade:'rgba(51,64,46,.16)'},
+  brick:{paper:'#f7f0e7',paper2:'#ecdfd1',ink:'#4a2b25',ink2:'#8a6058',side:'#d3bfae',line:'#cdbcaa',hi:'#fffaef',shade:'rgba(74,43,37,.16)'},
+  ash:  {paper:'#f4f4f1',paper2:'#e6e6e2',ink:'#303238',ink2:'#6b6e79',side:'#ccccc8',line:'#c4c4c0',hi:'#ffffff',shade:'rgba(48,50,56,.15)'},
+};
+let PALKEY='ink';   /* 默认墨蓝；配色不再暴露给玩家切换 */
+
+/* ================= 常量 ================= */
+const $=id=>document.getElementById(id);
+/* 番茄剪影：CSS 图标和锅心那张纸片共用同一张图，只在这里定义一次 */
+const TOMATO_URI='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHwAAAB8CAYAAACrHtS+AAAGKUlEQVR42u2dX4hVRRzHP+dmbCmoLKQJlUaioA9GYmkoGawVqP0REn3IiCiWNutBeiiD7SEyqATDBEFI6CFRTNAUKiVZg7UNyiJhzSBLaNVFxWi3DV22hzvUSe6fc+89Z2bOme8XLshyZjzn9zkzZ+Y38/tNNHf+40jhqCQTCLjv2guMtfBbIOD+a04M2KoW6+oz9awXcP90i4FzMoO63zd1B6VxHt/bVUv3NwZMAIbVwt3oLgPB5ss4BIwXcPt6EvjZ0f89JOB2NR3Y7fgenhdwezrjwT1sEnA7Smu0vB94HVgERFV+q8111yqUb9coPT+KEl63x/ziU78L5t+H1cKz12KLsCtp0JRfCywTcKw4V5rVpRZhx7Wrwt+2JnDVfingjemPFsq2m6lcmrotBrMrwfVLY9c/LeD1daTF8ruNsf80sFr5tIwBZ1uoY6epY7GA19a3KdQxwcAaAzY2UG6hKXMsxec5BpwQ8Oqan3J9bxqIs+pc9wvQm9EzzQNOC3g2I+1qOgWcrzH3n5HxM83Es/X3kodz6YdTrnNKBceOzWXRvpCBr4+NaNuqXPO5Af8J2XjzXKyB93vToixvYhxrohvfS+u7XEjRdTtA2S07Stn/PwhMBLpNb2Lzk5U74AeBFQnLrjQGt63tQGeDZZ4w08W463ozsCH0b/hy4IGE1x4wreRey2OKzibK7QNuNOVfNX+7R4O2so42OGf9xhhyeYb39GiKXfDbFu43d6P0eaa7v0ryrUaHjCF3ZDCqP5DBMw4LOBWXa4cM/IuU/eRtdco8l2JrXGQGYWi1LB1tprGFkd3ASMIAgzR0HLQ8mqY2eG6P61+i34GvycEqmGLL0tE0MyvYGXsJ1gi4e5+5TX0cg98j4Mk0uyA9wJIY/IUCXl0/+eKISFG9NL4WH9Q3/LsCQof/1uK7Bbwy9Ag3PvKs9YaP0am+jNIfK8BgrtZUr0fA/6+NBY/VXuJL9gkfIk9OU94KFIL6gCvA5FCBB5eBAZhknjsKqUufFShs5y+7C+ATKe8mlRzM210AvyLOFefthQQ+Jr5V9UWRgLcJdl11YCHliS3gI+JJ0qRG/XkHrpZNwyuJP+YV+EXxa0pzgYfyBnwlASTJyVCfAbfmCfh+MWtZA3kBru+2p7bMAni3GKWuD/E4mFCtOxulkvE57RZ+QlzwOvlvKYMYMclOoMQa18D7xQMX++PPuwI+WwycaAoNxNelBbxHdvemy99iA/gS2dobvWTAv5AV8MWysZf6wIC/IW3gn8q2Xuta2sAnyab5cc+WWjwt8LRsSeHDhbfGTgucKRMWE/h7DSaNl8jfITdzMjrzU/KwhW8R7HCAP2sm7xKFimerCnyH7FMoLSV2kNA4bV4otKJaXfoC2afYsK8H/pZsRFF2ukZJpmUdslXu1Q5cDuWwWXXhyrUqCbiA/yv5yAMDvk3mCK9Lj2SS8L7hgh7goC2ivAlOCmiU/qIBH5n5+lqZK5xp2SiwK/YCqNv3S0/ZmIcrnYc/mm4D+GXZ2Rudk6ctLO20Bfx72doLjdoC/oxs7VwjNhdPBmRv53rQJvBzsrdzHbe9PKr85+50FAfr4ZNld2d6WRsgwtIProDLz46TDA+4zMSoIAb8P5Y7zS59kRhg81xTL3KtqpV73LqzGLRp2RS/T5Ms+fT2SSQ5dGDUx33pimghs2O38RH4KDBDfPzrObN0vPwKfCROqWg1OQk1Wkf5dB6pefUCe/IUW/YIsF3cmtJh4H5yGEzYCRwUv4bUBSwjx9GjK8SQRnaxbCtCuHAE9IlnXd1MgeLD75NzpqpWZW2bUt7nlQXTPgqeAULQLdui5MmD3hQ47LMEluPlbwM+VM/cHaEm9VlH+YzNkHSBwLM4DZvWHsr256lK24W2P4eap63oo/hIwPMPvSPhrOOMWnht6CMe3tcp4J3rUqEcMbOOeoOxO8nbhjjs+5dd7Yo9STnKY5Dk4T1Ta9zvNPK4A9JRS/+rQUdNpU/CeMpHQ7QDbZSPa7wEfEW6qUwi4Dfgdl8+UeNyupKUtKW/UmPqd4iCOVWKHEwYAZuon47kXU3EihM9+lqN7rELuFt4i7l/XCtuig+XqukfKLorv7BLziwAAAAASUVORK5CYII=';
+document.documentElement.style.setProperty('--tomato-mask','url("'+TOMATO_URI+'")');
+const KY=0.60;      /* 圆盘透视压缩比（伪3D俯视倾角） */
+const SPR=128;      /* 立绘内容尺寸：上采样后就是像素块（128 才留得住脸和细线） */
+const PAD=92;       /* 贴图四周留白：压扁/拉长/摇晃/描边都在留白里发生，不会被画布边缘裁掉 */
+const TEX=SPR+PAD*2;
+const NPLAY=15;     /* 场上月巴数量 */
+const RMAX=1.0, RMIN=0.58, SHRINK_T=76;  /* 缩圈：76 秒从 1.0 收到 0.58（走得慢，圈也收得慢） */
+const PUNCH_CD=0.52;                     /* 玩家手动出拳冷却 */
+const GRAB_DRAIN=0.62;                   /* 抓握力每秒自然流失：约 1.1~1.6 秒就会被挣脱 */
+const TOM_R=0.060;                       /* 锅心番茄纸片的占地半径 */
+const TOM_ZONE=0.26;                     /* 它转起来的甩开范围 */
+const TOM_SPIN=1.6;                      /* 自转角速度（弧度/秒），约 4 秒转一圈 */
+let cv,ctx,W=0,H=0,DPR=1,CX=0,CY=0,AR=0,AR0=0;   /* AR0=基础取景，AR=随缩圈放大的当前取景 */
+
+/* ================= 状态 ================= */
+cv=document.getElementById('cv'); ctx=cv.getContext('2d');
+let blobs=[], R=RMAX, T=0, state='menu', paused=false;
+let player=null, hunter=null, outCount=0, pops=[], cd=0;
+let fx=[];   /* 出拳残影特效 */
+let dust=[];             /* 接触小烟 */
+let shake=0, cdPop=0;    /* 撞击震屏 / 倒计时数字弹一下 */
+/* 锅心那颗番茄：纸片，一直在转，靠太近的会被甩开 */
+let tomAng=0, tomPulse=0, tomPopCd=0;
+const tomImg=new Image(); tomImg.src=TOMATO_URI;
+let tomBack=null;   /* 纸片背面：同一张剪影，染成“没印东西”的纸色内胆 */
+/* 番茄转到正面时吹的一口气：一圈往外跑的冲击环 */
+const gust={on:false, age:0, life:0.62, r0:0.12, r1:0.9};
+let gustCd=0;
+let aim={x:0,y:0,on:false,hold:false}, keys={l:false,r:false,u:false,d:false};
+let punchCd=0, punchFlash=0, cdWord='';
+let grabHold=false, grabLatched=false, grabPressT=0, playerGrabAuto=true;
+let snd={on:true,ac:null,bus:null,g:{},noise:null};
+/* 每块软糖出圈时的小台词：大家都是软糖，谁都很努力，被挤出去也软乎乎的不生气 */
+const CUTE_OUT=['噗～','呜呜～','好挤呀～','番茄下次见～','噗通！','我再练练～'];
+/* 后期地基倾斜：amt 强度、ang 低侧方向；view 是只作用于锅面和站位的镜头微倾 */
+const tilt={amt:0, target:0, ang:Math.PI/2, targetAng:Math.PI/2, next:3, announced:false, gx:0, gy:0};
+const view={rot:0, shear:0, sy:1, sq:1, ax:1, ay:0};
+
+/* ================= 工具 ================= */
+const rnd=(a,b)=>a+Math.random()*(b-a);
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function ellipse(g,x,y,rx,ry,fill,stroke,lw){
+  g.beginPath(); g.ellipse(x,y,Math.max(1,rx),Math.max(1,ry),0,0,Math.PI*2);
+  if(fill){ g.fillStyle=fill; g.fill(); }
+  if(stroke){ g.strokeStyle=stroke; g.lineWidth=lw||2; g.stroke(); }
+}
+function mmss(t){ const s=Math.floor(t); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+
+/* ================= 尺寸 ================= */
+function resize(){
+  const box=cv.getBoundingClientRect();   /* 用画布自己的尺寸：边框不算进去，手指落点才准 */
+  W=Math.max(280,box.width); H=Math.max(280,box.height);
+  DPR=Math.min(2,window.devicePixelRatio||1);
+  cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.imageSmoothingEnabled=false;
+  CX=W/2; CY=H*0.535; AR0=Math.min(W,H)*0.475; AR=AR0;
+}
+
+/* ================= 音效（软糯可爱） ================= */
+/* 每个音效都是一颗“软糖音”：正弦/三角波 + 快速滑音 + 一点颤音，
+   听起来像捏一下会 Q 弹晃动的果冻；不同动作各有各的口感 */
+function audioCtx(){
+  if(!snd.on) return null;
+  try{
+    if(!snd.ac) snd.ac=new (window.AudioContext||window.webkitAudioContext)();
+    if(snd.ac.state==='suspended'){ try{ snd.ac.resume(); }catch(e){} }
+    /* 音效总线：整体推一点，让动作声压得住 8-bit 音乐，又不至于盖住它。
+       跟着上下文一起建，上下文换了就重建，避免跨上下文连线 */
+    if(!snd.bus||snd.bus.context!==snd.ac){
+      snd.bus=snd.ac.createGain(); snd.bus.gain.value=1.35; snd.bus.connect(snd.ac.destination);
+    }
+    return snd.ac;
+  }catch(e){ return null; }
+}
+/* 同一个音效的最短间隔：别让叠在一起的动作糊成一团噪音 */
+function gate(k,ms){
+  const n=performance.now();
+  if(snd.g[k]&&n-snd.g[k]<ms) return false;
+  snd.g[k]=n;
+  return true;
+}
+/* 软糖音主体：f0 滑到 f1，可选颤音 vib(Hz)/vibRate，低通让声音软软的 */
+function candy(f0,f1,dur,vol,o){
+  const ac=audioCtx(); if(!ac) return;
+  o=o||{};
+  const t0=ac.currentTime+(o.delay||0);
+  const atk=Math.min(o.atk||0.012,dur*0.5);
+  const o1=ac.createOscillator(), g=ac.createGain(), lp=ac.createBiquadFilter();
+  o1.type=o.type||'sine';
+  o1.frequency.setValueAtTime(Math.max(60,f0),t0);
+  if(f1&&f1!==f0) o1.frequency.exponentialRampToValueAtTime(Math.max(60,f1),t0+dur*0.92);
+  if(o.vib){
+    const lfo=ac.createOscillator(), lg=ac.createGain();
+    lfo.frequency.value=o.vibRate||14; lg.gain.value=o.vib;
+    lfo.connect(lg); lg.connect(o1.frequency);
+    lfo.start(t0); lfo.stop(t0+dur+0.06);
+  }
+  const cut=o.cut||2600;
+  lp.type='lowpass';
+  lp.frequency.setValueAtTime(cut,t0);
+  lp.frequency.exponentialRampToValueAtTime(Math.max(420,cut*0.55),t0+dur);
+  lp.Q.value=0.7;
+  g.gain.setValueAtTime(0.0001,t0);
+  g.gain.exponentialRampToValueAtTime(Math.max(0.001,vol),t0+atk);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  o1.connect(lp); lp.connect(g); g.connect(snd.bus||ac.destination);
+  o1.start(t0); o1.stop(t0+dur+0.06);
+}
+/* 软糖的“噗”：一小撮带通噪声，用在碰撞、拍打这种接触瞬间 */
+function puff(vol,delay,cut){
+  const ac=audioCtx(); if(!ac) return;
+  if(!snd.noise){
+    const len=Math.floor(ac.sampleRate*0.2), buf=ac.createBuffer(1,len,ac.sampleRate), d=buf.getChannelData(0);
+    for(let i=0;i<len;i++){ const k=i/len; d[i]=(Math.random()*2-1)*(1-k)*(1-k); }
+    snd.noise=buf;
+  }
+  const t0=ac.currentTime+(delay||0);
+  const src=ac.createBufferSource(); src.buffer=snd.noise;
+  const bp=ac.createBiquadFilter(); bp.type='bandpass';
+  bp.frequency.value=cut||1400; bp.Q.value=1.1;
+  const g=ac.createGain();
+  g.gain.setValueAtTime(vol,t0);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+0.11);
+  src.connect(bp); bp.connect(g); g.connect(snd.bus||ac.destination);
+  src.start(t0); src.stop(t0+0.13);
+}
+
+/* —— 一、挤在一起：低低的“啵”，挤得越狠越沉 —— */
+function sfxSquish(power){
+  if(!gate('squish',48)) return;
+  const p=Math.min(1,Math.max(0,power||0.3));
+  candy(300-p*90,212-p*70,0.085+p*0.03,0.026+0.028*p,{type:'triangle',vib:12+p*14,vibRate:26+p*10,cut:1800});
+  if(p>0.22) puff(0.016+0.024*p,0,900);
+}
+/* —— 二、出拳：先“啪”再“biu”地弹上去 —— */
+function sfxPunch(){
+  if(!gate('punch',80)) return;
+  puff(0.05,0,2200);
+  candy(520,980,0.075,0.05,{type:'triangle',vib:26,vibRate:34,delay:0.012});
+  candy(980,520,0.09,0.028,{delay:0.09,type:'triangle'});
+}
+/* —— 三、空挥：软软一声“呼” —— */
+function sfxWhiff(){
+  if(!gate('whiff',90)) return;
+  puff(0.026,0,700);
+  candy(430,260,0.1,0.02);
+}
+/* —— 四、抓住：两级上行“嘟·哒”，像小爪子合上 —— */
+function sfxGrab(){
+  if(!gate('grab',70)) return;
+  candy(430,640,0.07,0.045,{type:'triangle'});
+  candy(690,900,0.08,0.038,{delay:0.055,type:'triangle'});
+}
+/* —— 五、挣脱 / 甩开：抖抖的“啵噜噜” —— */
+function sfxSnap(){
+  if(!gate('snap',70)) return;
+  candy(830,360,0.15,0.045,{type:'triangle',vib:55,vibRate:34});
+  puff(0.028,0.02,900);
+}
+/* —— 六、自己松手：一点点“噗” —— */
+function sfxRelease(){
+  if(!gate('release',80)) return;
+  candy(400,300,0.06,0.022,{vib:10,vibRate:20});
+}
+/* —— 七、出圈：卡通式两段下滑“呜——喂”，掉出去也不生气 —— */
+function sfxOut(isP){
+  if(!gate('out',60)) return;
+  candy(isP?760:860,420,0.15,0.045,{type:'triangle',vib:30,vibRate:22});
+  candy(isP?380:450,240,0.17,0.038,{delay:0.1,vib:22,vibRate:18});
+  puff(0.018,0.02,600);
+}
+/* —— 八、倒计时：一声轻轻的“嘀”；开抢是一串上行小铃铛 —— */
+function sfxTick(){ candy(980,1050,0.06,0.032,{type:'triangle'}); }
+function sfxGo(){
+  [784,988,1245].forEach((f,i)=>candy(f,f*1.06,0.1,0.048,{type:'triangle',delay:i*0.055}));
+}
+/* —— 九、开局：一颗一颗跳上来的四连音 —— */
+function sfxStart(){
+  [523,659,784,1047].forEach((f,i)=>candy(f,f*1.03,0.12,0.038,{type:'triangle',delay:i*0.06}));
+}
+/* —— 十、锅歪了：摇摇晃晃的低音，像桌腿短了一截 —— */
+function sfxTilt(){
+  if(!gate('tilt',600)) return;
+  candy(190,150,0.45,0.034,{vib:26,vibRate:8,atk:0.05});
+  candy(285,220,0.4,0.018,{delay:0.09,vib:20,vibRate:7});
+}
+function sfxTiltTurn(){
+  if(!gate('tiltTurn',400)) return;
+  candy(300,190,0.22,0.018,{vib:18,vibRate:9});
+}
+/* —— 十一、被盯上：两声高高的“叮叮”提醒 —— */
+function sfxHunter(){
+  if(!gate('hunter',400)) return;
+  candy(1180,1240,0.05,0.026,{type:'triangle'});
+  candy(1480,1560,0.06,0.024,{delay:0.07,type:'triangle'});
+}
+/* —— 十二、番茄正面吹风：一阵低低的“呼——”，软软的，不吓人 —— */
+function sfxGust(){
+  if(!gate('gust',500)) return;
+  puff(0.042,0,650);
+  puff(0.030,0.07,1100);
+  candy(190,120,0.36,0.028,{vib:16,vibRate:8,atk:0.04});
+  candy(520,240,0.30,0.014,{delay:0.04,atk:0.05});
+}
+/* —— 十三、赢啦：亮亮的小号角，吃到番茄的那种开心 —— */
+function sfxWin(){
+  [659,784,988,1319].forEach((f,i)=>candy(f,f*1.02,0.17,0.05,{type:'triangle',delay:i*0.09,vib:6,vibRate:14}));
+  puff(0.02,0.33,3000);
+  candy(1568,1580,0.22,0.026,{delay:0.37});
+}
+/* —— 十三、输啦：软软的“呜～”，一点也不凶 —— */
+function sfxLose(){
+  candy(560,470,0.16,0.038,{vib:18,vibRate:12});
+  candy(470,300,0.3,0.032,{delay:0.16,vib:22,vibRate:11});
+}
+
+/* ================= 8-bit 芯片音乐 ================= */
+const CHORDS=[
+  {root:45, tones:[57,60,64,69]},   /* Am */
+  {root:41, tones:[53,57,60,65]},   /* F  */
+  {root:48, tones:[60,64,67,72]},   /* C  */
+  {root:43, tones:[55,59,62,67]},   /* G  */
+];
+const MELODY=[
+  [69,72,76,74,72,69,67,69],
+  [65,69,72,71,69,65,64,65],
+  [67,72,76,74,72,67,64,67],
+  [67,71,74,72,71,67,64,62],
+];
+const MUSIC={on:false, timer:null, next:0, step:0, master:null, filter:null, noise:null};
+function mtof(n){ return 440*Math.pow(2,(n-69)/12); }
+function musicEnsure(){
+  let ac=snd.ac;
+  if(!ac){
+    try{ ac=snd.ac=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; }
+  }
+  if(ac.state==='suspended'){ try{ ac.resume(); }catch(e){} }
+  if(!MUSIC.master){
+    const master=ac.createGain(); master.gain.value=0;
+    const filter=ac.createBiquadFilter();
+    filter.type='lowpass'; filter.frequency.value=4600; filter.Q.value=0.6;
+    filter.connect(master); master.connect(ac.destination);
+    const len=Math.floor(ac.sampleRate*0.25);
+    const buf=ac.createBuffer(1,len,ac.sampleRate);
+    const d=buf.getChannelData(0);
+    for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
+    MUSIC.master=master; MUSIC.filter=filter; MUSIC.noise=buf;
+  }
+  return ac;
+}
+function musicVoice(t,freq,dur,type,vol){
+  const ac=snd.ac; if(!ac||!MUSIC.filter) return;
+  const o=ac.createOscillator(), g=ac.createGain();
+  o.type=type||'square';
+  o.frequency.setValueAtTime(freq,t);
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(Math.max(0.0002,vol),t+0.007);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g); g.connect(MUSIC.filter);
+  o.start(t); o.stop(t+dur+0.02);
+}
+function musicKick(t,vol){
+  const ac=snd.ac; if(!ac||!MUSIC.master) return;
+  const o=ac.createOscillator(), g=ac.createGain();
+  o.type='sine';
+  o.frequency.setValueAtTime(155,t);
+  o.frequency.exponentialRampToValueAtTime(46,t+0.11);
+  g.gain.setValueAtTime(Math.max(0.0002,vol),t);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+0.14);
+  o.connect(g); g.connect(MUSIC.master);
+  o.start(t); o.stop(t+0.15);
+}
+function musicNoise(t,dur,vol,hp){
+  const ac=snd.ac; if(!ac||!MUSIC.noise||!MUSIC.filter) return;
+  const src=ac.createBufferSource(); src.buffer=MUSIC.noise;
+  const f=ac.createBiquadFilter();
+  f.type=hp?'highpass':'bandpass';
+  f.frequency.value=hp?7200:1900; f.Q.value=0.9;
+  const g=ac.createGain();
+  g.gain.setValueAtTime(Math.max(0.0002,vol),t);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  src.connect(f); f.connect(g); g.connect(MUSIC.filter);
+  src.start(t); src.stop(t+dur+0.02);
+}
+/* 0=松弛，1=终局：时间、缩圈、存活数、地基倾斜一起把紧张度推上去 */
+function musicIntensity(){
+  const alive=aliveCount();
+  const timeF=Math.min(1,T/55);
+  const ringF=Math.min(1,Math.max(0,(1-R)/0.42));
+  const aliveF=Math.min(1,Math.max(0,(8-alive)/7));
+  let i=0.08+0.38*timeF+0.20*ringF+0.28*aliveF+0.18*tilt.amt;
+  if(alive<=3) i=Math.max(i,0.86);
+  if(alive<=2) i=Math.max(i,0.96);
+  return Math.min(1,i);
+}
+function musicStep(step,t,i){
+  const bar=Math.floor(step/16)%4;
+  const s=step%16;
+  const ch=CHORDS[bar];
+  /* 鼓组 */
+  if(s===0||s===8||(i>0.72&&s===14)) musicKick(t,0.14+0.06*i);
+  if((s===4||s===12)&&i>0.32) musicNoise(t,0.11,0.045+0.04*i,false);
+  if(i>0.20&&s%2===0) musicNoise(t,0.032,0.010+0.012*i,true);
+  if(i>0.72&&s%2===1) musicNoise(t,0.022,0.007+0.006*i,true);
+  /* 低音：八分音符驱动，后半拍偶尔跳八度 */
+  if(s%2===0){
+    const n=ch.root-12+((s===6||s===14)?12:0);
+    musicVoice(t,mtof(n),0.10+(i>0.7?0.035:0),'square',0.045+0.020*i);
+  }
+  /* 琶音：前期八分，后期十六分 */
+  if(i>0.14||s%2===0){
+    const idx=(s+(s>=8?1:0))%4;
+    const n=ch.tones[idx]+(s>=8?12:0)+(i>0.82?12:0);
+    musicVoice(t,mtof(n),i>0.7?0.055:0.07,'square',0.016+0.012*i);
+  }
+  if(i>0.62&&s%2===1){
+    musicVoice(t,mtof(ch.tones[(s+2)%4]+12),0.045,'triangle',0.010+0.006*i);
+  }
+  /* 主旋律：终局升八度 */
+  if(i>0.22&&s%2===0){
+    const mel=MELODY[bar];
+    const n=mel[(s/2)|0]+(i>0.88?12:0);
+    musicVoice(t,mtof(n),0.15,'square',0.019+0.014*i);
+  }
+  /* 终局高音催命 */
+  if(i>0.9&&(s===3||s===7||s===11||s===15)){
+    musicVoice(t,mtof(81),0.045,'square',0.013);
+  }
+}
+function musicTick(){
+  if(!MUSIC.on) return;
+  const ac=snd.ac;
+  if(!ac) return;
+  if(ac.state!=='running'){
+    MUSIC.next=ac.currentTime+0.06;
+    return;
+  }
+  /* 暂停、静音、结算时只停排程，不堆音符 */
+  if(!snd.on||paused||state!=='play'){
+    MUSIC.next=ac.currentTime+0.06;
+    return;
+  }
+  const i=musicIntensity();
+  const tempo=132+40*i;                 /* 132 → 172 BPM */
+  const dur=60/tempo/4;                 /* 十六分音符 */
+  if(MUSIC.next<ac.currentTime) MUSIC.next=ac.currentTime+0.05;
+  try{ MUSIC.filter.frequency.setTargetAtTime(3600+3000*i,ac.currentTime,0.35); }catch(e){}
+  while(MUSIC.next<ac.currentTime+0.16){
+    musicStep(MUSIC.step,MUSIC.next,i);
+    MUSIC.step++;
+    MUSIC.next+=dur;
+  }
+}
+function musicStart(){
+  const ac=musicEnsure(); if(!ac) return;
+  MUSIC.on=true; MUSIC.step=0; MUSIC.next=ac.currentTime+0.10;
+  const g=MUSIC.master.gain;
+  g.cancelScheduledValues(ac.currentTime);
+  g.setValueAtTime(Math.max(0.0001,g.value),ac.currentTime);
+  g.linearRampToValueAtTime(snd.on?0.55:0,ac.currentTime+0.5);
+  if(!MUSIC.timer) MUSIC.timer=setInterval(musicTick,25);
+}
+function musicStop(){
+  MUSIC.on=false;
+  if(MUSIC.timer){ clearInterval(MUSIC.timer); MUSIC.timer=null; }
+  if(MUSIC.master&&snd.ac){
+    const now=snd.ac.currentTime, g=MUSIC.master.gain;
+    g.cancelScheduledValues(now);
+    g.setValueAtTime(Math.max(0.0001,g.value),now);
+    g.linearRampToValueAtTime(0,now+0.3);
+  }
+}
+function musicMute(){
+  if(!MUSIC.master||!snd.ac) return;
+  const now=snd.ac.currentTime, g=MUSIC.master.gain;
+  g.cancelScheduledValues(now);
+  g.setValueAtTime(Math.max(0.0001,g.value),now);
+  g.linearRampToValueAtTime(snd.on?0.55:0,now+0.25);
+}
+
+/* ================= 建局 ================= */
+/* 统一造一只月巴：新字段只在这里加，菜单预览和正式局不会再各写一份 */
+function makeBlob(p){
+  const r=rnd(0.116,0.168);
+  const b={
+    name:p.n, img:new Image(), imgOK:false, r, cr:r*0.62, m:(r/0.1)*(r/0.1),
+    x:0,y:0,vx:0,vy:0, sq:0,sqV:0,sqDir:0, dent:0,dentDir:0,dentV:0,
+    jx:0,jy:0,jvx:0,jvy:0, wob:0,wobV:0, hop:0,mv:0, rec:0,recMax:1,
+    atk:rnd(0.4,1.3), wind:0, aimT:null, whiff:0, face:Math.PI/2, facing:1,
+    grab:null, heldBy:null, grip:0, grabCd:rnd(1.0,2.2), grabT:0, struggle:0, gw:0,
+    out:false,fall:0, spin:rnd(0.7,1.3)*(Math.random()<0.5?-1:1),
+    isP:false, isHunter:false, scratch:document.createElement('canvas'),
+    sil:document.createElement('canvas'), silKey:'', tex:document.createElement('canvas'), texKey:'',
+    silG:null, texG:null, texGKey:'',   /* 玩家的金色描边版贴图，只在用到时才建 */
+    phase:rnd(0,6.3), wf:rnd(0.5,1.2), wp:rnd(0,6.3),
+  };
+  b.scratch.width=TEX; b.scratch.height=TEX;
+  b.sil.width=TEX; b.sil.height=TEX;
+  b.tex.width=TEX; b.tex.height=TEX;
+  b.img.onload=()=>{ b.imgOK=true; b.silKey=''; b.texKey=''; };
+  b.img.onerror=()=>{ b.imgOK=false; };
+  b.img.src=p.u;
+  return b;
+}
+
+function newRound(){
+  R=RMAX; T=0; outCount=0; pops=[]; cd=1.6; cdWord=''; paused=false; hunter=null; fx=[];
+  dust=[]; shake=0; cdPop=0;
+  punchCd=0; punchFlash=0; grabHold=false; grabLatched=false; playerGrabAuto=true;
+  aim.on=false; aim.hold=false;
+  tilt.amt=0; tilt.target=0; tilt.next=rnd(2.5,4.5); tilt.announced=false; tilt.gx=0; tilt.gy=0;
+  tilt.ang=tilt.targetAng=rnd(0,Math.PI*2);
+  view.rot=0; view.shear=0; view.sy=1; view.sq=1; view.ax=1; view.ay=0;
+  const pick=shuffle(POOL.slice()).slice(0,NPLAY);
+  blobs=pick.map(makeBlob);
+  /* 环形散开出生，避免叠在一起 */
+  const n=blobs.length;
+  for(let i=0;i<n;i++){
+    const a=(i/n)*Math.PI*2+rnd(-0.09,0.09);
+    const rad=rnd(0.46,0.78);
+    blobs[i].x=Math.cos(a)*rad;
+    blobs[i].y=Math.sin(a)*rad;
+  }
+  player=blobs[(Math.random()*n)|0];
+  player.isP=true;
+  player.isHunter=false;
+  player.grabCd=0.15;   /* 开局别让「抓」按钮灰太久 */
+  pickHunter();
+  $('sWho').textContent=player.name;
+  state='ready';
+  $('ovStart').classList.remove('show');
+  $('ovEnd').classList.remove('show');
+  sfxStart();
+  musicStart();
+}
+
+/* ================= 输入 ================= */
+function toWorld(sx,sy){
+  updateCamera();
+  const p=viewInv(sx,sy);
+  return {x:p.x/AR, y:p.y/(AR*KY)};
+}
+function pointer(e){
+  const b=cv.getBoundingClientRect();
+  const t=e.touches?e.touches[0]:e;
+  const sx=t.clientX-b.left, sy=t.clientY-b.top;
+  const w=toWorld(sx,sy);
+  aim.x=Math.max(-1.2,Math.min(1.2,w.x));
+  aim.y=Math.max(-1.2,Math.min(1.2,w.y));
+  aim.on=true;
+}
+cv.addEventListener('pointerdown',e=>{ cv.setPointerCapture&&cv.setPointerCapture(e.pointerId); aim.hold=true; pointer(e); e.preventDefault(); });
+cv.addEventListener('pointermove',e=>{ if(aim.hold){ pointer(e); } e.preventDefault(); });
+cv.addEventListener('pointerup',e=>{
+  aim.on=false; aim.hold=false;
+  if(player&&player.grab&&playerGrabAuto) endGrab(player,player.grab,'let');
+});
+cv.addEventListener('pointercancel',e=>{
+  aim.on=false; aim.hold=false;
+  if(player&&player.grab&&playerGrabAuto) endGrab(player,player.grab,'let');
+});
+window.addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();
+  if(k==='a'||k==='arrowleft') keys.l=true;
+  if(k==='d'||k==='arrowright') keys.r=true;
+  if(k==='w'||k==='arrowup') keys.u=true;
+  if(k==='s'||k==='arrowdown') keys.d=true;
+  if(k==='j'||k==='enter'){ if(!e.repeat) playerPunch(); }
+  if(k==='k'){ if(!e.repeat) setGrabHold(true); }
+  if(k===' '){ if(state==='play'||state==='ready') togglePause(); }
+  if([' ','arrowup','arrowdown','arrowleft','arrowright','enter'].indexOf(k)>=0) e.preventDefault();
+});
+window.addEventListener('keyup',e=>{
+  const k=e.key.toLowerCase();
+  if(k==='a'||k==='arrowleft') keys.l=false;
+  if(k==='d'||k==='arrowright') keys.r=false;
+  if(k==='w'||k==='arrowup') keys.u=false;
+  if(k==='s'||k==='arrowdown') keys.d=false;
+  if(k==='k') setGrabHold(false);
+});
+window.addEventListener('blur',()=>{ grabLatched=false; setGrabHold(false); aim.on=false; aim.hold=false; });
+
+/* ================= 物理 ================= */
+const SPRING=18, DAMP=2.2;     /* 软糖弹簧：压得快、回弹两次，Q 弹但不抽搐 */
+const WIND_T=0.16;            /* 出拳前的蓄力时间 */
+function setSquash(b,nx,ny,power){
+  const a=Math.atan2(ny*KY,nx);
+  b.sqDir=a;
+  b.sqV+=Math.min(0.9,power);
+  b.wobV+=(nx>=0?1:-1)*Math.min(1.1,power*0.9);    /* 二次果冻扭一扭 */
+}
+/* 果冻抖：整只立绘朝撞击方向甩出去一点，再弹回来 */
+function setJig(b,nx,ny,amt){
+  const a=Math.atan2(ny*KY,nx);
+  b.jvx+=Math.cos(a)*amt*0.5;
+  b.jvy+=Math.sin(a)*amt*0.5;
+}
+/* 猎手：至少有一只 AI 专门盯着玩家；它出局后立刻换最近的一只 */
+function setHunter(b){
+  if(hunter===b) return;
+  for(const x of blobs) x.isHunter=false;
+  hunter=b||null;
+  if(hunter) hunter.isHunter=true;
+  /* 开局摆位时不出声，只有打到一半换了盯你的软糖才“叮叮”提醒 */
+  if(hunter&&state==='play') sfxHunter();
+}
+function pickHunter(){
+  const cands=blobs.filter(x=>!x.isP&&!x.out);
+  if(!cands.length){ setHunter(null); return; }
+  const h=cands[(Math.random()*cands.length)|0];
+  h.atk=Math.min(h.atk,0.5);
+  setHunter(h);
+}
+function ensureHunter(){
+  if(!player||player.out){ if(hunter) setHunter(null); return; }
+  if(hunter&&!hunter.out&&hunter!==player) return;
+  let best=null,bd=1e9;
+  for(const b of blobs){
+    if(b.isP||b.out) continue;
+    const d=Math.hypot(b.x-player.x,b.y-player.y);
+    if(d<bd){ bd=d; best=b; }
+  }
+  if(best) best.atk=Math.min(best.atk,0.45);
+  setHunter(best);
+}
+/* 出拳目标：够得着就挥拳，够不着就再等一会儿；猎手优先打玩家 */
+const REACH=2.5;
+function nearTarget(a){
+  if(a.isHunter&&player&&!player.out){
+    const dp=Math.hypot(player.x-a.x,player.y-a.y);
+    if(dp<=a.r*REACH*1.35) return player;
+  }
+  let best=null,bd=1e9;
+  for(const o of blobs){
+    if(o===a||o.out) continue;
+    const d=Math.hypot(o.x-a.x,o.y-a.y);
+    if(d<bd){ bd=d; best=o; }
+  }
+  return (best&&bd<=a.r*REACH*1.35)?best:null;
+}
+/* ================= 抓拽 / 手动出拳 ================= */
+function keysAny(){ return keys.l||keys.r||keys.u||keys.d; }
+function popPair(a,b,txt){ popText((a.x+b.x)/2,(a.y+b.y)/2,txt); }
+
+/* 松开抓握：给被抓的一个挣脱的小冲量，双方都进入短暂“抓空”冷却 */
+function endGrab(g,v,reason){
+  if(!g||!v||g.grab!==v) return;
+  g.grab=null; v.heldBy=null; g.grip=0; g.grabT=0;
+  g.grabCd=Math.max(g.grabCd,1.1); v.grabCd=Math.max(v.grabCd,1.1);
+  const dx=v.x-g.x, dy=v.y-g.y, d=Math.hypot(dx,dy)||1e-5;
+  const nx=dx/d, ny=dy/d;
+  v.vx+=nx*0.20; v.vy+=ny*0.20;
+  g.vx-=nx*0.05; g.vy-=ny*0.05;
+  setSquash(v,-nx,-ny,0.24); setJig(v,nx,ny,3.2);
+  setSquash(g,nx,ny,0.12);
+  if(reason==='let'||reason==='out'){ sfxRelease(); }
+  else{
+    popPair(g,v, reason==='punch'?'甩出去啦～':'挣脱啦～');
+    sfxSnap();
+  }
+}
+function releaseAllGrabs(a,reason){
+  if(!a) return;
+  if(a.heldBy){ const h=a.heldBy; endGrab(h,a,reason||'punch'); }
+  if(a.grab){ endGrab(a,a.grab,reason||'punch'); }
+}
+/* 谁在“想抓”：玩家按住拖动/方向键就是主动想抓；AI 要先有抓人念头 gw */
+function grabWish(x,y,closing){
+  if(x.out||x.rec>0||x.grabCd>0||x.grab||x.heldBy) return false;
+  /* 玩家要“撞上去”才抓：慢慢贴住只是推，冲过去才会上手 */
+  if(x.isP) return (aim.hold||keysAny())&&closing>0.06;
+  return x.gw>0&&closing>0.03;
+}
+/* 真正建立抓握：碰撞自动抓和按住「抓」都走这里 */
+function beginGrab(g,v){
+  if(!g||!v||g.grab||v.heldBy) return false;
+  g.grab=v; v.heldBy=g; g.grip=1; g.grabT=0; g.gw=0; v.gw=0; v.struggle=0;
+  if(g.isP) playerGrabAuto=!grabHold;
+  const dx=v.x-g.x, dy=v.y-g.y, d=Math.hypot(dx,dy)||1e-5, ux=dx/d, uy=dy/d;
+  setSquash(g,ux,uy,0.20); setSquash(v,-ux,-uy,0.32); setJig(v,ux,uy,2.6);
+  v.dent=Math.max(v.dent,0.30); v.dentDir=Math.atan2(-uy*KY,-ux);
+  if(g.isP||v.isP){
+    popPair(g,v, v.isP?'被抓住啦～':'抓住啦～');
+    sfxGrab();
+  }
+  return true;
+}
+/* 按住「抓」时的最近目标：比碰撞距离再远一点，够得着就拽过来 */
+const GRAB_REACH=1.75;
+function nearestGrabTarget(){
+  if(!player||player.out) return null;
+  let best=null,bd=1e9;
+  for(const o of blobs){
+    if(o===player||o.out||o.rec>0||o.grab||o.heldBy) continue;
+    const d=Math.hypot(o.x-player.x,o.y-player.y);
+    if(d>(player.cr+o.cr)*GRAB_REACH) continue;
+    if(d<bd){ bd=d; best=o; }
+  }
+  return best;
+}
+function grabNearest(){
+  if(state!=='play'||paused) return false;
+  if(!player||player.out||player.heldBy||player.grab) return false;
+  if(player.rec>0||player.grabCd>0) return false;
+  const t=nearestGrabTarget();
+  if(!t) return false;
+  if(!beginGrab(player,t)) return false;
+  playerGrabAuto=false;
+  player.grabCd=0;
+  return true;
+}
+/* 抓按钮按下/按住：按住不放就抓着；轻点一下会“锁”住这次抓握，直到自己挣脱 */
+function setGrabHold(on){
+  grabHold=!!on;
+  if(grabHold){
+    if(player&&player.grab) playerGrabAuto=false;
+    if(!grabLatched) grabNearest();
+  }else if(!grabLatched&&player&&player.grab&&!playerGrabAuto){
+    endGrab(player,player.grab,'let');
+  }
+}
+function tryGrabPair(a,b,nx,ny){
+  if(a.grab||b.grab||a.heldBy||b.heldBy) return;
+  const closing=(a.vx-b.vx)*nx+(a.vy-b.vy)*ny;
+  if(closing<0.015) return;
+  const wa=grabWish(a,b,closing), wb=grabWish(b,a,closing);
+  if(!wa&&!wb) return;
+  let g;
+  if(wa&&wb){ g=(a.isP!==b.isP)?(a.isP?a:b):(Math.random()<0.5?a:b); }
+  else g=wa?a:b;
+  const v=g===a?b:a;
+  beginGrab(g,v);
+}
+function updateGrabs(dt){
+  for(const a of blobs){
+    if(a.out){ releaseAllGrabs(a,'out'); continue; }
+    if(a.grabCd>0) a.grabCd-=dt;
+    if(a.gw>0) a.gw-=dt;
+    if(a.whiff>0) a.whiff-=dt;
+    const b=a.grab;
+    if(!b) continue;
+    if(b.out||b.heldBy!==a||a.heldBy){ releaseAllGrabs(a); continue; }
+    a.grabT+=dt;
+    const dx=b.x-a.x, dy=b.y-a.y, d=Math.hypot(dx,dy)||1e-5;
+    const nx=dx/d, ny=dy/d;
+    const minD=(a.cr+b.cr)*0.94;
+    /* 把被抓的往自己身前拉：离得越远拉得越急；重的猎物也会把抓的人往回坠一点 */
+    if(d>minD){
+      const over=Math.min(0.10,d-minD);
+      const ratio=Math.min(1.6,b.m/Math.max(0.5,a.m));
+      b.x-=nx*over*0.45; b.y-=ny*over*0.45;
+      a.x+=nx*over*0.10*ratio; a.y+=ny*over*0.10*ratio;
+      const rel=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
+      if(rel>0){ b.vx-=nx*rel*0.5; b.vy-=ny*rel*0.5; }
+    }
+    /* 被抓的一侧被扯出凹坑，纸片贴在抓手上 */
+    b.dent=Math.max(b.dent,0.34);
+    b.dentDir=Math.atan2(-ny*KY,-nx);
+    /* 抓握力：时间 + 拉扯 + 挣扎都在掉，所以很容易被挣脱 */
+    const away=Math.max(0,(b.vx-a.vx)*nx+(b.vy-a.vy)*ny);
+    const active=(b.isP&&(aim.hold||keysAny()))?1:0;
+    const massF=Math.min(1.7,Math.sqrt(b.m/Math.max(0.5,a.m)));
+    const drain=(GRAB_DRAIN+away*0.9+active*0.22+a.grabT*0.10)*massF;
+    a.grip-=dt*drain;
+    b.struggle=Math.min(1.4,(b.struggle||0)+dt*(0.5+away*2.5));
+    /* 不规则地挣两下，拖拽才有“活的”手感 */
+    if(Math.random()<dt*2.6){
+      b.vx-=nx*rnd(0.05,0.16); b.vy-=ny*rnd(0.04,0.13);
+      b.vx+=rnd(-0.05,0.05); b.vy+=rnd(-0.05,0.05);
+      setSquash(b,-nx,-ny,0.10);
+    }
+    let reason='';
+    if(a.grip<=0) reason='escape';
+    else if(d>(a.cr+b.cr)*1.85) reason='slip';
+    else if(a.grabT>2.6) reason='tired';
+    else if(!a.isP&&Math.hypot(a.x,a.y)>R*0.90) reason='edge';   /* AI 不会拖着自己出圈 */
+    else if(a.isP&&playerGrabAuto&&!(aim.hold||keysAny())) reason='let';
+    if(reason) endGrab(a,b,reason);
+  }
+}
+/* 玩家手动出拳：优先打抓住自己的人 / 自己抓着的人，其次打面前最近的 */
+function playerPunch(){
+  if(state!=='play'||paused||!player||player.out||player.rec>0) return;
+  if(punchCd>0) return;
+  punchCd=PUNCH_CD; punchFlash=0.14;
+  const a=player;
+  let target=null;
+  if(a.heldBy&&!a.heldBy.out) target=a.heldBy;
+  else if(a.grab&&!a.grab.out) target=a.grab;
+  if(!target){
+    const hasDir=aim.hold||aim.on||keysAny();
+    let dx=Math.cos(a.face), dy=Math.sin(a.face);
+    if(hasDir){ dx=aim.x-a.x; dy=aim.y-a.y; const dl=Math.hypot(dx,dy)||1; dx/=dl; dy/=dl; }
+    let best=null,bs=1e9;
+    for(const o of blobs){
+      if(o===a||o.out) continue;
+      const ddx=o.x-a.x, ddy=o.y-a.y, d=Math.hypot(ddx,ddy)||1e-5;
+      if(d>a.r*REACH*1.55) continue;
+      const dot=(ddx/d)*dx+(ddy/d)*dy;
+      if(dot<-0.15) continue;
+      const score=d+(1-dot)*0.30;
+      if(score<bs){ bs=score; best=o; }
+    }
+    target=best;
+  }
+  if(target){
+    const dxT=target.x-a.x;
+    if(dxT>0.05) a.facing=1; else if(dxT<-0.05) a.facing=-1;
+    a.aimT=target; a.wind=0.10; a.atk=Math.max(a.atk,0.9);
+  }else{
+    /* 空挥：往前扑一下，给点声音，不白按 */
+    a.aimT=null; a.wind=0;
+    const dx=Math.cos(a.face), dy=Math.sin(a.face);
+    if(dx>0.1) a.facing=1; else if(dx<-0.1) a.facing=-1;
+    spawnPunchFx(a,dx,dy,0.55);
+    a.vx+=dx*0.12; a.vy+=dy*0.12;
+    setSquash(a,dx,dy,0.18); setJig(a,dx,dy,2.4);
+    a.whiff=0.18;
+    sfxWhiff();
+  }
+}
+/* ================= 出拳特效 ================= */
+const PUNCH_GRAY='#5c6573';
+const GOLD='#d9a521';        /* 玩家专属色：金色描边和头顶大箭头 */
+function spawnPunchFx(a,nx,ny,power){
+  if(!a||a.out) return;
+  let sx=nx, sy=ny*KY;
+  const sl=Math.hypot(sx,sy)||1; sx/=sl; sy/=sl;
+  const p=proj(a.x,a.y);
+  const px=a.r*2*AR*(1+a.y*0.12);
+  const hy=hopLift(a)*px;
+  const col=a.isP?PAL[PALKEY].ink:PUNCH_GRAY;
+  fx.push({
+    p, px, hy, sx, sy, col,
+    age:0, life:0.30, power:Math.max(0.45,power||1)
+  });
+  if(fx.length>24) fx.shift();
+}
+function drawPunchFx(){
+  for(const f of fx){
+    const k=Math.max(0,1-f.age/f.life);
+    const col=f.col||PUNCH_GRAY;
+    const cx=f.p.x+f.sx*f.px*0.06;
+    const cy=f.p.y-f.hy+f.sy*f.px*0.06;
+    /* 速度线 */
+    ctx.save();
+    ctx.strokeStyle=col; ctx.lineCap='round'; ctx.setLineDash([]);
+    for(let i=0;i<3;i++){
+      const side=(i-1)*f.px*0.15;
+      const x0=cx-f.sx*f.px*0.06 - f.sy*side;
+      const y0=cy-f.sy*f.px*0.06 + f.sx*side;
+      const len=f.px*(0.20+0.05*i)*f.power;
+      ctx.globalAlpha=k*0.55*(1-i*0.22);
+      ctx.lineWidth=Math.max(1.5,f.px*0.022);
+      ctx.beginPath();
+      ctx.moveTo(x0,y0);
+      ctx.lineTo(x0-f.sx*len,y0-f.sy*len);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
+function doPunch(a){
+  a.wind=0;
+  const t=a.aimT; a.aimT=null;
+  if(state!=='play'||a.out) return;
+  if(!t||t.out){
+    const ff=Math.cos(a.face);
+    if(ff>0.12) a.facing=1; else if(ff<-0.12) a.facing=-1;
+    spawnPunchFx(a,Math.cos(a.face),Math.sin(a.face),0.5);
+    return;
+  }
+  const dx=t.x-a.x, dy=t.y-a.y, d=Math.hypot(dx,dy)||1e-5;
+  const nx=dx/d, ny=dy/d;
+  if(nx>0.12) a.facing=1; else if(nx<-0.12) a.facing=-1;
+  if(d>a.r*REACH*1.6){                    /* 蓄力时跑掉了：也要甩出拳风 */
+    a.face=Math.atan2(ny,nx);
+    spawnPunchFx(a,nx,ny,0.55);
+    return;
+  }
+  a.face=Math.atan2(ny,nx);
+  spawnPunchFx(a,nx,ny,1);
+  /* 互抓着出拳：等于贴身甩出去，冲击更重，同时松手（刚抓住的 0.22 秒内先甩不开，保证拖得动） */
+  const linked=(a.grab===t||a.heldBy===t);
+  const holder=a.grab===t?a:(t.grab===a?t:null);
+  if(linked&&(!holder||holder.grabT>=0.22)){ releaseAllGrabs(a); releaseAllGrabs(t); }
+  /* 出拳的往前一扑（自己也会失稳，打完要缓一下才站得起来；玩家手动出拳后摇短一点，别太黏） */
+  a.vx+=nx*0.22; a.vy+=ny*0.22;
+  setSquash(a,-nx,-ny,0.34);
+  a.rec=a.isP?0.44:0.62; a.recMax=a.rec;
+  /* 挨顶的：被推出去 + 受击侧折出折痕，后摇更长（要努力爬起来） */
+  const ratio=a.m/Math.max(0.7,t.m);
+  const hitPow=linked?1.45:1;
+  t.vx+=nx*0.95*ratio*hitPow; t.vy+=ny*0.95*ratio*hitPow;
+  setSquash(t,-nx,-ny,linked?0.62:0.70);
+  setJig(t,nx,ny,linked?5.4:4.2);
+  t.dent=Math.max(t.dent,linked?0.95:0.88);
+  t.dentDir=Math.atan2(-ny*KY,-nx);
+  t.wind=0; t.aimT=null;                 /* 被打断，出不了拳 */
+  t.rec=Math.max(t.rec,1.0); t.recMax=1.0;
+  /* 命中反馈：接触点扬起小烟、锅晃一下 */
+  spawnDust(t.x,t.y,linked?6:4,linked?1.1:0.9);
+  addShake(linked?3.4:2.2);
+  sfxPunch();
+}
+function step(dt){
+  /* 倒计时：只数数，不动物理；数字每跳一下响一声，喊「抢!」时一串小铃铛 */
+  if(state==='ready'){
+    cd-=dt;
+    const word=cd<=0.4?'抢!':String(Math.max(1,Math.ceil(cd-0.35)));
+    if(word!==cdWord){
+      const first=!cdWord;
+      cdWord=word;
+      if(!first){ if(word==='抢!') sfxGo(); else sfxTick(); }
+      cdPop=1;                          /* 数字跳一下 */
+    }
+    if(cd<=0){ state='play'; }
+    decay(dt); return;
+  }
+  /* 结算：继续播放掉落，等弹层 */
+  if(state==='win'||state==='lose'){
+    decay(dt);
+    animFall(dt);
+    finishT-=dt;
+    if(finishT<=0 && !$('ovEnd').classList.contains('show')) showEnd();
+    return;
+  }
+  if(state!=='play'){ decay(dt); return; }
+  if(paused) return;
+  if(punchCd>0) punchCd=Math.max(0,punchCd-dt);
+  if(punchFlash>0) punchFlash=Math.max(0,punchFlash-dt);
+  T+=dt;
+  ensureHunter();
+  /* 缩圈 */
+  const k=Math.min(1,T/SHRINK_T);
+  R=RMAX-(RMAX-RMIN)*(k*k);
+  /* 后期地基：随机换低侧，越到后期越陡，所有人往低处滑 */
+  const late=Math.min(1,Math.max(0,(T-18)/30));
+  let tiltTar=0;
+  if(late>0){
+    tiltTar=0.40+0.60*late;
+    const aliveNow=aliveCount();
+    if(aliveNow<=4) tiltTar=Math.max(tiltTar,0.62);
+    if(aliveNow<=2) tiltTar=Math.max(tiltTar,0.92);
+    tilt.next-=dt;
+    if(tilt.next<=0){
+      tilt.targetAng=rnd(0,Math.PI*2);
+      tilt.next=rnd(2.6,5.2);
+      if(tilt.amt>0.18) sfxTiltTurn();
+    }
+    if(!tilt.announced){
+      tilt.announced=true;
+      popText(0,0,'锅歪啦～');
+      sfxTilt();
+    }
+  }
+  tilt.target=Math.min(1,tiltTar);
+  tilt.amt+=(tilt.target-tilt.amt)*Math.min(1,dt*0.85);
+  let dA=((tilt.targetAng-tilt.ang+Math.PI*3)%(Math.PI*2))-Math.PI;
+  tilt.ang+=dA*Math.min(1,dt*1.5);
+  tilt.gx=Math.cos(tilt.ang)*1.0*tilt.amt;
+  tilt.gy=Math.sin(tilt.ang)*1.0*tilt.amt;
+  /* 浮尘/文字 */
+  decay(dt);
+  /* 转向 + 积分 */
+  for(let i=0;i<blobs.length;i++){
+    const b=blobs[i];
+    if(b.out) continue;
+    /* 后摇：揍人 / 被揍之后都要缓一缓，趴着慢慢爬起来（期间不能走、不能跳、不能出拳） */
+    if(b.rec>0){
+      b.rec-=dt;
+      const rf=Math.exp(-3.4*dt);
+      b.vx*=rf; b.vy*=rf;
+      b.hop*=Math.exp(-6*dt);
+      b.mv*=Math.exp(-5*dt);
+      if(b.rec<0) b.rec=0;
+    }
+    let ax=0,ay=0;
+    if(b.isP&&b.rec<=0){
+      if(keys.l||keys.r||keys.u||keys.d){
+        ax=(keys.r?1:0)-(keys.l?1:0); ay=(keys.d?1:0)-(keys.u?1:0);
+      }else if(aim.on){
+        const dx=aim.x-b.x, dy=aim.y-b.y; const d=Math.hypot(dx,dy)||1;
+        ax=dx/d; ay=dy/d;
+        if(d<0.06){ ax=0; ay=0; }
+      }
+      /* 拽着别人走不快；被人拽住也使不上全力（但还能往反方向挣） */
+      const slow=(b.grab?0.72:1)*(b.heldBy?0.80:1);
+      const ACC=0.80*slow, VMAX=0.42*slow, VCAP=VMAX*2.2;
+      b.vx+=ax*ACC*dt; b.vy+=ay*ACC*dt;
+      const sp=Math.hypot(b.vx,b.vy);
+      if(sp>VCAP){ b.vx*=VCAP/sp; b.vy*=VCAP/sp; }
+    }else if(!b.isP&&b.rec<=0){
+      /* AI：被人抓住时先往反方向挣；抓了人就往圈边拖；否则边缘先往中间逃、再追最近目标 */
+      const dSelf=Math.hypot(b.x,b.y);
+      let tx=0,ty=0, chase=null;
+      if(b.heldBy){
+        const h=b.heldBy;
+        tx=b.x-h.x; ty=b.y-h.y;
+      }else if(b.grab){
+        const v=b.grab;
+        const mx=(b.x+v.x)/2, my=(b.y+v.y)/2, md=Math.hypot(mx,my)||1;
+        tx=mx/md; ty=my/md;                  /* 把猎物往锅边拖 */
+      }else if(b.isHunter&&player&&!player.out&&dSelf<R*0.90){
+        tx=player.x-b.x; ty=player.y-b.y; chase=player;   /* 猎手：直奔玩家 */
+      }else if(dSelf>R*0.76){ tx=-b.x; ty=-b.y; }
+      else{
+        let best=null,bd=1e9;
+        for(let j=0;j<blobs.length;j++){
+          const o=blobs[j]; if(o===b||o.out) continue;
+          const dd=(o.x-b.x)*(o.x-b.x)+(o.y-b.y)*(o.y-b.y);
+          const w=o.isP?dd*0.62:dd;          /* 其他 AI 也更愿意往玩家身上凑 */
+          if(w<bd){ bd=w; best=o; }
+        }
+        if(best){ tx=best.x-b.x; ty=best.y-b.y; chase=best; }
+      }
+      /* 近身时偶尔起“抓一把”的念头（猎手更爱抓） */
+      if(chase&&b.grabCd<=0&&!b.grab&&!b.heldBy){
+        const dd=Math.hypot(chase.x-b.x,chase.y-b.y);
+        if(dd<(b.cr+chase.cr)*2.0&&Math.random()<dt*(b.isHunter?1.5:0.85)) b.gw=0.52;
+      }
+      let d=Math.hypot(tx,ty)||1;
+      /* 一点点摆动，让推搡看起来像活物 */
+      const wob=Math.sin(T*b.wf+b.wp)*0.42;
+      let ux=tx/d, uy=ty/d;
+      const px=-uy, py=ux;
+      ux+=px*wob*0.35; uy+=py*wob*0.35;
+      d=Math.hypot(ux,uy)||1;
+      const slow=(b.grab?0.78:1)*(b.heldBy?0.86:1);
+      const ACC=0.48*slow, VMAX=0.27*slow, VCAP=VMAX*2.2;
+      b.vx+=ux/d*ACC*dt; b.vy+=uy/d*ACC*dt;
+      const sp=Math.hypot(b.vx,b.vy);
+      if(sp>VCAP){ b.vx*=VCAP/sp; b.vy*=VCAP/sp; }
+    }
+    /* 倾斜的锅面：往低处滑；盘还在转，带一点横向漂 */
+    if(tilt.amt>0.01){
+      b.vx+=tilt.gx*dt; b.vy+=tilt.gy*dt;
+      const swirl=0.16*tilt.amt;
+      b.vx+=-Math.sin(tilt.ang)*swirl*dt;
+      b.vy+= Math.cos(tilt.ang)*swirl*dt;
+    }
+    /* 摩擦 */
+    const fr=Math.exp(-2.6*dt);
+    b.vx*=fr; b.vy*=fr;
+    b.x+=b.vx*dt; b.y+=b.vy*dt;
+    /* 倾斜除了加速，还给一个不被摩擦抵消的直接滑移：所有月巴都会明显往低处滑 */
+    if(tilt.amt>0.01){
+      const slip=0.28*tilt.amt*dt;
+      b.x+=Math.cos(tilt.ang)*slip;
+      b.y+=Math.sin(tilt.ang)*slip;
+    }
+    /* 面朝方向：出拳挥空时也朝最近一次的运动/瞄准方向 */
+    if(Math.hypot(b.vx,b.vy)>0.05) b.face=Math.atan2(b.vy,b.vx);
+    else if(b.isP&&(aim.hold||keysAny())) b.face=Math.atan2(aim.y-b.y,aim.x-b.x);
+    /* 水平朝向：按实际移动/瞄准方向左右翻转立绘，小阈值防抖 */
+    if(b.vx>0.05) b.facing=1;
+    else if(b.vx<-0.05) b.facing=-1;
+    else if(b.isP){
+      if(keys.l&&!keys.r) b.facing=-1;
+      else if(keys.r&&!keys.l) b.facing=1;
+      else if(aim.hold){
+        const fdx=aim.x-b.x;
+        if(fdx>0.07) b.facing=1; else if(fdx<-0.07) b.facing=-1;
+      }
+    }
+    /* 一蹦一蹦：速度越快跳得越急，落地时压一下 */
+    b.mv=Math.min(1,Math.hypot(b.vx,b.vy)/(b.isP?0.34:0.22));
+    if(b.mv>0.10&&b.rec<=0){
+      const prevHop=b.hop;
+      b.hop+=dt*(2.2+2.0*b.mv);            /* 一蹦一蹦的节奏：2.2~4.2 跳/秒 */
+      /* 0.84 相位踩到地面：这一刻才最该压扁，而不是绕回 0 的时候 */
+      if(prevHop<0.84&&b.hop>=0.84){
+        b.sqDir=Math.PI/2;                 /* 落地压扁：竖着压 */
+        b.sqV+=0.28+0.34*b.mv;
+        b.wobV+=(b.vx>=0?1:-1)*(0.20+0.16*b.mv);
+      }
+      if(b.hop>=1){
+        b.hop-=1;
+        b.sqDir=0; b.sqV+=0.10+0.09*b.mv;  /* 起跳：竖着拉长 */
+      }
+    }else{
+      b.hop*=Math.exp(-7*dt);
+      if(b.rec<=0) b.mv*=Math.exp(-5*dt);
+    }
+    /* 出拳：冷却好了先蓄力，蓄力到底才真打出去 */
+    if(b.wind>0){
+      b.wind-=dt;
+      if(b.wind<=0) doPunch(b);
+    }else if(!b.isP&&b.rec<=0){
+      b.atk-=dt;
+      if(b.atk<=0){
+        const t=nearTarget(b);
+        if(t){ b.aimT=t; b.wind=WIND_T; }
+        b.atk=rnd(0.70,1.20);
+      }
+    }
+    /* 软糖弹簧：撞一下先压扁再弹回，来回晃好几下 */
+    b.sqV+=(-SPRING*b.sq-DAMP*b.sqV)*dt;
+    b.sq+=b.sqV*dt;
+    if(b.sq<-0.20){ b.sq=-0.20; b.sqV*=-0.6; }
+    if(b.sq>0.64){ b.sq=0.64; b.sqV*=-0.6; }
+    /* 二次果冻扭动：和主压扁不同频率，松手后还会软软地扭两下 */
+    b.wobV+=(-30*b.wob-2.0*b.wobV)*dt; b.wob+=b.wobV*dt;
+    if(b.wob<-0.55){ b.wob=-0.55; b.wobV*=-0.5; }
+    if(b.wob>0.55){ b.wob=0.55; b.wobV*=-0.5; }
+    /* 凹坑自己会弹回来（弹簧，不是指数衰减） */
+    b.dentV+=(-48*b.dent-4.0*b.dentV)*dt;
+    b.dent+=b.dentV*dt;
+    if(b.dent<0){ b.dent=0; if(b.dentV<0) b.dentV*=-0.34; }
+    if(b.dent>0.95){ b.dent=0.95; if(b.dentV>0) b.dentV*=-0.34; }
+    b.dentV=Math.max(-3,Math.min(3,b.dentV));
+    /* 果冻抖：整只立绘在贴图格里小幅晃动（软一点，不要高频抽搐） */
+    b.jvx+=(-55*b.jx-5*b.jvx)*dt; b.jx+=b.jvx*dt;
+    b.jvy+=(-55*b.jy-5*b.jvy)*dt; b.jy+=b.jvy*dt;
+    b.jx=Math.max(-3.8,Math.min(3.8,b.jx));
+    b.jy=Math.max(-3.8,Math.min(3.8,b.jy));
+  }
+  /* 按住「抓」：够得着就把最近的一只拽过来；轻点锁住，松开（长按）放人 */
+  if(player&&!player.out){
+    if(grabHold) grabNearest();
+    else if(grabLatched){ if(!player.grab) grabLatched=false; }
+    else if(player.grab&&!playerGrabAuto) endGrab(player,player.grab,'let');
+  }
+  /* 抓拽：拉人、掉抓握力、挣脱 */
+  updateGrabs(dt);
+  /* 锅心的番茄纸片：一直在转，转出来的风把靠太近的软糖往外甩 */
+  tomAng+=TOM_SPIN*dt;
+  tomPopCd=Math.max(0,tomPopCd-dt);
+  /* 转整圈时正面扫过来，就吹一口气：一次比一次推得远 */
+  if(gustCd>0) gustCd=Math.max(0,gustCd-dt);
+  const cNow=Math.cos(tomAng), cPrev=Math.cos(tomAng-TOM_SPIN*dt);
+  if(cPrev<0.90&&cNow>=0.90&&gustCd<=0) startGust();
+  if(gust.on){
+    gust.age+=dt;
+    const gk=Math.min(1,gust.age/gust.life);
+    const gr=gust.r0+(gust.r1-gust.r0)*(1-Math.pow(1-gk,2));
+    /* 冲击环前沿一路扬灰，风就有了形状 */
+    gust.puff=(gust.puff||0)-dt;
+    if(gust.puff<=0){
+      gust.puff=0.05;
+      const ga=rnd(0,Math.PI*2);
+      spawnDust(Math.cos(ga)*gr,Math.sin(ga)*gr,1,0.55);
+    }
+    for(let i=0;i<blobs.length;i++){
+      const b=blobs[i];
+      if(b.out||b.gustHit) continue;
+      const d=Math.hypot(b.x,b.y)||1e-5;
+      if(d>gr) continue;                 /* 冲击环还没扫到它 */
+      b.gustHit=true;
+      const nx=b.x/d, ny=b.y/d, f=Math.max(0,1-d/gust.r1);
+      b.vx+=nx*1.10*f; b.vy+=ny*1.10*f;
+      b.vx-=ny*0.40*f; b.vy+=nx*0.40*f;
+      setJig(b,nx,ny,2.2);
+      b.dent=Math.max(b.dent,0.22); b.dentDir=Math.atan2(-ny*KY,-nx);
+      spawnDust(b.x,b.y,1,0.7);
+    }
+    if(gust.age>=gust.life) gust.on=false;
+  }
+  for(let i=0;i<blobs.length;i++){
+    const b=blobs[i];
+    if(b.out) continue;
+    const d=Math.hypot(b.x,b.y)||1e-5;
+    const zone=TOM_ZONE+b.r*0.25;
+    if(d<zone){
+      const nx=b.x/d, ny=b.y/d, f=1-d/zone;
+      /* 越靠里推得越猛；再顺带一点转向的搓劲，像被旋转的纸片带了一下 */
+      b.vx+=nx*10*f*f*dt;
+      b.vy+=ny*10*f*f*dt;
+      b.vx-=ny*3.2*f*dt;
+      b.vy+=nx*3.2*f*dt;
+      const hard=TOM_R+b.cr*0.9;
+      if(d<hard){
+        b.x=nx*hard; b.y=ny*hard;
+        const vr=b.vx*nx+b.vy*ny;
+        if(vr<0){ b.vx-=vr*nx*1.5; b.vy-=vr*ny*1.5; }
+        b.vx+=nx*0.85; b.vy+=ny*0.85;
+        tomPulse=Math.min(1,tomPulse+0.55);
+        setJig(b,nx,ny,2.2);
+        spawnDust(b.x,b.y,2,0.6);
+        if(b.isP&&tomPopCd<=0){ popText(b.x,b.y,'番茄不让碰～'); tomPopCd=2.8; }
+      }
+    }
+  }
+  /* 碰撞：分离 + 冲量 + 形变 */
+  for(let i=0;i<blobs.length;i++){
+    const a=blobs[i]; if(a.out) continue;
+    for(let j=i+1;j<blobs.length;j++){
+      const b=blobs[j]; if(b.out) continue;
+      /* 已经抓在一起的这一对不再互相弹开，交给抓拽约束 */
+      if(a.grab===b||a.heldBy===b) continue;
+      const dx=b.x-a.x, dy=b.y-a.y;
+      const d=Math.hypot(dx,dy)||1e-5;
+      /* 碰撞半径比立绘小一圈：允许身体贴到一起、软软地压进去 */
+      const min=a.cr+b.cr;
+      if(d>=min) continue;
+      const nx=dx/d, ny=dy/d, ov=min-d;
+      /* 贴上的这一瞬间，谁在往前顶谁就有机会抓人（用碰撞前的速度判定“正在往对方身上挤”） */
+      tryGrabPair(a,b,nx,ny);
+      if(a.grab===b||a.heldBy===b) continue;
+      /* 质量加权推开（只解开一部分，留更多咬合，贴得近才像软糖挤在一起） */
+      const invA=1/a.m, invB=1/b.m, tot=invA+invB;
+      const sep=ov*0.78;
+      a.x-=nx*sep*(invA/tot); a.y-=ny*sep*(invA/tot);
+      b.x+=nx*sep*(invB/tot); b.y+=ny*sep*(invB/tot);
+      /* 相对速度冲量（软一点，不要一碰就弹开） */
+      const rv=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
+      if(rv<0){
+        const jimp=-(1.25)*rv*(a.m*b.m/(a.m+b.m));
+        a.vx-=nx*jimp/a.m; a.vy-=ny*jimp/a.m;
+        b.vx+=nx*jimp/b.m; b.vy+=ny*jimp/b.m;
+        const pw=Math.min(0.75,Math.abs(rv)*1.2+ov*1.8);
+        setSquash(a,-nx,-ny,pw*0.85);
+        setSquash(b,nx,ny,pw);
+        setJig(a,nx,ny,-pw*6);
+        setJig(b,nx,ny,pw*6);
+        if(pw>0.18){ sfxSquish(pw); }
+        /* 挤得狠的时候：脚边扬起一点小烟，重撞再带一下震屏 */
+        if(pw>0.5){ spawnDust((a.x+b.x)/2,(a.y+b.y)/2,2,pw); }
+        if(pw>0.62){ addShake(pw*1.1); }
+      }
+      /* 持续的挤压力：贴着就互相顶 */
+      const push=ov*10*dt;
+      a.vx-=nx*push; a.vy-=ny*push;
+      b.vx+=nx*push; b.vy+=ny*push;
+      /* 贴住的时候，接触面被顶得凹进去（越挤越深） */
+      const rel=Math.min(1,(a.r+b.r-d)/((a.r+b.r)*0.62));
+      const dTar=Math.min(0.9,0.10+0.82*rel);
+      if(dTar>a.dent){ a.dent=dTar; a.dentDir=Math.atan2(ny*KY,nx); }
+      if(dTar>b.dent){ b.dent=dTar; b.dentDir=Math.atan2(-ny*KY,-nx); }
+    }
+  }
+  /* 出圈判定：出圈的一只定下名次，最后留在锅里的那只吃番茄 */
+  for(let i=0;i<blobs.length;i++){
+    const b=blobs[i];
+    if(b.out) continue;
+    const d=Math.hypot(b.x,b.y);
+    if(d>R+b.r*0.10){
+      b.rank=aliveCount();              /* 含自己在内的剩余只数 = 名次 */
+      b.outT=T;                         /* 自己撑到第几秒，结算里用 */
+      b.out=true; b.fall=0.0001;
+      outCount++;
+      spawnDust(b.x,b.y,8,1.25);        /* 出去时在锅边扬起一团小烟 */
+      releaseAllGrabs(b,'out');
+      if(b.isP){
+        popText(b.x,b.y,'被挤出去啦～');
+        sfxOut(true);
+        addShake(1.8);
+        /* 不立刻结算：留在锅边看完这局，谁是赢家由最后一只决定 */
+      }else{
+        popText(b.x,b.y,CUTE_OUT[(Math.random()*CUTE_OUT.length)|0]);
+        sfxOut(false);
+      }
+    }
+  }
+  if(aliveCount()<=1) resolveMatch();
+  animFall(dt);
+}
+/* 一锅只剩最后一只：定下赢家；要是玩家还活着，那就是玩家吃番茄 */
+function resolveMatch(){
+  if(state!=='play') return;
+  let winner=null;
+  for(const b of blobs){ if(!b.out){ winner=b; break; } }
+  if(!winner){
+    /* 同一帧一起掉出去：名次最好的那只算撑到最后 */
+    for(const b of blobs){ if(b.out&&(!winner||b.rank<winner.rank)) winner=b; }
+    if(!winner) return;
+  }
+  winner.rank=1;
+  /* 赢家定格的一下：一圈小烟 */
+  spawnDust(winner.x,winner.y,12,1.4);
+  addShake(2.4);
+  if(winner===player){
+    state='win';
+    popText(player.x,player.y,'番茄到手！');
+  }else{
+    state='lose';
+  }
+  finishTimer(0.8);
+}
+function animFall(dt){
+  for(const b of blobs){
+    if(!b.out) continue;
+    b.fall+=dt;
+    const len=Math.hypot(b.x,b.y)||1;
+    b.x+=b.x/len*0.35*dt;
+    b.y+=b.y/len*0.35*dt;
+  }
+}
+/* ================= 小特效：接触小烟 / 命中星芒 / 震屏 ================= */
+/* 喷几粒小烟：碰撞、出圈都用它，动作才有“真的碰到了”的分量 */
+function spawnDust(x,y,n,pow){
+  const col=PAL[PALKEY].ink, p=pow||1;
+  for(let i=0;i<n;i++){
+    const a=rnd(0,Math.PI*2), sp=rnd(0.05,0.32)*p;
+    dust.push({
+      x,y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp*0.45,
+      lift:rnd(0.01,0.04), vlift:rnd(0.35,0.95)*p,
+      age:0, life:rnd(0.30,0.55), r:rnd(0.006,0.015), col
+    });
+  }
+  if(dust.length>90) dust.splice(0,dust.length-90);
+}
+function addShake(a){ shake=Math.min(7,shake+a); }
+function updateDust(dt){
+  for(let i=dust.length-1;i>=0;i--){
+    const d=dust[i];
+    d.age+=dt;
+    if(d.age>=d.life){ dust.splice(i,1); continue; }
+    d.x+=d.vx*dt; d.y+=d.vy*dt;
+    d.vx*=Math.pow(0.02,dt); d.vy*=Math.pow(0.02,dt);
+    d.vlift-=2.4*dt; d.lift+=d.vlift*dt;
+    if(d.lift<0){ d.lift=0; d.vlift*=-0.35; }
+  }
+}
+function drawDust(){
+  for(const d of dust){
+    const k=d.age/d.life, al=(1-k)*(1-k)*0.24;
+    if(al<0.02) continue;
+    const p=proj(d.x,d.y);
+    ctx.globalAlpha=al; ctx.fillStyle=d.col;
+    ctx.beginPath(); ctx.arc(p.x,p.y-d.lift*AR,Math.max(0.6,d.r*AR*(1-k*0.3)),0,6.3); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+function decay(dt){
+  for(let i=pops.length-1;i>=0;i--){
+    const p=pops[i]; p.life-=dt; p.y-=dt*0.25;
+    if(p.life<=0) pops.splice(i,1);
+  }
+  for(let i=fx.length-1;i>=0;i--){
+    fx[i].age+=dt;
+    if(fx[i].age>=fx[i].life) fx.splice(i,1);
+  }
+  updateDust(dt);
+  if(shake>0) shake=Math.max(0,shake-dt*22);
+  if(cdPop>0) cdPop=Math.max(0,cdPop-dt*4);
+  if(tomPulse>0) tomPulse=Math.max(0,tomPulse-dt*3);
+}
+function popText(x,y,txt){ pops.push({x,y,txt,life:0.9,max:0.9}); }
+function aliveCount(){ let n=0; for(const b of blobs) if(!b.out) n++; return n; }
+function finishTimer(s){ finishT=s; }
+
+/* ================= 绘制 ================= */
+function draw(){
+  const P=PAL[PALKEY];
+  updateCamera();
+  updateView();
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.imageSmoothingEnabled=false;
+  ctx.save();
+  ctx.fillStyle=P.paper; ctx.fillRect(-20,-20,W+40,H+40);
+  /* 撞击震屏：只晃锅和软糖，HUD 与倒计时不动 */
+  ctx.save();
+  if(shake>0.05) ctx.translate(Math.sin(T*57)*shake*0.55,Math.cos(T*43)*shake*0.45);
+  drawRing(P);
+  drawTomatoZone(P);
+  /* 影子先铺 */
+  for(const b of blobs) if(!b.out) drawShadow(b,P);
+  drawDust();
+  /* 按纵深排序（y 小的在后）；锅心的番茄按 y=0 插进队列，前后关系才对 */
+  const list=blobs.slice().sort((a,b)=>a.y-b.y);
+  let tomDrawn=false;
+  for(const b of list){
+    if(!tomDrawn&&b.y>0){ drawTomatoCard(P); tomDrawn=true; }
+    drawBlob(b,P);
+  }
+  if(!tomDrawn) drawTomatoCard(P);
+  drawGrabs(P);
+  drawGrabHint(P);
+  if(state!=='menu') drawTiltHint(P);
+  drawSpectator(P);
+  if(hunter&&!hunter.out&&player&&!player.out&&state!=='menu') drawHunter(hunter,P);
+  drawPunchFx();
+  drawGust(P);          /* 风从软糖上方扫过去，才看得出“吹” */
+  drawPops(P);
+  if(player&&player.isP&&!player.out&&state!=='menu') drawMarker(player,P);
+  ctx.restore();
+  drawVcr(P);
+  if(state==='ready'||cd>0) drawCount(P);
+  if(paused) drawPause(P);
+  ctx.restore();
+}
+function platePoint(x,y){ return viewPt(CX+x*AR, CY+y*AR*KY); }
+function platePath(g,r,dy,dx){
+  const N=72; g.beginPath();
+  for(let i=0;i<=N;i++){
+    const a=i/N*Math.PI*2;
+    const p=platePoint(Math.cos(a)*r, Math.sin(a)*r);
+    const x=p.x+(dx||0), y=p.y+(dy||0);
+    if(i===0) g.moveTo(x,y); else g.lineTo(x,y);
+  }
+  g.closePath();
+}
+function drawRing(P){
+  /* 桌下投影 */
+  ctx.save();
+  platePath(ctx,1.03,22,7); ctx.fillStyle=P.shade; ctx.fill();
+  ctx.restore();
+  /* 圆锅厚度：三层错位圆盘，做出厚度 */
+  platePath(ctx,1.005,16,0); ctx.fillStyle=P.ink; ctx.fill();
+  platePath(ctx,1.0,9,0); ctx.fillStyle=P.side; ctx.fill();
+  /* 锅面 */
+  platePath(ctx,1,0,0);
+  ctx.fillStyle=P.paper2; ctx.fill();
+  ctx.strokeStyle=P.ink; ctx.lineWidth=2.5; ctx.stroke();
+  /* 后期倾斜：以前低侧铺一层灰，看着脏；现在只在低侧冒「滑滑～」小气泡，见 drawTiltHint */
+  /* 面内浅刻度 */
+  ctx.save();
+  ctx.globalAlpha=0.16; ctx.strokeStyle=P.ink; ctx.lineWidth=1;
+  for(const k of [0.34,0.68]){ platePath(ctx,k,0,0); ctx.stroke(); }
+  for(let i=0;i<6;i++){
+    const a=i*Math.PI/3;
+    const p1=platePoint(Math.cos(a),Math.sin(a));
+    const p2=platePoint(-Math.cos(a),-Math.sin(a));
+    ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+  }
+  ctx.restore();
+  /* 圈心十字 */
+  ctx.save(); ctx.globalAlpha=0.5; ctx.strokeStyle=P.ink; ctx.lineWidth=1;
+  const c0=viewPt(CX-7,CY), c1=viewPt(CX+7,CY), c2=viewPt(CX,CY-4), c3=viewPt(CX,CY+4);
+  ctx.beginPath(); ctx.moveTo(c0.x,c0.y); ctx.lineTo(c1.x,c1.y); ctx.moveTo(c2.x,c2.y); ctx.lineTo(c3.x,c3.y); ctx.stroke();
+  ctx.restore();
+  /* 收缩边界（虚线"Do not cross"） */
+  ctx.save();
+  ctx.strokeStyle=P.ink; ctx.lineWidth=2; ctx.globalAlpha=0.62;
+  ctx.setLineDash([7,5]);
+  platePath(ctx,R,0,0); ctx.stroke();
+  ctx.restore();
+  /* 低侧方向交给 drawTiltHint 的小箭头和小气泡，这里不再画箭头 */
+}
+/* 锅歪的可爱提示：低的一侧冒个「滑滑～」小气泡，后面跟几道往外溜的小箭头。
+   画在所有月巴之上，免得被挡住；倾斜越明显，提示越清楚 */
+function drawTiltHint(P){
+  if(tilt.amt<0.05) return;
+  const a=Math.min(1,(tilt.amt-0.02)/0.30);
+  const ca=Math.cos(tilt.ang), sa=Math.sin(tilt.ang);
+  const c0=viewPt(CX,CY);
+  ctx.save();
+  /* 三只小箭头：沿着下坡方向一趟一趟往外溜 */
+  ctx.strokeStyle=P.ink; ctx.lineWidth=2.4; ctx.lineCap='round'; ctx.lineJoin='round';
+  for(let i=0;i<3;i++){
+    const ph=(T*0.5+i*0.34)%1;
+    const d=R*(0.34+ph*0.32);
+    const p=platePoint(ca*d,sa*d);
+    const ang=Math.atan2(p.y-c0.y,p.x-c0.x);
+    const al=a*0.7*Math.sin(Math.PI*ph);
+    if(al<=0.02) continue;
+    ctx.globalAlpha=al;
+    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(ang);
+    const cs=5+2.5*a;
+    ctx.beginPath(); ctx.moveTo(-cs,-cs*0.58); ctx.lineTo(cs*0.36,0); ctx.lineTo(-cs,cs*0.58); ctx.stroke();
+    ctx.restore();
+  }
+  /* 小气泡：滑滑～（跟着锅轻轻晃两下） */
+  const lp=platePoint(ca*R*0.80,sa*R*0.80);
+  const txt='滑滑～';
+  ctx.font='900 10px "SF Mono",Consolas,monospace';
+  const w=Math.ceil(ctx.measureText(txt).width)+16, h=17;
+  const bob=Math.sin(T*4)*1.5;
+  const bx=lp.x, by=lp.y+bob;
+  ctx.globalAlpha=Math.min(1,0.30+0.70*a);
+  /* 朝锅外的小尾巴（先画，气泡的纸底正好盖住接缝） */
+  let ux=lp.x-c0.x, uy=lp.y-c0.y;
+  const ul=Math.hypot(ux,uy)||1; ux/=ul; uy/=ul;
+  const ex=bx+ux*(w/2-4), ey=by+uy*(h/2-4);
+  ctx.fillStyle=P.ink;
+  ctx.beginPath();
+  ctx.moveTo(ex-uy*3.6,ey+ux*3.6);
+  ctx.lineTo(ex+uy*3.6,ey-ux*3.6);
+  ctx.lineTo(ex+ux*5.5,ey+uy*5.5);
+  ctx.closePath(); ctx.fill();
+  ctx.save();
+  ctx.translate(bx,by); ctx.rotate(Math.sin(T*3)*0.06);
+  ctx.fillStyle=P.paper; ctx.fillRect(-w/2,-h/2,w,h);
+  ctx.strokeStyle=P.ink; ctx.lineWidth=2; ctx.strokeRect(-w/2,-h/2,w,h);
+  ctx.fillStyle=P.ink; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(txt,0,1);
+  ctx.restore();
+  ctx.restore();
+}
+/* 观战提示：自己出圈后不急着结算，先在锅边看谁能抢到番茄 */
+function drawSpectator(P){
+  if(state!=='play'||!player||!player.out) return;
+  const txt='你出圈啦～ 快进看谁抢到番茄';
+  ctx.save();
+  ctx.font='900 9px "SF Mono",Consolas,monospace';
+  const w=Math.ceil(ctx.measureText(txt).width)+20, h=18;
+  const x=CX, y=17+Math.sin(T*3)*1.2;
+  ctx.globalAlpha=0.94;
+  ctx.fillStyle=P.paper; ctx.fillRect(x-w/2,y-h/2,w,h);
+  ctx.strokeStyle=P.ink; ctx.lineWidth=2; ctx.strokeRect(x-w/2,y-h/2,w,h);
+  ctx.fillStyle=P.ink; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(txt,x,y+1);
+  ctx.restore();
+}
+/* 快进录像的观感：右上角 ▶▶ ×2.4 角标 + 一条自上而下扫的跟踪带 */
+function drawVcr(P){
+  if(state!=='play'||!player||!player.out) return;
+  const t=performance.now()/1000;
+  /* 跟踪带 */
+  const bh=Math.max(7,H*0.03);
+  const y=((t*0.45)%1)*(H+bh*3)-bh;
+  ctx.save();
+  ctx.globalAlpha=0.13; ctx.fillStyle=P.ink;
+  ctx.fillRect(0,y,W,bh);
+  ctx.globalAlpha=0.07;
+  ctx.fillRect(0,y-bh*0.55,W,Math.max(1.5,bh*0.28));
+  ctx.globalAlpha=0.06;
+  ctx.fillRect(0,y+bh+2,W,Math.max(2,bh*0.4));
+  ctx.restore();
+  /* 角标：两个小三角交替亮，像录像机的快进指示 */
+  const w=54,h=16,bx0=W-10-w,cy=17;
+  ctx.save();
+  ctx.globalAlpha=0.96;
+  ctx.fillStyle=P.paper; ctx.fillRect(bx0,cy-h/2,w,h);
+  ctx.strokeStyle=P.ink; ctx.lineWidth=2; ctx.strokeRect(bx0,cy-h/2,w,h);
+  ctx.fillStyle=P.ink;
+  const step=Math.floor(t*4)%2;
+  for(let i=0;i<2;i++){
+    ctx.globalAlpha=(step===i)?1:0.32;
+    const x=bx0+8+i*8;
+    ctx.beginPath();
+    ctx.moveTo(x,cy-4.5); ctx.lineTo(x+5.5,cy); ctx.lineTo(x,cy+4.5);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  ctx.font='900 9px "SF Mono",Consolas,monospace';
+  ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.fillText('×2.4',bx0+26,cy+1);
+  ctx.restore();
+}
+/* 番茄纸片的甩开范围：有人靠近才亮起来，像转盘 */
+function drawTomatoZone(P){
+  let near=0;
+  for(const b of blobs){
+    if(b.out) continue;
+    const k=Math.max(0,1-Math.hypot(b.x,b.y)/(TOM_ZONE+b.r*0.25));
+    if(k>near) near=k;
+  }
+  const a=0.07+0.24*near+0.05*Math.sin(T*3.1)*near;
+  if(a<0.05) return;
+  ctx.save();
+  ctx.globalAlpha=a;
+  ctx.strokeStyle=P.ink; ctx.lineWidth=1;
+  ctx.setLineDash([2,7]); ctx.lineDashOffset=-T*16;
+  platePath(ctx,TOM_ZONE,0,0); ctx.stroke();
+  ctx.restore();
+}
+/* 正面吹风：一圈冲击环从锅心往外扫，扫到的软糖被吹开 */
+function startGust(){
+  gust.on=true; gust.age=0;
+  gust.r0=TOM_ZONE*0.45;
+  gust.r1=Math.max(0.55,R)*0.98;
+  gustCd=1.2;
+  tomPulse=1;
+  for(const b of blobs) b.gustHit=false;
+  addShake(0.9);
+  sfxGust();
+  for(let i=0;i<10;i++){
+    const a=rnd(0,Math.PI*2), rr=rnd(0.03,TOM_ZONE*0.6);
+    spawnDust(Math.cos(a)*rr,Math.sin(a)*rr,1,0.7);
+  }
+}
+/* 背面：墨色轮廓 + 纸色内胆，一眼能看出是纸片的另一面 */
+function ensureTomBack(P){
+  if(tomBack) return tomBack;
+  if(!tomImg.complete||!tomImg.naturalWidth) return null;
+  const s=tomImg.naturalWidth;
+  tomBack=document.createElement('canvas'); tomBack.width=s; tomBack.height=s;
+  const g=tomBack.getContext('2d');
+  const tmp=document.createElement('canvas'); tmp.width=s; tmp.height=s;
+  const tg=tmp.getContext('2d');
+  tg.drawImage(tomImg,0,0);
+  tg.globalCompositeOperation='source-in';
+  tg.fillStyle=P.paper; tg.fillRect(0,0,s,s);
+  const o=Math.max(1,s*0.022);
+  for(let k=0;k<12;k++){ const a=k*Math.PI/6; g.drawImage(tomImg,Math.cos(a)*o,Math.sin(a)*o); }
+  g.drawImage(tmp,0,0);
+  return tomBack;
+}
+/* 冲击环：主环 + 紧跟一圈淡影 + 顺着风向的一圈短划线 */
+function drawGust(P){
+  if(!gust.on) return;
+  const k=Math.min(1,gust.age/gust.life);
+  const gr=gust.r0+(gust.r1-gust.r0)*(1-Math.pow(1-k,2));
+  const a=1-k;
+  ctx.save();
+  ctx.strokeStyle=P.ink; ctx.lineCap='round';
+  ctx.globalAlpha=a*0.72; ctx.lineWidth=4;
+  platePath(ctx,gr,0,0); ctx.stroke();
+  ctx.globalAlpha=a*0.38; ctx.lineWidth=2;
+  platePath(ctx,Math.max(0.03,gr-0.07),0,0); ctx.stroke();
+  /* 一圈顺着风向的短划线，让“吹”的方向看得出来 */
+  ctx.globalAlpha=a*0.6; ctx.lineWidth=2.5;
+  for(let i=0;i<14;i++){
+    const ang=i*Math.PI*2/14+k*0.25;
+    const r1=gr+0.05+0.05*(1-k);
+    const p0=platePoint(Math.cos(ang)*gr,Math.sin(ang)*gr);
+    const p1=platePoint(Math.cos(ang)*r1,Math.sin(ang)*r1);
+    ctx.beginPath(); ctx.moveTo(p0.x,p0.y); ctx.lineTo(p1.x,p1.y); ctx.stroke();
+  }
+  ctx.restore();
+}
+/* 锅心的番茄纸片：绕竖轴转，侧过来时只剩一条边 */
+function drawTomatoCard(P){
+  const t=(state==='menu')?performance.now()/1000:T;
+  const p=proj(0,0);
+  const px=(0.28+0.06*tomPulse)*AR;
+  const bob=Math.sin(t*2.2)*1.4;
+  const cy=p.y-px*0.34+bob;
+  /* 纸片影子 */
+  ctx.save();
+  ctx.globalAlpha=0.14+0.05*tomPulse; ctx.fillStyle=P.ink;
+  ctx.beginPath(); ctx.ellipse(p.x,p.y+px*0.14,px*0.30,px*0.10,0,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+  /* 本体：真正转 360°——正面是印好的剪影，背面翻过来是没印东西的纸背 */
+  const c=Math.cos(tomAng), front=c>=0;
+  const sx=Math.max(0.10,Math.abs(c));
+  ctx.save();
+  ctx.translate(p.x,cy);
+  ctx.rotate(Math.sin(tomAng*0.5)*0.06);
+  ctx.scale(front?sx:-sx,1);
+  ctx.globalAlpha=front?0.97:0.92;
+  if(tomImg.complete&&tomImg.naturalWidth){
+    const back=front?null:ensureTomBack(P);
+    ctx.drawImage(back||tomImg,-px/2,-px/2,px,px);
+  }
+  ctx.restore();
+  /* 转出来的两道小弧线 */
+  ctx.save();
+  ctx.strokeStyle=P.ink; ctx.lineWidth=1.5; ctx.lineCap='round';
+  for(let i=0;i<2;i++){
+    const ph=(t*0.85+i*0.5)%1, al=(1-ph)*0.32;
+    if(al<=0.02) continue;
+    ctx.globalAlpha=al;
+    const rr=px*(0.30+ph*0.12);
+    ctx.beginPath();
+    ctx.arc(p.x,cy,rr,-0.95+i*Math.PI,-0.15+i*Math.PI);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawShadow(b,P){
+  const p=proj(b.x,b.y);
+  const air=hopLift(b);
+  const s=b.r*2*AR*(1+b.y*0.12)*(1-air*0.22);
+  /* 纸片是“立”在锅面上的：影子收成贴着脚边的一条，而不是一整颗大椭圆 */
+  ctx.save();
+  ctx.globalAlpha=0.15*(1-air*0.5); ctx.fillStyle=P.ink;
+  ellipse(ctx,p.x,p.y+s*0.42,s*0.60,s*0.145*KY*2.1,null);
+  ctx.globalAlpha=0.10*(1-air*0.5);
+  ellipse(ctx,p.x,p.y+s*0.40,s*0.34,s*0.085*KY*2.1,null);
+  ctx.restore();
+}
+/* 镜头跟着缩圈走：圈越小，取景越大，圆盘外沿允许被裁掉 */
+function updateCamera(){
+  const rr=Math.max(0.5,R);
+  const zoom=Math.min(1.8,1+0.92*(1/rr-1));
+  AR=AR0*zoom*(1-0.08*tilt.amt);
+}
+/* 镜头微倾：只变换锅面和站位，立绘本身保持竖直 */
+function updateView(){
+  /* 只改“看起来有多歪”，物理完全不动：倾斜方向压扁 + 旋转/错切一起放大 */
+  const a=tilt.amt;
+  view.rot=a*(0.095*Math.sin(T*0.73+0.6)+0.050*Math.sin(T*0.31+2.0)+0.095*Math.sin(tilt.ang));
+  view.shear=a*(0.100*Math.sin(T*0.57+1.1)+0.040*Math.cos(tilt.ang));
+  view.sy=1-a*0.09*Math.sin(T*0.66+0.3);
+  view.sq=1-a*(0.20+0.04*Math.sin(T*0.81+1.4));
+  view.ax=Math.cos(tilt.ang); view.ay=Math.sin(tilt.ang);
+}
+function viewPt(x,y){
+  const dx=x-CX, dy=y-CY;
+  let x0=dx+dy*view.shear, y0=dy*view.sy;
+  if(view.sq!==1){
+    /* 沿倾斜轴压一压：低的那头更“扁”，倾斜一眼看得出来 */
+    const along=x0*view.ax+y0*view.ay, k=along*(view.sq-1);
+    x0+=view.ax*k; y0+=view.ay*k;
+  }
+  const ca=Math.cos(view.rot), sa=Math.sin(view.rot);
+  return {x:CX+x0*ca-y0*sa, y:CY+x0*sa+y0*ca};
+}
+function viewInv(x,y){
+  const dx=x-CX, dy=y-CY;
+  const ca=Math.cos(view.rot), sa=Math.sin(view.rot);
+  let x0=dx*ca+dy*sa, y0=-dx*sa+dy*ca;
+  if(view.sq!==1){
+    const along=x0*view.ax+y0*view.ay, k=along*(1/view.sq-1);
+    x0+=view.ax*k; y0+=view.ay*k;
+  }
+  const py=y0/view.sy;
+  return {x:x0-py*view.shear, y:py};
+}
+function proj(x,y){ return viewPt(CX+x*AR, CY+y*AR*KY); }
+
+/* 蹦跳高度（0~1）：一段跳在空中，剩下的时间踩在地上蓄力下一跳 */
+function hopH(b){
+  if(b.out) return 0;
+  const p=Math.min(1,b.hop/0.84);
+  return Math.sin(Math.PI*p);
+}
+/* 实际抬升量：走得越快跳得越高，但幅度收着点，别一顿一顿 */
+function hopLift(b){ return hopH(b)*(0.15+0.13*Math.min(1,b.mv)); }
+
+/* 软糖凹陷：受击侧被软软压出一个圆坑，外圈鼓起来，坑底有一层柔光 */
+function drawDent(g,b,ox,oy,P){
+  const d=b.dent;
+  if(d<=0.05) return;
+  const cx=TEX/2+(ox||0), cy=TEX/2+(oy||0);
+  const R=SPR*0.48*(1-0.30*Math.max(0,b.sq));
+  const nx=Math.cos(b.dentDir), ny=Math.sin(b.dentDir);
+  const px=cx+nx*R*0.52, py=cy+ny*R*0.52;
+  const rad=R*0.92;
+  /* 1) 轮廓软软陷进去一点，不挖穿 */
+  g.save();
+  g.globalCompositeOperation='destination-out';
+  const r1=g.createRadialGradient(px,py,0,px,py,rad);
+  r1.addColorStop(0,'rgba(0,0,0,'+(0.30*d)+')');
+  r1.addColorStop(0.55,'rgba(0,0,0,'+(0.18*d)+')');
+  r1.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=r1; g.beginPath(); g.arc(px,py,rad,0,6.3); g.fill();
+  g.restore();
+  /* 2) 坑内暗面 + 外圈被挤起的软肉亮环 + 坑底柔光 */
+  g.save();
+  g.globalCompositeOperation='source-atop';
+  const r2=g.createRadialGradient(px,py,0,px,py,rad*0.95);
+  r2.addColorStop(0,'rgba(0,0,0,'+(0.40*d)+')');
+  r2.addColorStop(0.55,'rgba(0,0,0,'+(0.22*d)+')');
+  r2.addColorStop(0.86,'rgba(0,0,0,0)');
+  g.fillStyle=r2; g.beginPath(); g.arc(px,py,rad*0.95,0,6.3); g.fill();
+  const r3=g.createRadialGradient(px,py,rad*0.72,px,py,rad*1.30);
+  r3.addColorStop(0,'rgba(255,255,255,0)');
+  r3.addColorStop(0.55,'rgba(255,255,255,'+(0.10*d)+')');
+  r3.addColorStop(0.80,'rgba(255,255,255,'+(0.17*d)+')');
+  r3.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=r3; g.beginPath(); g.arc(px,py,rad*1.30,0,6.3); g.fill();
+  const hx=px-nx*rad*0.16, hy=py-ny*rad*0.16;
+  const r4=g.createRadialGradient(hx,hy,0,hx,hy,rad*0.42);
+  r4.addColorStop(0,'rgba(255,255,255,'+(0.18*d)+')');
+  r4.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=r4; g.beginPath(); g.arc(hx,hy,rad*0.42,0,6.3); g.fill();
+  g.restore();
+}
+
+/* 纸片描边：用立绘 alpha 调出一张实心墨色剪影，再沿八方向铺一圈 */
+function ensureSil(b,P){
+  if(!b.imgOK) return false;
+  if(b.silKey===P.ink) return true;
+  const g=b.sil.getContext('2d');
+  g.setTransform(1,0,0,1,0,0);
+  g.clearRect(0,0,TEX,TEX);
+  g.imageSmoothingEnabled=false;
+  g.drawImage(b.img,PAD,PAD,SPR,SPR);
+  g.globalCompositeOperation='source-in';
+  g.fillStyle=P.ink; g.fillRect(0,0,TEX,TEX);
+  g.globalCompositeOperation='source-over';
+  b.silKey=P.ink;
+  return true;
+}
+/* 每套配色只合成一次“纸片贴图”：厚边 + 八向描边 + 原图。
+   之后每帧每人只 drawImage 一次，15 只同屏也不掉帧。 */
+function ensureTex(b,P){
+  if(!b.imgOK) return false;
+  if(b.texKey===P.ink) return true;
+  ensureSil(b,P);
+  const g=b.tex.getContext('2d');
+  g.setTransform(1,0,0,1,0,0);
+  g.globalCompositeOperation='source-over';
+  g.clearRect(0,0,TEX,TEX);
+  g.globalAlpha=1;
+  g.globalAlpha=0.30;
+  g.drawImage(b.sil,SPR*0.014,SPR*0.030);
+  g.globalAlpha=1;
+  const o=Math.max(1.5,SPR*0.017);
+  for(let k=0;k<8;k++){
+    const ang=k*Math.PI/4;
+    g.drawImage(b.sil,Math.cos(ang)*o,Math.sin(ang)*o);
+  }
+  g.drawImage(b.img,PAD,PAD,SPR,SPR);
+  b.texKey=P.ink;
+  return true;
+}
+/* 玩家专属：在普通纸片描边外面再套一圈金色，远远也能一眼找到自己 */
+function ensureTexGold(b,P){
+  if(!b.imgOK) return false;
+  if(!ensureTex(b,P)) return false;
+  const key=P.ink+'|'+GOLD;
+  if(b.texGKey===key) return true;
+  if(!b.silG){ b.silG=document.createElement('canvas'); b.silG.width=TEX; b.silG.height=TEX; }
+  const gs=b.silG.getContext('2d');
+  gs.setTransform(1,0,0,1,0,0);
+  gs.globalCompositeOperation='source-over';
+  gs.clearRect(0,0,TEX,TEX);
+  gs.drawImage(b.sil,0,0);
+  gs.globalCompositeOperation='source-in';
+  gs.fillStyle=GOLD; gs.fillRect(0,0,TEX,TEX);
+  gs.globalCompositeOperation='source-over';
+
+  if(!b.texG){ b.texG=document.createElement('canvas'); b.texG.width=TEX; b.texG.height=TEX; }
+  const g=b.texG.getContext('2d');
+  g.setTransform(1,0,0,1,0,0);
+  g.globalCompositeOperation='source-over';
+  g.globalAlpha=1;
+  g.clearRect(0,0,TEX,TEX);
+  g.imageSmoothingEnabled=false;
+  /* 金圈比墨边再往外 6 个贴图像素（画到屏幕上约 2~3px） */
+  const o=Math.max(1.5,SPR*0.017)+6;
+  for(let k=0;k<12;k++){
+    const ang=k*Math.PI/6;
+    g.drawImage(b.silG,Math.cos(ang)*o,Math.sin(ang)*o);
+  }
+  g.drawImage(b.tex,0,0);
+  b.texGKey=key;
+  return true;
+}
+function rr(g,x,y,w,h,r){
+  g.beginPath();
+  g.moveTo(x+r,y); g.lineTo(x+w-r,y); g.quadraticCurveTo(x+w,y,x+w,y+r);
+  g.lineTo(x+w,y+h-r); g.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  g.lineTo(x+r,y+h); g.quadraticCurveTo(x,y+h,x,y+h-r);
+  g.lineTo(x,y+r); g.quadraticCurveTo(x,y,x+r,y);
+  g.closePath();
+}
+/* 立绘加载失败时的兜底：一张有耳朵的纸片月巴，绝不再是墨色椭圆 */
+function drawFallback(g,P,size){
+  const s=size, lw=Math.max(2,s*0.020);
+  g.save();
+  g.globalAlpha=0.30; g.fillStyle=P.ink;
+  rr(g,-s*0.265+s*0.014,-s*0.235+s*0.030,s*0.53,s*0.55,s*0.07); g.fill();
+  rr(g,-s*0.170+s*0.014,-s*0.430+s*0.030,s*0.105,s*0.245,s*0.05); g.fill();
+  rr(g,s*0.065+s*0.014,-s*0.430+s*0.030,s*0.105,s*0.245,s*0.05); g.fill();
+  g.restore();
+  g.fillStyle=P.hi; g.strokeStyle=P.ink; g.lineWidth=lw; g.lineJoin='round';
+  rr(g,-s*0.170,-s*0.430,s*0.105,s*0.245,s*0.05); g.fill(); g.stroke();
+  rr(g,s*0.065,-s*0.430,s*0.105,s*0.245,s*0.05); g.fill(); g.stroke();
+  rr(g,-s*0.265,-s*0.235,s*0.53,s*0.55,s*0.07); g.fill(); g.stroke();
+  g.fillStyle=P.ink;
+  g.fillRect(-s*0.105,-s*0.025,s*0.038,s*0.055);
+  g.fillRect(s*0.067,-s*0.025,s*0.038,s*0.055);
+  g.fillRect(-s*0.022,s*0.068,s*0.044,s*0.016);
+}
+
+function drawBlob(b,P){
+  const g=b.scratch.getContext('2d');
+  g.setTransform(1,0,0,1,0,0);
+  g.globalCompositeOperation='source-over';
+  g.globalAlpha=1;
+  g.clearRect(0,0,TEX,TEX);
+  g.imageSmoothingEnabled=false;
+  const size=SPR;                                  /* 立绘铺满贴图格，贴得更近 */
+  const air=hopLift(b);
+  const mvv=Math.min(1,b.mv);
+  /* 后摇：趴着努力爬起来，起身前先左右挣扎几下 */
+  const rp=b.recMax>0?Math.min(1,Math.max(0,b.rec/b.recMax)):0;
+  const struggle=Math.sin(T*(8.0+3.0*b.wf)+b.phase)*Math.pow(rp,1.6);
+  /* 迈步时左右摇：越走越晃，站着不晃 */
+  const swayW=T*(5.2+b.wf*1.8)+b.phase;
+  const idle=1-mvv;
+  const sway=Math.sin(swayW)*size*0.075*mvv + struggle*size*0.12 + Math.sin(T*2.3+b.phase)*size*0.007*idle;
+  const tilt=Math.sin(swayW)*0.075*mvv + struggle*0.13 + b.wob*0.35;
+  const sq=b.sq+Math.sin(T*1.7+b.phase)*0.024 + air*(0.05+0.06*mvv) + Math.pow(rp,1.6)*0.25;
+  /* 蓄力：先往后仰一下，出手才往前扑；空挥也往前甩 */
+  let leanX=0, leanY=0;
+  if(b.wind>0&&b.aimT&&!b.aimT.out){
+    const p=1-b.wind/WIND_T;
+    const dx=b.aimT.x-b.x, dy=b.aimT.y-b.y, d=Math.hypot(dx,dy)||1;
+    leanX=-dx/d*size*0.10*p; leanY=-dy/d*size*0.10*p;
+  }
+  if(b.whiff>0){
+    const p=Math.min(1,b.whiff/0.18);
+    leanX+=Math.cos(b.face)*size*0.13*p; leanY+=Math.sin(b.face)*size*0.13*p;
+  }
+  /* 被抓 / 抓人：身体朝对方微微拉长，像被扯着的纸片 */
+  if(b.heldBy){
+    const h=b.heldBy, dx=h.x-b.x, dy=h.y-b.y, d=Math.hypot(dx,dy)||1;
+    leanX+=dx/d*size*0.055; leanY+=dy/d*size*0.055;
+  }else if(b.grab){
+    const v=b.grab, dx=v.x-b.x, dy=v.y-b.y, d=Math.hypot(dx,dy)||1;
+    leanX+=dx/d*size*0.035; leanY+=dy/d*size*0.035;
+  }
+  g.save();
+  /* 菜单里还没开打，锅里的软糖也会轻轻呼吸，不至于像贴图 */
+  const breathe=state==='menu'?Math.sin(performance.now()*0.0011+b.phase)*size*0.014:0;
+  g.translate(TEX/2+leanX+b.jx+sway, TEX/2+leanY+b.jy + Math.sin(T*2.0+b.phase)*size*0.006*(1-mvv) + breathe);
+  /* 绕靠下的支点倾斜：纸片是“立”着的，不是悬在空中转 */
+  const pivot=size*0.30;
+  g.translate(0,pivot); g.rotate(tilt); g.translate(0,-pivot);
+  g.rotate(b.sqDir); g.scale(1-sq*0.68,1+sq*0.54); g.rotate(-b.sqDir);
+  const texOK=b.imgOK&&(b.isP?ensureTexGold(b,P):ensureTex(b,P));
+  if(b.facing<0) g.scale(-1,1);        /* 朝向左侧时水平翻转（最后应用，压扁方向仍在屏幕空间） */
+  if(texOK){
+    g.drawImage(b.isP?b.texG:b.tex,-TEX/2,-TEX/2,TEX,TEX);
+  }else{
+    drawFallback(g,P,size);
+  }
+  g.restore();
+  /* 被撞的那一侧软软地凹进去 */
+  drawDent(g,b,leanX+b.jx+sway,leanY+b.jy,P);
+  const p=proj(b.x,b.y);
+  let px=b.r*2*AR*(1+b.y*0.12);
+  let ox=0,oy=0,alpha=1;
+  const hy=air*px;                      /* 蹦起来的高度（随速度变高） */
+  if(b.out){
+    const f=b.fall;
+    const len=Math.hypot(b.x,b.y)||1;
+    ox=b.x/len*f*f*AR*0.55;
+    oy=f*f*AR*0.34+f*26;
+    px*=Math.max(0.2,1-f*0.5);
+    alpha=Math.max(0,1-f/1.05);
+  }
+  /* 玩家：脚下的虚线环先画，随后立绘会遮住后半圈，环就是“踩在脚下”而不是浮在身上 */
+  if(b.isP&&state!=='menu'){
+    /* 越靠近圈边，脚下的虚线圈越急地闪：给一点“要掉了”的提醒 */
+    const edge=Math.min(1,Math.max(0,(Math.hypot(b.x,b.y)/Math.max(0.01,R)-0.80)/0.20));
+    ctx.save();
+    ctx.globalAlpha=alpha*0.75*(1+0.5*edge*Math.sin(T*11));
+    ctx.strokeStyle=P.ink; ctx.lineWidth=1.5; ctx.setLineDash([3,3]);
+    ctx.beginPath();
+    ctx.ellipse(p.x+ox,p.y+oy+px*0.30,px*0.46,px*0.16,0,0,Math.PI*2);
+    ctx.stroke();
+    ctx.restore();
+  }
+  const blit=px*(TEX/SPR);            /* 贴图四周有留白，整张贴图放大画，内容仍然是 px 宽 */
+  ctx.save();
+  ctx.globalAlpha=alpha;
+  if(b.out){
+    /* 掉出圈外时翻着小跟头飞走 */
+    ctx.translate(p.x+ox,p.y+oy-hy);
+    ctx.rotate((b.spin||1)*Math.min(1.15,b.fall*2.4));
+    ctx.drawImage(b.scratch,-blit/2,-blit/2,blit,blit);
+  }else{
+    ctx.drawImage(b.scratch,p.x+ox-blit/2,p.y+oy-hy-blit/2,blit,blit);
+  }
+  ctx.restore();
+}
+/* 抓拽的可视化：一条绷紧的虚线 + 两只小爪 + 抓握条（快断了会变短） */
+function drawGrabs(P){
+  for(const a of blobs){
+    const b=a.grab;
+    if(!b||a.out||b.out) continue;
+    const pa=proj(a.x,a.y), pb=proj(b.x,b.y);
+    const sa=a.r*2*AR*(1+a.y*0.12), sb=b.r*2*AR*(1+b.y*0.12);
+    const ax=pa.x, ay=pa.y+sa*0.06-hopLift(a)*sa;
+    const bx=pb.x, by=pb.y+sb*0.06-hopLift(b)*sb;
+    ctx.save();
+    ctx.strokeStyle=P.ink; ctx.lineWidth=2; ctx.globalAlpha=0.72;
+    ctx.setLineDash([4,4]); ctx.lineDashOffset=-(T*16)%8;
+    /* 抓握力变小时绳子开始发抖：快被挣脱了看得出来 */
+    const gl=Math.hypot(bx-ax,by-ay)||1;
+    const wob=(1-Math.min(1,Math.max(0,a.grip)))*4.2;
+    const wobY=Math.sin(T*36)*wob;
+    const wx=(ax+bx)/2-(by-ay)/gl*wobY, wy=(ay+by)/2+(bx-ax)/gl*wobY;
+    ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(wx,wy); ctx.lineTo(bx,by); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha=0.95; ctx.fillStyle=P.ink;
+    ctx.beginPath(); ctx.arc(ax,ay,3.2,0,6.3); ctx.fill();
+    ctx.beginPath(); ctx.arc(bx,by,3.2,0,6.3); ctx.fill();
+    if(a.isP||b.isP){
+      const mx=(ax+bx)/2, my=(ay+by)/2-Math.max(sa,sb)*0.46;
+      const w=36,h=6;
+      ctx.globalAlpha=0.96;
+      ctx.fillStyle=P.paper; ctx.fillRect(mx-w/2,my-h/2,w,h);
+      ctx.strokeStyle=P.ink; ctx.lineWidth=2; ctx.strokeRect(mx-w/2,my-h/2,w,h);
+      const gw=Math.max(0,Math.min(1,a.grip));
+      ctx.fillStyle=P.ink;
+      ctx.fillRect(mx-w/2+2,my-h/2+2,Math.max(0,(w-4)*gw),h-4);
+      if(b.isP){
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.font='800 8px "SF Mono",Consolas,monospace';
+        ctx.globalAlpha=0.9; ctx.fillStyle=P.ink;
+        ctx.fillText('拖一拖 / 拳 挣脱～',mx,my-9);
+      }
+    }
+    ctx.restore();
+  }
+}
+/* 走近对手时，在他头顶冒出「按住 抓」，把操作方式直接摆到玩家眼前 */
+function drawGrabHint(P){
+  if(state!=='play'||!player||player.out||player.grab||player.heldBy||player.rec>0||player.grabCd>0) return;
+  const t=nearestGrabTarget();
+  if(!t) return;
+  const p=proj(t.x,t.y);
+  const s=t.r*2*AR*(1+t.y*0.12);
+  const y=p.y-s*0.60-hopLift(t)*s;
+  ctx.save();
+  ctx.font='900 9px "SF Mono",Consolas,monospace';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  const txt='点/按住抓～';
+  const w=Math.max(48,Math.ceil(ctx.measureText(txt).width)+14);
+  ctx.globalAlpha=0.96; ctx.fillStyle=P.paper;
+  ctx.fillRect(p.x-w/2,y-8,w,16);
+  ctx.strokeStyle=P.ink; ctx.lineWidth=2;
+  ctx.strokeRect(p.x-w/2,y-8,w,16);
+  ctx.fillStyle=P.ink; ctx.fillText(txt,p.x,y+1);
+  ctx.beginPath(); ctx.moveTo(p.x-4,y+8); ctx.lineTo(p.x+4,y+8); ctx.lineTo(p.x,y+13); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function drawHunter(b,P){
+  const p=proj(b.x,b.y);
+  const s=b.r*2*AR;
+  const bob=Math.sin(T*7.5)*1.6;
+  const y=p.y-s*0.64-hopLift(b)*s-bob;
+  const r=6.2+Math.sin(T*9)*0.7;
+  ctx.save();
+  ctx.translate(p.x,y);
+  ctx.fillStyle=P.paper; ctx.strokeStyle=P.ink; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(0,0,r,0,6.3); ctx.fill(); ctx.stroke();
+  ctx.fillStyle=P.ink;
+  ctx.font='900 10px "SF Mono",Consolas,monospace';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('!',0,0.5);
+  ctx.restore();
+}
+function drawMarker(b,P){
+  const p=proj(b.x,b.y);
+  const s=b.r*2*AR*(1+b.y*0.12);
+  const bob=Math.sin(T*3.2)*3.2;
+  const y=p.y-s*0.70-bob-hopLift(b)*s;
+  /* 金色大箭头，尖端朝下指着自己；带一点呼吸 */
+  const k=1+0.05*Math.sin(T*5);
+  const w=8*k, h=18*k;
+  ctx.save();
+  ctx.translate(p.x,y);
+  ctx.beginPath();
+  ctx.moveTo(0,h*0.5);
+  ctx.lineTo(w,-h*0.5);
+  ctx.lineTo(0,-h*0.24);
+  ctx.lineTo(-w,-h*0.5);
+  ctx.closePath();
+  ctx.fillStyle=GOLD; ctx.fill();
+  ctx.strokeStyle=P.ink; ctx.lineWidth=2; ctx.lineJoin='round';
+  ctx.stroke();
+  ctx.restore();
+}
+function drawPops(P){
+  ctx.save();
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  for(const t of pops){
+    const q=proj(t.x,t.y);
+    const a=Math.max(0,t.life/t.max);
+    const sc=1+(1-a)*0.5;
+    ctx.save();
+    ctx.globalAlpha=a; ctx.translate(q.x,q.y-6-(1-a)*22); ctx.scale(sc,sc);
+    ctx.font='900 10px "SF Mono",Consolas,monospace';
+    const bw=Math.max(26,Math.ceil(ctx.measureText(t.txt).width)+12);
+    ctx.fillStyle=P.paper; ctx.fillRect(-bw/2,-7,bw,14);
+    ctx.strokeStyle=P.ink; ctx.lineWidth=2; ctx.strokeRect(-bw/2,-7,bw,14);
+    ctx.fillStyle=P.ink;
+    ctx.fillText(t.txt,0,1);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+function drawCount(P){
+  const n=Math.max(1,Math.ceil(cd-0.35));
+  const txt=cd<=0.4?'抢!':String(n);
+  const s=1+0.3*cdPop;
+  ctx.save();
+  ctx.globalAlpha=0.95; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.translate(CX,CY); ctx.scale(s,s);
+  ctx.fillStyle=P.paper; ctx.fillRect(-34,-26,68,52);
+  ctx.strokeStyle=P.ink; ctx.lineWidth=3; ctx.strokeRect(-34,-26,68,52);
+  ctx.fillStyle=P.ink; ctx.font='900 30px "SF Mono",Consolas,monospace';
+  ctx.fillText(txt,0,1);
+  ctx.restore();
+}
+function drawPause(P){
+  ctx.save();
+  ctx.globalAlpha=0.82; ctx.fillStyle=P.paper; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle=P.ink; ctx.font='900 18px "SF Mono",Consolas,monospace';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('软糖休息中…',W/2,H/2-8);
+  ctx.font='700 9px "SF Mono",Consolas,monospace';
+  ctx.fillText('点 ❚❚ 继续抢番茄～',W/2,H/2+14);
+  ctx.restore();
+}
+
+/* ================= HUD / 结束 ================= */
+let finishT=0;
+function showEnd(){
+  musicStop();
+  const win=(state==='win');
+  /* 名次：出圈时按“含自己在内的剩余只数”定下，赢家固定第 1 */
+  const list=blobs.slice().filter(b=>b.rank>0).sort((a,b)=>a.rank-b.rank);
+  const winner=list[0]||null;
+  const myPlace=player&&player.rank?player.rank:0;
+  const myT=(player&&player.outT!=null)?player.outT:T;
+  $('eKick').textContent=win?'TOMATO GET!':'TOMATO GOES TO';
+  $('eTitle').textContent=win?'番茄是你的啦～':(winner?winner.name+'抢到啦～':'番茄被抢走啦～');
+  $('eSub').textContent=win
+    ? '最后一块软糖！番茄慢慢吃，别噎到～'
+    : '你第 '+myPlace+' 名 · 坚持 '+mmss(myT)+' · 软糖摔不坏，下次一定～';
+  $('ePrize').style.display=win?'block':'none';
+  $('eRank').innerHTML=list.map((b,i)=>{
+    const cls=(i===0?'top ':'')+(b.isP?'me':'');
+    const tag= i===0 ? '<i class="tag">赢</i>' : (b.isP?'<i class="tag">你</i>':'');
+    return '<li class="'+cls+'" style="animation-delay:'+(i*16)+'ms"><b>'+(i+1)+'</b><span>'+b.name+'</span>'+tag+'</li>';
+  }).join('');
+  $('ovEnd').classList.add('show');
+  if(win) sfxWin();
+  else sfxLose();
+}
+let hudT=0;
+/* HUD 数字变化时弹一下，视线能捕捉到“锅里又少了一只” */
+function setNum(el,v){
+  const t=String(v);
+  if(el.textContent===t) return;
+  el.textContent=t;
+  el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+}
+function syncHUD(dt){
+  hudT+=dt;
+  if(hudT<0.12) return;
+  hudT=0;
+  setNum($('sAlive'),aliveCount());
+  setNum($('sOut'),outCount);
+  $('sTime').textContent=mmss(T);
+  if(punchBtn){
+    const vis=(state==='play'||state==='ready')&&player&&!player.out;
+    punchBtn.style.display=vis?'flex':'none';
+    punchBtn.classList.toggle('cd',punchCd>0||(player&&player.rec>0));
+    punchBtn.classList.toggle('hit',punchFlash>0);
+    grabBtn.style.display=vis?'flex':'none';
+    const inRange=vis&&state==='play'&&player&&!player.out&&!player.grab&&!player.heldBy&&player.rec<=0&&player.grabCd<=0&&nearestGrabTarget();
+    grabBtn.classList.toggle('rdy',!!inRange);
+    grabBtn.classList.toggle('on',!!(grabHold||grabLatched||(player&&player.grab)));
+    grabBtn.classList.toggle('cd',!!(player&&(player.heldBy||player.rec>0||(player.grabCd>0&&!player.grab))));
+  }
+}
+
+/* ================= 循环 ================= */
+let last=performance.now();
+function loop(now){
+  const raw=(now-last)/1000; last=now;
+  const dt=Math.min(0.033,Math.max(0.001,raw));
+  if(state==='play'||state==='ready'||state==='win'||state==='lose'){
+    /* 玩家出圈后进入“快进录像”：整局按 2.4 倍速播，分小步跑保证物理稳定 */
+    const fast=(state==='play'&&player&&player.out&&!paused)?2.4:1;
+    let acc=dt*fast, guard=0;
+    while(acc>0.0001&&guard++<6){
+      const h=Math.min(0.033,acc);
+      step(h);
+      acc-=h;
+    }
+  }
+  if(state==='menu') tomAng+=dt*0.9;    /* 还没开打，锅心的番茄也在慢慢转 */
+  draw();
+  syncHUD(dt);
+  requestAnimationFrame(loop);
+}
+
+/* ================= 交互按钮 ================= */
+function togglePause(){
+  if(state!=='play'&&state!=='ready') return;
+  paused=!paused;
+}
+$('btnPause').onclick=()=>{ togglePause(); };
+$('btnSound').onclick=()=>{
+  snd.on=!snd.on;
+  $('btnSound').textContent=snd.on?'🔊':'🔇';
+  musicMute();
+};
+$('btnStart').onclick=()=> newRound();
+$('btnAgain').onclick=()=> newRound();
+
+/* 出拳按钮：手机用第二根拇指按住，不打断拖拽；桌面直接点 */
+const punchBtn=$('btnPunch');
+punchBtn.addEventListener('pointerdown',e=>{
+  e.preventDefault(); e.stopPropagation();
+  playerPunch();
+});
+/* 抓按钮：按住不放就抓着；轻点一下锁住抓握，再点一次放开。配合拖动 = 拖行 */
+const grabBtn=$('btnGrab');
+grabBtn.addEventListener('pointerdown',e=>{
+  e.preventDefault(); e.stopPropagation();
+  try{ grabBtn.setPointerCapture(e.pointerId); }catch(_){}
+  grabBtn.classList.add('hit');
+  if(grabLatched){
+    grabLatched=false; grabHold=false;
+    if(player&&player.grab&&!playerGrabAuto) endGrab(player,player.grab,'let');
+    return;
+  }
+  grabPressT=performance.now();
+  setGrabHold(true);
+});
+grabBtn.addEventListener('pointerup',e=>{
+  e.preventDefault(); e.stopPropagation();
+  grabBtn.classList.remove('hit');
+  if(grabLatched) return;
+  const quick=(performance.now()-grabPressT)<180;
+  if(quick&&player&&player.grab&&!playerGrabAuto){
+    grabLatched=true; grabHold=false;      /* 轻点：保留抓握，手指可以立刻去拖画面 */
+  }else{
+    setGrabHold(false);
+  }
+});
+grabBtn.addEventListener('pointercancel',e=>{
+  e.preventDefault(); e.stopPropagation();
+  grabBtn.classList.remove('hit');
+  if(!grabLatched) setGrabHold(false);
+});
+grabBtn.addEventListener('lostpointercapture',()=>{
+  grabBtn.classList.remove('hit');
+  if(!grabLatched) setGrabHold(false);
+});
+
+/* 初始化 */
+window.addEventListener('resize',resize);
+resize();
+/* 菜单状态先摆一帧静态画面 */
+(function menuPreview(){
+  const pick=shuffle(POOL.slice()).slice(0,NPLAY);
+  blobs=pick.map((p,i)=>{
+    const b=makeBlob(p);
+    b.atk=99;
+    const a=(i/NPLAY)*Math.PI*2+rnd(-0.1,0.1), rad=rnd(0.4,0.78);
+    b.x=Math.cos(a)*rad; b.y=Math.sin(a)*rad;
+    return b;
+  });
+})();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

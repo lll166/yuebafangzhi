@@ -10146,6 +10146,7 @@ const DEX_GAME={
   m3_eluosi:{icon:'🧱', label:'🧱 俄罗斯巴块', enter:'🧱 进入俄罗斯巴块', game:'tetris'},
   mb_wenshi:{icon:'🧩', label:'🧩 月巴数织', enter:'🧩 进入月巴数织', game:'nonogram'},
   mb_wansheng:{icon:'🎃', label:'🎃 月巴追茄', enter:'🎃 进入月巴追茄', game:'pacman'},
+  m3_gummy:{icon:'🍅', label:'🍅 月巴推推圈', enter:'🍅 进入月巴推推圈', game:'push'},
   m2_baboyi:{icon:'🥊', label:'🥊 巴巴博弈', enter:'🥊 进入巴巴博弈', game:'fight'},
 };
 function dexGameOf(id){ return DEX_GAME[id]||null; }
@@ -10165,6 +10166,7 @@ function dexGameEntry(id){
   if(g.game==='tetris'){ dexTetrisEntry(); return; }
   if(g.game==='nonogram'){ dexNonogramEntry(); return; }
   if(g.game==='pacman'){ dexPacmanEntry(); return; }
+  if(g.game==='push'){ dexPushEntry(); return; }
   if(g.game==='fight'){ dexFightEntry(); return; }
 }
 function bookRowsHTML(list,quiet){
@@ -15247,6 +15249,7 @@ function openFlyFromDex(id){
    game:'fly' -> 复用页内飞行浮层；html:'xxx.html' -> 内嵌 iframe（同幸存者）。 */
 const GB_GAMES=[
   {id:'pacman', codex:'mb_wansheng', name:'🎃 月巴追茄', sub:true, html:'pacman.html'},
+  {id:'push', codex:'m3_gummy', name:'🍅 月巴推推圈', sub:true, html:'月巴推推圈/push-mockup.html'},
   {id:'fly', codex:'mb_yunduan', name:'飞行小游戏', game:'fly'},
   {id:'snake', codex:'m2_she', name:'（贪吃）蛇月巴', game:'snake'},
   {id:'gamble', codex:'jieba', name:'🎲 对赌', game:'gamble', lock:true},
@@ -15437,6 +15440,14 @@ function dexNonogramEntry(){
 /* 图鉴入口：万圣月巴 → 月巴追茄小游戏。关闭后同样回到图鉴 */
 function dexPacmanEntry(){
   const g=GB_GAMES.filter(function(x){ return x.id==='pacman'; })[0];
+  if(!g) return;
+  try{ save(); }catch(e){}
+  sfx.click();
+  gbFrameOpen(g,'dex');
+}
+/* 图鉴入口：软糖月巴 → 月巴推推圈小游戏。关闭后同样回到图鉴 */
+function dexPushEntry(){
+  const g=GB_GAMES.filter(function(x){ return x.id==='push'; })[0];
   if(!g) return;
   try{ save(); }catch(e){}
   sfx.click();
