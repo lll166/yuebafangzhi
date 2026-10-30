@@ -107,8 +107,8 @@ body{
 /* ---------- 舞台 ---------- */
 #frame{
   position:relative;flex:0 0 auto;
-  width:min(600px,97vw,calc(100vh - 192px));
-  width:min(600px,97vw,calc(100dvh - 192px));
+  width:min(600px,97vw,max(240px,calc(100vh - 192px)));
+  width:min(600px,97vw,max(240px,calc(100dvh - 192px)));
   aspect-ratio:1/1;
   border:3px solid var(--ink);background:var(--paper2);
   box-shadow:7px 7px 0 var(--shade),inset 0 0 0 3px var(--hi);
@@ -193,6 +193,13 @@ html[data-pal="ash"] .ov{background:rgba(244,244,241,.74);}
           mask:var(--tomato-mask) center/contain no-repeat;
   animation:bob 2.6s ease-in-out infinite;}
 @keyframes bob{0%,100%{transform:translateY(0) rotate(-4deg);}50%{transform:translateY(-3px) rotate(4deg);}}
+@media (max-height:560px){
+  /* 窗口特别矮（侧边栏 / 小窗）：藏起操作说明让画框先占住地方，必要时整页可滚 */
+  #app{justify-content:flex-start;overflow-y:auto;touch-action:pan-y;
+    padding-top:4px;padding-bottom:4px;}
+  .coach{display:none;}
+  #frame{width:min(600px,97vw,max(220px,calc(100dvh - 100px)));}
+}
 @media (prefers-reduced-motion:reduce){
   .tomato{animation:none;}
   .ov.show .panel{animation:none;}
@@ -2348,22 +2355,29 @@ function syncHUD(dt){
 
 /* ================= 循环 ================= */
 let last=performance.now();
+let loopErr=0;
 function loop(now){
-  const raw=(now-last)/1000; last=now;
-  const dt=Math.min(0.033,Math.max(0.001,raw));
-  if(state==='play'||state==='ready'||state==='win'||state==='lose'){
-    /* 玩家出圈后进入“快进录像”：整局按 2.4 倍速播，分小步跑保证物理稳定 */
-    const fast=(state==='play'&&player&&player.out&&!paused)?2.4:1;
-    let acc=dt*fast, guard=0;
-    while(acc>0.0001&&guard++<6){
-      const h=Math.min(0.033,acc);
-      step(h);
-      acc-=h;
+  try{
+    const raw=(now-last)/1000; last=now;
+    const dt=Math.min(0.033,Math.max(0.001,raw));
+    if(state==='play'||state==='ready'||state==='win'||state==='lose'){
+      /* 玩家出圈后进入“快进录像”：整局按 2.4 倍速播，分小步跑保证物理稳定 */
+      const fast=(state==='play'&&player&&player.out&&!paused)?2.4:1;
+      let acc=dt*fast, guard=0;
+      while(acc>0.0001&&guard++<6){
+        const h=Math.min(0.033,acc);
+        step(h);
+        acc-=h;
+      }
     }
+    if(state==='menu') tomAng+=dt*0.9;    /* 还没开打，锅心的番茄也在慢慢转 */
+    draw();
+    syncHUD(dt);
+  }catch(e){
+    /* 单帧出错不能把整个循环弄死（否则会停在白画面上）：
+       只记一次日志，然后继续排下一帧 */
+    if(!loopErr++){ try{ console.error('[月巴推推圈] frame error:', e); }catch(_){} }
   }
-  if(state==='menu') tomAng+=dt*0.9;    /* 还没开打，锅心的番茄也在慢慢转 */
-  draw();
-  syncHUD(dt);
   requestAnimationFrame(loop);
 }
 
@@ -2435,7 +2449,15 @@ resize();
     b.x=Math.cos(a)*rad; b.y=Math.sin(a)*rad;
     return b;
   });
+  /* 首帧同步画一次：省电模式 / 后台节流时 rAF 可能迟迟不来，
+     先画出来就不会停在空白画布上 */
+  try{ draw(); syncHUD(0); }catch(e){}
 })();
+/* 从后台切回来时补一次布局+重绘（低功耗下 rAF 会被挂起） */
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden) return;
+  try{ resize(); draw(); }catch(e){}
+});
 requestAnimationFrame(loop);
 </script>
 </body>
