@@ -212,7 +212,7 @@
   /* ========== 场地场景视图 ========== */
   #scene{position:fixed;inset:0;z-index:55;display:none;}
   #scene.show{display:block;}
-  #scene .bg{position:absolute;inset:0;background-size:cover;background-position:center;}
+  #scene .bg{position:absolute;inset:0;background-size:cover;background-position:center;background-color:var(--bg2);}
   #scene .scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.06));}
   #scene .sbar{
     position:absolute;top:10px;left:10px;right:10px;z-index:5;border-radius:16px;
@@ -4078,32 +4078,32 @@ function fmtDurTrend(ms){ // 趋势图紧凑格式：长时长用本地化单位
 */
 const ZONES=[
   {name:'初始庭院', icon:'🏡', cost:0,     woodBase:300,   woodMult:2.2,
-   // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/1_FotoSketcherdd5b7aa2f895b494.jpg'},
+   // 图源: 自定义背景（玩家提供）；已压缩为 1800px WebP，放仓库内随站点一起分发
+   bg:'assets/bg/garden.webp'},
   {name:'潮湿地下室', icon:'🕳️', cost:2000,   woodBase:900,   woodMult:2.3,
    // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/__128135210_FotoSketcherc9f81392cbdead6a.jpg'},
+   bg:'assets/bg/basement.webp'},
   {name:'玻璃温室', icon:'🌱', cost:12000,  woodBase:2600,  woodMult:2.4,
    // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/_1788429025766_35140043_FotoSketchere2f4a0425f632220.jpg'},
+   bg:'assets/bg/greenhouse.webp'},
   {name:'天台风场', icon:'🌬️', cost:60000,  woodBase:8000,  woodMult:2.5,
    // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/__183720300_FotoSketcherf4ae1401dd537290.jpg'},
+   bg:'assets/bg/rooftop.webp'},
   {name:'幽暗森林', icon:'🌲', cost:300000, woodBase:26000, woodMult:2.6,
    // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/_-_194310583_FotoSketcher982611e1ba4e7a12.jpg'},
+   bg:'assets/bg/forest.webp'},
   {name:'冰雪洞穴', icon:'❄️', cost:1500000, woodBase:90000, woodMult:2.7,
    // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/__131195802_FotoSketcherd1e880cdc7babeca.jpg'},
+   bg:'assets/bg/ice.webp'},
   {name:'熔岩深坑', icon:'🌋', cost:7000000, woodBase:300000,woodMult:2.8,
    // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/__1714459_FotoSketcherdaa767a1a264dfaf.jpg'},
+   bg:'assets/bg/lava.webp'},
   {name:'云端之上', icon:'☁️', cost:30000000,woodBase:1000000,woodMult:3,
    // 图源: 自定义背景（玩家提供）
-   bg:'https://origin.picgo.net/2026/09/03/_-_194592063_FotoSketcher96545d1331d68cfd.jpg'},
+   bg:'assets/bg/clouds.webp'},
 ];
-// 木头图（自定义图片直链，玩家提供）
-const WOOD_IMG='https://origin.picgo.net/2026/09/03/58512f7c468327988fd65ba259f261417096759aace686b4.jpg';
+// 木头图（自定义图片直链，玩家提供；已压缩为 960px WebP）
+const WOOD_IMG='assets/bg/wood.webp';
 
 /* ---------------- 数据：道具/装饰 ---------------- */
 const FAST_COST=20, WEATHER_COST=500, ACCEL_BASE=2000, ACCEL_MULT=2.2, ACCEL_MAX=15;
@@ -9303,6 +9303,8 @@ let currentZone=-1;
 function openScene(z){
   currentZone=z;
   $('sceneName').textContent=`${ZONES[z].icon} ${ZONES[z].name}`;
+  const zph=ZBG_PH[z%ZBG_PH.length];
+  $('sceneBg').style.backgroundColor=zph[0];                    // 背景图解码前的占位色，避免白闪
   $('sceneBg').style.backgroundImage=`url('${ZONES[z].bg}')`;
   $('scene').classList.add('show');
   $('sceneWoods').scrollLeft=0;
