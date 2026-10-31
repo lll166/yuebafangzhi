@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>月巴放置 · 云存档看板</title>
+<style>
+  :root{
+    --bg:#ece9f6; --bg2:#e2ddf2; --card:#fff; --line:#ddd6ef;
+    --text:#413c5b; --dim:#8d86ab; --purple:#9575cd; --purple2:#7e57c2;
+    --good:#6fb26a; --gold:#c9971c; --danger:#e05b6f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    min-height:100vh;font-family:'Segoe UI','Microsoft YaHei',system-ui,sans-serif;
+    background:radial-gradient(900px 520px at 85% -8%,#f3efff,transparent 60%),
+               radial-gradient(800px 480px at -8% 108%,#e9e3ff,transparent 60%),
+               linear-gradient(180deg,var(--bg),var(--bg2));
+    color:var(--text);padding:18px 14px 40px;
+  }
+  .wrap{max-width:1000px;margin:0 auto;}
+  header{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  h1{font-size:18px;letter-spacing:.5px;color:var(--purple2);}
+  h1 small{font-size:12px;color:var(--dim);font-weight:400;margin-left:6px;}
+  .spacer{flex:1;}
+  .btn{
+    border:1px solid var(--line);background:rgba(255,255,255,.8);color:var(--purple2);
+    border-radius:10px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;
+    transition:.15s;font-family:inherit;
+  }
+  .btn:hover{border-color:var(--purple);transform:translateY(-1px);}
+  .btn:active{transform:scale(.97);}
+  .btn.primary{background:linear-gradient(180deg,#a98adb,#7e57c2);border-color:#7e57c2;color:#fff;}
+  .btn.on{background:linear-gradient(180deg,#a98adb,#7e57c2);border-color:#7e57c2;color:#fff;}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    box-shadow:0 10px 30px rgba(100,80,160,.10);
+  }
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px;}
+  .kpi{padding:12px 14px;border-radius:14px;background:var(--card);border:1px solid var(--line);box-shadow:0 6px 18px rgba(100,80,160,.08);}
+  .kpi .k{font-size:11px;color:var(--dim);font-weight:700;letter-spacing:.3px;}
+  .kpi .v{font-size:22px;font-weight:800;color:var(--text);margin-top:4px;font-variant-numeric:tabular-nums;}
+  .kpi .v.p{color:var(--purple2);}
+  .panel{padding:14px 16px;margin-bottom:12px;}
+  .panel h2{font-size:13px;color:var(--dim);font-weight:800;margin-bottom:10px;letter-spacing:.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .panel h2 em{font-style:normal;font-weight:600;font-size:11px;color:var(--dim);opacity:.85;}
+  .empty{font-size:13px;color:var(--dim);text-align:center;padding:22px 0;}
+
+  /* 免费额度进度条 */
+  .qrow{margin-bottom:11px;}
+  .qrow:last-child{margin-bottom:0;}
+  .qhead{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;font-weight:700;margin-bottom:4px;gap:8px;}
+  .qhead .qval{color:var(--dim);font-weight:600;font-size:11px;font-variant-numeric:tabular-nums;}
+  .qbar{height:10px;background:#eee7fb;border-radius:99px;overflow:hidden;}
+  .qbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#b39ddb,#7e57c2);transition:width .4s;}
+  .qbar.warn i{background:linear-gradient(90deg,#f0c76a,#c9971c);}
+  .qbar.bad i{background:linear-gradient(90deg,#ef8d9c,#e05b6f);}
+  .qhint{font-size:11px;color:var(--dim);margin-top:8px;line-height:1.6;}
+
+  /* 趋势图 */
+  .chart{display:flex;align-items:flex-end;gap:3px;height:120px;padding-top:6px;}
+  .chart .col{flex:1;min-width:2px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;}
+  .chart .col i{display:block;width:100%;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#a98adb,#7e57c2);min-height:2px;transition:height .3s;}
+  .chart .col i.zero{background:#ece6f9;}
+  .xlab{display:flex;gap:3px;margin-top:4px;font-size:10px;color:var(--dim);}
+  .xlab span{flex:1;text-align:center;white-space:nowrap;overflow:hidden;}
+
+  /* 分布 */
+  .distRow{display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:7px;}
+  .distRow .dl{width:74px;flex:0 0 auto;color:var(--dim);font-weight:600;}
+  .distRow .db{flex:1;height:8px;background:#eee7fb;border-radius:99px;overflow:hidden;}
+  .distRow .db i{display:block;height:100%;background:linear-gradient(90deg,#b39ddb,#7e57c2);border-radius:99px;}
+  .distRow .dn{width:42px;text-align:right;font-variant-numeric:tabular-nums;font-weight:700;}
+
+  .grid2{display:grid;grid-template-columns:1.35fr 1fr;gap:12px;align-items:start;}
+  @media (max-width:720px){ .grid2{grid-template-columns:1fr;} }
+
+  /* 列表 */
+  .tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+  .tools input,.tools select{
+    border:1px solid var(--line);background:#faf8ff;color:var(--text);
+    border-radius:9px;padding:7px 10px;font-size:13px;outline:none;font-family:inherit;
+  }
+  .tools input{flex:1;min-width:130px;font-family:ui-monospace,Consolas,monospace;}
+  .tools input:focus,.tools select:focus{border-color:var(--purple);}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{font-size:11px;color:var(--dim);font-weight:700;text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  td{padding:8px;border-bottom:1px dashed rgba(221,214,239,.85);vertical-align:middle;}
+  tr:last-child td{border-bottom:0;}
+  .hash{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--purple2);letter-spacing:.4px;}
+  .muted{color:var(--dim);font-size:11px;}
+  .num{font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .mini{font-size:11px;padding:4px 9px;border-radius:8px;}
+  .barwrap{height:6px;background:#eee7fb;border-radius:99px;overflow:hidden;min-width:60px;}
+  .barwrap i{display:block;height:100%;background:linear-gradient(90deg,#b39ddb,#7e57c2);border-radius:99px;}
+  .pager{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;font-size:12px;color:var(--dim);}
+
+  #keybox{padding:20px;max-width:420px;margin:40px auto;}
+  #keybox p{font-size:12px;color:var(--dim);line-height:1.7;margin-bottom:12px;}
+  #keyinput{
+    width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
+    background:#faf8ff;color:var(--text);font-size:14px;font-family:ui-monospace,Consolas,monospace;
+    outline:none;margin-bottom:10px;
+  }
+  #keyinput:focus{border-color:var(--purple);}
+  #msg{margin-top:10px;font-size:12px;color:var(--danger);line-height:1.6;min-height:16px;}
+  .foot{margin-top:16px;font-size:11px;color:var(--dim);line-height:1.7;text-align:center;}
+  .hide{display:none!important;}
+  @media (max-width:520px){
+    body{padding:14px 10px 32px;}
+    .panel{padding:12px;}
+    th:nth-child(3),td:nth-child(3){display:none;}
+    .kpi .v{font-size:20px;}
+    .chart{height:96px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🐰 月巴放置 · 云存档看板<small>只读</small></h1>
+    <div class="spacer"></div>
+    <button class="btn hide" id="range7" onclick="setDays(7)">7天</button>
+    <button class="btn hide" id="range14" onclick="setDays(14)">14天</button>
+    <button class="btn hide" id="range30" onclick="setDays(30)">30天</button>
+    <button class="btn hide" id="csvBtn" onclick="exportCsv()">导出 CSV</button>
+    <button class="btn hide" id="refreshBtn" onclick="load()">↻ 刷新</button>
+    <button class="btn hide" id="outBtn" onclick="logout()">退出</button>
+  </header>
+
+  <div class="card hide" id="keybox">
+    <p>输入管理员密钥（部署时设置的 <code>ADMIN_KEY</code>），本机只会记住它，不会发给其他人。</p>
+    <input id="keyinput" type="password" autocomplete="off" placeholder="管理员密钥" onkeydown="if(event.key==='Enter')saveKey()">
+    <button class="btn primary" onclick="saveKey()">进入看板</button>
+    <div id="msg"></div>
+  </div>
+
+  <div id="main" class="hide">
+    <div class="kpis">
+      <div class="kpi"><div class="k">云存档数</div><div class="v p" id="kCodes">–</div></div>
+      <div class="kpi"><div class="k">总上传次数</div><div class="v" id="kUploads">–</div></div>
+      <div class="kpi"><div class="k">占用空间</div><div class="v" id="kBytes">–</div></div>
+      <div class="kpi"><div class="k">近 24 小时活跃</div><div class="v" id="kActive">–</div></div>
+      <div class="kpi"><div class="k">近 7 天活跃</div><div class="v" id="kActive7">–</div></div>
+      <div class="kpi"><div class="k">只传过一次</div><div class="v" id="kOnce">–</div></div>
+    </div>
+
+    <div class="card panel">
+      <h2>免费额度剩余 <em id="quotaDay"></em></h2>
+      <div id="quotaBox"></div>
+      <div class="qhint">
+        请求数、写入行数为本站自身统计的估算值（每次请求约 2 行写入，每次上传再加 2 行）；存储为实际占用。<br>
+        额度按北京时间 00:00 重置。
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card panel">
+        <h2>上传趋势 <em>按天（北京时间）</em></h2>
+        <div id="trendBox"></div>
+      </div>
+      <div class="card panel">
+        <h2>存档大小分布</h2>
+        <div id="distBox"></div>
+      </div>
+    </div>
+
+    <div class="card panel">
+      <h2>存档列表 <em id="listMeta"></em></h2>
+      <div class="tools">
+        <input id="qBox" type="text" placeholder="按哈希前缀搜索，如 9908" maxlength="16" autocomplete="off" onkeydown="if(event.key==='Enter')applySearch()">
+        <select id="sortSel" onchange="applySort()">
+          <option value="at">按时间</option>
+          <option value="bytes">按大小</option>
+          <option value="ver">按版本</option>
+        </select>
+        <button class="btn" onclick="applySearch()">搜索</button>
+      </div>
+      <div id="listBox"></div>
+      <div class="pager" id="pager"></div>
+    </div>
+
+    <div class="foot">
+      数据来自 D1 的 <code>saves</code> / <code>upload_log</code> / <code>usage</code>：只有哈希前缀、大小、版本号与时间。<br>
+      没有 IP、没有明文同步码，哈希无法反推出同步码。
+    </div>
+  </div>
+</div>
+
+<script>
+var KEY_STORE = 'yueba-admin-key';
+var state = { days: 14, q: '', sort: 'at', page: 1, data: null };
+
+function $(id){ return document.getElementById(id); }
+
+function fmtBytes(n){
+  if(n < 1024) return n + ' B';
+  if(n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+  if(n < 1024 * 1024 * 1024) return (n / 1024 / 1024).toFixed(2) + ' MB';
+  return (n / 1024 / 1024 / 1024).toFixed(2) + ' GB';
+}
+function fmtNum(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+function fmtPct(x){ return x < 0.1 && x > 0 ? '<0.1%' : x.toFixed(1) + '%'; }
+function pad(x){ return x < 10 ? '0' + x : '' + x; }
+function fmtTime(ts){
+  if(!ts) return '–';
+  var d = new Date(ts);
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+function fmtAgo(ts){
+  var s = Math.floor((Date.now() - ts) / 1000);
+  if(s < 60) return '刚刚';
+  if(s < 3600) return Math.floor(s / 60) + ' 分钟前';
+  if(s < 86400) return Math.floor(s / 3600) + ' 小时前';
+  return Math.floor(s / 86400) + ' 天前';
+}
+
+function showKey(msg){
+  $('keybox').classList.remove('hide');
+  $('main').classList.add('hide');
+  ['range7','range14','range30','csvBtn','refreshBtn','outBtn'].forEach(function(id){ $(id).classList.add('hide'); });
+  if(msg) $('msg').textContent = msg;
+  $('keyinput').focus();
+}
+
+function saveKey(){
+  var k = $('keyinput').value.trim();
+  if(!k) return;
+  localStorage.setItem(KEY_STORE, k);
+  $('msg').textContent = '';
+  load();
+}
+function logout(){
+  localStorage.removeItem(KEY_STORE);
+  $('keyinput').value = '';
+  showKey('');
+}
+
+function setDays(n){ state.days = n; state.page = 1; load(); }
+function applySearch(){ state.q = $('qBox').value.trim(); state.page = 1; load(); }
+function applySort(){ state.sort = $('sortSel').value; state.page = 1; load(); }
+function gotoPage(p){ state.page = p; load(); }
+
+function apiUrl(path, extra){
+  var key = localStorage.getItem(KEY_STORE) || '';
+  var u = path + '?key=' + encodeURIComponent(key);
+  if(extra) u += '&' + extra;
+  return u;
+}
+
+function load(){
+  var key = localStorage.getItem(KEY_STORE) || '';
+  if(!key){ showKey(''); return; }
+  var extra = 'days=' + state.days + '&page=' + state.page + '&sort=' + state.sort;
+  if(state.q) extra += '&q=' + encodeURIComponent(state.q);
+  fetch(apiUrl('/admin/data', extra), { cache: 'no-store' }).then(function(r){
+    if(r.status === 403) throw new Error('key');
+    if(r.status === 503) throw new Error('disabled');
+    if(!r.ok) throw new Error('http');
+    return r.json();
+  }).then(function(j){
+    if(!j || !j.ok) throw new Error('bad');
+    state.data = j;
+    $('keybox').classList.add('hide');
+    $('main').classList.remove('hide');
+    ['range7','range14','range30','csvBtn','refreshBtn','outBtn'].forEach(function(id){ $(id).classList.remove('hide'); });
+    ['range7','range14','range30'].forEach(function(id){ $(id).classList.remove('on'); });
+    $('range' + state.days).classList.add('on');
+    $('qBox').value = state.q;
+    $('sortSel').value = state.sort;
+    render(j);
+  }).catch(function(e){
+    if(e.message === 'key') showKey('密钥不对，请重新输入。');
+    else if(e.message === 'disabled') showKey('服务端还没有设置 ADMIN_KEY，先在终端执行部署命令。');
+    else showKey('加载失败，请检查网络后重试。');
+  });
+}
+
+function render(j){
+  var t = j.totals || {};
+  $('kCodes').textContent = fmtNum(t.codes || 0);
+  $('kUploads').textContent = fmtNum(t.uploads || 0);
+  $('kBytes').textContent = fmtBytes(t.bytes || 0);
+  $('kActive').textContent = fmtNum(t.active24 || 0);
+  $('kActive7').textContent = fmtNum(t.active7d || 0);
+  $('kOnce').textContent = fmtNum(t.once || 0);
+  $('quotaDay').textContent = '统计日 ' + (j.day || '');
+  renderQuota(j);
+  renderTrend(j);
+  renderDist(j);
+  renderList(j);
+}
+
+function renderQuota(j){
+  var q = j.quota || {}, today = j.today || {}, totals = j.totals || {};
+  var estWrite = (today.req || 0) * 2 + (today.up || 0) * 2;
+  var rows = [
+    { name: 'Workers 请求（今日）', used: today.req || 0, max: q.req || 100000, fmt: fmtNum },
+    { name: 'D1 写入（今日·估算）', used: estWrite, max: q.write || 100000, fmt: fmtNum },
+    { name: 'D1 存储（实际）', used: totals.bytes || 0, max: q.storage || 5368709120, fmt: fmtBytes }
+  ];
+  var html = '';
+  rows.forEach(function(r){
+    var pct = r.max ? Math.min(100, r.used / r.max * 100) : 0;
+    var cls = pct >= 85 ? ' bad' : pct >= 60 ? ' warn' : '';
+    html += '<div class="qrow">' +
+      '<div class="qhead"><span>' + r.name + '</span>' +
+      '<span class="qval">' + r.fmt(r.used) + ' / ' + r.fmt(r.max) + ' · ' + fmtPct(pct) + '</span></div>' +
+      '<div class="qbar' + cls + '"><i style="width:' + Math.max(1, pct).toFixed(1) + '%"></i></div>' +
+      '</div>';
+  });
+  $('quotaBox').innerHTML = html;
+}
+
+function bjDate(off){
+  return new Date(Date.now() + 8 * 3600 * 1000 - off * 86400000).toISOString().slice(0, 10);
+}
+
+function renderTrend(j){
+  var map = {}, active = {}, added = {};
+  (j.trend || []).forEach(function(r){ map[r.d] = r.n || 0; active[r.d] = r.a || 0; });
+  (j.newCodes || []).forEach(function(r){ added[r.d] = r.n || 0; });
+
+  var days = [], max = 1;
+  for(var i = state.days - 1; i >= 0; i--){
+    var d = bjDate(i);
+    days.push(d);
+    if((map[d] || 0) > max) max = map[d];
+  }
+  var cols = '';
+  days.forEach(function(d){
+    var n = map[d] || 0;
+    var h = n ? Math.max(3, Math.round(n / max * 100)) : 0;
+    var tip = d + '：上传 ' + n + ' 次 · 活跃 ' + (active[d] || 0) + ' 个码 · 新增 ' + (added[d] || 0) + ' 个';
+    cols += '<div class="col" title="' + tip + '"><i class="' + (n ? '' : 'zero') + '" style="height:' + (n ? h : 3) + '%"></i></div>';
+  });
+  var step = Math.ceil(days.length / 7);
+  var labs = '';
+  days.forEach(function(d, i){
+    labs += '<span>' + (i % step === 0 ? d.slice(5) : '') + '</span>';
+  });
+  $('trendBox').innerHTML = '<div class="chart">' + cols + '</div><div class="xlab">' + labs + '</div>';
+}
+
+function renderDist(j){
+  var b = j.buckets || {};
+  var rows = [
+    { l: '<10 KB', v: b.b1 || 0 },
+    { l: '10–50 KB', v: b.b2 || 0 },
+    { l: '50–100 KB', v: b.b3 || 0 },
+    { l: '100–500 KB', v: b.b4 || 0 },
+    { l: '≥500 KB', v: b.b5 || 0 }
+  ];
+  var max = 1;
+  rows.forEach(function(r){ if(r.v > max) max = r.v; });
+  var html = '';
+  rows.forEach(function(r){
+    html += '<div class="distRow"><span class="dl">' + r.l + '</span>' +
+      '<span class="db"><i style="width:' + Math.round(r.v / max * 100) + '%"></i></span>' +
+      '<span class="dn">' + r.v + '</span></div>';
+  });
+  $('distBox').innerHTML = html;
+}
+
+function renderList(j){
+  var rows = j.rows || [];
+  var total = j.total || 0;
+  var size = j.pageSize || 50;
+  var pages = Math.max(1, Math.ceil(total / size));
+  $('listMeta').textContent = '共 ' + total + ' 条';
+
+  var box = $('listBox');
+  box.innerHTML = '';
+  if(!rows.length){
+    box.innerHTML = '<div class="empty">' + (state.q ? '没有匹配的哈希前缀' : '还没有人上传过云存档') + '</div>';
+  } else {
+    var max = 1;
+    rows.forEach(function(r){ if(r.bytes > max) max = r.bytes; });
+
+    var table = document.createElement('table');
+    var thead = document.createElement('thead');
+    thead.innerHTML = '<tr><th>哈希前缀</th><th>大小</th><th>版本</th><th>最后上传</th><th></th></tr>';
+    table.appendChild(thead);
+    var tb = document.createElement('tbody');
+
+    rows.forEach(function(row){
+      var tr = document.createElement('tr');
+
+      var tdH = document.createElement('td');
+      tdH.className = 'hash';
+      tdH.textContent = String(row.id).slice(0, 8);
+      tr.appendChild(tdH);
+
+      var tdS = document.createElement('td');
+      tdS.className = 'num';
+      var bw = document.createElement('div');
+      bw.className = 'barwrap';
+      var bi = document.createElement('i');
+      bi.style.width = Math.max(4, Math.round(row.bytes / max * 100)) + '%';
+      bw.appendChild(bi);
+      var span = document.createElement('div');
+      span.className = 'muted';
+      span.textContent = fmtBytes(row.bytes);
+      var cell = document.createElement('div');
+      cell.appendChild(bw);
+      cell.appendChild(span);
+      tdS.appendChild(cell);
+      tr.appendChild(tdS);
+
+      var tdV = document.createElement('td');
+      tdV.className = 'num';
+      tdV.textContent = 'v' + row.ver;
+      tr.appendChild(tdV);
+
+      var tdT = document.createElement('td');
+      var a = document.createElement('div');
+      a.style.fontSize = '12px';
+      a.textContent = fmtTime(row.at);
+      var b = document.createElement('div');
+      b.className = 'muted';
+      b.textContent = fmtAgo(row.at);
+      tdT.appendChild(a);
+      tdT.appendChild(b);
+      tr.appendChild(tdT);
+
+      var tdA = document.createElement('td');
+      var btn = document.createElement('button');
+      btn.className = 'btn mini';
+      btn.textContent = '下载';
+      btn.onclick = function(){ download(row.id, row.at); };
+      tdA.appendChild(btn);
+      tr.appendChild(tdA);
+
+      tb.appendChild(tr);
+    });
+    table.appendChild(tb);
+    box.appendChild(table);
+  }
+
+  var pager = $('pager');
+  if(pages <= 1){
+    pager.innerHTML = total ? '<span>第 1 / 1 页</span>' : '';
+  } else {
+    pager.innerHTML = '';
+    var prev = document.createElement('button');
+    prev.className = 'btn mini';
+    prev.textContent = '上一页';
+    prev.disabled = state.page <= 1;
+    prev.onclick = function(){ if(state.page > 1) gotoPage(state.page - 1); };
+    var info = document.createElement('span');
+    info.textContent = '第 ' + state.page + ' / ' + pages + ' 页';
+    var next = document.createElement('button');
+    next.className = 'btn mini';
+    next.textContent = '下一页';
+    next.disabled = state.page >= pages;
+    next.onclick = function(){ if(state.page < pages) gotoPage(state.page + 1); };
+    pager.appendChild(prev);
+    pager.appendChild(info);
+    pager.appendChild(next);
+  }
+}
+
+function exportCsv(){
+  window.open(apiUrl('/admin/export'), '_blank');
+}
+
+function download(id, at){
+  fetch(apiUrl('/admin/save', 'h=' + encodeURIComponent(id)), { cache: 'no-store' }).then(function(r){
+    if(!r.ok) throw new Error('http');
+    return r.json();
+  }).then(function(j){
+    return decode(j.data);
+  }).then(function(text){
+    var d = new Date(at || Date.now());
+    var name = 'yueba-cloud-' + String(id).slice(0, 8) + '-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + '.json';
+    var blob = new Blob([pretty(text)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }).catch(function(){
+    alert('下载失败：存档可能已损坏或网络异常。');
+  });
+}
+
+/* 存档可能是 base64(gzip) 也可能是明文 JSON，两种都还原成文本 */
+function decode(raw){
+  var s = String(raw || '');
+  if(/^[\s{]/.test(s)) return Promise.resolve(s);
+  var bin;
+  try { bin = atob(s); } catch(e){ return Promise.resolve(s); }
+  var u = new Uint8Array(bin.length);
+  for(var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  if(u[0] === 0x1f && u[1] === 0x8b && typeof DecompressionStream === 'function'){
+    return new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+  }
+  return Promise.resolve(new TextDecoder().decode(u));
+}
+
+function pretty(text){
+  try { return JSON.stringify(JSON.parse(text), null, 2); } catch(e){ return text; }
+}
+
+(function init(){
+  if(!localStorage.getItem(KEY_STORE)){
+    showKey('');
+  } else {
+    load();
+  }
+})();
+</script>
+</body>
+</html>

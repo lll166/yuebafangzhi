@@ -1,0 +1,20 @@
+name = "yueba-sync"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+# 先执行：npx wrangler d1 create yueba-sync
+# 再把输出的 database_id 填到下面
+[[d1_databases]]
+binding = "DB"
+database_name = "yueba-sync"
+database_id = "0fa93995-6233-4852-b6bc-8b9dd8eaeba8"
+
+# 可选：给 hash 加一层盐。改了它，之前所有同步码都会失效（慎改）
+# [vars]
+# PEPPER = "换成你自己的随机字符串"
+
+# admin.html 以纯文本打进 Worker（看板页面由 /admin 直接返回）
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = true
