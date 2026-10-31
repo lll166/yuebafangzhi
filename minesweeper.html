@@ -1266,7 +1266,7 @@ function defSave(){
   return {
     v:1,
     stats:{easy:blankStat(),normal:blankStat(),hard:blankStat()},
-    daily:{key:'',done:false,bestMs:0,bestStars:0,rewarded:false,streak:0,lastKey:''},
+    daily:{key:'',done:false,bestMs:0,bestStars:0,rewarded:false,streak:0,lastKey:'',reset:''},
     totalWins:0,totalHits:0,totalHints:0,ach:{},
     muted:!!(MAIN&&MAIN.muted),lowPower:!!(MAIN&&MAIN.lowPower),
     firstSeen:todayKey()
@@ -1299,6 +1299,7 @@ function loadSave(){
       S.daily.rewarded=!!q.rewarded;
       S.daily.streak=Math.max(0,parseInt(q.streak,10)||0);
       S.daily.lastKey=typeof q.lastKey==='string'?q.lastKey:'';
+      if(typeof q.reset==='string') S.daily.reset=q.reset;
     }
     S.totalWins=Math.max(0,parseInt(d.totalWins,10)||0);
     S.totalHits=Math.max(0,parseInt(d.totalHits,10)||0);
@@ -1309,6 +1310,15 @@ function loadSave(){
   }catch(e){ S=defSave(); }
 }
 loadSave();
+/* 每日奖励重置令牌：改这个串即可让所有玩家重领「今日大扫除」首通奖励。
+   清掉游戏端的已完成/已领标记（可重打当日每日局）；连击、最佳成绩、通关数都保留 */
+const MS_DAILY_RESET='r1';
+if(S.daily.reset!==MS_DAILY_RESET){
+  S.daily.reset=MS_DAILY_RESET;
+  S.daily.done=false;
+  S.daily.rewarded=false;
+  saveGame();
+}
 function saveGame(){
   try{
     const out={v:1,stats:S.stats,daily:S.daily,totalWins:S.totalWins,totalHits:S.totalHits,
@@ -2193,7 +2203,8 @@ function recordWin(stars){
     }
     if(!S.daily.done){
       if(S.daily.lastKey===yesterdayKey()) S.daily.streak=Math.max(1,(S.daily.streak||0)+1);
-      else S.daily.streak=1;
+      /* 同一天重打（奖励重置后可发生）：连击不变，不清零也不重复 +1 */
+      else if(S.daily.lastKey!==key) S.daily.streak=1;
       S.daily.lastKey=key;
     }
     S.daily.done=true;

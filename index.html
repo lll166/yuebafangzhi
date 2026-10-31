@@ -15524,6 +15524,9 @@ function dexSweeperEntry(){
 }
 _i18nRepaint.push(function(){ if($('gbBox')&&$('gbBox').classList.contains('show')) gbRender(); });
 /* 黄金矿工回传：金币（每关达标）与每日挑战道具（隧道通行证） */
+/* 月巴大扫除每日奖励重置令牌：与 minesweeper.html 的 MS_DAILY_RESET 保持一致，
+   改动一次即让所有玩家重领「今日大扫除」首通奖励 */
+const MS_DAILY_RESET='r1';
 window.addEventListener('message',function(e){
   const d=e&&e.data;
   if(!d) return;
@@ -15628,14 +15631,15 @@ window.addEventListener('message',function(e){
     if(e.source) e.source.postMessage({type:'yueba-gold-item-ack',item:'goldletter',ok:true},'*');
     toast($t('🚇 隧道通行证已放入旅行仓库，可在行囊里带上出发'));
   }else if(d.type==='yueba-minesweeper-daily'){
-    /* 月巴大扫除：今日大扫除首通奖励。父页记账（每天一次），回 ack 带金币数，
+    /* 月巴大扫除：今日大扫除首通奖励 = 玩家当前 1.5 小时的金币产出
+       （codeRewardGold() 是 24 小时估算，除以 16）。父页记账（每天一次），回 ack 带金币数，
        游戏端自己还有一份 rewarded 标记，两边各管各的存档 */
     if(!e.source) return;
     const key=dayKey(clockNow());
-    if(!S.msDaily) S.msDaily={day:'',n:0};
+    if(!S.msDaily||S.msDaily.reset!==MS_DAILY_RESET) S.msDaily={day:'',n:0,reset:MS_DAILY_RESET};
     let n=0;
     if(S.msDaily.day!==key){
-      n=10;
+      n=Math.max(1,Math.round(codeRewardGold()/16));
       S.msDaily={day:key,n:n};
       addCoins(n);
       save();
