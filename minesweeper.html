@@ -254,6 +254,14 @@
   #gameView{display:none;flex:1;min-height:0;flex-direction:column;align-items:center;gap:9px;
     padding:0 0 calc(12px + var(--safeB));overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
   #gameView.show{display:flex}
+  /* 全屏模式：隐藏顶栏和提示条，只保留游戏工具栏 + 棋盘，空间全部让给棋盘 */
+  body.fsplay #top,body.playing.fsplay #top{display:none}
+  body.fsplay #gameHint{display:none}
+  body.fsplay #gameView,body.playing.fsplay #gameView{padding-bottom:calc(8px + var(--safeB))}
+  /* 全屏时从顶栏搬进来的「敲一敲」「暂停」，与 .gbtn 对齐 */
+  .gbar .chip{flex:none}
+  body.fsplay .gbar .chip.hint{align-items:center;text-align:center}
+  body.fsplay .gbar .chip.pause{opacity:.9}
   .gbar{display:flex;align-items:center;gap:7px;width:100%;padding:0 2px}
   .gbtn{flex:none;min-height:44px;padding:0 10px;font-size:10px;font-weight:900;letter-spacing:.6px;
     color:var(--accent2);border:1px solid var(--line);border-left:2px solid var(--line2);
@@ -807,6 +815,7 @@
       <div class="ginfo" id="gameInfo"></div>
       <button class="gbtn mode" id="btnMode" data-i18n-title="modeTitle" aria-label="mode"><span id="modeIco">🧹</span><span id="modeTxt">翻</span></button>
       <button class="gbtn" id="gameRestart" data-i18n="restart">↻ 重开</button>
+      <button class="gbtn" id="btnFull" data-i18n-title="fullTitle" aria-label="fullscreen">⛶</button>
     </div>
     <div id="boardWrap"><div id="board"></div></div>
     <div class="ghint" id="gameHint"></div>
@@ -939,7 +948,7 @@ const I18N={
     back:'← 返回', restart:'↻ 重开',
     gameInfo:'{name} · {r}×{c} · {m} 只偷茄月巴',
     gameHint:'点开纸箱；长按或右键贴封条。数字四周封齐后，再点数字可一次翻开。',
-    modeOpen:'翻', modeSeal:'封', modeTitle:'切换：翻格 / 封条',
+    modeOpen:'翻', modeSeal:'封', modeTitle:'切换：翻格 / 封条', fullTitle:'全屏：只保留棋盘',
     paused:'已暂停', resume:'继续',
     winTitle:'番茄都保住了', winSub:'大扫除完成，用时 {time}。',
     loseTitle:'番茄被其他月巴偷走了！', loseSub:'{name} 趁乱偷走了宝贵的番茄，用时 {time}。下次看紧一点。',
@@ -987,7 +996,7 @@ const I18N={
     back:'← Back', restart:'↻ Restart',
     gameInfo:'{name} · {r}×{c} · {m} tomato thieves',
     gameHint:'Tap to open; long-press or right-click to seal. When the seals match the number, tap it to open around.',
-    modeOpen:'OPEN', modeSeal:'SEAL', modeTitle:'Switch open / seal',
+    modeOpen:'OPEN', modeSeal:'SEAL', modeTitle:'Switch open / seal', fullTitle:'Fullscreen: board only',
     paused:'Paused', resume:'Resume',
     winTitle:'Every tomato is safe', winSub:'Deep clean done in {time}.',
     loseTitle:'Another banny stole the tomatoes!!!', loseSub:'{name} slipped away with the precious tomato. {time} this run — keep a closer eye next time.',
@@ -1035,7 +1044,7 @@ const I18N={
     back:'← 戻る', restart:'↻ やり直し',
     gameInfo:'{name} · {r}×{c} · 月巴 {m} 匹',
     gameHint:'タップで開く。長押し／右クリックで封。数字の周りを封じ切ったら、数字をタップで一括オープン。',
-    modeOpen:'開く', modeSeal:'封', modeTitle:'開く／封を切り替え',
+    modeOpen:'開く', modeSeal:'封', modeTitle:'開く／封を切り替え', fullTitle:'全画面：盤面のみ表示',
     paused:'一時停止', resume:'再開',
     winTitle:'トマトは無事', winSub:'大掃除完了。タイム {time}。',
     loseTitle:'トマトは他の月巴に盗まれた！！！', loseSub:'{name} が大切なトマトを盗んでいきました。タイム {time}。次はもっと注意して。',
@@ -1083,7 +1092,7 @@ const I18N={
     back:'← 뒤로', restart:'↻ 다시 시작',
     gameInfo:'{name} · {r}×{c} · 토마토 도둑 {m}마리',
     gameHint:'탭해서 열기, 길게 누르거나 오른쪽 클릭으로 봉인. 숫자 주변을 모두 봉인하면 숫자를 탭해 한 번에 열 수 있어요.',
-    modeOpen:'열기', modeSeal:'봉인', modeTitle:'열기 / 봉인 전환',
+    modeOpen:'열기', modeSeal:'봉인', modeTitle:'열기 / 봉인 전환', fullTitle:'전체 화면: 보드만 표시',
     paused:'일시정지', resume:'계속',
     winTitle:'토마토를 모두 지켰다', winSub:'대청소 완료. 시간 {time}.',
     loseTitle:'토마토를 다른 배니에게 빼앗겼다！！！', loseSub:'{name}이(가) 소중한 토마토를 훔쳐 갔습니다. 시간 {time}. 다음엔 더 조심하세요.',
@@ -2633,6 +2642,11 @@ function backToMenu(){
   $('gameView').classList.remove('show');
   $('menuView').classList.remove('hide');
   document.body.classList.remove('playing');
+  /* 返回菜单时退出全屏态（含把 HUD 按钮放回顶栏），并请求浏览器退出全屏 */
+  if(document.body.classList.contains('fsplay')){
+    setFsplay(false);
+    if(document.fullscreenElement&&document.exitFullscreen){ try{ document.exitFullscreen(); }catch(e){} }
+  }
   $('board').style.width='';
   $('hudBugs').textContent='—';
   $('hudTime').textContent='00:00';
@@ -2763,6 +2777,50 @@ $('board').addEventListener('click',function(e){
 $('btnMode').addEventListener('click',function(){
   sfxClick();
   setMode(G.mode==='seal'?'open':'seal');
+});
+/* 全屏模式：隐藏顶栏和提示条只留棋盘；能把浏览器全屏 API 用上就顺带全屏，不支持则仅做沉浸式布局 */
+/* 「敲一敲」「暂停」随全屏从顶栏搬进游戏工具栏（移动真实节点，事件与状态同步天然保留），退出时放回原位 */
+let hudChipsHome=null;
+function moveHudChips(toBar){
+  const hint=$('btnHint'),pause=$('btnPause'),bar=document.querySelector('#gameView .gbar');
+  if(!hint||!pause||!bar) return;
+  if(toBar){
+    if(!hudChipsHome) hudChipsHome={parent:hint.parentNode,next2:pause.nextSibling};
+    const anchor=$('btnMode');
+    bar.insertBefore(hint,anchor);
+    bar.insertBefore(pause,anchor);
+  }else if(hudChipsHome&&hudChipsHome.parent){
+    hudChipsHome.parent.insertBefore(pause,hudChipsHome.next2);
+    hudChipsHome.parent.insertBefore(hint,pause);
+  }
+}
+function setFsplay(on){
+  document.body.classList.toggle('fsplay',on);
+  const bf=$('btnFull');
+  if(bf) bf.textContent=on?'⤡':'⛶';
+  moveHudChips(on);
+  /* 布局变化后棋盘按新可用空间重算（fitBoard 自适应宽高，fitCellFont 跟着放大字号）；
+     浏览器全屏真正生效时的 resize 事件也会再触发一次重算 */
+  if(G.active) fitBoard();
+}
+function toggleFullscreen(){
+  sfxClick();
+  const on=!document.body.classList.contains('fsplay');
+  const root=document.documentElement;
+  if(on&&root.requestFullscreen&&!document.fullscreenElement){
+    try{
+      const p=root.requestFullscreen();
+      if(p&&p.catch) p.catch(function(){});
+    }catch(e){}
+  }else if(!on&&document.fullscreenElement&&document.exitFullscreen){
+    try{ document.exitFullscreen(); }catch(e){}
+  }
+  setFsplay(on);
+}
+$('btnFull').addEventListener('click',toggleFullscreen);
+document.addEventListener('fullscreenchange',function(){
+  /* 用户按 Esc 退出浏览器全屏时，同步退出沉浸布局，避免顶栏消失 */
+  if(!document.fullscreenElement&&document.body.classList.contains('fsplay')) setFsplay(false);
 });
 window.addEventListener('resize',function(){
   if(G.active){
