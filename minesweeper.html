@@ -2906,24 +2906,40 @@ let boardPendingSend=null;
 let boardCur='daily';
 let boardSeq=0;
 
+/* localStorage 会被部分手机 WebView / 系统回收清掉（如 iOS WKWebView）。
+   uid 与名字额外镜像一份到一年期 Cookie：localStorage 丢失时自动从 Cookie 找回，
+   保证排行榜名字「输入一次，一直保留」，版本更新、页面刷新都不受影响 */
+function cookieGet(k){
+  try{
+    const m=document.cookie.match(new RegExp('(?:^|;\\s*)'+k+'=([^;]*)'));
+    return m?decodeURIComponent(m[1]):'';
+  }catch(e){ return ''; }
+}
+function cookieSet(k,v){
+  try{ document.cookie=k+'='+encodeURIComponent(v)+'; max-age=34560000; path=/; SameSite=Lax'; }catch(e){}
+}
 function boardUid(){
   let u='';
   try{ u=localStorage.getItem(BOARD_UID_KEY)||''; }catch(e){}
+  if(!/^[A-Za-z0-9_-]{8,64}$/.test(u)) u=cookieGet(BOARD_UID_KEY);   // 本地丢了，从 Cookie 找回
   if(!/^[A-Za-z0-9_-]{8,64}$/.test(u)){
     const r=new Uint8Array(8);
     (window.crypto||window.msCrypto).getRandomValues(r);
     u=[].map.call(r,function(b){ return (b|0).toString(16).padStart(2,'0'); }).join('');
-    try{ localStorage.setItem(BOARD_UID_KEY,u); }catch(e){}
   }
+  try{ localStorage.setItem(BOARD_UID_KEY,u); }catch(e){}
+  if(cookieGet(BOARD_UID_KEY)!==u) cookieSet(BOARD_UID_KEY,u);
   return u;
 }
 function boardName(){
   let n='';
   try{ n=localStorage.getItem(BOARD_NAME_KEY)||''; }catch(e){}
+  if(!n) n=cookieGet(BOARD_NAME_KEY);                                 // 本地丢了，从 Cookie 找回
   return n;
 }
 function boardSetName(n){
   try{ localStorage.setItem(BOARD_NAME_KEY,n); }catch(e){}
+  cookieSet(BOARD_NAME_KEY,n);
 }
 function fmtSec(sec){
   const s=Math.max(0,sec|0), m=(s/60)|0;
@@ -3057,7 +3073,12 @@ $('boardRename').addEventListener('click',function(){
 });
 $('nickSave').addEventListener('click',function(){ sfxClick(); nickCommit(false); });
 $('nickLater').addEventListener('click',function(){ sfxClick(); nickCommit(true); });
-$('nickModal').addEventListener('click',function(e){ if(e.target===$('nickModal')) nickCommit(true); });
+$('nickModal').addEventListener('click',function(e){
+  if(e.target===$('nickModal')){
+    /* 已经输入了名字就保存输入，不丢给随机名 */
+    nickCommit($('nickInput').value.trim()?false:true);
+  }
+});
 $('nickInput').addEventListener('keydown',function(e){
   if(e.key==='Enter'){ e.preventDefault(); nickCommit(false); }
 });
