@@ -258,6 +258,9 @@
   body.fsplay #top,body.playing.fsplay #top{display:none}
   body.fsplay #gameHint{display:none}
   body.fsplay #gameView,body.playing.fsplay #gameView{padding-bottom:calc(8px + var(--safeB))}
+  /* 全屏时解除对局容器 1040px 宽度上限：2K/4K 屏幕上棋盘才能等比例放大到高度上限 */
+  body.fsplay #app,body.playing.fsplay #app{max-width:none}
+  body.fsplay .gbar,body.playing.fsplay .gbar{max-width:1040px;margin:0 auto}
   /* 全屏时从顶栏搬进来的「敲一敲」「暂停」，与 .gbtn 对齐 */
   .gbar .chip{flex:none}
   body.fsplay .gbar .chip.hint{align-items:center;text-align:center}
@@ -2821,6 +2824,8 @@ $('btnFull').addEventListener('click',toggleFullscreen);
 document.addEventListener('fullscreenchange',function(){
   /* 用户按 Esc 退出浏览器全屏时，同步退出沉浸布局，避免顶栏消失 */
   if(!document.fullscreenElement&&document.body.classList.contains('fsplay')) setFsplay(false);
+  /* 浏览器全屏真正生效的瞬间再重算一次棋盘，避免全屏过渡期尺寸未定导致没放大 */
+  else if(document.fullscreenElement&&G.active) fitBoard();
 });
 window.addEventListener('resize',function(){
   if(G.active){
