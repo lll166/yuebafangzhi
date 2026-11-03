@@ -1363,7 +1363,7 @@ F('w4ah','王庭古龙鲤',2,'#95a0d0',{pat:'stripe',fat:1.25}); F('w4ai','失�
 var SAVE_KEY='ybf_fishing_save_v1';
 var save={v:6,tomato:0,totalCatch:0,fish:{},rewards:{},sel:'f1',auto:false,autoReel:0,autoTs:0,autoMap:'',buddy:'',portrait:'normal',
   rod:0,rodLv:0,line:0,basket:0,bait:{powder:0,rare:0,dragon:0},
-  orders:null,orderAt:0,ordDay:'',ordRr:0,ach:{},stats:{smooth:0,snaps:0,rs:0,fast:0,casts:0,offCatch:0,mapCasts:{}},title:'',
+  orders:null,orderAt:0,ordYard:0,ordDay:'',ordRr:0,ach:{},stats:{smooth:0,snaps:0,rs:0,fast:0,casts:0,offCatch:0,mapCasts:{}},title:'',
   kings:{},kingPity:{},junk:{},junkDone:false,bond:{},bag:[],
   /* 排行榜 / 今日记录（旧档缺字段时按 0 处理）：
      at：最后一次写入时间，用来和云存档比谁更新；
@@ -1407,6 +1407,7 @@ function loadSave(){
       /* C2 订单 / 成就 / 统计 / 称号 */
       save.orders=(Array.isArray(d.orders)?d.orders:null);
       save.orderAt=(typeof d.orderAt==='number')?d.orderAt:0;   /* 本轮订单所属刷新点 */
+      save.ordYard=(d.ordYard|0)?1:0;                           /* 本轮订单是否按庭院名册开的 */
       save.ordDay=(typeof d.ordDay==='string')?d.ordDay:'';     /* 付费刷新计数所属日期 */
       save.ordRr=clamp(d.ordRr|0,0,3);                          /* 当天已用付费刷新次数 */
       save.ach=d.ach||{};
@@ -6971,26 +6972,27 @@ function updateOrdTimer(){
 function ensureOrders(){
   if(YARD_PENDING) return;                /* 内嵌时等庭院名册到达再开单，别先用保底名册开一轮 */
   var ys=yardList(), slot=orderSlot();
-  var valid=!!(save.orders&&save.orders.length===ys.length);
+  /* 只有「本轮刷新点」变化才重新开单：庭院月巴每 10~30 分钟轮换一次，
+     若拿庭院人数/委托人去校验，玩家每次打开垂钓都会白丢订单进度 */
+  var valid=!!(save.orders&&save.orders.length);
   if(valid&&!save.orderAt){               /* 旧档：订单保留，只补记刷新点，不白丢进度 */
-    save.orderAt=slot; commitSave(); return;
+    save.orderAt=slot; save.ordYard=YARD?1:0; commitSave(); return;
   }
   if(valid&&save.orderAt===slot) return;
   save.orderAt=slot;
+  save.ordYard=YARD?1:0;                  /* 用庭院名册开的单：之后庭院轮换不再重开 */
   save.orders=[];
   var key=orderKey(slot);
   ys.forEach(function(y){ save.orders.push(genOrder(y.id,y.name,key,0,y.names)); });
   commitSave();
 }
 /* 庭院名册到达后校正订单委托人：启动时可能还没收到名册，
-   已存在的订单若委托人不在这批庭院月巴里，就整轮重开 */
+   已存在的订单若委托人不在这批庭院月巴里，就整轮重开。
+   注意：只换掉「保底名册开的单」，本轮已按庭院开好的单子要保留到下一个刷新点，
+   否则庭院每次轮换都会把玩家做到一半的心愿作废。 */
 function syncOrdersToYard(){
   if(!YARD||!Array.isArray(save.orders)||!save.orders.length) return;
-  var stale=false;
-  save.orders.forEach(function(o){
-    if(o&&o.bid&&!yardEntry(o.bid)) stale=true;
-  });
-  if(!stale) return;
+  if(save.ordYard) return;                /* 已按庭院开单：轮换不重开 */
   save.orders=null; save.orderAt=0;
   commitSave();
 }
