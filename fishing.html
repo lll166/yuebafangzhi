@@ -878,7 +878,7 @@ function buildLangModal(){
     var b=document.createElement('button');
     b.className='langBtn'+(l.code===LANG?' on':'');
     b.textContent=l.label+(l.code===LANG?' ✓':'');
-    b.onclick=function(){ setLang(l.code); buildLangModal(); };
+    b.onclick=function(){ setLang(l.code); $('langOv').classList.remove('show'); };
     box.appendChild(b);
   });
 }
@@ -4472,8 +4472,13 @@ function drawTomato(t){
    独立打开时从保底名册随机一位（本次会话固定）。庭院会轮换，旧随行自动回落。 */
 var YARD=null;      /* [{id,url,color,name}]；null=尚未收到父页名册 */
 var IN_FRAME=(function(){ try{ return !!(window.parent&&window.parent!==window); }catch(e){ return false; } })();
+/* 验收开关：0 = 垂钓页暂不接入百巴箱 / 图鉴月巴。
+   父页仍下发旅行信件与语言（开图、i18n 需要），但庭院名册一律忽略；
+   随行、订单委托、羁绊全部改用下面的本地保底名册。
+   验收通过后把这里改成 1，即可恢复与庭院月巴的联动。 */
+var BUDDY_LINK=0;
 /* 保底月巴（C4.5）：硬编码外链立绘——独立打开/未连接主页面时，
-   陪伴永远有图；与主页面连通后会被庭院名册覆盖 */
+   陪伴永远有图；BUDDY_LINK=1 且收到庭院名册后才会被覆盖 */
 var FALLBACK_YARD=[
   {id:'mb_xiaoyue',name:'小月巴',color:'#c9b2e8',scale:1,url:'月巴立绘裁剪/mb_xiaoyue.png'},
   {id:'mb_chi',name:'进食月巴',color:'#e8c39e',scale:1,url:'月巴立绘裁剪/mb_chi.png'},
@@ -4528,13 +4533,15 @@ window.addEventListener('message',function(e){
   }
   var yard=Array.isArray(d.yard)?d.yard:[];
   var map=[];
-  yard.forEach(function(t){
+  /* 验收前（BUDDY_LINK=0）忽略庭院名册：随行/订单/羁绊不接图鉴月巴 */
+  if(BUDDY_LINK) yard.forEach(function(t){
     if(!t||!t.id) return;
     map.push({id:t.id,url:t.art||'',color:t.color||'#9e9e9e',name:t.name||t.id,names:t.names||null,scale:t.scale||1});
   });
-  if(!map.length) return;                 /* 庭院暂时没有月巴：保持现状 */
-  YARD=map;
-  if(save.buddy&&!yardEntry(save.buddy)) save.buddy='';
+  if(map.length){                          /* 庭院暂时没有月巴：保持现状 */
+    YARD=map;
+    if(save.buddy&&!yardEntry(save.buddy)) save.buddy='';
+  }
   /* 父页下发的语言：玩家没在页面内手动切过时跟随父页 */
   if(d.lang&&!LANG_LOCKED) setLang(d.lang,true);
 });
@@ -6300,7 +6307,7 @@ function buildOrders(){
     var card=document.createElement('div');
     card.className='ordCard'+(o.done?' done':'');
     var head=document.createElement('div'); head.className='ohead';
-    head.innerHTML=$tf('{b} 想要 {f} ×{n}',{b:o.bname,f:'<span style="color:'+rr.color+';font-weight:800">'+fishName(f)+'</span>',n:o.need});
+    head.innerHTML=$tf('{b} 想要 {f} ×{n}',{b:bannyNameOf(o.bid)||o.bname,f:'<span style="color:'+rr.color+';font-weight:800">'+fishName(f)+'</span>',n:o.need});
     card.appendChild(head);
     var bar=document.createElement('div'); bar.className='oprog';
     var fill=document.createElement('i');
@@ -7098,7 +7105,7 @@ var I18N_UI={
   '番茄币不够（刷新需 50）':{en:'Not enough Tomato Coins (50 to reroll)',ja:'トマトコイン不足（更新に50）',ko:'토마토 코인 부족 (갱신 50)'},
   '订单已刷新（今天还剩 {n} 次）':{en:'Order rerolled ({n} left today)',ja:'依頼を更新（今日あと {n} 回）',ko:'주문 갱신됨 (오늘 {n}회 남음)'},
   '📋 订单 ✓{n}':{en:'📋 Orders ✓{n}',ja:'📋 依頼 ✓{n}',ko:'📋 주문 ✓{n}'},
-  '{b} 想要 {f} ×{n}':{en:'{b} wants {f} ×{n}',ja:'{b}が{f}を×{n}ほしい',ko:'{b}가 {f} ×{n} 원해요'},
+  '{b} 想要 {f} ×{n}':{en:'{b} wants {f} ×{n}',ja:'{b}が{f}を{n}匹ほしい',ko:'{b}가 {f} {n}마리 원해요'},
   '{g} / {n} · 报酬约 {e} 番茄币':{en:'{g} / {n} · Reward ~{e} Tomato Coins',ja:'{g} / {n} · 報酬約 {e} トマトコイン',ko:'{g} / {n} · 보상 약 {e} 토마토 코인'},
   '✓ 已完成':{en:'✓ Done',ja:'✓ 完了',ko:'✓ 완료'},
   '交付':{en:'Deliver',ja:'納品',ko:'전달'},
@@ -7211,7 +7218,38 @@ var I18N_UI={
   '龙涎饵':{en:'Dragon Bait',ja:'龍涎餌',ko:'용연 미끼'},
   '下一竿等待时间减半':{en:'Next cast waits half as long',ja:'次の一投の待ち時間が半分',ko:'다음 캐스팅 대기 절반'},
   '下一竿稀有+传说概率 +2%':{en:'Next cast: Rare + Legend +2%',ja:'次の一投：レア＋レジェンド +2%',ko:'다음 캐스팅: 희귀+전설 +2%'},
-  '下一竿传说概率 +10%':{en:'Next cast: Legend +10%',ja:'次の一投：レジェンド +10%',ko:'다음 캐스팅: 전설 +10%'}
+  '下一竿传说概率 +10%':{en:'Next cast: Legend +10%',ja:'次の一投：レジェンド +10%',ko:'다음 캐스팅: 전설 +10%'},
+
+  /* ---- 称号 / 单位 / 动态商品名 ---- */
+  '渔获五百人':{en:'Catch-500 Master',ja:'漁獲五百人',ko:'어획 500인'},
+  '图鉴大师':{en:'Codex Master',ja:'図鑑マスター',ko:'도감 마스터'},
+  '垂钓百科':{en:'Fishing Encyclopedia',ja:'釣り百科',ko:'낚시 백과'},
+  '传说猎人':{en:'Legend Hunter',ja:'伝説ハンター',ko:'전설 사냥꾼'},
+  '传家宝猎人':{en:'Heirloom Hunter',ja:'家宝ハンター',ko:'가보 사냥꾼'},
+  '稳如老巴':{en:'Steady as a Banny',ja:'安定のバニー',ko:'안정의 배니'},
+  '丝滑大师':{en:'Smooth Master',ja:'スムーズマスター',ko:'부드러움 마스터'},
+  '瞬收大师':{en:'Instant Reel Master',ja:'瞬巻きマスター',ko:'순간 감기 마스터'},
+  '百折不挠':{en:'Never Give Up',ja:'七転八起',ko:'백절불굴'},
+  '四海驯王':{en:'King of Four Seas',ja:'四海馴致王',ko:'사해의 왕'},
+  '币':{en:'coins',ja:'コイン',ko:'코인'},
+  '条':{en:'fish',ja:'匹',ko:'마리'},
+  '单':{en:'orders',ja:'件',ko:'건'},
+  '强化 +10':{en:'Enhance +10',ja:'強化 +10',ko:'강화 +10'},
+  '扩容 +5 条':{en:'Expand +5',ja:'拡張 +5',ko:'확장 +5'},
+  '自动 开':{en:'Auto On',ja:'自動 入',ko:'자동 켜짐'},
+  '自动 关':{en:'Auto Off',ja:'自動 切',ko:'자동 꺼짐'},
+  '自动 🔒':{en:'Auto 🔒',ja:'自動 🔒',ko:'자동 🔒'},
+  '商店购入「自动收线器」后可用（需成就「渔获五十」）':{en:'Buy the Auto-Reeler in the shop (needs “Catch 50”)',ja:'ショップで「自動巻き器」を購入（実績「漁獲五十」が必要）',ko:'상점에서 “자동 감기 장치” 구매 (“어획 50” 업적 필요)'},
+  '自动收线器还没装——达成成就「渔获五十」后可在商店购入':{en:'No Auto-Reeler yet — unlock “Catch 50” then buy it in the shop',ja:'自動巻き器は未装着——実績「漁獲五十」達成後にショップで購入できます',ko:'자동 감기 장치가 없어요 — “어획 50” 달성 후 상점에서 구매하세요'},
+  '自动收线开启：交给我吧':{en:'Auto-reel on: leave it to me',ja:'自動巻き ON：任せて',ko:'자동 감기 켜짐: 맡겨 주세요'},
+  '自动收线关闭：稳住！':{en:'Auto-reel off: steady now!',ja:'自動巻き OFF：落ち着いて！',ko:'자동 감기 꺼짐: 침착하게!'},
+  '(无)':{en:'(none)',ja:'（なし）',ko:'(없음)'},
+  '无':{en:'None',ja:'なし',ko:'없음'},
+  '饵:':{en:'Bait: ',ja:'餌：',ko:'미끼: '},
+  '清晨':{en:'Dawn',ja:'早朝',ko:'새벽'},
+  '白天':{en:'Day',ja:'昼',ko:'낮'},
+  '黄昏':{en:'Dusk',ja:'夕暮れ',ko:'황혼'},
+  '夜晚':{en:'Night',ja:'夜',ko:'밤'}
 };
 
 /* ---------- 地区 / 钓点 ---------- */
@@ -7710,7 +7748,150 @@ var I18N_FISH={
   s4ag:{en:'Merfolk Ancient Song Shark',ja:'人魚古歌の鮫',ko:'인어고가 상어'},
   s4ah:{en:'Pearl Palace Dragon Koi',ja:'珠宮の龍鯉',ko:'진주궁 용잉어'},
   s4ai:{en:'Deep Sea Merfolk King Shark',ja:'深海人魚王の鮫',ko:'심해 인어왕 상어'},
-  /* ---- 雪地（待补） ---- */
+  /* ---- 雪地 ---- */
+  w1a:{en:'Snow Velvet Fish',ja:'雪絨の魚',ko:'눈솜털어'},
+  w1b:{en:'Ice Crystal Trout',ja:'氷晶の鱒',ko:'얼음결정 송어'},
+  w1c:{en:'Meltwater Trout',ja:'雪解け水の鱒',ko:'녹은물 송어'},
+  w2a:{en:'Rune Bass',ja:'ルーンのスズキ',ko:'룬 농어'},
+  w2b:{en:'Stone Statue Fish',ja:'石像魚',ko:'석상어'},
+  w2c:{en:'Ruins Grouper',ja:'遺跡のハタ',ko:'유적 그루퍼'},
+  w3a:{en:'Under-Ice Silverfish',ja:'氷下のシラウオ',ko:'얼음밑 은어'},
+  w3b:{en:'Aurora Salmon',ja:'オーロラのサケ',ko:'오로라 연어'},
+  w3c:{en:'Lake-Center Blue Diamond Fish',ja:'湖心の青ダイヤ魚',ko:'호수중심 푸른다이아어'},
+  w4a:{en:'Crown Golden Koi',ja:'王冠の金鯉',ko:'왕관 금잉어'},
+  w4b:{en:'Court Ghost Lantern Fish',ja:'宮廷の幽灯魚',ko:'궁정 유등어'},
+  w4c:{en:'Ice Throne King Sturgeon',ja:'氷座王の鱘',ko:'얼음왕좌왕 철갑상어'},
+  w1d:{en:'Snow Rabbit Minnow',ja:'雪兎のハヤ',ko:'눈토끼 미노우'},
+  w1e:{en:'Snowstorm Pike',ja:'吹雪のカワカマス',ko:'눈보라 강꼬치'},
+  w1f:{en:'Snow Mountain Summit Trout',ja:'雪山の頂の鱒',ko:'설산정상 송어'},
+  w2d:{en:'Broken Pillar Xenocypris',ja:'断柱のエツ',ko:'부러진기둥 각시붕어'},
+  w2e:{en:'Rune Lantern Puffer',ja:'ルーン提灯フグ',ko:'룬 등불복어'},
+  w2f:{en:'Ruins Guardian Stone Shark',ja:'遺跡守りの石鮫',ko:'유적지기 돌상어'},
+  w3d:{en:'Ice Bubble Herring',ja:'氷泡のニシン',ko:'얼음거품 청어'},
+  w3e:{en:'Blue Ice Goby',ja:'青氷のハゼ',ko:'푸른얼음 망둥어'},
+  w3f:{en:'Lakebed Aurora Koi',ja:'湖底のオーロラ鯉',ko:'호수바닥 오로라잉어'},
+  w4d:{en:'Ice Palace Silver Minnow',ja:'氷宮の銀ハヤ',ko:'얼음궁 은미노우'},
+  w4e:{en:'Attendant Flounder',ja:'侍従のカレイ',ko:'시종 가자미'},
+  w4f:{en:'Court Candle Bream',ja:'王庭の燭鯛',ko:'왕정 촛불도미'},
+  w4g:{en:'Court Shadow Guard Shark',ja:'王庭の影衛鮫',ko:'왕정 그림자위상어'},
+  w1g:{en:'Meltwater Silver Minnow',ja:'雪解けの銀ハヤ',ko:'녹은물 은미노우'},
+  w1h:{en:'Snow Water Bream',ja:'雪水のタナゴ',ko:'설수 납자루'},
+  w1i:{en:'Ice Crevice Loach',ja:'氷縫のドジョウ',ko:'얼음틈 미꾸라지'},
+  w1j:{en:'Snow Velvet Little Barb',ja:'雪絨の小バルブ',ko:'눈솜털 꼬마바브'},
+  w1k:{en:'Melt Brook Trout Fry',ja:'融渓の鱒稚魚',ko:'녹은개울 송어치어'},
+  w1l:{en:'Ice Shard Bitterling',ja:'氷碴のタナゴ',ko:'얼음조각 납자루'},
+  w1m:{en:'Pine Snow Bagrid',ja:'松雪のギギ',ko:'솔눈 동자개'},
+  w1n:{en:'Glacier Lanternfish',ja:'氷河の灯魚',ko:'빙하 등어'},
+  w1o:{en:'Meltwater Rock Bass',ja:'雪解けの岩スズキ',ko:'녹은물 바위농어'},
+  w1p:{en:'Snow Mountain Brook Guardian Catfish',ja:'雪山の渓守りナマズ',ko:'설산 개울지기 메기'},
+  w1q:{en:'Ice Crevice Rainbow Trout',ja:'氷縫の虹鱒',ko:'얼음틈 무지개송어'},
+  w1r:{en:'Snow Velvet Lantern Bass',ja:'雪絨の灯スズキ',ko:'눈솜털 등농어'},
+  w1s:{en:'Glacier Ancient Trout',ja:'氷河の古鱒',ko:'빙하 고송어'},
+  w1t:{en:'Snow Summit Silver Dragon',ja:'雪嶺の銀龍',ko:'설봉 은룡'},
+  w1aj:{en:'Snow God Ice Soul Shark',ja:'雪神氷魄の鮫',ko:'설신 빙백상어'},
+  w2g:{en:'Rune Pool Silver Minnow',ja:'ルーン池の銀ハヤ',ko:'룬연못 은미노우'},
+  w2h:{en:'Stone Statue Bream',ja:'石像のタナゴ',ko:'석상 납자루'},
+  w2i:{en:'Broken Pillar Loach',ja:'断柱のドジョウ',ko:'부러진기둥 미꾸라지'},
+  w2j:{en:'Moss Pattern Stone Barb',ja:'苔紋の石バルブ',ko:'이끼무늬 돌바브'},
+  w2k:{en:'Rune Little Bagrid',ja:'ルーンの小ギギ',ko:'룬 꼬마동자개'},
+  w2l:{en:'Ruins Medaka',ja:'遺跡のメダカ',ko:'유적 송사리'},
+  w2m:{en:'Stone Statue Lantern Bass',ja:'石像の灯スズキ',ko:'석상 등농어'},
+  w2n:{en:'Ancient Brick Bitterling',ja:'古煉瓦のタナゴ',ko:'고벽돌 납자루'},
+  w2o:{en:'Pool Loach',ja:'水池のドジョウ',ko:'연못 미꾸라지'},
+  w2p:{en:'Stone Statue Guard Catfish',ja:'石像守衛のナマズ',ko:'석상수위 메기'},
+  w2q:{en:'Rune Rainbow Bream',ja:'ルーン虹鯛',ko:'룬 무지개도미'},
+  w2r:{en:'Ancient Statue Lantern-Eye Fish',ja:'古像の灯眼魚',ko:'고상 등눈어'},
+  w2s:{en:'Ruins Pool Guardian Eel',ja:'遺跡の池守りウナギ',ko:'유적 연못지기 장어'},
+  w2t:{en:'Rune Lord Koi',ja:'ルーンの主鯉',ko:'룬의 주인잉어'},
+  w2aj:{en:'Rune Primogenitor Koi',ja:'ルーンの始祖鯉',ko:'룬 시조잉어'},
+  w3g:{en:'Frozen Lake Silver Minnow',ja:'氷湖の銀ハヤ',ko:'얼음호수 은미노우'},
+  w3h:{en:'Under-Ice Bream',ja:'氷下のタナゴ',ko:'얼음밑 납자루'},
+  w3i:{en:'Ice Bubble Loach',ja:'氷泡のドジョウ',ko:'얼음거품 미꾸라지'},
+  w3j:{en:'Aurora Bitterling',ja:'オーロラのタナゴ',ko:'오로라 납자루'},
+  w3k:{en:'Lake-Center Little Barb',ja:'湖心の小バルブ',ko:'호수중심 꼬마바브'},
+  w3l:{en:'Ice Algae Bagrid',ja:'氷藻のギギ',ko:'얼음조류 동자개'},
+  w3m:{en:'Ice Hole Lanternfish',ja:'氷穴の灯魚',ko:'얼음구멍 등어'},
+  w3n:{en:'Lakebed Green Bass',ja:'湖底の青スズキ',ko:'호수바닥 청농어'},
+  w3o:{en:'Frozen Lake Grouper',ja:'氷湖のハタ',ko:'얼음호수 그루퍼'},
+  w3p:{en:'Aurora Lake Guardian Eel',ja:'オーロラの湖守りウナギ',ko:'오로라 호수지기 장어'},
+  w3q:{en:'Under-Ice Rainbow Trout',ja:'氷下の虹鱒',ko:'얼음밑 무지개송어'},
+  w3r:{en:'Aurora Lantern Bass',ja:'オーロラ灯のスズキ',ko:'오로라 등농어'},
+  w3s:{en:'Frozen Lake Ancient Sturgeon',ja:'氷湖の古鱘',ko:'얼음호수 고철갑상어'},
+  w3t:{en:'Lakebed Aurora Dragon Koi',ja:'湖底オーロラの龍鯉',ko:'호수바닥 오로라 용잉어'},
+  w3aj:{en:'Heart of the Frozen Lake Shark',ja:'氷湖の心の鮫',ko:'얼음호수 심장상어'},
+  w4h:{en:'Ice Palace Bream',ja:'氷宮のタナゴ',ko:'얼음궁 납자루'},
+  w4i:{en:'Icicle Loach',ja:'氷柱のドジョウ',ko:'고드름 미꾸라지'},
+  w4j:{en:'Court Little Barb',ja:'王庭の小バルブ',ko:'왕정 꼬마바브'},
+  w4k:{en:'Ice Crystal Bitterling',ja:'氷晶のタナゴ',ko:'얼음결정 납자루'},
+  w4l:{en:'Palace Wall Green Bass',ja:'宮牆の青スズキ',ko:'궁벽 청농어'},
+  w4m:{en:'Ice Corridor Silver Minnow',ja:'氷廊の銀ハヤ',ko:'얼음회랑 은미노우'},
+  w4n:{en:'Court Lanternfish',ja:'王庭の灯魚',ko:'왕정 등어'},
+  w4o:{en:'Ice Stair Rock Bass',ja:'氷階の岩スズキ',ko:'얼음계단 바위농어'},
+  w4p:{en:'Court Loach',ja:'王庭のドジョウ',ko:'왕정 미꾸라지'},
+  w4q:{en:'Ice Throne Little Puffer',ja:'氷座の小フグ',ko:'얼음왕좌 꼬마복어'},
+  w4r:{en:'Ice Palace Guard Eel',ja:'氷宮守衛のウナギ',ko:'얼음궁 수위장어'},
+  w4s:{en:'Court Candlelight Anglerfish',ja:'王庭の燭光アンコウ',ko:'왕정 촛불빛아귀'},
+  w4t:{en:'Court Ghost Shadow Shark',ja:'王庭の幽影鮫',ko:'왕정 유영상어'},
+  w1u:{en:'Snow Water Loach',ja:'雪水のドジョウ',ko:'설수 미꾸라지'},
+  w1v:{en:'Broken Ice Bream',ja:'砕氷のタナゴ',ko:'깨진얼음 납자루'},
+  w1w:{en:'Snowfield Barb',ja:'雪原のバルブ',ko:'설원 바브'},
+  w1x:{en:'Pine Needle Trout',ja:'松葉の鱒',ko:'솔잎 송어'},
+  w1y:{en:'Snow Cave Lanternfish',ja:'雪洞の灯魚',ko:'눈굴 등어'},
+  w1z:{en:'Meltwater Little Minnow',ja:'雪解けの小ハヤ',ko:'녹은물 꼬마미노우'},
+  w1aa:{en:'Glacier Loach',ja:'氷河のドジョウ',ko:'빙하 미꾸라지'},
+  w1ab:{en:'Frost Velvet Bream',ja:'霜絨のタナゴ',ko:'서리솜털 납자루'},
+  w1ac:{en:'Ice Crevice Little Puffer',ja:'氷縫の小フグ',ko:'얼음틈 꼬마복어'},
+  w1ad:{en:'Snow Ravine Valley Guardian Catfish',ja:'雪澗の谷守りナマズ',ko:'설간 계곡지기 메기'},
+  w1ae:{en:'Glacier Rainbow Trout',ja:'氷河の虹鱒',ko:'빙하 무지개송어'},
+  w1af:{en:'Snowstorm Lantern-Eye Bass',ja:'吹雪の灯眼スズキ',ko:'눈보라 등눈농어'},
+  w1ag:{en:'Snow Mountain Giant Trout',ja:'雪山の大鱒',ko:'설산 왕송어'},
+  w1ah:{en:'Snow Peak Ancient Dragon Koi',ja:'雪峰の古龍鯉',ko:'설봉 고룡잉어'},
+  w1ai:{en:'Snow Mountain Summit Guardian Shark',ja:'雪山の頂の守り鮫',ko:'설산정상 지기상어'},
+  w2u:{en:'Rune Bream',ja:'ルーンのタナゴ',ko:'룬 납자루'},
+  w2v:{en:'Stone Statue Crevice Loach',ja:'石像隙のドジョウ',ko:'석상틈 미꾸라지'},
+  w2w:{en:'Broken Pillar Little Barb',ja:'断柱の小バルブ',ko:'부러진기둥 꼬마바브'},
+  w2x:{en:'Ancient Brick Loach',ja:'古煉瓦のドジョウ',ko:'고벽돌 미꾸라지'},
+  w2y:{en:'Ruins Lanternfish',ja:'遺跡の灯魚',ko:'유적 등어'},
+  w2z:{en:'Moss-Sealed Bagrid',ja:'苔封のギギ',ko:'이끼봉인 동자개'},
+  w2aa:{en:'Rune Silver Minnow',ja:'ルーンの銀ハヤ',ko:'룬 은미노우'},
+  w2ab:{en:'Stone Statue Fragment Fish',ja:'石像碎片魚',ko:'석상조각어'},
+  w2ac:{en:'Pool Little Eel',ja:'水池の小ウナギ',ko:'연못 꼬마장어'},
+  w2ad:{en:'Stone Gate Guard Catfish',ja:'石門守衛のナマズ',ko:'석문수위 메기'},
+  w2ae:{en:'Rune Rainbow Trout',ja:'ルーンの虹鱒',ko:'룬 무지개송어'},
+  w2af:{en:'Ancient Rune Lantern-Eye Bass',ja:'古符の灯眼スズキ',ko:'고부 등눈농어'},
+  w2ag:{en:'Ruins Giant Grouper',ja:'遺跡の大ハタ',ko:'유적 거대그루퍼'},
+  w2ah:{en:'Rune Ancient King Koi',ja:'ルーンの古王鯉',ko:'룬 고왕잉어'},
+  w2ai:{en:'Ruins Rune Guardian Ancient Shark',ja:'遺跡の符守り古鮫',ko:'유적 부적지기 고대상어'},
+  w3u:{en:'Frozen Lake Bream',ja:'氷湖のタナゴ',ko:'얼음호수 납자루'},
+  w3v:{en:'Lakebed Loach',ja:'湖底のドジョウ',ko:'호수바닥 미꾸라지'},
+  w3w:{en:'Frozen Lake Barb',ja:'氷湖のバルブ',ko:'얼음호수 바브'},
+  w3x:{en:'Aurora Little Minnow',ja:'オーロラの小ハヤ',ko:'오로라 꼬마미노우'},
+  w3y:{en:'Ice Algae Lanternfish',ja:'氷藻の灯魚',ko:'얼음조류 등어'},
+  w3z:{en:'Under-Ice Green Bass',ja:'氷下の青スズキ',ko:'얼음밑 청농어'},
+  w3aa:{en:'Ice Hole Loach',ja:'氷穴のドジョウ',ko:'얼음구멍 미꾸라지'},
+  w3ab:{en:'Lake-Center Silver Bagrid',ja:'湖心の銀ギギ',ko:'호수중심 은동자개'},
+  w3ac:{en:'Ice Bubble Little Puffer',ja:'氷泡の小フグ',ko:'얼음거품 꼬마복어'},
+  w3ad:{en:'Ice Abyss Lake Guardian Catfish',ja:'氷淵の湖守りナマズ',ko:'얼음심연 호수지기 메기'},
+  w3ae:{en:'Frozen Lake Rainbow Trout',ja:'氷湖の虹鱒',ko:'얼음호수 무지개송어'},
+  w3af:{en:'Aurora Lantern-Eye Bream',ja:'オーロラの灯眼鯛',ko:'오로라 등눈도미'},
+  w3ag:{en:'Frozen Lake Giant Trout',ja:'氷湖の大鱒',ko:'얼음호수 왕송어'},
+  w3ah:{en:'Frozen Lake Ancient Dragon Koi',ja:'氷湖の古龍鯉',ko:'얼음호수 고룡잉어'},
+  w3ai:{en:'Aurora Abyss Shark',ja:'オーロラ深淵の鮫',ko:'오로라 심연상어'},
+  w4u:{en:'Palace Pool Bitterling',ja:'宮池のタナゴ',ko:'궁연못 납자루'},
+  w4v:{en:'Throne Bream',ja:'王座のタナゴ',ko:'왕좌 납자루'},
+  w4w:{en:'Ice Corridor Loach',ja:'氷廊のドジョウ',ko:'얼음회랑 미꾸라지'},
+  w4x:{en:'Jade Stair Barb',ja:'玉階のバルブ',ko:'옥계단 바브'},
+  w4y:{en:'Candlestick Lanternfish',ja:'燭台の灯魚',ko:'촛대 등어'},
+  w4z:{en:'Ice Palace Silver Jack',ja:'氷宮の銀アジ',ko:'얼음궁 은잭'},
+  w4aa:{en:'Palace Canal Loach',ja:'宮渠のドジョウ',ko:'궁수로 미꾸라지'},
+  w4ab:{en:'Ice Stair Bream',ja:'氷階のタナゴ',ko:'얼음계단 납자루'},
+  w4ac:{en:'Court Little Puffer',ja:'王庭の小フグ',ko:'왕정 꼬마복어'},
+  w4ad:{en:'Throne Abyss Guardian Eel',ja:'玉座の淵守りウナギ',ko:'옥좌 심연지기 장어'},
+  w4ae:{en:'Court Rainbow Trout',ja:'王庭の虹鱒',ko:'왕정 무지개송어'},
+  w4af:{en:'Candlelight Lantern-Eye Bream',ja:'燭光の灯眼鯛',ko:'촛불빛 등눈도미'},
+  w4ag:{en:'Court Giant Sturgeon',ja:'王庭の大鱘',ko:'왕정 왕철갑상어'},
+  w4ah:{en:'Court Ancient Dragon Koi',ja:'王庭の古龍鯉',ko:'왕정 고룡잉어'},
+  w4ai:{en:'Lost Crown Shark',ja:'失われた王権の鮫',ko:'잃어버린 왕권상어'},
   /* ---- 鱼王 ---- */
   king_forest:{en:'Moss-Scale King · Lord of the Forest',ja:'苔鱗王・森の主',ko:'이끼비늘왕 · 숲의 주인'},
   king_town:{en:'Golden Carp King · Lord of the Town',ja:'金鯉王・町の主',ko:'금잉어왕 · 마을의 주인'},
@@ -7721,8 +7902,20 @@ var I18N_FISH={
 /* ---------- 启动 ---------- */
 applyStaticI18n();   /* 先把静态文案按当前语言铺好 */
 loadSave();
-/* 没接入父页庭院（独立打开）：每局从保底名册随机一位随行；接入后由庭院名册接管 */
-if(!IN_FRAME) save.buddy='';
+/* 验收前（BUDDY_LINK=0）或独立打开：每局从保底名册随机一位随行；
+   BUDDY_LINK=1 且接入父页庭院后，才由庭院当前月巴接管 */
+if(!IN_FRAME || !BUDDY_LINK) save.buddy='';
+/* 验收前若订单还是图鉴月巴发起的（旧档），按保底名册重开一轮，避免残留联动 */
+if(!BUDDY_LINK && save.orders && save.orders.length){
+  var linkedOrder=false;
+  save.orders.forEach(function(o){
+    if(!o||!o.bid) return;
+    var isLocal=false;
+    for(var i=0;i<FALLBACK_YARD.length;i++) if(FALLBACK_YARD[i].id===o.bid) isLocal=true;
+    if(!isLocal) linkedOrder=true;
+  });
+  if(linkedOrder){ save.orders=null; save.orderAt=0; commitSave(); }
+}
 refreshHud(false);
 updateAutoUI();
 updateBaitUI();
