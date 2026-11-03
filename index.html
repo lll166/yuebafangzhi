@@ -3579,6 +3579,10 @@
     background:var(--panel);border:1px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.18);
     pointer-events:none;z-index:2;}
   .gbcard .gbdaily.done{filter:grayscale(1);opacity:.42;}
+  /* 测试期提示：钓鱼存档随时可能被清空，进箱第一眼就能看到 */
+  #gbNote{margin:0 16px 6px;padding:7px 10px;border-radius:11px;
+    border:1px dashed rgba(224,146,58,.5);background:rgba(224,146,58,.10);
+    color:var(--text);font-size:11px;font-weight:800;line-height:1.55;text-align:center;}
   #gbLockTip{margin:0 16px 8px;padding:9px 12px;border-radius:12px;border:1px dashed var(--line);
     background:var(--panel2);color:var(--text);font-size:12px;font-weight:800;line-height:1.6;
     text-align:center;animation:gbpop .2s ease both;}
@@ -4015,6 +4019,7 @@
       <span class="gbs" data-i18n="小游戏合集">小游戏合集</span>
       <button id="gbClose" class="btn" onclick="gbBoxClose()" data-i18n="✕ 收起">✕ 收起</button>
     </div>
+    <div id="gbNote" data-i18n="🎣 钓鱼系统测试中，可能随时会删除存档。">🎣 钓鱼系统测试中，可能随时会删除存档。</div>
     <div id="gbGrid"></div>
     <div id="gbLockTip" style="display:none"></div>
     <div id="gbEmpty" style="display:none" data-i18n="箱子还空着，新的月巴游戏正在装箱…">箱子还空着，新的月巴游戏正在装箱…</div>
@@ -5252,6 +5257,8 @@ const I18N_UI={
   '🔒 {a} 解锁条件：集齐第一图鉴 {n} 个月巴开启第二图鉴（当前 {c}/{n}）':{en:'🔒 {a} unlock: collect {n} Bannies in Codex I to open Codex II ({c}/{n})',ja:'🔒 {a} の解放条件：第一図鑑のバニーを {n} 匹集めて第二図鑑を解放（現在 {c}/{n}）',ko:'🔒 {a} 해금 조건: 첫 번째 도감에서 배니 {n}마리를 모아 두 번째 도감 해금 (현재 {c}/{n})'},
   '🔒 需集齐第一图鉴 {n} 个月巴开启第二图鉴':{en:'🔒 Requires {n} Bannies in Codex I to open Codex II',ja:'🔒 第一図鑑のバニー {n} 匹で第二図鑑を解放',ko:'🔒 첫 번째 도감 배니 {n}마리로 두 번째 도감 해금'},
   '小游戏合集':{en:'Mini-game Collection',ja:'ミニゲーム集',ko:'미니게임 모음'},
+  /* 钓鱼测试期提示（百巴箱入口） */
+  '🎣 钓鱼系统测试中，可能随时会删除存档。':{en:'🎣 Fishing is in testing — saves may be wiped at any time.',ja:'🎣 釣りシステムはテスト中です。セーブデータが予告なく削除される場合があります。',ko:'🎣 낚시 시스템 테스트 중 — 저장 데이터가 수시로 삭제될 수 있습니다.'},
   '飞行小游戏':{en:'Flight Mini-game',ja:'フライトミニゲーム',ko:'비행 미니게임'},
   '黄金矿工':{en:'Gold Miner',ja:'ゴールドマイナー',ko:'골드 마이너'},
   '🎃 月巴追茄':{en:'🎃 Banny Chase',ja:'🎃 バニーチェイス',ko:'🎃 배니 체이스'},
