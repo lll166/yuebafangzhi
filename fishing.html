@@ -15,7 +15,13 @@
     --wood:#c9a06a; --red:#d9776b;
     --sq:520px;
   }
-  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-user-drag:none;}
+  /* 移动端：长按不再弹「复制 / 粘贴 / 保存图片」系统菜单
+     （收线本身就要长按「下竿」键，正好踩系统的长按阈值，所以这里必须一并关掉） */
+  html,body,#stage,#wrap,button,.chipbtn,canvas,img{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
+  /* 唯一允许选中的两处输入框，恢复原生行为 */
+  #dexQ,#nickInput{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default;}
   html,body{height:100%;overflow:hidden;color:var(--text);}
   body{background-color:var(--bg);
     background-image:linear-gradient(45deg,#eee7d6 25%,transparent 25%,transparent 75%,#eee7d6 75%),
@@ -4790,12 +4796,13 @@ $('ptOv').onclick=function(e){ if(e.target===$('ptOv')) $('ptOv').classList.remo
    iframe 内由父页下发庭院名册（yueba-fishing-roster），随行即庭院当前月巴；
    独立打开时从保底名册随机一位（本次会话固定）。庭院会轮换，旧随行自动回落。 */
 var YARD=null;      /* [{id,url,color,name}]；null=尚未收到父页名册 */
+var YARD_PENDING=false;   /* 内嵌时先别用保底名册开订单，等父页庭院名册到达 */
 var IN_FRAME=(function(){ try{ return !!(window.parent&&window.parent!==window); }catch(e){ return false; } })();
-/* 验收开关：0 = 垂钓页暂不接入百巴箱 / 图鉴月巴。
-   父页仍下发旅行信件与语言（开图、i18n 需要），但庭院名册一律忽略；
-   随行、订单委托、羁绊全部改用下面的本地保底名册。
-   验收通过后把这里改成 1，即可恢复与庭院月巴的联动。 */
-var BUDDY_LINK=0;
+/* 庭院联动开关：1 = 随行 / 订单委托 / 羁绊接入百巴箱庭院月巴（已验收）。
+   父页下发庭院名册、旅行信件与语言；名册到达后覆盖本地保底名册，
+   收不到名册（独立打开 / 庭院为空）时自动回退保底名册。
+   如需临时断开验收，改回 0 即可。 */
+var BUDDY_LINK=1;
 /* 保底月巴（C4.5）：硬编码外链立绘——独立打开/未连接主页面时，
    陪伴永远有图；BUDDY_LINK=1 且收到庭院名册后才会被覆盖 */
 var FALLBACK_YARD=[
@@ -4855,14 +4862,18 @@ window.addEventListener('message',function(e){
   }
   var yard=Array.isArray(d.yard)?d.yard:[];
   var map=[];
-  /* 验收前（BUDDY_LINK=0）忽略庭院名册：随行/订单/羁绊不接图鉴月巴 */
   if(BUDDY_LINK) yard.forEach(function(t){
     if(!t||!t.id) return;
     map.push({id:t.id,url:t.art||'',color:t.color||'#9e9e9e',name:t.name||t.id,names:t.names||null,scale:t.scale||1});
   });
   if(map.length){                          /* 庭院暂时没有月巴：保持现状 */
     YARD=map;
+    YARD_PENDING=false;
     if(save.buddy&&!yardEntry(save.buddy)) save.buddy='';
+    syncOrdersToYard();                    /* 启动时先按保底名册开的订单，这里换成庭院月巴 */
+    ensureOrders();                        /* 名册到齐后再按 4 小时刷新点校验/开单 */
+    if($('ordOv')&&$('ordOv').classList.contains('show')) buildOrders();
+    updateOrdBtn();
   }
   /* 父页下发的语言：玩家没在页面内手动切过时跟随父页 */
   if(d.lang&&!LANG_LOCKED) setLang(d.lang,true);
@@ -5970,6 +5981,24 @@ function requestClose(){
 }
 
 /* ---------- 事件绑定 ---------- */
+/* 移动端长按兜底：屏蔽系统菜单 / 选中高亮，避免按住「下竿」收线时弹出复制粘贴框 */
+document.addEventListener('contextmenu',function(e){
+  if(e.target&&(e.target.id==='dexQ'||e.target.id==='nickInput')) return;
+  e.preventDefault();
+});
+document.addEventListener('selectstart',function(e){
+  var t=e.target;
+  if(t&&(t.id==='dexQ'||t.id==='nickInput'||t.tagName==='INPUT'||t.tagName==='TEXTAREA')) return;
+  e.preventDefault();
+});
+/* iOS 上仅靠 CSS 仍可能弹气泡：在 touchstart 里取消默认行为（pointerdown 照常触发，不影响收线） */
+(function(){
+  var btn=$('btnAction');
+  btn.addEventListener('touchstart',function(e){ if(e.cancelable) e.preventDefault(); },{passive:false});
+  /* 兜底：即便某个浏览器因上面的 preventDefault 少发 pointerup，松手也一定停线 */
+  btn.addEventListener('touchend',function(){ if(G.state==='reel') reelStop(); });
+  btn.addEventListener('touchcancel',function(){ if(G.state==='reel') reelStop(); });
+})();
 var lastPointerAt=0;
 $('btnAction').addEventListener('pointerdown',function(e){
   e.preventDefault(); lastPointerAt=Date.now();
@@ -6595,6 +6624,7 @@ function updateOrdTimer(){
     '<span style="opacity:.8"> · '+$tf('换心愿 {l}/{m}',{l:left,m:ORDER_REROLL_MAX})+'</span>';
 }
 function ensureOrders(){
+  if(YARD_PENDING) return;                /* 内嵌时等庭院名册到达再开单，别先用保底名册开一轮 */
   var ys=yardList(), slot=orderSlot();
   var valid=!!(save.orders&&save.orders.length===ys.length);
   if(valid&&!save.orderAt){               /* 旧档：订单保留，只补记刷新点，不白丢进度 */
@@ -6605,6 +6635,18 @@ function ensureOrders(){
   save.orders=[];
   var key=orderKey(slot);
   ys.forEach(function(y){ save.orders.push(genOrder(y.id,y.name,key,0,y.names)); });
+  commitSave();
+}
+/* 庭院名册到达后校正订单委托人：启动时可能还没收到名册，
+   已存在的订单若委托人不在这批庭院月巴里，就整轮重开 */
+function syncOrdersToYard(){
+  if(!YARD||!Array.isArray(save.orders)||!save.orders.length) return;
+  var stale=false;
+  save.orders.forEach(function(o){
+    if(o&&o.bid&&!yardEntry(o.bid)) stale=true;
+  });
+  if(!stale) return;
+  save.orders=null; save.orderAt=0;
   commitSave();
 }
 function deliverOrder(i){
@@ -8302,10 +8344,10 @@ var I18N_FISH={
 applyStaticI18n();   /* 先把静态文案按当前语言铺好 */
 TOMATO='<img class="timg" src="'+COIN_URL+'" alt="'+$t('番茄币')+'">';
 loadSave();
-/* 验收前（BUDDY_LINK=0）或独立打开：每局从保底名册随机一位随行；
-   BUDDY_LINK=1 且接入父页庭院后，才由庭院当前月巴接管 */
+/* 独立打开（不在百巴箱内）：每局从保底名册随机一位随行；
+   内嵌且 BUDDY_LINK=1 时，庭院名册到达后由庭院当前月巴接管 */
 if(!IN_FRAME || !BUDDY_LINK) save.buddy='';
-/* 验收前若订单还是图鉴月巴发起的（旧档），按保底名册重开一轮，避免残留联动 */
+/* 若把 BUDDY_LINK 临时关回 0：旧档里图鉴月巴发起的订单按保底名册重开一轮，避免残留联动 */
 if(!BUDDY_LINK && save.orders && save.orders.length){
   var linkedOrder=false;
   save.orders.forEach(function(o){
@@ -8319,7 +8361,18 @@ if(!BUDDY_LINK && save.orders && save.orders.length){
 refreshHud(false);
 updateAutoUI();
 updateBaitUI();
+/* 内嵌且要接庭院：先等父页名册（一般立刻到），别用保底名册先把订单开了 */
+YARD_PENDING=!!(IN_FRAME&&BUDDY_LINK);
 ensureOrders();
+if(YARD_PENDING){
+  setTimeout(function(){
+    if(!YARD_PENDING) return;                /* 名册已到，正常流程已经开好单 */
+    YARD_PENDING=false;                      /* 父页没回（独立/异常）：回退保底名册 */
+    ensureOrders();
+    if($('ordOv')&&$('ordOv').classList.contains('show')) buildOrders();
+    updateOrdBtn();
+  },2500);
+}
 updateOrdBtn();
 checkAch();          /* 存量进度一次性补发成就 */
 FALLBACK_YARD.forEach(function(y){ var i=new Image(); i.src=y.url; });   /* 预热保底立绘 */
