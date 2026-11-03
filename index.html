@@ -4488,6 +4488,12 @@ const TYPES3=[
     imgs:[{url:'https://origin.picgo.net/2026/11/01/train-banny358505b4dab5544e.th.png', by:'hellomelody'}], r:3, v:45, t:450, cond:null, color:'#e8e4dc', shape:'wide', size:2},
   {id:'m3_16bit',    name:'16位月巴',    img:'https://origin.picgo.net/2026/11/01/16-bit-Bannyb4bff354ec834210.th.png',
     imgs:[{url:'https://origin.picgo.net/2026/11/01/16-bit-Bannyb4bff354ec834210.th.png', by:'VVisteria', note:'Tiny and weak but grand are its dreams to level up to be a strong banny!'}], r:1, v:12, t:120, cond:null, color:'#c9c2e8', shape:'cube'},
+  {id:'m3_dango',    name:'团子月巴',    img:'https://origin.picgo.net/2026/11/03/Dango-Bannyf17dda020ef5ea00.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/11/03/Dango-Bannyf17dda020ef5ea00.th.png', by:'Suwa'}], r:2, v:20, t:200, cond:null, color:'#f2a7c3', shape:'wide'},
+  {id:'m3_burger',   name:'汉堡月巴',    img:'https://origin.picgo.net/2026/11/03/Hamburger-bannye89eb71b8b666d03.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/11/03/Hamburger-bannye89eb71b8b666d03.th.png', by:'Suwa'}], r:2, v:20, t:200, cond:null, color:'#d98a5f', shape:'wide'},
+  {id:'m3_omurice',  name:'蛋包饭月巴',  img:'https://origin.picgo.net/2026/11/03/Omurice-Banny454726f84ceb7a01.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/11/03/Omurice-Banny454726f84ceb7a01.th.png', by:'Suwa'}], r:2, v:20, t:200, cond:null, color:'#e8b96a', shape:'wide'},
 ];
 const RAR_NAME={1:'普通',2:'常见',3:'稀有',4:'史诗',5:'传说',6:'活动'};
 const R_H={1:[2,5],2:[4,8],3:[6,12],4:[10,20],5:[16,30],6:[22,40]};   // 身高 cm 范围
@@ -4584,6 +4590,9 @@ const YB_PIC_AUTHOR={
   m2_shamo:'Nyaomi',
   m2_yueshi:'Nyaomi',
   m2_xian:'200',
+  m3_dango:'Suwa',
+  m3_burger:'Suwa',
+  m3_omurice:'Suwa',
 };
 /* 每种月巴的「简介(文字)作者」by ID，图鉴详情弹窗简介末尾展示；未填则不显示文字作者 */
 const YB_TXT_AUTHOR={};
@@ -4809,6 +4818,9 @@ const FAT_INTRO={
   m3_liberty:'他免费了。 He\'s free.',
   m3_train:'呜——呜——！咔嚓咔嚓！',
   m3_16bit:'LV.1 的月巴，正踏上为了寻找番茄而心跳加速的大冒险。',
+  m3_dango:'一边看着番茄园，一边吃的小甜点。',
+  m3_burger:'月巴快乐餐。用番茄园里现摘的新鲜番茄做的。',
+  m3_omurice:'早餐的绝佳选择！！',
 };
 
 /* ---------------- 界面皮肤（图鉴解锁） ---------------- */
@@ -7504,6 +7516,9 @@ const I18N_BANNY={
   m3_liberty:{n:{en:'Liberty Banny',ja:'自由の女神バニー',ko:'자유의 여신배니'}},
   m3_train:{n:{en:'Train Banny',ja:'汽車バニー',ko:'기차배니'}},
   m3_16bit:{n:{en:'16-bit Banny',ja:'16ビットバニー',ko:'16비트배니'}},
+  m3_dango:{n:{en:'Dango Banny',ja:'団子バニー',ko:'당고배니'}},
+  m3_burger:{n:{en:'Hamburger Banny',ja:'ハンバーガーバニー',ko:'햄버거배니'}},
+  m3_omurice:{n:{en:'Omurice Banny',ja:'オムライスバニー',ko:'오므라이스배니'}},
 
   dest_forest:{n:{en:'Forest Edge',ja:'森のほとり',ko:'숲의 가장자리'}},
   dest_fairy:{n:{en:'Fairy Hideaway',ja:'桃源郷',ko:'무릉도원'}},
@@ -7992,6 +8007,9 @@ const I18N_BANNY={
   m3_liberty_intro:{d:{en:'He’s free.',ja:'彼は無料になった。',ko:'그는 공짜가 됐어요.'}},
   m3_train_intro:{d:{en:'Toot! Toot! Choo choo!',ja:'ポッポー！ガタンゴトン！',ko:'칙칙폭폭! 덜컹덜컹!'}},
   m3_16bit_intro:{d:{en:'Lvl 1 banny starting a throbbing adventure to seek out tomatoes',ja:'レベル1のバニー、トマトを探す胸躍る大冒険に出発！',ko:'레벨 1 배니, 토마토를 찾아 두근거리는 대모험을 시작한다!'}},
+  m3_dango_intro:{d:{en:'Sweet snack to eat while watching your tomato garden.',ja:'トマト畑を眺めながら食べる、小さな甘いおやつ。',ko:'토마토 밭을 바라보면서 먹는 달콤한 간식.'}},
+  m3_burger_intro:{d:{en:'Banny Happy Meal. Made from fresh tomatoes from the garden.',ja:'バニーハッピーセット。畑で採れた新鮮なトマトで作ったよ。',ko:'배니 해피밀. 밭에서 갓 딴 신선한 토마토로 만들었어요.'}},
+  m3_omurice_intro:{d:{en:'Great choice for breakfast!!',ja:'朝ごはんに最高の選択！！',ko:'아침 식사로 최고의 선택!!'}},
   /* ---------- P5：成就描述 ach_<id>_desc（字段 d） ---------- */
   ach_h1_desc:{d:{en:'Harvest your first Banny',ja:'初めてバニーを収穫する',ko:'첫 배니를 수확하기'}},
   ach_d1_desc:{d:{en:'Unlock 10 Banny species in the Codex',ja:'図鑑で 10 種のバニーを解放する',ko:'도감에서 배니 10종 해금하기'}},
