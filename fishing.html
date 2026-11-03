@@ -963,9 +963,11 @@ var I18N_LANGS=[
   {code:'ja',label:'日本語'},
   {code:'ko',label:'한국어'},
 ];
+var LANG_URL='';                      /* ?lang= 明确指定过语言：父页消息不再覆盖 */
 var LANG=(function(){
   var q='';
   try{ q=(new URLSearchParams(location.search).get('lang')||'').toLowerCase(); }catch(e){}
+  if(q&&I18N_LANGS.some(function(l){ return l.code===q; })) LANG_URL=q;
   if(!q){ try{ q=(localStorage.getItem('ybf_lang')||'').toLowerCase(); }catch(e){} }
   if(!I18N_LANGS.some(function(l){ return l.code===q; })){
     var nav=String(navigator.language||navigator.userLanguage||'').toLowerCase();
@@ -974,6 +976,8 @@ var LANG=(function(){
   return q;
 })();
 var LANG_LOCKED=false;                 /* 页面内手动切过语言：父页消息不再覆盖 */
+/* 玩家在钓鱼页里手动选过的语言（跨会话保存）：也优先于父页下发 */
+function storedLangPref(){ try{ return String(localStorage.getItem('ybf_lang')||'').trim(); }catch(e){ return ''; } }
 function curLang(){ return LANG; }
 function isZh(){ return LANG==='zh'; }
 function $t(s){ if(!s||LANG==='zh') return s; var e=I18N_UI[s]; var v=e&&e[LANG]; return v==null?s:v; }
@@ -991,23 +995,31 @@ function $tn(tbl,id,field,fb){
 function fishName(f){
   var id=(typeof f==='string')?f:(f&&f.id);
   if(!id) return '';
-  var base=(FISH[id]&&FISH[id].name)||((kingFish(id)||{}).name)||'';
+  var fo=fishById(id);                     /* 统一走 hasOwnProperty 版本，避免原型键被当成鱼 */
+  var base=fo?fo.name:'';
   if(LANG==='zh') return base;
-  var e=I18N_FISH[id]; return (e&&e[LANG])||base;
+  var e=Object.prototype.hasOwnProperty.call(I18N_FISH,id)?I18N_FISH[id]:null;
+  return (e&&e[LANG])||base;
 }
 /* 鱼王（king_*）在 KING_FISH 里按地区 id 存（forest / town / …），
-   这里同时接受地区 id 和存档里的鱼 id（king_forest） */
+   这里同时接受地区 id 和存档里的鱼 id（king_forest）。
+   注意必须用 hasOwnProperty：'constructor' / '__proto__' 之类的 id
+   会命中原型属性，把函数/对象当成鱼返回，后续读 f.r 直接崩。 */
 function kingFish(id){
   if(!id||typeof KING_FISH==='undefined') return null;
-  if(KING_FISH[id]) return KING_FISH[id];
-  if(id.indexOf('king_')===0) return KING_FISH[id.slice(5)]||null;
+  if(Object.prototype.hasOwnProperty.call(KING_FISH,id)) return KING_FISH[id];
+  if(id.indexOf('king_')===0){
+    var k=id.slice(5);
+    return Object.prototype.hasOwnProperty.call(KING_FISH,k)?KING_FISH[k]:null;
+  }
   return null;
 }
 /* 鱼篓里的 id → 鱼对象：鱼王不在 FISH 图鉴池里，单独从 KING_FISH 取，
    否则读档会把鱼王条目当脏数据丢掉、列表也渲染不出来 */
 function fishById(id){
   if(!id) return null;
-  return FISH[id]||kingFish(id);
+  if(Object.prototype.hasOwnProperty.call(FISH,id)) return FISH[id];
+  return kingFish(id);
 }
 function mapName(mp){ return mp?$tn(I18N_MAP,mp.id,'n',mp.name):''; }
 function mapDesc(mp){ return mp?$tn(I18N_MAP,mp.id,'d',mp.desc):''; }
@@ -1046,6 +1058,7 @@ function repaintAll(){
   try{ refreshHud(false); }catch(e){}
   try{ updateAutoUI(); }catch(e){}
   try{ updateBaitUI(); }catch(e){}
+  try{ updateOrdBtn(); }catch(e){}     /* applyStaticI18n 会重置按钮文案，切语言后补回 ✓n */
   if(G.view==='scene'&&scene.map) sceneTitle();
   if(G.view==='select') buildSelect();
   if($('dex').classList.contains('show')) buildDex();
@@ -1356,7 +1369,7 @@ var save={v:6,tomato:0,totalCatch:0,fish:{},rewards:{},sel:'f1',auto:false,autoR
      at：最后一次写入时间，用来和云存档比谁更新；
      rec：北京时间当日记录，跨天在 recTouch() 里清零；
      ordDone：累计交付订单数；maxGold/maxGoldId：单条最贵渔获 */
-  at:0,ordDone:0,maxGold:0,maxGoldId:'',
+  at:0,dbg:0,ordDone:0,maxGold:0,maxGoldId:'',
   rec:{day:'',catch:0,size:0,sizeId:'',gold:0,goldId:'',ord:0,ordAt:0}};
 function loadSave(){
   try{
@@ -1383,8 +1396,9 @@ function loadSave(){
       save.buddy=(typeof d.buddy==='string')?d.buddy:'';
     }
     if(d.v>=3){                             /* C1 钓具与鱼饵 */
-      var oldRod=clamp(d.rod|0,0,4);
-      if(d.v<4) oldRod=[0,1,3,5,7][oldRod];  /* v3 五档 → v4 八档 */
+      /* v3 是五档老竿，按 [0,1,3,5,7] 折到八档；v4+ 直接按八档读。
+         这里不能再用 0~4 截断，否则黑曜/星辉/传家宝竿每次读档都会掉回钛合金竿。 */
+      var oldRod=(d.v<4)?[0,1,3,5,7][clamp(d.rod|0,0,4)]:clamp(d.rod|0,0,RODS.length-1);
       save.rod=clamp(oldRod,0,RODS.length-1); save.line=clamp(d.line|0,0,3);
       save.rodLv=clamp(d.rodLv|0,0,10);
       save.basket=clamp(d.basket|0,0,BASKET_MAX_EXP);  /* 鱼篓扩容次数（每次 +5 条，封顶 70 次 = 360 条） */
@@ -1411,6 +1425,36 @@ function loadSave(){
       save.junk=d.junk||{}; save.junkDone=!!d.junkDone;
       save.bond=d.bond||{};
     }
+    /* ---------- 脏档兜底（旧版本残留 / 云回档 / 手改存档） ----------
+       1) 鱼条目里的 null / 非对象会让统计页 bestFishEver 直接抛错；
+       2) 订单里 null 或不存在的鱼 id 会让订单页 buildOrders 抛错，
+          orderAt=0 的旧档还会原样保留这些坏订单（启动时 updateOrdBtn 也崩）。 */
+    var nf={};
+    Object.keys(save.fish||{}).forEach(function(id){
+      var e=save.fish[id];
+      if(!e||typeof e!=='object') return;
+      nf[id]={n:clamp(e.n|0,0,100000000),
+              first:(typeof e.first==='number'&&e.first>0)?e.first:0,
+              best:clamp(e.best|0,0,9999)};
+    });
+    save.fish=nf;
+    if(save.orders){
+      var oks=[], oBad=false;
+      save.orders.forEach(function(o){
+        if(!o||typeof o!=='object'||!o.fid||!fishById(o.fid)){ oBad=true; return; }
+        oks.push({bid:String(o.bid||''),bname:String(o.bname||''),
+          names:(o.names&&typeof o.names==='object')?o.names:null,
+          fid:o.fid,need:clamp(o.need|0,1,99),done:!!o.done,rr:clamp(o.rr|0,0,99)});
+      });
+      if(oBad){ save.orders=null; save.orderAt=0; }   /* 有一条坏单就整轮重开，避免点开就崩 */
+      else save.orders=oks;
+    }
+    /* 收藏/统计容器必须是对象，字符串/数字会让后续按字段写值静默失败并重复发奖 */
+    ['rewards','ach','kings','kingPity','junk','bond'].forEach(function(k){
+      if(!save[k]||typeof save[k]!=='object'||Array.isArray(save[k])) save[k]={};
+    });
+    if(!save.stats||typeof save.stats!=='object') save.stats={smooth:0,snaps:0,rs:0,fast:0,casts:0,offCatch:0,mapCasts:{}};
+    if(!save.stats.mapCasts||typeof save.stats.mapCasts!=='object'||Array.isArray(save.stats.mapCasts)) save.stats.mapCasts={};
     /* 自动收线器：未购入时收回旧档的自动开关（开局只能手动，购入后进图随时开关） */
     save.autoReel=(d.autoReel|0)?1:0;
     if(!save.autoReel) save.auto=false;
@@ -1418,6 +1462,7 @@ function loadSave(){
     save.portrait=(typeof d.portrait==='string'&&d.portrait)?d.portrait:'normal';
     /* 排行榜相关：旧档没有这些字段时从 0 起算；今日记录跨天会在 recTouch() 清零 */
     save.at=(typeof d.at==='number')?d.at:0;
+    save.dbg=(d.dbg|0)?1:0;               /* 用过 ?debug=1 的存档：禁止上报排行榜 */
     save.ordDone=clamp(d.ordDone|0,0,1000000);
     save.maxGold=clamp(d.maxGold|0,0,1000000);
     save.maxGoldId=(typeof d.maxGoldId==='string')?d.maxGoldId:'';
@@ -1632,7 +1677,10 @@ var DEX_ART = {
     'm2_tian':['https://origin.picgo.net/2026/11/02/0be64feec62e91f984a6ce9091d5eede1fc8a35132b5626f.th.png','#f8bbd0','甜月巴'],
     'm2_shamo':['https://origin.picgo.net/2026/11/02/0059847a33461c9b05dbed513a3a7498201fc69bcf6582ba.th.png','#ffcc80','沙漠月巴'],
     'm2_yueshi':['https://origin.picgo.net/2026/11/02/2775d34d4123537c87ae900e911636e4d04587a79becc9f6.th.png','#e0a94f','夜市月巴'],
-    'm2_xian':['https://origin.picgo.net/2026/11/02/8279f00c7323e443ce5cc5eadee6c0c845655ca09396480c.th.png','#90a4ae','盐月巴']
+    'm2_xian':['https://origin.picgo.net/2026/11/02/8279f00c7323e443ce5cc5eadee6c0c845655ca09396480c.th.png','#90a4ae','盐月巴'],
+    'm3_dango':['https://origin.picgo.net/2026/11/03/Dango-Bannyf17dda020ef5ea00.th.png','#f2a7c3','团子月巴'],
+    'm3_burger':['https://origin.picgo.net/2026/11/03/Hamburger-bannye89eb71b8b666d03.th.png','#d98a5f','汉堡月巴'],
+    'm3_omurice':['https://origin.picgo.net/2026/11/03/Omurice-Banny454726f84ceb7a01.th.png','#e8b96a','蛋包饭月巴']
   };
 function artOf(id){
   var e=DEX_ART[id];
@@ -4912,6 +4960,15 @@ function buddyName(){
 window.addEventListener('message',function(e){
   var d=e&&e.data;
   if(!d||d.type!=='yueba-fishing-roster') return;
+  /* 只接受同源父页下发的名册：任意页面 iframe 本页后都能 postMessage，
+     若不校验来源，名册里的月巴名会被当成 HTML 注入订单/统计页（XSS）。 */
+  var sameOrigin=false;
+  try{
+    sameOrigin=(e.origin===location.origin)||
+      (location.protocol==='file:'&&(e.origin==='null'||e.origin===''));
+  }catch(_e){}
+  if(!sameOrigin) return;
+  try{ if(window.parent&&e.source&&e.source!==window.parent) return; }catch(_e2){}
   /* 旅行信件进度：父页下发的计数优先于本地主存档（独立打开时仍读 localStorage） */
   if(d.letters&&typeof d.letters==='object'){
     TRAVEL_LETTERS=d.letters;
@@ -4934,8 +4991,8 @@ window.addEventListener('message',function(e){
     if($('ordOv')&&$('ordOv').classList.contains('show')) buildOrders();
     updateOrdBtn();
   }
-  /* 父页下发的语言：玩家没在页面内手动切过时跟随父页 */
-  if(d.lang&&!LANG_LOCKED) setLang(d.lang,true);
+  /* 父页下发的语言：?lang= / 玩家手动选过的语言优先，其次才跟随父页 */
+  if(d.lang&&!LANG_LOCKED&&!LANG_URL&&!storedLangPref()) setLang(d.lang,true);
 });
 if(IN_FRAME){ try{ window.parent.postMessage({type:'yueba-fishing-ready'},'*'); }catch(err){} }
 /* 陪伴月巴（M5 正式版）：庭院/保底名册的月巴立绘，HD-2D 同番茄管线；
@@ -5526,6 +5583,16 @@ function setView(v){
   document.body.classList.toggle('framed',v==='scene'&&window.parent!==window);
   fitScene();                               /* 切进场景后按剩余高度定画面尺寸 */
 }
+/* 自动模式续竿：进图 / 刷新回来 / 短暂切后台回来时自动补一次下竿。
+   只在自动已购入、自动开着、鱼篓没满、当前在场景里时生效；
+   玩家手点「下竿」时 cast() 会 clearTimer('wait')，不会双下竿。 */
+function scheduleAutoCast(delay){
+  if(!save.auto||!scene.map||G.view!=='scene'||bagFull()) return;
+  clearTimer('wait');
+  timers.wait=setTimeout(function(){
+    if(save.auto&&G.state==='idle'&&G.view==='scene'&&scene.map&&!bagFull()) cast();
+  },(typeof delay==='number')?delay:AUTO_NEXT_MS);
+}
 function openMap(id){
   var f=findMap(id); if(!f) return;
   if(f.map.r4&&!DEBUG){ toast($t('这个钓点还在迷雾里…旅行联动后解锁')); return; }
@@ -5535,6 +5602,11 @@ function openMap(id){
   save.sel=id; commitSave();
   setState('idle');
   setView('scene');
+  /* 自动挂机中重新进图（含刷新后恢复）：继续下竿，不用再手点 */
+  if(save.auto){
+    if(bagFull()) autoStopFull();
+    else scheduleAutoCast(600);
+  }
 }
 function setState(s){
   if(s!=='landing') G.landing=null;
@@ -5682,6 +5754,10 @@ function doBite(){
 }
 /* 提竿 → 张力收线（M2） */
 function hook(){
+  /* 自动模式下咬钩会排一个 500ms 后自动提竿的定时器；如果玩家在这之前
+     按空格/回车抢先提竿，定时器仍会触发。没有这道状态守卫会二次 hook：
+     重抽一条鱼并把已经收起来的进度清零。 */
+  if(G.state!=='bite') return;
   clearTimer('bite');
   G.hookFish=G.king?KING_FISH[G.king]:pickFish();
   G.reel=0; G.tension=34; G.esc=0;
@@ -5745,7 +5821,8 @@ function giveUp(msg,isSnap){
   G.snapUntil=anim.t+0.6;
   holding=false; $('btnAction').classList.remove('hold');
   setState('idle');
-  if(save.auto){ clearTimer('wait'); timers.wait=setTimeout(cast,1400); }
+  /* 玩家已经返回钓点选择页时不再续竿：否则会在看不见的选择页上继续下竿/钓鱼 */
+  if(save.auto&&G.view==='scene') scheduleAutoCast(1400);
 }
 /* 主循环：张力收线 + 渲染
    统一时间泵 pump()：rAF 每帧与 250ms 心跳都调它，共享同一墙钟
@@ -5970,14 +6047,16 @@ function finishLanding(){
   save.totalCatch+=1;
   bagAdd(f,size,gain);                       /* 渔获不自动卖：先进鱼篓，去鱼篓页才出售 */
   /* 鱼王报酬 */
-  G.kingReward=null;
+  G.kingReward=null; G.kingRewardInfo=null;
   if(f.king){
     save.kings[f.kingRegion]=(save.kings[f.kingRegion]|0)+1;
-    var kg=save.kings[f.kingRegion]===1?800:randi(100,200);
+    var kingAgain=save.kings[f.kingRegion]>1;
+    var kg=kingAgain?randi(100,200):800;
     save.tomato+=kg;
-    G.kingReward=save.kings[f.kingRegion]===1
-      ?$tf('鱼王首杀！ +{n} 番茄币',{n:kg})
-      :$tf('鱼王再次到手！ +{n} 番茄币',{n:kg});
+    G.kingReward=kingAgain
+      ?$tf('鱼王再次到手！ +{n} 番茄币',{n:kg})
+      :$tf('鱼王首杀！ +{n} 番茄币',{n:kg});
+    G.kingRewardInfo={region:f.kingRegion,gain:kg,first:!kingAgain};
   }
   /* 随机事件结算 */
   var evMsg=settleEvent();
@@ -6002,7 +6081,8 @@ function finishLanding(){
     },AUTO_NEXT_MS);
     return;
   }
-  G.result={kind:'catch',f:f,size:size,gain:gain,first:first,kingReward:G.kingReward,evMsg:evMsg};
+  G.result={kind:'catch',f:f,size:size,gain:gain,first:first,kingReward:G.kingReward,
+    kingRewardInfo:G.kingRewardInfo,evMsg:evMsg};
   showResult(f,size,gain,first);
   if(G.kingReward) $('ovBuddy').textContent=G.kingReward;
   else if(evMsg) $('ovBuddy').textContent=evMsg;
@@ -6033,8 +6113,18 @@ function showResult(f,size,gain,first){
 /* 切语言后按上次结算数据重绘结算弹层 */
 function repaintResult(){
   var r=G.result; if(!r) return;
-  if(r.kind==='offline') showOfflineModal(r.map,r.n,r.gain,r.best,r.bestSize);
-  else showResult(r.f,r.size,r.gain,r.first);
+  if(r.kind==='offline'){ showOfflineModal(r.map,r.n,r.gain,r.best,r.bestSize); return; }
+  showResult(r.f,r.size,r.gain,r.first);
+  /* showResult 会随机塞一句陪伴台词；鱼王报酬 / 随机事件文案要盖回去，
+     否则切一次语言就看不到「鱼王首杀 +800」或「捞到沉底宝箱」了。
+     鱼王用结构化数据按当前语言重拼；事件文案保留钓到时的原文。 */
+  if(r.kingRewardInfo){
+    var ki=r.kingRewardInfo;
+    $('ovBuddy').textContent=ki.first
+      ?$tf('鱼王首杀！ +{n} 番茄币',{n:ki.gain})
+      :$tf('鱼王再次到手！ +{n} 番茄币',{n:ki.gain});
+  }else if(r.kingReward) $('ovBuddy').textContent=r.kingReward;
+  else if(r.evMsg) $('ovBuddy').textContent=r.evMsg;
 }
 
 /* ---------- HUD / Toast ---------- */
@@ -6044,6 +6134,11 @@ function refreshHud(pop){
   t.classList.toggle('neg',save.tomato<0);   /* 欠账（负数）标红，方便玩家知道要赚回来 */
   if(pop){ t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop');
            c.classList.remove('pop'); c.classList.add('pop'); }
+  /* 鱼篓页开着时同步刷新：自动挂机/离线结算也会持续上鱼，
+     否则面板一直停在打开时的 0/10，看起来像没钓到 */
+  if($('bagOv')&&$('bagOv').classList.contains('show')){
+    try{ buildBag(); }catch(e){}
+  }
 }
 var toastTimer=null;
 function toast(msg){
@@ -6135,10 +6230,17 @@ $('btnAction').addEventListener('click',function(){
 window.addEventListener('pointerup',function(){ if(G.state==='reel') reelStop(); });
 window.addEventListener('pointercancel',function(){ if(G.state==='reel') reelStop(); });
 /* 键盘：空格 = 当前动作（按住收线同样生效） */
+/* 任意弹层打开时，空格/回车不应在背后偷偷下竿/提竿（之前只挡了玩法说明） */
+function anyOverlayOpen(){
+  var ids=['dex','shopOv','bagOv','ordOv','achOv','statOv','lbOv','ptOv','langOv','nickOv','overlay'];
+  for(var i=0;i<ids.length;i++){ var el=$(ids[i]); if(el&&el.classList.contains('show')) return true; }
+  return false;
+}
 window.addEventListener('keydown',function(e){
   var ae=document.activeElement;
   if(ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.isContentEditable)) return;   /* 图鉴搜索框里打字不触发下竿 */
-  if($('guideOv').classList.contains('show')) return;   /* 看玩法说明时按键别在背后偷偷下竿 */
+  if(G.view!=='scene') return;            /* 钓点选择页/弹层里按空格不能偷偷下竿 */
+  if($('guideOv').classList.contains('show')||anyOverlayOpen()) return;   /* 弹层打开时按键别在背后偷偷下竿 */
   if(e.code!=='Space'&&e.code!=='Enter') return;
   e.preventDefault();
   if(G.state==='idle') cast();
@@ -6150,6 +6252,10 @@ window.addEventListener('keyup',function(e){
 });
 $('btnBack').onclick=function(){
   clearTimer('wait'); clearTimer('bite'); reelStop();
+  /* 返回选点页必须真正结束这一竿：以前只切视图，state 仍停在 waiting/reel/landing，
+     自动模式会继续在后台把鱼钓上来（甚至再下竿），起鱼动画还会在选点页结算。 */
+  G.hookFish=null; G.king=null; G.result=null;
+  setState('idle');                         /* 顺带清掉 G.landing */
   setView('select'); buildSelect();
 };
 $('ovAgain').onclick=function(){ $('overlay').classList.remove('show'); cast(); };
@@ -6308,6 +6414,10 @@ function offlineSettle(showModal){
   save.stats.offCatch=(save.stats.offCatch|0)+n;
   if(bagFull()) autoStopFull();           /* 装满即停：先把自动关掉（卖完再开） */
   commitSave(); refreshHud(false);
+  /* 离线渔获同样要补成就 / 订单徽标：以前只算图鉴奖励，51 条回来时 c50 要等下一竿才发 */
+  checkAch();
+  updateOrdBtn();
+  if($('ordOv')&&$('ordOv').classList.contains('show')) buildOrders();
   setState('idle');
   setView('scene');
   if(showModal){
@@ -6317,6 +6427,8 @@ function offlineSettle(showModal){
     toast($tf('挂机收获 {n} 条已入篓',{n:n}));
   }
   checkDexRewards();
+  /* 短时间切后台回来（不弹结算层）：自动模式继续下竿 */
+  if(!showModal&&save.auto&&!bagFull()&&G.view==='scene') scheduleAutoCast(600);
   return true;
 }
 function showOfflineModal(map,n,gain,best,bestSize){
@@ -6352,7 +6464,7 @@ function caughtCount(){                    /* 已收录种数 */
   if(DEBUG) return totalFish();            /* DEBUG：图鉴全解锁 */
   var n=0;
   Object.keys(save.fish).forEach(function(id){
-    if(!FISH[id]) return;                   /* 鱼王（king_*）不进图鉴，也不计入收录种数 */
+    if(!Object.prototype.hasOwnProperty.call(FISH,id)) return;   /* 鱼王（king_*）不进图鉴，也不计入收录种数 */
     if(dexDone(id)) n++;
   });
   return n;
@@ -6653,6 +6765,19 @@ function buildShop(){
   });
 }
 $('btnShop').onclick=function(){ buildShop(); $('shopOv').classList.add('show'); };
+/* 商店购买防双击：买完一根竿后列表重建，原坐标可能正好落在「强化 +1」/下一根竿的
+   购买按钮上，双击会多花一笔；换心愿也有同样问题（单独在 refreshOrder 里挡）。
+   只拦「同一位置」的第二次点击，买不同位置的东西不受影响。 */
+var shopBuyAt=0, shopBuyX=0, shopBuyY=0;
+$('shopBody').addEventListener('click',function(e){
+  var b=e.target&&e.target.closest?e.target.closest('.buy'):null;
+  if(!b||e.detail<=0) return;                 /* detail<=0：键盘/程序触发，不拦 */
+  var now=Date.now();
+  if(now-shopBuyAt<350&&Math.abs(e.clientX-shopBuyX)<8&&Math.abs(e.clientY-shopBuyY)<8){
+    e.preventDefault(); e.stopPropagation(); return;
+  }
+  shopBuyAt=now; shopBuyX=e.clientX||0; shopBuyY=e.clientY||0;
+},true);
 $('shopClose').onclick=function(){ $('shopOv').classList.remove('show'); };
 
 /* ---------- 鱼篓（渔获出售）：钓到的鱼不会自动卖，只有这一页能换成番茄币 ---------- */
@@ -6697,18 +6822,23 @@ function buildBag(){
     body.appendChild(row);
   });
 }
+/* 鱼篓变化会直接影响订单进度：卖鱼后同步 HUD 徽标（订单面板开着也重绘） */
+function bagChanged(){
+  updateOrdBtn();
+  if($('ordOv')&&$('ordOv').classList.contains('show')) buildOrders();
+}
 function sellBagItem(it){
   var i=save.bag.indexOf(it); if(i<0) return;
   save.bag.splice(i,1);
   save.tomato+=(it.g|0);
-  commitSave(); refreshHud(true); buildBag();
+  commitSave(); refreshHud(true); bagChanged();
   toast($tf('卖出 {f} · +{g} 番茄币',{f:fishName(fishById(it.id)),g:(it.g|0)}));
 }
 function sellWholeBag(){
   var n=save.bag.length; if(!n) return;
   var sum=bagValue();
   save.bag=[]; save.tomato+=sum;
-  commitSave(); refreshHud(true); buildBag();
+  commitSave(); refreshHud(true); bagChanged();
   toast($tf('卖出 {n} 条 · +{g} 番茄币',{n:n,g:sum}));
 }
 function openBag(){ buildBag(); $('bagOv').classList.add('show'); }
@@ -6844,7 +6974,10 @@ function orderBagCount(fid){
   (save.bag||[]).forEach(function(it){ if(it&&it.id===fid) n++; });
   return n;
 }
-function orderHave(o){ return Math.min(o.need|0,orderBagCount(o.fid)); }
+function orderHave(o){
+  if(!o) return 0;
+  return Math.min(clamp(o.need|0,1,99),orderBagCount(o.fid));
+}
 function takeFromBag(fid,n){
   var idx=[];
   for(var i=0;i<save.bag.length;i++) if(save.bag[i].id===fid) idx.push(i);
@@ -6856,7 +6989,7 @@ function takeFromBag(fid,n){
 }
 function deliverOrder(i){
   var o=save.orders[i]; if(!o||o.done) return;
-  var f=FISH[o.fid];
+  var f=fishById(o.fid);
   if(!f||!takeFromBag(o.fid,o.need)){ toast($t('还没凑齐呢')); return; }
   var rr=RARITY[f.r];
   var gain=randi(rr.gain[0]*2,rr.gain[1]*3);
@@ -6876,10 +7009,14 @@ function deliverOrder(i){
   if($('bagOv').classList.contains('show')) buildBag();
   toast(msg);
 }
+var ordRerollAt={};                       /* 每个订单最近一次付费刷新时间：双击只算一次 */
 function refreshOrder(i){
   var o=save.orders[i]; if(!o||o.done) return;
+  var now=Date.now();
+  if(ordRerollAt[i]&&now-ordRerollAt[i]<500) return;   /* 防双击连扣两次次数/币 */
   if(ordRerollLeft()<=0){ toast($tf('今天的换心愿次数用完了（{m}/{m}），明天再来',{m:ORDER_REROLL_MAX})); return; }
   if(save.tomato<50){ toast($t('番茄币不够（刷新需 50）')); return; }
+  ordRerollAt[i]=now;
   save.tomato-=50;
   ordRerollUse();
   /* 付费换心愿也走同一颗种子：第 N 次刷新，所有人的结果依然一致 */
@@ -6889,24 +7026,29 @@ function refreshOrder(i){
 }
 function updateOrdBtn(){
   var n=0;
-  (save.orders||[]).forEach(function(o){ if(!o.done&&orderHave(o)>=o.need) n++; });
+  (save.orders||[]).forEach(function(o){ if(!o||o.done) return; if(orderHave(o)>=clamp(o.need|0,1,99)) n++; });
   var b=$('btnOrders'); if(b) b.textContent=n?$tf('📋 订单 ✓{n}',{n:n}):$t('📋 订单');
 }
 function buildOrders(){
   var body=$('ordBody'); body.innerHTML='';
   (save.orders||[]).forEach(function(o,i){
-    var f=FISH[o.fid], rr=RARITY[f.r];
+    if(!o) return;                            /* 脏档里的 null 订单直接跳过，别整页崩掉 */
+    var f=fishById(o.fid); if(!f) return;     /* 旧版本删过的鱼：跳过这一格 */
+    var rr=RARITY[f.r]||RARITY[0];
+    var need=clamp(o.need|0,1,99);
     var card=document.createElement('div');
     card.className='ordCard'+(o.done?' done':'');
     var head=document.createElement('div'); head.className='ohead';
-    head.innerHTML=$tf('{b} 想要 {f} ×{n}',{b:bannyNameOf(o.bid)||(o.names&&o.names[LANG])||(LANG==='zh'?o.bname:$t('月巴')),f:'<span style="color:'+rr.color+';font-weight:800">'+fishName(f)+'</span>',n:o.need});
+    /* 月巴名来自父页名册 / 存档，必须转义后再拼 innerHTML（否则可注入脚本） */
+    var bname=bannyNameOf(o.bid)||(o.names&&o.names[LANG])||(LANG==='zh'?o.bname:$t('月巴'));
+    head.innerHTML=$tf('{b} 想要 {f} ×{n}',{b:lbEsc(bname),f:'<span style="color:'+rr.color+';font-weight:800">'+fishName(f)+'</span>',n:need});
     card.appendChild(head);
     var bar=document.createElement('div'); bar.className='oprog';
-    var have=o.done?o.need:orderHave(o);      /* 已交付的格子保留满进度，鱼已从鱼篓扣走 */
+    var have=o.done?need:orderHave(o);         /* 已交付的格子保留满进度，鱼已从鱼篓扣走 */
     var fill=document.createElement('i');
-    fill.style.width=Math.round(clamp(have/o.need,0,1)*100)+'%';
+    fill.style.width=Math.round(clamp(have/need,0,1)*100)+'%';
     bar.appendChild(fill); card.appendChild(bar);
-    if(!o.done&&have<o.need){
+    if(!o.done&&have<need){
       var hint=document.createElement('small'); hint.className='ohint';
       hint.textContent=$t('鱼篓里带够即可 · 卖掉这鱼就不算了');
       card.appendChild(hint);
@@ -6914,12 +7056,12 @@ function buildOrders(){
     var foot=document.createElement('div'); foot.className='ofoot';
     var est=Math.round((rr.gain[0]*2+rr.gain[1]*3)/2);
     var prog=document.createElement('small');
-    prog.textContent=$tf('{g} / {n} · 报酬约 {e} 番茄币',{g:have,n:o.need,e:est});
+    prog.textContent=$tf('{g} / {n} · 报酬约 {e} 番茄币',{g:have,n:need,e:est});
     foot.appendChild(prog);
     if(o.done){
       var dn=document.createElement('small'); dn.className='odone'; dn.textContent=$t('✓ 已完成');
       foot.appendChild(dn);
-    }else if(have>=o.need){
+    }else if(have>=need){
       var dv=document.createElement('button'); dv.className='buy'; dv.textContent=$t('交付');
       dv.onclick=function(){ deliverOrder(i); };
       foot.appendChild(dv);
@@ -6964,7 +7106,9 @@ function dexMapsDone(){
   return n;
 }
 function anyRarity(r){
-  return Object.keys(save.fish).some(function(id){ return FISH[id]&&FISH[id].r===r; });
+  return Object.keys(save.fish).some(function(id){
+    return Object.prototype.hasOwnProperty.call(FISH,id)&&FISH[id].r===r;
+  });
 }
 var ACHS=[
   {id:'c10',   cat:'累计', name:'初次渔获',   desc:'累计渔获 10 条',                 test:function(){return save.totalCatch>=10;},   reward:{t:30}},
@@ -7096,10 +7240,14 @@ function regionDexDone(rgId){
 /* ---------- 统计页（C4，只读） ---------- */
 function bestFishEver(){
   var best=null;
-  Object.keys(save.fish).forEach(function(id){
-    var e=save.fish[id], f=FISH[id];
+  Object.keys(save.fish||{}).forEach(function(id){
+    var e=save.fish[id];
+    if(!e||typeof e!=='object') return;
+    var f=fishById(id);                      /* 鱼王不在 FISH 里，也要算进最大渔获 */
     if(!f) return;
-    if(!best||e.best>best.size) best={name:fishName(f),size:e.best};
+    var s=e.best|0;
+    if(s<=0) return;
+    if(!best||s>best.size) best={name:fishName(f),size:s};
   });
   return best;
 }
@@ -7129,7 +7277,8 @@ function kingTotal(){
 function statRow(label,value){
   var r=document.createElement('div');
   r.className='shopRow';
-  r.innerHTML='<div class="si"><b>'+label+'</b></div><span class="tag">'+value+'</span>';
+  /* 月巴名 / 称号来自名册或存档，统一转义；统计值本身没有需要保留的 HTML */
+  r.innerHTML='<div class="si"><b>'+lbEsc(label)+'</b></div><span class="tag">'+lbEsc(value)+'</span>';
   return r;
 }
 function buildStats(){
@@ -7367,6 +7516,7 @@ function lbPost(e){
   }).then(function(r){ return r.ok?r.json():null; });
 }
 function lbSubmit(stats,force){
+  if(save.dbg) return;                    /* 调试档不上榜（本地仍可看榜/取名） */
   if(!lbName()) return;
   if(!force&&Date.now()-lbLastPost<15000) return;
   lbLastPost=Date.now();
@@ -7519,8 +7669,18 @@ window.addEventListener('keydown',function(e){
   if($('guideOv').classList.contains('show')){ guideClose(); return; }
   if($('ptOv').classList.contains('show')){ $('ptOv').classList.remove('show'); return; }
   if($('langOv').classList.contains('show')){ $('langOv').classList.remove('show'); return; }
-  if($('nickOv').classList.contains('show')){ lbNickCommit(true); return; }
-  if($('lbOv').classList.contains('show')){ lbClose(); }
+  /* 改名按 Esc = 取消：以前会调用 lbNickCommit(true)，把玩家输入的名字换成随机鱼名 */
+  if($('nickOv').classList.contains('show')){ $('nickOv').classList.remove('show'); return; }
+  if($('lbOv').classList.contains('show')){ lbClose(); return; }
+  if($('shopOv').classList.contains('show')){ $('shopOv').classList.remove('show'); return; }
+  if($('bagOv').classList.contains('show')){ $('bagOv').classList.remove('show'); return; }
+  if($('ordOv').classList.contains('show')){
+    if(ordTicker){ clearInterval(ordTicker); ordTicker=null; }
+    $('ordOv').classList.remove('show'); return;
+  }
+  if($('achOv').classList.contains('show')){ $('achOv').classList.remove('show'); return; }
+  if($('statOv').classList.contains('show')){ $('statOv').classList.remove('show'); return; }
+  if($('dex').classList.contains('show')){ $('dex').classList.remove('show'); return; }
 });
 
 /* ============================================================
@@ -8561,6 +8721,9 @@ var I18N_FISH={
 applyStaticI18n();   /* 先把静态文案按当前语言铺好 */
 TOMATO='<img class="timg" src="'+COIN_URL+'" alt="'+$t('番茄币')+'">';
 loadSave();
+/* 调试档标记：?debug=1 仍可用于本地调试，但这份存档不再上报排行榜，
+   避免用调试档解锁图四/自动收线后刷榜；清掉 localStorage 里的 dbg 才会恢复。 */
+if(DEBUG&&!save.dbg){ save.dbg=1; commitSave(); }
 /* 独立打开（不在百巴箱内）：每局从保底名册随机一位随行；
    内嵌且 BUDDY_LINK=1 时，庭院名册到达后由庭院当前月巴接管 */
 if(!IN_FRAME || !BUDDY_LINK) save.buddy='';
