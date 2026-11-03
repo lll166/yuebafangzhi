@@ -4870,18 +4870,26 @@ function yardEntry(id){
   for(var i=0;i<ys.length;i++){ if(ys[i].id===id) return ys[i]; }
   return null;
 }
+/* 随行候选：优先有外链立绘的月巴——没立绘的只能像素兜底，
+   所以自动领养 / 随机时先排除它们；庭院里一只带图的都没有才退回全部 */
+function buddyArtPool(ys){
+  var withArt=[];
+  for(var i=0;i<ys.length;i++){ if(ys[i].url) withArt.push(ys[i]); }
+  return withArt.length?withArt:ys;
+}
 function currentBuddyId(){
+  var ys=yardList();
   if(save.buddy){
-    if(yardEntry(save.buddy)) return save.buddy;
-    save.buddy='';                        /* 不在庭院里了（庭院会轮换）：回退未选 */
+    var cur=yardEntry(save.buddy);
+    /* 已领养的没立绘、而庭院里还有带图的：换一只带图的，别让跟随一直是像素兜底 */
+    if(cur&&(cur.url||buddyArtPool(ys)===ys)) return save.buddy;
+    save.buddy='';                        /* 不在庭院里了（庭院会轮换）/ 换带图的那只：回退未选 */
   }
-  if(!save.buddy){
-    var ys=yardList();
-    if(ys.length){
-      /* 接入父页庭院：沿用庭院当前第一只；
-         未接入（保底名册）：每局随机一位来陪钓 */
-      save.buddy=YARD?ys[0].id:ys[randi(0,ys.length-1)].id;
-    }
+  if(!save.buddy&&ys.length){
+    /* 接入父页庭院：沿用庭院里第一只带立绘的；
+       未接入（保底名册）：从带立绘的里随机一位来陪钓 */
+    var pool=buddyArtPool(ys);
+    save.buddy=YARD?pool[0].id:pool[randi(0,pool.length-1)].id;
   }
   return save.buddy;
 }
