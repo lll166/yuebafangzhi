@@ -4920,6 +4920,7 @@ window.addEventListener('message',function(e){
     YARD=map;
     YARD_PENDING=false;
     if(save.buddy&&!yardEntry(save.buddy)) save.buddy='';
+    refreshBuddyArt();                     /* 名册带图晚到 / 换人：重取立绘 */
     syncOrdersToYard();                    /* 启动时先按保底名册开的订单，这里换成庭院月巴 */
     ensureOrders();                        /* 名册到齐后再按 4 小时刷新点校验/开单 */
     if($('ordOv')&&$('ordOv').classList.contains('show')) buildOrders();
@@ -4956,6 +4957,15 @@ function fallbackBanny(id){
 /* 陪伴月巴立绘：加载缓存（外链缩略图本身紧裁剪，无需再裁）；
    加载失败走像素兜底 */
 var BUDDY_ART={};
+/* 立绘缓存失效重来：失败（外链 404 / 断网 / 名册还没带图）过的不必一错到底，
+   退出地图再进、或父页名册补上立绘时清掉重取一次，免得整局都只剩像素兜底 */
+function refreshBuddyArt(){
+  var ys=yardList();
+  for(var i=0;i<ys.length;i++){
+    var e=BUDDY_ART[ys[i].id];
+    if(e&&(e.st==='err'||e.ext!==ys[i].url)) delete BUDDY_ART[ys[i].id];
+  }
+}
 function buddyLoaded(e,im){
   e.cv=im; e.im=im; e.st='plain';
 }
@@ -5491,6 +5501,7 @@ function openMap(id){
   if(f.map.r4&&!DEBUG){ toast($t('这个钓点还在迷雾里…旅行联动后解锁')); return; }
   scene.region=f.region; scene.map=f.map; scene.curMap=id;
   sceneTitle();
+  refreshBuddyArt();                        /* 上次没刷出来的立绘：这次进图重取一次 */
   save.sel=id; commitSave();
   setState('idle');
   setView('scene');
