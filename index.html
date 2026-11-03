@@ -423,6 +423,14 @@
   .sub-form .st b{display:block;font-size:13px;font-weight:900;}
   .sub-form .st small{display:block;font-size:10px;opacity:.85;margin-top:1px;}
   .sub-form .sa{font-size:16px;font-weight:900;opacity:.9;}
+  /* 月巴艺术投稿：弱化配色，避免与立绘投稿主入口抢视觉 */
+  .sub-form.alt{background:rgba(149,117,205,.12);color:var(--purple2);
+    border:1px solid rgba(149,117,205,.38);box-shadow:none;}
+  .sub-hd{display:flex;align-items:center;gap:8px;margin:14px 2px 8px;font-size:11px;
+    font-weight:900;color:var(--dim);letter-spacing:.02em;}
+  .sub-hd::after{content:'';flex:1;height:1px;background:var(--line);}
+  /* 窄屏四个表单卡片太高，吸顶会挡住列表，改为随内容滚动 */
+  @media (max-width:640px){ .subtop{position:static;} }
   .subsearch{margin-top:0;width:100%;box-sizing:border-box;padding:9px 12px;border-radius:12px;
     border:1px solid var(--line);background:var(--panel2);color:var(--text);font-size:13px;outline:none;}
   .subsearch:focus{border-color:var(--purple2);}
@@ -5787,6 +5795,13 @@ const I18N_UI={
   '腾讯文档表单 · 上传 PNG 立绘（两个表单任选其一）':{en:'Tencent Docs form · upload a PNG illustration (either form works)',ja:'Tencent ドキュメントフォーム · PNG 立ち絵をアップロード（どちらか一方でOK）',ko:'Tencent 문서 양식 · PNG 일러스트 업로드 (둘 중 하나만)'},
   '两个投稿表单内容一样，任选一个填写即可，不需要两个都投。':{en:'Both submission forms are identical — fill in either one, no need to submit twice.',ja:'2つの投稿フォームは同じ内容です。どちらか一方に記入すればOKで、両方に投稿する必要はありません。',ko:'두 투고 양식은 내용이 같아요. 하나만 작성하면 되고, 둘 다 제출할 필요는 없어요.'},
   '备用投稿表单还没做好，请稍后再来':{en:'The backup submission form is not ready yet — please check back later.',ja:'予備の投稿フォームはまだ準備中です。後ほどご確認ください。',ko:'예비 투고 양식은 아직 준비 중이에요. 나중에 다시 확인해 주세요.'},
+  '🎨 月巴艺术投稿':{en:'🎨 Banny art submission',ja:'🎨 バニーアート投稿',ko:'🎨 배니 아트 투고'},
+  '艺术投稿表单':{en:'Art submission form',ja:'アート投稿フォーム',ko:'아트 투고 양식'},
+  'Google 表单 · 上传月巴艺术图':{en:'Google Form · upload Banny art',ja:'Google フォーム · バニーアートをアップロード',ko:'Google 설문지 · 배니 아트 업로드'},
+  '备用艺术投稿表单':{en:'Backup art submission form',ja:'予備のアート投稿フォーム',ko:'예비 아트 투고 양식'},
+  '腾讯文档表单 · 上传月巴艺术图（两个表单任选其一）':{en:'Tencent Docs form · upload Banny art (either form works)',ja:'Tencent ドキュメントフォーム · バニーアートをアップロード（どちらか一方でOK）',ko:'Tencent 문서 양식 · 배니 아트 업로드 (둘 중 하나만)'},
+  '艺术投稿表单还没做好，请稍后再来':{en:'The art submission form is not ready yet — please check back later.',ja:'アート投稿フォームはまだ準備中です。後ほどご確認ください。',ko:'아트 투고 양식은 아직 준비 중이에요. 나중에 다시 확인해 주세요.'},
+  '备用艺术投稿表单还没做好，请稍后再来':{en:'The backup art submission form is not ready yet — please check back later.',ja:'予備のアート投稿フォームはまだ準備中です。後ほどご確認ください。',ko:'예비 아트 투고 양식은 아직 준비 중이에요. 나중에 다시 확인해 주세요.'},
   '搜索月巴名字或简介…':{en:'Search by name or description…',ja:'名前や紹介文で検索…',ko:'이름이나 소개로 검색…'},
   '共 {n} 只还缺立绘':{en:'{n} Bannies still need art',ja:'立ち絵待ち {n} 体',ko:'일러스트가 필요한 배니 {n}마리'},
   '找到 {n} 只':{en:'{n} found',ja:'{n} 体見つかりました',ko:'{n}마리 찾음'},
@@ -9185,6 +9200,17 @@ function subForm2Open(){
   if(!SUBMIT_FORM_URL2){ toast($t('备用投稿表单还没做好，请稍后再来')); return false; }
   window.open(SUBMIT_FORM_URL2,'_blank','noopener'); return false;
 }
+/* 月巴艺术投稿（自由创作的同人图/插画）：链接到位后填这里；留空时点击只提示未开放。两个表单任选一个投即可。 */
+const ART_FORM_URL='https://docs.google.com/forms/d/e/1FAIpQLSdh4MAxXm52H6H4bED9VEtaHWzz40hv57I9BMp1wf_J6ZNFzQ/viewform?usp=publish-editor';
+const ART_FORM_URL2='https://docs.qq.com/form/page/DYWV3QWF5VWNuSXNM';
+function artFormOpen(){
+  if(!ART_FORM_URL){ toast($t('艺术投稿表单还没做好，请稍后再来')); return false; }
+  window.open(ART_FORM_URL,'_blank','noopener'); return false;
+}
+function artForm2Open(){
+  if(!ART_FORM_URL2){ toast($t('备用艺术投稿表单还没做好，请稍后再来')); return false; }
+  window.open(ART_FORM_URL2,'_blank','noopener'); return false;
+}
 function dex2Unlocked(){ return Object.keys(S.collection).length>=DEX1_MIN; }
 function isDex2(id){ return TYPES2.some(t=>t.id===id); }
 function isDex3(id){ return TYPES3.some(t=>t.id===id); }
@@ -10568,6 +10594,19 @@ function openSubmitPage(){
          ${SUBMIT_FORM_URL2?'target="_blank" rel="noopener"':'onclick="return subForm2Open()"'}>
         <span class="si">📮</span>
         <span class="st"><b>${$t('备用投稿表单')}</b><small>${$t('腾讯文档表单 · 上传 PNG 立绘（两个表单任选其一）')}</small></span>
+        <span class="sa">↗</span>
+      </a>
+      <div class="sub-hd">${$t('🎨 月巴艺术投稿')}</div>
+      <a class="sub-form alt" href="${ART_FORM_URL||'#'}"
+         ${ART_FORM_URL?'target="_blank" rel="noopener"':'onclick="return artFormOpen()"'}>
+        <span class="si">🎨</span>
+        <span class="st"><b>${$t('艺术投稿表单')}</b><small>${$t('Google 表单 · 上传月巴艺术图')}</small></span>
+        <span class="sa">↗</span>
+      </a>
+      <a class="sub-form alt" href="${ART_FORM_URL2||'#'}"
+         ${ART_FORM_URL2?'target="_blank" rel="noopener"':'onclick="return artForm2Open()"'}>
+        <span class="si">🎨</span>
+        <span class="st"><b>${$t('备用艺术投稿表单')}</b><small>${$t('腾讯文档表单 · 上传月巴艺术图（两个表单任选其一）')}</small></span>
         <span class="sa">↗</span>
       </a>
     </div>
