@@ -56,6 +56,9 @@
   .chipbtn.show{display:flex;}
   .chipbtn:active{transform:scale(.94);}
   .chipbtn.lock{color:var(--dim);opacity:.75;}
+  /* 右上角立绘入口：直接显示当前钓手番茄的缩略图 */
+  .portraitbtn{padding:0 3px;}
+  #ptIcon{display:block;width:20px;height:20px;}
 
   /* ---------- 钓点选择 ---------- */
   #viewSelect{display:flex;flex-direction:column;gap:8px;min-height:0;
@@ -519,6 +522,91 @@
   .langBtn.on{color:#fff;border-color:var(--accent);background:linear-gradient(180deg,var(--accent2),var(--accent));}
   .langBtn:active{transform:translateY(1px);filter:brightness(.96);}
   #langNote{margin-top:9px;font-size:9px;line-height:1.6;letter-spacing:.4px;color:var(--dim);text-align:center;}
+
+  /* ---------- 番茄立绘（右上角切换） ---------- */
+  #ptOv{position:fixed;inset:0;z-index:12;display:none;align-items:center;justify-content:center;
+    padding:16px;background:rgba(91,83,67,.38);
+    -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);}
+  #ptOv.show{display:flex;}
+  #ptPanel{display:flex;flex-direction:column;gap:8px;width:min(480px,94%);max-height:90%;padding:12px;
+    background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--line2);box-shadow:0 18px 44px rgba(91,83,67,.32);}
+  #ptHead{display:flex;align-items:center;gap:8px;}
+  #ptHead .dt{font-size:13px;font-weight:900;letter-spacing:2px;color:var(--accent);}
+  #ptProg{flex:1 1 auto;min-width:0;font-size:10px;font-weight:800;color:var(--dim);
+    letter-spacing:.5px;font-variant-numeric:tabular-nums;}
+  #ptClose{flex:0 0 auto;height:24px;padding:0 9px;cursor:pointer;font-family:inherit;
+    font-size:10px;font-weight:800;letter-spacing:1px;color:var(--dim);
+    border:1px solid var(--line);background:var(--panel);
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%);}
+  #ptClose:active{transform:scale(.95);}
+  #ptBody{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;
+    overflow-y:auto;min-height:0;padding:2px;}
+  .ptCard{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 6px 7px;
+    border:1px solid var(--line);background:var(--panel);cursor:pointer;
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%);}
+  .ptCard:active{transform:scale(.98);}
+  .ptCard.cur{border-color:var(--accent);background:#e9f3ee;
+    box-shadow:inset 0 0 0 1px rgba(62,142,126,.35);}
+  .ptCard.lock{cursor:default;opacity:.9;}
+  .ptCard.lock:active{transform:none;}
+  .ptCv{display:block;width:84px;height:84px;background:#edf3ef;border:1px solid #e2dcc9;}
+  .ptName{font-size:11px;font-weight:900;letter-spacing:.5px;line-height:1.2;text-align:center;}
+  .ptCard.cur .ptName{color:var(--accent);}
+  .ptNum{display:block;min-height:10px;margin-top:-2px;font-size:8px;line-height:1.2;color:var(--dim);
+    text-align:center;font-variant-numeric:tabular-nums;}
+  .ptState{display:block;min-height:26px;font-size:9px;line-height:1.45;color:var(--dim);text-align:center;
+    font-variant-numeric:tabular-nums;}
+  .ptLine{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ptCard.cur .ptState{color:var(--accent);font-weight:900;}
+  .ptBar{display:block;width:100%;height:9px;padding:1px;border:1px solid var(--line);background:var(--panel2);}
+  .ptBar i{display:block;height:100%;background:repeating-linear-gradient(90deg,var(--accent2) 0 4px,var(--accent) 4px 8px);}
+  #ptNote{margin-top:2px;font-size:9px;line-height:1.6;letter-spacing:.4px;color:var(--dim);text-align:center;}
+
+  /* ---------- 玩法说明（右上角 ❔） ---------- */
+  .guidebtn{padding:0 7px;gap:3px;letter-spacing:0;}
+  .guidebtn b{font-size:12px;font-weight:900;line-height:1;}
+  #guideOv{position:fixed;inset:0;z-index:13;display:none;align-items:center;justify-content:center;
+    padding:16px;background:rgba(91,83,67,.38);
+    -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);}
+  #guideOv.show{display:flex;}
+  #guidePanel{display:flex;flex-direction:column;gap:8px;width:min(430px,94%);max-height:94%;padding:12px;
+    background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--line2);box-shadow:0 18px 44px rgba(91,83,67,.32);}
+  #guideHead{display:flex;align-items:center;gap:8px;}
+  #guideHead .dt{flex:1 1 auto;min-width:0;font-size:13px;font-weight:900;letter-spacing:1px;color:var(--accent);}
+  #guideClose{flex:0 0 auto;height:24px;padding:0 9px;cursor:pointer;font-family:inherit;
+    font-size:10px;font-weight:800;letter-spacing:1px;color:var(--dim);
+    border:1px solid var(--line);background:var(--panel);
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%);}
+  #guideClose:active{transform:scale(.95);}
+  #guideBody{display:flex;flex-direction:column;gap:8px;overflow-y:auto;min-height:0;padding:2px 3px 2px 2px;
+    font-size:10.5px;line-height:1.68;letter-spacing:.3px;color:var(--text);}
+  /* 还没滚到底时底部渐隐，提示下面还有内容 */
+  #guideBody.more{-webkit-mask-image:linear-gradient(180deg,#000 calc(100% - 16px),transparent);
+    mask-image:linear-gradient(180deg,#000 calc(100% - 16px),transparent);}
+  .gSec{display:flex;flex-direction:column;gap:2px;}
+  .gT{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:900;
+    letter-spacing:1px;color:var(--accent);}
+  .gT::before{content:'';width:3px;height:10px;flex:0 0 auto;background:var(--accent2);}
+  .gSec p{position:relative;padding-left:11px;color:var(--text);}
+  .gSec p::before{content:'·';position:absolute;left:2px;top:0;color:var(--accent2);font-weight:900;}
+  /* 步骤编号用 CSS 计数：切语言时编号不会跟着译文乱掉 */
+  .gSteps{counter-reset:gs;display:flex;flex-direction:column;gap:3px;}
+  .gSteps p{padding-left:18px;}
+  .gSteps p::before{counter-increment:gs;content:counter(gs);left:0;top:3px;
+    width:13px;height:13px;display:flex;align-items:center;justify-content:center;
+    font-size:8px;line-height:1;color:#fff;background:var(--accent2);border-radius:50%;}
+  #guideOk{flex:0 0 auto;margin-top:2px;padding:9px 0;border:0;cursor:pointer;font-family:inherit;
+    font-size:11px;font-weight:900;letter-spacing:2px;color:#fff;
+    background:linear-gradient(180deg,var(--accent2),var(--accent));
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%);}
+  #guideOk:active{transform:translateY(1px);filter:brightness(.95);}
+  /* 窄屏只留「?」，否则顶栏一排芯片会被挤掉 */
+  @media (max-width:430px){
+    .guidebtn span{display:none;}
+    .guidebtn{padding:0 6px;}
+  }
   /* 英 / 日 / 韩文案普遍更长：收紧字距，避免按钮与标题撑破 */
   html:not([lang="zh-CN"]) .chipbtn{letter-spacing:.3px;}
   html:not([lang="zh-CN"]) .brand{letter-spacing:1px;}
@@ -528,9 +616,38 @@
   html:not([lang="zh-CN"]) #ovTitle{letter-spacing:.5px;font-size:17px;}
   html:not([lang="zh-CN"]) #btnAction{letter-spacing:2px;font-size:12px;}
   html:not([lang="zh-CN"]) .ovBtn{letter-spacing:1px;font-size:10px;}
-  html:not([lang="zh-CN"]) .dexCell b{letter-spacing:0;font-size:9px;}
+  html:not([lang="zh-CN"]) .dexCell b{letter-spacing:0;font-size:9px;white-space:normal;
+    line-height:1.3;min-height:23px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  html:not([lang="zh-CN"]) .dexCell{width:102px;}
+  html:not([lang="zh-CN"]) #shopHead .dt,html:not([lang="zh-CN"]) #dexHead .dt,
+  html:not([lang="zh-CN"]) #ordHead .dt,html:not([lang="zh-CN"]) #achHead .dt,
+  html:not([lang="zh-CN"]) #statHead .dt,html:not([lang="zh-CN"]) #lbHead .dt,
+  html:not([lang="zh-CN"]) #langHead .dt,html:not([lang="zh-CN"]) #guideHead .dt{white-space:nowrap;}
+  html:not([lang="zh-CN"]) #shopClose,html:not([lang="zh-CN"]) #dexClose,
+  html:not([lang="zh-CN"]) #ordClose,html:not([lang="zh-CN"]) #achClose,
+  html:not([lang="zh-CN"]) #statClose,html:not([lang="zh-CN"]) #lbClose,
+  html:not([lang="zh-CN"]) #langClose,html:not([lang="zh-CN"]) #guideClose,
+  html:not([lang="zh-CN"]) #bagClose{white-space:nowrap;}
   html:not([lang="zh-CN"]) .dexHit .hn{letter-spacing:0;}
   html:not([lang="zh-CN"]) #toast{letter-spacing:0;font-size:10px;}
+  html:not([lang="zh-CN"]) .maprow .mi small span{white-space:normal;}
+  @media (max-width:400px){
+    html:not([lang="zh-CN"]) #selectTools .chipbtn{font-size:9px;padding:0 1px;letter-spacing:0;}
+  }
+  @media (max-width:340px){
+    .brand{display:none;}
+    #topbar{justify-content:flex-end;}
+  }
+  @media (max-width:390px){
+    html:not([lang="zh-CN"]) .brand{display:none;}
+    html:not([lang="zh-CN"]) #topbar{justify-content:flex-end;}
+  }
+  /* 内嵌场景 + 窄屏：顶栏要同时放「返回」与语言键，标题让位，避免挤成省略号 */
+  @media (max-width:430px){
+    body.framed .brand{display:none;}
+    body.framed #topbar{justify-content:flex-end;}
+    .langbtn{padding:0 4px;}
+  }
 </style>
 </head>
 <body>
@@ -539,9 +656,11 @@
     <div id="topbar">
       <div class="brand" data-i18n-html="<em>月巴</em>垂钓"><em>月巴</em>垂钓</div>
       <div class="stats">
-        <div class="stat"><img class="timg" id="coinImg" alt="番茄币"><b id="hudTomato">0</b></div>
+        <div class="stat"><img class="timg" id="coinImg" alt="番茄币" data-i18n-alt="番茄币"><b id="hudTomato">0</b></div>
         <div class="stat clickable" id="statBag" title="打开鱼篓" data-i18n-title="打开鱼篓"><span data-i18n="渔获">渔获</span><b id="hudCatch">0/10</b></div>
+        <button class="chipbtn show portraitbtn" id="btnPortrait" title="番茄立绘" data-i18n-title="番茄立绘"><canvas id="ptIcon" width="44" height="44"></canvas></button>
         <button class="chipbtn show langbtn" id="btnLang" title="语言 / Language" data-i18n-title="语言 / Language">🌐</button>
+        <button class="chipbtn show guidebtn" id="btnGuide" title="玩法说明" data-i18n-title="玩法说明"><b>?</b><span data-i18n="玩法">玩法</span></button>
         <button class="chipbtn show" id="btnDex" data-i18n="📘 图鉴">📘 图鉴</button>
         <button class="chipbtn" id="btnClose" data-i18n="✕ 返回">✕ 返回</button>
       </div>
@@ -728,6 +847,59 @@
   </div>
 </div>
 
+<!-- 玩法说明：顶栏右上角 ❔；静态文案走 data-i18n，切语言即时刷新 -->
+<div id="guideOv">
+  <div id="guidePanel">
+    <div id="guideHead">
+      <span class="dt" data-i18n="❔ 玩法说明">❔ 玩法说明</span>
+      <button id="guideClose" data-i18n="✕ 关闭">✕ 关闭</button>
+    </div>
+    <div id="guideBody">
+      <div class="gSec">
+        <b class="gT" data-i18n="怎么钓">怎么钓</b>
+        <div class="gSteps">
+          <p data-i18n="选好钓点，点「下竿」抛出浮标，等它动。">选好钓点，点「下竿」抛出浮标，等它动。</p>
+          <p data-i18n="浮标猛沉、炸开水花就是咬钩：立刻提竿（空格 / 回车也行）。">浮标猛沉、炸开水花就是咬钩：立刻提竿（空格 / 回车也行）。</p>
+          <p data-i18n="按住收线键，把张力指针顶进彩色目标带；进带后松手，反复收满进度就能上鱼。">按住收线键，把张力指针顶进彩色目标带；进带后松手，反复收满进度就能上鱼。</p>
+          <p data-i18n="顶到鱼线上限会断线；完全不管，鱼会游走。两种都不扣东西，重来就好。">顶到鱼线上限会断线；完全不管，鱼会游走。两种都不扣东西，重来就好。</p>
+        </div>
+      </div>
+      <div class="gSec">
+        <b class="gT" data-i18n="鱼与饵">鱼与饵</b>
+        <p data-i18n="鱼有普通、稀有、传说、传家宝四种稀有度，越往后越难遇到。">鱼有普通、稀有、传说、传家宝四种稀有度，越往后越难遇到。</p>
+        <p data-i18n="传家宝只在地区第四张图出现，下竿需要带鱼饵。">传家宝只在地区第四张图出现，下竿需要带鱼饵。</p>
+        <p data-i18n="引鱼粉让下一竿等得更快；稀有饵更容易遇到稀有和传说；龙涎饵更容易遇到传说。">引鱼粉让下一竿等得更快；稀有饵更容易遇到稀有和传说；龙涎饵更容易遇到传说。</p>
+      </div>
+      <div class="gSec">
+        <b class="gT" data-i18n="鱼篓 · 图鉴 · 订单">鱼篓 · 图鉴 · 订单</b>
+        <p data-i18n="钓到的鱼先进鱼篓，不会自动卖；篓满了就钓不了，点顶部「渔获」卖掉。">钓到的鱼先进鱼篓，不会自动卖；篓满了就钓不了，点顶部「渔获」卖掉。</p>
+        <p data-i18n="同一种鱼多钓几条才会在图鉴点亮，传家宝钓到一条就算收录。">同一种鱼多钓几条才会在图鉴点亮，传家宝钓到一条就算收录。</p>
+        <p data-i18n="订单会定时刷新，交付能换番茄币，有时还送鱼饵。">订单会定时刷新，交付能换番茄币，有时还送鱼饵。</p>
+        <p data-i18n="钓具和后续钓点会随着旅行信件与图鉴收录逐步解锁。">钓具和后续钓点会随着旅行信件与图鉴收录逐步解锁。</p>
+      </div>
+      <div class="gSec">
+        <b class="gT" data-i18n="放置也照钓">放置也照钓</b>
+        <p data-i18n="达成「渔获五十」后，商店会上架自动收线器：自动提竿、自动稳张力。">达成「渔获五十」后，商店会上架自动收线器：自动提竿、自动稳张力。</p>
+        <p data-i18n="自动模式收获会少一些；开着自动关掉页面也会继续钓，直到鱼篓装满。">自动模式收获会少一些；开着自动关掉页面也会继续钓，直到鱼篓装满。</p>
+      </div>
+    </div>
+    <button id="guideOk" data-i18n="知道了">知道了</button>
+  </div>
+</div>
+
+<!-- 番茄立绘：普通默认；集齐第 2 张地图奖励战斗番茄、第 3 张奖励 006 番茄 -->
+<div id="ptOv">
+  <div id="ptPanel">
+    <div id="ptHead">
+      <span class="dt" data-i18n="🎨 番茄立绘">🎨 番茄立绘</span>
+      <span id="ptProg"></span>
+      <button id="ptClose" data-i18n="✕ 关闭">✕ 关闭</button>
+    </div>
+    <div id="ptBody"></div>
+    <div id="ptNote" data-i18n="集齐第 2 张地图解锁战斗番茄 · 第 3 张地图解锁 006 番茄">集齐第 2 张地图解锁战斗番茄 · 第 3 张地图解锁 006 番茄</div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -834,6 +1006,8 @@ function applyStaticI18n(){
   for(i=0;i<nodes.length;i++) nodes[i].setAttribute('title',$t(nodes[i].getAttribute('data-i18n-title')));
   nodes=document.querySelectorAll('[data-i18n-placeholder]');
   for(i=0;i<nodes.length;i++) nodes[i].setAttribute('placeholder',$t(nodes[i].getAttribute('data-i18n-placeholder')));
+  nodes=document.querySelectorAll('[data-i18n-alt]');
+  for(i=0;i<nodes.length;i++) nodes[i].setAttribute('alt',$t(nodes[i].getAttribute('data-i18n-alt')));
   document.title=$t('月巴垂钓 · 像素垂钓');
 }
 /* 场景标题：钓点名 + 地区 · 副标题 */
@@ -844,6 +1018,7 @@ function sceneTitle(){
 /* 切语言后重绘当前打开的所有视图（弹层按 show 状态逐个重建） */
 function repaintAll(){
   applyStaticI18n();
+  TOMATO='<img class="timg" src="'+COIN_URL+'" alt="'+$t('番茄币')+'">';
   try{ refreshHud(false); }catch(e){}
   try{ updateAutoUI(); }catch(e){}
   try{ updateBaitUI(); }catch(e){}
@@ -858,6 +1033,9 @@ function repaintAll(){
   if($('lbOv').classList.contains('show')){ lbRenderTabs(); lbPaintMy(); lbLoad(); }
   if($('overlay').classList.contains('show')) repaintResult();
   if($('langOv').classList.contains('show')) buildLangModal();
+  if($('ptOv').classList.contains('show')) buildPortraits();
+  if($('guideOv').classList.contains('show')) guideFade();   /* 译文长短不同，重算底部渐隐 */
+  try{ refreshPortraitIcon(); }catch(e){}
   if(G.state==='reel') setState('reel');
   else if(G.state==='idle'||G.state==='waiting'||G.state==='bite'||G.state==='landing') setState(G.state);
 }
@@ -1146,7 +1324,7 @@ F('w4ah','王庭古龙鲤',2,'#95a0d0',{pat:'stripe',fat:1.25}); F('w4ai','失�
    auto: 自动收线开关；autoReel: 是否已购入自动收线器（成就「渔获五十」后商店解锁）；
    autoTs/autoMap: 离线挂机起点（心跳+关闭时写入） */
 var SAVE_KEY='ybf_fishing_save_v1';
-var save={v:5,tomato:0,totalCatch:0,fish:{},rewards:{},sel:'f1',auto:false,autoReel:0,autoTs:0,autoMap:'',buddy:'',
+var save={v:5,tomato:0,totalCatch:0,fish:{},rewards:{},sel:'f1',auto:false,autoReel:0,autoTs:0,autoMap:'',buddy:'',portrait:'normal',
   rod:0,rodLv:0,line:0,basket:0,bait:{powder:0,rare:0,dragon:0},
   orders:null,orderAt:0,ordDay:'',ordRr:0,ach:{},stats:{smooth:0,snaps:0,rs:0,fast:0,casts:0,offCatch:0,mapCasts:{}},title:'',
   kings:{},kingPity:{},junk:{},junkDone:false,bond:{},bag:[],
@@ -1210,6 +1388,8 @@ function loadSave(){
     /* 自动收线器：未购入时收回旧档的自动开关（开局只能手动，购入后进图随时开关） */
     save.autoReel=(d.autoReel|0)?1:0;
     if(!save.autoReel) save.auto=false;
+    /* 钓手立绘：旧档没有该字段时用普通番茄；失效 / 未解锁的 id 由 currentPortraitId() 回退 */
+    save.portrait=(typeof d.portrait==='string'&&d.portrait)?d.portrait:'normal';
     /* 排行榜相关：旧档没有这些字段时从 0 起算；今日记录跨天会在 recTouch() 清零 */
     save.at=(typeof d.at==='number')?d.at:0;
     save.ordDone=clamp(d.ordDone|0,0,1000000);
@@ -4433,40 +4613,179 @@ function drawBiteMark(t,bob){
   rr(hdx,bx,by,2,7.6,1); hdx.stroke();
   hdx.beginPath(); hdx.arc(bx+1,by+9.5,1,0,6.2832); hdx.stroke();
 }
-/* 钓手番茄（C4.5）：持竿的角色就是玩家番茄，用「番茄立绘-普通」外链图，HD-2D
-   原图四周有透明空白 → 加载后自动裁边（扫描 alpha 包围盒），角色落地才准 */
-var TOMATO_CHAR={url:'月巴放置（图）/番茄立绘/番茄立绘-普通.png'};
-var TOMATO_CROP={x:440,y:352,w:1202,h:1326};   /* 预量好的不透明包围盒：绘制时源矩形裁切，file:// 下同样精确 */
-var TOMATO_IMG=null;      /* null=加载中 / 'err'=失败 / Image=原图 */
-var TOMATO_RAW=null;      /* 原始 Image（加载中转） */
-function tomatoImage(){
-  if(TOMATO_IMG!==null) return TOMATO_IMG;
-  if(!TOMATO_RAW){
-    var im=new Image();
-    im.onload=function(){ TOMATO_IMG=im; };
-    im.onerror=function(){ TOMATO_IMG='err'; };
-    im.src=TOMATO_CHAR.url;
-    TOMATO_RAW=im;
-  }
-  return TOMATO_IMG;                       /* null=仍在加载 */
+/* 钓手番茄（C4.5）：持竿的角色就是玩家番茄，HD-2D 立绘 + 预量好的包围盒裁边。
+   立绘共三张，右上角「立绘」面板随时切换：
+     普通番茄（默认） / 战斗番茄（集齐第 2 张地图 f2「世外桃源」） /
+     006 番茄（集齐第 3 张地图 f3「上古秘境」）。
+   「集齐」沿用图鉴奖励口径：该图全部鱼达到收录额度（dexDone）。 */
+var PORTRAITS=[
+  {id:'normal',name:'普通番茄',desc:'最初的样子',
+   url:'月巴放置（图）/番茄立绘/番茄立绘-普通.png',
+   crop:{x:440,y:352,w:1202,h:1326}},
+  {id:'battle',name:'战斗番茄',desc:'集齐「世外桃源」后解锁',
+   url:'月巴放置（图）/番茄立绘/番茄立绘-异血.png',
+   crop:{x:0,y:0,w:189,h:192},need:'f2'},
+  {id:'t006',name:'006番茄',desc:'集齐「上古秘境」后解锁',
+   url:'月巴放置（图）/番茄立绘/番茄立绘-006.png',
+   crop:{x:381,y:319,w:1260,h:1319},need:'f3'},
+];
+var PORTRAIT_BY_ID={},PORTRAIT_BY_MAP={};
+PORTRAITS.forEach(function(p){
+  PORTRAIT_BY_ID[p.id]=p;
+  if(p.need) PORTRAIT_BY_MAP[p.need]=p;
+});
+var PORTRAIT_IMGS={};     /* id -> {img:null|'err'|Image}：按需加载，切换时才拉图 */
+function portraitById(id){ return PORTRAIT_BY_ID[id]||null; }
+function portraitName(p){ return p?$tn(I18N_PORTRAIT,p.id,'n',p.name):''; }
+function portraitDesc(p){ return p?$tn(I18N_PORTRAIT,p.id,'d',p.desc):''; }
+/* 解锁判定：该地图 36 种鱼是否全部达到收录额度（DEBUG 视作全收集） */
+function mapDexDone(mpId){
+  var f=findMap(mpId); if(!f) return false;
+  if(DEBUG) return true;
+  return f.map.fish.every(function(id){ return dexDone(id); });
 }
+function mapDexGot(mpId){
+  var f=findMap(mpId); if(!f) return 0;
+  if(DEBUG) return f.map.fish.length;
+  return f.map.fish.filter(function(id){ return dexDone(id); }).length;
+}
+function portraitUnlocked(p){ return !p.need||mapDexDone(p.need); }
+function currentPortraitId(){
+  var p=portraitById(save.portrait);
+  if(p&&portraitUnlocked(p)) return p.id;
+  return PORTRAITS[0].id;                /* 旧档 / 未解锁 / 被改过的 id 一律回退普通番茄 */
+}
+function currentPortrait(){ return portraitById(currentPortraitId())||PORTRAITS[0]; }
+function tomatoImage(p){
+  p=p||currentPortrait();
+  var rec=PORTRAIT_IMGS[p.id];
+  if(!rec){
+    rec=PORTRAIT_IMGS[p.id]={img:null};
+    var im=new Image();
+    im.onload=function(){ rec.img=im; portraitArtChanged(); };
+    im.onerror=function(){ rec.img='err'; };
+    im.src=p.url;
+  }
+  return rec.img;                        /* null=仍在加载 / 'err'=失败 / Image=原图 */
+}
+/* 图加载完成后刷新缩略图与面板（面板开着时按新图重绘） */
+function portraitArtChanged(){
+  try{ refreshPortraitIcon(); }catch(e){}
+  try{ if($('ptOv')&&$('ptOv').classList.contains('show')) buildPortraits(); }catch(e){}
+}
+/* 按固定的 27:29 框铺满 crop：图标 / 面板预览 / 场景共用同一比例 */
+function drawPortraitBox(ctx,img,p,w,h){
+  var bw=w, bh=Math.round(bw*TOMATO_BOX_H/TOMATO_BOX_W);
+  if(bh>h){ bh=h; bw=Math.round(bh*TOMATO_BOX_W/TOMATO_BOX_H); }
+  ctx.drawImage(img,p.crop.x,p.crop.y,p.crop.w,p.crop.h,
+    (w-bw)/2,(h-bh)/2,bw,bh);
+}
+/* 三张立绘统一画进固定的 27×29 框：切换时占位完全一致，不会一大一小。
+   原图比例接近（0.91~0.98），统一到 27:29 的形变不超过 6%，游戏尺寸下看不出来。 */
+var TOMATO_BOX_W=27, TOMATO_BOX_H=29;
 function drawTomato(t){
-  var img=tomatoImage();
+  var p=currentPortrait(), img=tomatoImage(p);
   if(img&&img!=='err'){
     /* HD-2D：源矩形直接裁切空白（不读像素，file:// 下同样精确）；底边固定贴在栈桥面。
-       呼吸感：只有上半身上下起伏（宽度不变、脚底不陷地）。
-       尺寸：按参考截图放大（角色约 26×29，含帽子卷） */
-    var iw=TOMATO_CROP.w, ih=TOMATO_CROP.h;
-    var h=29, w=Math.max(14,h*iw/ih);
-    var h2=h*(1+Math.sin(t*2)*0.03);
+       呼吸感：只有上半身上下起伏（宽度不变、脚底不陷地）。 */
+    var w=TOMATO_BOX_W, h2=TOMATO_BOX_H*(1+Math.sin(t*2)*0.03);
     hdx.imageSmoothingEnabled=true;
     hdx.imageSmoothingQuality='high';
-    hdx.drawImage(img,TOMATO_CROP.x,TOMATO_CROP.y,TOMATO_CROP.w,TOMATO_CROP.h,
+    hdx.drawImage(img,p.crop.x,p.crop.y,p.crop.w,p.crop.h,
       LAY.tomX-w/2,LAY.dockTop-h2,w,h2);
     return;
   }
   drawYueba(LAY.tomX-9,LAY.dockTop-13,t,'#d96a5a');           /* 立绘未就绪：矢量番茄兜底 */
 }
+/* 右上角入口缩略图：没加载完 / 加载失败时画一颗小番茄占位 */
+function refreshPortraitIcon(){
+  var cv=$('ptIcon'); if(!cv) return;
+  var ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,cv.width,cv.height);
+  var p=currentPortrait(), img=tomatoImage(p);
+  if(img&&img!=='err'){ drawPortraitBox(ctx,img,p,cv.width-4,cv.height-4); return; }
+  var cx=cv.width/2, cy=cv.height/2+3;
+  ctx.fillStyle='#d96a5a';
+  ctx.beginPath(); ctx.arc(cx,cy,cv.width*0.3,0,6.2832); ctx.fill();
+  ctx.fillStyle='#4f9d6e';
+  ctx.fillRect(cx-1.5,1,3,cv.height*0.16);
+}
+function drawPortraitPreview(cv,p,ok){
+  var ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,cv.width,cv.height);
+  var img=tomatoImage(p);
+  if(!img||img==='err'){
+    ctx.fillStyle='rgba(90,72,58,.25)';
+    ctx.font='900 30px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('…',cv.width/2,cv.height/2);
+    return;
+  }
+  if(!ok){ ctx.globalAlpha=.4; try{ ctx.filter='grayscale(1) brightness(.55)'; }catch(e){} }
+  drawPortraitBox(ctx,img,p,cv.width-18,cv.height-6);
+  ctx.globalAlpha=1;
+  try{ ctx.filter='none'; }catch(e){}
+}
+function buildPortraits(){
+  var body=$('ptBody'); if(!body) return;
+  body.innerHTML='';
+  var cur=currentPortraitId(), unlocked=0;
+  PORTRAITS.forEach(function(p){
+    var ok=portraitUnlocked(p);
+    if(ok) unlocked++;
+    var card=document.createElement('div');
+    card.className='ptCard'+(p.id===cur?' cur':'')+(ok?'':' lock');
+    var cv=document.createElement('canvas');
+    cv.className='ptCv'; cv.width=168; cv.height=168;
+    card.appendChild(cv);
+    var nm=document.createElement('b');
+    nm.className='ptName'; nm.textContent=portraitName(p);
+    card.appendChild(nm);
+    var f=p.need?findMap(p.need):null;
+    var all=f?f.map.fish.length:0, got=p.need?(ok?all:mapDexGot(p.need)):0;
+    var bar=document.createElement('span');
+    bar.className='ptBar';
+    var fill=document.createElement('i');
+    fill.style.width=(p.need&&all?Math.round(got/all*100):100)+'%';
+    bar.appendChild(fill);
+    card.appendChild(bar);
+    var num=document.createElement('small');
+    num.className='ptNum';
+    num.textContent=p.need?(got+'/'+all):'';
+    card.appendChild(num);
+    var st=document.createElement('small');
+    st.className='ptState';
+    if(ok){
+      st.textContent=p.id===cur?$t('使用中'):$t('点击切换');
+      card.onclick=function(){ selectPortrait(p.id); };
+    }else{
+      var l1=document.createElement('span');
+      l1.className='ptLine'; l1.textContent=f?mapName(f.map):'';
+      var l2=document.createElement('span');
+      l2.className='ptLine'; l2.textContent=$t('集齐解锁');
+      st.appendChild(l1); st.appendChild(l2);
+    }
+    card.appendChild(st);
+    card.title=portraitDesc(p);
+    body.appendChild(card);
+    drawPortraitPreview(cv,p,ok);
+  });
+  $('ptProg').textContent=$tf('已解锁 {n}/{m}',{n:unlocked,m:PORTRAITS.length});
+}
+function selectPortrait(id){
+  var p=portraitById(id);
+  if(!p||!portraitUnlocked(p)) return;
+  if(save.portrait===p.id){ buildPortraits(); return; }
+  save.portrait=p.id; commitSave();
+  refreshPortraitIcon();
+  buildPortraits();
+  toast($tf('已换上「{p}」立绘',{p:portraitName(p)}));
+}
+$('btnPortrait').onclick=function(){
+  buildPortraits();
+  $('ptOv').classList.add('show');
+};
+$('ptClose').onclick=function(){ $('ptOv').classList.remove('show'); };
+$('ptOv').onclick=function(e){ if(e.target===$('ptOv')) $('ptOv').classList.remove('show'); };
 /* 随行月巴（M4.5）：没有选择按钮，自动领养
    iframe 内由父页下发庭院名册（yueba-fishing-roster），随行即庭院当前月巴；
    独立打开时从保底名册随机一位（本次会话固定）。庭院会轮换，旧随行自动回落。 */
@@ -4512,10 +4831,13 @@ function currentBuddyId(){
 function bannyNameOf(id){
   if(!id) return '';
   var y=yardEntry(id);
-  if(!y) return '';
-  if(LANG==='zh') return y.name;
-  var n=y.names&&y.names[LANG];
-  return n||y.name;
+  if(y){
+    if(LANG==='zh') return y.name;
+    var n=y.names&&y.names[LANG];
+    return n||y.name;
+  }
+  var e=I18N_BANNY&&I18N_BANNY[id];
+  return (e&&e[LANG])||'';
 }
 function buddyName(){
   var id=currentBuddyId();
@@ -4911,11 +5233,11 @@ var RODS=[
   {name:'竹竿',      price:0,     gate:0,  zone:0,  spd:0,    wait:1.00, leg:0,     desc:'目标带基准宽'},
   {name:'青竹竿',    price:600,   gate:1,  zone:3,  spd:0.06, wait:0.97, leg:0,     desc:'目标带 +3 · 收线 +6% · 等待 -3%'},
   {name:'玻璃纤维竿',price:7500,  gate:2,  zone:6,  spd:0.12, wait:0.94, leg:0,     desc:'目标带 +6 · 收线 +12% · 等待 -6%'},
-  {name:'碳素竿',    price:17000, gate:4,  zone:9,  spd:0.18, wait:0.90, leg:0.004, desc:'目标带 +9 · 收线 +18% · 传说 +0.4%'},
-  {name:'钛合金竿',  price:19000, gate:6,  zone:12, spd:0.24, wait:0.87, leg:0.008, desc:'目标带 +12 · 收线 +24% · 传说 +0.8%'},
-  {name:'黑曜竿',    price:19500, gate:8,  zone:15, spd:0.30, wait:0.84, leg:0.012, desc:'目标带 +15 · 收线 +30% · 传说 +1.2%'},
-  {name:'星辉竿',    price:19500, gate:10, zone:18, spd:0.36, wait:0.81, leg:0.016, desc:'目标带 +18 · 收线 +36% · 传说 +1.6%'},
-  {name:'传家宝竿',  price:19000, gate:12, zone:22, spd:0.42, wait:0.78, leg:0.020, desc:'目标带 +22 · 收线 +42% · 传说 +2%'},
+  {name:'碳素竿',    price:17000, gate:4,  zone:9,  spd:0.18, wait:0.90, leg:0.004, desc:'目标带 +9 · 收线 +18%'},
+  {name:'钛合金竿',  price:19000, gate:6,  zone:12, spd:0.24, wait:0.87, leg:0.008, desc:'目标带 +12 · 收线 +24%'},
+  {name:'黑曜竿',    price:19500, gate:8,  zone:15, spd:0.30, wait:0.84, leg:0.012, desc:'目标带 +15 · 收线 +30%'},
+  {name:'星辉竿',    price:19500, gate:10, zone:18, spd:0.36, wait:0.81, leg:0.016, desc:'目标带 +18 · 收线 +36%'},
+  {name:'传家宝竿',  price:19000, gate:12, zone:22, spd:0.42, wait:0.78, leg:0.020, desc:'目标带 +22 · 收线 +42%'},
 ];
 /* ---------- 鱼竿强化 ----------
    每根竿可 +0~+10；+10 ≈ 下一根竿 90% 的收益（顶级竿按最后一档差值外推）。
@@ -5062,8 +5384,8 @@ function basketCost(){ return 600+120*(save.basket|0); }
 function basketHours(){ return basketCap()/30; }   /* 30 条/小时，仅用于展示 */
 var BAITS=[
   {key:'powder',name:'引鱼粉',price:20,  desc:'下一竿等待时间减半'},
-  {key:'rare',  name:'稀有饵',price:60,  desc:'下一竿稀有+传说概率 +2%'},
-  {key:'dragon',name:'龙涎饵',price:200, desc:'下一竿传说概率 +10%'},
+  {key:'rare',  name:'稀有饵',price:60,  desc:'下一竿更容易遇到稀有与传说'},
+  {key:'dragon',name:'龙涎饵',price:200, desc:'下一竿更容易遇到传说'},
 ];
 var BAIT_NAMES={powder:'引鱼粉',rare:'稀有饵',dragon:'龙涎饵'};
 /* 图四（各地区第四张图）是传家宝水域：每竿必须先付 1 个鱼饵，任意种类都行。
@@ -5097,6 +5419,7 @@ function setView(v){
   $('viewScene').classList.toggle('show',v==='scene');
   $('wrap').classList.toggle('scene',v==='scene');
   $('btnClose').classList.toggle('show',v==='scene'&&window.parent!==window);
+  document.body.classList.toggle('framed',v==='scene'&&window.parent!==window);
   fitScene();                               /* 切进场景后按剩余高度定画面尺寸 */
 }
 function openMap(id){
@@ -5156,9 +5479,10 @@ function setState(s){
    首页会跳过本次刷新，等钓完（结算 / 回到待机）再刷。
    自动挂机不拦截：进度已落盘，刷新后会自动续竿。 */
 window.__fishBusy=function(){
-  /* 看排行榜 / 取名时别让父页自动刷新打断 */
+  /* 看排行榜 / 取名 / 玩法说明时别让父页自动刷新打断 */
   if($('lbOv')&&$('lbOv').classList.contains('show')) return true;
   if($('nickOv')&&$('nickOv').classList.contains('show')) return true;
+  if($('guideOv')&&$('guideOv').classList.contains('show')) return true;
   if(!G||G.view!=='scene') return false;
   if(save.auto) return false;
   return G.state==='waiting'||G.state==='bite'||G.state==='reel'||G.state==='landing';
@@ -5665,6 +5989,7 @@ window.addEventListener('pointercancel',function(){ if(G.state==='reel') reelSto
 window.addEventListener('keydown',function(e){
   var ae=document.activeElement;
   if(ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.isContentEditable)) return;   /* 图鉴搜索框里打字不触发下竿 */
+  if($('guideOv').classList.contains('show')) return;   /* 看玩法说明时按键别在背后偷偷下竿 */
   if(e.code!=='Space'&&e.code!=='Enter') return;
   e.preventDefault();
   if(G.state==='idle') cast();
@@ -5685,6 +6010,22 @@ $('btnDex').onclick=openDex;
 $('btnLang').onclick=function(){ buildLangModal(); $('langOv').classList.add('show'); };
 $('langClose').onclick=function(){ $('langOv').classList.remove('show'); };
 $('langOv').onclick=function(e){ if(e.target===$('langOv')) $('langOv').classList.remove('show'); };
+/* 玩法说明：纯静态文案，开关只切 show；内容随 applyStaticI18n 一起换语言 */
+/* 底部渐隐只在「还能往下滚」时出现，滚到底就收掉，免得压暗最后一行 */
+function guideFade(){
+  var b=$('guideBody'); if(!b) return;
+  b.classList.toggle('more', b.scrollHeight-b.clientHeight>2&&b.scrollTop+b.clientHeight<b.scrollHeight-2);
+}
+function guideClose(){ $('guideOv').classList.remove('show'); }
+$('btnGuide').onclick=function(){
+  $('guideOv').classList.add('show');
+  $('guideBody').scrollTop=0;                 /* 每次打开都从第一条开始读 */
+  requestAnimationFrame(guideFade);
+};
+$('guideClose').onclick=guideClose;
+$('guideOk').onclick=guideClose;
+$('guideOv').onclick=function(e){ if(e.target===$('guideOv')) guideClose(); };
+$('guideBody').addEventListener('scroll',guideFade);
 $('dexClose').onclick=function(){ $('dex').classList.remove('show'); };
 /* 图鉴搜索：输入即时过滤（地区/钓点名随时可搜，未捕获的鱼仍显示为？？？）
    结果覆盖全部 16 张地图，不再截断；输入用 120ms 防抖，避免每敲一下都重绘几百行 */
@@ -5940,6 +6281,8 @@ function checkDexRewards(){
       if(full&&!save.rewards[mp.id]){
         save.rewards[mp.id]=1; save.tomato+=30;
         gained.push($tf('{m}图鉴集齐 +30 番茄币',{m:mapName(mp)}));
+        var pp=PORTRAIT_BY_MAP[mp.id];
+        if(pp) gained.push($tf('集齐{m} · 解锁「{p}」立绘',{m:mapName(mp),p:portraitName(pp)}));
       }
     });
     if(rgFull&&!save.rewards[rg.id]){
@@ -5954,6 +6297,7 @@ function checkDexRewards(){
   if(gained.length){
     commitSave(); refreshHud(true);
     toast(gained.join(' · '));
+    if($('ptOv').classList.contains('show')) buildPortraits();   /* 面板开着时同步解锁状态 */
   }
 }
 
@@ -6010,18 +6354,18 @@ function buildShop(){
         row(o,true,0,o.desc,$tf('使用中 · +{n}',{n:lv}),true);
         if(lv<ROD_MAX_LV){
           var cost=enhanceCost(), e0=rodEff(), e1=rodEffAt(save.rod,lv+1);
-          row({name:'强化 +'+(lv+1)},false,cost,
+          row({name:$tf('强化 +{n}',{n:lv+1})},false,cost,
             $tf('目标带 {a}→{b} · 收线 +{c}%→+{d}% · 等待 -{e}%→-{f}%',{
               a:e0.zone.toFixed(1),b:e1.zone.toFixed(1),
               c:(e0.spd*100).toFixed(1),d:(e1.spd*100).toFixed(1),
               e:((1-e0.wait)*100).toFixed(1),f:((1-e1.wait)*100).toFixed(1)
-            })+(e1.leg>0?($tf(' · 传说 +{a}%→+{b}%',{a:(e0.leg*100).toFixed(1),b:(e1.leg*100).toFixed(1)})):''),
+            }),
             '',false,function(){
               save.tomato-=cost; save.rodLv=lv+1; commitSave(); refreshHud(false);
               toast($tf('{n} 强化 +{lv}',{n:$t(o.name),lv:lv+1})); buildShop();
             });
         }else{
-          row({name:'强化 +10'},false,0,'已强化到顶，换下一根竿继续',$t('已满'),true);
+          row({name:$tf('强化 +{n}',{n:10})},false,0,'已强化到顶，换下一根竿继续',$t('已满'),true);
         }
       }else{
         row(o,false,0,o.desc,$t('已拥有'),true);
@@ -6070,13 +6414,13 @@ function buildShop(){
     });
   cat('自动收线（解放双手）');
   if(hasAutoReel()){
-    row({name:'自动收线器'},true,0,'已装配：进图后右上角可随时开关自动 · 收线效率 ×0.7',$t('已拥有'),true);
+    row({name:'自动收线器'},true,0,'已装配：进图后右上角可随时开关自动',$t('已拥有'),true);
   }else if(!save.ach.c50){
     row({name:'自动收线器'},false,0,
-      '自动提竿 + 自动收线（效率 ×0.7）· 达成成就「渔获五十」后上架',$t('🔒 需成就「渔获五十」'),true);
+      '自动提竿 + 自动收线 · 达成成就「渔获五十」后上架',$t('🔒 需成就「渔获五十」'),true);
   }else{
     row({name:'自动收线器'},false,AUTO_REEL_PRICE,
-      '自动提竿 + 自动收线（效率 ×0.7），进图后右上角随时开关','',false,function(){
+      '自动提竿 + 自动收线，进图后右上角随时开关','',false,function(){
         save.tomato-=AUTO_REEL_PRICE; save.autoReel=1; commitSave();
         refreshHud(false); updateAutoUI(); buildShop();
         toast($t('自动收线器到手！进图后点右上角「自动」'));
@@ -6191,12 +6535,12 @@ function seedRand(str){                     /* FNV-1a 取种子，mulberry32 出
     return ((t^(t>>>14))>>>0)/4294967296;
   };
 }
-function genOrder(bid,bname,key,reroll){
+function genOrder(bid,bname,key,reroll,names){
   var rng=seedRand(key+'|'+bid+'|'+(reroll|0));
   var tier=['c','r','l'][Math.floor(rng()*3)];
   var need=tier==='c'?(rng()<0.5?2:3):(tier==='r'?2:1);   /* 与原概率一致 */
   var pool=orderPool()[tier];
-  return {bid:bid,bname:bname,fid:pool[Math.floor(rng()*pool.length)],need:need,got:0,done:false,rr:reroll|0};
+  return {bid:bid,bname:bname,names:names||null,fid:pool[Math.floor(rng()*pool.length)],need:need,got:0,done:false,rr:reroll|0};
 }
 function orderSlot(now){                    /* 最近一个已到点的刷新时刻 */
   now=(typeof now==='number')?now:Date.now();
@@ -6260,7 +6604,7 @@ function ensureOrders(){
   save.orderAt=slot;
   save.orders=[];
   var key=orderKey(slot);
-  ys.forEach(function(y){ save.orders.push(genOrder(y.id,y.name,key,0)); });
+  ys.forEach(function(y){ save.orders.push(genOrder(y.id,y.name,key,0,y.names)); });
   commitSave();
 }
 function deliverOrder(i){
@@ -6291,7 +6635,7 @@ function refreshOrder(i){
   save.tomato-=50;
   ordRerollUse();
   /* 付费换心愿也走同一颗种子：第 N 次刷新，所有人的结果依然一致 */
-  save.orders[i]=genOrder(o.bid,o.bname,orderKey(save.orderAt),(o.rr|0)+1);
+  save.orders[i]=genOrder(o.bid,o.bname,orderKey(save.orderAt),(o.rr|0)+1,o.names);
   commitSave(); refreshHud(false); buildOrders(); updateOrdBtn(); updateOrdTimer();
   toast($tf('订单已刷新（今天还剩 {n} 次）',{n:ordRerollLeft()}));
 }
@@ -6307,7 +6651,7 @@ function buildOrders(){
     var card=document.createElement('div');
     card.className='ordCard'+(o.done?' done':'');
     var head=document.createElement('div'); head.className='ohead';
-    head.innerHTML=$tf('{b} 想要 {f} ×{n}',{b:bannyNameOf(o.bid)||o.bname,f:'<span style="color:'+rr.color+';font-weight:800">'+fishName(f)+'</span>',n:o.need});
+    head.innerHTML=$tf('{b} 想要 {f} ×{n}',{b:bannyNameOf(o.bid)||(o.names&&o.names[LANG])||(LANG==='zh'?o.bname:$t('月巴')),f:'<span style="color:'+rr.color+';font-weight:800">'+fishName(f)+'</span>',n:o.need});
     card.appendChild(head);
     var bar=document.createElement('div'); bar.className='oprog';
     var fill=document.createElement('i');
@@ -6514,7 +6858,11 @@ function topSpot(){
 }
 function bondTop(){
   var id=null,n=0;
-  Object.keys(save.bond).forEach(function(k){ if((save.bond[k]|0)>n){ n=save.bond[k]|0; id=k; } });
+  Object.keys(save.bond).forEach(function(k){
+    /* 只统计当前名册里、且有三语名的月巴：旧档残留的 id 不显示中文原名 */
+    if(k!=='bunny'&&!bannyNameOf(k)) return;
+    if((save.bond[k]|0)>n){ n=save.bond[k]|0; id=k; }
+  });
   if(!id) return null;
   var name=id==='bunny'?$t('小兔子'):((function(){ var a=artOf(id); return bannyNameOf(id)||(a&&a.name)||id; })());
   return {name:name,n:n,lv:bondLv(id)};
@@ -6914,6 +7262,8 @@ $('nickInput').addEventListener('keydown',function(e){
 });
 window.addEventListener('keydown',function(e){
   if(e.key!=='Escape') return;
+  if($('guideOv').classList.contains('show')){ guideClose(); return; }
+  if($('ptOv').classList.contains('show')){ $('ptOv').classList.remove('show'); return; }
   if($('langOv').classList.contains('show')){ $('langOv').classList.remove('show'); return; }
   if($('nickOv').classList.contains('show')){ lbNickCommit(true); return; }
   if($('lbOv').classList.contains('show')){ lbClose(); }
@@ -6969,6 +7319,18 @@ var I18N_UI={
   '随便取一个':{en:'Random Name',ja:'おまかせ',ko:'아무거나'},
   '就这样':{en:'Done',ja:'これで決定',ko:'이걸로'},
   '切换后立即生效，只影响本页显示':{en:'Applies immediately; affects this page only.',ja:'すぐに反映されます（このページのみ）。',ko:'바로 적용되며 이 페이지에만 영향을 줍니다.'},
+
+  /* ---- 番茄立绘（右上角切换） ---- */
+  '番茄立绘':{en:'Tomato Portrait',ja:'トマト立ち絵',ko:'토마토 일러스트'},
+  '🎨 番茄立绘':{en:'🎨 Tomato Portrait',ja:'🎨 トマト立ち絵',ko:'🎨 토마토 일러스트'},
+  '集齐第 2 张地图解锁战斗番茄 · 第 3 张地图解锁 006 番茄':{en:'Complete map 2 to unlock Battle Tomato · map 3 for Tomato 006',ja:'2枚目コンプでバトルトマト · 3枚目で006トマト',ko:'2번째 지도 완성 시 배틀 토마토 · 3번째 지도는 006 토마토'},
+  '使用中':{en:'In use',ja:'使用中',ko:'사용 중'},
+  '点击切换':{en:'Tap to switch',ja:'タップで切替',ko:'눌러서 변경'},
+  '集齐解锁':{en:'complete to unlock',ja:'コンプで解放',ko:'완성 시 해금'},
+  '已解锁 {n}/{m}':{en:'Unlocked {n}/{m}',ja:'解放 {n}/{m}',ko:'해금 {n}/{m}'},
+  '已换上「{p}」立绘':{en:'Now wearing the “{p}” portrait',ja:'「{p}」の立ち絵に変更しました',ko:'“{p}” 일러스트로 변경했어요'},
+  '集齐{m} · 解锁「{p}」立绘':{en:'{m} complete · “{p}” portrait unlocked',ja:'{m}コンプ · 「{p}」立ち絵を解放',ko:'{m} 완성 · “{p}” 일러스트 해금'},
+
   '钓 上 来 啦':{en:'C A U G H T !',ja:'釣 れ た ！',ko:'낚 았 다 !'},
   '★ 首次捕获 · 已记录':{en:'★ First catch · Logged',ja:'★ 初捕獲 · 記録済み',ko:'★ 첫 포획 · 기록됨'},
   '换个钓点':{en:'Change Spot',ja:'釣り場を変える',ko:'낚시터 바꾸기'},
@@ -7053,7 +7415,6 @@ var I18N_UI={
   '鱼竿（目标带更宽 · 收线更快 · 按开图解锁）':{en:'Rods (wider zone · faster reel · unlock by maps)',ja:'竿（目標帯が広い · 巻きが速い · 解放数で解除）',ko:'낚싯대 (목표대 넓음 · 감기 빠름 · 해금 수로 개방)'},
   '使用中 · +{n}':{en:'Equipped · +{n}',ja:'使用中 · +{n}',ko:'사용 중 · +{n}'},
   '目标带 {a}→{b} · 收线 +{c}%→+{d}% · 等待 -{e}%→-{f}%':{en:'Zone {a}→{b} · Reel +{c}%→+{d}% · Wait -{e}%→-{f}%',ja:'目標帯 {a}→{b} · 巻き +{c}%→+{d}% · 待ち -{e}%→-{f}%',ko:'목표대 {a}→{b} · 감기 +{c}%→+{d}% · 대기 -{e}%→-{f}%'},
-  ' · 传说 +{a}%→+{b}%':{en:' · Legend +{a}%→+{b}%',ja:' · レジェンド +{a}%→+{b}%',ko:' · 전설 +{a}%→+{b}%'},
   '{n} 强化 +{lv}':{en:'{n} enhanced +{lv}',ja:'{n} 強化 +{lv}',ko:'{n} 강화 +{lv}'},
   '已强化到顶，换下一根竿继续':{en:'Maxed out. Upgrade to the next rod.',ja:'強化上限。次の竿に替えよう',ko:'최대 강화. 다음 낚싯대로 넘어가요'},
   '已满':{en:'Max',ja:'上限',ko:'최대'},
@@ -7073,10 +7434,10 @@ var I18N_UI={
   '鱼篓扩容：{n} 条':{en:'Basket expanded: {n}',ja:'魚篭を拡張：{n} 匹',ko:'바구니 확장: {n}마리'},
   '自动收线（解放双手）':{en:'Auto-Reel (hands free)',ja:'自動巻き（手放し）',ko:'자동 감기 (손 놓기)'},
   '自动收线器':{en:'Auto-Reeler',ja:'自動巻き器',ko:'자동 감기 장치'},
-  '已装配：进图后右上角可随时开关自动 · 收线效率 ×0.7':{en:'Installed: toggle auto from the top-right in a spot · reel rate ×0.7',ja:'装備済み：釣り場で右上から自動を切替 · 巻き効率 ×0.7',ko:'장착됨: 낚시터 오른쪽 위에서 자동 전환 · 감기 효율 ×0.7'},
-  '自动提竿 + 自动收线（效率 ×0.7）· 达成成就「渔获五十」后上架':{en:'Auto-strike + auto-reel (rate ×0.7) · listed after “Catch 50”',ja:'自動合わせ＋自動巻き（効率 ×0.7）· 実績「漁獲五十」で販売',ko:'자동 챔질 + 자동 감기 (효율 ×0.7) · “어획 50” 업적 후 판매'},
+  '已装配：进图后右上角可随时开关自动':{en:'Installed: toggle auto from the top-right in a spot',ja:'装備済み：釣り場で右上から自動を切替',ko:'장착됨: 낚시터 오른쪽 위에서 자동 전환'},
+  '自动提竿 + 自动收线 · 达成成就「渔获五十」后上架':{en:'Auto-strike + auto-reel · listed after “Catch 50”',ja:'自動合わせ＋自動巻き · 実績「漁獲五十」で販売',ko:'자동 챔질 + 자동 감기 · “어획 50” 업적 후 판매'},
   '🔒 需成就「渔获五十」':{en:'🔒 Needs “Catch 50”',ja:'🔒 実績「漁獲五十」が必要',ko:'🔒 “어획 50” 업적 필요'},
-  '自动提竿 + 自动收线（效率 ×0.7），进图后右上角随时开关':{en:'Auto-strike + auto-reel (rate ×0.7); toggle from the top-right in a spot',ja:'自動合わせ＋自動巻き（効率 ×0.7）。釣り場の右上で切替',ko:'자동 챔질 + 자동 감기 (효율 ×0.7). 낚시터 오른쪽 위에서 전환'},
+  '自动提竿 + 自动收线，进图后右上角随时开关':{en:'Auto-strike + auto-reel; toggle from the top-right in a spot',ja:'自動合わせ＋自動巻き。釣り場の右上で切替',ko:'자동 챔질 + 자동 감기. 낚시터 오른쪽 위에서 전환'},
   '自动收线器到手！进图后点右上角「自动」':{en:'Auto-Reeler acquired! Tap “Auto” at the top-right in a spot.',ja:'自動巻き器を入手！釣り場で右上の「自動」を押そう',ko:'자동 감기 장치 획득! 낚시터 오른쪽 위 “자동”을 누르세요'},
   '鱼饵（下竿时消耗 · 图四每竿必耗 1 个，任意种类）':{en:'Bait (used per cast · Map IV always costs 1, any kind)',ja:'餌（投げるたび消費 · 第4マップは毎投1個、種類自由）',ko:'미끼 (캐스팅마다 소모 · 4번 지도는 매번 1개, 종류 무관)'},
   '持有 ×{n}':{en:'Held ×{n}',ja:'所持 ×{n}',ko:'보유 ×{n}'},
@@ -7196,17 +7557,17 @@ var I18N_UI={
   '目标带基准宽':{en:'Baseline target zone',ja:'目標帯の基準幅',ko:'목표대 기준 폭'},
   '目标带 +3 · 收线 +6% · 等待 -3%':{en:'Zone +3 · Reel +6% · Wait -3%',ja:'目標帯 +3 · 巻き +6% · 待ち -3%',ko:'목표대 +3 · 감기 +6% · 대기 -3%'},
   '目标带 +6 · 收线 +12% · 等待 -6%':{en:'Zone +6 · Reel +12% · Wait -6%',ja:'目標帯 +6 · 巻き +12% · 待ち -6%',ko:'목표대 +6 · 감기 +12% · 대기 -6%'},
-  '目标带 +9 · 收线 +18% · 传说 +0.4%':{en:'Zone +9 · Reel +18% · Legend +0.4%',ja:'目標帯 +9 · 巻き +18% · レジェンド +0.4%',ko:'목표대 +9 · 감기 +18% · 전설 +0.4%'},
-  '目标带 +12 · 收线 +24% · 传说 +0.8%':{en:'Zone +12 · Reel +24% · Legend +0.8%',ja:'目標帯 +12 · 巻き +24% · レジェンド +0.8%',ko:'목표대 +12 · 감기 +24% · 전설 +0.8%'},
-  '目标带 +15 · 收线 +30% · 传说 +1.2%':{en:'Zone +15 · Reel +30% · Legend +1.2%',ja:'目標帯 +15 · 巻き +30% · レジェンド +1.2%',ko:'목표대 +15 · 감기 +30% · 전설 +1.2%'},
-  '目标带 +18 · 收线 +36% · 传说 +1.6%':{en:'Zone +18 · Reel +36% · Legend +1.6%',ja:'目標帯 +18 · 巻き +36% · レジェンド +1.6%',ko:'목표대 +18 · 감기 +36% · 전설 +1.6%'},
-  '目标带 +22 · 收线 +42% · 传说 +2%':{en:'Zone +22 · Reel +42% · Legend +2%',ja:'目標帯 +22 · 巻き +42% · レジェンド +2%',ko:'목표대 +22 · 감기 +42% · 전설 +2%'},
+  '目标带 +9 · 收线 +18%':{en:'Zone +9 · Reel +18%',ja:'目標帯 +9 · 巻き +18%',ko:'목표대 +9 · 감기 +18%'},
+  '目标带 +12 · 收线 +24%':{en:'Zone +12 · Reel +24%',ja:'目標帯 +12 · 巻き +24%',ko:'목표대 +12 · 감기 +24%'},
+  '目标带 +15 · 收线 +30%':{en:'Zone +15 · Reel +30%',ja:'目標帯 +15 · 巻き +30%',ko:'목표대 +15 · 감기 +30%'},
+  '目标带 +18 · 收线 +36%':{en:'Zone +18 · Reel +36%',ja:'目標帯 +18 · 巻き +36%',ko:'목표대 +18 · 감기 +36%'},
+  '目标带 +22 · 收线 +42%':{en:'Zone +22 · Reel +42%',ja:'目標帯 +22 · 巻き +42%',ko:'목표대 +22 · 감기 +42%'},
 
   /* ---- 鱼线 ---- */
   '棉线':{en:'Cotton Line',ja:'綿糸',ko:'면사'},
   '尼龙线':{en:'Nylon Line',ja:'ナイロン糸',ko:'나일론 줄'},
   '碳氟线':{en:'Fluorocarbon Line',ja:'フロロ糸',ko:'플루오로 줄'},
-  '龙王线':{en:'Dragon King Line',ja:'龙王糸',ko:'용왕 줄'},
+  '龙王线':{en:'Dragon King Line',ja:'竜王糸',ko:'용왕 줄'},
   '张力上限 100':{en:'Tension cap 100',ja:'張力上限 100',ko:'장력 상한 100'},
   '张力上限 105：手滑容错':{en:'Tension cap 105: slip allowance',ja:'張力上限 105：ミスに余裕',ko:'장력 상한 105: 실수 여유'},
   '张力上限 112：更耐挣扎':{en:'Tension cap 112: tougher vs. struggles',ja:'張力上限 112：暴れに強い',ko:'장력 상한 112: 발버둥에 강함'},
@@ -7217,8 +7578,8 @@ var I18N_UI={
   '稀有饵':{en:'Rare Bait',ja:'レア餌',ko:'희귀 미끼'},
   '龙涎饵':{en:'Dragon Bait',ja:'龍涎餌',ko:'용연 미끼'},
   '下一竿等待时间减半':{en:'Next cast waits half as long',ja:'次の一投の待ち時間が半分',ko:'다음 캐스팅 대기 절반'},
-  '下一竿稀有+传说概率 +2%':{en:'Next cast: Rare + Legend +2%',ja:'次の一投：レア＋レジェンド +2%',ko:'다음 캐스팅: 희귀+전설 +2%'},
-  '下一竿传说概率 +10%':{en:'Next cast: Legend +10%',ja:'次の一投：レジェンド +10%',ko:'다음 캐스팅: 전설 +10%'},
+  '下一竿更容易遇到稀有与传说':{en:'Next cast favors Rare and Legendary',ja:'次の一投はレアと伝説が出やすい',ko:'다음 캐스팅은 희귀와 전설이 잘 나와요'},
+  '下一竿更容易遇到传说':{en:'Next cast favors Legendary',ja:'次の一投は伝説が出やすい',ko:'다음 캐스팅은 전설이 잘 나와요'},
 
   /* ---- 称号 / 单位 / 动态商品名 ---- */
   '渔获五百人':{en:'Catch-500 Master',ja:'漁獲五百人',ko:'어획 500인'},
@@ -7235,7 +7596,8 @@ var I18N_UI={
   '条':{en:'fish',ja:'匹',ko:'마리'},
   '单':{en:'orders',ja:'件',ko:'건'},
   '强化 +10':{en:'Enhance +10',ja:'強化 +10',ko:'강화 +10'},
-  '扩容 +5 条':{en:'Expand +5',ja:'拡張 +5',ko:'확장 +5'},
+  '强化 +{n}':{en:'Enhance +{n}',ja:'強化 +{n}',ko:'강화 +{n}'},
+  '番茄币':{en:'Tomato Coin',ja:'トマトコイン',ko:'토마토 코인'},
   '自动 开':{en:'Auto On',ja:'自動 入',ko:'자동 켜짐'},
   '自动 关':{en:'Auto Off',ja:'自動 切',ko:'자동 꺼짐'},
   '自动 🔒':{en:'Auto 🔒',ja:'自動 🔒',ko:'자동 🔒'},
@@ -7249,7 +7611,44 @@ var I18N_UI={
   '清晨':{en:'Dawn',ja:'早朝',ko:'새벽'},
   '白天':{en:'Day',ja:'昼',ko:'낮'},
   '黄昏':{en:'Dusk',ja:'夕暮れ',ko:'황혼'},
-  '夜晚':{en:'Night',ja:'夜',ko:'밤'}
+  '夜晚':{en:'Night',ja:'夜',ko:'밤'},
+  '普通':{en:'Common',ja:'コモン',ko:'일반'},
+  '稀有':{en:'Rare',ja:'レア',ko:'희귀'},
+  '传说':{en:'Legendary',ja:'レジェンド',ko:'전설'},
+  '传家宝':{en:'Heirloom',ja:'家宝',ko:'가보'},
+
+  /* ---- 玩法说明（右上角 ❔） ---- */
+  '玩法':{en:'Guide',ja:'遊び方',ko:'가이드'},
+  '玩法说明':{en:'How to Play',ja:'遊び方',ko:'플레이 안내'},
+  '❔ 玩法说明':{en:'❔ How to Play',ja:'❔ 遊び方',ko:'❔ 플레이 안내'},
+  '知道了':{en:'Got it',ja:'わかりました',ko:'알겠어요'},
+  '怎么钓':{en:'How to Fish',ja:'釣り方',ko:'낚시 방법'},
+  '选好钓点，点「下竿」抛出浮标，等它动。':{en:'Pick a spot, tap Cast to throw the float, and wait for it to move.',ja:'釣り場を選び、「投げる」で浮きを投げて、動くのを待ちます。',ko:'낚시터를 고르고 “던지기”로 찌를 던진 뒤 움직일 때까지 기다려요.'},
+  '浮标猛沉、炸开水花就是咬钩：立刻提竿（空格 / 回车也行）。':{en:'A hard dip and a splash mean a bite: strike right away (Space / Enter also work).',ja:'浮きが大きく沈み、水しぶきが上がったらアタリ：すぐに合わせてください（スペース / Enter でも可）。',ko:'찌가 크게 잠기고 물보라가 튀면 입질이에요. 바로 챔질하세요 (스페이스 / Enter도 가능).'},
+  '按住收线键，把张力指针顶进彩色目标带；进带后松手，反复收满进度就能上鱼。':{en:'Hold Reel to push the tension needle into the colored target zone; release inside it and repeat until the catch bar fills.',ja:'「巻く」を押して張力の針を色付きの目標帯へ。帯に入ったら離し、ゲージが満ちるまで繰り返します。',ko:'“감기”를 눌러 장력 바늘을 색 목표대 안으로 밀어 넣고, 안에 들어오면 놓으며 게이지가 찰 때까지 반복해요.'},
+  '顶到鱼线上限会断线；完全不管，鱼会游走。两种都不扣东西，重来就好。':{en:'Reaching the line limit snaps it; ignoring the fish lets it swim away. Neither costs anything — just try again.',ja:'糸の上限まで張ると切れ、放っておくと魚は逃げます。どちらも失うものはないので、また挑戦すれば大丈夫。',ko:'줄 한계까지 당기면 끊어지고, 그냥 두면 물고기가 도망가요. 둘 다 잃는 건 없으니 다시 하면 돼요.'},
+  '鱼与饵':{en:'Fish & Bait',ja:'魚とエサ',ko:'물고기와 미끼'},
+  '鱼有普通、稀有、传说、传家宝四种稀有度，越往后越难遇到。':{en:'Fish come in four rarities — Common, Rare, Legendary and Heirloom — each harder to find than the last.',ja:'魚には普通・レア・伝説・家宝の4段階があり、後ろほど出会いにくくなります。',ko:'물고기는 일반, 희귀, 전설, 가보 네 등급이 있고 뒤로 갈수록 만나기 어려워요.'},
+  '传家宝只在地区第四张图出现，下竿需要带鱼饵。':{en:'Heirlooms appear only on each region’s fourth map, where every cast needs bait.',ja:'家宝は各地区の4枚目にだけ出現し、投げるには餌が必要です。',ko:'가보는 각 지역의 4번째 지도에만 나오고, 던질 때 미끼가 필요해요.'},
+  '引鱼粉让下一竿等得更快；稀有饵更容易遇到稀有和传说；龙涎饵更容易遇到传说。':{en:'Chum Powder shortens the next wait; Rare Bait favors Rare and Legendary fish; Dragon Bait favors Legendary.',ja:'寄せ粉は次の待ち時間を短く、レア餌はレアと伝説、龍涎餌は伝説に出会いやすくします。',ko:'유인 가루는 다음 대기를 줄이고, 희귀 미끼는 희귀와 전설, 용연 미끼는 전설을 만나기 쉽게 해요.'},
+  '鱼篓 · 图鉴 · 订单':{en:'Basket · Codex · Orders',ja:'魚篭・図鑑・依頼',ko:'바구니 · 도감 · 주문'},
+  '钓到的鱼先进鱼篓，不会自动卖；篓满了就钓不了，点顶部「渔获」卖掉。':{en:'Catch goes into the basket and never sells itself; when full you can’t fish — tap “Catch” up top to sell.',ja:'釣った魚は魚篭に入り、自動では売れません。満杯だと釣れないので、上の「漁獲」から売りましょう。',ko:'잡은 물고기는 바구니에 들어가고 자동으로 팔리지 않아요. 가득 차면 낚시할 수 없으니 위쪽 “어획”에서 팔아요.'},
+  '同一种鱼多钓几条才会在图鉴点亮，传家宝钓到一条就算收录。':{en:'A species lights up in the codex after several catches; one Heirloom is enough.',ja:'同じ魚を何匹か釣ると図鑑に点灯します。家宝は1匹で収録です。',ko:'같은 물고기를 여러 마리 잡아야 도감에 점등돼요. 가보는 1마리면 수록돼요.'},
+  '订单会定时刷新，交付能换番茄币，有时还送鱼饵。':{en:'Orders refresh regularly; delivering pays Tomato Coins and sometimes bait.',ja:'依頼は定期的に更新され、納品でトマトコイン、時々餌ももらえます。',ko:'주문은 정기적으로 갱신되고, 전달하면 토마토 코인과 가끔 미끼를 받아요.'},
+  '钓具和后续钓点会随着旅行信件与图鉴收录逐步解锁。':{en:'Gear and later spots unlock as your travel letters and codex progress.',ja:'道具と後の釣り場は、旅の手紙と図鑑の進み具合で解放されます。',ko:'장비와 이후 낚시터는 여행 편지와 도감 진행에 따라 해금돼요.'},
+  '放置也照钓':{en:'Idle Fishing',ja:'放置でも釣れる',ko:'방치 낚시'},
+  '达成「渔获五十」后，商店会上架自动收线器：自动提竿、自动稳张力。':{en:'After “Catch 50”, the shop lists the Auto-Reeler: it strikes and holds tension for you.',ja:'「漁獲五十」達成後、ショップに自動巻き器が並びます。合わせと張力維持を自動で行います。',ko:'“어획 50” 달성 후 상점에 자동 감기 장치가 올라와요. 챔질과 장력을 대신 해 줘요.'},
+  '自动模式收获会少一些；开着自动关掉页面也会继续钓，直到鱼篓装满。':{en:'Auto mode catches a little less; leave it on and close the page — it keeps fishing until the basket is full.',ja:'自動モードは収穫が少し減ります。自動を入れたまま閉じても、魚篭がいっぱいになるまで釣り続けます。',ko:'자동 모드는 수확이 조금 줄어요. 자동을 켜 둔 채 닫아도 바구니가 가득 찰 때까지 계속 낚아요.'}
+};
+
+/* ---------- 番茄立绘 ---------- */
+var I18N_PORTRAIT={
+  normal:{n:{en:'Classic Tomato',ja:'ふつうのトマト',ko:'평범한 토마토'},
+          d:{en:'The original look',ja:'最初の姿',ko:'처음 모습'}},
+  battle:{n:{en:'Battle Tomato',ja:'バトルトマト',ko:'배틀 토마토'},
+          d:{en:'Unlocked by completing Hidden Paradise',ja:'「桃源郷」コンプで解放',ko:'“무릉도원” 완성 시 해금'}},
+  t006:{n:{en:'Tomato 006',ja:'006トマト',ko:'006 토마토'},
+        d:{en:'Unlocked by completing Ancient Sanctum',ja:'「上古の秘境」コンプで解放',ko:'“태고의 비경” 완성 시 해금'}}
 };
 
 /* ---------- 地区 / 钓点 ---------- */
@@ -7306,10 +7705,10 @@ var I18N_KING={
 
 /* ---------- 保底月巴名 ---------- */
 var I18N_BANNY={
-  mb_xiaoyue:{en:'Little Banny',ja:'小バニー',ko:'꼬마 배니'},
-  mb_chi:{en:'Snacking Banny',ja:'ごはんバニー',ko:'식사 배니'},
-  mb_shui:{en:'Sleepy Banny',ja:'おやすみバニー',ko:'잠자는 배니'},
-  mb_pang:{en:'Chubby Banny',ja:'ぽっちゃりバニー',ko:'통통 배니'}
+  mb_xiaoyue:{en:'Little Banny',ja:'ちびバニー',ko:'꼬마배니'},
+  mb_chi:{en:'Munching Banny',ja:'もぐもぐバニー',ko:'냠냠배니'},
+  mb_shui:{en:'Sleepy Banny',ja:'すやすやバニー',ko:'잠자는배니'},
+  mb_pang:{en:'Chubby Banny',ja:'ぷくぷくバニー',ko:'뚱뚱배니'}
 };
 /* 保底名册补上三语名（庭院名册由父页下发 names） */
 FALLBACK_YARD.forEach(function(y){ y.names=I18N_BANNY[y.id]||null; });
@@ -7361,7 +7760,7 @@ var I18N_FISH={
   f2h:{en:'Peach Leaf Bream',ja:'桃葉のタナゴ',ko:'복사잎 납자루'},
   f2i:{en:'Brook Stone Mandarin Fry',ja:'渓石のケツギョ稚魚',ko:'계곡돌 쏘가리 치어'},
   f2j:{en:'Pink Petal Minnow',ja:'粉花びらのハヤ',ko:'분홍꽃잎 미노우'},
-  f2k:{en:'Mudflat Mudskipper',ja:'泥滩のトビハゼ',ko:'갯벌 짱뚱어'},
+  f2k:{en:'Mudflat Mudskipper',ja:'泥灘のトビハゼ',ko:'갯벌 짱뚱어'},
   f2l:{en:'Peach Gum Loach',ja:'桃膠のドジョウ',ko:'복숭아진 미꾸라지'},
   f2m:{en:'Peach Blossom Barb',ja:'桃花の小バルブ',ko:'복사꽃 작은바브'},
   f2n:{en:'Spring Silverfish',ja:'渓泉のシラウオ',ko:'샘물 은어'},
@@ -7523,8 +7922,8 @@ var I18N_FISH={
   t3k:{en:'Night Ditch Silver Eel',ja:'夜溝の銀ウナギ',ko:'밤도랑 은장어'},
   t3l:{en:'Silent Bagrid',ja:'無声のギギ',ko:'무성 동자개'},
   t3m:{en:'Black Current Bitterling',ja:'黒潮のタナゴ',ko:'흑조 납자루'},
-  t3n:{en:'Shadow Shore Mudskipper',ja:'影滩のトビハゼ',ko:'그림자여울 짱뚱어'},
-  t3o:{en:'Ink Shore Silverfish',ja:'墨滩のシラウオ',ko:'먹여울 은어'},
+  t3n:{en:'Shadow Shore Mudskipper',ja:'影灘のトビハゼ',ko:'그림자여울 짱뚱어'},
+  t3o:{en:'Ink Shore Silverfish',ja:'墨灘のシラウオ',ko:'먹여울 은어'},
   t3p:{en:'Shadow Nightwatch Eel',ja:'影中の夜番ウナギ',ko:'그림자 수위장어'},
   t3q:{en:'Ink-Scale Lantern Bass',ja:'墨鱗の灯スズキ',ko:'먹비늘 등농어'},
   t3r:{en:'Midnight Bigmouth Catfish',ja:'深夜の大口ナマズ',ko:'심야 큰입메기'},
@@ -7583,7 +7982,7 @@ var I18N_FISH={
   t3z:{en:'Silent Silver Minnow',ja:'無声の銀ハヤ',ko:'무성 은미노우'},
   t3aa:{en:'Shadow Marsh Loach',ja:'影沼のドジョウ',ko:'그림자늪 미꾸라지'},
   t3ab:{en:'Night Ditch Rock Bass',ja:'夜溝の岩スズキ',ko:'밤도랑 바위농어'},
-  t3ac:{en:'Dark Shore Mudskipper',ja:'暗滩のトビハゼ',ko:'어둔여울 짱뚱어'},
+  t3ac:{en:'Dark Shore Mudskipper',ja:'暗灘のトビハゼ',ko:'어둔여울 짱뚱어'},
   t3ad:{en:'Ink Abyss Nightwatch Catfish',ja:'墨淵の夜番ナマズ',ko:'먹심연 수위메기'},
   t3ae:{en:'Waning Moon Rainbow Trout',ja:'欠月の虹鱒',ko:'이지러진달 무지개송어'},
   t3af:{en:'Night Shadow Lantern-Eye Bream',ja:'夜影の灯眼鯛',ko:'밤그림자 등눈도미'},
@@ -7901,6 +8300,7 @@ var I18N_FISH={
 
 /* ---------- 启动 ---------- */
 applyStaticI18n();   /* 先把静态文案按当前语言铺好 */
+TOMATO='<img class="timg" src="'+COIN_URL+'" alt="'+$t('番茄币')+'">';
 loadSave();
 /* 验收前（BUDDY_LINK=0）或独立打开：每局从保底名册随机一位随行；
    BUDDY_LINK=1 且接入父页庭院后，才由庭院当前月巴接管 */
@@ -7925,6 +8325,7 @@ checkAch();          /* 存量进度一次性补发成就 */
 FALLBACK_YARD.forEach(function(y){ var i=new Image(); i.src=y.url; });   /* 预热保底立绘 */
 applyLayout();       /* 自适应画布：桌面铺满 / 手机竖屏（resize 时也会重算） */
 buildSelect();
+refreshPortraitIcon();   /* 右上角显示当前立绘缩略图（同时触发当前立绘加载） */
 if(!offlineSettle()){ setView('select'); }
 requestAnimationFrame(tick);
 </script>

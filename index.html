@@ -5294,6 +5294,8 @@ const I18N_UI={
   '🧹 月巴大扫除':{en:'🧹 Banny Deep Clean',ja:'🧹 バニー大掃除',ko:'🧹 배니 대청소'},
   '🧹 进入月巴大扫除':{en:'🧹 Enter Banny Deep Clean',ja:'🧹 バニー大掃除へ',ko:'🧹 배니 대청소 시작'},
   '🧹 月巴大扫除 +{n} 🪙':{en:'🧹 Banny Deep Clean +{n} 🪙',ja:'🧹 バニー大掃除 +{n} 🪙',ko:'🧹 배니 대청소 +{n} 🪙'},
+  '🎣 月巴垂钓':{en:'🎣 Banny Fishing',ja:'🎣 バニー釣り',ko:'🎣 배니 낚시'},
+  '🎣 进入月巴垂钓':{en:'🎣 Enter Banny Fishing',ja:'🎣 バニー釣りへ',ko:'🎣 배니 낚시 시작'},
   /* C. 场地工具条 */
   '← 返回':{en:'← Back',ja:'← 戻る',ko:'← 뒤로'},
   '🪵 新木头':{en:'🪵 New Log',ja:'🪵 新しい木材',ko:'🪵 새 나무'},
@@ -10227,6 +10229,7 @@ const DEX_GAME={
   m3_gummy:{icon:'🍅', label:'🍅 月巴推推圈', enter:'🍅 进入月巴推推圈', game:'push'},
   m2_baboyi:{icon:'🥊', label:'🥊 巴巴博弈', enter:'🥊 进入巴巴博弈', game:'fight'},
   mb_zhoumo:{icon:'🧹', label:'🧹 月巴大扫除', enter:'🧹 进入月巴大扫除', game:'minesweeper'},
+  m2_zhangyu:{icon:'🎣', label:'🎣 月巴垂钓', enter:'🎣 进入月巴垂钓', game:'fishing'},
 };
 function dexGameOf(id){ return DEX_GAME[id]||null; }
 /* 第二图鉴解锁条件文案（对赌 / 斗月巴 共用） */
@@ -10248,6 +10251,7 @@ function dexGameEntry(id){
   if(g.game==='push'){ dexPushEntry(); return; }
   if(g.game==='fight'){ dexFightEntry(); return; }
   if(g.game==='minesweeper'){ dexSweeperEntry(); return; }
+  if(g.game==='fishing'){ dexFishingEntry(); return; }
 }
 function bookRowsHTML(list,quiet){
   let rows=''; let i=0;
@@ -15332,6 +15336,7 @@ function openFlyFromDex(id){
    卡片图标取图鉴月巴（有外链立绘则用外链，否则用 SVG）。
    game:'fly' -> 复用页内飞行浮层；html:'xxx.html' -> 内嵌 iframe（同幸存者）。 */
 const GB_GAMES=[
+  {id:'fishing', codex:'m2_zhangyu', name:'🎣 月巴垂钓', sub:true, html:'fishing.html'},
   {id:'pacman', codex:'mb_wansheng', name:'🎃 月巴追茄', sub:true, html:'pacman.html'},
   {id:'minesweeper', codex:'mb_zhoumo', name:'🧹 月巴大扫除', sub:true, html:'minesweeper.html'},
   {id:'push', codex:'m3_gummy', name:'🍅 月巴推推圈', sub:true, html:'月巴推推圈/push-mockup.html'},
@@ -15573,6 +15578,14 @@ function dexSweeperEntry(){
   sfx.click();
   gbFrameOpen(g,'dex');
 }
+/* 图鉴入口：章鱼月巴 → 月巴垂钓小游戏。关闭后同样回到图鉴 */
+function dexFishingEntry(){
+  const g=GB_GAMES.filter(function(x){ return x.id==='fishing'; })[0];
+  if(!g) return;
+  try{ save(); }catch(e){}
+  sfx.click();
+  gbFrameOpen(g,'dex');
+}
 _i18nRepaint.push(function(){ if($('gbBox')&&$('gbBox').classList.contains('show')) gbRender(); });
 /* 黄金矿工回传：金币（每关达标）与每日挑战道具（隧道通行证） */
 /* 月巴大扫除每日奖励重置令牌：与 minesweeper.html 的 MS_DAILY_RESET 保持一致，
@@ -15662,6 +15675,9 @@ window.addEventListener('message',function(e){
       lowPower:!!S.lowPower,
       lang:curLang()
     },'*');
+  }else if(d.type==='yueba-fish-close'){
+    /* 垂钓页「✕ 返回」：只接受当前内嵌的垂钓窗口发来的关闭请求 */
+    if(gbFrameId==='fishing' && e.source===$('gbGameFrame').contentWindow) gbFrameClose();
   }else if(d.type==='yueba-diner-ready'){
     /* 月巴食堂 iframe 就绪：只下发已解锁名册（优先有外链立绘），不写主存档 */
     if(!e.source) return;
