@@ -10759,7 +10759,7 @@ function resetSave(){
    备份才能完整还原百巴箱进度；旧的存档文件没有 _mini 字段时照常兼容。
    idle-yueba-svtest-v1：#test 进入的幸存者测试档也一并备份；正式上线（SV_PUBLIC=true）
    时启动会整键删除它（见「正式版上线后：测试入口下线」），备份里即便带着也会被清掉。 */
-const MINI_KEY_RE=/^(yueba-[a-z0-9-]+|mb_snake_best|mb_snake_ach_v1|idle-yueba-ddgame-v1|idle-yueba-svtest-v1)$/i;
+const MINI_KEY_RE=/^(yueba-[a-z0-9-]+|ybf_fishing_[a-z0-9_-]+|mb_snake_best|mb_snake_ach_v1|idle-yueba-ddgame-v1|idle-yueba-svtest-v1)$/i;
 function isMiniKey(k){ return MINI_KEY_RE.test(String(k||'')); }
 function miniSnapshot(){
   const bag={};
@@ -15637,17 +15637,27 @@ window.addEventListener('message',function(e){
     /* 月巴垂钓 iframe 就绪：下发已解锁名册 + 庭院当前月巴（随行三选一，只读不写主存档） */
     if(!e.source) return;
     const flist=fgAllTypes().filter(function(t){ return colCount(t.id)>0 && !!artURL(t); }).map(function(t){
-      return {id:t.id,name:t.name,color:t.color||'#c9b2e8',art:artURL(t)||''};
+      const nm=I18N_BANNY[t.id]&&I18N_BANNY[t.id].n;
+      return {id:t.id,name:t.name,names:nm||null,color:t.color||'#c9b2e8',art:artURL(t)||''};
     });
     const ftv=S.travel||{};
     const fyard=(ftv.yardIds||[]).filter(function(id){ return !!typeById(id); }).map(function(id){
       const t=typeById(id);
-      return {id:id,name:t.name,color:t.color||'#c9b2e8',art:artURL(t)||''};
+      const nm=I18N_BANNY[t.id]&&I18N_BANNY[t.id].n;
+      /* scale = 图鉴的「特殊 size」：钓鱼页据此保留巨 / 超巨 / 小月巴的体型差异 */
+      return {id:id,name:t.name,names:nm||null,color:t.color||'#c9b2e8',art:artURL(t)||'',scale:t.size||1};
+    });
+    /* 旅行信件进度：钓鱼页「开图」条件之一（对应目的地信件 ≥50%） */
+    const fcards=Array.isArray(ftv.cards)?ftv.cards:[];
+    const fletters={};
+    TV_DESTS.forEach(function(td){
+      fletters[td.id]={got:td.cards.filter(function(c){ return fcards.indexOf(c)>=0; }).length,all:td.cards.length};
     });
     e.source.postMessage({
       type:'yueba-fishing-roster',
       list:flist,
       yard:fyard,
+      letters:fletters,
       muted:!!S.muted,
       lowPower:!!S.lowPower,
       lang:curLang()
@@ -19524,6 +19534,20 @@ function ddSparkHTML(cum){
       return st==='play'||st==='pause';
     }catch(e){ return true; }
   }
+  /* 月巴垂钓是否正在手动钓鱼：等鱼 / 咬钩 / 收线 / 起鱼这一竿还没结束时跳过，
+     等钓完（结算或回到待机）再刷；自动挂机照常刷新（进度已落盘，刷新后自动续竿）。 */
+  function fishBusy(){
+    var fr=document.getElementById('gbGameFrame');
+    var open=(typeof gbFrameId!=='undefined'&&gbFrameId==='fishing')||
+             !!(fr&&fr.src&&fr.src.indexOf('fishing.html')>=0);
+    if(!open) return false;
+    try{
+      var w=fr&&fr.contentWindow;
+      if(!w) return true;
+      if(typeof w.__fishBusy!=='function') return true;   // 内嵌页还没加载完：先别刷
+      return w.__fishBusy()===true;
+    }catch(e){ return true; }
+  }
   function check(){
     if(reloading) return;
     if(svBusy()) return;
@@ -19534,6 +19558,7 @@ function ddSparkHTML(cum){
     if(pmBusy()) return;                        // 月巴追茄一局进行中不打断
     if(dnBusy()) return;                        // 月巴食堂营业中不打断
     if(msBusy()) return;                        // 月巴大扫除扫除中不打断
+    if(fishBusy()) return;                      // 月巴垂钓手动收线中不打断
     fetch(location.href,{method:'HEAD',cache:'no-store'}).then(sig).then(function(s){
       if(!s) return;                          // 该环境不返回版本标识时静默跳过
       if(base===null){ base=s; return; }       // 首次：记录基线
