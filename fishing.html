@@ -4737,6 +4737,11 @@ PORTRAITS.forEach(function(p){
   if(p.need) PORTRAIT_BY_MAP[p.need]=p;
 });
 var PORTRAIT_IMGS={};     /* id -> {img:null|'err'|Image}：按需加载，切换时才拉图 */
+/* 失败自动重试：断网 / CDN 抖一下 / 请求卡住时不必重开页面，
+   与随行月巴立绘同一套节奏与上限，不会一直打网络 */
+var PORTRAIT_TRY={};
+var PORTRAIT_RETRY_DELAYS=[1500,4000,10000,25000];
+var PORTRAIT_LOAD_TIMEOUT=15000;          /* pend 超过这个时长当失败，允许重试 */
 function portraitById(id){ return PORTRAIT_BY_ID[id]||null; }
 function portraitName(p){ return p?$tn(I18N_PORTRAIT,p.id,'n',p.name):''; }
 function portraitDesc(p){ return p?$tn(I18N_PORTRAIT,p.id,'d',p.desc):''; }
@@ -4758,14 +4763,36 @@ function currentPortraitId(){
   return PORTRAITS[0].id;                /* 旧档 / 未解锁 / 被改过的 id 一律回退普通番茄 */
 }
 function currentPortrait(){ return portraitById(currentPortraitId())||PORTRAITS[0]; }
+function portraitArtFail(id,rec){
+  rec.img='err';
+  if(PORTRAIT_IMGS[id]!==rec) return;      /* 已经被换掉 */
+  var n=PORTRAIT_TRY[id]|0;
+  if(n>=PORTRAIT_RETRY_DELAYS.length) return;   /* 次数用尽：本次会话保持矢量番茄兜底 */
+  PORTRAIT_TRY[id]=n+1;
+  setTimeout(function(){
+    if(PORTRAIT_IMGS[id]!==rec||rec.img!=='err') return;   /* 已重取 / 又加载成功 */
+    delete PORTRAIT_IMGS[id];              /* 下一帧重新发起加载 */
+  },PORTRAIT_RETRY_DELAYS[n]);
+}
+/* 进图重取：本次会话已经放弃（次数用尽）的失败项清掉，进图再试一次 */
+function refreshPortraitArt(){
+  PORTRAITS.forEach(function(p){
+    var rec=PORTRAIT_IMGS[p.id];
+    if(rec&&rec.img==='err'){ delete PORTRAIT_IMGS[p.id]; PORTRAIT_TRY[p.id]=0; }
+  });
+}
 function tomatoImage(p){
   p=p||currentPortrait();
   var rec=PORTRAIT_IMGS[p.id];
   if(!rec){
     rec=PORTRAIT_IMGS[p.id]={img:null};
+    /* 卡住的请求不会触发 onerror：超时也当失败，交给统一重试 */
+    setTimeout(function(){
+      if(rec.img===null&&PORTRAIT_IMGS[p.id]===rec) portraitArtFail(p.id,rec);
+    },PORTRAIT_LOAD_TIMEOUT);
     var im=new Image();
-    im.onload=function(){ rec.img=im; portraitArtChanged(); };
-    im.onerror=function(){ rec.img='err'; };
+    im.onload=function(){ rec.img=im; PORTRAIT_TRY[p.id]=0; portraitArtChanged(); };
+    im.onerror=function(){ portraitArtFail(p.id,rec); };
     im.src=p.url;
   }
   return rec.img;                        /* null=仍在加载 / 'err'=失败 / Image=原图 */
@@ -5599,6 +5626,7 @@ function openMap(id){
   scene.region=f.region; scene.map=f.map; scene.curMap=id;
   sceneTitle();
   refreshBuddyArt();                        /* 上次没刷出来的立绘：这次进图重取一次 */
+  refreshPortraitArt();                     /* 番茄立绘重试次数用尽时，进图再给一次机会 */
   save.sel=id; commitSave();
   setState('idle');
   setView('scene');
