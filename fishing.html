@@ -987,9 +987,23 @@ function $tn(tbl,id,field,fb){
 function fishName(f){
   var id=(typeof f==='string')?f:(f&&f.id);
   if(!id) return '';
-  var base=(FISH[id]&&FISH[id].name)||(KING_FISH[id]&&KING_FISH[id].name)||'';
+  var base=(FISH[id]&&FISH[id].name)||((kingFish(id)||{}).name)||'';
   if(LANG==='zh') return base;
   var e=I18N_FISH[id]; return (e&&e[LANG])||base;
+}
+/* 鱼王（king_*）在 KING_FISH 里按地区 id 存（forest / town / …），
+   这里同时接受地区 id 和存档里的鱼 id（king_forest） */
+function kingFish(id){
+  if(!id||typeof KING_FISH==='undefined') return null;
+  if(KING_FISH[id]) return KING_FISH[id];
+  if(id.indexOf('king_')===0) return KING_FISH[id.slice(5)]||null;
+  return null;
+}
+/* 鱼篓里的 id → 鱼对象：鱼王不在 FISH 图鉴池里，单独从 KING_FISH 取，
+   否则读档会把鱼王条目当脏数据丢掉、列表也渲染不出来 */
+function fishById(id){
+  if(!id) return null;
+  return FISH[id]||kingFish(id);
 }
 function mapName(mp){ return mp?$tn(I18N_MAP,mp.id,'n',mp.name):''; }
 function mapDesc(mp){ return mp?$tn(I18N_MAP,mp.id,'d',mp.desc):''; }
@@ -1367,7 +1381,7 @@ function loadSave(){
       if(d.v<4) oldRod=[0,1,3,5,7][oldRod];  /* v3 五档 → v4 八档 */
       save.rod=clamp(oldRod,0,RODS.length-1); save.line=clamp(d.line|0,0,3);
       save.rodLv=clamp(d.rodLv|0,0,10);
-      save.basket=clamp(d.basket|0,0,999);     /* 鱼篓扩容次数（每次 +5 条） */
+      save.basket=clamp(d.basket|0,0,BASKET_MAX_EXP);  /* 鱼篓扩容次数（每次 +5 条，封顶 70 次 = 360 条） */
       var b=d.bait||{};
       save.bait={powder:b.powder|0,rare:b.rare|0,dragon:b.dragon|0};
       /* C2 订单 / 成就 / 统计 / 称号 */
@@ -1383,7 +1397,7 @@ function loadSave(){
       /* 鱼篓：在线/挂机钓到的鱼都存这里，只有打开鱼篓才能卖 */
       save.bag=[];
       if(Array.isArray(d.bag)) d.bag.forEach(function(it){
-        if(!it||!FISH[it.id]) return;
+        if(!it||!fishById(it.id)) return;
         save.bag.push({id:it.id,s:clamp(it.s|0,0,999),g:Math.max(0,it.g|0),t:it.t|0});
       });
       /* C3 鱼王 / 垃圾收藏；C4 随行羁绊 */
@@ -4804,12 +4818,14 @@ var IN_FRAME=(function(){ try{ return !!(window.parent&&window.parent!==window);
    如需临时断开验收，改回 0 即可。 */
 var BUDDY_LINK=1;
 /* 保底月巴（C4.5）：硬编码外链立绘——独立打开/未连接主页面时，
-   陪伴永远有图；BUDDY_LINK=1 且收到庭院名册后才会被覆盖 */
+   陪伴永远有图；BUDDY_LINK=1 且收到庭院名册后才会被覆盖。
+   URL 用图鉴同一批 picgo 外链：月巴立绘裁剪/ 是本地构建产物、不入库，
+   线上引用它只会 404，最后退到像素兜底。 */
 var FALLBACK_YARD=[
-  {id:'mb_xiaoyue',name:'小月巴',color:'#c9b2e8',scale:1,url:'月巴立绘裁剪/mb_xiaoyue.png'},
-  {id:'mb_chi',name:'进食月巴',color:'#e8c39e',scale:1,url:'月巴立绘裁剪/mb_chi.png'},
-  {id:'mb_shui',name:'睡觉月巴',color:'#e3b8c9',scale:1,url:'月巴立绘裁剪/mb_shui.gif'},
-  {id:'mb_pang',name:'胖月巴',color:'#e7a3b8',scale:1,url:'月巴立绘裁剪/mb_pang.png'},
+  {id:'mb_xiaoyue',name:'小月巴',color:'#c9b2e8',scale:1,url:'https://origin.picgo.net/2026/09/03/1512e4bde4713ba02.th.png'},
+  {id:'mb_chi',name:'进食月巴',color:'#e8c39e',scale:1,url:'https://origin.picgo.net/2026/09/03/15b077f9364349ae92.th.png'},
+  {id:'mb_shui',name:'睡觉月巴',color:'#e3b8c9',scale:1,url:'https://origin.picgo.net/2026/09/29/4d2c34425dd356082928e5e796a603fcd01d1cbc5324c06f.gif'},
+  {id:'mb_pang',name:'胖月巴',color:'#e7a3b8',scale:1,url:'https://origin.picgo.net/2026/10/21/62bc9b437f18c5e1f6f712a8e7a58ecbb2356f889dde89eb.th.png'},
 ];
 function yardList(){
   if(YARD) return YARD;
@@ -5380,10 +5396,11 @@ var LINES=[
   {name:'碳氟线',price:600,  max:112, desc:'张力上限 112：更耐挣扎'},
   {name:'龙王线',price:1500, max:120, desc:'张力上限 120：几乎拉不断'},
 ];
-/* 鱼篓：容量按「条」算，初始 10 条，每次扩容 +5 条。
+/* 鱼篓：容量按「条」算，初始 10 条，每次扩容 +5 条，最多扩容 70 次。
+   70 次 × 5 + 10 = 360 条，正好是离线 12 小时的产量（30 条/小时）；到顶即离线封顶。
    钓到的鱼不会自动卖，全部存在这里；满了就钓不了，要去鱼篓页卖鱼腾位置。
    离线挂机同样往里装，每 2 分钟 1 条，装满即止。 */
-var BASKET_BASE=10, BASKET_STEP=5;
+var BASKET_BASE=10, BASKET_STEP=5, BASKET_MAX_EXP=70;
 function basketCap(){ return BASKET_BASE+(save.basket|0)*BASKET_STEP; }
 function bagFull(){ return save.bag.length>=basketCap(); }
 function bagValue(){ var s=0; save.bag.forEach(function(it){ s+=(it.g|0); }); return s; }
@@ -6174,7 +6191,10 @@ function totalFish(){ return Object.keys(FISH).length; }
 function caughtCount(){                    /* 已收录种数 */
   if(DEBUG) return totalFish();            /* DEBUG：图鉴全解锁 */
   var n=0;
-  Object.keys(save.fish).forEach(function(id){ if(dexDone(id)) n++; });
+  Object.keys(save.fish).forEach(function(id){
+    if(!FISH[id]) return;                   /* 鱼王（king_*）不进图鉴，也不计入收录种数 */
+    if(dexDone(id)) n++;
+  });
   return n;
 }
 var dexRegion=0;
@@ -6435,12 +6455,18 @@ function buildShop(){
   var bcap=basketCap(), bcost=basketCost();
   row({name:$tf('鱼篓 {n} 条',{n:bcap})},true,0,
     $tf('当前 {b}/{c} · 离线约 {h} 小时',{b:save.bag.length,c:bcap,h:(bcap/30).toFixed(1)}),$t('使用中'),true);
-  row({name:'扩容 +5 条'},false,bcost,
-    $tf('容量 {a} → {b} 条 · 离线上限 {x}h → {y}h',{a:bcap,b:bcap+5,x:(bcap/30).toFixed(1),y:((bcap+5)/30).toFixed(1)}),
-    '',false,function(){
-      save.tomato-=bcost; save.basket=(save.basket|0)+1; commitSave(); refreshHud(false);
-      toast($tf('鱼篓扩容：{n} 条',{n:bcap+5})); buildShop();
-    });
+  if((save.basket|0)>=BASKET_MAX_EXP){
+    row({name:'扩容 +5 条'},false,0,
+      $tf('已达上限 {n} 条 · 离线上限 {h} 小时',{n:bcap,h:(bcap/30).toFixed(1)}),$t('已满'),true);
+  }else{
+    row({name:'扩容 +5 条'},false,bcost,
+      $tf('容量 {a} → {b} 条 · 离线上限 {x}h → {y}h',{a:bcap,b:bcap+5,x:(bcap/30).toFixed(1),y:((bcap+5)/30).toFixed(1)}),
+      '',false,function(){
+        if((save.basket|0)>=BASKET_MAX_EXP) return;   /* 云端回档等竞态下再兜一次底 */
+        save.tomato-=bcost; save.basket=(save.basket|0)+1; commitSave(); refreshHud(false);
+        toast($tf('鱼篓扩容：{n} 条',{n:bcap+5})); buildShop();
+      });
+  }
   cat('自动收线（解放双手）');
   if(hasAutoReel()){
     row({name:'自动收线器'},true,0,'已装配：进图后右上角可随时开关自动',$t('已拥有'),true);
@@ -6490,7 +6516,7 @@ function buildBag(){
     body.appendChild(note);
   }
   shown.forEach(function(it){
-    var f=FISH[it.id]; if(!f) return;
+    var f=fishById(it.id); if(!f) return;
     var rr=RARITY[f.r];
     var row=document.createElement('div'); row.className='bagRow';
     var cv=document.createElement('canvas'); cv.width=60; cv.height=28;
@@ -6515,7 +6541,7 @@ function sellBagItem(it){
   save.bag.splice(i,1);
   save.tomato+=(it.g|0);
   commitSave(); refreshHud(true); buildBag();
-  toast($tf('卖出 {f} · +{g} 番茄币',{f:fishName(FISH[it.id]),g:(it.g|0)}));
+  toast($tf('卖出 {f} · +{g} 番茄币',{f:fishName(fishById(it.id)),g:(it.g|0)}));
 }
 function sellWholeBag(){
   var n=save.bag.length; if(!n) return;
@@ -6992,8 +7018,8 @@ function recGold(f,gain){
 }
 function fishNameOf(id){
   if(!id) return '';
-  if(FISH[id]||KING_FISH[id]) return fishName(id);
-  return '';
+  var f=fishById(id);
+  return f?fishName(f):'';
 }
 
 /* ---- 身份与昵称（与大扫除同一套：localStorage + 一年期 Cookie 兜底） ---- */
@@ -7473,6 +7499,7 @@ var I18N_UI={
   '使用中':{en:'In use',ja:'使用中',ko:'사용 중'},
   '扩容 +5 条':{en:'Expand +5',ja:'拡張 +5 匹',ko:'확장 +5마리'},
   '容量 {a} → {b} 条 · 离线上限 {x}h → {y}h':{en:'Capacity {a} → {b} · offline cap {x}h → {y}h',ja:'容量 {a} → {b} 匹 · 放置上限 {x}h → {y}h',ko:'용량 {a} → {b}마리 · 방치 상한 {x}h → {y}h'},
+  '已达上限 {n} 条 · 离线上限 {h} 小时':{en:'Maxed at {n} · offline cap {h} h',ja:'上限 {n} 匹 · 放置上限 {h} 時間',ko:'최대 {n}마리 · 방치 상한 {h}시간'},
   '鱼篓扩容：{n} 条':{en:'Basket expanded: {n}',ja:'魚篭を拡張：{n} 匹',ko:'바구니 확장: {n}마리'},
   '自动收线（解放双手）':{en:'Auto-Reel (hands free)',ja:'自動巻き（手放し）',ko:'자동 감기 (손 놓기)'},
   '自动收线器':{en:'Auto-Reeler',ja:'自動巻き器',ko:'자동 감기 장치'},
