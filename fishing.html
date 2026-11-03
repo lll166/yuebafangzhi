@@ -4957,17 +4957,37 @@ function fallbackBanny(id){
 /* 陪伴月巴立绘：加载缓存（外链缩略图本身紧裁剪，无需再裁）；
    加载失败走像素兜底 */
 var BUDDY_ART={};
+/* 失败自动重试：断网 / CDN 抖一下 / 请求卡住时，不必等玩家退出地图或重开页面，
+   在场景里等几秒自己再取一次；次数有上限，不会一直打网络。 */
+var BUDDY_TRY={};
+var BUDDY_RETRY_DELAYS=[1500,4000,10000,25000];
+var BUDDY_LOAD_TIMEOUT=15000;             /* pend 超过这个时长当失败，允许重试 */
 /* 立绘缓存失效重来：失败（外链 404 / 断网 / 名册还没带图）过的不必一错到底，
    退出地图再进、或父页名册补上立绘时清掉重取一次，免得整局都只剩像素兜底 */
 function refreshBuddyArt(){
   var ys=yardList();
   for(var i=0;i<ys.length;i++){
     var e=BUDDY_ART[ys[i].id];
-    if(e&&(e.st==='err'||e.ext!==ys[i].url)) delete BUDDY_ART[ys[i].id];
+    if(e&&(e.st==='err'||e.ext!==ys[i].url)){
+      delete BUDDY_ART[ys[i].id];
+      BUDDY_TRY[ys[i].id]=0;              /* 进图 / 换图：重试次数重新计 */
+    }
   }
 }
-function buddyLoaded(e,im){
+function buddyArtFail(id,e){
+  e.st='err';
+  if(BUDDY_ART[id]!==e) return;           /* 已经被换掉 */
+  var n=BUDDY_TRY[id]|0;
+  if(n>=BUDDY_RETRY_DELAYS.length) return;
+  BUDDY_TRY[id]=n+1;
+  setTimeout(function(){
+    if(BUDDY_ART[id]!==e||e.st!=='err') return;   /* 已重取 / 又加载成功 */
+    delete BUDDY_ART[id];                 /* 下一帧重新发起加载 */
+  },BUDDY_RETRY_DELAYS[n]);
+}
+function buddyLoaded(id,e,im){
   e.cv=im; e.im=im; e.st='plain';
+  BUDDY_TRY[id]=0;
 }
 function buddyArt(id){
   var e=BUDDY_ART[id];
@@ -4977,13 +4997,15 @@ function buddyArt(id){
     else{
       e={st:'pend',ext:a.url};
       BUDDY_ART[id]=e;
+      /* 卡住的请求不会触发 onerror：超时也当失败，交给统一重试 */
+      setTimeout(function(){ if(e.st==='pend') buddyArtFail(id,e); },BUDDY_LOAD_TIMEOUT);
       /* 先试本地裁剪版（去透明边，所有环境一致），失败再退外链原图 */
       var im=new Image();
-      im.onload=function(){ buddyLoaded(e,im); };
+      im.onload=function(){ buddyLoaded(id,e,im); };
       im.onerror=function(){
         var im2=new Image();
-        im2.onload=function(){ buddyLoaded(e,im2); };
-        im2.onerror=function(){ e.st='err'; };
+        im2.onload=function(){ buddyLoaded(id,e,im2); };
+        im2.onerror=function(){ buddyArtFail(id,e); };
         im2.src=e.ext;
       };
       im.src='月巴立绘裁剪/'+id+'.png';
