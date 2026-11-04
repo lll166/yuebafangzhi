@@ -5468,7 +5468,8 @@ function seenCount(mp){
 /* ---------- DEBUG（?debug=1 / #debug） ----------
    调试用：全部钓点开放（含旅行联动的图四），图鉴视作全收集。
    只在展示层生效，不写入存档 */
-function isMapOpen(mp){ return !mp.r4||DEBUG; }
+/* 钓点准入：图一~图三恒开放；图四按「对应旅行信件 ≥50% + 上张钓点收录 ≥80%」解锁（=开图条件） */
+function isMapOpen(mp){ return DEBUG||!mp.r4||mapOpenState(mp).ok; }
 function dbgEntry(id){
   var f=FISH[id];
   return f?{n:quotaOf(id),first:0,best:f.size[0]}:null;   /* best 取下限：不伪造 👑 满尺寸 */
@@ -5566,6 +5567,7 @@ function basketCap(){ return BASKET_BASE+(save.basket|0)*BASKET_STEP; }
 function bagFull(){ return save.bag.length>=basketCap(); }
 function bagValue(){ var s=0; save.bag.forEach(function(it){ s+=(it.g|0); }); return s; }
 function bagAdd(f,size,gain){
+  if(save.bag.length>=basketCap()) return;   /* 鱼篓已满：任何路径都不许再塞，防止超容 */
   save.bag.push({id:f.id,s:size,g:gain,t:Date.now()});
   recGold(f,gain);                         /* 今日榜 + 历史最贵单条 */
 }
@@ -5621,9 +5623,18 @@ function scheduleAutoCast(delay){
     if(save.auto&&G.state==='idle'&&G.view==='scene'&&scene.map&&!bagFull()) cast();
   },(typeof delay==='number')?delay:AUTO_NEXT_MS);
 }
+/* 熄屏 / 短暂切后台回来：自动模式接着下竿。
+   离线结算不足 1 分钟时不会走结算尾巴，这里统一补一次，别让「自动 开」却停在待机。 */
+function resumeAutoAfterAway(){
+  if(!save.auto||!scene.map||G.view!=='scene'||bagFull()) return;
+  if(G.state!=='idle') return;
+  var ov=$('overlay');
+  if(ov&&ov.classList.contains('show')) return;   /* 结算层还开着，别在背后偷偷下竿 */
+  scheduleAutoCast(600);
+}
 function openMap(id){
   var f=findMap(id); if(!f) return;
-  if(f.map.r4&&!DEBUG){ toast($t('这个钓点还在迷雾里…旅行联动后解锁')); return; }
+  if(!isMapOpen(f.map)){ toast($t('这个钓点还在迷雾里…旅行联动后解锁')); return; }
   scene.region=f.region; scene.map=f.map; scene.curMap=id;
   sceneTitle();
   refreshBuddyArt();                        /* 上次没刷出来的立绘：这次进图重取一次 */
@@ -5856,13 +5867,59 @@ function giveUp(msg,isSnap){
 /* 主循环：张力收线 + 渲染
    统一时间泵 pump()：rAF 每帧与 250ms 心跳都调它，共享同一墙钟
    （谁运行谁消耗时间，不会重复计）。页面被遮挡/节流导致 rAF 停摆时，
-   心跳仍以稀疏间隔推进玩法逻辑与画面，收线不会冻结。 */
+   心跳仍以稀疏间隔推进玩法逻辑与画面，收线不会冻结；
+   但「自动挂机」例外：没有画面就立即停手转离线计时，回来按离线规则补鱼。 */
 var lastTs=0;
+var lastFrameAt=0;                         /* 最近一次真正渲染到屏幕的墙钟：判断熄屏/后台没有画面 */
+var AWAY_FRAME_MS=4000;                    /* 连续这么久没有一帧画面，就当作玩家看不到，转离线计时 */
+var awayAt=0;                              /* 本会话「失去画面」的时刻（Date.now），用来夹掉过期时间戳 */
+/* 自动挂机保护：页面已经没画面（手机熄屏、被完全遮挡、浏览器不派发 visibilitychange、
+   或者根页面把定时器留着跑）时，绝不能再在线钓鱼——否则几分钟就能把鱼篓钓满。
+   这里只影响自动模式；手动收线仍按原逻辑走心跳推进。 */
+function noFrameAway(){
+  if(isHidden()) return true;
+  return !!(lastFrameAt&&(Date.now()-lastFrameAt)>AWAY_FRAME_MS);
+}
+/* 回来结算：以本会话真实「失去画面」的时刻为准，夹掉存档里过期/异常的起点，
+   避免熄屏几秒回来却按几小时前的旧时间戳一次补满鱼篓。 */
+function settleAway(){
+  if(awayAt>0&&(!save.autoTs||save.autoTs<awayAt)) save.autoTs=awayAt;
+  awayAt=0;
+  if(G.view==='scene'&&save.auto&&scene.map){
+    /* 没存到钓点（旧档 / 定时器被冻结前没来得及写）：用当前钓点兜底，
+       起点已被 awayAt 夹到本次真正离开时刻，所以兜底也不会一次补满 */
+    if(!save.autoMap) save.autoMap=scene.curMap;
+    if(save.autoTs) offlineSettle(Date.now()-save.autoTs>=600000);
+    else resumeAutoAfterAway();
+  }else if(save.autoTs||save.autoMap){
+    /* 不在钓点（人在选点页）时不算挂机：别让旧起点留着，下次回来变成一笔糊涂账 */
+    save.autoTs=0; save.autoMap=''; commitSave();
+  }
+}
+/* 从没有画面的状态回来：先按离线规则结算离开的这段时间，再让自动挂机接上下一竿。
+   结算层开着时不自动下竿，等玩家自己点。 */
+function wakeFromNoFrame(awayStart){
+  if(isHidden()) return;                                  /* 真·后台交给 visibilitychange 处理 */
+  if(awayStart>0) awayAt=awayAt?Math.min(awayAt,awayStart):awayStart;
+  settleAway();
+  resumeAutoAfterAway();
+}
 function pump(){
   var now=(typeof performance!=='undefined'&&performance.now)?performance.now():Date.now();
   var dtMs=lastTs?Math.min(1000,Math.max(0,now-lastTs)):16;
   lastTs=now;
   var dt=dtMs/1000;
+  /* 没有画面时自动挂机立即停手，记下失去画面的时刻当离线起点：
+     熄屏 / 切后台也算挂机，回来按离线规则补鱼，但不能按在线速度狂钓。 */
+  if(save.auto&&scene.map&&G.view==='scene'&&noFrameAway()){
+    if(!awayAt){
+      awayAt=lastFrameAt||Date.now();
+      save.autoTs=awayAt; save.autoMap=scene.curMap; commitSave();
+    }
+    clearTimer('wait'); clearTimer('bite'); reelStop();
+    if(G.state!=='idle'&&G.state!=='result') setState('idle');
+    return;
+  }
   perfStep(dtMs);
   anim.t+=dt;
   if(G.state==='reel'){ reelStep(dt); }
@@ -5895,6 +5952,12 @@ function pump(){
 var rafLast=0, rafAvg=16.7, rafSkip=false;
 function tick(){
   var now=performance.now();
+  var wall=Date.now();
+  var gap=lastFrameAt?wall-lastFrameAt:0;
+  var awayStart=lastFrameAt;
+  lastFrameAt=wall;
+  /* 从「没有画面」的状态回来：按离线规则结算这段时间，再让自动挂机接上下一竿。 */
+  if(gap>=AWAY_FRAME_MS) wakeFromNoFrame(awayStart);
   if(rafLast){
     var d=now-rafLast;
     if(d>0&&d<50) rafAvg=rafAvg*0.9+d*0.1;
@@ -6205,7 +6268,7 @@ function buildSelect(){
         '<span>✉ '+st.letters.got+'/'+st.letters.all+'</span>'+
         (st.prev?'<span>'+$tf('前图 {p}%',{p:Math.round(st.prevGot/st.prevAll*100)})+'</span>':'')+
         (mp.r4?'<span>'+$t('需鱼饵×1/竿')+'</span>':'')+
-        (st.ok?'<span>'+$t('✓ 开图')+'</span>':'')+
+        (st.ok&&open?'<span>'+$t('✓ 开图')+'</span>':'')+   /* 图四进度达标但旅行联动未解锁时不显示，免得和 🔒「未解锁」打架 */
       '</small></div>'+
       '<div class="go">'+(open?$t('去钓鱼 →'):$t('未解锁'))+'</div>';
     if(open) row.onclick=function(){ openMap(mp.id); };
@@ -6243,16 +6306,21 @@ document.addEventListener('selectstart',function(e){
   btn.addEventListener('touchend',function(){ if(G.state==='reel') reelStop(); });
   btn.addEventListener('touchcancel',function(){ if(G.state==='reel') reelStop(); });
 })();
-var lastPointerAt=0;
+var lastPointerAt=0,lastPointerState=null;
 $('btnAction').addEventListener('pointerdown',function(e){
-  e.preventDefault(); lastPointerAt=Date.now();
+  e.preventDefault(); lastPointerAt=Date.now(); lastPointerState=G.state;
   if(G.state==='idle') cast();
   else if(G.state==='bite') hook();
   else if(G.state==='reel') reelStart();
 });
-/* 纯 click 触发（键盘 Enter / 辅助功能）：指针按下后 600ms 内的 click 忽略，防双触发 */
-$('btnAction').addEventListener('click',function(){
+/* 纯 click 触发（键盘 Enter / 辅助功能）：指针按下后 600ms 内的 click 忽略，防双触发；
+   按下时是收线态（长按收线）的指针 click 也忽略——断线/鱼跑后状态已回到 idle，
+   松手产生的合成 click 会误触发一次下竿（键盘 detail=0 不受影响） */
+$('btnAction').addEventListener('click',function(e){
+  var wasReel=(lastPointerState==='reel'); lastPointerState=null;
   if(Date.now()-lastPointerAt<600) return;
+  /* 长按收线松手产生的合成 click（detail>0）不再触发下竿；键盘 / 辅助功能的 click（detail=0）保留 */
+  if(wasReel&&e.detail>0) return;
   if(G.state==='idle') cast();
   else if(G.state==='bite') hook();
 });
@@ -6351,20 +6419,27 @@ $('btnAuto').onclick=function(){
     toast($t('自动收线器还没装——达成成就「渔获五十」后可在商店购入'));
     return;
   }
+  /* 篓满时不让打开：否则 HUD 显示「自动 开」，却因为装不下而永远不下竿 */
+  if(!save.auto&&bagFull()){
+    toast($t('鱼篓满了 —— 先去「渔获」卖鱼，再开自动吧'));
+    return;
+  }
   save.auto=!save.auto; commitSave(); updateAutoUI();
+  /* 在场景里把开关拨到「开」时，原本只会在进图/结算后自动续竿，
+     手动开机这一下没人排程，会一直干站着。这里补一次。 */
+  if(save.auto&&G.view==='scene'&&G.state==='idle'&&scene.map) scheduleAutoCast(600);
   toast(save.auto?$t('自动收线开启：交给我吧'):$t('自动收线关闭：稳住！'));
 };
-/* 关闭页面 / 切后台时记录挂机起点。
+/* 关闭页面时记录挂机起点。
    pagehide 覆盖 iframe 被移除、系统回收页面等 beforeunload 不触发的情况。
-   不按视图/状态清零：在钓点选择页或结算弹窗被关掉时，也要从这一刻算离线，
-   否则会留下很早以前的心跳时间戳，回来时把「一直在玩」的时间也补成鱼。
-   切后台时已经记过起点（autoAwayAt），关页面不要再把它推后，否则后台那段时间白丢。 */
-var autoAwayAt=0;
+   已经切过后台（awayAt 有值）时就保留那个更早的起点，别把后台那段挂机时间丢掉。 */
 function stampAutoAway(){
   /* 还没进过钓点就退出（停在选择页）时，用上次挂机的钓点兜底，别把挂机时间丢掉 */
   var mid=scene.map?scene.curMap:(save.autoMap||'');
   if(save.auto&&mid){
-    if(!autoAwayAt){ save.autoTs=Date.now(); save.autoMap=mid; }
+    if(!awayAt) save.autoTs=Date.now();        /* 正玩着直接关掉：从这一刻开始离线 */
+    else if(!save.autoTs) save.autoTs=awayAt; /* 已在后台：沿用失去画面的时刻 */
+    save.autoMap=mid;
   }else{
     save.autoTs=0; save.autoMap='';
   }
@@ -6372,28 +6447,26 @@ function stampAutoAway(){
 }
 window.addEventListener('beforeunload',stampAutoAway);
 window.addEventListener('pagehide',stampAutoAway);
-/* 切后台：从这一刻起按离线结算，并暂停手上这一竿（断掉无惩罚），
-   避免「后台还在慢慢钓」和「回来后的离线补鱼」两头吃。 */
+/* 切后台 / 熄屏：把这一刻当成挂机起点（断掉手上这一竿，无惩罚），
+   回来按离线规则补鱼——但起点必须是本会话真实离开的时刻，
+   不能沿用存档里的旧时间戳，否则一开屏就会把鱼篓瞬间补满。 */
 document.addEventListener('visibilitychange',function(){
   if(isHidden()){
-    autoAwayAt=Date.now();
+    awayAt=awayAt||Date.now();
     if(!save.auto||!scene.map) return;
-    save.autoTs=autoAwayAt; save.autoMap=scene.curMap; commitSave();
+    save.autoTs=awayAt; save.autoMap=scene.curMap; commitSave();
     clearTimer('wait'); clearTimer('bite'); reelStop();
     if(G.view==='scene'&&G.state!=='idle'&&G.state!=='result') setState('idle');
   }else{
-    autoAwayAt=0;
-    /* 回到前台：把后台这段时间补成挂机渔获；不足 10 分钟只弹提示，不打断当前界面。
-       人在钓点选择页时只结算不切视图，避免刚回来就被拽进场景。 */
-    if(G.view==='scene'&&save.auto&&save.autoTs&&save.autoMap){
-      offlineSettle(Date.now()-save.autoTs>=600000);
-    }
+    lastFrameAt=Date.now();      /* 切回前台从这一刻重新计帧，避免心跳先把这段时间又当成一次挂机 */
+    settleAway();                /* 按真实离开时长补离线渔获，再续竿 */
+    resumeAutoAfterAway();
   }
 });
 
 /* ---------- 挂机离线结算 ----------
-   自动模式关页面 / 切后台期间钓点继续作业：每 2 分钟 1 条，最多装到鱼篓容量，回来一次结算。
-   showModal=false 用于短暂切后台回来：只弹提示，不打断界面。 */
+   熄屏 / 切后台 / 关闭页面都算挂机：自动模式按每 2 分钟 1 条补到鱼篓容量，回来一次结算。
+   起点只认「本次真正离开」的时刻，宁可少补也不按旧时间戳一次补满。 */
 function isHidden(){ return !!(typeof document!=='undefined'&&document.hidden); }
 /* 篓满：自动模式自动关掉，HUD 不再显示「自动 开」却钓不了 */
 function autoStopFull(){
@@ -6407,13 +6480,15 @@ function offlineSettle(showModal){
   save.autoTs=0; save.autoMap='';
   if(!save.auto||!(ts>0)||!mid) return false;   /* 脏档：没有有效起点（负数/NaN 也不结算） */
   var f=findMap(mid);
-  if(!f||(f.map.r4&&!DEBUG)) return false;
+  if(!f||!isMapOpen(f.map)) return false;
   var el=Date.now()-ts;
-  if(!(el>=60000)) return false;          /* 不足 1 分钟 / 时间戳异常（NaN、未来时间）都不结算 */
+  if(!(el>=OFFLINE_FISH_MS)) return false;/* 不足 2 分钟 / 时间戳异常（NaN、未来时间）都不结算 */
   if(el>OFFLINE_MAX_MS) el=OFFLINE_MAX_MS;/* 脏档或改过系统时间：最多按 24 小时补 */
   var space=basketCap()-save.bag.length;  /* 鱼篓里已有的鱼不自动卖，只剩这么多空位 */
   if(space<=0){ autoStopFull(); return false; }
-  var n=Math.min(space, Math.max(1,Math.floor(el/OFFLINE_FISH_MS)));
+  /* 严格按「每 2 分钟 1 条」取整：不足 2 分钟一条都不补，不额外送保底鱼 */
+  var n=Math.min(space, Math.floor(el/OFFLINE_FISH_MS));
+  if(n<=0) return false;
   /* 图四挂机同样按竿扣饵（任意种类）：饵不够就少钓，一条都没饵则不结算 */
   if(f.map.r4){
     n=Math.min(n,baitStockTotal());
@@ -8054,6 +8129,7 @@ var I18N_UI={
   '自动收线器还没装——达成成就「渔获五十」后可在商店购入':{en:'No Auto-Reeler yet — unlock “Catch 50” then buy it in the shop',ja:'自動巻き器は未装着——実績「漁獲五十」達成後にショップで購入できます',ko:'자동 감기 장치가 없어요 — “어획 50” 달성 후 상점에서 구매하세요'},
   '自动收线开启：交给我吧':{en:'Auto-reel on: leave it to me',ja:'自動巻き ON：任せて',ko:'자동 감기 켜짐: 맡겨 주세요'},
   '自动收线关闭：稳住！':{en:'Auto-reel off: steady now!',ja:'自動巻き OFF：落ち着いて！',ko:'자동 감기 꺼짐: 침착하게!'},
+  '鱼篓满了 —— 先去「渔获」卖鱼，再开自动吧':{en:'Basket is full — sell your catch first, then turn Auto on',ja:'魚篭がいっぱい —— 先に「漁獲」で売ってから自動を入れましょう',ko:'바구니가 가득 찼어요 — 먼저 “어획”에서 팔고 자동을 켜 주세요'},
   '(无)':{en:'(none)',ja:'（なし）',ko:'(없음)'},
   '无':{en:'None',ja:'なし',ko:'없음'},
   '饵:':{en:'Bait: ',ja:'餌：',ko:'미끼: '},
