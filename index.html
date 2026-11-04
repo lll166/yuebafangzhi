@@ -452,13 +452,31 @@
   .gal-empty small{font-size:11px;color:var(--dim);}
   .galcard{border-radius:14px;border:1px solid var(--line);background:var(--panel);overflow:hidden;cursor:pointer;transition:.15s;}
   .galcard:hover{transform:translateY(-2px);border-color:var(--purple);}
-  .galcard .galpic{width:100%;aspect-ratio:4/3;background:var(--panel2);display:flex;align-items:center;justify-content:center;
+  .galcard .galpic{position:relative;width:100%;aspect-ratio:4/3;background:var(--panel2);display:flex;align-items:center;justify-content:center;
     overflow:hidden;font-size:28px;color:var(--dim);}
-  .galcard .galpic img{width:100%;height:100%;object-fit:cover;display:block;}
+  .galcard .galpic img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;-webkit-user-drag:none;}
+  .galcount{position:absolute;right:6px;bottom:6px;z-index:2;padding:1px 6px;border-radius:8px;
+    background:rgba(0,0,0,.62);color:#fff;font-size:9px;font-weight:800;line-height:1.7;pointer-events:none;}
   .galcard .galnm{font-size:12px;font-weight:800;color:var(--purple2);padding:6px 8px 0;}
   .galcard .galst{font-size:10px;color:var(--dim);padding:2px 8px 8px;line-height:1.5;}
+  /* 投稿画廊：画家留言 + 成人向遮罩 */
+  .galcard .galmsg{font-size:10px;color:var(--text);padding:4px 8px 0;line-height:1.45;text-align:left;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:30px;}
+  .galcard .galby{font-size:9px;color:var(--dim);padding:2px 8px 8px;line-height:1.4;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .galcard.r18 .galpic{position:relative;}
+  .galmask{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:4px;padding:10px;text-align:center;cursor:pointer;
+    background:linear-gradient(160deg,rgba(24,12,32,.95),rgba(52,20,42,.93));color:#fff;}
+  .galmask .gm-ico{font-size:22px;line-height:1;}
+  .galmask b{font-size:11px;font-weight:900;letter-spacing:.02em;}
+  .galmask small{font-size:9.5px;font-weight:600;line-height:1.5;color:#ffd9e2;}
   .galcard.locked{opacity:.9;}
   .galcard.locked .galnm{color:var(--dim);}
+  /* 画廊子页签：故事画廊 / 投稿画廊（复用 .btab，自动继承全部皮肤样式） */
+  .galsub{display:flex;gap:6px;margin:0 0 10px;}
+  .galsub .btab{flex:1 1 0;min-width:0;padding:9px 8px;}
+  .galsub .btab small{font-size:10px;font-weight:700;opacity:.75;margin-left:4px;}
   /* 画廊详情悬浮层（与图鉴详情同一套视觉，叠在弹窗之上） */
   #galOverlay{position:absolute;inset:0;display:none;z-index:31;}
   #galOverlay.show{display:flex;align-items:center;justify-content:center;}
@@ -467,8 +485,26 @@
     background:linear-gradient(180deg,var(--bg),var(--bg2));border:1px solid var(--line);
     box-shadow:0 14px 44px rgba(0,0,0,.35);padding:14px;animation:popin .22s ease;}
   #galOverlay .gal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-weight:800;color:var(--purple2);font-size:15px;}
-  #galOverlay .gal-big{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:14px;border:1px solid var(--line);display:block;background:var(--panel2);}
+  #galOverlay .gal-big{width:100%;height:auto;max-height:66vh;object-fit:contain;border-radius:14px;border:1px solid var(--line);display:block;background:var(--panel2);cursor:zoom-in;}
   #galOverlay .gal-big.empty{display:flex;align-items:center;justify-content:center;font-size:34px;color:var(--dim);}
+  /* 投稿作品多图翻页 */
+  #galOverlay .gal-viewer{position:relative;}
+  #galOverlay .gal-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:36px;height:36px;
+    display:flex;align-items:center;justify-content:center;border:none;border-radius:50%;cursor:pointer;
+    background:rgba(20,12,30,.62);color:#fff;font-size:20px;line-height:1;padding:0;}
+  #galOverlay .gal-arrow:hover{background:rgba(20,12,30,.82);}
+  #galOverlay .gal-arrow.left{left:8px;}
+  #galOverlay .gal-arrow.right{right:8px;}
+  #galOverlay .gal-page{position:absolute;right:8px;bottom:8px;padding:2px 8px;border-radius:10px;
+    background:rgba(0,0,0,.62);color:#fff;font-size:10px;font-weight:800;letter-spacing:.04em;}
+  /* 画廊单图全屏层：点击详情里的大图后，图片铺满整个屏幕（手机同样铺满），点任意处关闭 */
+  #galBig{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;
+    background:#000;cursor:zoom-out;-webkit-user-select:none;}
+  #galBig.show{display:flex;}
+  #galBig img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none;-webkit-user-drag:none;}
+  #galBig .gb-close{position:fixed;top:calc(12px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right));
+    width:38px;height:38px;display:flex;align-items:center;justify-content:center;z-index:2;
+    border:none;border-radius:50%;background:rgba(255,255,255,.2);color:#fff;font-size:18px;line-height:1;cursor:pointer;}
   #galOverlay .gal-text{font-size:13px;color:var(--text);line-height:1.9;margin-top:10px;padding:10px 12px;border-radius:12px;
     background:var(--panel2);border:1px solid var(--line);white-space:pre-wrap;}
   #galOverlay .gal-cond{margin-top:10px;border-radius:12px;border:1px solid var(--line);background:var(--panel);padding:8px 10px;}
@@ -3997,6 +4033,7 @@
   <!-- 图鉴/画廊详情层：放在 #modal 之外，避免搜索结果很少、弹窗很矮时被 #modal 的 overflow:hidden 裁断 -->
   <div id="fdOverlay"></div>
   <div id="galOverlay"></div>
+  <div id="galBig" onclick="closeGalBig()"></div>
 </div>
 
 <!-- 番茄幸存者：独立页内嵌窗口。iframe 独立加载/刷新，首页保持可见，
@@ -5048,7 +5085,21 @@ function skinBarHTML(page){
      dests   → 集齐这些地图的全部信件 + 全部特产
      moonbas → 额外要求这些月巴已收获，配 moonbaLabel 指定显示名
    雪地四图 id = snow / ruins / ice / empire。暂不放条目时，画廊显示空态 */
-const GALLERY=[];
+const GALLERY=[];              // 故事画廊：旅途 CG 收藏，条目按需补充
+const ART_GALLERY=[
+  {id:'art_01',name:'Banny Stealing Tomato',author:'200',img:'https://origin.picgo.net/2026/11/04/Bannystealingtomatoe7428686e3dfd48c.md.png'},
+  {id:'art_02',name:'Cheat Banny',author:'200',img:'https://origin.picgo.net/2026/11/04/Cheatbannyd0d35717b40c5cb4.md.png'},
+  {id:'art_03',name:'Noisy',author:'200',r18:true,img:'https://origin.picgo.net/2026/11/04/Noisyf869b3f26525bc3f.md.png',
+   text:"This was when the logs was still randomly placed too close. The Slick-back banny got annoyed by Lah banny's activity with tomato."},
+  {id:'art_04',name:'Regular Guest',author:'200',img:'https://origin.picgo.net/2026/11/04/Regularguest477637f0a87dc7f9.md.png'},
+  {id:'art_05',name:'Tomato Story',author:'200',imgs:[
+    'https://origin.picgo.net/2026/11/04/Tomato_story168a0f101ac1906f0.md.png',
+    'https://origin.picgo.net/2026/11/04/Tomato_story2e51f95fd0d2cc91d.md.png'
+  ],text:"I like Nyaomi's 月巴 about night market so I drew this"}
+];
+                               // 条目结构：{ id, name, imgs:[…] 或 img, author, text, r18 }；imgs 多张时缩略图显示张数角标，点开可翻页
+let galTab='story';            // 画廊子页：story=故事画廊 art=投稿画廊
+const galR18Open={};           // 本次会话已确认过成人向的作品 id（刷新后需重新确认）
 function galById(id){ return GALLERY.find(e=>e.id===id); }
 function galInfo(e){
   if(!e) return {met:true,parts:[]};
@@ -5095,20 +5146,20 @@ function galTimeText(id){
   const t=S.galFirst&&S.galFirst[id];
   return t?fmtDT(t):'—';
 }
-/* 画廊缩略图网格 */
+/* 故事画廊缩略图网格 */
 function galGridHTML(){
-  if(!GALLERY.length) return `<div class="gal-empty">${$tm('ui_gal_empty','🖼 画廊还空着<br><small>新的画面正在路上，敬请期待…</small>')}</div>`;
+  if(!GALLERY.length) return `<div class="gal-empty">${$tm('ui_gal_empty','🖼 故事画廊还空着<br><small>新的画面正在路上，敬请期待…</small>')}</div>`;
   let h='', i=0;
   for(const e of GALLERY){
     const unlocked=galUnlocked(e.id);
     if(unlocked){
-      h+=`<div class="galcard anim-in" style="--stagger:${i*36}ms" onclick="openGalDetail('${e.id}')">
+      h+=`<div class="galcard anim-in" style="--stagger:${Math.min(i,20)*36}ms" onclick="openGalDetail('${e.id}')">
         <div class="galpic">${e.img?`<img src="${esc(e.img)}" alt="${esc(e.name)}" loading="lazy" decoding="async">`:'🖼'}</div>
         <div class="galnm">${esc(e.name)}</div>
         <div class="galst">✓ 已解锁 · ${galTimeText(e.id)}</div>
       </div>`;
     }else{
-      h+=`<div class="galcard locked anim-in" style="--stagger:${i*36}ms" onclick="openGalLock('${e.id}')">
+      h+=`<div class="galcard locked anim-in" style="--stagger:${Math.min(i,20)*36}ms" onclick="openGalLock('${e.id}')">
         <div class="galpic">🔒</div>
         <div class="galnm">???</div>
         <div class="galst">${esc(galCondText(galInfo(e)))}</div>
@@ -5118,6 +5169,79 @@ function galGridHTML(){
   }
   return h;
 }
+/* 投稿画廊：预留给以后的投稿 CG，当前不放任何内容。
+   ART_GALLERY 条目结构：{ id:'art_01', name:'作品名', imgs:['https://…','https://…'], author:'画师', text:'画家留言…', r18:true }
+   单张时也可写 img:'https://…'；imgs 数组有多张时缩略图显示张数角标，点开可翻页 */
+function galArtList(){
+  return ART_GALLERY.filter(e=>e).map(e=>{
+    const raw = Array.isArray(e.imgs) ? e.imgs : (Array.isArray(e.img) ? e.img : [e.img]);
+    const pics = raw.filter(u=>typeof u==='string' && u);
+    return {
+      id:e.id, name:e.name||$t('投稿作品'), pics, author:e.author||$t('匿名'), text:e.text||'', r18:!!e.r18
+    };
+  }).filter(e=>e.pics.length);
+}
+/* 投稿画廊缩略图网格 */
+function galArtGridHTML(list){
+  const arts=list||galArtList();
+  if(!arts.length) return `<div class="gal-empty">${$tm('ui_galart_empty','🎨 投稿画廊还空着<br><small>这里预留给以后的投稿 CG，敬请期待…</small>')}</div>`;
+  return arts.map((e,i)=>{
+    const locked=!!e.r18 && !galR18Open[e.id];
+    const click=locked?`galUnmaskArt('${e.id}')`:`openGalArtDetail('${e.id}')`;
+    return `<div class="galcard anim-in${locked?' r18':''}" style="--stagger:${Math.min(i,20)*36}ms" onclick="${click}">
+      <div class="galpic"><img src="${esc(e.pics[0])}" alt="${esc(e.name)}" loading="lazy" decoding="async">${e.pics.length>1?`<span class="galcount">1/${e.pics.length}</span>`:''}${locked?`<div class="galmask"><span class="gm-ico">🔞</span><b>${$t('🔞 成人向作品')}</b><small>${$t('请确认后再观看')}</small></div>`:''}</div>
+      <div class="galnm">${esc(e.name)}</div>
+      ${locked
+        ?`<div class="galby">🎨 by ${esc(e.author)}</div>`
+        :`<div class="galmsg">${e.text?'💬 '+esc(e.text):''}</div><div class="galby">🎨 by ${esc(e.author)}</div>`}
+    </div>`;
+  }).join('');
+}
+/* 点击成人向遮罩：确认后本次会话内解锁该作品的缩略图与画家留言 */
+function galUnmaskArt(id){ galR18Open[id]=1; openBook(); }
+/* 点开投稿作品：大图 + 画家留言 + 作者署名；多图可左右翻页 */
+let galArtCur=null, galArtIdx=0;
+function openGalArtDetail(id){
+  const e=galArtList().find(x=>x.id===id);
+  if(!e) return;
+  if(e.r18 && !galR18Open[e.id]){ galUnmaskArt(e.id); return; }
+  galArtCur=e; galArtIdx=0;
+  galArtDetailRender();
+}
+function galArtDetailRender(){
+  if(!galArtCur) return;
+  const e=galArtCur, pics=e.pics, n=pics.length, i=galArtIdx;
+  const multi=n>1;
+  const ov=$('galOverlay'); if(!ov) return;
+  ov.innerHTML=`<div class="gal-back" onclick="closeGalDetail()"></div>
+    <div class="gal-card">
+      <div class="gal-head"><span>${e.r18?'🔞 ':''}🎨 ${esc(e.name)}</span><button class="iconbtn" onclick="closeGalDetail()">✕</button></div>
+      <div class="gal-viewer">
+        <img class="gal-big" src="${esc(pics[i])}" alt="${esc(e.name)}" loading="lazy" decoding="async" draggable="false" onclick="openGalBig(this.src)">
+        ${multi?`<button class="gal-arrow left" onclick="event.stopPropagation();galArtPage(-1)">‹</button>
+          <button class="gal-arrow right" onclick="event.stopPropagation();galArtPage(1)">›</button>
+          <div class="gal-page">${i+1} / ${n}</div>`:''}
+      </div>
+      ${e.text?`<div class="gal-text">${esc(e.text)}</div>`:''}
+      <div class="gal-time">🎨 by ${esc(e.author)}</div>
+    </div>`;
+  ov.classList.add('show');
+}
+function galArtPage(d){
+  if(!galArtCur) return;
+  const n=galArtCur.pics.length;
+  if(n<2) return;
+  galArtIdx=(galArtIdx+d+n)%n;
+  galArtDetailRender();
+}
+/* 画廊子页签：左侧故事画廊、右侧投稿画廊 */
+function galSubTabsHTML(storyGot,artCount){
+  return `<div class="galsub">
+    <button class="btab ${galTab==='story'?'on':''}" onclick="setGalTab('story')">${$t('🖼 故事画廊')}${GALLERY.length?`<small>${storyGot}/${GALLERY.length}</small>`:''}</button>
+    <button class="btab ${galTab==='art'?'on':''}" onclick="setGalTab('art')">${$t('🎨 投稿画廊')}${artCount?`<small>${artCount}</small>`:''}</button>
+  </div>`;
+}
+function setGalTab(t){ if(t===galTab) return; galTab=t; closeGalDetail(); openBook(); }
 /* 点开已解锁的 CG：图片 + 图片下的文案 + 解锁条件 + 解锁时间 */
 function openGalDetail(id){
   const e=galById(id);
@@ -5128,7 +5252,7 @@ function openGalDetail(id){
   ov.innerHTML=`<div class="gal-back" onclick="closeGalDetail()"></div>
     <div class="gal-card">
       <div class="gal-head"><span>🖼 ${esc(e.name)}</span><button class="iconbtn" onclick="closeGalDetail()">✕</button></div>
-      ${e.img?`<img class="gal-big" src="${esc(e.img)}" alt="${esc(e.name)}" loading="lazy" decoding="async">`:`<div class="gal-big empty">🖼</div>`}
+      ${e.img?`<img class="gal-big" src="${esc(e.img)}" alt="${esc(e.name)}" loading="lazy" decoding="async" draggable="false" onclick="openGalBig(this.src)">`:`<div class="gal-big empty">🖼</div>`}
       <div class="gal-text">${esc(e.text||'')}</div>
       ${rows?`<div class="gal-cond"><div class="gal-cond-h">🔓 解锁条件</div>${rows}</div>`:''}
       <div class="gal-time">🕒 解锁于 ${galTimeText(id)}</div>
@@ -5149,7 +5273,14 @@ function openGalLock(id){
     </div>`;
   ov.classList.add('show');
 }
-function closeGalDetail(){ const ov=$('galOverlay'); if(ov){ ov.classList.remove('show'); ov.innerHTML=''; } }
+function closeGalDetail(){ const ov=$('galOverlay'); if(ov){ ov.classList.remove('show'); ov.innerHTML=''; } closeGalBig(); }
+/* 详情里再点大图 → 图片铺满整个屏幕（含手机），点任意处或右上角 ✕ 关闭 */
+function openGalBig(src){
+  const b=$('galBig'); if(!b||!src) return;
+  b.innerHTML=`<img src="${esc(src)}" alt="" draggable="false"><button class="gb-close" onclick="event.stopPropagation();closeGalBig()">✕</button>`;
+  b.classList.add('show');
+}
+function closeGalBig(){ const b=$('galBig'); if(b){ b.classList.remove('show'); b.innerHTML=''; } }
 
 /* ================= i18n 多语言（P0：只搭框架，翻译按 P1~P8 分批填充） =================
    口径：① 界面短文案用 $t('中文原文')，字典缺条目时原样返回中文，可增量补译、天然回退；
@@ -5784,6 +5915,14 @@ const I18N_UI={
   '搜索月巴':{en:'Search Bannies',ja:'バニーを検索',ko:'배니 검색'},
   '🔍 全图鉴搜索 · {n} 只':{en:'🔍 All codexes · {n} found',ja:'🔍 全図鑑検索 · {n} 体',ko:'🔍 전체 도감 검색 · {n}마리'},
   '🖼 画廊':{en:'🖼 Gallery',ja:'🖼 ギャラリー',ko:'🖼 갤러리'},
+  '🖼 故事画廊':{en:'🖼 Story Gallery',ja:'🖼 ストーリーギャラリー',ko:'🖼 스토리 갤러리'},
+  '🎨 投稿画廊':{en:'🎨 Fan Art Gallery',ja:'🎨 投稿ギャラリー',ko:'🎨 투고 갤러리'},
+  '🖼 故事画廊 {a}/{b}':{en:'🖼 Story Gallery {a}/{b}',ja:'🖼 ストーリーギャラリー {a}/{b}',ko:'🖼 스토리 갤러리 {a}/{b}'},
+  '🎨 投稿画廊 · {n} 张':{en:'🎨 Fan Art Gallery · {n} works',ja:'🎨 投稿ギャラリー · {n} 点',ko:'🎨 투고 갤러리 · {n}점'},
+  '投稿作品':{en:'Submitted artwork',ja:'投稿作品',ko:'투고 작품'},
+  '🔞 成人向作品':{en:'🔞 Adult content',ja:'🔞 成人向け作品',ko:'🔞 성인물'},
+  '请确认后再观看':{en:'Please confirm before viewing.',ja:'確認してからご覧ください。',ko:'확인 후 감상해 주세요.'},
+  '这位画师还没有留言':{en:'The artist left no message yet.',ja:'この絵師からのメッセージはまだありません。',ko:'이 작가의 메시지가 아직 없어요.'},
   '第一图鉴集齐 {n} 个月巴后开启':{en:'Unlocks after collecting {n} Bannies in Codex I',ja:'第一図鑑でバニーを{n}体集めると解放',ko:'도감 1에서 배니 {n}마리를 모으면 해금'},
   '收集旅途中的画面':{en:'Scenes collected on your trips',ja:'旅先で集めた情景',ko:'여행 중 모은 장면'},
   '✏️ 投稿':{en:'✏️ Submit',ja:'✏️ 投稿',ko:'✏️ 투고'},
@@ -8409,7 +8548,8 @@ const I18N_MISC={    // 事件/台词/系统说明：键为语义 key（字段�
   fly_lb_empty:{d:{en:'No free-mode records yet — go take a flight!',ja:'まだフリーモードの記録がありません。さっそく飛んでみましょう～',ko:'아직 프리 모드 기록이 없어요. 얼른 한 번 날아보세요~'}},
   ui_cal_legend_task:{d:{en:'• Dates with tasks show a dot · tap a date to select / view that day\u2019s to-dos',ja:'• タスクのある日はドット付き ・ 日付をタップして選択 / その日のやることを表示',ko:'• 할 일이 있는 날은 점 표시 · 날짜를 눌러 선택 / 그날 할 일 보기'}},
   ui_cal_legend_pomo:{d:{en:'🎨 A new color every 8 hours · up to 4 colors a day (24 hours)',ja:'🎨 8 時間ごとに色が変わり ・ 1 日最大 4 色（24 時間）',ko:'🎨 8시간마다 색이 바뀜 · 하루 최대 4색(24시간)'}},
-  ui_gal_empty:{d:{en:'🖼 The gallery is still empty<br><small>New artwork is on the way — stay tuned…</small>',ja:'🖼 ギャラリーはまだ空です<br><small>新しい一枚を準備中。お楽しみに…</small>',ko:'🖼 갤러리가 아직 비어 있어요<br><small>새 그림을 준비 중이에요. 기대해 주세요…</small>'}},
+  ui_gal_empty:{d:{en:'🖼 The story gallery is still empty<br><small>New artwork is on the way — stay tuned…</small>',ja:'🖼 ストーリーギャラリーはまだ空です<br><small>新しい一枚を準備中。お楽しみに…</small>',ko:'🖼 스토리 갤러리가 아직 비어 있어요<br><small>새 그림을 준비 중이에요. 기대해 주세요…</small>'}},
+  ui_galart_empty:{d:{en:'🎨 The submission gallery is still empty<br><small>This space is reserved for future submitted CGs — stay tuned…</small>',ja:'🎨 投稿ギャラリーはまだ空です<br><small>ここは今後の投稿 CG のために予約されています。お楽しみに…</small>',ko:'🎨 투고 갤러리가 아직 비어 있어요<br><small>이곳은 앞으로의 투고 CG를 위해 예약되어 있어요. 기대해 주세요…</small>'}},
   ui_tv_yard_empty:{d:{en:'🧺 The yard is quiet — go collect some Bannies in the Codex first',ja:'🧺 庭はしんと静か。まず図鑑でバニーを集めましょう',ko:'🧺 마당이 조용해요. 먼저 도감에서 배니를 모아 보세요'}},
   ui_tv_home_empty:{d:{en:'🧺 Indoors is empty — send a Banny out to gather some Tomatoes',ja:'🧺 部屋はがらんとしています。バニーにトマトを集めさせましょう',ko:'🧺 실내가 텅 비었어요. 배니를 보내 토마토를 모아 오게 하세요'}},
   ui_skin_map_title:{d:{en:'🗺 Map Skins',ja:'🗺 マップスキン',ko:'🗺 맵 스킨'}},
@@ -10523,9 +10663,15 @@ function openBook(){
   </div>`;
   if(dexPage===4){
     galSync(true);
+    const arts=galArtList();
     const gg=GALLERY.filter(e=>galUnlocked(e.id)).length;
-    openModal($tf('🖼 画廊 {a}/{b}',{a:gg,b:GALLERY.length}),
-      `${tabs}<div class="book">${galGridHTML()}</div>`, openBook);
+    const title=galTab==='art'
+      ?(arts.length?$tf('🎨 投稿画廊 · {n} 张',{n:arts.length}):$t('🎨 投稿画廊'))
+      :$tf('🖼 故事画廊 {a}/{b}',{a:gg,b:GALLERY.length});
+    const body=galTab==='art'
+      ?`<div class="book">${galArtGridHTML(arts)}</div>`
+      :`<div class="book">${galGridHTML()}</div>`;
+    openModal(title, `${tabs}${galSubTabsHTML(gg,arts.length)}${body}`, openBook);
     dexScrollActiveTab();
     return;
   }
