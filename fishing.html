@@ -7298,19 +7298,19 @@ var BOTTLE_MSGS=['今天也是好天气！','听说深夜有大家伙出没…�
   G.event=null;
   if(Math.random()>=0.03) return;
   var roll=Math.random();
-  if(roll<0.40) G.event={kind:'bottle'};
-  else if(roll<0.55) G.event={kind:'chest'};
+  if(roll<0.20) G.event={kind:'bottle'};
+  else if(roll<0.25) G.event={kind:'chest'};
   else G.event={kind:'junk',junk:JUNKS[randi(0,JUNKS.length-1)]};
 }
 function settleEvent(){
   var ev=G.event; G.event=null;
   if(!ev) return '';
   if(ev.kind==='bottle'){
-    var g1=randi(20,60); save.tomato+=g1;
+    var g1=randi(1,10); save.tomato+=g1;
     return $tf('捞到漂流瓶：「{m}」（+{g} 番茄币）',{m:$t(BOTTLE_MSGS[randi(0,BOTTLE_MSGS.length-1)]),g:g1});
   }
   if(ev.kind==='chest'){
-    var g2=randi(100,200); save.tomato+=g2;
+    var g2=randi(50,100); save.tomato+=g2;
     return $tf('捞到沉底宝箱！（+{g} 番茄币）',{g:g2});
   }
   save.junk[ev.junk]=(save.junk[ev.junk]|0)+1;
