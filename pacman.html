@@ -123,6 +123,7 @@
     grid-template-areas:". up ." "left . right" ". down .";}
   body.touch #pad{display:grid;}
   .pbtn{display:flex;align-items:center;justify-content:center;padding:0;touch-action:none;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;
     font-size:15px;line-height:1;font-weight:900;color:var(--accent2);cursor:pointer;
     border:1px solid var(--line2);border-radius:10px;
     background:linear-gradient(180deg,rgba(36,23,54,.92),rgba(11,7,20,.95));
@@ -581,6 +582,7 @@
     <div class="bestRow"><span data-i18n="best">最高分</span><b id="bestVal">0</b></div>
     <div class="themes" id="themes"></div>
     <label class="swRow"><input type="checkbox" id="chkLight"><span data-i18n="light">浅色</span></label>
+    <label class="swRow"><input type="checkbox" id="chkPadLock" checked><span data-i18n="padLock">方向键点按锁定</span></label>
     <div class="accRow" id="langRow">
       <span data-i18n="langLabel">语言</span>
       <button class="miniBtn langBtn" type="button" data-lang="zh">中文</button>
@@ -607,6 +609,7 @@
     <div style="height:14px"></div>
     <div class="skinHead" data-i18n="skin">番茄皮肤</div>
     <div class="skins" id="skinList"></div>
+    <label class="swRow"><input type="checkbox" id="chkPadLock2" checked><span data-i18n="padLock">方向键点按锁定</span></label>
     <button class="primary" id="btnResume" data-i18n="resume">继续</button>
     <button class="ghostBtn" id="btnQuit" data-i18n="backTitle">返回标题</button>
   </div>
@@ -892,7 +895,34 @@
     'm2_kuji':['https://origin.picgo.net/2026/10/28/48bf5c5a3f40d87fa322d3660b325cf53bd45781a4814da5.th.png','#9b7fb0'],
     'm2_island':['https://origin.picgo.net/2026/10/29/ca5dae8e8af396dead2e65a5f74e53629616550b183a98a8.th.png','#3fb5a6'],
     'm3_candy':['https://origin.picgo.net/2026/10/29/c027b30582384fdcb49c1a29a8a9e6e089134f5b0e68d115.th.png','#f2e6c9'],
-    'm3_banini':['https://origin.picgo.net/2026/10/29/a171d47a19cba017dcac07b8277d861d7c5760f8595c52cd.th.png','#f5c4c9']
+    'm3_banini':['https://origin.picgo.net/2026/10/29/a171d47a19cba017dcac07b8277d861d7c5760f8595c52cd.th.png','#f5c4c9'],
+    'mb_gungun':['https://origin.picgo.net/2026/10/30/dafc48b943e8cd2a60fb3b27909bc4bcd3bc0e92a97d1ba8.th.png','#f0b27a'],
+    'm2_xiangjiao':['https://origin.picgo.net/2026/10/30/choco---KoTofuf6ec1174c00258e1.th.png','#ffe082'],
+    'm2_digong':['https://origin.picgo.net/2026/10/30/b0ab7a09932d8503ce16faa23e6ec4c45b88d2a10d87ea4c.th.png','#5d5a6e'],
+    'm3_gummy':['https://origin.picgo.net/2026/10/30/c10b899599909fbe8c00b823514b0d1186af9f31d5e83a76.th.png','#e8f0fa'],
+    'm2_wuyue':['https://origin.picgo.net/2026/10/31/0fc698411a43fda2befaa164d741ad449499809deb531985.th.png','#6b5f8a'],
+    'm3_liberty':['https://origin.picgo.net/2026/10/31/1e2434fad7de64997443bb347252032d39d7215970404fd9.th.png','#c8ccc0'],
+    'mb_xinnian':['https://origin.picgo.net/2026/10/31/6cc021c8752ea5605c71f670842c2203ca53d231ebe4d5b6.th.png','#d94a6b'],
+    'm2_xinglai':['https://origin.picgo.net/2026/10/31/e49cc43aeee1e35be6f6424f785183bd2eaaa3c401aef606.th.png','#b9a8e0'],
+    'm2_shouling':['https://origin.picgo.net/2026/10/31/316e2150f0312750f4d7cd4fcc4f6303a4ad69ec8e464c65.th.png','#9aa0a6'],
+    'm2_linyao':['https://origin.picgo.net/2026/10/31/c170f2a1fb785896827b8b22af3900de3695f964760288bf.th.png','#7fc9a6'],
+    'm2_zuojia':['https://origin.picgo.net/2026/11/01/1b95e58782df282eba180dd0fddea8e89d19a8c7ce048ff8.th.png','#90a4ae'],
+    'm2_huanmeng':['https://origin.picgo.net/2026/11/01/3a376135483b78d18b13848a6cf5e07ccadc0dfa354ea302.th.png','#c9a6d8'],
+    'mb_shan':['https://origin.picgo.net/2026/11/01/74963261b78193e1e743deb60efee14cb15473c1ed2a08cf.png','#e0d24e'],
+    'm2_gou':['https://origin.picgo.net/2026/11/01/d4fb5d4acd0144900c631e8556cce20a0b21511ef0b18500.png','#d7ccc8'],
+    'm3_train':['https://origin.picgo.net/2026/11/01/train-banny358505b4dab5544e.th.png','#e8e4dc'],
+    'm3_16bit':['https://origin.picgo.net/2026/11/01/16-bit-Bannyb4bff354ec834210.th.png','#c9c2e8'],
+    'm2_shoudeng':['https://origin.picgo.net/2026/11/02/97292342221ee2ec8ea222d67d271a6b8118c2737398e2ef.th.png','#d99a3c'],
+    'm2_yingzi':['https://origin.picgo.net/2026/11/02/f0d18daabf88c898b70270fdf9a7ff8510fc0c8849d4fd41.th.png','#4a4458'],
+    'm2_mengyan':['https://origin.picgo.net/2026/11/02/ab775743f8267d63d65b81c28917666e56f8ef46bb82723e.th.png','#8a5fd8'],
+    'm2_sunkcity':['https://origin.picgo.net/2026/11/02/b241fdcc94f78a8b329c05fb8b649e228685080cf550e065.th.png','#3f7fb5'],
+    'm2_tian':['https://origin.picgo.net/2026/11/02/0be64feec62e91f984a6ce9091d5eede1fc8a35132b5626f.th.png','#f8bbd0'],
+    'm2_shamo':['https://origin.picgo.net/2026/11/02/0059847a33461c9b05dbed513a3a7498201fc69bcf6582ba.th.png','#ffcc80'],
+    'm2_yueshi':['https://origin.picgo.net/2026/11/02/2775d34d4123537c87ae900e911636e4d04587a79becc9f6.th.png','#e0a94f'],
+    'm2_xian':['https://origin.picgo.net/2026/11/02/8279f00c7323e443ce5cc5eadee6c0c845655ca09396480c.th.png','#90a4ae'],
+    'm3_dango':['https://origin.picgo.net/2026/11/03/Dango-Bannyf17dda020ef5ea00.th.png','#f2a7c3'],
+    'm3_burger':['https://origin.picgo.net/2026/11/03/Hamburger-bannye89eb71b8b666d03.th.png','#d98a5f'],
+    'm3_omurice':['https://origin.picgo.net/2026/11/03/Omurice-Banny454726f84ceb7a01.th.png','#e8b96a']
   };
 
   /* 已解锁月巴的立绘池：只读主存档 collection / collection2 / collection3 的键。
@@ -989,7 +1019,7 @@
       overSub:'番茄酱洒了一地，但明天还会长出来。',
       restart:'再来一次', newBest:'新纪录', bestNight:'最高纪录',
       sound:'音效', music:'音乐',
-      light:'浅色', achTitle:'夜之成就', achProgress:'已解锁',
+      light:'浅色', padLock:'方向键点按锁定', achTitle:'夜之成就', achProgress:'已解锁',
       achGot:'已解锁', achLocked:'未解锁', achUnlocked:'成就解锁', close:'关闭',
       langLabel:'语言',
       dir:{up:'上',left:'左',right:'右',down:'下'},
@@ -1034,7 +1064,7 @@
       overSub:'Just a little ketchup spilled. It grows back tomorrow.',
       restart:'Play again', newBest:'NEW BEST', bestNight:'Best record',
       sound:'Sound', music:'Music',
-      light:'Light', achTitle:'Night Badges', achProgress:'UNLOCKED',
+      light:'Light', padLock:'D-pad tap-lock', achTitle:'Night Badges', achProgress:'UNLOCKED',
       achGot:'UNLOCKED', achLocked:'LOCKED', achUnlocked:'ACHIEVEMENT', close:'Close',
       langLabel:'Language',
       dir:{up:'Up',left:'Left',right:'Right',down:'Down'},
@@ -1078,7 +1108,7 @@
       chip:'第{n}夜', clear:'カボチャの灯が全部ついた', over:'今夜はここまで',
       overSub:'トマトソースが少しこぼれただけ。明日にはまた生えてくる。', restart:'もう一度', newBest:'新記録', bestNight:'最高記録',
       sound:'効果音', music:'音楽',
-      light:'ライト', achTitle:'夜の実績', achProgress:'達成',
+      light:'ライト', padLock:'方向キー点押し固定', achTitle:'夜の実績', achProgress:'達成',
       achGot:'達成', achLocked:'未達成', achUnlocked:'実績解除', close:'閉じる',
       langLabel:'言語',
       dir:{up:'上',left:'左',right:'右',down:'下'},
@@ -1122,7 +1152,7 @@
       chip:'{n}번째 밤', clear:'호박등이 모두 켜졌다', over:'오늘 밤은 여기까지',
       overSub:'케첩이 조금 쏟아졌을 뿐이에요. 내일이면 다시 자라요.', restart:'다시 하기', newBest:'신기록', bestNight:'최고 기록',
       sound:'효과음', music:'음악',
-      light:'라이트', achTitle:'밤의 업적', achProgress:'달성',
+      light:'라이트', padLock:'방향키 탭 고정', achTitle:'밤의 업적', achProgress:'달성',
       achGot:'달성', achLocked:'미달성', achUnlocked:'업적 달성', close:'닫기',
       langLabel:'언어',
       dir:{up:'위',left:'왼쪽',right:'오른쪽',down:'아래'},
@@ -1184,7 +1214,7 @@
     return {
       v:1, theme:'pumpkin', light:false, best:0, bestNight:0, skin:'green',
       stats:{plays:0, nights:0, pellets:0, ghosts:0, maxCombo:0, talks:0},
-      ach:{}, ui:{dpad:true, dlg:true, sfx:true, music:true, tips:true}
+      ach:{}, ui:{dpad:true, padLock:true, dlg:true, sfx:true, music:true, tips:true}
     };
   }
   function normalizeSave(raw){
@@ -1203,6 +1233,7 @@
     if(s.ach && typeof s.ach === 'object') d.ach = s.ach;
     if(s.ui && typeof s.ui === 'object'){
       if(typeof s.ui.dpad === 'boolean') d.ui.dpad = s.ui.dpad;
+      if(typeof s.ui.padLock === 'boolean') d.ui.padLock = s.ui.padLock;
       if(typeof s.ui.dlg === 'boolean') d.ui.dlg = s.ui.dlg;
       if(typeof s.ui.sfx === 'boolean') d.ui.sfx = s.ui.sfx;
       if(typeof s.ui.music === 'boolean') d.ui.music = s.ui.music;
@@ -2302,8 +2333,11 @@
   /* 番茄改为「长按才走」：按住方向键才推进，松手立即停在原地。
      dir 保留（便于半格内反向与到达格中心后继续转向），移动由 hold 门控。 */
   var holdKeys = {}, holdOrder = [];
-  /* 屏幕方向键：按一下等同长按（锁定该方向持续走），再点同一方向或换方向才改变 */
+  /* 屏幕方向键：默认按一下等同长按（锁定该方向持续走），再点同一方向或换方向才改变；
+     关闭「点按锁定」后改为必须按住，松手立即停。 */
   var padDir = '';
+  var padHold = {}, padCount = {};
+  function padLockOn(){ return save.ui.padLock !== false; }
   function dropHold(k){
     if(!holdKeys[k]) return;
     delete holdKeys[k];
@@ -2315,6 +2349,11 @@
     if(padDir){ dropHold('pad-' + padDir); padDir = ''; }
     var bs = document.querySelectorAll('#pad .pbtn.on');
     for(var i = 0; i < bs.length; i++) bs[i].classList.remove('on');
+    /* 按住模式下仍按着的手指不改动：把高亮补回来 */
+    for(var pid in padHold){
+      var hb = document.querySelector('#pad .pbtn[data-dir="' + padHold[pid] + '"]');
+      if(hb) hb.classList.add('on');
+    }
   }
   function setPadDir(dir){
     if(padDir === dir){ clearPadLatch(); syncHold(); return; }   /* 再点一下 = 停 */
@@ -2326,6 +2365,39 @@
     var b = document.querySelector('#pad .pbtn[data-dir="' + dir + '"]');
     if(b) b.classList.add('on');
     syncHold();
+  }
+  /* 按住模式：按下才走，松手即停（支持多指同时按不同方向） */
+  function padHoldDown(dir, pid){
+    if(padLockOn()){ setPadDir(dir); return; }
+    if(padHold[pid]) return;
+    padHold[pid] = dir;
+    padCount[dir] = (padCount[dir] || 0) + 1;
+    if(padCount[dir] === 1){
+      var key = 'pad-' + dir;
+      if(!holdKeys[key]){ holdKeys[key] = KEY_DIR['arrow' + dir]; holdOrder.push(key); }
+    }
+    var b = document.querySelector('#pad .pbtn[data-dir="' + dir + '"]');
+    if(b) b.classList.add('on');
+    syncHold();
+  }
+  function padHoldUp(pid){
+    var dir = padHold[pid];
+    if(!dir) return;
+    delete padHold[pid];
+    padCount[dir] = (padCount[dir] || 0) - 1;
+    if(padCount[dir] <= 0){
+      delete padCount[dir];
+      dropHold('pad-' + dir);
+      var b = document.querySelector('#pad .pbtn[data-dir="' + dir + '"]');
+      if(b) b.classList.remove('on');
+    }
+    syncHold();
+  }
+  function padHoldClear(){
+    for(var pid in padHold){ dropHold('pad-' + padHold[pid]); }
+    padHold = {}; padCount = {};
+    var bs = document.querySelectorAll('#pad .pbtn.on');
+    for(var i = 0; i < bs.length; i++) bs[i].classList.remove('on');
   }
   function syncHold(){
     if(!player) return;
@@ -2343,6 +2415,7 @@
     holdKeys = {}; holdOrder.length = 0;
     if(player){ player.hold = false; player.want = DIR_NONE; }
     clearPadLatch();
+    padHoldClear();
   }
 
   function setMazeForNight(){
@@ -3763,6 +3836,17 @@
       applyTheme(save.theme);
       writeSave();
     });
+    function onPadLockChange(){
+      save.ui.padLock = !!this.checked;
+      writeSave();
+      $('chkPadLock').checked = save.ui.padLock;
+      $('chkPadLock2').checked = save.ui.padLock;
+      clearPadLatch();
+      padHoldClear();
+      syncHold();
+    }
+    $('chkPadLock').addEventListener('change', onPadLockChange);
+    $('chkPadLock2').addEventListener('change', onPadLockChange);
     function onSkinClick(e){
       var b = e.target.closest ? e.target.closest('.skinBtn') : null;
       if(!b) return;
@@ -3868,14 +3952,21 @@
     $('frame').addEventListener('touchend', endTouch, {passive:true});
     $('frame').addEventListener('touchcancel', endTouch, {passive:true});
 
-    /* 虚拟方向键：点一下即锁定该方向持续前进（等同长按），再点同一方向停下 */
+    /* 虚拟方向键：默认点一下即锁定该方向持续前进（等同长按），再点同一方向停下；
+       关闭「点按锁定」后改为按住才走、松手即停 */
     $('pad').addEventListener('pointerdown', function(e){
       var b = e.target.closest ? e.target.closest('.pbtn') : null;
       if(!b) return;
       e.preventDefault();
       var dir = b.getAttribute('data-dir');
-      if(dir) setPadDir(dir);
+      if(dir) padHoldDown(dir, 'pt' + (e.pointerId == null ? 'x' : e.pointerId));
     });
+    function onPadRelease(e){ padHoldUp('pt' + (e.pointerId == null ? 'x' : e.pointerId)); }
+    window.addEventListener('pointerup', onPadRelease);
+    window.addEventListener('pointercancel', onPadRelease);
+    /* 长按方向键时屏蔽系统菜单 / 文字选择，避免弹出复制翻译等面板 */
+    $('pad').addEventListener('contextmenu', function(e){ e.preventDefault(); });
+    $('pad').addEventListener('selectstart', function(e){ e.preventDefault(); });
 
     document.addEventListener('visibilitychange', function(){
       if(document.hidden && state === 'play') pauseGame();
@@ -4271,6 +4362,8 @@
   $('chkDlg').checked = !!save.ui.dlg;
   $('chkSfx').checked = !!save.ui.sfx;
   $('chkMusic').checked = !!save.ui.music;
+  $('chkPadLock').checked = save.ui.padLock !== false;
+  $('chkPadLock2').checked = save.ui.padLock !== false;
   if(save.ui.dlg){ $('dlgBar').classList.remove('off'); }else{ $('dlgBar').classList.add('off'); }
   if(mainSave.lowPower || reduceMotion){ document.body.classList.add('lp'); }
   loadSprites();
