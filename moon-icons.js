@@ -5,8 +5,9 @@
    墨色 #5b5343 / 米白 #fffdf5 / 浅青 #3e8e7e / 浅青亮 #6fb7a8
    浅木 #c9a06a / 金色 #c9983e / 砖红 #d9776b
 
-   用法（经典 script，直接双击 html 也能用）：
-     <script src="moon-icons.js"></script>
+   用法（经典 script，直接双击 html 也能用；该文件也可整段贴进内联脚本，
+   但注释/字符串里请写 <\/script>，不要写裸的结束标签）：
+     <script src="moon-icons.js"><\/script>
 
      // 静态骨架：给元素写 data-ico，启动后调一次 paintIcons()
      <span class="ico" data-ico="book"></span>
@@ -15,10 +16,15 @@
      // 动态字符串：直接拼 SVG
      el.innerHTML = MoonIcons.icon('check') + '完成';
 
+     // 月巴大扫除等暖棕 UI 使用第二套主题（墨褐 / 焦糖 / 番茄红 / 苔绿）：
+     MoonIcons.icon('broom','only','warm');
+     MoonIcons.paintIcons(root,'warm');
+     MoonIcons.svg('tomato','warm');   // 只要裸 SVG 时用
+
      // 图标自带基础样式（.ico / .ico.only），如需自己控制可先设：
      // window.MOON_ICONS_NO_STYLE = true;
 
-   可用名字见 MoonIcons.names。
+   可用名字见 MoonIcons.names（浅色）与 MoonIcons.warmNames（暖棕）。
    ============================================================ */
 (function(g){
   var INK='#5b5343', PANEL='#fffdf5', ACC='#3e8e7e', ACC2='#6fb7a8', WOOD='#c9a06a',
@@ -131,16 +137,100 @@
       '<rect x="4.6" y="11" width="7.4" height="1" fill="'+ACC2+'"/>')
   };
 
-  /* 生成 <i class="ico">…</i>；cls 传 'only' 时不带右侧间距 */
-  function icon(name,cls){
-    return '<i class="ico'+(cls?' '+cls:'')+'">'+(ICONS[name]||'')+'</i>';
+  /* ---------- 暖棕主题：月巴大扫除（墨褐 / 米白 / 焦糖 / 番茄红 / 苔绿） ---------- */
+  var WINK='#3b2a1b', WPANEL='#fffaf2', WACC='#b9741f', WACC2='#8f5310',
+      WWOOD='#c9a06a', WGOLD='#d9a441', WRED='#cf4430', WGREEN='#6c8b4f';
+  var WSPK='<rect x="1.9" y="6.3" width="2.7" height="3.4" rx=".5" fill="'+WACC2+'" stroke="'+WINK+'" stroke-width=".8"/>'
+    +'<path d="M4.6 6.3L8 3.5v9L4.6 9.7z" fill="'+WACC+'" stroke="'+WINK+'" stroke-width="1"/>';
+  var WARM_ICONS={
+    /* 扫把：大扫除主图标 / 翻格 */
+    broom:S('<rect x="7.2" y="1.2" width="1.7" height="6.6" fill="'+WWOOD+'" stroke="'+WINK+'" stroke-width=".9"/>'+
+      '<rect x="6.3" y="6.9" width="3.5" height="1.7" fill="'+WACC2+'"/>'+
+      '<path d="M4.7 8.4h7.2l-1.2 6H5.9z" fill="'+WGOLD+'" stroke="'+WINK+'" stroke-width="1.1"/>'+
+      '<rect x="6.7" y="9.4" width=".9" height="4.5" fill="'+WACC2+'"/>'+
+      '<rect x="9" y="9.4" width=".9" height="4.5" fill="'+WACC2+'"/>'),
+    /* 水桶：普通难度 */
+    bucket:S('<path d="M3.9 5.7h8.2l-1 7.8H4.9z" fill="'+WWOOD+'" stroke="'+WINK+'" stroke-width="1.1"/>'+
+      '<rect x="2.9" y="4.4" width="10.2" height="1.7" fill="'+WACC+'" stroke="'+WINK+'" stroke-width=".8"/>'+
+      '<path d="M5.1 4.8a2.9 2.9 0 0 1 5.8 0" fill="none" stroke="'+WINK+'" stroke-width="1.2"/>'+
+      '<rect x="5.8" y="7.6" width=".9" height="5" fill="'+WACC2+'" opacity=".5"/>'),
+    /* 档案柜：困难难度 */
+    cabinet:S('<rect x="2.8" y="2" width="10.4" height="12" fill="'+WPANEL+'" stroke="'+WINK+'" stroke-width="1.1"/>'+
+      '<rect x="3.9" y="3.2" width="8.2" height="3" fill="'+WWOOD+'" stroke="'+WINK+'" stroke-width=".8"/>'+
+      '<rect x="3.9" y="7" width="8.2" height="3" fill="'+WWOOD+'" stroke="'+WINK+'" stroke-width=".8"/>'+
+      '<rect x="3.9" y="10.8" width="8.2" height="2.2" fill="'+WWOOD+'" stroke="'+WINK+'" stroke-width=".8"/>'+
+      '<rect x="7.1" y="4.4" width="1.8" height=".8" fill="'+WINK+'"/>'+
+      '<rect x="7.1" y="8.2" width="1.8" height=".8" fill="'+WINK+'"/>'+
+      '<rect x="7.1" y="11.5" width="1.8" height=".8" fill="'+WINK+'"/>'),
+    /* 番茄：每日大扫除 / 奖励 */
+    tomato:S('<path d="M8 4.5c2.9 0 5 2 5 4.6 0 2.9-2.2 5-5 5s-5-2.1-5-5c0-2.6 2.1-4.6 5-4.6z" fill="'+WRED+'" stroke="'+WINK+'" stroke-width="1.1"/>'+
+      '<path d="M8 4.6L5.3 2.9M8 4.6l2.7-1.7M8 4.6V2" fill="none" stroke="'+WGREEN+'" stroke-width="1.2" stroke-linecap="square"/>'+
+      '<path d="M5.4 7.4c.5-.7 1.2-1.1 1.9-1.2" fill="none" stroke="'+WPANEL+'" stroke-width="1" opacity=".6"/>'),
+    /* 胶带：封格 */
+    tape:S('<path d="M2.9 10.1l7.2-7.2 3 3-7.2 7.2z" fill="'+WPANEL+'" stroke="'+WINK+'" stroke-width="1.1"/>'+
+      '<rect x="6.2" y="6.2" width="3.6" height="3.6" transform="rotate(45 8 8)" fill="'+WWOOD+'" stroke="'+WINK+'" stroke-width=".7"/>'+
+      '<circle cx="6.1" cy="9.9" r=".6" fill="'+WINK+'"/><circle cx="9.9" cy="6.1" r=".6" fill="'+WINK+'"/>'),
+    /* 拳头：敲一敲 */
+    fist:S('<rect x="4.2" y="6.4" width="7.6" height="6.2" rx="1.5" fill="'+WWOOD+'" stroke="'+WINK+'" stroke-width="1.1"/>'+
+      '<rect x="4.9" y="5" width="1.6" height="2.4" rx=".6" fill="'+WWOOD+'" stroke="'+WINK+'" stroke-width=".8"/>'+
+      '<rect x="7.2" y="4.5" width="1.6" height="2.9" rx=".6" fill="'+WWOOD+'" stroke="'+WINK+'" stroke-width=".8"/>'+
+      '<rect x="9.5" y="5" width="1.6" height="2.4" rx=".6" fill="'+WWOOD+'" stroke="'+WINK+'" stroke-width=".8"/>'+
+      '<rect x="3.4" y="11.3" width="9.2" height="1.9" fill="'+WACC2+'"/>'+
+      '<rect x="5.2" y="8.2" width="5.6" height=".8" fill="'+WACC2+'" opacity=".45"/>'),
+    /* 硬币：金币奖励 */
+    coin:S('<circle cx="8" cy="8" r="5.7" fill="'+WGOLD+'" stroke="'+WINK+'" stroke-width="1.1"/>'+
+      '<circle cx="8" cy="8" r="3.7" fill="none" stroke="'+WACC2+'" stroke-width=".9"/>'+
+      '<rect x="7.2" y="5.3" width="1.6" height="5.4" fill="'+WACC2+'"/>'+
+      '<circle cx="5.3" cy="5.7" r=".8" fill="'+WPANEL+'" opacity=".55"/>'),
+    /* 纸箱：藏小偷 */
+    box:S('<path d="M2.7 5.2L8 2.4l5.3 2.8v6.2L8 14.2l-5.3-3z" fill="'+WWOOD+'" stroke="'+WINK+'" stroke-width="1.1"/>'+
+      '<path d="M2.7 5.2L8 8l5.3-2.8M8 8v6.2" fill="none" stroke="'+WINK+'" stroke-width="1"/>'+
+      '<path d="M5.4 3.8l5.3 2.8" stroke="'+WACC2+'" stroke-width="1.2"/>'),
+    /* 奖杯：成就通知 */
+    trophy:S('<path d="M4.4 2.4h7.2v3.1a3.6 3.6 0 0 1-7.2 0z" fill="'+WGOLD+'" stroke="'+WINK+'" stroke-width="1.1"/>'+
+      '<path d="M4.4 3.9H2.6v1.5a2.1 2.1 0 0 0 2.1 2.1M11.6 3.9h1.8v1.5a2.1 2.1 0 0 1-2.1 2.1" fill="none" stroke="'+WINK+'" stroke-width="1.1"/>'+
+      '<rect x="6.9" y="8.8" width="2.2" height="3" fill="'+WACC2+'"/>'+
+      '<rect x="4.7" y="11.8" width="6.6" height="1.6" fill="'+WINK+'"/>'+
+      '<rect x="6.6" y="3.5" width="1" height="4" fill="'+WWOOD+'"/>'),
+    /* 奖牌：排行榜 */
+    medal:S('<rect x="4.4" y="1.2" width="2.5" height="4.2" fill="'+WACC+'"/>'+
+      '<rect x="9.1" y="1.2" width="2.5" height="4.2" fill="'+WRED+'"/>'+
+      '<circle cx="8" cy="10" r="4.4" fill="'+WGOLD+'" stroke="'+WINK+'" stroke-width="1.1"/>'+
+      '<circle cx="8" cy="10" r="2" fill="'+WPANEL+'"/>'+
+      '<circle cx="8" cy="10" r=".9" fill="'+WACC2+'"/>'),
+    /* 喇叭 / 静音 */
+    sound:S(WSPK+'<path d="M10 5.7a3.3 3.3 0 0 1 0 4.6M11.7 4.2a5.5 5.5 0 0 1 0 7.6" fill="none" stroke="'+WINK+'" stroke-width="1.1" stroke-linecap="round"/>'),
+    mute:S(WSPK+'<path d="M10.3 6.3l3.4 3.4M13.7 6.3l-3.4 3.4" fill="none" stroke="'+WRED+'" stroke-width="1.4" stroke-linecap="square"/>'),
+    /* 暂停 / 全屏 */
+    pause:S('<rect x="4.2" y="3.2" width="2.9" height="9.6" rx=".6" fill="'+WACC2+'"/>'+
+      '<rect x="8.9" y="3.2" width="2.9" height="9.6" rx=".6" fill="'+WACC2+'"/>'),
+    expand:S('<path d="M2.6 6.2V2.6h3.6M10 2.6h3.4v3.6M13.4 9.8v3.6H10M6 13.4H2.6V9.8" fill="none" stroke="'+WINK+'" stroke-width="1.6" stroke-linecap="square"/>'),
+    shrink:S('<path d="M6.2 2.6v3.6H2.6M13.4 6.2H9.8V2.6M9.8 13.4v-3.6h3.6M2.6 9.8h3.6v3.6" fill="none" stroke="'+WINK+'" stroke-width="1.6" stroke-linecap="square"/>'),
+    /* 关闭 / 锁定 / 完成 */
+    close:S('<path d="M4 4l8 8M12 4l-8 8" stroke="'+WINK+'" stroke-width="1.8" stroke-linecap="square"/>'),
+    lock:S('<rect x="3.4" y="7.2" width="9.2" height="6.4" fill="'+WWOOD+'" stroke="'+WINK+'" stroke-width="1.1"/>'+
+      '<path d="M5.5 7.2V5.4a2.5 2.5 0 0 1 5 0v1.8" fill="none" stroke="'+WINK+'" stroke-width="1.4"/>'+
+      '<rect x="7.1" y="9.2" width="1.8" height="2.4" fill="'+WINK+'"/>'),
+    check:S('<path d="M3.2 8.4l3.4 3.4 6.2-7" fill="none" stroke="'+WGREEN+'" stroke-width="2" stroke-linecap="square"/>')
+  };
+
+  /* 生成 <i class="ico">…</i>；cls 传 'only' 时不带右侧间距；theme 传 'warm' 用暖棕主题 */
+  function icon(name,cls,theme){
+    var set=theme==='warm'?WARM_ICONS:ICONS;
+    return '<i class="ico'+(cls?' '+cls:'')+'">'+(set[name]||'')+'</i>';
+  }
+  /* 只要裸 SVG（用于容器内部直接塞图形） */
+  function svg(name,theme){
+    var set=theme==='warm'?WARM_ICONS:ICONS;
+    return set[name]||'';
   }
   /* 给静态骨架里的 [data-ico] 填图标：只换图形，不碰文字，切语言后仍保留 */
-  function paintIcons(root){
+  function paintIcons(root,theme){
+    var set=theme==='warm'?WARM_ICONS:ICONS;
     var nodes=(root||document).querySelectorAll('[data-ico]'), i, el, n;
     for(i=0;i<nodes.length;i++){
       el=nodes[i]; n=el.getAttribute('data-ico');
-      if(ICONS[n]) el.innerHTML=ICONS[n];
+      if(set[n]) el.innerHTML=set[n];
     }
   }
 
@@ -161,10 +251,13 @@
 
   var api={
     ICONS:ICONS,
+    warm:WARM_ICONS,
     icon:icon,
+    svg:svg,
     paintIcons:paintIcons,
     css:CSS,
-    names:Object.keys(ICONS)
+    names:Object.keys(ICONS),
+    warmNames:Object.keys(WARM_ICONS)
   };
   g.MoonIcons=api;
 })(window);

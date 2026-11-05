@@ -21,17 +21,15 @@
   html,body{height:100%}
   body{
     overflow:hidden;color:var(--text);font-family:var(--mono);letter-spacing:.02em;
+    /* 纸纹原本是一层 fixed 伪元素（opacity .5），直接并进背景层：
+       少一个全屏常驻图层，合成顺序与原版一致（纸纹压在渐变上、渐晕仍在最上层） */
     background:
+      repeating-linear-gradient(0deg,rgba(92,66,40,.013) 0 1px,transparent 1px 4px),
+      repeating-linear-gradient(90deg,rgba(92,66,40,.011) 0 1px,transparent 1px 5px),
       radial-gradient(58% 34% at 16% -4%,rgba(226,166,86,.26),transparent 72%),
       radial-gradient(110% 70% at 50% 112%,rgba(120,88,54,.16),transparent 62%),
       linear-gradient(160deg,var(--bg2) 0%,var(--bg) 58%,#f1e5d1 100%);
     overscroll-behavior:contain;
-  }
-  body::before{
-    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;
-    background:
-      repeating-linear-gradient(0deg,rgba(92,66,40,.026) 0 1px,transparent 1px 4px),
-      repeating-linear-gradient(90deg,rgba(92,66,40,.022) 0 1px,transparent 1px 5px);
   }
   body::after{
     content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
@@ -53,6 +51,19 @@
     42%{opacity:1;transform:translate(calc(var(--tx) * .45),calc(var(--ty) * .45 - 46px)) scale(1.06) rotate(180deg)}
     100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(.32) rotate(520deg)}}
   button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  /* 手绘小图标：16×16 像素 SVG 统一由 moon-icons.js 的 warm 主题提供，
+     配色沿用本页墨色 / 焦糖 / 番茄红 / 苔绿 */
+  .ico{display:inline-block;width:1.15em;height:1.15em;line-height:0;vertical-align:-.2em;flex:0 0 auto}
+  .ico.only{margin-right:0}
+  .ico svg{display:block;width:100%;height:100%}
+  .iconbtn .ico{width:17px;height:17px}
+  .chip.pause .ico{width:14px;height:14px;vertical-align:0}
+  .heroIco .ico{width:26px;height:26px;vertical-align:0}
+  .dico .ico{width:22px;height:22px;vertical-align:0}
+  .rule .ico{width:13px;height:13px;vertical-align:-2px}
+  .gbtn .ico{width:13px;height:13px;vertical-align:-1px}
+  .achrow .aico .ico{width:15px;height:15px}
+  .achrow .alock .ico{width:11px;height:11px}
   #app{
     position:relative;z-index:1;height:100%;max-width:520px;margin:0 auto;
     display:flex;flex-direction:column;padding:0 14px;
@@ -165,7 +176,7 @@
     text-align:left;border:1px solid var(--line);border-left:2px solid var(--line2);
     background:linear-gradient(180deg,#fffdf8,#f8efe0);
     clip-path:polygon(0 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%);
-    transition:background .15s,transform .12s;
+    transition:transform .12s;
   }
   .diff:active{transform:scale(.985)}
   .diff:active .dico{animation:icoPop .2s cubic-bezier(.2,1.5,.4,1) both}
@@ -212,7 +223,7 @@
     border:1px solid rgba(207,68,48,.34);border-left:2px solid var(--tomato);
     background:linear-gradient(160deg,#fff5ee,#fbe7da);
     clip-path:polygon(0 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%);
-    transition:background .15s,transform .12s,filter .3s,opacity .3s;
+    transition:transform .12s,filter .3s,opacity .3s;
   }
   .daily:active{transform:scale(.985)}
   .daily .dico{width:36px;height:36px;flex:none;display:grid;place-items:center;font-size:17px;
@@ -292,6 +303,8 @@
     background:linear-gradient(160deg,#f3e4cb,#e9d3b1);
     box-shadow:0 10px 26px rgba(90,60,30,.18),inset 0 0 24px rgba(120,88,54,.08);
     touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;overflow:hidden;
+    /* 棋盘自身形成布局/绘制边界：翻格只会让棋盘内部失效，不会牵连整页重绘 */
+    contain:layout paint;
   }
   #board::before{content:"";position:absolute;inset:3px;pointer-events:none;opacity:.55;z-index:2;
     background:
@@ -317,7 +330,9 @@
     border:1px solid rgba(92,66,40,.2);border-radius:2px;color:transparent;
     background:linear-gradient(180deg,#f5e7cf,#e9d4b2);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 1px 1px rgba(90,60,30,.10);
-    transition:transform .09s,background .09s;
+    /* 渐变背景不可插值，原来的 background 过渡只会带来无意义的重算；只保留 transform */
+    transition:transform .09s;
+    contain:layout style;
   }
   .cell:not(.open):not(.mine):active{transform:scale(.92)}
   .cell:not(.open):not(.mine)::after{content:"";position:absolute;left:20%;right:16%;top:42%;height:18%;
@@ -391,9 +406,10 @@
   #board.lost .cell.boom .thf{transform-origin:50% 92%;
     animation:thiefProud 1.4s cubic-bezier(.3,1.3,.4,1) both}
   .cell .loot{position:absolute;right:-1px;top:-2px;z-index:3;line-height:1;
-    font-size:calc(var(--fs,12px) * 1.05);
+    width:calc(var(--fs,12px) * 1.05);height:calc(var(--fs,12px) * 1.05);
     filter:drop-shadow(0 1px 1px rgba(90,60,30,.4));
     animation:lootBob .9s ease-in-out 2 both}
+  .cell .loot svg{display:block;width:100%;height:100%}
   @keyframes thiefJump{
     0%{transform:translateY(0) scale(1,1)}
     16%{transform:translateY(-18%) scale(.9,1.14)}
@@ -613,7 +629,10 @@
     background:linear-gradient(180deg,#fffaf0,#f7e9cf);
     box-shadow:0 12px 34px rgba(160,110,40,.34),inset 0 0 22px rgba(233,162,74,.18);
     overflow:hidden}
-  #toast.ach::before{content:"🏆";display:inline-block;margin-right:6px;
+  #toast.ach::before{content:"";display:inline-block;width:13px;height:13px;margin-right:6px;
+    vertical-align:-2px;background:var(--accent2);
+    -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.4 2.4h7.2v3.1a3.6 3.6 0 0 1-7.2 0z'/%3E%3Cpath d='M4.4 3.9H2.6v1.5a2.1 2.1 0 0 0 2.1 2.1M11.6 3.9h1.8v1.5a2.1 2.1 0 0 1-2.1 2.1' fill='none' stroke='%23000' stroke-width='1.1'/%3E%3Crect x='6.9' y='8.8' width='2.2' height='3'/%3E%3Crect x='4.7' y='11.8' width='6.6' height='1.6'/%3E%3Crect x='6.6' y='3.5' width='1' height='4'/%3E%3C/svg%3E") center/contain no-repeat;
+    mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.4 2.4h7.2v3.1a3.6 3.6 0 0 1-7.2 0z'/%3E%3Cpath d='M4.4 3.9H2.6v1.5a2.1 2.1 0 0 0 2.1 2.1M11.6 3.9h1.8v1.5a2.1 2.1 0 0 1-2.1 2.1' fill='none' stroke='%23000' stroke-width='1.1'/%3E%3Crect x='6.9' y='8.8' width='2.2' height='3'/%3E%3Crect x='4.7' y='11.8' width='6.6' height='1.6'/%3E%3Crect x='6.6' y='3.5' width='1' height='4'/%3E%3C/svg%3E") center/contain no-repeat;
     animation:trophyPop .42s cubic-bezier(.2,1.6,.4,1) both}
   #toast.ach::after{content:"";position:absolute;top:0;bottom:0;width:40%;
     background:linear-gradient(100deg,transparent,rgba(255,255,255,.85),transparent);
@@ -633,13 +652,15 @@
     0%{transform:translate(0,0) scale(1);opacity:.95}
     70%{opacity:.7}
     100%{transform:translate(var(--dx),var(--dy)) scale(.25);opacity:0}}
-  #board .sweep{position:absolute;inset:0;pointer-events:none;z-index:5;
+  /* 胜利扫光：把整块渐变放进子层做 transform（合成器完成），
+     不再逐帧改 background-position 触发整盘重绘；起止位置与原版一致 */
+  #board .sweep{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:hidden;
+    animation:sweepFade .8s ease-out both}
+  #board .sweep::before{content:"";position:absolute;left:0;top:0;width:220%;height:100%;
     background:linear-gradient(105deg,transparent 38%,rgba(255,214,150,.42) 50%,transparent 62%);
-    background-size:220% 100%;animation:sweep .8s ease-out both}
-  @keyframes sweep{
-    0%{opacity:0;background-position:180% 0}
-    22%{opacity:1}
-    100%{opacity:0;background-position:-90% 0}}
+    animation:sweepSlide .8s ease-out both}
+  @keyframes sweepSlide{0%{transform:translateX(-98.2%)}100%{transform:translateX(49.1%)}}
+  @keyframes sweepFade{0%{opacity:0}22%{opacity:1}100%{opacity:0}}
   /* ---------- P0 手感动效 ---------- */
   /* 长按封条进度环 */
   @property --lp{syntax:'<number>';inherits:false;initial-value:0}
@@ -755,23 +776,23 @@
         <h1 id="brandTitle">月巴大扫除</h1>
       </div>
       <div class="hbtns">
-        <button class="iconbtn" id="btnAch" data-i18n-title="btnAch" aria-label="achievements">🏆<b id="achCount">0/8</b></button>
-        <button class="iconbtn" id="btnBoard" data-i18n-title="boardBtn" aria-label="leaderboard">🥇</button>
-        <button class="iconbtn" id="btnMute" data-i18n-title="btnMute" aria-label="sound">🔊</button>
+        <button class="iconbtn" id="btnAch" data-i18n-title="btnAch" aria-label="achievements"><span class="ico only" data-ico="trophy"></span><b id="achCount">0/8</b></button>
+        <button class="iconbtn" id="btnBoard" data-i18n-title="boardBtn" aria-label="leaderboard"><span class="ico only" data-ico="medal"></span></button>
+        <button class="iconbtn" id="btnMute" data-i18n-title="btnMute" aria-label="sound"><span class="ico only" data-ico="sound"></span></button>
       </div>
     </div>
     <div class="hud">
       <div class="chip"><i data-i18n="hudBugs">剩余小偷</i><b id="hudBugs">—</b></div>
       <div class="chip"><i data-i18n="hudTime">用时</i><b id="hudTime">00:00</b></div>
       <button class="chip hint" id="btnHint" data-i18n-title="hintTitle" aria-label="knock"><i data-i18n="hudHints">敲一敲</i><b id="hudHints">3</b></button>
-      <button class="chip pause" id="btnPause" data-i18n-title="hudPause" aria-label="pause">⏸</button>
+      <button class="chip pause" id="btnPause" data-i18n-title="hudPause" aria-label="pause"><span class="ico only" data-ico="pause"></span></button>
     </div>
   </header>
 
   <main class="main" id="menuView">
     <section class="hero rise" style="--i:0">
       <div class="heroTop">
-        <div class="heroIco">🧹</div>
+        <div class="heroIco"><span class="ico only" data-ico="broom"></span></div>
         <div style="min-width:0">
           <div class="heroTag" id="heroTag">WEEKEND DEEP CLEAN</div>
           <div class="heroSub" id="heroSub">周末大扫除</div>
@@ -790,7 +811,7 @@
     <section class="diffs" id="diffList"></section>
 
     <button class="daily rise" id="btnDaily" style="--i:4">
-      <span class="dico">🍅</span>
+      <span class="dico"><span class="ico only" data-ico="tomato"></span></span>
       <span class="dmain">
         <span class="dname" data-i18n="daily">今日大扫除</span>
         <span class="dsub" data-i18n="dailySub">同一天固定棋盘 · 每日挑战</span>
@@ -804,11 +825,11 @@
 
     <section class="rules rise" style="--i:5">
       <div class="rtitle" data-i18n="rules">清扫守则</div>
-      <div class="rule"><i>📦</i><span data-i18n="rule1"></span></div>
-      <div class="rule"><i>🩹</i><span data-i18n="rule2"></span></div>
-      <div class="rule"><i>🍅</i><span data-i18n="rule3"></span></div>
-      <div class="rule"><i>✊</i><span data-i18n="rule4"></span></div>
-      <div class="rule"><i>🪙</i><span data-i18n="rule5"></span></div>
+      <div class="rule"><i class="ico only" data-ico="box"></i><span data-i18n="rule1"></span></div>
+      <div class="rule"><i class="ico only" data-ico="tape"></i><span data-i18n="rule2"></span></div>
+      <div class="rule"><i class="ico only" data-ico="tomato"></i><span data-i18n="rule3"></span></div>
+      <div class="rule"><i class="ico only" data-ico="fist"></i><span data-i18n="rule4"></span></div>
+      <div class="rule"><i class="ico only" data-ico="coin"></i><span data-i18n="rule5"></span></div>
     </section>
   </main>
 
@@ -816,9 +837,9 @@
     <div class="gbar">
       <button class="gbtn" id="gameBack" data-i18n="back">← 返回</button>
       <div class="ginfo" id="gameInfo"></div>
-      <button class="gbtn mode" id="btnMode" data-i18n-title="modeTitle" aria-label="mode"><span id="modeIco">🧹</span><span id="modeTxt">翻</span></button>
+      <button class="gbtn mode" id="btnMode" data-i18n-title="modeTitle" aria-label="mode"><span id="modeIco" class="ico only" data-ico="broom"></span><span id="modeTxt">翻</span></button>
       <button class="gbtn" id="gameRestart" data-i18n="restart">↻ 重开</button>
-      <button class="gbtn" id="btnFull" data-i18n-title="fullTitle" aria-label="fullscreen">⛶</button>
+      <button class="gbtn" id="btnFull" data-i18n-title="fullTitle" aria-label="fullscreen"><span id="fullIco" class="ico only" data-ico="expand"></span></button>
     </div>
     <div id="boardWrap"><div id="board"></div></div>
     <div class="ghint" id="gameHint"></div>
@@ -832,7 +853,7 @@
         <div class="achKicker">LOCAL RECORDS</div>
         <div class="achTitle"><span data-i18n="achTitle">本地成就</span><b id="achTopCount">0/8</b></div>
       </div>
-      <button id="achClose" data-i18n-title="achClose" aria-label="close">✕</button>
+      <button id="achClose" data-i18n-title="achClose" aria-label="close"><span class="ico only" data-ico="close"></span></button>
     </div>
     <div class="achList" id="achList"></div>
   </div>
@@ -874,7 +895,7 @@
         <div class="achTitle"><span data-i18n="boardTitle">排行榜</span></div>
       </div>
       <button id="boardRename" data-i18n="boardRename">改名</button>
-      <button id="boardClose" data-i18n-title="boardClose" aria-label="close">✕</button>
+      <button id="boardClose" data-i18n-title="boardClose" aria-label="close"><span class="ico only" data-ico="close"></span></button>
     </div>
     <div class="bTabs" id="bTabs"></div>
     <div class="bList" id="bList"></div>
@@ -896,6 +917,7 @@
 
 <div id="toast"></div>
 
+<script src="moon-icons.js"></script>
 <script>
 (function(){
 'use strict';
@@ -1126,14 +1148,21 @@ function t(k,v){
   return s;
 }
 
+/* ================= 图标 =================
+   所有 16×16 手绘 SVG 统一收在根目录 moon-icons.js 的 warm 主题
+   （墨褐 / 米白 / 焦糖 / 番茄红 / 苔绿，与本页 UI 同色）。 */
+function mico(n){ return MoonIcons.icon(n,'only','warm'); }
+function miSvg(n){ return MoonIcons.svg(n,'warm'); }
+function paintMI(root){ MoonIcons.paintIcons(root||document,'warm'); }
+
 /* ================= 难度配置 ================= */
 const DIFFS=[
-  {id:'easy',   icon:'🧹', name:'diffEasy',   rows:9,  cols:9,  mines:10, std:90},
-  {id:'normal', icon:'🪣', name:'diffNormal', rows:16, cols:16, mines:40, std:210},
-  {id:'hard',   icon:'🗄️', name:'diffHard',   rows:16, cols:30, mines:99, std:420}
+  {id:'easy',   icon:'broom',   name:'diffEasy',   rows:9,  cols:9,  mines:10, std:90},
+  {id:'normal', icon:'bucket',  name:'diffNormal', rows:16, cols:16, mines:40, std:210},
+  {id:'hard',   icon:'cabinet', name:'diffHard',   rows:16, cols:30, mines:99, std:420}
 ];
 /* 每日大扫除：固定 9×9 / 10，按本地日期做种子，当天同盘 */
-const DAILY_CFG={id:'daily', icon:'🍅', name:'daily', rows:9, cols:9, mines:10, std:90};
+const DAILY_CFG={id:'daily', icon:'tomato', name:'daily', rows:9, cols:9, mines:10, std:90};
 /* ================= 偷番茄的月巴 ================= */
 /* 立绘池：主游戏图鉴中所有带外链立绘的月巴（双休月巴是本作主持，不参与偷番茄）。
    布雷时每只小偷随机分到一位月巴，翻开或失败时显示它的立绘。 */
@@ -1416,8 +1445,11 @@ function winSweep(){
 /* 一次性触发 CSS 动画：移除 → 回流 → 重新添加，结束自动清理 */
 function retrig(el,cls,ms){
   if(!el||!el.classList||typeof el.classList.add!=='function') return;
+  /* 只有类还在（需要强制重启动画）时才读 offsetWidth 触发布局；
+     计时器每秒的脉冲类此时早已被移除，不必再强迫整页同步回流 */
+  const live=el.classList.contains(cls);
   el.classList.remove(cls);
-  void (el.offsetWidth||0);
+  if(live) void (el.offsetWidth||0);
   el.classList.add(cls);
   setTimeout(function(){ if(el.classList) el.classList.remove(cls); },ms||300);
 }
@@ -1672,7 +1704,7 @@ function renderDiffs(){
     const best=st.bestMs>0?fmtMs(st.bestMs):t('noBest');
     const dm=desiredRot(cfg)?{rows:cfg.cols,cols:cfg.rows}:{rows:cfg.rows,cols:cfg.cols};
     out+='<button class="diff '+cfg.id+' rise" style="--i:'+(2+i)+'" data-diff="'+cfg.id+'">'
-      +'<span class="dico">'+cfg.icon+'</span>'
+      +'<span class="dico">'+mico(cfg.icon)+'</span>'
       +'<span class="dmain">'
         +'<span class="dname">'+esc(t(cfg.name))+'</span>'
         +'<span class="dmeta">'+esc(t('diffMeta',{r:dm.rows,c:dm.cols,m:cfg.mines}))+'</span>'
@@ -1697,7 +1729,7 @@ function renderDaily(){
   if(btn.setAttribute) btn.setAttribute('aria-disabled',done?'true':'false');
   btn.classList.toggle('done',done);
   const ico=btn.querySelector?btn.querySelector('.dico'):null;
-  if(ico) ico.textContent=done?'🔒':'🍅';
+  if(ico) ico.innerHTML=mico(done?'lock':'tomato');
   if(done){
     $('dailyState').textContent=t('dailyDone');
     $('dailyState').style.color='';
@@ -1732,12 +1764,12 @@ function renderAch(){
   for(let i=0;i<ACH_LIST.length;i++){
     const id=ACH_LIST[i],got=!!(S.ach&&S.ach[id]),d=achData(id);
     out+='<div class="achrow '+(got?'on':'locked')+'" style="--i:'+i+'">'
-      +'<span class="aico">'+(got?'✅':'🔒')+'</span>'
+      +'<span class="aico">'+mico(got?'check':'lock')+'</span>'
       +'<span class="abody">'
         +'<span class="aname">'+esc(d[0])+'</span>'
         +'<span class="adesc">'+esc(d[1])+'</span>'
       +'</span>'
-      +'<span class="alock">'+(got?'':'🔒')+'</span>'
+      +'<span class="alock">'+(got?'':mico('lock'))+'</span>'
     +'</div>';
   }
   $('achList').innerHTML=out;
@@ -1745,12 +1777,13 @@ function renderAch(){
 
 function refreshMute(){
   const b=$('btnMute');
-  b.textContent=S.muted?'🔇':'🔊';
+  b.innerHTML=mico(S.muted?'mute':'sound');
   b.classList.toggle('on',!S.muted);
 }
 
 function renderAll(){
   applyStatic();
+  paintMI();
   setMode(G.mode);
   renderDiffs();
   renderDaily();
@@ -2029,7 +2062,7 @@ function setMode(m){
   G.mode=m==='seal'?'seal':'open';
   const b=$('btnMode');
   b.classList.toggle('seal',G.mode==='seal');
-  $('modeIco').textContent=G.mode==='seal'?'🩹':'🧹';
+  $('modeIco').innerHTML=miSvg(G.mode==='seal'?'tape':'broom');
   $('modeTxt').textContent=t(G.mode==='seal'?'modeSeal':'modeOpen');
   if(was!==G.mode&&!fxOff()) retrig($('modeIco'),'fx-flip',300);
   /* 贴封条模式：棋盘描一圈暗红细边，提示点击会封格 */
@@ -2117,7 +2150,8 @@ function updateHud(){
     bugsEl.textContent=bugs;
   }
   hudBugsPrev=bugs;
-  $('hudTime').textContent=fmtMs(G.elapsed);
+  const timeEl=$('hudTime'), timeTxt=fmtMs(G.elapsed);
+  if(timeEl&&timeEl.textContent!==timeTxt) timeEl.textContent=timeTxt;
   const hints=String(G.hintsLeft);
   const hintsEl=$('hudHints');
   if(hintsEl&&hintsEl.textContent!==hints){
@@ -2363,7 +2397,7 @@ function addLoot(i){
   if(typeof el.querySelector==='function'&&el.querySelector('.loot')) return;
   const t=document.createElement('i');
   t.className='loot';
-  t.textContent='🍅';
+  t.innerHTML=miSvg('tomato');
   el.appendChild(t);
 }
 
@@ -2799,8 +2833,8 @@ function moveHudChips(toBar){
 }
 function setFsplay(on){
   document.body.classList.toggle('fsplay',on);
-  const bf=$('btnFull');
-  if(bf) bf.textContent=on?'⤡':'⛶';
+  const bf=$('fullIco');
+  if(bf) bf.innerHTML=miSvg(on?'shrink':'expand');
   moveHudChips(on);
   /* 布局变化后棋盘按新可用空间重算（fitBoard 自适应宽高，fitCellFont 跟着放大字号）；
      浏览器全屏真正生效时的 resize 事件也会再触发一次重算 */
