@@ -24,7 +24,12 @@
      // 图标自带基础样式（.ico / .ico.only），如需自己控制可先设：
      // window.MOON_ICONS_NO_STYLE = true;
 
-   可用名字见 MoonIcons.names（浅色）与 MoonIcons.warmNames（暖棕）。
+    // 月巴数织等冷调 UI 用第三套主题（靛蓝 / 冰蓝 / 薰衣草 / 赭金），线条随 currentColor 变色：
+     MoonIcons.icon('star','only','cool');
+     MoonIcons.paintIcons(root,'cool');
+     MoonIcons.svg('sparkle','cool');
+
+     可用名字见 MoonIcons.names（浅色）、MoonIcons.warmNames（暖棕）与 MoonIcons.coolNames（冷调）。
    ============================================================ */
 (function(g){
   var INK='#5b5343', PANEL='#fffdf5', ACC='#3e8e7e', ACC2='#6fb7a8', WOOD='#c9a06a',
@@ -214,19 +219,77 @@
     check:S('<path d="M3.2 8.4l3.4 3.4 6.2-7" fill="none" stroke="'+WGREEN+'" stroke-width="2" stroke-linecap="square"/>')
   };
 
-  /* 生成 <i class="ico">…</i>；cls 传 'only' 时不带右侧间距；theme 传 'warm' 用暖棕主题 */
+  /* ---------- 冷调主题：月巴数织（靛蓝 / 薰衣草 / 冰蓝 / 赭金） ----------
+     这套线条图标统一用 currentColor 描边，颜色跟随所在元素
+     （--ink / --acc / --ice / --pink / --gold），换模式自动变色。 */
+  var COOL_ICONS={
+    /* 四角星：成就 / 提示 */
+    sparkle:S('<path d="M8 1.5l1.5 4.9 4.9 1.6-4.9 1.6-1.5 4.9-1.5-4.9-4.9-1.6 4.9-1.6z" fill="currentColor"/>'),
+    /* 设置：三条滑杆 */
+    gear:S('<rect x="2" y="3.4" width="2.2" height="1.3" fill="currentColor"/>'+
+      '<rect x="8.2" y="3.4" width="5.8" height="1.3" fill="currentColor"/>'+
+      '<rect x="2" y="7.35" width="7.4" height="1.3" fill="currentColor"/>'+
+      '<rect x="13" y="7.35" width="1" height="1.3" fill="currentColor"/>'+
+      '<rect x="2" y="11.3" width="4.2" height="1.3" fill="currentColor"/>'+
+      '<rect x="10.4" y="11.3" width="3.6" height="1.3" fill="currentColor"/>'+
+      '<circle cx="6.2" cy="4.05" r="1.8" fill="none" stroke="currentColor" stroke-width="1.4"/>'+
+      '<circle cx="11.2" cy="8" r="1.8" fill="none" stroke="currentColor" stroke-width="1.4"/>'+
+      '<circle cx="8.3" cy="11.95" r="1.8" fill="none" stroke="currentColor" stroke-width="1.4"/>'),
+    /* 锁 / 开锁 */
+    lock:S('<rect x="3.5" y="7" width="9" height="6.4" rx=".6" fill="none" stroke="currentColor" stroke-width="1.5"/>'+
+      '<path d="M5.6 7V5.2a2.4 2.4 0 0 1 4.8 0V7" fill="none" stroke="currentColor" stroke-width="1.5"/>'+
+      '<rect x="7.2" y="9.3" width="1.6" height="2.4" fill="currentColor"/>'),
+    unlock:S('<rect x="3.5" y="7" width="9" height="6.4" rx=".6" fill="none" stroke="currentColor" stroke-width="1.5"/>'+
+      '<path d="M10.4 7V5.2a2.4 2.4 0 0 0-4.8 0" fill="none" stroke="currentColor" stroke-width="1.5"/>'+
+      '<rect x="7.2" y="9.3" width="1.6" height="2.4" fill="currentColor"/>'),
+    /* 骰子：随机一题 */
+    dice:S('<rect x="2.5" y="2.5" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5"/>'+
+      '<circle cx="5.4" cy="5.4" r="1.15" fill="currentColor"/>'+
+      '<circle cx="10.6" cy="5.4" r="1.15" fill="currentColor"/>'+
+      '<circle cx="8" cy="8" r="1.15" fill="currentColor"/>'+
+      '<circle cx="5.4" cy="10.6" r="1.15" fill="currentColor"/>'+
+      '<circle cx="10.6" cy="10.6" r="1.15" fill="currentColor"/>'),
+    /* 暂停 */
+    pause:S('<rect x="4.3" y="3.2" width="2.6" height="9.6" fill="currentColor"/>'+
+      '<rect x="9.1" y="3.2" width="2.6" height="9.6" fill="currentColor"/>'),
+    /* 铅笔：说明 / 备注 */
+    pencil:S('<path d="M2.6 13.4l1.1-3.5 7.7-7.7 2.4 2.4-7.7 7.7z" fill="none" stroke="currentColor" stroke-width="1.4"/>'+
+      '<path d="M9.6 3.9l1.1-1.1a1.1 1.1 0 0 1 1.6 1.6l-1.1 1.1" fill="none" stroke="currentColor" stroke-width="1.4"/>'+
+      '<path d="M2.6 13.4l3.4-.9" stroke="currentColor" stroke-width="1.1" opacity=".65"/>'),
+    /* 涂黑 / 打叉 / 待选 */
+    fill:S('<rect x="3.2" y="3.2" width="9.6" height="9.6" fill="currentColor"/>'),
+    cross:S('<path d="M3.4 3.4L12.6 12.6M12.6 3.4L3.4 12.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square"/>'),
+    tent:S('<path d="M2.8 2.8h10.4v10.4H2.8z" fill="none" stroke="currentColor" stroke-width="1.5"/>'+
+      '<path d="M13.2 2.8v10H2.8z" fill="currentColor" opacity=".3"/>'),
+    /* 撤销 / 清空 */
+    undo:S('<path d="M4.4 4.5h5.4a3.5 3.5 0 0 1 0 7H6" fill="none" stroke="currentColor" stroke-width="1.5"/>'+
+      '<path d="M6.9 2.1L4.3 4.5l2.6 2.4" fill="none" stroke="currentColor" stroke-width="1.5"/>'),
+    erase:S('<path d="M5.4 3.2h7.8v9.6H5.4l-3.2-4.8z" fill="none" stroke="currentColor" stroke-width="1.5"/>'+
+      '<path d="M8.2 6.2l3.4 3.4M11.6 6.2l-3.4 3.4" fill="none" stroke="currentColor" stroke-width="1.2"/>'),
+    /* 星 / 降难度 */
+    star:S('<path d="M8 1.8l1.9 3.8 4.3.6-3.1 3-1.3 4.3-3.8-2.1-3.8 2.1-1.3-4.3 3.1-3 4.3-.6z" fill="currentColor"/>'),
+    down:S('<path d="M8 2.4v11" fill="none" stroke="currentColor" stroke-width="1.5"/>'+
+      '<path d="M3.7 9.3L8 13.6l4.3-4.3" fill="none" stroke="currentColor" stroke-width="1.5"/>'),
+    /* 关闭 / 返回 */
+    close:S('<path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square"/>'),
+    back:S('<path d="M13 8H3.6M7.8 3.8L3.6 8l4.2 4.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square"/>')
+  };
+
+  /* 生成 <i class="ico">…</i>；cls 传 'only' 时不带右侧间距；theme 传 'warm' / 'cool' 切换主题 */
   function icon(name,cls,theme){
-    var set=theme==='warm'?WARM_ICONS:ICONS;
+    var set=themeOf(theme);
     return '<i class="ico'+(cls?' '+cls:'')+'">'+(set[name]||'')+'</i>';
   }
   /* 只要裸 SVG（用于容器内部直接塞图形） */
   function svg(name,theme){
-    var set=theme==='warm'?WARM_ICONS:ICONS;
-    return set[name]||'';
+    return themeOf(theme)[name]||'';
+  }
+  function themeOf(theme){
+    return theme==='warm'?WARM_ICONS:(theme==='cool'?COOL_ICONS:ICONS);
   }
   /* 给静态骨架里的 [data-ico] 填图标：只换图形，不碰文字，切语言后仍保留 */
   function paintIcons(root,theme){
-    var set=theme==='warm'?WARM_ICONS:ICONS;
+    var set=themeOf(theme);
     var nodes=(root||document).querySelectorAll('[data-ico]'), i, el, n;
     for(i=0;i<nodes.length;i++){
       el=nodes[i]; n=el.getAttribute('data-ico');
@@ -252,12 +315,14 @@
   var api={
     ICONS:ICONS,
     warm:WARM_ICONS,
+    cool:COOL_ICONS,
     icon:icon,
     svg:svg,
     paintIcons:paintIcons,
     css:CSS,
     names:Object.keys(ICONS),
-    warmNames:Object.keys(WARM_ICONS)
+    warmNames:Object.keys(WARM_ICONS),
+    coolNames:Object.keys(COOL_ICONS)
   };
   g.MoonIcons=api;
 })(window);

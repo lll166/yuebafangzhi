@@ -86,6 +86,17 @@ header#top{
 .stat i{display:block;font-style:normal;font-size:8.5px;font-weight:700;letter-spacing:.16em;color:var(--mut)}
 .stat b{display:block;font-size:18px;font-weight:800;margin-top:3px;font-variant-numeric:tabular-nums;letter-spacing:.01em}
 .stat b em{font-style:normal;font-size:10px;color:var(--mut);font-weight:400}
+/* 手绘图标：统一由 moon-icons.js 的 cool 主题提供，线条随 currentColor 变色 */
+.ico.sstar{width:10px;height:10px;vertical-align:-1px;margin-right:0;color:var(--mut)}
+.topstat .ico{width:9px;height:9px;vertical-align:0;margin:0 0 0 2px;color:var(--paper)}
+.iconbtn .ico{width:15px;height:15px;vertical-align:0;margin-right:0}
+.tab .ico{width:13px;height:13px;vertical-align:-2px;margin-right:4px}
+.backbtn .ico{width:12px;height:12px;vertical-align:-2px;margin-right:5px}
+.notice .ni .ico{width:13px;height:13px;vertical-align:0;margin-right:0}
+.rstars .ico{width:18px;height:18px;vertical-align:0;margin-right:0}
+#achbar .ab .ico{width:15px;height:15px;vertical-align:0;margin-right:0}
+.achrow .ai .ico{width:15px;height:15px;vertical-align:0;margin-right:0}
+.wq .ico{width:1em;height:1em;vertical-align:0;margin-right:0}
 .notice{
   display:flex;gap:9px;align-items:flex-start;padding:9px 12px 9px 13px;margin-bottom:12px;
   border:1px solid var(--line);border-left:2px solid rgba(160,143,194,.72);border-radius:0;
@@ -258,7 +269,11 @@ header#top{
 .bad .num{color:var(--acc);text-shadow:0 0 7px rgba(99,108,158,.35)}
 .cleft.fx-done .num,.ctop.fx-done .num{animation:clueNum .2s var(--ease-out) both;animation-delay:calc(var(--i,0) * 22ms)}
 @keyframes clueNum{0%{transform:translateY(0) scale(1);opacity:1}45%{transform:translateY(-2px) scale(1.08);opacity:.9}100%{transform:translateY(0) scale(.92);opacity:.55}}
-.cleft.fx-done::after,.ctop.fx-done::after{content:"✓";position:absolute;font-size:9px;line-height:1;color:rgba(99,108,158,.75);opacity:0;animation:clueCheck .26s ease-out .1s both}
+.cleft.fx-done::after,.ctop.fx-done::after{content:"";position:absolute;width:9px;height:9px;
+  background:rgba(99,108,158,.75);
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.2 8.2l3.6 3.6 6-7' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.2 8.2l3.6 3.6 6-7' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat;
+  opacity:0;animation:clueCheck .26s ease-out .1s both}
 .cleft.fx-done::after{left:2px;top:calc(50% - 5px)}
 .ctop.fx-done::after{left:calc(50% - 4px);top:1px}
 @keyframes clueCheck{0%{opacity:0}60%{opacity:.9}100%{opacity:.55}}
@@ -284,9 +299,15 @@ header#top{
   box-shadow:var(--sh),inset 0 0 0 1px rgba(160,143,194,.4);
 }
 .cell.tent::after{content:"";position:absolute;inset:2px;border:1px dashed rgba(99,108,158,.38);pointer-events:none}
-.cell.cross::before{content:"✕";font-size:calc(var(--cell) * .48);color:rgba(38,42,58,.38);line-height:1}
-.cell.fill.cross::before{content:none}
-.cell.hm::after{content:"✦";position:absolute;right:1px;top:-1px;font-size:calc(var(--cell) * .4);color:rgba(255,255,255,.85);text-shadow:0 0 3px rgba(0,0,0,.6)}
+.cell.cross::before{content:"";width:calc(var(--cell) * .5);height:calc(var(--cell) * .5);
+  background:rgba(38,42,58,.38);
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.4 3.4L12.6 12.6M12.6 3.4L3.4 12.6' stroke='%23000' stroke-width='2' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.4 3.4L12.6 12.6M12.6 3.4L3.4 12.6' stroke='%23000' stroke-width='2' stroke-linecap='square'/%3E%3C/svg%3E") center/contain no-repeat}
+.cell.fill.cross::before{display:none}
+.cell.hm::after{content:"";position:absolute;right:1px;top:-1px;width:calc(var(--cell) * .4);height:calc(var(--cell) * .4);
+  background:rgba(255,255,255,.88);filter:drop-shadow(0 0 2px rgba(0,0,0,.6));
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 1.5l1.5 4.9 4.9 1.6-4.9 1.6-1.5 4.9-1.5-4.9-4.9-1.6 4.9-1.6z' fill='%23000'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 1.5l1.5 4.9 4.9 1.6-4.9 1.6-1.5 4.9-1.5-4.9-4.9-1.6 4.9-1.6z' fill='%23000'/%3E%3C/svg%3E") center/contain no-repeat}
 /* 点提示后标出的填错格：红色描边呼吸 */
 .cell.wbad::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:2;box-shadow:inset 0 0 0 2px rgba(214,73,63,.95);animation:wbadPulse 1.15s ease-in-out infinite}
 @keyframes wbadPulse{0%,100%{opacity:.95}50%{opacity:.38}}
@@ -316,15 +337,15 @@ body.low-power .cell.wbad::after{animation:none}
   background:linear-gradient(180deg,rgba(255,255,255,.78),rgba(234,238,248,.82));
   clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);
 }
-.tool b{font-size:15px;font-weight:800;color:var(--paper);line-height:1}
+.tool .ico{width:16px;height:16px;vertical-align:0;margin-right:0;color:var(--paper)}
 .tool.fillmode.on{background:linear-gradient(180deg,rgba(99,108,158,.16),rgba(99,108,158,.06));border-color:rgba(99,108,158,.6);border-left-color:var(--acc);box-shadow:inset 0 0 16px rgba(99,108,158,.12)}
 .tool.crossmode.on{background:linear-gradient(180deg,rgba(127,158,201,.2),rgba(127,158,201,.08));border-color:rgba(127,158,201,.62);border-left-color:var(--ice);box-shadow:inset 0 0 16px rgba(127,158,201,.14)}
 .tool.tentmode.on{background:linear-gradient(180deg,rgba(160,143,194,.2),rgba(160,143,194,.08));border-color:rgba(160,143,194,.62);border-left-color:var(--pink);box-shadow:inset 0 0 16px rgba(160,143,194,.14)}
-.tool.fillmode.on b{color:var(--acc)}
-.tool.crossmode.on b{color:var(--ice)}
-.tool.tentmode.on b{color:var(--pink)}
+.tool.fillmode.on .ico{color:var(--acc)}
+.tool.crossmode.on .ico{color:var(--ice)}
+.tool.tentmode.on .ico{color:var(--pink)}
 .tool.easymode.on{background:linear-gradient(180deg,rgba(127,158,201,.2),rgba(127,158,201,.08));border-color:rgba(127,158,201,.62);border-left-color:var(--ice);box-shadow:inset 0 0 16px rgba(127,158,201,.14)}
-.tool.easymode.on b{color:var(--ice)}
+.tool.easymode.on .ico{color:var(--ice)}
 .tool:active{transform:scale(.95)}
 .tool .cnt{position:absolute;transform:translate(14px,-11px);font-size:8px;color:var(--acc);font-weight:800}
 /* ---------- 遮罩 / 面板 ---------- */
@@ -703,31 +724,31 @@ body.low-power .rvcap{animation-duration:.01s}
     <div class="brand"><span id="brandT">月巴数织</span><small>NONOGRAM · RESCUE</small></div>
     <div class="topstat" id="topstat"></div>
     <button class="iconbtn" id="btnHelp" title="玩法说明">?</button>
-    <button class="iconbtn" id="btnAch" title="成就">✦</button>
-    <button class="iconbtn" id="btnSet" title="设置">⚙</button>
+    <button class="iconbtn" id="btnAch" title="成就"><span class="ico only" data-ico="sparkle"></span></button>
+    <button class="iconbtn" id="btnSet" title="设置"><span class="ico only" data-ico="gear"></span></button>
   </header>
 
   <section class="scroll" id="viewCatalog">
     <div class="statgrid">
       <div class="stat"><i id="stL1">已解救</i><b id="stSolved">0<em>/155</em></b></div>
-      <div class="stat"><i id="stL2">收集星数</i><b id="stStars">0<em>★</em></b></div>
+      <div class="stat"><i id="stL2">收集星数</i><b id="stStars">0<span class="ico only sstar" data-ico="star"></span></b></div>
       <div class="stat"><i id="stL3">累计用时</i><b id="stTime">0:00</b></div>
     </div>
     <div class="tabs" id="tabs">
       <button class="tab on" data-tab="random" id="tabRandom">随机</button>
       <button class="tab" data-tab="codex" id="tabCodex">图鉴</button>
-      <button class="tab" data-tab="pure" id="tabPure">🔓 无图</button>
+      <button class="tab" data-tab="pure" id="tabPure"><span class="ico only" data-ico="unlock"></span><span id="tabPureT">无图</span></button>
     </div>
     <div id="paneRandom">
       <div class="hero" id="hero"></div>
     </div>
     <div id="paneCodex" class="off">
-      <div class="notice"><span class="ni">✎</span><span id="noticeT"></span></div>
+      <div class="notice"><span class="ni"><span class="ico only" data-ico="pencil"></span></span><span id="noticeT"></span></div>
       <div class="chips" id="chips"></div>
       <div id="catalog"></div>
     </div>
     <div id="panePure" class="off">
-      <div class="notice"><span class="ni">🔓</span><span id="pureIntroT"></span></div>
+      <div class="notice"><span class="ni"><span class="ico only" data-ico="unlock"></span></span><span id="pureIntroT"></span></div>
       <div class="tabs sub" id="pureTabs">
         <button class="tab on" data-sub="normal" id="subTabNormal">普通数织</button>
         <button class="tab" data-sub="mega" id="subTabMega">超级数织</button>
@@ -747,9 +768,9 @@ body.low-power .rvcap{animation-duration:.01s}
 
   <section id="viewPuzzle">
     <div class="pbar">
-      <button class="backbtn" id="btnBack">← 目录</button>
+      <button class="backbtn" id="btnBack"><span class="ico only" data-ico="back"></span><span id="backT">目录</span></button>
       <div class="ptitle" id="pTitle"></div>
-      <button class="iconbtn" id="btnPause" title="暂停">⏸</button>
+      <button class="iconbtn" id="btnPause" title="暂停"><span class="ico only" data-ico="pause"></span></button>
     </div>
     <div class="pinfo">
       <span id="pTime">00:00</span>
@@ -765,13 +786,13 @@ body.low-power .rvcap{animation-duration:.01s}
       </div>
     </div>
     <div class="toolbar">
-      <button class="tool fillmode on" id="modeFill"><b>■</b><span id="lblFill">涂黑</span></button>
-      <button class="tool crossmode" id="modeCross"><b>✕</b><span id="lblCross">打叉</span></button>
-      <button class="tool tentmode" id="modeTent"><b>▨</b><span id="lblTent">待选</span></button>
-      <button class="tool" id="btnUndo"><b>↶</b><span id="lblUndo">撤销</span></button>
-      <button class="tool" id="btnClear"><b>⌫</b><span id="lblClear">清空</span></button>
-      <button class="tool" id="btnHint"><b>✦</b><span id="lblHint">提示</span></button>
-      <button class="tool easymode" id="btnEasy"><b>↓</b><span id="lblEasy">降难度</span></button>
+      <button class="tool fillmode on" id="modeFill"><span class="ico only" data-ico="fill"></span><span id="lblFill">涂黑</span></button>
+      <button class="tool crossmode" id="modeCross"><span class="ico only" data-ico="cross"></span><span id="lblCross">打叉</span></button>
+      <button class="tool tentmode" id="modeTent"><span class="ico only" data-ico="tent"></span><span id="lblTent">待选</span></button>
+      <button class="tool" id="btnUndo"><span class="ico only" data-ico="undo"></span><span id="lblUndo">撤销</span></button>
+      <button class="tool" id="btnClear"><span class="ico only" data-ico="erase"></span><span id="lblClear">清空</span></button>
+      <button class="tool" id="btnHint"><span class="ico only" data-ico="sparkle"></span><span id="lblHint">提示</span></button>
+      <button class="tool easymode" id="btnEasy"><span class="ico only" data-ico="down"></span><span id="lblEasy">降难度</span></button>
       <i id="brushBar" aria-hidden="true"></i>
     </div>
   </section>
@@ -786,13 +807,13 @@ body.low-power .rvcap{animation-duration:.01s}
   <button class="pb sec" id="pauseBack">返回目录</button>
 </div></div>
 <div class="overlay" id="ach"><div class="sheet">
-  <button class="iconbtn x" id="achClose">✕</button>
+  <button class="iconbtn x" id="achClose"><span class="ico only" data-ico="close"></span></button>
   <h3 id="achTitle">本地成就</h3>
   <div class="sub" id="achSub"></div>
   <div id="achList"></div>
 </div></div>
 <div class="overlay" id="set"><div class="sheet">
-  <button class="iconbtn x" id="setClose">✕</button>
+  <button class="iconbtn x" id="setClose"><span class="ico only" data-ico="close"></span></button>
   <h3 id="setTitle">设置</h3>
   <div class="sub" id="setSub"></div>
   <div class="row"><div class="rt" id="setSoundT">音效</div><button class="sw on" id="setSound"></button></div>
@@ -801,14 +822,15 @@ body.low-power .rvcap{animation-duration:.01s}
   <div class="row"><div class="rt" id="setDataT">题池</div><span class="ap" id="setDataV"></span></div>
 </div></div>
 <div class="overlay" id="help"><div class="sheet">
-  <button class="iconbtn x" id="helpClose">✕</button>
+  <button class="iconbtn x" id="helpClose"><span class="ico only" data-ico="close"></span></button>
   <h3 id="helpTitle">玩法说明</h3>
   <div class="sub" id="helpSub"></div>
   <div id="helpList"></div>
 </div></div>
 <div id="toast"></div>
-<div id="achbar"><span class="ab">✦</span><div><b id="achbarT"></b><small id="achbarS"></small></div></div>
+<div id="achbar"><span class="ab"><span class="ico only" data-ico="sparkle"></span></span><div><b id="achbarT"></b><small id="achbarS"></small></div></div>
 <div class="fx" id="fx"></div>
+<script src="moon-icons.js"></script>
 
 <!-- ===== 题目数据（由 tools/nonogram/gen.py 生成） ===== -->
 <script>
@@ -845,10 +867,10 @@ const I18N={
     fill:'涂黑', cross:'打叉', tent:'待选', undo:'撤销', clear:'清空', hint:'提示', pause:'暂停',
     easy:'降难度', easyOn:'降难度：开（自动划叉、实时判错）', easyOff:'降难度：关（自己划叉，填满才判错）',
     fillWrong:'填满了，但和答案不一致，撤销几格检查一下',
-    paused:'已暂停', pauseSub:'计时已停止，棋盘会保留。', back:'← 名册', backCatalog:'返回名册',
+    paused:'已暂停', pauseSub:'计时已停止，棋盘会保留。', back:'名册', backCatalog:'返回名册',
     win:'解救成功', author:'画作者', rank:'稀有度', resultTime:'用时', resultMist:'失误', resultHint:'提示',
     next:'下一只待解救', close:'关闭',
-    hintNone:'当前没有可确定的格子，先试填一格', hintOut:'提示已用完', hintWrong:'✦ 发现 {n} 处填错了，红框标出的格子需要改', cleared:'已清空，可撤销',
+    hintNone:'当前没有可确定的格子，先试填一格', hintOut:'提示已用完', hintWrong:'发现 {n} 处填错了，红框标出的格子需要改', cleared:'已清空，可撤销',
     resumed:'已恢复上次进度，计时已暂停，点「继续」接着玩',
     ach:'本地成就', achSub:'共 {a}/{b} 项达成', achUnlocked:'已达成', achLocked:'未达成',
     set:'设置', setSub:'只影响本页面，不改动主游戏存档', sound:'音效', auto:'自动划叉',
@@ -873,8 +895,8 @@ const I18N={
     hw4:'一条线的数字全部满足时会变灰划线。开启「降难度」时，行/列不成立会标红并计一次失误；关闭后不实时判错，填满才检查。可随时撤销。',
     hw5:'「提示」按行列逻辑填入必然格，每个笼位 3 次，卡住时使用。',
     hw6:'所有行列线索满足即解救成功并揭晓立绘；只有图鉴已收集的月巴可以解救。',
-    pureTab:'🔓 无图', pureIntro:'这里虽然没有被关押的月巴，但可以练习一下开锁技巧。', pureBranch1:'普通数织',
-    pureSolved:'已开锁', pureProgress:'已开锁 {a}/{b}', pureRand:'🎲 随机一题', pureMeta:'无图数织', pureWin:'咔哒，锁开了',
+    pureTab:'无图', pureIntro:'这里虽然没有被关押的月巴，但可以练习一下开锁技巧。', pureBranch1:'普通数织',
+    pureSolved:'已开锁', pureProgress:'已开锁 {a}/{b}', pureRand:'随机一题', pureMeta:'无图数织', pureWin:'咔哒，锁开了',
     pureBranch2:'超级数织', megaMeta:'超级数织', megaWin:'咔哒，超级锁也开了',
     megaIntro:'超级数织：除普通的行列小线索外，还有黑底白字的「超级线索」（大数字）：横跨相邻两行（或两列），只数这一段连成一片的 N 格——单数同样有效，且两端至少各隔一整列（行）空白，与其它色块不相连。大数字与小数字分开计算：超级块自身的格子不再算进它所在两行的小线索（列小线索照常统计全部点亮格）。',
     megaV2Tip:'V2 规则：没有超级线索的相邻两行之间，不会出现上下相连的填色。',
@@ -892,10 +914,10 @@ const I18N={
     fill:'Fill', cross:'Cross', tent:'Mark', undo:'Undo', clear:'Clear', hint:'Hint', pause:'Pause',
     easy:'Easier', easyOn:'Easier: ON (auto-cross + live mistakes)', easyOff:'Easier: OFF (cross manually, errors only when full)',
     fillWrong:'Board is full but not correct — undo a few cells and check again',
-    paused:'Paused', pauseSub:'The timer is stopped. Your board is kept.', back:'← List', backCatalog:'Back to list',
+    paused:'Paused', pauseSub:'The timer is stopped. Your board is kept.', back:'List', backCatalog:'Back to list',
     win:'Rescue Complete', author:'Artist', rank:'Rarity', resultTime:'Time', resultMist:'Mistakes', resultHint:'Hints',
     next:'Next caged', close:'Close',
-    hintNone:'No certain cell right now. Try a guess first.', hintOut:'No hints left', hintWrong:'✦ {n} cell(s) are wrong — the red-outlined cells need fixing', cleared:'Cleared — undo available',
+    hintNone:'No certain cell right now. Try a guess first.', hintOut:'No hints left', hintWrong:'{n} cell(s) are wrong — the red-outlined cells need fixing', cleared:'Cleared — undo available',
     resumed:'Progress restored — timer paused. Tap Resume to continue.',
     ach:'Local Achievements', achSub:'{a}/{b} unlocked', achUnlocked:'Unlocked', achLocked:'Locked',
     set:'Settings', setSub:'Only affects this page; the main save is untouched', sound:'Sound', auto:'Auto-cross',
@@ -920,8 +942,8 @@ const I18N={
     hw4:'A line greys out when its clues are satisfied. With "Easier" on, an impossible line turns red and counts as a mistake; with it off, errors are only checked when the board is full. Undo any time.',
     hw5:'Hint fills logically certain cells, 3 per rescue. Use it when stuck.',
     hw6:'Satisfy every row and column clue to free the Banny and reveal the artwork. Only collected Bannies can be rescued.',
-    pureTab:'🔓 Plain', pureIntro:"No caged Bannies here — but it's a fine place to practise your lockpicking.", pureBranch1:'Standard',
-    pureSolved:'Unlocked', pureProgress:'Unlocked {a}/{b}', pureRand:'🎲 Random puzzle', pureMeta:'Plain nonogram', pureWin:'Click — unlocked',
+    pureTab:'Plain', pureIntro:"No caged Bannies here — but it's a fine place to practise your lockpicking.", pureBranch1:'Standard',
+    pureSolved:'Unlocked', pureProgress:'Unlocked {a}/{b}', pureRand:'Random puzzle', pureMeta:'Plain nonogram', pureWin:'Click — unlocked',
     pureBranch2:'Mega', megaMeta:'Mega nonogram', megaWin:'Click — mega unlocked',
     megaIntro:'Mega: besides the usual small row/column clues, dark badges are “super clues” (big numbers). A super clue spans two adjacent rows (or columns) and counts only its own connected run of N cells — odd N is fine — with at least one full empty column (row) on each side, separate from every other block. Big and small numbers are counted separately: the super block’s cells are not counted again in the small clues of the two rows it occupies (column clues still count every lit cell).',
     megaV2Tip:'V2 rule: between two adjacent rows without a super clue, no filled cells touch vertically.',
@@ -939,10 +961,10 @@ const I18N={
     fill:'塗る', cross:'×', tent:'仮置き', undo:'戻す', clear:'消す', hint:'ヒント', pause:'一時停止',
     easy:'易しく', easyOn:'易しく：オン（自動×・即時ミス判定）', easyOff:'易しく：オフ（×は手動、満杯時のみ判定）',
     fillWrong:'盤面は埋まりましたが正解と違います。何マスか戻して確認してください',
-    paused:'一時停止中', pauseSub:'タイマーは停止しました。盤面は保持されます。', back:'← リスト', backCatalog:'リストへ',
+    paused:'一時停止中', pauseSub:'タイマーは停止しました。盤面は保持されます。', back:'リスト', backCatalog:'リストへ',
     win:'救助成功', author:'絵師', rank:'レア度', resultTime:'時間', resultMist:'ミス', resultHint:'ヒント',
     next:'次の未救助', close:'閉じる',
-    hintNone:'確定できるマスがありません。まず一マス試してください', hintOut:'ヒントを使い切りました', hintWrong:'✦ {n} マス間違っています。赤枠のマスを直してください', cleared:'消去しました（戻せます）',
+    hintNone:'確定できるマスがありません。まず一マス試してください', hintOut:'ヒントを使い切りました', hintWrong:'{n} マス間違っています。赤枠のマスを直してください', cleared:'消去しました（戻せます）',
     resumed:'前回の続きを復元しました（タイマー停止中）。「再開」で続けられます',
     ach:'ローカル実績', achSub:'{a}/{b} 達成', achUnlocked:'達成', achLocked:'未達成',
     set:'設定', setSub:'このページのみに適用。メインセーブは変更しません', sound:'効果音', auto:'自動×',
@@ -967,8 +989,8 @@ const I18N={
     hw4:'手がかりを満たすと数字が灰色になり取り消し線。「易しく」オンのとき成立しない線は赤くなりミス＋1、オフのときは盤面が埋まるまで判定しません。いつでも戻せます。',
     hw5:'ヒントは論理的に確定するマスを埋めます（1 回の救助につき 3 回）。詰まったら使いましょう。',
     hw6:'すべての行と列の手がかりを満たすと救助成功。立ち絵が現れます。救助できるのは図鑑で収集済みのバニーだけです。',
-    pureTab:'🔓 無地', pureIntro:'ここに囚われたバニーはいませんが、鍵開けの練習にはちょうどいい。', pureBranch1:'ノーマル',
-    pureSolved:'解錠済み', pureProgress:'解錠 {a}/{b}', pureRand:'🎲 おまかせ1問', pureMeta:'無地のノノグラム', pureWin:'カチッ、開いた',
+    pureTab:'無地', pureIntro:'ここに囚われたバニーはいませんが、鍵開けの練習にはちょうどいい。', pureBranch1:'ノーマル',
+    pureSolved:'解錠済み', pureProgress:'解錠 {a}/{b}', pureRand:'おまかせ1問', pureMeta:'無地のノノグラム', pureWin:'カチッ、開いた',
     pureBranch2:'メガ', megaMeta:'メガノノグラム', megaWin:'カチッ、メガも開いた',
     megaIntro:'メガノノグラム：通常の小さな行列ヒントに加えて、黒地の「メガヒント（大きな数字）」があります。隣り合う2行（または2列）にまたがり、その連続したNマスだけを数えます（奇数も可）。両端には必ず1列（行）分の空白があり、他のブロックとはつながりません。大きな数字と小さな数字は別々に数えます：メガブロックのマスは、それが属する2行の小さなヒントには含まれません（列のヒントは点灯マスをすべて数えます）。',
     megaV2Tip:'V2 ルール：メガヒントのない隣接2行の間で、上下に接する塗りはありません。',
@@ -986,10 +1008,10 @@ const I18N={
     fill:'칠하기', cross:'×', tent:'임시', undo:'되돌리기', clear:'지우기', hint:'힌트', pause:'일시정지',
     easy:'쉬움', easyOn:'쉬움: 켜짐 (자동 ×, 실시간 오류 판정)', easyOff:'쉬움: 꺼짐 (× 수동, 다 채워야 판정)',
     fillWrong:'다 채웠지만 정답과 다릅니다. 몇 칸 되돌리고 확인하세요',
-    paused:'일시정지', pauseSub:'타이머가 멈췄습니다. 판은 유지됩니다.', back:'← 목록', backCatalog:'목록으로',
+    paused:'일시정지', pauseSub:'타이머가 멈췄습니다. 판은 유지됩니다.', back:'목록', backCatalog:'목록으로',
     win:'구출 성공', author:'작가', rank:'희귀도', resultTime:'시간', resultMist:'실수', resultHint:'힌트',
     next:'다음 미구출', close:'닫기',
-    hintNone:'확정할 수 있는 칸이 없습니다. 먼저 한 칸 시도하세요', hintOut:'힌트를 모두 썼습니다', hintWrong:'✦ 잘못된 칸이 {n}개 있습니다. 빨간 테두리 칸을 고쳐 주세요', cleared:'지웠습니다 — 되돌릴 수 있어요',
+    hintNone:'확정할 수 있는 칸이 없습니다. 먼저 한 칸 시도하세요', hintOut:'힌트를 모두 썼습니다', hintWrong:'잘못된 칸이 {n}개 있습니다. 빨간 테두리 칸을 고쳐 주세요', cleared:'지웠습니다 — 되돌릴 수 있어요',
     resumed:'이전 진행 상황을 복원했습니다 (타이머 정지). 「계속」을 눌러 이어서 하세요',
     ach:'로컬 업적', achSub:'{a}/{b} 달성', achUnlocked:'달성', achLocked:'미달성',
     set:'설정', setSub:'이 페이지만 적용되며 메인 저장은 건드리지 않습니다', sound:'효과음', auto:'자동 ×',
@@ -1014,8 +1036,8 @@ const I18N={
     hw4:'단서가 모두 만족되면 숫자가 회색으로 바뀌고 취소선이 그어집니다. 「쉬움」이 켜지면 불가능한 줄이 빨갛게 변하고 실수 +1, 꺼지면 판이 다 채워질 때만 판정합니다. 언제든 되돌릴 수 있습니다.',
     hw5:'힌트는 논리적으로 확정된 칸을 채웁니다(구출당 3회). 막히면 사용하세요.',
     hw6:'모든 행과 열의 단서를 만족하면 구출 성공, 일러스트가 나타납니다. 구출할 수 있는 것은 도감에서 수집한 배니뿐입니다.',
-    pureTab:'🔓 무그림', pureIntro:'여기 갇힌 배니는 없지만, 자물쇠 따기 연습을 하기엔 좋아요.', pureBranch1:'일반',
-    pureSolved:'해제 완료', pureProgress:'해제 {a}/{b}', pureRand:'🎲 무작위 한 문제', pureMeta:'그림 없는 노노그램', pureWin:'딸깍, 잠금 해제',
+    pureTab:'무그림', pureIntro:'여기 갇힌 배니는 없지만, 자물쇠 따기 연습을 하기엔 좋아요.', pureBranch1:'일반',
+    pureSolved:'해제 완료', pureProgress:'해제 {a}/{b}', pureRand:'무작위 한 문제', pureMeta:'그림 없는 노노그램', pureWin:'딸깍, 잠금 해제',
     pureBranch2:'메가', megaMeta:'메가 노노그램', megaWin:'딸깍, 메가 잠금도 해제',
     megaIntro:'메가 노노그램: 일반적인 작은 행·열 힌트 외에 검은 바탕의 "메가 힌트(큰 숫자)"가 있습니다. 인접한 두 줄(또는 두 열)에 걸쳐 이어진 N칸만 셉니다(홀수도 가능). 양쪽에는 반드시 한 줄(열) 너비의 빈 공간이 있고 다른 블록과 이어지지 않습니다. 큰 숫자와 작은 숫자는 따로 계산합니다: 메가 블록의 칸은 그 두 줄의 작은 힌트에 포함되지 않습니다(열 힌트는 켜진 칸을 모두 셉니다).',
     megaV2Tip:'V2 규칙: 메가 힌트가 없는 인접 두 행 사이에는 위아래로 붙는 칠하기가 없습니다.',
@@ -1401,6 +1423,11 @@ const FX=(function(){
 /* ================= 工具 ================= */
 function $(id){ return document.getElementById(id); }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+/* ================= 图标 =================
+   所有 16×16 手绘 SVG 统一收在根目录 moon-icons.js 的 cool 主题
+   （线条随 currentColor 变色，自动跟随 --ink / --acc / --ice / --pink / --gold）。 */
+function mico(n,cls){ return MoonIcons.icon(n, cls||'only', 'cool'); }
+function paintMI(root){ MoonIcons.paintIcons(root||document,'cool'); }
 function fmtTime(ms){
   if(!ms||ms<0) ms=0;
   const s=Math.floor(ms/1000), m=Math.floor(s/60);
@@ -1462,9 +1489,9 @@ function renderStats(){
   for(const k in map){ n++; stars+=(map[k].s||0); }
   $('stL1').textContent=MODE==='pure'?t('pureSolved'):(MODE==='mega'?t('pureSolved'):t('solved'));
   $('stSolved').innerHTML=n+'<em>/'+total+'</em>';
-  $('stStars').innerHTML=stars+'<em>★</em>';
+  $('stStars').innerHTML=stars+mico('star','only sstar');
   $('stTime').textContent=fmtTime(tms);
-  $('topstat').innerHTML=t('progress',{a:n,b:total})+'<br><b>'+stars+' ★</b>';
+  $('topstat').innerHTML=t('progress',{a:n,b:total})+'<br><b>'+stars+' '+mico('star')+'</b>';
   $('setDataV').textContent=t('dataSub',{n:NP.length,m:ENTRIES.length});
   bumpStat($('stSolved'),'solved',n);
   bumpStat($('stStars'),'stars',stars);
@@ -1480,7 +1507,7 @@ function renderChips(){
 }
 function starHTML(s){
   let out='';
-  for(let i=1;i<=3;i++) out+='<span class="'+(i<=s?'':'d')+'" style="--i:'+(i-1)+'">★</span>';
+  for(let i=1;i<=3;i++) out+='<span class="'+(i<=s?'':'d')+'" style="--i:'+(i-1)+'">'+mico('star')+'</span>';
   return out;
 }
 function pixelCanvas(p,cls){
@@ -1552,7 +1579,7 @@ function renderCatalog(){
     let art;
     const cage='<i class="sil" aria-hidden="true"></i><div class="bars" aria-hidden="true"></div>';
     if(locked){
-      art=cage+'<span class="wq">🔒</span>';
+      art=cage+'<span class="wq">'+mico('lock')+'</span>';
     }else if(sv){
       art='<img loading="lazy" decoding="async" src="'+esc(p.img)+'">';
     }else{
@@ -1650,8 +1677,8 @@ function monoStars(map){ let n=0; for(const k in map) n+=(map[k].s||0); return n
 function renderMonoHero(elId,pool,map,branchKey){
   const wrap=$(elId); if(!wrap) return;
   wrap.innerHTML='<div class="herotag">'+esc(t(branchKey))+'</div>'
-    +'<div class="herometa">'+esc(t('pureProgress',{a:monoCount(map),b:pool.length}))+' · '+monoStars(map)+' ★</div>'
-    +'<button class="herobtn" data-rand="1">'+esc(t('pureRand'))+'</button>';
+    +'<div class="herometa">'+esc(t('pureProgress',{a:monoCount(map),b:pool.length}))+' · '+monoStars(map)+' '+mico('star')+'</div>'
+    +'<button class="herobtn" data-rand="1">'+mico('dice')+esc(t('pureRand'))+'</button>';
 }
 function renderMonoCatalog(elId,pool,map,branchKey){
   const wrap=$(elId); if(!wrap) return;
@@ -1990,7 +2017,7 @@ function updateHUD(){
   $('pMist').innerHTML=t('mistakes')+' <b>'+G.mistakes+'</b>';
   $('pHint').innerHTML=t('hints')+' <b>'+G.hintsLeft+'</b>';
   $('pMist').classList.toggle('warn',G.mistakes>0);
-  $('btnHint').innerHTML='<b>✦</b><span>'+esc(t('hint'))+'</span>';
+  $('btnHint').innerHTML=mico('sparkle')+'<span>'+esc(t('hint'))+'</span>';
   bumpHud($('pMist').querySelector('b'),'m',G.mistakes);
   bumpHud($('pHint').querySelector('b'),'h',G.hintsLeft);
 }
@@ -3037,7 +3064,7 @@ function finish(){
 
 /* ================= 成就 ================= */
 const ACHS=[
-  {id:'np_first',icon:'✦',n:'achFirst',d:'achFirstD',test:function(){ return puzzlesSolved()>=1; }},
+  {id:'np_first',ico:'sparkle',n:'achFirst',d:'achFirstD',test:function(){ return puzzlesSolved()>=1; }},
   {id:'np_ten',icon:'十',n:'achTen',d:'achTenD',test:function(){ return puzzlesSolved()>=10; }},
   {id:'np_thirty',icon:'半',n:'achThirty',d:'achThirtyD',test:function(){ return puzzlesSolved()>=30; }},
   {id:'np_all',icon:'全',n:'achAll',d:'achAllD',test:function(){ return puzzlesSolved()>=NP.length; }},
@@ -3082,7 +3109,7 @@ function renderAch(){
   $('achSub').textContent=t('achSub',{a:got,b:total});
   $('achList').innerHTML=ACHS.map(function(a){
     const g=!!S.ach[a.id];
-    return '<div class="achrow'+(g?' got':'')+'"><div class="ai">'+a.icon+'</div>'
+    return '<div class="achrow'+(g?' got':'')+'"><div class="ai">'+(a.ico?mico(a.ico):a.icon)+'</div>'
       +'<div class="at">'+esc(t(a.n))+'<small>'+esc(t(a.d))+'</small></div>'
       +'<div class="ap">'+(g?esc(t('achUnlocked')):esc(t('achLocked')))+'</div></div>';
   }).join('');
@@ -3451,7 +3478,7 @@ function applyStaticText(){
   $('noticeT').textContent=t('notice');
   $('tabRandom').textContent=t('rand');
   $('tabCodex').textContent=t('codex');
-  $('tabPure').textContent=t('pureTab');
+  $('tabPureT').textContent=t('pureTab');
   $('pureIntroT').textContent=t(SUB==='mega'?'megaIntro':'pureIntro');
   $('subTabNormal').textContent=t('pureBranch1');
   $('subTabMega').textContent=t('pureBranch2');
@@ -3463,7 +3490,7 @@ function applyStaticText(){
   $('stL1').textContent=t('solved');
   $('stL2').textContent=t('stars');
   $('stL3').textContent=t('totalTime');
-  $('btnBack').textContent=t('back');
+  $('backT').textContent=t('back');
   $('lblFill').textContent=t('fill');
   $('lblCross').textContent=t('cross');
   $('lblTent').textContent=t('tent');
@@ -3644,6 +3671,7 @@ function selftest(){
 /* ================= 初始化 ================= */
 function init(){
   applyStaticText();
+  paintMI();
   NP.forEach(buildClues);
   NP2.forEach(function(p){ p.pure=true; buildClues(p); });
   NP3.forEach(function(p){ p.mega=true; p._sr=p.sr; p._sc=p.sc; buildClues(p); });
