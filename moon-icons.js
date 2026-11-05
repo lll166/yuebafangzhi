@@ -34,7 +34,12 @@
      MoonIcons.paintIcons(root,'neon');
      MoonIcons.svg('tomato','neon');
 
-     可用名字见 MoonIcons.names（浅色）、MoonIcons.warmNames（暖棕）、MoonIcons.coolNames（冷调）与 MoonIcons.neonNames（霓虹）。
+     // 俄罗斯巴块等深蓝紫调 UI 用第五套主题（同样单色，跟随 currentColor，深浅两种皮肤通用）：
+     MoonIcons.icon('ladder','only','tetris');
+     MoonIcons.paintIcons(root,'tetris');
+
+     可用名字见 MoonIcons.names（浅色）、MoonIcons.warmNames（暖棕）、MoonIcons.coolNames（冷调）、
+     MoonIcons.neonNames（霓虹）与 MoonIcons.tetrisNames（俄罗斯巴块）。
    ============================================================ */
 (function(g){
   var INK='#5b5343', PANEL='#fffdf5', ACC='#3e8e7e', ACC2='#6fb7a8', WOOD='#c9a06a',
@@ -358,7 +363,55 @@
     check:S('<path d="M3.2 8.4l3.4 3.4 6.2-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"/>')
   };
 
-  /* 生成 <i class="ico">…</i>；cls 传 'only' 时不带右侧间距；theme 传 'warm' / 'cool' / 'neon' 切换主题 */
+  /* ---------- 俄罗斯巴块主题：深蓝紫调，沿用霓虹单色线条并补方块专属图标 ---------- */
+  var TETRIS_ICONS=Object.assign({},NEON_ICONS,{
+    /* 叶子：第一次消行 */
+    leaf:S('<path d="M4.2 12.2C4.6 8 7.6 4.2 13.2 2.8 12.4 7 9.4 10.6 4.2 12.2z" fill="none" stroke="currentColor" stroke-width="1.5"/>'+
+      '<path d="M4.8 11.4C8 8.8 10.4 6.2 12.4 3.6" fill="none" stroke="currentColor" stroke-width="1.1"/>'),
+    /* 麦穗：一次四消 */
+    wheat:S('<path d="M8 14.4V4" fill="none" stroke="currentColor" stroke-width="1.2"/>'+
+      '<ellipse cx="8" cy="3.2" rx="1.2" ry="1.8" fill="currentColor"/>'+
+      '<ellipse cx="6.2" cy="5.9" rx="1.6" ry="1" transform="rotate(-32 6.2 5.9)" fill="currentColor"/>'+
+      '<ellipse cx="9.8" cy="5.9" rx="1.6" ry="1" transform="rotate(32 9.8 5.9)" fill="currentColor"/>'+
+      '<ellipse cx="6.2" cy="8.7" rx="1.6" ry="1" transform="rotate(-32 6.2 8.7)" fill="currentColor"/>'+
+      '<ellipse cx="9.8" cy="8.7" rx="1.6" ry="1" transform="rotate(32 9.8 8.7)" fill="currentColor"/>'+
+      '<ellipse cx="6.3" cy="11.5" rx="1.5" ry=".95" transform="rotate(-32 6.3 11.5)" fill="currentColor"/>'+
+      '<ellipse cx="9.7" cy="11.5" rx="1.5" ry=".95" transform="rotate(32 9.7 11.5)" fill="currentColor"/>'),
+    /* 闪光：完美消行 */
+    sparkle:S('<path d="M7 2.2l1.3 3.5 3.5 1.3-3.5 1.3L7 11.8 5.7 8.3 2.2 7l3.5-1.3z" fill="currentColor"/>'+
+      '<path d="M12.4 9.8l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z" fill="currentColor" opacity=".75"/>'),
+    /* 闪电：五连击 */
+    bolt:S('<path d="M9.6 1.2L3.4 9h3.6L6 14.8l6.4-8.2h-3.7z" fill="currentColor"/>'),
+    /* 阶梯：升到 5 级 */
+    stairs:S('<path d="M2 14V10.6h3.2V8h3.2V5.4h3.2V2.6h2.4v11.4z" fill="none" stroke="currentColor" stroke-width="1.4"/>'),
+    /* 旋转：缺口环形箭头 */
+    rotate:S('<path d="M8 3.3A4.7 4.7 0 1 1 3.58 6.39" fill="none" stroke="currentColor" stroke-width="1.6"/>'+
+      '<path d="M4.47 3.95L4.99 6.9 2.17 5.88z" fill="currentColor"/>'),
+    /* 软降：向下箭头 */
+    drop:S('<path d="M8 2.4v8.6M4.5 7.8L8 12.2l3.5-4.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square"/>'),
+    /* 硬降：箭头砸到底线 */
+    harddrop:S('<path d="M8 1.6v7.6M4.8 5.4L8 9.4l3.2-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square"/>'+
+      '<path d="M2.4 12.6h11.2" stroke="currentColor" stroke-width="2"/>'),
+    /* 王冠：15 级 */
+    crown:S('<path d="M2.4 9.8V5.6l3.1 3.4L8 3.2l2.5 5.8 3.1-3.4v4.2z" fill="currentColor"/>'+
+      '<rect x="1.8" y="11.2" width="12.4" height="1.6" fill="currentColor"/>'),
+    /* 整排：累计百行 */
+    rows:S('<rect x="2.4" y="3.2" width="11.2" height="2.4" fill="currentColor"/>'+
+      '<rect x="2.4" y="6.8" width="11.2" height="2.4" fill="currentColor" opacity=".72"/>'+
+      '<rect x="2.4" y="10.4" width="11.2" height="2.4" fill="currentColor" opacity=".5"/>'),
+    /* 硬币：单局万点 */
+    coin:S('<circle cx="8" cy="8" r="5.6" fill="none" stroke="currentColor" stroke-width="1.4"/>'+
+      '<path d="M5.4 4.8L8 8.1l2.6-3.3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="square"/>'+
+      '<path d="M8 8.1v4.4" fill="none" stroke="currentColor" stroke-width="1.4"/>'+
+      '<path d="M6.1 9.5h3.8M6.1 11.2h3.8" stroke="currentColor" stroke-width="1.2"/>'),
+    /* 格子旗：单局百行 */
+    flag:S('<path d="M4.2 14.4V2" fill="none" stroke="currentColor" stroke-width="1.5"/>'+
+      '<path d="M4.2 2.4h9.2v5.4H4.2z" fill="none" stroke="currentColor" stroke-width="1.1"/>'+
+      '<rect x="4.2" y="2.4" width="4.6" height="2.7" fill="currentColor"/>'+
+      '<rect x="8.8" y="5.1" width="4.6" height="2.7" fill="currentColor"/>')
+  });
+
+  /* 生成 <i class="ico">…</i>；cls 传 'only' 时不带右侧间距；theme 传 'warm' / 'cool' / 'neon' / 'tetris' 切换主题 */
   function icon(name,cls,theme){
     var set=themeOf(theme);
     return '<i class="ico'+(cls?' '+cls:'')+'">'+(set[name]||'')+'</i>';
@@ -371,6 +424,7 @@
     if(theme==='warm') return WARM_ICONS;
     if(theme==='cool') return COOL_ICONS;
     if(theme==='neon') return NEON_ICONS;
+    if(theme==='tetris') return TETRIS_ICONS;
     return ICONS;
   }
   /* 给静态骨架里的 [data-ico] 填图标：只换图形，不碰文字，切语言后仍保留 */
@@ -403,6 +457,7 @@
     warm:WARM_ICONS,
     cool:COOL_ICONS,
     neon:NEON_ICONS,
+    tetris:TETRIS_ICONS,
     icon:icon,
     svg:svg,
     paintIcons:paintIcons,
@@ -410,7 +465,8 @@
     names:Object.keys(ICONS),
     warmNames:Object.keys(WARM_ICONS),
     coolNames:Object.keys(COOL_ICONS),
-    neonNames:Object.keys(NEON_ICONS)
+    neonNames:Object.keys(NEON_ICONS),
+    tetrisNames:Object.keys(TETRIS_ICONS)
   };
   g.MoonIcons=api;
 })(window);

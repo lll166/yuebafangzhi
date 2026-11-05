@@ -47,6 +47,11 @@
   #btnAch{padding:0 5px;font-size:11px;}
   #btnAch b{font-size:7px;font-weight:800;letter-spacing:0;color:var(--dim);font-variant-numeric:tabular-nums;}
   #btnPause:active,#btnAch:active{transform:scale(.94);}
+  #btnAch .ico,#btnPause .ico{width:13px;height:13px;}
+  #achClose .ico{width:12px;height:12px;}
+  .achIcon .ico{width:13px;height:13px;}
+  .cbtn .ico{width:17px;height:17px;}
+  .cbtn.drop .ico{width:19px;height:19px;}
 
   /* ---------- 行数等级 / 预览 ---------- */
   #prow{display:flex;align-items:stretch;gap:5px;height:58px;flex:0 0 auto;}
@@ -219,6 +224,7 @@
   .stList{overflow-y:auto;padding:6px 8px 9px;display:flex;flex-direction:column;gap:3px;}
   .stRow{display:flex;gap:5px;font-size:8px;line-height:1.35;color:var(--dim);}
   .stRow b{flex:0 0 12px;text-align:center;}
+  .stRow b .ico{width:9px;height:9px;vertical-align:-.14em;}
   .stRow.ok b{color:#7bf5b5;}
   .stRow.ng b{color:var(--red2);}
   .stRow.ng{color:#ffb3b8;}
@@ -306,8 +312,8 @@
         <div class="stat"><span>SCORE</span><b id="scoreEl">0</b></div>
         <div class="stat"><span>BEST</span><b id="bestEl">0</b></div>
       </div>
-      <button id="btnAch">🏆<b id="achCount">0/15</b></button>
-      <button id="btnPause">❚❚</button>
+      <button id="btnAch"><span class="ico only" data-ico="trophy"></span><b id="achCount">0/15</b></button>
+      <button id="btnPause" aria-label="暂停"><span class="ico only" data-ico="pause"></span></button>
     </div>
 
     <div id="prow">
@@ -368,7 +374,7 @@
                 <div class="achKicker">// ACHIEVEMENTS //</div>
                 <div class="achTitle"><span id="achTitleTxt">成就</span><b id="achTotal">0/15</b></div>
               </div>
-              <button id="achClose">✕</button>
+              <button id="achClose" aria-label="关闭"><span class="ico only" data-ico="close"></span></button>
             </div>
             <div class="achList" id="achList"></div>
             <div class="achFoot" id="achFoot"></div>
@@ -387,15 +393,16 @@
     <div id="tips"></div>
 
     <div id="ctrl" role="group">
-      <button class="cbtn" id="bLeft">◀</button>
-      <button class="cbtn" id="bRight">▶</button>
-      <button class="cbtn" id="bRot">↻</button>
-      <button class="cbtn" id="bDown">▼</button>
-      <button class="cbtn drop" id="bDrop">⇩</button>
+      <button class="cbtn" id="bLeft" aria-label="左移"><span class="ico only" data-ico="left"></span></button>
+      <button class="cbtn" id="bRight" aria-label="右移"><span class="ico only" data-ico="right"></span></button>
+      <button class="cbtn" id="bRot" aria-label="旋转"><span class="ico only" data-ico="rotate"></span></button>
+      <button class="cbtn" id="bDown" aria-label="软降"><span class="ico only" data-ico="drop"></span></button>
+      <button class="cbtn drop" id="bDrop" aria-label="硬降"><span class="ico only" data-ico="harddrop"></span></button>
     </div>
   </div>
 </div>
 
+<script src="moon-icons.js"></script>
 <script>
 (function(){
   'use strict';
@@ -746,6 +753,9 @@
 
   /* ---------- DOM ---------- */
   function $(id) { return document.getElementById(id); }
+  // 线条图标：动态串直接拼 SVG，静态骨架用 data-ico + paintMI 填充
+  function mico(n) { return MoonIcons.icon(n, 'only', 'tetris'); }
+  function paintMI(root) { MoonIcons.paintIcons(root || document, 'tetris'); }
   var cv = $('cv'), ctx = cv.getContext('2d');
   var brandEl = $('brand'), scoreEl = $('scoreEl'), bestEl = $('bestEl');
   var linesEl = $('linesEl'), levelEl = $('levelEl'), achCount = $('achCount');
@@ -832,21 +842,21 @@
 
   /* ---------- 成就表 ---------- */
   var ACH = [
-    { id: 't_first_clear', icon: '🌱', tier: 'common' },
-    { id: 't_tetris', icon: '🌾', tier: 'common' },
-    { id: 't_perfect', icon: '✨', tier: 'common' },
-    { id: 't_combo3', icon: '🔥', tier: 'common' },
-    { id: 't_combo5', icon: '💥', tier: 'common' },
-    { id: 't_lv5', icon: '🪜', tier: 'common' },
-    { id: 't_hard_20', icon: '⤓', tier: 'long' },
-    { id: 't_lv10', icon: '⭐', tier: 'long' },
-    { id: 't_lv15', icon: '🌟', tier: 'long' },
-    { id: 't_total_100', icon: '📏', tier: 'long' },
-    { id: 't_total_1000', icon: '🧱', tier: 'long' },
-    { id: 't_score_10k', icon: '💰', tier: 'long' },
-    { id: 't_score_50k', icon: '🏆', tier: 'long' },
-    { id: 't_run_100', icon: '🐇', tier: 'long' },
-    { id: 't_i11', icon: '❔', tier: 'hidden' }
+    { id: 't_first_clear', icon: 'leaf', tier: 'common' },
+    { id: 't_tetris', icon: 'wheat', tier: 'common' },
+    { id: 't_perfect', icon: 'sparkle', tier: 'common' },
+    { id: 't_combo3', icon: 'flame', tier: 'common' },
+    { id: 't_combo5', icon: 'bolt', tier: 'common' },
+    { id: 't_lv5', icon: 'stairs', tier: 'common' },
+    { id: 't_hard_20', icon: 'harddrop', tier: 'long' },
+    { id: 't_lv10', icon: 'star', tier: 'long' },
+    { id: 't_lv15', icon: 'crown', tier: 'long' },
+    { id: 't_total_100', icon: 'rows', tier: 'long' },
+    { id: 't_total_1000', icon: 'brick', tier: 'long' },
+    { id: 't_score_10k', icon: 'coin', tier: 'long' },
+    { id: 't_score_50k', icon: 'trophy', tier: 'long' },
+    { id: 't_run_100', icon: 'flag', tier: 'long' },
+    { id: 't_i11', icon: 'help', tier: 'hidden' }
   ];
 
   /* ---------- 存档 ---------- */
@@ -1964,10 +1974,10 @@
         var done = !!data.ach.done[a.id];
         var hidden = a.tier === 'hidden' && !done;
         html += '<div class="achRow' + (done ? ' done' : '') + '">'
-          + '<div class="achIcon">' + (hidden ? '❔' : a.icon) + '</div>'
+          + '<div class="achIcon">' + mico(hidden ? 'help' : a.icon) + '</div>'
           + '<div class="achTxt"><div class="achName">' + esc(hidden ? '???' : t('ach_' + a.id + '_n')) + '</div>'
           + '<div class="achDesc">' + esc(hidden ? t('achHidden') : t('ach_' + a.id + '_d')) + '</div></div>'
-          + '<div class="achState">' + (done ? t('achDone') : t('achLocked')) + '</div></div>';
+          + '<div class="achState">' + (done ? mico('check') + esc(t('achDone')) : esc(t('achLocked'))) + '</div></div>';
       }
     }
     achList.innerHTML = html;
@@ -2627,10 +2637,10 @@
     var pass = 0, html = '';
     for (i = 0; i < results.length; i++) {
       if (results[i].ok) pass++;
-      html += '<div class="stRow ' + (results[i].ok ? 'ok' : 'ng') + '"><b>' + (results[i].ok ? '✓' : '✕') + '</b><span>'
+      html += '<div class="stRow ' + (results[i].ok ? 'ok' : 'ng') + '"><b>' + mico(results[i].ok ? 'check' : 'close') + '</b><span>'
         + esc(results[i].name) + (results[i].extra ? ' · ' + esc(results[i].extra) : '') + '</span></div>';
     }
-    html += '<div class="stRow ' + (pass === results.length ? 'ok' : 'ng') + '"><b>' + (pass === results.length ? '✓' : '✕') + '</b><span>'
+    html += '<div class="stRow ' + (pass === results.length ? 'ok' : 'ng') + '"><b>' + mico(pass === results.length ? 'check' : 'close') + '</b><span>'
       + pass + ' / ' + results.length + '</span></div>';
     stList.innerHTML = html;
     selfTestEl.classList.add('show');
@@ -2673,6 +2683,7 @@
     redrawStatic();
     renderPreviews();
     applyLang();
+    paintMI();
     applyInputMode();
     updateHUD();
     showOverlay('ready');
