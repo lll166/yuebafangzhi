@@ -1389,6 +1389,21 @@ function tone(freq,dur,vol){
   }catch(e){}
 }
 function sfxClick(){ tone(700,0.055,0.035); }
+/* 音频设备初始化（new AudioContext）放到首次按下时做：
+   pointerdown 早于 click，等于给开局那一帧提前腾出这段耗时，
+   点击音与观感都不变 */
+let audioWarmed=false;
+function warmAudio(){
+  if(audioWarmed) return;
+  audioWarmed=true;
+  if(S.muted||AC) return;
+  try{
+    const Ctx=window.AudioContext||window.webkitAudioContext;
+    if(Ctx) AC=new Ctx();
+  }catch(e){}
+}
+document.addEventListener('pointerdown',warmAudio,{once:true,passive:true});
+document.addEventListener('keydown',warmAudio,{once:true});
 function sfxWin(){
   tone(660,0.09,0.045);
   setTimeout(function(){ tone(880,0.1,0.045); },90);
@@ -1877,18 +1892,13 @@ function buildBoardDOM(){
   board.style.setProperty('--cols',G.cols);
   board.style.setProperty('--rows',G.rows);
   board.style.setProperty('--ar',(G.cols/G.rows).toFixed(4));
-  board.innerHTML='';
-  G.cells=[];
-  const frag=document.createDocumentFragment();
-  for(let i=0;i<G.rows*G.cols;i++){
-    const c=document.createElement('button');
-    c.type='button';
-    c.className='cell';
-    c.setAttribute('data-i',i);
-    frag.appendChild(c);
-    G.cells.push(c);
-  }
-  board.appendChild(frag);
+  /* 一次性拼字符串交给解析器，代替 480 次 createElement/appendChild：
+     节点属性与最终 DOM 完全一致，但开局建格明显更快 */
+  const N=G.rows*G.cols;
+  let html='';
+  for(let i=0;i<N;i++) html+='<button type="button" class="cell" data-i="'+i+'"></button>';
+  board.innerHTML=html;
+  G.cells=Array.prototype.slice.call(board.children);
   fitCellFont();
 }
 
@@ -2585,12 +2595,19 @@ function startGame(cfg,opts){
   $('menuView').classList.add('hide');
   $('gameView').classList.add('show');
   $('gameView').scrollTop=0;
+  /* 先切到对局布局，再测可用尺寸：playing 会改变顶部栏与间距，
+     顺序反了会按菜单态尺寸量一次、白做一遍重排 */
+  document.body.classList.add('playing');
   $('gameHint').textContent=t('gameHint');
-  buildBoardDOM();
-  /* 手机竖屏：大扫除整盘顺时针转 90°，让 30 列收成竖向 30 行 */
+  /* 手机竖屏：大扫除整盘顺时针转 90°，让 30 列收成竖向 30 行。
+     此时还没布雷，数据为空，只需把行列互换即可；
+     原来是先按旧尺寸建 480 个格子、再整盘重建一次，开局多花一倍建格与重排 */
   const wantRot=desiredRot(cfg);
-  if(wantRot){ rotateBoard(wantRot); G.rot=wantRot; }
+  if(wantRot){ G.rows=cfg.cols; G.cols=cfg.rows; G.rot=wantRot; }
   $('gameInfo').textContent=t('gameInfo',{name:t(cfg.name),r:G.rows,c:G.cols,m:G.mines});
+  /* 先把棋盘宽度定下来（此刻还没有格子，测量只作用于空容器），再一次性建格 */
+  fitBoard();
+  buildBoardDOM();
 
   if(G.daily){
     /* 每日局：按日期种子固定布雷，中心 3×3 预先翻开；预翻不计时 */
@@ -2609,8 +2626,7 @@ function startGame(cfg,opts){
     const st=S.stats[cfg.id];
     if(st){ st.plays++; saveGame(); }
   }
-  document.body.classList.add('playing');
-  fitBoard();
+  /* 宽度与字号在 buildBoardDOM 里已按最终尺寸定好，这里不再二次测量 */
   updateHud();
   /* 开局入场：整盘轻压 + 四角框线亮一下 */
   if(!fxOff()) retrig($('board'),'fx-in',240);
