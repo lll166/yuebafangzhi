@@ -1056,7 +1056,7 @@ function kingName(id){ return KINGS[id]?$tn(I18N_KING,id,'n',KINGS[id].name):'';
 
 /* ---------- 自绘像素图标 ----------
    图标统一收在根目录 moon-icons.js（颜色与这套 UI 同一套：墨色 / 米白 / 浅青 / 浅木 / 金色 / 砖红），
-   其他小游戏直接 <script src="moon-icons.js"></script> 也能用。
+   其他小游戏直接引入根目录同名脚本也能用。
    静态骨架用 <span class="ico" data-ico="名字"></span>，启动与切语言后由 paintIcons() 填充；
    动态拼字符串的地方直接调 icon('名字')。 */
 var ICONS=MoonIcons.ICONS;
