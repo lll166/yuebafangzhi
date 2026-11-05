@@ -159,6 +159,8 @@
   #tensionWrap.danger #tensionPin{background:var(--red);}
   /* 自动收线按钮 */
   #btnAuto.on{color:#fff;background:linear-gradient(180deg,var(--accent2),var(--accent));}
+  #btnPower{padding:6px 7px;font-size:12px;line-height:1;}
+  #btnPower.on{background:linear-gradient(180deg,#d8c8a6,#c2b090);}
   #btnAction.autorun{background:linear-gradient(180deg,#b9ccc2,#9db8a9);box-shadow:0 3px 0 rgba(91,83,67,.18);
     animation:none;}
 
@@ -697,6 +699,7 @@
         <div id="sceneTitle">—<i></i></div>
         <button class="chipbtn show" id="btnBait">饵:无</button>
         <button class="chipbtn show" id="btnAuto">自动 关</button>
+        <button class="chipbtn show" id="btnPower" data-i18n-title="点击开启低功耗（减少动效）" title="点击开启低功耗（减少动效）">⚡</button>
       </div>
       <div id="frame"><canvas id="cv" width="256" height="144"></canvas></div>
       <div id="statusLine">选好了吗？</div>
@@ -890,7 +893,7 @@
       <div class="gSec">
         <b class="gT" data-i18n="放置也照钓">放置也照钓</b>
         <p data-i18n="达成「渔获五十」后，商店会上架自动收线器：自动提竿、自动稳张力。">达成「渔获五十」后，商店会上架自动收线器：自动提竿、自动稳张力。</p>
-        <p data-i18n="自动模式收获会少一些；开着自动关掉页面也会继续钓，直到鱼篓装满；装满会自动关掉自动，回来结算弹窗可一键全部售出。">自动模式收获会少一些；开着自动关掉页面也会继续钓，直到鱼篓装满；装满会自动关掉自动，回来结算弹窗可一键全部售出。</p>
+        <p data-i18n="自动模式收获会少一些；开着自动关掉页面也会继续钓，直到鱼篓装满；装满会自动暂停，卖鱼后自动继续。">自动模式收获会少一些；开着自动关掉页面也会继续钓，直到鱼篓装满；装满会自动暂停，卖鱼后自动继续。</p>
       </div>
     </div>
     <button id="guideOk" data-i18n="知道了">知道了</button>
@@ -1057,6 +1060,7 @@ function repaintAll(){
   TOMATO='<img class="timg" src="'+COIN_URL+'" alt="'+$t('番茄币')+'">';
   try{ refreshHud(false); }catch(e){}
   try{ updateAutoUI(); }catch(e){}
+  try{ updatePowerUI(); }catch(e){}
   try{ updateBaitUI(); }catch(e){}
   try{ updateOrdBtn(); }catch(e){}     /* applyStaticI18n 会重置按钮文案，切语言后补回 ✓n */
   if(G.view==='scene'&&scene.map) sceneTitle();
@@ -1370,6 +1374,7 @@ var save={v:6,tomato:0,totalCatch:0,fish:{},rewards:{},sel:'f1',auto:false,autoR
      rec：北京时间当日记录，跨天在 recTouch() 里清零；
      ordDone：累计交付订单数；maxGold/maxGoldId：单条最贵渔获 */
   at:0,dbg:0,ordDone:0,maxGold:0,maxGoldId:'',
+  lowPower:null,autoPause:'',
   rec:{day:'',catch:0,size:0,sizeId:'',gold:0,goldId:'',ord:0,ordAt:0}};
 function loadSave(){
   try{
@@ -1425,6 +1430,9 @@ function loadSave(){
       save.kings=d.kings||{}; save.kingPity=d.kingPity||{};
       save.junk=d.junk||{}; save.junkDone=!!d.junkDone;
       save.bond=d.bond||{};
+      /* 低功耗（null=跟随系统 prefers-reduced-motion）/ 自动暂停原因 */
+      save.lowPower=(d.lowPower===true)?1:((d.lowPower===false)?0:null);
+      save.autoPause=(d.autoPause==='bag'||d.autoPause==='bait')?d.autoPause:'';
     }
     /* ---------- 脏档兜底（旧版本残留 / 云回档 / 手改存档） ----------
        1) 鱼条目里的 null / 非对象会让统计页 bestFishEver 直接抛错；
@@ -1459,6 +1467,7 @@ function loadSave(){
     /* 自动收线器：未购入时收回旧档的自动开关（开局只能手动，购入后进图随时开关） */
     save.autoReel=(d.autoReel|0)?1:0;
     if(!save.autoReel) save.auto=false;
+    if(!save.auto) save.autoPause='';
     /* 钓手立绘：旧档没有该字段时用普通番茄；失效 / 未解锁的 id 由 currentPortraitId() 回退 */
     save.portrait=(typeof d.portrait==='string'&&d.portrait)?d.portrait:'normal';
     /* 排行榜相关：旧档没有这些字段时从 0 起算；今日记录跨天会在 recTouch() 清零 */
@@ -2097,6 +2106,23 @@ function drawFishSprite(ctx,f,ox,oy,cell,flip,mono){
   measuring=true; paint(); measuring=false;              /* 第一遍：量包围盒 */
   if(mxx>=0) offx=Math.round((W-(mxx-mnx+1))/2)-mnx;      /* 只横向居中，纵向仍以身体中线对齐 */
   paint();                                               /* 第二遍：居中落笔 */
+}
+/* 鱼贴图缓存：鱼篓 / 图鉴 / 结算每次打开都重建 canvas 太贵，
+   按「鱼 id + 格大小 + 朝向 + 剪影色」缓存离屏 canvas，之后只 drawImage */
+var FISH_SPR_CACHE={};
+function fishSpriteCanvas(f,cell,flip,mono){
+  var key=f.id+'|'+cell+'|'+(flip?1:0)+'|'+(mono||'-');
+  var cv=FISH_SPR_CACHE[key];
+  if(!cv){
+    cv=document.createElement('canvas');
+    cv.width=FISH_CW*cell; cv.height=FISH_CH*cell;
+    drawFishSprite(cv.getContext('2d'),f,0,0,cell,flip,mono);
+    FISH_SPR_CACHE[key]=cv;
+  }
+  return cv;
+}
+function drawFishCached(ctx,f,ox,oy,cell,flip,mono){
+  ctx.drawImage(fishSpriteCanvas(f,cell,flip,mono),ox,oy);
 }
 
 /* ---------- HD-2D 场景：十六张钓点共用一套程序化绘制 ----------
@@ -4112,6 +4138,8 @@ function drawLanding(t){
   hdx.restore();
 }
 
+/* 低功耗：跳过装饰动效，只保留玩法核心层（收线、角色、鱼漂、涟漪） */
+function lowPowerOn(){ return !!save.lowPower; }
 function drawScene(){
   var m=scene.map;
   if(!m) return;
@@ -4128,8 +4156,8 @@ function drawScene(){
   if(bob) drawBobber(t,bob);
   if(bob&&G.state==='bite') drawBiteMark(t,bob);
   drawLanding(t);
-  if(m.id==='s4') drawS4Film(t);             /* 结界光效压在角色与竿之上，界外不受影响 */
-  fxDraw();                                  /* 粒子最上层 */
+  if(m.id==='s4'&&!lowPowerOn()) drawS4Film(t);   /* 结界光效压在角色与竿之上，界外不受影响 */
+  if(!lowPowerOn()) fxDraw();                /* 粒子最上层（低功耗跳过） */
   drawPost(t,m);                             /* 光柱 + 暗角 */
   /* 像素滤镜：4× 舞台平滑降采样回 256 网格（一像素一格），
      再由 CSS 最近邻放大——光影保留高清层次，颗粒回到像素大小 */
@@ -4144,6 +4172,13 @@ function drawScene(){
 function drawStageFx(t,m,bob){
   var night=isNight(m), rg=scene.region?scene.region.id:'forest';
   var orbX=LAY.W-37, orbY=LAY.horizon*0.14+3.5;
+  if(lowPowerOn()){
+    /* 低功耗：云 / 光晕 / 水光 / 极光 / 雾 / 萤火 / 花瓣 / 鱼影 / 粒子 / 气泡全部跳过 */
+    drawContactShadow(t);
+    if(anim.flee) drawFleeShadow(t);
+    drawRipples();
+    return;
+  }
   if(m.id==='s4'){                                       /* 人鱼之海：界内气泡/小鱼 + 界外雪粒 */
     drawS4Fx(t,m,bob);
     drawContactShadow(t);
@@ -4170,6 +4205,7 @@ function drawStageFx(t,m,bob){
 }
 function drawPost(t,m){
   var night=isNight(m), dark=!!m.noMoon;
+  if(lowPowerOn()) return;                               /* 低功耗：跳过光柱，暗角仍由外层统一贴 */
   if(m.id==='s4') return;                                /* 深海：没有月光柱，暗角在降采样后统一贴 */
   if(!dark) drawLightShafts(t,m,night);                  /* 光柱来自月亮，无月时没有 */
 }
@@ -5398,6 +5434,8 @@ var G={
   baitSel:'',              /* 玩家在 HUD 上预选的鱼饵 */
   bunny:{mode:'idle',t:0,until:2,x:null,dir:1,nextHeart:0},   /* 陪伴月巴行为状态机 */
   hookFish:null,
+  waitEnd:0,biteEnd:0,        /* 等待 / 咬钩的墙钟截止时间（手动后台冻结恢复用） */
+  pause:null,                 /* 手动模式后台冻结快照 {state,waitLeft,biteLeft} */
 };
 var WAIT_MIN=8000,WAIT_MAX=16000,BITE_WIN=2600;
 var LEGEND_RATE=0.044;                      /* 传说每竿概率（全图鉴 16 图约 120h 的目标值） */
@@ -5617,16 +5655,16 @@ function setView(v){
    只在自动已购入、自动开着、鱼篓没满、当前在场景里时生效；
    玩家手点「下竿」时 cast() 会 clearTimer('wait')，不会双下竿。 */
 function scheduleAutoCast(delay){
-  if(!save.auto||!scene.map||G.view!=='scene'||bagFull()) return;
+  if(!save.auto||save.autoPause||!scene.map||G.view!=='scene'||bagFull()) return;
   clearTimer('wait');
   timers.wait=setTimeout(function(){
-    if(save.auto&&G.state==='idle'&&G.view==='scene'&&scene.map&&!bagFull()) cast();
+    if(save.auto&&!save.autoPause&&G.state==='idle'&&G.view==='scene'&&scene.map&&!bagFull()) cast();
   },(typeof delay==='number')?delay:AUTO_NEXT_MS);
 }
 /* 熄屏 / 短暂切后台回来：自动模式接着下竿。
    离线结算不足 1 分钟时不会走结算尾巴，这里统一补一次，别让「自动 开」却停在待机。 */
 function resumeAutoAfterAway(){
-  if(!save.auto||!scene.map||G.view!=='scene'||bagFull()) return;
+  if(!save.auto||save.autoPause||!scene.map||G.view!=='scene'||bagFull()) return;
   if(G.state!=='idle') return;
   var ov=$('overlay');
   if(ov&&ov.classList.contains('show')) return;   /* 结算层还开着，别在背后偷偷下竿 */
@@ -5640,12 +5678,13 @@ function openMap(id){
   refreshBuddyArt();                        /* 上次没刷出来的立绘：这次进图重取一次 */
   refreshPortraitArt();                     /* 番茄立绘重试次数用尽时，进图再给一次机会 */
   save.sel=id; commitSave();
+  G.pause=null; G.waitEnd=0; G.biteEnd=0;
   setState('idle');
   setView('scene');
   /* 自动挂机中重新进图（含刷新后恢复）：继续下竿，不用再手点 */
   if(save.auto){
     if(bagFull()) autoStopFull();
-    else scheduleAutoCast(600);
+    else { tryResumeAuto('bait'); scheduleAutoCast(600); }
   }
 }
 function setState(s){
@@ -5715,7 +5754,7 @@ function cast(){
   /* 鱼篓满了：先卖鱼再下竿（不消耗鱼饵/竿数） */
   if(bagFull()){
     toast($tf('鱼篓满了（{n}/{n}）—— 点顶部「渔获」去卖鱼',{n:basketCap()}));
-    if(save.auto){ save.auto=false; commitSave(); updateAutoUI(); }
+    autoPause('bag');
     setState('idle');
     return;
   }
@@ -5726,15 +5765,16 @@ function cast(){
     if(!k||!(save.bait[k]>0)) k=firstStockedBait();
     if(!k){
       toast($t('图四只认鱼饵：下竿要 1 个鱼饵（任意种类都行），先去商店补货'));
-      /* 挂机时饵用完就别再顶着「自动 开」空转，等玩家补饵后再手动开 */
-      if(save.auto){ save.auto=false; commitSave(); updateAutoUI(); }
+      /* 挂机时饵用完：自动切到“暂停”，补饵后自动恢复 */
+      autoPause('bait');
       setState('idle');
       return;
     }
     G.baitSel=k;
     save.bait[k]--; G.baitKind=k; commitSave();
     updateBaitUI();
-    toast($tf('撒下了{b} · 图四每竿耗 1 个',{b:$t(BAIT_NAMES[k])}));
+    var low=baitStockTotal()<=2?(' · '+$tf('鱼饵只剩 {n} 个了，记得补饵',{n:baitStockTotal()})):'';
+    toast($tf('撒下了{b} · 图四每竿耗 1 个',{b:$t(BAIT_NAMES[k])})+low);
   }else{
     G.baitKind=null;
     if(k){
@@ -5773,6 +5813,7 @@ function cast(){
     }
     commitSave();
   }
+  G.waitEnd=Date.now()+dur; G.biteEnd=0;
   timers.wait=setTimeout(function(){ doBite(); },dur);
 }
 function doBite(){
@@ -5783,9 +5824,11 @@ function doBite(){
   anim.ripples.push({x:LAY.bobX,y:LAY.bobY+1,a:4});
   clearTimer('bite');
   if(save.auto){                        /* 自动模式：稍候自动提竿 */
+    G.biteEnd=Date.now()+500;
     timers.bite=setTimeout(hook,500);
     return;
   }
+  G.biteEnd=Date.now()+BITE_WIN;
   timers.bite=setTimeout(function(){   /* 错过提竿：鱼溜走，无惩罚，自动续竿 */
     toast($t('鱼儿溜走了…没关系，再等等看'));
     anim.ripples.push({x:LAY.bobX,y:LAY.bobY+1,a:3});
@@ -5799,6 +5842,7 @@ function hook(){
      重抽一条鱼并把已经收起来的进度清零。 */
   if(G.state!=='bite') return;
   clearTimer('bite');
+  G.biteEnd=0;
   G.hookFish=G.king?KING_FISH[G.king]:pickFish();
   G.reel=0; G.tension=34; G.esc=0;
   G.strOn=false;
@@ -5859,6 +5903,7 @@ function giveUp(msg,isSnap){
   anim.ripples.push({x:LAY.bobX,y:LAY.bobY+1,a:8});
   anim.flee={x0:LAY.bobX,t0:anim.t};
   G.snapUntil=anim.t+0.6;
+  G.pause=null; G.waitEnd=0; G.biteEnd=0;
   holding=false; $('btnAction').classList.remove('hold');
   setState('idle');
   /* 玩家已经返回钓点选择页时不再续竿：否则会在看不见的选择页上继续下竿/钓鱼 */
@@ -5903,6 +5948,7 @@ function wakeFromNoFrame(awayStart){
   if(awayStart>0) awayAt=awayAt?Math.min(awayAt,awayStart):awayStart;
   settleAway();
   resumeAutoAfterAway();
+  resumeRod();
 }
 function pump(){
   var now=(typeof performance!=='undefined'&&performance.now)?performance.now():Date.now();
@@ -5920,6 +5966,22 @@ function pump(){
     if(G.state!=='idle'&&G.state!=='result') setState('idle');
     return;
   }
+  /* 手动模式切后台 / 失去画面：冻结整竿，不让等待/咬钩/收线在后台偷偷推进 */
+  if(isHidden()){ pauseRod(); return; }
+  if(!save.auto&&noFrameAway()&&G.view==='scene'){ pauseRod(); return; }
+  /* 挂机心跳：只要人还在页面上就刷新挂机起点（隐藏页 beforeunload 不可靠）。
+     用墙钟判定而不是累计 dt：节流下 pump 变稀疏，累计 dt 会严重滞后。
+     可见时不再看界面状态：钓点选择页 / 结算弹窗期间也在计时，避免把
+     「其实一直开着」的时间算成离线，一回来就把鱼篓塞满。 */
+  var nowMs=Date.now();
+  if(nowMs-(G.lastHbAt||0)>60000){
+    G.lastHbAt=nowMs;
+    if(save.auto&&scene.map&&!isHidden()){
+      save.autoTs=nowMs; save.autoMap=scene.curMap; commitSave();
+    }
+  }
+  /* 非场景页（选点 / 图鉴等）不推进场景动画，也不绘制舞台 */
+  if(G.view!=='scene') return;
   perfStep(dtMs);
   anim.t+=dt;
   if(G.state==='reel'){ reelStep(dt); }
@@ -5933,17 +5995,6 @@ function pump(){
   }
   /* 鱼跃动画播完 → 结算 */
   if(G.state==='landing'&&G.landing&&anim.t-G.landing.t0>G.landing.dur){ finishLanding(); }
-  /* 挂机心跳：只要人还在页面上就刷新挂机起点（隐藏页 beforeunload 不可靠）。
-     用墙钟判定而不是累计 dt：节流下 pump 变稀疏，累计 dt 会严重滞后。
-     可见时不再看界面状态：钓点选择页 / 结算弹窗期间也在计时，避免把
-     「其实一直开着游戏」的时间算成离线，一回来就把鱼篓塞满。 */
-  var nowMs=Date.now();
-  if(nowMs-(G.lastHbAt||0)>60000){
-    G.lastHbAt=nowMs;
-    if(save.auto&&scene.map&&!isHidden()){
-      save.autoTs=nowMs; save.autoMap=scene.curMap; commitSave();
-    }
-  }
   fxStep(dt,anim.t);
   rippleStep(dt);
   updateBunny(dt);
@@ -5968,9 +6019,15 @@ function tick(){
   }
   rafLast=now;
   pump();
+  rafPumpAt=Date.now();
   requestAnimationFrame(tick);
 }
-setInterval(pump,250);
+/* 250ms 心跳只做 rAF 失活的兜底：正常出帧时不重复跑逻辑/绘制 */
+var rafPumpAt=0;
+setInterval(function(){
+  if(Date.now()-rafPumpAt<400) return;
+  pump();
+},250);
 /* 帧率兜底：连续 90 个正常帧均值超过 22ms（约 45fps）时，把舞台倍率降到 3× 并重烘一次；
    只在场景可见、且帧间隔正常时统计，避免隐藏页 / 心跳间隔造成误判 */
 var perf={n:0,sum:0,done:false};
@@ -6122,7 +6179,7 @@ function landFish(){
   anim.ripples.push({x:bx-2,y:by+1,a:7});
   var sp=document.createElement('canvas');
   sp.width=60; sp.height=28;
-  drawFishSprite(sp.getContext('2d'),f,6,1,2,false,false);   /* 24×13 格居中：48×26 落在 60×28 */
+  drawFishCached(sp.getContext('2d'),f,6,1,2,false,false);   /* 24×13 格居中：48×26 落在 60×28 */
   G.landing={t0:anim.t,dur:DEBUG?0.55:0.85,fish:f,x0:bx,y0:by,sprite:sp};
   setState('landing');
 }
@@ -6165,11 +6222,12 @@ function finishLanding(){
     checkDexRewards();
     checkAch();
     updateOrdBtn();
-    if(bagFull()){ autoStopFull(); return; }   /* 篓满：关自动，别让 HUD 顶着「自动 开」却钓不了 */
+    ordSyncBag();
+    if(bagFull()){ autoStopFull(); return; }   /* 篓满：暂停自动，卖鱼后恢复 */
     clearTimer('wait');
     timers.wait=setTimeout(function(){
-      /* 期间玩家关掉自动 / 回到钓点选择页 / 已经手动下竿，就不再续 */
-      if(save.auto&&G.state==='idle'&&G.view==='scene') cast();
+      /* 期间玩家关掉自动 / 钓点选择页 / 已手动下竿 / 自动已暂停，就不再续 */
+      if(save.auto&&!save.autoPause&&G.state==='idle'&&G.view==='scene') cast();
     },AUTO_NEXT_MS);
     return;
   }
@@ -6182,6 +6240,7 @@ function finishLanding(){
   checkDexRewards();
   checkAch();
   updateOrdBtn();
+  ordSyncBag();
 }
 function showResult(f,size,gain,first){
   $('ovKicker').textContent=$t('钓 上 来 啦');
@@ -6199,7 +6258,7 @@ function showResult(f,size,gain,first){
   $('ovGo').style.display='';
   var fc=$('fishCv'), fx=fc.getContext('2d');
   fx.clearRect(0,0,fc.width,fc.height);
-  drawFishSprite(fx,f,3,3,6,false);        /* 24×13 格居中：144×78 落在 150×84 */
+  drawFishCached(fx,f,3,3,6,false);        /* 24×13 格居中：144×78 落在 150×84 */
   $('overlay').classList.add('show');
 }
 /* 切语言后按上次结算数据重绘结算弹层 */
@@ -6229,7 +6288,7 @@ function refreshHud(pop){
   /* 鱼篓页开着时同步刷新：自动挂机/离线结算也会持续上鱼，
      否则面板一直停在打开时的 0/10，看起来像没钓到 */
   if($('bagOv')&&$('bagOv').classList.contains('show')){
-    try{ buildBag(); }catch(e){}
+    try{ if(!bagSync()) buildBag(true); }catch(e){}
   }
 }
 var toastTimer=null;
@@ -6352,6 +6411,7 @@ $('btnBack').onclick=function(){
   /* 返回选点页必须真正结束这一竿：以前只切视图，state 仍停在 waiting/reel/landing，
      自动模式会继续在后台把鱼钓上来（甚至再下竿），起鱼动画还会在选点页结算。 */
   G.hookFish=null; G.king=null; G.result=null;
+  G.pause=null; G.waitEnd=0; G.biteEnd=0;
   setState('idle');                         /* 顺带清掉 G.landing */
   setView('select'); buildSelect();
 };
@@ -6359,9 +6419,12 @@ $('ovAgain').onclick=function(){ $('overlay').classList.remove('show'); cast(); 
 /* 满篓的离线结算：一键卖光，卖完直接回到待机（再点「下竿」或重开自动） */
 $('ovSell').onclick=function(){
   if(!save.bag.length) return;
-  sellWholeBag();
+  var r=sellWholeBag();
+  /* 二次确认还没完成、或卖完仍满篓（订单鱼被保留）时，保留弹层方便继续处理 */
+  if(r==='armed'||(r==='sold'&&bagFull())) return;
   $('overlay').classList.remove('show');
   if(G.state==='result') setState('idle');
+  if(save.auto&&!save.autoPause&&scene.map) scheduleAutoCast(900);
 };
 $('ovGo').onclick=function(){ $('overlay').classList.remove('show'); setView('select'); buildSelect(); };
 $('btnClose').onclick=requestClose;
@@ -6409,6 +6472,12 @@ function updateAutoUI(){
     b.title=$t('商店购入「自动收线器」后可用（需成就「渔获五十」）');
     return;
   }
+  if(save.auto&&save.autoPause){
+    b.textContent=$t('自动 暂停');
+    b.classList.add('on');
+    b.title=$t(save.autoPause==='bait'?'鱼饵用完了 —— 自动已暂停，补饵后自动继续':'鱼篓满了 —— 卖鱼后自动继续');
+    return;
+  }
   b.title='';
   b.textContent=save.auto?$t('自动 开'):$t('自动 关');
   b.classList.toggle('on',save.auto);
@@ -6424,11 +6493,21 @@ $('btnAuto').onclick=function(){
     toast($t('鱼篓满了 —— 先去「渔获」卖鱼，再开自动吧'));
     return;
   }
-  save.auto=!save.auto; commitSave(); updateAutoUI();
+  save.auto=!save.auto; save.autoPause=''; commitSave(); updateAutoUI();
   /* 在场景里把开关拨到「开」时，原本只会在进图/结算后自动续竿，
      手动开机这一下没人排程，会一直干站着。这里补一次。 */
   if(save.auto&&G.view==='scene'&&G.state==='idle'&&scene.map) scheduleAutoCast(600);
   toast(save.auto?$t('自动收线开启：交给我吧'):$t('自动收线关闭：稳住！'));
+};
+function updatePowerUI(){
+  var b=$('btnPower'); if(!b) return;
+  b.textContent=save.lowPower?'🌙':'⚡';
+  b.classList.toggle('on',!!save.lowPower);
+  b.title=$t(save.lowPower?'低功耗：装饰动效已关闭':'点击开启低功耗（减少动效）');
+}
+$('btnPower').onclick=function(){
+  save.lowPower=save.lowPower?0:1; commitSave(); updatePowerUI();
+  toast(save.lowPower?$t('省电模式：装饰动效已关闭'):$t('装饰动效已恢复'));
 };
 /* 关闭页面时记录挂机起点。
    pagehide 覆盖 iframe 被移除、系统回收页面等 beforeunload 不触发的情况。
@@ -6453,7 +6532,7 @@ window.addEventListener('pagehide',stampAutoAway);
 document.addEventListener('visibilitychange',function(){
   if(isHidden()){
     awayAt=awayAt||Date.now();
-    if(!save.auto||!scene.map) return;
+    if(!save.auto||!scene.map){ pauseRod(); return; }
     save.autoTs=awayAt; save.autoMap=scene.curMap; commitSave();
     clearTimer('wait'); clearTimer('bite'); reelStop();
     if(G.view==='scene'&&G.state!=='idle'&&G.state!=='result') setState('idle');
@@ -6461,6 +6540,7 @@ document.addEventListener('visibilitychange',function(){
     lastFrameAt=Date.now();      /* 切回前台从这一刻重新计帧，避免心跳先把这段时间又当成一次挂机 */
     settleAway();                /* 按真实离开时长补离线渔获，再续竿 */
     resumeAutoAfterAway();
+    resumeRod();                 /* 手动模式：解冻本竿，按剩余时间继续 */
   }
 });
 
@@ -6468,11 +6548,66 @@ document.addEventListener('visibilitychange',function(){
    熄屏 / 切后台 / 关闭页面都算挂机：自动模式按每 2 分钟 1 条补到鱼篓容量，回来一次结算。
    起点只认「本次真正离开」的时刻，宁可少补也不按旧时间戳一次补满。 */
 function isHidden(){ return !!(typeof document!=='undefined'&&document.hidden); }
-/* 篓满：自动模式自动关掉，HUD 不再显示「自动 开」却钓不了 */
-function autoStopFull(){
-  if(!save.auto) return;
-  save.auto=false; updateAutoUI(); commitSave();
-  toast($tf('鱼篓满了（{n}/{n}）—— 点顶部「渔获」去卖鱼',{n:basketCap()}));
+/* 自动暂停：篓满 / 饵尽时不再关掉自动，而是记下原因；卖鱼 / 补饵后自动恢复 */
+function autoPause(reason){
+  if(!save.auto||!reason||save.autoPause) return;
+  save.autoPause=reason; commitSave(); updateAutoUI();
+  if(reason==='bait') toast($t('鱼饵用完了 —— 自动已暂停，补饵后自动继续'));
+  else toast($tf('鱼篓满了（{n}/{m}）—— 自动已暂停，卖鱼后自动继续',{n:save.bag.length,m:basketCap()}));
+}
+function tryResumeAuto(reason){
+  if(!save.auto||!save.autoPause||save.autoPause!==reason) return false;
+  if(reason==='bag'&&bagFull()) return false;
+  if(reason==='bait'&&mapNeedsBait()&&baitStockTotal()<=0) return false;
+  save.autoPause=''; commitSave(); updateAutoUI();
+  if(G.view==='scene'&&G.state==='idle'&&scene.map&&!bagFull()) scheduleAutoCast(700);
+  return true;
+}
+/* 篓满：保留旧的调用点，语义改成“暂停” */
+function autoStopFull(){ autoPause('bag'); }
+
+/* ---------- 手动模式后台冻结 ----------
+   自动模式靠离线结算补鱼；手动模式在后台不能继续走等待/咬钩计时，
+   否则会悄悄断线或卡在 holding。这里把整竿冻结，回前台按剩余时间恢复。 */
+function pauseRod(){
+  if(save.auto||G.view!=='scene'||G.pause) return;
+  var st=G.state;
+  if(st!=='waiting'&&st!=='bite'&&st!=='reel'&&st!=='landing') return;
+  G.pause={state:st,
+    waitLeft:(st==='waiting'&&G.waitEnd)?Math.max(0,G.waitEnd-Date.now()):0,
+    biteLeft:(st==='bite'&&G.biteEnd)?Math.max(0,G.biteEnd-Date.now()):0};
+  clearTimer('wait'); clearTimer('bite');
+  reelStop();
+}
+function resumeRod(){
+  var p=G.pause;
+  if(!p) return;
+  G.pause=null;
+  if(save.auto||G.view!=='scene') return;
+  if(p.state==='waiting'){
+    clearTimer('wait');
+    G.waitEnd=Date.now()+Math.max(200,p.waitLeft);
+    timers.wait=setTimeout(doBite,Math.max(200,p.waitLeft));
+    setState('waiting');
+  }else if(p.state==='bite'){
+    if(p.biteLeft>150){
+      clearTimer('bite');
+      G.biteEnd=Date.now()+p.biteLeft;
+      timers.bite=setTimeout(function(){
+        if(G.state!=='bite') return;
+        toast($t('鱼儿溜走了…没关系，再等等看'));
+        anim.ripples.push({x:LAY.bobX,y:LAY.bobY+1,a:3});
+        cast();
+      },p.biteLeft);
+      setState('bite');
+    }else{
+      toast($t('鱼儿溜走了…没关系，再等等看'));
+      anim.ripples.push({x:LAY.bobX,y:LAY.bobY+1,a:3});
+      cast();
+    }
+  }else{
+    setState(p.state);   /* reel / landing：回到原状态；收线不按住 */
+  }
 }
 function offlineSettle(showModal){
   if(showModal==null) showModal=true;
@@ -6492,7 +6627,7 @@ function offlineSettle(showModal){
   /* 图四挂机同样按竿扣饵（任意种类）：饵不够就少钓，一条都没饵则不结算 */
   if(f.map.r4){
     n=Math.min(n,baitStockTotal());
-    if(n<=0) return false;
+    if(n<=0){ autoPause('bait'); return false; }   /* 饵尽：自动暂停，补饵后恢复 */
     consumeBaits(n);
   }
   /* 先把场景切到该钓点（抽鱼依赖钓点专属鱼池），再结算 */
@@ -6516,12 +6651,12 @@ function offlineSettle(showModal){
   save.stats.casts=(save.stats.casts|0)+n;
   if(scene.curMap){ save.stats.mapCasts[scene.curMap]=(save.stats.mapCasts[scene.curMap]|0)+n; }
   save.stats.offCatch=(save.stats.offCatch|0)+n;
-  if(bagFull()) autoStopFull();           /* 装满即停：先把自动关掉（卖完再开） */
+  if(bagFull()) autoStopFull();           /* 装满即停：自动暂停（卖鱼后自动恢复） */
   commitSave(); refreshHud(false);
   /* 离线渔获同样要补成就 / 订单徽标：以前只算图鉴奖励，51 条回来时 c50 要等下一竿才发 */
   checkAch();
   updateOrdBtn();
-  if($('ordOv')&&$('ordOv').classList.contains('show')) buildOrders();
+  ordSyncBag();
   setState('idle');
   setView('scene');
   if(showModal){
@@ -6532,7 +6667,7 @@ function offlineSettle(showModal){
   }
   checkDexRewards();
   /* 短时间切后台回来（不弹结算层）：自动模式继续下竿 */
-  if(!showModal&&save.auto&&!bagFull()&&G.view==='scene') scheduleAutoCast(600);
+  if(!showModal&&save.auto&&!save.autoPause&&!bagFull()&&G.view==='scene') scheduleAutoCast(600);
   return true;
 }
 function showOfflineModal(map,n,gain,best,bestSize){
@@ -6542,7 +6677,7 @@ function showOfflineModal(map,n,gain,best,bestSize){
   $('ovRar').textContent=$t('离线也在钓'); $('ovRar').style.background='#8a9a7b';
   var fc=$('fishCv'), fx=fc.getContext('2d');
   fx.clearRect(0,0,fc.width,fc.height);
-  if(best) drawFishSprite(fx,best,3,3,6,false);
+  if(best) drawFishCached(fx,best,3,3,6,false);
   $('ovSub').innerHTML=$tf('共 <b>{n}</b> 条已入篓 · 估价 <b>+{g}</b> {t}',{n:n,g:gain,t:TOMATO})+
     (best?('<br>'+$tf('最大收获：<b>{f}</b> {s} cm',{f:fishName(best),s:bestSize})):'')+
     '<br><small style="opacity:.8">'+$t(full?'鱼篓满了 · 先卖鱼才能继续钓':'点顶部「渔获」打开鱼篓出售')+'</small>';
@@ -6620,7 +6755,7 @@ function buildDexSearch(body,q){
     row.className='dexHit'+(e?'':' unknown');
     row.style.borderLeftColor=rr.color;
     var cv2=document.createElement('canvas'); cv2.width=60; cv2.height=28;
-    drawFishSprite(cv2.getContext('2d'),f,6,1,2,false,e?null:'#8a857a');
+    drawFishCached(cv2.getContext('2d'),f,6,1,2,false,e?null:'#8a857a');
     row.appendChild(cv2);
     var mid=document.createElement('div'); mid.className='hi';
     var nm=document.createElement('div'); nm.className='hn';
@@ -6679,7 +6814,7 @@ function buildDex(){
       cell.style.borderTop='3px solid '+RARITY[f.r].color;
       var cv2=document.createElement('canvas');
       cv2.width=60; cv2.height=28;
-      drawFishSprite(cv2.getContext('2d'),f,6,1,2,false,e?null:'#8a857a');
+      drawFishCached(cv2.getContext('2d'),f,6,1,2,false,e?null:'#8a857a');
       cell.appendChild(cv2);
       var nm=document.createElement('b');
       nm.textContent=e?fishName(f):$t('？？？');
@@ -6864,8 +6999,22 @@ function buildShop(){
       save.tomato-=o.price; save.bait[o.key]=(save.bait[o.key]|0)+1;
       commitSave(); refreshHud(false); updateBaitUI();
       toast($tf('{n} ×1 入袋',{n:$t(o.name)})); buildShop();
+      tryResumeAuto('bait');
     });
     r.querySelector('.buy').innerHTML=TOMATO+o.price;
+    /* 批量补饵：图四每竿 1 个，买 10 个不用连点 */
+    var price10=o.price*10;
+    var b10=document.createElement('button'); b10.className='buy';
+    b10.style.padding='6px 6px'; b10.style.fontSize='11px';
+    b10.innerHTML=TOMATO+price10+' <b>×10</b>';
+    b10.disabled=save.tomato<price10;
+    b10.onclick=function(){
+      save.tomato-=price10; save.bait[o.key]=(save.bait[o.key]|0)+10;
+      commitSave(); refreshHud(false); updateBaitUI();
+      toast($tf('{n} ×10 入袋',{n:$t(o.name)})); buildShop();
+      tryResumeAuto('bait');
+    };
+    r.appendChild(b10);
   });
 }
 $('btnShop').onclick=function(){ buildShop(); $('shopOv').classList.add('show'); };
@@ -6888,45 +7037,94 @@ $('shopClose').onclick=function(){ $('shopOv').classList.remove('show'); };
 function bagSumText(){
   return $tf('<b>{b}/{c}</b> 条 · 估价 <b>{v}</b> {t}',{b:save.bag.length,c:basketCap(),v:bagValue(),t:TOMATO});
 }
-function buildBag(){
-  var body=$('bagBody'); body.innerHTML='';
+var bagRenderLen=-1;                 /* 上次渲染时 save.bag 的长度，用于增量追加 */
+var bagSellArmAt=0, bagSellArmT=0;   /* 「全部售出」二次确认 */
+function bagRowEl(it){
+  var f=fishById(it.id); if(!f) return null;
+  var rr=RARITY[f.r];
+  var row=document.createElement('div'); row.className='bagRow';
+  var cv=document.createElement('canvas'); cv.width=60; cv.height=28;
+  drawFishCached(cv.getContext('2d'),f,6,1,2,false);
+  row.appendChild(cv);
+  var si=document.createElement('div'); si.className='si';
+  var nm=document.createElement('b');
+  nm.innerHTML=fishName(f)+'<i style="background:'+rr.color+'">'+rarityName(rr)+'</i>';
+  si.appendChild(nm);
+  var sub=document.createElement('small');
+  sub.textContent=$tf('尺寸 {s}/{m} cm · 估价 +{g} 番茄币',{s:it.s,m:f.size[1],g:(it.g|0)});
+  si.appendChild(sub);
+  row.appendChild(si);
+  var btn=document.createElement('button'); btn.className='buy'; btn.textContent=$t('售出');
+  btn.onclick=function(){ sellBagItem(it); };
+  row.appendChild(btn);
+  return row;
+}
+function resetSellArm(){
+  bagSellArmAt=0; clearTimeout(bagSellArmT);
+  var b=$('bagSellAll'); if(b) b.textContent=$t('全部售出');
+}
+function bagSummary(){
   $('bagSum').innerHTML=bagSumText();
   $('bagSellAll').disabled=!save.bag.length;
+}
+function bagOverflowNote(){
+  var body=$('bagBody'), note=body.querySelector('.bagNote');
+  if(save.bag.length>120){
+    if(!note){
+      note=document.createElement('div'); note.className='shopCat bagNote';
+      body.insertBefore(note,body.firstChild);
+    }
+    note.textContent=$tf('仅显示最近 120 条 · 其余 {n} 条可一并「全部售出」',
+      {n:Math.max(0,save.bag.length-120)});
+  }else if(note){ note.remove(); }
+}
+function buildBag(preserveScroll){
+  var body=$('bagBody');
+  var sc=preserveScroll?body.scrollTop:0;
+  body.style.overflowAnchor='none';      /* 自己控制滚动位置，避免浏览器锚定把 scrollTop 改掉 */
+  body.innerHTML='';
+  resetSellArm();
+  bagRenderLen=save.bag.length;
+  bagSummary();
   if(!save.bag.length){
-    var em=document.createElement('div'); em.className='shopCat';
+    var em=document.createElement('div'); em.className='shopCat bagEmpty';
     em.textContent=$t('鱼篓是空的——去钓点钓几条鱼吧');
     body.appendChild(em);
     return;
   }
+  bagOverflowNote();
   var list=save.bag.slice().reverse();          /* 最新钓到的排最前 */
-  var shown=list.slice(0,120);
-  if(list.length>shown.length){
-    var note=document.createElement('div'); note.className='shopCat';
-    note.textContent=$tf('仅显示最近 120 条 · 其余 {n} 条可一并「全部售出」',{n:list.length-shown.length});
-    body.appendChild(note);
-  }
-  shown.forEach(function(it){
-    var f=fishById(it.id); if(!f) return;
-    var rr=RARITY[f.r];
-    var row=document.createElement('div'); row.className='bagRow';
-    var cv=document.createElement('canvas'); cv.width=60; cv.height=28;
-    drawFishSprite(cv.getContext('2d'),f,6,1,2,false);
-    row.appendChild(cv);
-    var si=document.createElement('div'); si.className='si';
-    var nm=document.createElement('b');
-    nm.innerHTML=fishName(f)+'<i style="background:'+rr.color+'">'+rarityName(rr)+'</i>';
-    si.appendChild(nm);
-    var sub=document.createElement('small');
-    sub.textContent=$tf('尺寸 {s}/{m} cm · 估价 +{g} 番茄币',{s:it.s,m:f.size[1],g:(it.g|0)});
-    si.appendChild(sub);
-    row.appendChild(si);
-    var btn=document.createElement('button'); btn.className='buy'; btn.textContent=$t('售出');
-    btn.onclick=function(){ sellBagItem(it); };
-    row.appendChild(btn);
-    body.appendChild(row);
+  list.slice(0,120).forEach(function(it){
+    var row=bagRowEl(it); if(row) body.appendChild(row);
   });
+  if(preserveScroll) body.scrollTop=sc;
 }
-/* 鱼篓变化会直接影响订单进度：卖鱼后同步 HUD 徽标（订单面板开着也重绘） */
+/* 挂机上鱼时只往顶部补新增行并保持滚动位置，避免整页重建 / 跳顶 */
+function bagSync(){
+  var body=$('bagBody');
+  if(!body||bagRenderLen<0) return false;
+  var sc=body.scrollTop;
+  var added=save.bag.length-bagRenderLen;
+  if(added<0){ buildBag(true); return true; }
+  if(added>24){ buildBag(true); return true; }
+  if(added>0){
+    var em=body.querySelector('.bagEmpty'); if(em) em.remove();
+    var first=body.querySelector('.bagRow');
+    /* 从最新往回插到原首行之前：最终最新在最上 */
+    for(var i=save.bag.length-1;i>=bagRenderLen;i--){
+      var row=bagRowEl(save.bag[i]);
+      if(row) body.insertBefore(row,first);
+    }
+    var rows=body.querySelectorAll('.bagRow');
+    for(var j=rows.length-1;j>=120;j--) rows[j].remove();
+    bagOverflowNote();
+  }
+  bagSummary();
+  bagRenderLen=save.bag.length;
+  body.scrollTop=sc;                     /* 挂机上新不跳顶，也不改变玩家当前滚动位置 */
+  return true;
+}
+/* 鱼篓变化会直接影响订单进度：卖鱼后同步 HUD 徽标与订单面板 */
 function bagChanged(){
   updateOrdBtn();
   if($('ordOv')&&$('ordOv').classList.contains('show')) buildOrders();
@@ -6935,15 +7133,61 @@ function sellBagItem(it){
   var i=save.bag.indexOf(it); if(i<0) return;
   save.bag.splice(i,1);
   save.tomato+=(it.g|0);
+  resetSellArm();
   commitSave(); refreshHud(true); bagChanged();
   toast($tf('卖出 {f} · +{g} 番茄币',{f:fishName(fishById(it.id)),g:(it.g|0)}));
+  tryResumeAuto('bag');
+}
+/* 未完成订单需要的鱼：全部售出时按最便宜优先保留，避免误卖订单鱼 */
+function orderNeedMap(){
+  var m={};
+  (save.orders||[]).forEach(function(o){
+    if(!o||o.done) return;
+    var n=clamp(o.need|0,1,99);
+    m[o.fid]=(m[o.fid]|0)+n;
+  });
+  return m;
 }
 function sellWholeBag(){
-  var n=save.bag.length; if(!n) return;
-  var sum=bagValue();
-  save.bag=[]; save.tomato+=sum;
+  var n=save.bag.length; if(!n) return 'none';
+  var needs=orderNeedMap(), keep={}, keepN=0;
+  Object.keys(needs).forEach(function(id){
+    var idxs=[];
+    for(var i=0;i<save.bag.length;i++) if(save.bag[i].id===id) idxs.push(i);
+    idxs.sort(function(a,b){ return (save.bag[a].g|0)-(save.bag[b].g|0); });
+    var k=Math.min(needs[id],idxs.length);
+    for(var j=0;j<k;j++){ keep[idxs[j]]=1; keepN++; }
+  });
+  var sum=0, sellN=0;
+  for(var i2=0;i2<save.bag.length;i2++){
+    if(!keep[i2]){ sum+=(save.bag[i2].g|0); sellN++; }
+  }
+  /* 篓里全是要留给订单的鱼：5 秒内二次点击才真的全卖 */
+  if(!sellN){
+    if(Date.now()-bagSellArmAt>5000){
+      bagSellArmAt=Date.now();
+      $('bagSellAll').textContent=$t('确认全部售出（含订单鱼）');
+      clearTimeout(bagSellArmT);
+      bagSellArmT=setTimeout(resetSellArm,5000);
+      toast($t('鱼篓里全是订单要的鱼 —— 再点一次「全部售出」才会卖掉'));
+      return 'armed';
+    }
+    resetSellArm();
+    var total=bagValue();
+    save.bag=[]; save.tomato+=total;
+    commitSave(); refreshHud(true); bagChanged();
+    toast($tf('卖出 {n} 条 · +{g} 番茄币',{n:n,g:total}));
+    tryResumeAuto('bag');
+    return 'sold';
+  }
+  for(var i3=save.bag.length-1;i3>=0;i3--) if(!keep[i3]) save.bag.splice(i3,1);
+  save.tomato+=sum;
+  resetSellArm();
   commitSave(); refreshHud(true); bagChanged();
-  toast($tf('卖出 {n} 条 · +{g} 番茄币',{n:n,g:sum}));
+  toast(keepN?$tf('卖出 {n} 条 · +{g} 番茄币 · 保留 {k} 条订单鱼',{n:sellN,g:sum,k:keepN})
+             :$tf('卖出 {n} 条 · +{g} 番茄币',{n:sellN,g:sum}));
+  tryResumeAuto('bag');
+  return 'sold';
 }
 function openBag(){ buildBag(); $('bagOv').classList.add('show'); }
 $('statBag').onclick=openBag;
@@ -7111,8 +7355,9 @@ function deliverOrder(i){
   rec.ord=(rec.ord|0)+1;
   rec.ordAt=Date.now();                     /* 今日同数量时比「最后一单更早」 */
   commitSave(); refreshHud(true); updateOrdBtn(); buildOrders();
-  if($('bagOv').classList.contains('show')) buildBag();
+  if($('bagOv').classList.contains('show')) buildBag(true);
   toast(msg);
+  tryResumeAuto('bag');     /* 交付后腾出位置，篓满暂停的挂机自动恢复 */
 }
 var ordRerollAt={};                       /* 每个订单最近一次付费刷新时间：双击只算一次 */
 function refreshOrder(i){
@@ -7134,8 +7379,9 @@ function updateOrdBtn(){
   (save.orders||[]).forEach(function(o){ if(!o||o.done) return; if(orderHave(o)>=clamp(o.need|0,1,99)) n++; });
   var b=$('btnOrders'); if(b) b.textContent=n?$tf('📋 订单 ✓{n}',{n:n}):$t('📋 订单');
 }
+var ordRows=[];                    /* 订单卡引用，上鱼后只改进度不整页重建 */
 function buildOrders(){
-  var body=$('ordBody'); body.innerHTML='';
+  var body=$('ordBody'); body.innerHTML=''; ordRows=[];
   (save.orders||[]).forEach(function(o,i){
     if(!o) return;                            /* 脏档里的 null 订单直接跳过，别整页崩掉 */
     var f=fishById(o.fid); if(!f) return;     /* 旧版本删过的鱼：跳过这一格 */
@@ -7181,7 +7427,23 @@ function buildOrders(){
     }
     card.appendChild(foot);
     body.appendChild(card);
+    ordRows.push({o:o,fill:fill,prog:prog,need:need,est:est,hasDeliver:(o.done||have>=need)});
   });
+}
+/* 挂机上鱼后订单面板只局部刷新进度；某单刚好凑齐时才整页重建（出现「交付」按钮） */
+function ordSyncBag(){
+  if(!($('ordOv')&&$('ordOv').classList.contains('show'))) return;
+  if(!ordRows.length){ buildOrders(); return; }
+  var rebuild=false;
+  ordRows.forEach(function(r){
+    if(r.o.done) return;
+    var have=orderHave(r.o);
+    r.fill.style.width=Math.round(clamp(have/r.need,0,1)*100)+'%';
+    r.prog.textContent=$tf('{g} / {n} · 报酬约 {e} 番茄币',{g:have,n:r.need,e:r.est});
+    if(have>=r.need&&!r.hasDeliver) rebuild=true;
+  });
+  if(rebuild) buildOrders();
+  updateOrdBtn();
 }
 /* 面板打开时每秒走表：跨过刷新点自动换单 */
 var ordTicker=null, ordDayShown='';
@@ -8163,7 +8425,22 @@ var I18N_UI={
   '钓具和后续钓点会随着旅行信件与图鉴收录逐步解锁。':{en:'Gear and later spots unlock as your travel letters and codex progress.',ja:'道具と後の釣り場は、旅の手紙と図鑑の進み具合で解放されます。',ko:'장비와 이후 낚시터는 여행 편지와 도감 진행에 따라 해금돼요.'},
   '放置也照钓':{en:'Idle Fishing',ja:'放置でも釣れる',ko:'방치 낚시'},
   '达成「渔获五十」后，商店会上架自动收线器：自动提竿、自动稳张力。':{en:'After “Catch 50”, the shop lists the Auto-Reeler: it strikes and holds tension for you.',ja:'「漁獲五十」達成後、ショップに自動巻き器が並びます。合わせと張力維持を自動で行います。',ko:'“어획 50” 달성 후 상점에 자동 감기 장치가 올라와요. 챔질과 장력을 대신 해 줘요.'},
-  '自动模式收获会少一些；开着自动关掉页面也会继续钓，直到鱼篓装满；装满会自动关掉自动，回来结算弹窗可一键全部售出。':{en:'Auto mode catches a little less; leave it on and close the page — it keeps fishing until the basket is full, then auto turns off and the return pop-up offers one-tap Sell All.',ja:'自動モードは収穫が少し減ります。自動を入れたまま閉じても、魚篭がいっぱいになるまで釣り続けます。いっぱいになると自動は切れ、戻ったときの画面で「すべて売る」が押せます。',ko:'자동 모드는 수확이 조금 줄어요. 자동을 켜 둔 채 닫아도 바구니가 가득 찰 때까지 계속 낚아요. 가득 차면 자동이 꺼지고, 돌아왔을 때 창에서 “전부 팔기”를 누를 수 있어요.'}
+  '自动模式收获会少一些；开着自动关掉页面也会继续钓，直到鱼篓装满；装满会自动暂停，卖鱼后自动继续。':{en:'Auto mode catches a little less; leave it on and close the page — it keeps fishing until the basket is full, then pauses and resumes after you sell.',ja:'自動モードは収穫が少し減ります。自動を入れたまま閉じても、魚篭がいっぱいになるまで釣り続けます。いっぱいになると自動で一時停止し、売ると再開します。',ko:'자동 모드는 수확이 조금 줄어요. 자동을 켜 둔 채 닫아도 바구니가 가득 찰 때까지 계속 낚아요. 가득 차면 자동으로 잠시 멈추고, 팔면 다시 시작해요.'},
+  /* ---- P0/P1 新增文案 ---- */
+  '自动 暂停':{en:'Auto Paused',ja:'自動 一時停止',ko:'자동 일시정지'},
+  '鱼饵用完了 —— 自动已暂停，补饵后自动继续':{en:'Out of bait — auto is paused; it resumes after you restock.',ja:'エサがなくなりました — 自動を一時停止しました。補給すると再開します。',ko:'미끼가 떨어졌어요 — 자동을 잠시 멈췄어요. 보급하면 다시 시작해요.'},
+  '鱼篓满了 —— 卖鱼后自动继续':{en:'Basket full — auto resumes after you sell',ja:'魚篭がいっぱい — 売ると自動再開',ko:'바구니가 가득 — 팔면 자동 재개'},
+  '鱼篓满了（{n}/{m}）—— 自动已暂停，卖鱼后自动继续':{en:'Basket full ({n}/{m}) — auto paused; it resumes after you sell.',ja:'魚篭がいっぱいです（{n}/{m}）— 自動を一時停止しました。売ると再開します。',ko:'바구니가 가득 찼어요 ({n}/{m}) — 자동을 잠시 멈췄어요. 팔면 다시 시작해요.'},
+  '确认全部售出（含订单鱼）':{en:'Confirm Sell All (incl. order fish)',ja:'すべて売る（依頼魚を含む）を確認',ko:'전부 팔기 확인 (주문 물고기 포함)'},
+  '鱼篓里全是订单要的鱼 —— 再点一次「全部售出」才会卖掉':{en:'Every fish here is needed by an order — tap “Sell All” again to sell them anyway.',ja:'魚篭は依頼に必要な魚ばかりです — もう一度「すべて売る」を押すと売れます。',ko:'바구니가 전부 주문에 필요한 물고기예요 — “전부 팔기”를 한 번 더 누르면 팔려요.'},
+  '卖出 {n} 条 · +{g} 番茄币 · 保留 {k} 条订单鱼':{en:'Sold {n} fish · +{g} Tomato Coins · kept {k} order fish',ja:'{n} 匹売却 · +{g} トマトコイン · 依頼魚 {k}匹を保留',ko:'{n}마리 판매 · +{g} 토마토 코인 · 주문 물고기 {k}마리 보관'},
+  '省电模式：装饰动效已关闭':{en:'Low power: decorative effects off',ja:'省電力モード：装飾エフェクトを停止',ko:'저전력 모드: 장식 효과 꺼짐'},
+  '装饰动效已恢复':{en:'Decorative effects restored',ja:'装飾エフェクトを再開しました',ko:'장식 효과를 다시 켰어요'},
+  '省电模式':{en:'Low power mode',ja:'省電力モード',ko:'저전력 모드'},
+  '点击开启低功耗（减少动效）':{en:'Turn on low power (fewer effects)',ja:'低電力にする（エフェクト削減）',ko:'저전력 켜기 (효과 줄이기)'},
+  '低功耗：装饰动效已关闭':{en:'Low power: decorative effects off',ja:'低電力：装飾エフェクト停止',ko:'저전력: 장식 효과 꺼짐'},
+  '{n} ×10 入袋':{en:'{n} ×10 added',ja:'{n} ×10 補充',ko:'{n} ×10 보충'},
+  '鱼饵只剩 {n} 个了，记得补饵':{en:'Only {n} bait left — remember to restock.',ja:'エサ残り {n} 個。補充を忘れずに。',ko:'미끼가 {n}개 남았어요. 보충해 주세요.'}
 };
 
 /* ---------- 番茄立绘 ---------- */
@@ -8827,6 +9104,14 @@ var I18N_FISH={
 applyStaticI18n();   /* 先把静态文案按当前语言铺好 */
 TOMATO='<img class="timg" src="'+COIN_URL+'" alt="'+$t('番茄币')+'">';
 loadSave();
+/* 低功耗未设置时跟随系统“减少动效”偏好，只决定一次并写入存档 */
+if(save.lowPower===null||save.lowPower===undefined){
+  var rmPref=false;
+  try{ rmPref=matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
+  save.lowPower=rmPref?1:0; commitSave();
+}
+/* 存档里带暂停原因的挂机：若条件已解除（比如之前卖过鱼），启动时自动恢复 */
+if(save.auto&&save.autoPause){ try{ tryResumeAuto(save.autoPause); }catch(e){} }
 /* 调试档标记：?debug=1 仍可用于本地调试，但这份存档不再上报排行榜，
    避免用调试档解锁图四/自动收线后刷榜；清掉 localStorage 里的 dbg 才会恢复。 */
 if(DEBUG&&!save.dbg){ save.dbg=1; commitSave(); }
@@ -8846,6 +9131,7 @@ if(!BUDDY_LINK && save.orders && save.orders.length){
 }
 refreshHud(false);
 updateAutoUI();
+updatePowerUI();
 updateBaitUI();
 /* 内嵌且要接庭院：先等父页名册（一般立刻到），别用保底名册先把订单开了 */
 YARD_PENDING=!!(IN_FRAME&&BUDDY_LINK);
