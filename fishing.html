@@ -161,6 +161,19 @@
   #btnAuto.on{color:#fff;background:linear-gradient(180deg,var(--accent2),var(--accent));}
   #btnPower{padding:6px 7px;font-size:12px;line-height:1;}
   #btnPower.on{background:linear-gradient(180deg,#d8c8a6,#c2b090);}
+  /* ---------- 自绘像素图标 ----------
+     全部 emoji 换成内联 SVG，沿用米白 / 浅青 / 浅木 / 金色同一套色板。 */
+  .ico{display:inline-block;width:1.15em;height:1.15em;flex:0 0 auto;vertical-align:-.22em;
+    margin-right:.3em;line-height:0;}
+  .ico svg{display:block;width:100%;height:100%;}
+  .ico.only{margin-right:0;}
+  #btnBack .ico,#btnClose .ico,#dexClose .ico,#dexQC .ico,#shopClose .ico,#bagClose .ico,
+  #ordClose .ico,#achClose .ico,#statClose .ico,#lbClose .ico,#langClose .ico,#guideClose .ico,
+  #ptClose .ico{color:var(--dim);}
+  #ovFirst .ico{margin-right:.2em;color:#c98a3e;}
+  #btnPower .ico{vertical-align:-.12em;}
+  .bagRow .lk .ico{margin-right:0;width:1.25em;height:1.25em;}
+  .bagRow .lk.on .ico{color:#7a5c14;}
   #btnAction.autorun{background:linear-gradient(180deg,#b9ccc2,#9db8a9);box-shadow:0 3px 0 rgba(91,83,67,.18);
     animation:none;}
 
@@ -306,6 +319,11 @@
   .bagRow .si b{font-size:11px;letter-spacing:.5px;}
   .bagRow .si b i{font-style:normal;font-size:8px;font-weight:900;color:#fff;margin-left:5px;padding:1px 5px;}
   .bagRow .si small{display:block;margin-top:1px;font-size:9px;color:var(--dim);font-variant-numeric:tabular-nums;}
+  .bagRow.locked{background:#faf3dc;border-color:#d8c8a0;}
+  .bagRow .lk{flex:0 0 auto;width:24px;height:26px;padding:0;cursor:pointer;font-family:inherit;
+    font-size:12px;line-height:1;color:var(--dim);border:1px solid var(--line);background:var(--panel);}
+  .bagRow .lk.on{color:#7a5c14;border-color:#c9983e;background:#f5e8c2;}
+  .bagRow .lk:active{transform:scale(.94);}
 
   /* ---------- 月巴订单（C2） ---------- */
   .ordCard{padding:9px 10px;margin-bottom:6px;border:1px solid var(--line);background:var(--panel);
@@ -485,7 +503,7 @@
   @media (max-width:560px){
     /* 五个工具键等分一行，右侧那句提示在竖屏里只会挤掉按钮，藏起来 */
     #selectTools{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;}
-    #selectTools span{display:none;}
+    #selectTools>span{display:none;}   /* 只藏尾注，别把按钮里的图标/文字一起藏了 */
     #selectTools .chipbtn{padding:0 2px;letter-spacing:0;}
     /* 场景页：钓点名一行省略，副标题（地区·水质）在窄屏隐藏，信息在钓点页已有 */
     #sceneTitle i{display:none;}
@@ -500,7 +518,7 @@
     .stat .timg{width:15px;height:15px;}
     .stat b{font-size:12px;min-width:16px;}
     .chipbtn{padding:0 6px;letter-spacing:0;}
-    /* 360 一行只剩 1px 余量，收一点段间距让「收录/✉」不掉行 */
+    /* 360 一行只剩 1px 余量，收一点段间距让「收录/信件」不掉行 */
     .maprow .mi small{column-gap:11px;}
   }
   /* ---------- Toast ---------- */
@@ -574,9 +592,10 @@
   .ptBar i{display:block;height:100%;background:repeating-linear-gradient(90deg,var(--accent2) 0 4px,var(--accent) 4px 8px);}
   #ptNote{margin-top:2px;font-size:9px;line-height:1.6;letter-spacing:.4px;color:var(--dim);text-align:center;}
 
-  /* ---------- 玩法说明（右上角 ❔） ---------- */
+  /* ---------- 玩法说明（右上角问号） ---------- */
   .guidebtn{padding:0 7px;gap:3px;letter-spacing:0;}
   .guidebtn b{font-size:12px;font-weight:900;line-height:1;}
+  .guidebtn b.ico{width:14px;height:14px;}
   #guideOv{position:fixed;inset:0;z-index:13;display:none;align-items:center;justify-content:center;
     padding:16px;background:rgba(91,83,67,.38);
     -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);}
@@ -660,6 +679,7 @@
     .langbtn{padding:0 4px;}
   }
 </style>
+<script src="moon-icons.js"></script>
 </head>
 <body>
 <div id="stage">
@@ -670,21 +690,21 @@
         <div class="stat"><img class="timg" id="coinImg" alt="番茄币" data-i18n-alt="番茄币"><b id="hudTomato">0</b></div>
         <div class="stat clickable" id="statBag" title="打开鱼篓" data-i18n-title="打开鱼篓"><span data-i18n="渔获">渔获</span><b id="hudCatch">0/10</b></div>
         <button class="chipbtn show portraitbtn" id="btnPortrait" title="番茄立绘" data-i18n-title="番茄立绘"><canvas id="ptIcon" width="44" height="44"></canvas></button>
-        <button class="chipbtn show langbtn" id="btnLang" title="语言 / Language" data-i18n-title="语言 / Language">🌐</button>
-        <button class="chipbtn show guidebtn" id="btnGuide" title="玩法说明" data-i18n-title="玩法说明"><b>?</b><span data-i18n="玩法">玩法</span></button>
-        <button class="chipbtn show" id="btnDex" data-i18n="📘 图鉴">📘 图鉴</button>
-        <button class="chipbtn" id="btnClose" data-i18n="✕ 返回">✕ 返回</button>
+        <button class="chipbtn show langbtn" id="btnLang" title="语言 / Language" data-i18n-title="语言 / Language"><span class="ico only" data-ico="globe"></span></button>
+        <button class="chipbtn show guidebtn" id="btnGuide" title="玩法说明" data-i18n-title="玩法说明"><b class="ico only" data-ico="help"></b><span data-i18n="玩法">玩法</span></button>
+        <button class="chipbtn show" id="btnDex"><span class="ico" data-ico="book"></span><span data-i18n="图鉴">图鉴</span></button>
+        <button class="chipbtn" id="btnClose"><span class="ico" data-ico="back"></span><span data-i18n="返回">返回</span></button>
       </div>
     </div>
 
     <!-- 钓点选择页：四地区 × 四小地图（图四锁定，M5 旅行联动后解锁） -->
     <div id="viewSelect">
       <div id="selectTools">
-        <button class="chipbtn show" id="btnShop" data-i18n="🛍 商店">🛍 商店</button>
-        <button class="chipbtn show" id="btnOrders" data-i18n="📋 订单">📋 订单</button>
-        <button class="chipbtn show" id="btnAch" data-i18n="🏆 挑战">🏆 挑战</button>
-        <button class="chipbtn show" id="btnStat" data-i18n="📊 统计">📊 统计</button>
-        <button class="chipbtn show" id="btnBoard" data-i18n="🥇 排行">🥇 排行</button>
+        <button class="chipbtn show" id="btnShop"><span class="ico" data-ico="bag"></span><span data-i18n="商店">商店</span></button>
+        <button class="chipbtn show" id="btnOrders"><span class="ico" data-ico="clip"></span><span data-i18n="订单">订单</span></button>
+        <button class="chipbtn show" id="btnAch"><span class="ico" data-ico="trophy"></span><span data-i18n="挑战">挑战</span></button>
+        <button class="chipbtn show" id="btnStat"><span class="ico" data-ico="chart"></span><span data-i18n="统计">统计</span></button>
+        <button class="chipbtn show" id="btnBoard"><span class="ico" data-ico="medal"></span><span data-i18n="排行">排行</span></button>
         <span data-i18n="升级钓具 · 接订单 · 领成就">升级钓具 · 接订单 · 领成就</span>
       </div>
       <div id="regionTabs"></div>
@@ -695,11 +715,11 @@
     <!-- 垂钓场景 -->
     <div id="viewScene">
       <div id="sceneHead">
-        <button id="btnBack" data-i18n="← 钓点">← 钓点</button>
+        <button id="btnBack"><span class="ico" data-ico="back"></span><span data-i18n="钓点">钓点</span></button>
         <div id="sceneTitle">—<i></i></div>
         <button class="chipbtn show" id="btnBait">饵:无</button>
         <button class="chipbtn show" id="btnAuto">自动 关</button>
-        <button class="chipbtn show" id="btnPower" data-i18n-title="点击开启低功耗（减少动效）" title="点击开启低功耗（减少动效）">⚡</button>
+        <button class="chipbtn show" id="btnPower" data-i18n-title="点击开启低功耗（减少动效）" title="点击开启低功耗（减少动效）"><span class="ico only" data-ico="bolt"></span></button>
       </div>
       <div id="frame"><canvas id="cv" width="256" height="144"></canvas></div>
       <div id="statusLine">选好了吗？</div>
@@ -718,7 +738,7 @@
     <div id="ovRar">普通</div>
     <div id="fishBox"><canvas id="fishCv" width="150" height="84"></canvas></div>
     <div id="ovSub">—</div>
-    <div id="ovFirst" data-i18n="★ 首次捕获 · 已记录">★ 首次捕获 · 已记录</div>
+    <div id="ovFirst"><span class="ico" data-ico="star"></span><span data-i18n="首次捕获 · 已记录">首次捕获 · 已记录</span></div>
     <div id="ovBuddy"></div>
     <div id="ovTitleTag"></div>
     <div id="ovBtns">
@@ -733,13 +753,13 @@
 <div id="dex">
   <div id="dexPanel">
     <div id="dexHead">
-      <span class="dt" data-i18n="📘 图鉴">📘 图鉴</span>
+      <span class="dt"><span class="ico" data-ico="book"></span><span data-i18n="图鉴">图鉴</span></span>
       <span id="dexProg">0 / 100</span>
-      <button id="dexClose" data-i18n="✕ 关闭">✕ 关闭</button>
+      <button id="dexClose"><span class="ico" data-ico="close"></span><span data-i18n="关闭">关闭</span></button>
     </div>
     <div id="dexSearch">
       <input id="dexQ" type="text" placeholder="搜索鱼名 · 钓点 · 稀有度 · 时段" data-i18n-placeholder="搜索鱼名 · 钓点 · 稀有度 · 时段" autocomplete="off" spellcheck="false">
-      <button id="dexQC" data-i18n="✕ 清空">✕ 清空</button>
+      <button id="dexQC"><span class="ico" data-ico="close"></span><span data-i18n="清空">清空</span></button>
     </div>
     <div id="dexTabs"></div>
     <div id="dexBody"></div>
@@ -750,9 +770,9 @@
 <div id="shopOv">
   <div id="shopPanel">
     <div id="shopHead">
-      <span class="dt" data-i18n="🛍 钓具商店">🛍 钓具商店</span>
+      <span class="dt"><span class="ico" data-ico="bag"></span><span data-i18n="钓具商店">钓具商店</span></span>
       <span id="shopBal"></span>
-      <button id="shopClose" data-i18n="✕ 关闭">✕ 关闭</button>
+      <button id="shopClose"><span class="ico" data-ico="close"></span><span data-i18n="关闭">关闭</span></button>
     </div>
     <div id="shopBody"></div>
   </div>
@@ -762,10 +782,10 @@
 <div id="bagOv">
   <div id="bagPanel">
     <div id="bagHead">
-      <span class="dt" data-i18n="🧺 鱼篓">🧺 鱼篓</span>
+      <span class="dt"><span class="ico" data-ico="basket"></span><span data-i18n="鱼篓">鱼篓</span></span>
       <span id="bagSum"></span>
       <button id="bagSellAll" data-i18n="全部售出">全部售出</button>
-      <button id="bagClose" data-i18n="✕ 关闭">✕ 关闭</button>
+      <button id="bagClose"><span class="ico" data-ico="close"></span><span data-i18n="关闭">关闭</span></button>
     </div>
     <div id="bagBody"></div>
   </div>
@@ -775,9 +795,9 @@
 <div id="ordOv">
   <div id="shopPanel">
     <div id="ordHead">
-      <span class="dt" data-i18n="📋 月巴订单">📋 月巴订单</span>
+      <span class="dt"><span class="ico" data-ico="clip"></span><span data-i18n="月巴订单">月巴订单</span></span>
       <span class="shopBal" data-i18n="庭院月巴的心愿，交付领报酬">庭院月巴的心愿，交付领报酬</span>
-      <button id="ordClose" data-i18n="✕ 关闭">✕ 关闭</button>
+      <button id="ordClose"><span class="ico" data-ico="close"></span><span data-i18n="关闭">关闭</span></button>
     </div>
     <div id="ordTimer"></div>
     <div id="ordBody"></div>
@@ -788,9 +808,9 @@
 <div id="achOv">
   <div id="achPanel">
     <div id="achHead">
-      <span class="dt" data-i18n="🏆 挑战">🏆 挑战</span>
+      <span class="dt"><span class="ico" data-ico="trophy"></span><span data-i18n="挑战">挑战</span></span>
       <span class="shopBal" data-i18n="称号会在结算弹窗署名">称号会在结算弹窗署名</span>
-      <button id="achClose" data-i18n="✕ 关闭">✕ 关闭</button>
+      <button id="achClose"><span class="ico" data-ico="close"></span><span data-i18n="关闭">关闭</span></button>
     </div>
     <div id="achBody"></div>
   </div>
@@ -800,9 +820,9 @@
 <div id="statOv">
   <div id="statPanel">
     <div id="statHead">
-      <span class="dt" data-i18n="📊 钓鱼统计">📊 钓鱼统计</span>
+      <span class="dt"><span class="ico" data-ico="chart"></span><span data-i18n="钓鱼统计">钓鱼统计</span></span>
       <span class="shopBal" data-i18n="一路走来的数据">一路走来的数据</span>
-      <button id="statClose" data-i18n="✕ 关闭">✕ 关闭</button>
+      <button id="statClose"><span class="ico" data-ico="close"></span><span data-i18n="关闭">关闭</span></button>
     </div>
     <div id="statBody"></div>
   </div>
@@ -812,9 +832,9 @@
 <div id="lbOv">
   <div id="lbPanel">
     <div id="lbHead">
-      <span class="dt" data-i18n="🥇 排行榜">🥇 排行榜</span>
+      <span class="dt"><span class="ico" data-ico="medal"></span><span data-i18n="排行榜">排行榜</span></span>
       <span class="shopBal" id="lbSub">北京时间 00:00 刷新</span>
-      <button id="lbClose" data-i18n="✕ 关闭">✕ 关闭</button>
+      <button id="lbClose"><span class="ico" data-ico="close"></span><span data-i18n="关闭">关闭</span></button>
     </div>
     <div id="lbDays">
       <button class="lbDay on" data-day="today" data-i18n="今日">今日</button>
@@ -852,20 +872,20 @@
 <div id="langOv">
   <div id="langPanel">
     <div id="langHead">
-      <span class="dt" data-i18n="🌐 语言 / Language">🌐 语言 / Language</span>
-      <button id="langClose" data-i18n="✕ 关闭">✕ 关闭</button>
+      <span class="dt"><span class="ico" data-ico="globe"></span><span data-i18n="语言 / Language">语言 / Language</span></span>
+      <button id="langClose"><span class="ico" data-ico="close"></span><span data-i18n="关闭">关闭</span></button>
     </div>
     <div id="langList"></div>
     <div id="langNote" data-i18n="切换后立即生效，只影响本页显示">切换后立即生效，只影响本页显示</div>
   </div>
 </div>
 
-<!-- 玩法说明：顶栏右上角 ❔；静态文案走 data-i18n，切语言即时刷新 -->
+<!-- 玩法说明：顶栏右上角问号；静态文案走 data-i18n，切语言即时刷新 -->
 <div id="guideOv">
   <div id="guidePanel">
     <div id="guideHead">
-      <span class="dt" data-i18n="❔ 玩法说明">❔ 玩法说明</span>
-      <button id="guideClose" data-i18n="✕ 关闭">✕ 关闭</button>
+      <span class="dt"><span class="ico" data-ico="help"></span><span data-i18n="玩法说明">玩法说明</span></span>
+      <button id="guideClose"><span class="ico" data-ico="close"></span><span data-i18n="关闭">关闭</span></button>
     </div>
     <div id="guideBody">
       <div class="gSec">
@@ -904,9 +924,9 @@
 <div id="ptOv">
   <div id="ptPanel">
     <div id="ptHead">
-      <span class="dt" data-i18n="🎨 番茄立绘">🎨 番茄立绘</span>
+      <span class="dt"><span class="ico" data-ico="palette"></span><span data-i18n="番茄立绘">番茄立绘</span></span>
       <span id="ptProg"></span>
-      <button id="ptClose" data-i18n="✕ 关闭">✕ 关闭</button>
+      <button id="ptClose"><span class="ico" data-ico="close"></span><span data-i18n="关闭">关闭</span></button>
     </div>
     <div id="ptBody"></div>
     <div id="ptNote" data-i18n="集齐第 2 张地图解锁战斗番茄 · 第 3 张地图解锁 006 番茄">集齐第 2 张地图解锁战斗番茄 · 第 3 张地图解锁 006 番茄</div>
@@ -1034,6 +1054,14 @@ function achTitle(a){ return a.title?$tn(I18N_ACH,a.id,'t',a.title):''; }
 function slotName(i){ return $t(SLOT_NAMES[i]); }
 function kingName(id){ return KINGS[id]?$tn(I18N_KING,id,'n',KINGS[id].name):''; }
 
+/* ---------- 自绘像素图标 ----------
+   图标统一收在根目录 moon-icons.js（颜色与这套 UI 同一套：墨色 / 米白 / 浅青 / 浅木 / 金色 / 砖红），
+   其他小游戏直接 <script src="moon-icons.js"></script> 也能用。
+   静态骨架用 <span class="ico" data-ico="名字"></span>，启动与切语言后由 paintIcons() 填充；
+   动态拼字符串的地方直接调 icon('名字')。 */
+var ICONS=MoonIcons.ICONS;
+var icon=MoonIcons.icon;
+var paintIcons=MoonIcons.paintIcons;
 /* 静态文案：给元素加 data-i18n / data-i18n-html / data-i18n-title / data-i18n-placeholder */
 function applyStaticI18n(){
   try{ document.documentElement.lang=(LANG==='zh'?'zh-CN':LANG); }catch(e){}
@@ -1057,12 +1085,13 @@ function sceneTitle(){
 /* 切语言后重绘当前打开的所有视图（弹层按 show 状态逐个重建） */
 function repaintAll(){
   applyStaticI18n();
+  paintIcons();
   TOMATO='<img class="timg" src="'+COIN_URL+'" alt="'+$t('番茄币')+'">';
   try{ refreshHud(false); }catch(e){}
   try{ updateAutoUI(); }catch(e){}
   try{ updatePowerUI(); }catch(e){}
   try{ updateBaitUI(); }catch(e){}
-  try{ updateOrdBtn(); }catch(e){}     /* applyStaticI18n 会重置按钮文案，切语言后补回 ✓n */
+  try{ updateOrdBtn(); }catch(e){}     /* applyStaticI18n 会重置按钮文案，切语言后补回完成数 */
   if(G.view==='scene'&&scene.map) sceneTitle();
   if(G.view==='select') buildSelect();
   if($('dex').classList.contains('show')) buildDex();
@@ -1096,7 +1125,7 @@ function buildLangModal(){
   I18N_LANGS.forEach(function(l){
     var b=document.createElement('button');
     b.className='langBtn'+(l.code===LANG?' on':'');
-    b.textContent=l.label+(l.code===LANG?' ✓':'');
+    b.innerHTML=l.label+(l.code===LANG?icon('check'):'');
     b.onclick=function(){ setLang(l.code); $('langOv').classList.remove('show'); };
     box.appendChild(b);
   });
@@ -1424,7 +1453,7 @@ function loadSave(){
       save.bag=[];
       if(Array.isArray(d.bag)) d.bag.forEach(function(it){
         if(!it||!fishById(it.id)) return;
-        save.bag.push({id:it.id,s:clamp(it.s|0,0,999),g:Math.max(0,it.g|0),t:(typeof it.t==='number')?it.t:0});
+        save.bag.push({id:it.id,s:clamp(it.s|0,0,999),g:Math.max(0,it.g|0),t:(typeof it.t==='number')?it.t:0,lk:it.lk?1:0});
       });
       /* C3 鱼王 / 垃圾收藏；C4 随行羁绊 */
       save.kings=d.kings||{}; save.kingPity=d.kingPity||{};
@@ -1512,7 +1541,7 @@ function commitSave(){
    真实离开时长已被覆盖，无法精确重算，因此按「每次渔获都应有一次下竿」的口径回正：
      · 多算条数 excess = max(0, 总渔获 − 总下竿)
      · 先把鱼篓里多出来的鱼拿走（最新的一批）；这些鱼还没换成钱，不再重复扣
-     · 剩下的（已经卖掉的部分）按离线期望单价 ≈7.7 🍅/条 从番茄币扣回；
+     · 剩下的（已经卖掉的部分）按离线期望单价 ≈7.7 番茄币/条 从番茄币扣回；
        钱已经花在竿/线/篓上时允许**扣成负数**，先记账，之后钓到/卖鱼/领奖慢慢还清，
        余额为负期间商店与换心愿按「钱不够」处理，回到 0 以上自动恢复
      · 总渔获 / 离线渔获计数减去 excess；图鉴、成就、称号、订单不回退
@@ -5510,7 +5539,7 @@ function seenCount(mp){
 function isMapOpen(mp){ return DEBUG||!mp.r4||mapOpenState(mp).ok; }
 function dbgEntry(id){
   var f=FISH[id];
-  return f?{n:quotaOf(id),first:0,best:f.size[0]}:null;   /* best 取下限：不伪造 👑 满尺寸 */
+  return f?{n:quotaOf(id),first:0,best:f.size[0]}:null;   /* best 取下限：不伪造满尺寸 */
 }
 function fishEntry(id){ return save.fish[id]||(DEBUG?dbgEntry(id):null); }
 /* 钓点 ↔ 旅行目的地（与主页 TV_DESTS / TV_REGIONS 一一对应） */
@@ -5606,7 +5635,7 @@ function bagFull(){ return save.bag.length>=basketCap(); }
 function bagValue(){ var s=0; save.bag.forEach(function(it){ s+=(it.g|0); }); return s; }
 function bagAdd(f,size,gain){
   if(save.bag.length>=basketCap()) return;   /* 鱼篓已满：任何路径都不许再塞，防止超容 */
-  save.bag.push({id:f.id,s:size,g:gain,t:Date.now()});
+  save.bag.push({id:f.id,s:size,g:gain,t:Date.now(),lk:0});
   recGold(f,gain);                         /* 今日榜 + 历史最贵单条 */
 }
 function basketCost(){ return 600+120*(save.basket|0); }
@@ -6214,7 +6243,7 @@ function finishLanding(){
     /* 自动/挂机：不弹结算遮罩（以前挂机时没人点「再钓一条」就一直卡在这一竿），
        只飘一条渔获提示，稍后自动续竿。 */
     G.result=null;                         /* 不留给切语言时的 repaintResult 重开遮罩 */
-    var msg=[(first?'★ ':'')+$tf('钓到 {f} · {s} cm · +{g} 番茄币',{f:fishName(f),s:size,g:gain})];
+    var msg=[$tf('钓到 {f} · {s} cm · +{g} 番茄币',{f:fishName(f),s:size,g:gain})];
     if(G.kingReward) msg.push(G.kingReward);
     if(evMsg) msg.push(evMsg);
     toast(msg.join(' · '));
@@ -6252,7 +6281,7 @@ function showResult(f,size,gain,first){
     '<br><small style="opacity:.8">'+$t('已入篓，点顶部「渔获」才能卖出')+'</small>';
   $('ovFirst').style.display=first?'block':'none';
   $('ovBuddy').textContent=(Math.random()<0.5?buddyName()+'：'+$t(BUDDY_WIN[randi(0,BUDDY_WIN.length-1)]):'');
-  $('ovTitleTag').textContent=save.title?('🏆 '+$t(save.title)):'';
+  $('ovTitleTag').innerHTML=save.title?(icon('trophy')+$t(save.title)):'';
   /* 普通渔获结算不显示「全部售出」，并恢复「换个钓点」 */
   $('ovSell').style.display='none';
   $('ovGo').style.display='';
@@ -6321,13 +6350,13 @@ function buildSelect(){
     row.style.setProperty('--sw-water',mp.water[0]);
     var got=seenCount(mp), st=mapOpenState(mp);
     row.innerHTML='<div class="swatch"></div>'+
-      '<div class="mi"><b>'+mapName(mp)+(open?'':' 🔒')+'</b><small>'+
+      '<div class="mi"><b>'+mapName(mp)+(open?'':icon('lock','only'))+'</b><small>'+
         '<span>'+mapDesc(mp)+'</span>'+
         '<span>'+$tf('收录 {g}/{a}',{g:got,a:mp.fish.length})+'</span>'+
-        '<span>✉ '+st.letters.got+'/'+st.letters.all+'</span>'+
+        '<span>'+icon('mail')+st.letters.got+'/'+st.letters.all+'</span>'+
         (st.prev?'<span>'+$tf('前图 {p}%',{p:Math.round(st.prevGot/st.prevAll*100)})+'</span>':'')+
         (mp.r4?'<span>'+$t('需鱼饵×1/竿')+'</span>':'')+
-        (st.ok&&open?'<span>'+$t('✓ 开图')+'</span>':'')+   /* 图四进度达标但旅行联动未解锁时不显示，免得和 🔒「未解锁」打架 */
+        (st.ok&&open?'<span>'+icon('check')+$t('开图')+'</span>':'')+   /* 图四进度达标但旅行联动未解锁时不显示，免得和「未解锁」打架 */
       '</small></div>'+
       '<div class="go">'+(open?$t('去钓鱼 →'):$t('未解锁'))+'</div>';
     if(open) row.onclick=function(){ openMap(mp.id); };
@@ -6420,8 +6449,8 @@ $('ovAgain').onclick=function(){ $('overlay').classList.remove('show'); cast(); 
 $('ovSell').onclick=function(){
   if(!save.bag.length) return;
   var r=sellWholeBag();
-  /* 二次确认还没完成、或卖完仍满篓（订单鱼被保留）时，保留弹层方便继续处理 */
-  if(r==='armed'||(r==='sold'&&bagFull())) return;
+  /* 二次确认还没完成、或卖完仍满篓（订单鱼/锁定鱼被保留）时，保留弹层方便继续处理 */
+  if(r==='armed'||bagFull()) return;
   $('overlay').classList.remove('show');
   if(G.state==='result') setState('idle');
   if(save.auto&&!save.autoPause&&scene.map) scheduleAutoCast(900);
@@ -6467,7 +6496,7 @@ function updateAutoUI(){
   var b=$('btnAuto'), owned=hasAutoReel();
   b.classList.toggle('lock',!owned);
   if(!owned){
-    b.textContent=$t('自动 🔒');
+    b.innerHTML=$t('自动')+icon('lock','only');
     b.classList.remove('on');
     b.title=$t('商店购入「自动收线器」后可用（需成就「渔获五十」）');
     return;
@@ -6501,7 +6530,7 @@ $('btnAuto').onclick=function(){
 };
 function updatePowerUI(){
   var b=$('btnPower'); if(!b) return;
-  b.textContent=save.lowPower?'🌙':'⚡';
+  b.innerHTML=icon(save.lowPower?'moon':'bolt','only');
   b.classList.toggle('on',!!save.lowPower);
   b.title=$t(save.lowPower?'低功耗：装饰动效已关闭':'点击开启低功耗（减少动效）');
 }
@@ -6719,7 +6748,7 @@ function dexQuery(){ var el=$('dexQ'); return el?(''+el.value).trim():''; }
 /* 搜索结果里的一条：立绘 + 名称/稀有度 + 出处 + 尺寸/时段/收录状态 */
 function dexStateText(f,e){
   if(!e) return $t('未捕获');
-  if(dexDone(f.id)) return $tf('✓ 已收录 ×{n}',{n:e.n|0})+(e.best?(' · '+$tf('最大 {b}/{m}cm',{b:e.best,m:f.size[1]})):'');
+  if(dexDone(f.id)) return icon('check')+$tf('已收录 ×{n}',{n:e.n|0})+(e.best?(' · '+$tf('最大 {b}/{m}cm',{b:e.best,m:f.size[1]})):'');
   return $tf('收录中 ×{n}/{q}',{n:e.n|0,q:quotaOf(f.id)})+' · '+$tf('最长 {m}cm',{m:f.size[1]});
 }
 function buildDexSearch(body,q){
@@ -6762,10 +6791,10 @@ function buildDexSearch(body,q){
     nm.innerHTML=(e?fishName(f):$t('？？？'))+'<i style="background:'+rr.color+'">'+rarityName(rr)+'</i>';
     mid.appendChild(nm);
     var src=document.createElement('div'); src.className='hs';
-    src.textContent=$tf('出处：{r} · {m}',{r:regionName(h.rg),m:mapName(h.mp)})+(isMapOpen(h.mp)?'':' 🔒');
+    src.innerHTML=$tf('出处：{r} · {m}',{r:regionName(h.rg),m:mapName(h.mp)})+(isMapOpen(h.mp)?'':icon('lock','only'));
     mid.appendChild(src);
     var extra=document.createElement('div'); extra.className='hs';
-    extra.textContent=$tf('尺寸 {a}–{b}cm · {s}',{a:f.size[0],b:f.size[1],s:(f.slot!=null?(SLOT_ICONS[f.slot]+slotName(f.slot)):$t('全天'))})+' · '+dexStateText(f,e);
+    extra.innerHTML=$tf('尺寸 {a}–{b}cm · {s}',{a:f.size[0],b:f.size[1],s:(f.slot!=null?(icon(SLOT_ICONS[f.slot])+slotName(f.slot)):$t('全天'))})+' · '+dexStateText(f,e);
     mid.appendChild(extra);
     row.appendChild(mid);
     body.appendChild(row);
@@ -6799,9 +6828,9 @@ function buildDex(){
     head.className='dexMap';
     var open=isMapOpen(mp);
     var got=seenCount(mp), full=mp.fish.filter(function(id){ return dexDone(id); }).length;
-    head.innerHTML='<b>'+mapName(mp)+(open?'':' 🔒')+'</b><small>'+$tf('收录 {g} / {n}',{g:got,n:mp.fish.length})+
+    head.innerHTML='<b>'+mapName(mp)+(open?'':icon('lock','only'))+'</b><small>'+$tf('收录 {g} / {n}',{g:got,n:mp.fish.length})+
       ' · '+$tf('集齐 {f} / {n}',{f:full,n:mp.fish.length})+
-      (isMapOpened(mp)?' · '+$t('✓开图'):'')+
+      (isMapOpened(mp)?' · '+icon('check')+$t('开图'):'')+
       (open?'':' · '+$t('旅行联动后解锁'))+'</small>';
     body.appendChild(head);
     var grid=document.createElement('div');
@@ -6820,8 +6849,8 @@ function buildDex(){
       nm.textContent=e?fishName(f):$t('？？？');
       cell.appendChild(nm);
       var sm=document.createElement('small');
-      sm.textContent=(!e?$t('未捕获'):(dexDone(id)?($tf('✓ ×{n}',{n:e.n})+' · '+$tf('最大 {b}/{m}cm',{b:e.best,m:f.size[1]})+(maxed?' 👑':'')):($tf('收录中 ×{n}/{q}',{n:e.n,q:quotaOf(id)})+(e?' · '+$tf('最长 {m}cm',{m:f.size[1]}):''))))+
-        (f.slot!=null?' · '+SLOT_ICONS[f.slot]+slotName(f.slot):'');
+      sm.innerHTML=(!e?$t('未捕获'):(dexDone(id)?(icon('check')+$tf('×{n}',{n:e.n})+' · '+$tf('最大 {b}/{m}cm',{b:e.best,m:f.size[1]})+(maxed?icon('crown','only'):'')):($tf('收录中 ×{n}/{q}',{n:e.n,q:quotaOf(id)})+(e?' · '+$tf('最长 {m}cm',{m:f.size[1]}):''))))+
+        (f.slot!=null?' · '+icon(SLOT_ICONS[f.slot])+slotName(f.slot):'');
       cell.appendChild(sm);
       grid.appendChild(cell);
     });
@@ -6894,7 +6923,7 @@ function buildShop(){
     si.innerHTML='<b>'+$t(o.name)+'</b><small>'+segHTML($t(desc))+'</small>';
     r.appendChild(si);
     if(tag){
-      var t=document.createElement('span'); t.className='tag'+(tagDim?' dim':''); t.textContent=tag;
+      var t=document.createElement('span'); t.className='tag'+(tagDim?' dim':''); t.innerHTML=tag;
       r.appendChild(t);
     }
     if(buyFn){
@@ -6934,7 +6963,7 @@ function buildShop(){
     }else if(i===save.rod+1){
       var op=openedSpots();
       if(op<o.gate){
-        var lr=row(o,false,0,o.desc,$tf('🔒 开图 {o}/{g}',{o:op,g:o.gate}),true);
+        var lr=row(o,false,0,o.desc,icon('lock')+$tf('开图 {o}/{g}',{o:op,g:o.gate}),true);
         lr.title=$tf('开图：该钓点对应旅行信件 ≥{l}%，且上一张钓点（区内前一张，区首接前区第四图）鱼种收录 ≥{p}%',{l:Math.round(LETTER_RATIO*100),p:Math.round(PREV_MAP_RATIO*100)});
       }else{
         row(o,false,o.price,o.desc,'',false,function(){
@@ -6943,7 +6972,7 @@ function buildShop(){
         });
       }
     }else{
-      row(o,false,0,o.desc,$t('🔒 需先升级上一级'),true);
+      row(o,false,0,o.desc,icon('lock')+$t('需先升级上一级'),true);
     }
   });
   var hint=document.createElement('div');
@@ -6960,7 +6989,7 @@ function buildShop(){
         toast($tf('{n} 到手！',{n:$t(o.name)})); buildShop();
       });
     }else{
-      row(o,false,0,o.desc,$t('🔒 需先升级上一级'),true);
+      row(o,false,0,o.desc,icon('lock')+$t('需先升级上一级'),true);
     }
   });
   cat('鱼篓（在线 + 挂机都能装 · 满了要卖鱼）');
@@ -6984,7 +7013,7 @@ function buildShop(){
     row({name:'自动收线器'},true,0,'已装配：进图后右上角可随时开关自动',$t('已拥有'),true);
   }else if(!save.ach.c50){
     row({name:'自动收线器'},false,0,
-      '自动提竿 + 自动收线 · 达成成就「渔获五十」后上架',$t('🔒 需成就「渔获五十」'),true);
+      '自动提竿 + 自动收线 · 达成成就「渔获五十」后上架',icon('lock')+$t('需成就「渔获五十」'),true);
   }else{
     row({name:'自动收线器'},false,AUTO_REEL_PRICE,
       '自动提竿 + 自动收线，进图后右上角随时开关','',false,function(){
@@ -7034,8 +7063,32 @@ $('shopBody').addEventListener('click',function(e){
 $('shopClose').onclick=function(){ $('shopOv').classList.remove('show'); };
 
 /* ---------- 鱼篓（渔获出售）：钓到的鱼不会自动卖，只有这一页能换成番茄币 ---------- */
+function bagLockCount(){
+  var n=0;
+  (save.bag||[]).forEach(function(it){ if(it&&it.lk) n++; });
+  return n;
+}
 function bagSumText(){
+  var l=bagLockCount();
+  if(l) return $tf('<b>{b}/{c}</b> 条 · 估价 <b>{v}</b> {t} · 锁定 <b>{l}</b> 条',
+    {b:save.bag.length,c:basketCap(),v:bagValue(),t:TOMATO,l:l});
   return $tf('<b>{b}/{c}</b> 条 · 估价 <b>{v}</b> {t}',{b:save.bag.length,c:basketCap(),v:bagValue(),t:TOMATO});
+}
+/* 锁定：锁住的鱼不会被卖出/交付，但仍然占鱼篓位置 */
+function toggleBagLock(it,row,btn,lk){
+  it.lk=it.lk?0:1;
+  resetSellArm();
+  commitSave();
+  var on=!!it.lk;
+  if(row) row.classList.toggle('locked',on);
+  if(btn){ btn.disabled=on; btn.textContent=on?$t('已锁定'):$t('售出'); }
+  if(lk){
+    lk.innerHTML=icon(on?'lock':'unlock','only');
+    lk.classList.toggle('on',on);
+    lk.title=$t(on?'点击解锁':'点击锁定（锁定后不会被卖出）');
+  }
+  bagSummary(); bagChanged();
+  toast($t(on?'已锁定 · 这条鱼不会被卖出':'已解锁 · 可以售出了'));
 }
 var bagRenderLen=-1;                 /* 上次渲染时 save.bag 的长度，用于增量追加 */
 var bagSellArmAt=0, bagSellArmT=0;   /* 「全部售出」二次确认 */
@@ -7054,9 +7107,17 @@ function bagRowEl(it){
   sub.textContent=$tf('尺寸 {s}/{m} cm · 估价 +{g} 番茄币',{s:it.s,m:f.size[1],g:(it.g|0)});
   si.appendChild(sub);
   row.appendChild(si);
-  var btn=document.createElement('button'); btn.className='buy'; btn.textContent=$t('售出');
-  btn.onclick=function(){ sellBagItem(it); };
+  var lk=document.createElement('button'); lk.className='lk'+(it.lk?' on':'');
+  lk.innerHTML=icon(it.lk?'lock':'unlock','only');
+  lk.title=$t(it.lk?'点击解锁':'点击锁定（锁定后不会被卖出）');
+  row.appendChild(lk);
+  var btn=document.createElement('button'); btn.className='buy';
+  btn.textContent=it.lk?$t('已锁定'):$t('售出');
+  btn.disabled=!!it.lk;
   row.appendChild(btn);
+  if(it.lk) row.classList.add('locked');
+  lk.onclick=function(){ toggleBagLock(it,row,btn,lk); };
+  btn.onclick=function(){ if(it.lk) return; sellBagItem(it); };
   return row;
 }
 function resetSellArm(){
@@ -7065,7 +7126,7 @@ function resetSellArm(){
 }
 function bagSummary(){
   $('bagSum').innerHTML=bagSumText();
-  $('bagSellAll').disabled=!save.bag.length;
+  $('bagSellAll').disabled=!(save.bag.length-bagLockCount());
 }
 function bagOverflowNote(){
   var body=$('bagBody'), note=body.querySelector('.bagNote');
@@ -7131,6 +7192,7 @@ function bagChanged(){
 }
 function sellBagItem(it){
   var i=save.bag.indexOf(it); if(i<0) return;
+  if(it.lk){ toast($t('这条鱼已锁定 —— 先解锁再售出')); return; }
   save.bag.splice(i,1);
   save.tomato+=(it.g|0);
   resetSellArm();
@@ -7138,7 +7200,8 @@ function sellBagItem(it){
   toast($tf('卖出 {f} · +{g} 番茄币',{f:fishName(fishById(it.id)),g:(it.g|0)}));
   tryResumeAuto('bag');
 }
-/* 未完成订单需要的鱼：全部售出时按最便宜优先保留，避免误卖订单鱼 */
+/* 未完成订单需要的鱼：全部售出时按最便宜优先保留，避免误卖订单鱼；
+   已锁定的同种鱼直接算作保留，不再重复占名额 */
 function orderNeedMap(){
   var m={};
   (save.orders||[]).forEach(function(o){
@@ -7150,42 +7213,55 @@ function orderNeedMap(){
 }
 function sellWholeBag(){
   var n=save.bag.length; if(!n) return 'none';
+  var lockedN=bagLockCount();
+  if(lockedN===n){ resetSellArm(); toast($t('鱼篓里的鱼都锁定了 —— 先解锁再售出')); return 'none'; }
   var needs=orderNeedMap(), keep={}, keepN=0;
   Object.keys(needs).forEach(function(id){
-    var idxs=[];
-    for(var i=0;i<save.bag.length;i++) if(save.bag[i].id===id) idxs.push(i);
+    var locked=0, idxs=[];
+    for(var i=0;i<save.bag.length;i++){
+      if(save.bag[i].id!==id) continue;
+      if(save.bag[i].lk) locked++; else idxs.push(i);
+    }
     idxs.sort(function(a,b){ return (save.bag[a].g|0)-(save.bag[b].g|0); });
-    var k=Math.min(needs[id],idxs.length);
+    var k=Math.min(Math.max(0,needs[id]-locked),idxs.length);
     for(var j=0;j<k;j++){ keep[idxs[j]]=1; keepN++; }
   });
   var sum=0, sellN=0;
   for(var i2=0;i2<save.bag.length;i2++){
-    if(!keep[i2]){ sum+=(save.bag[i2].g|0); sellN++; }
+    if(!keep[i2]&&!save.bag[i2].lk){ sum+=(save.bag[i2].g|0); sellN++; }
   }
-  /* 篓里全是要留给订单的鱼：5 秒内二次点击才真的全卖 */
+  /* 剩下能卖的全是订单要的：5 秒内二次点击才真的卖掉（锁定鱼始终保留） */
   if(!sellN){
     if(Date.now()-bagSellArmAt>5000){
       bagSellArmAt=Date.now();
-      $('bagSellAll').textContent=$t('确认全部售出（含订单鱼）');
+      $('bagSellAll').textContent=lockedN?$t('确认全部售出（订单鱼也卖 · 锁定保留）'):$t('确认全部售出（含订单鱼）');
       clearTimeout(bagSellArmT);
       bagSellArmT=setTimeout(resetSellArm,5000);
-      toast($t('鱼篓里全是订单要的鱼 —— 再点一次「全部售出」才会卖掉'));
+      toast(lockedN?$tf('能卖的全是订单要的鱼 —— 再点一次「全部售出」才会卖掉（锁定 {l} 条保留）',{l:lockedN})
+                      :$t('鱼篓里全是订单要的鱼 —— 再点一次「全部售出」才会卖掉'));
       return 'armed';
     }
     resetSellArm();
-    var total=bagValue();
-    save.bag=[]; save.tomato+=total;
+    var total=0, sold=0;
+    for(var i4=save.bag.length-1;i4>=0;i4--){
+      if(save.bag[i4].lk) continue;
+      total+=(save.bag[i4].g|0); sold++;
+      save.bag.splice(i4,1);
+    }
+    save.tomato+=total;
     commitSave(); refreshHud(true); bagChanged();
-    toast($tf('卖出 {n} 条 · +{g} 番茄币',{n:n,g:total}));
+    toast(lockedN?$tf('卖出 {n} 条 · +{g} 番茄币 · 留下 {k} 条锁定鱼',{n:sold,g:total,k:lockedN})
+                :$tf('卖出 {n} 条 · +{g} 番茄币',{n:sold,g:total}));
     tryResumeAuto('bag');
     return 'sold';
   }
-  for(var i3=save.bag.length-1;i3>=0;i3--) if(!keep[i3]) save.bag.splice(i3,1);
+  for(var i3=save.bag.length-1;i3>=0;i3--) if(!keep[i3]&&!save.bag[i3].lk) save.bag.splice(i3,1);
   save.tomato+=sum;
   resetSellArm();
   commitSave(); refreshHud(true); bagChanged();
-  toast(keepN?$tf('卖出 {n} 条 · +{g} 番茄币 · 保留 {k} 条订单鱼',{n:sellN,g:sum,k:keepN})
-             :$tf('卖出 {n} 条 · +{g} 番茄币',{n:sellN,g:sum}));
+  toast(lockedN?$tf('卖出 {n} 条 · +{g} 番茄币 · 留下 {k} 条（订单/锁定）',{n:sellN,g:sum,k:keepN+lockedN})
+        :(keepN?$tf('卖出 {n} 条 · +{g} 番茄币 · 保留 {k} 条订单鱼',{n:sellN,g:sum,k:keepN})
+                 :$tf('卖出 {n} 条 · +{g} 番茄币',{n:sellN,g:sum})));
   tryResumeAuto('bag');
   return 'sold';
 }
@@ -7320,7 +7396,7 @@ function syncOrdersToYard(){
    累计，交付不扣鱼，卖掉的鱼还能反复交，是 bug） */
 function orderBagCount(fid){
   var n=0;
-  (save.bag||[]).forEach(function(it){ if(it&&it.id===fid) n++; });
+  (save.bag||[]).forEach(function(it){ if(it&&it.id===fid&&!it.lk) n++; });
   return n;
 }
 function orderHave(o){
@@ -7329,7 +7405,8 @@ function orderHave(o){
 }
 function takeFromBag(fid,n){
   var idx=[];
-  for(var i=0;i<save.bag.length;i++) if(save.bag[i].id===fid) idx.push(i);
+  /* 锁定的鱼不参与交付：锁住就是要留在篓里 */
+  for(var i=0;i<save.bag.length;i++) if(save.bag[i].id===fid&&!save.bag[i].lk) idx.push(i);
   if(idx.length<n) return false;
   /* 先带走便宜的，贵的留着玩家自己卖 */
   idx.sort(function(a,b){ return (save.bag[a].g|0)-(save.bag[b].g|0); });
@@ -7377,7 +7454,7 @@ function refreshOrder(i){
 function updateOrdBtn(){
   var n=0;
   (save.orders||[]).forEach(function(o){ if(!o||o.done) return; if(orderHave(o)>=clamp(o.need|0,1,99)) n++; });
-  var b=$('btnOrders'); if(b) b.textContent=n?$tf('📋 订单 ✓{n}',{n:n}):$t('📋 订单');
+  var b=$('btnOrders'); if(b) b.innerHTML=icon('clip')+$t('订单')+(n?(' '+n):'');
 }
 var ordRows=[];                    /* 订单卡引用，上鱼后只改进度不整页重建 */
 function buildOrders(){
@@ -7410,7 +7487,7 @@ function buildOrders(){
     prog.textContent=$tf('{g} / {n} · 报酬约 {e} 番茄币',{g:have,n:need,e:est});
     foot.appendChild(prog);
     if(o.done){
-      var dn=document.createElement('small'); dn.className='odone'; dn.textContent=$t('✓ 已完成');
+      var dn=document.createElement('small'); dn.className='odone'; dn.innerHTML=icon('check')+$t('已完成');
       foot.appendChild(dn);
     }else if(have>=need){
       var dv=document.createElement('button'); dv.className='buy'; dv.textContent=$t('交付');
@@ -7419,7 +7496,7 @@ function buildOrders(){
     }else{
       var left=ordRerollLeft();
       var rf=document.createElement('button'); rf.className='buy ghostb';
-      rf.textContent=left>0?$t('🔄 50'):$t('🔄 用尽');
+      rf.innerHTML=left>0?(icon('refresh')+'50'):(icon('refresh')+$t('用尽'));
       rf.title=left>0?$tf('换一个心愿（50 番茄币 · 今天还剩 {n} 次）',{n:left}):$t('今天的换心愿次数用完了，明天再来');
       if(left<=0) rf.disabled=true;
       rf.onclick=function(){ refreshOrder(i); };
@@ -7529,7 +7606,7 @@ function buildAch(){
       var done=!!save.ach[a.id];
       var r=document.createElement('div');
       r.className='shopRow'+(done?' cur':'');
-      r.innerHTML='<div class="si"><b>'+(done?'✓ ':'')+achName(a)+'</b><small>'+segHTML(achDesc(a)+' · '+achRewardDesc(a))+'</small></div>'+
+      r.innerHTML='<div class="si"><b>'+(done?icon('check','only'):'')+achName(a)+'</b><small>'+segHTML(achDesc(a)+' · '+achRewardDesc(a))+'</small></div>'+
         '<span class="tag'+(done?'':' dim')+'">'+(done?$t('已达成'):$t('未达成'))+'</span>';
       body.appendChild(r);
     });
@@ -7540,7 +7617,7 @@ $('achClose').onclick=function(){ $('achOv').classList.remove('show'); };
 
 /* ---------- 时段鱼情（C3）：真实时钟四时段，每钓点 2 条时段限定 ---------- */
 var SLOT_NAMES=['清晨','白天','黄昏','夜晚'];
-var SLOT_ICONS=['🌅','☀️','🌆','🌙'];
+var SLOT_ICONS=['sunrise','sun','sunset','moon'];
 function timeSlot(){
   var h=new Date().getHours();
   if(h>=5&&h<11) return 0;
@@ -7916,7 +7993,7 @@ function lbCatInfo(id){
 function lbPaintMy(){
   var el=$('lbMy'); if(!el) return;
   if(!lbName()){
-    el.innerHTML=$t('🏅 取个名字就能上榜，成绩会自动提交');
+    el.innerHTML=icon('medal')+$t('取个名字就能上榜，成绩会自动提交');
     $('lbRename').textContent=$t('取名');
     return;
   }
@@ -7932,7 +8009,7 @@ function lbPaintMy(){
   }else{
     txt=$tf('我完成的订单：<b>{n}</b> 单',{n:s.ord})+(lbCurDay==='today'&&s.ordAt?(' · '+$tf('最后一单 {t}',{t:lbClock(s.ordAt)})):'');
   }
-  if(lbCloudUsed) txt+=' <span style="opacity:.75">· '+$t('☁️ 已含云存档')+'</span>';
+  if(lbCloudUsed) txt+=' <span style="opacity:.75">· '+icon('cloud')+$t('已含云存档')+'</span>';
   el.innerHTML=txt;
 }
 function lbRenderList(rows,err){
@@ -8063,29 +8140,28 @@ var I18N_UI={
   '渔获':{en:'Catch',ja:'漁獲',ko:'어획'},
   '打开鱼篓':{en:'Open basket',ja:'魚篭を開く',ko:'바구니 열기'},
   '语言 / Language':{en:'Language',ja:'言語',ko:'언어'},
-  '🌐 语言 / Language':{en:'🌐 Language',ja:'🌐 言語',ko:'🌐 언어'},
-  '📘 图鉴':{en:'📘 Codex',ja:'📘 図鑑',ko:'📘 도감'},
-  '✕ 返回':{en:'✕ Back',ja:'✕ 戻る',ko:'✕ 돌아가기'},
-  '🛍 商店':{en:'🛍 Shop',ja:'🛍 ショップ',ko:'🛍 상점'},
-  '📋 订单':{en:'📋 Orders',ja:'📋 依頼',ko:'📋 주문'},
-  '🏆 挑战':{en:'🏆 Challenges',ja:'🏆 チャレンジ',ko:'🏆 도전'},
-  '📊 统计':{en:'📊 Stats',ja:'📊 統計',ko:'📊 통계'},
-  '🥇 排行':{en:'🥇 Board',ja:'🥇 ランキング',ko:'🥇 랭킹'},
+  '图鉴':{en:'Codex',ja:'図鑑',ko:'도감'},
+  '返回':{en:'Back',ja:'戻る',ko:'돌아가기'},
+  '商店':{en:'Shop',ja:'ショップ',ko:'상점'},
+  '订单':{en:'Orders',ja:'依頼',ko:'주문'},
+  '挑战':{en:'Challenges',ja:'チャレンジ',ko:'도전'},
+  '统计':{en:'Stats',ja:'統計',ko:'통계'},
+  '排行':{en:'Board',ja:'ランキング',ko:'랭킹'},
   '升级钓具 · 接订单 · 领成就':{en:'Upgrade gear · Take orders · Claim achievements',ja:'道具強化 · 依頼 · 実績',ko:'장비 강화 · 주문 · 업적'},
   '下拉浮标 · 咬钩提竿 · 收线入篓 —— 慢慢来':{en:'Drop the float · Strike on the bite · Reel it in — take your time',ja:'浮きを落とし · アタリで合わせ · 巻いて篭へ —— ゆっくりでいい',ko:'찌를 내리고 · 입질에 챔질 · 감아서 바구니로 — 천천히 해요'},
-  '← 钓点':{en:'← Spots',ja:'← 釣り場',ko:'← 낚시터'},
-  '✕ 关闭':{en:'✕ Close',ja:'✕ 閉じる',ko:'✕ 닫기'},
-  '✕ 清空':{en:'✕ Clear',ja:'✕ クリア',ko:'✕ 지우기'},
+  '钓点':{en:'Spots',ja:'釣り場',ko:'낚시터'},
+  '关闭':{en:'Close',ja:'閉じる',ko:'닫기'},
+  '清空':{en:'Clear',ja:'クリア',ko:'지우기'},
   '搜索鱼名 · 钓点 · 稀有度 · 时段':{en:'Search fish · spot · rarity · time',ja:'魚名 · 釣り場 · レア度 · 時間帯で検索',ko:'물고기 · 낚시터 · 희귀도 · 시간대 검색'},
-  '🛍 钓具商店':{en:'🛍 Tackle Shop',ja:'🛍 釣具屋',ko:'🛍 낚시 도구 상점'},
-  '🧺 鱼篓':{en:'🧺 Basket',ja:'🧺 魚篭',ko:'🧺 바구니'},
+  '钓具商店':{en:'Tackle Shop',ja:'釣具屋',ko:'낚시 도구 상점'},
+  '鱼篓':{en:'Basket',ja:'魚篭',ko:'바구니'},
   '全部售出':{en:'Sell All',ja:'すべて売る',ko:'전부 팔기'},
-  '📋 月巴订单':{en:'📋 Banny Orders',ja:'📋 バニーの依頼',ko:'📋 배니 주문'},
+  '月巴订单':{en:'Banny Orders',ja:'バニーの依頼',ko:'배니 주문'},
   '庭院月巴的心愿，交付领报酬':{en:'Wishes from your yard Bannies — deliver for rewards',ja:'庭のバニーの願い事。届けて報酬をもらおう',ko:'마당 배니의 소원. 전달하고 보상을 받아요'},
   '称号会在结算弹窗署名':{en:'Titles are signed on the result screen',ja:'称号は結果画面に署名されます',ko:'칭호는 결과 창에 표시돼요'},
-  '📊 钓鱼统计':{en:'📊 Fishing Stats',ja:'📊 釣り統計',ko:'📊 낚시 통계'},
+  '钓鱼统计':{en:'Fishing Stats',ja:'釣り統計',ko:'낚시 통계'},
   '一路走来的数据':{en:'Your journey so far',ja:'これまでの記録',ko:'지금까지의 기록'},
-  '🥇 排行榜':{en:'🥇 Leaderboard',ja:'🥇 ランキング',ko:'🥇 랭킹'},
+  '排行榜':{en:'Leaderboard',ja:'ランキング',ko:'랭킹'},
   '今日':{en:'Today',ja:'今日',ko:'오늘'},
   '历史':{en:'All Time',ja:'履歴',ko:'역대'},
   '最大的鱼':{en:'Biggest Fish',ja:'最大の魚',ko:'가장 큰 물고기'},
@@ -8103,7 +8179,6 @@ var I18N_UI={
 
   /* ---- 番茄立绘（右上角切换） ---- */
   '番茄立绘':{en:'Tomato Portrait',ja:'トマト立ち絵',ko:'토마토 일러스트'},
-  '🎨 番茄立绘':{en:'🎨 Tomato Portrait',ja:'🎨 トマト立ち絵',ko:'🎨 토마토 일러스트'},
   '集齐第 2 张地图解锁战斗番茄 · 第 3 张地图解锁 006 番茄':{en:'Complete map 2 to unlock Battle Tomato · map 3 for Tomato 006',ja:'2枚目コンプでバトルトマト · 3枚目で006トマト',ko:'2번째 지도 완성 시 배틀 토마토 · 3번째 지도는 006 토마토'},
   '使用中':{en:'In use',ja:'使用中',ko:'사용 중'},
   '点击切换':{en:'Tap to switch',ja:'タップで切替',ko:'눌러서 변경'},
@@ -8113,7 +8188,7 @@ var I18N_UI={
   '集齐{m} · 解锁「{p}」立绘':{en:'{m} complete · “{p}” portrait unlocked',ja:'{m}コンプ · 「{p}」立ち絵を解放',ko:'{m} 완성 · “{p}” 일러스트 해금'},
 
   '钓 上 来 啦':{en:'C A U G H T !',ja:'釣 れ た ！',ko:'낚 았 다 !'},
-  '★ 首次捕获 · 已记录':{en:'★ First catch · Logged',ja:'★ 初捕獲 · 記録済み',ko:'★ 첫 포획 · 기록됨'},
+  '首次捕获 · 已记录':{en:'First catch · Logged',ja:'初捕獲 · 記録済み',ko:'첫 포획 · 기록됨'},
   '换个钓点':{en:'Change Spot',ja:'釣り場を変える',ko:'낚시터 바꾸기'},
   '再钓一条':{en:'Catch Another',ja:'もう一匹',ko:'한 마리 더'},
 
@@ -8169,15 +8244,14 @@ var I18N_UI={
   '收录 {g}/{a}':{en:'Found {g}/{a}',ja:'収録 {g}/{a}',ko:'수록 {g}/{a}'},
   '前图 {p}%':{en:'Prev {p}%',ja:'前図 {p}%',ko:'이전 {p}%'},
   '需鱼饵×1/竿':{en:'Bait ×1/cast',ja:'餌×1/投',ko:'미끼×1/캐스팅'},
-  '✓ 开图':{en:'✓ Unlocked',ja:'✓ 解放',ko:'✓ 해금'},
-  '✓开图':{en:'✓ Unlocked',ja:'✓ 解放',ko:'✓ 해금'},
+  '开图':{en:'Unlocked',ja:'解放',ko:'해금'},
   '去钓鱼 →':{en:'Fish →',ja:'釣る →',ko:'낚시 →'},
   '未解锁':{en:'Locked',ja:'未解放',ko:'잠김'},
 
   /* ---- 图鉴 ---- */
   '未捕获':{en:'Not caught',ja:'未捕獲',ko:'미포획'},
-  '✓ 已收录 ×{n}':{en:'✓ Logged ×{n}',ja:'✓ 収録 ×{n}',ko:'✓ 수록 ×{n}'},
-  '✓ ×{n}':{en:'✓ ×{n}',ja:'✓ ×{n}',ko:'✓ ×{n}'},
+  '已收录 ×{n}':{en:'Logged ×{n}',ja:'収録 ×{n}',ko:'수록 ×{n}'},
+  '×{n}':{en:'×{n}',ja:'×{n}',ko:'×{n}'},
   '最大 {b}/{m}cm':{en:'Max {b}/{m}cm',ja:'最大 {b}/{m}cm',ko:'최대 {b}/{m}cm'},
   '收录中 ×{n}/{q}':{en:'In progress ×{n}/{q}',ja:'収録中 ×{n}/{q}',ko:'수집 중 ×{n}/{q}'},
   '最长 {m}cm':{en:'Longest {m}cm',ja:'最長 {m}cm',ko:'최장 {m}cm'},
@@ -8203,10 +8277,10 @@ var I18N_UI={
   '已强化到顶，换下一根竿继续':{en:'Maxed out. Upgrade to the next rod.',ja:'強化上限。次の竿に替えよう',ko:'최대 강화. 다음 낚싯대로 넘어가요'},
   '已满':{en:'Max',ja:'上限',ko:'최대'},
   '已拥有':{en:'Owned',ja:'所持済み',ko:'보유 중'},
-  '🔒 开图 {o}/{g}':{en:'🔒 Maps {o}/{g}',ja:'🔒 解放 {o}/{g}',ko:'🔒 해금 {o}/{g}'},
+  '开图 {o}/{g}':{en:'Maps {o}/{g}',ja:'解放 {o}/{g}',ko:'해금 {o}/{g}'},
   '开图：该钓点对应旅行信件 ≥{l}%，且上一张钓点（区内前一张，区首接前区第四图）鱼种收录 ≥{p}%':{en:'Unlock: Travel letters for this spot ≥{l}%, and species found in the previous spot (previous in region; region-first links to the previous region’s Map IV) ≥{p}%',ja:'解放条件：この釣り場の旅の手紙 ≥{l}% かつ前の釣り場（区内の前図、区の先頭は前区の第4図）の魚種収録 ≥{p}%',ko:'해금: 이 낚시터의 여행 편지 ≥{l}% 그리고 이전 낚시터(지역 내 이전 지도, 지역 첫 지도는 이전 지역 4번 지도) 어종 수록 ≥{p}%'},
   '{n} 到手！':{en:'Got {n}!',ja:'{n} を手に入れた！',ko:'{n} 획득!'},
-  '🔒 需先升级上一级':{en:'🔒 Upgrade the previous tier first',ja:'🔒 先に一つ前を強化',ko:'🔒 이전 단계를 먼저 업그레이드'},
+  '需先升级上一级':{en:'Upgrade the previous tier first',ja:'先に一つ前を強化',ko:'이전 단계를 먼저 업그레이드'},
   '开图：对应旅行信件 ≥{l}% + 上一张钓点收录 ≥{p}%，当前 {n} 张':{en:'Unlock: Travel letters ≥{l}% + previous spot ≥{p}% · currently {n} maps',ja:'解放：旅の手紙 ≥{l}% ＋ 前の釣り場 ≥{p}% · 現在 {n} マップ',ko:'해금: 여행 편지 ≥{l}% + 이전 낚시터 ≥{p}% · 현재 {n}개 지도'},
   '鱼线（张力上限：手滑容错）':{en:'Lines (tension cap: slip allowance)',ja:'糸（張力上限：ミスの余裕）',ko:'줄 (장력 상한: 실수 여유)'},
   '鱼篓（在线 + 挂机都能装 · 满了要卖鱼）':{en:'Basket (online + idle · sell when full)',ja:'魚篭（オンライン＋放置どちらも · 満杯なら売る）',ko:'바구니 (온라인 + 방치 모두 · 가득 차면 판매)'},
@@ -8221,7 +8295,7 @@ var I18N_UI={
   '自动收线器':{en:'Auto-Reeler',ja:'自動巻き器',ko:'자동 감기 장치'},
   '已装配：进图后右上角可随时开关自动':{en:'Installed: toggle auto from the top-right in a spot',ja:'装備済み：釣り場で右上から自動を切替',ko:'장착됨: 낚시터 오른쪽 위에서 자동 전환'},
   '自动提竿 + 自动收线 · 达成成就「渔获五十」后上架':{en:'Auto-strike + auto-reel · listed after “Catch 50”',ja:'自動合わせ＋自動巻き · 実績「漁獲五十」で販売',ko:'자동 챔질 + 자동 감기 · “어획 50” 업적 후 판매'},
-  '🔒 需成就「渔获五十」':{en:'🔒 Needs “Catch 50”',ja:'🔒 実績「漁獲五十」が必要',ko:'🔒 “어획 50” 업적 필요'},
+  '需成就「渔获五十」':{en:'Needs “Catch 50”',ja:'実績「漁獲五十」が必要',ko:'“어획 50” 업적 필요'},
   '自动提竿 + 自动收线，进图后右上角随时开关':{en:'Auto-strike + auto-reel; toggle from the top-right in a spot',ja:'自動合わせ＋自動巻き。釣り場の右上で切替',ko:'자동 챔질 + 자동 감기. 낚시터 오른쪽 위에서 전환'},
   '自动收线器到手！进图后点右上角「自动」':{en:'Auto-Reeler acquired! Tap “Auto” at the top-right in a spot.',ja:'自動巻き器を入手！釣り場で右上の「自動」を押そう',ko:'자동 감기 장치 획득! 낚시터 오른쪽 위 “자동”을 누르세요'},
   '鱼饵（下竿时消耗 · 图四每竿必耗 1 个，任意种类）':{en:'Bait (used per cast · Map IV always costs 1, any kind)',ja:'餌（投げるたび消費 · 第4マップは毎投1個、種類自由）',ko:'미끼 (캐스팅마다 소모 · 4번 지도는 매번 1개, 종류 무관)'},
@@ -8234,6 +8308,16 @@ var I18N_UI={
   '仅显示最近 120 条 · 其余 {n} 条可一并「全部售出」':{en:'Showing the latest 120 · the other {n} can be sold with “Sell All”',ja:'最新120匹のみ表示 · 残り{n}匹は「すべて売る」でまとめて売れます',ko:'최근 120마리만 표시 · 나머지 {n}마리는 “전부 팔기”로 판매'},
   '尺寸 {s}/{m} cm · 估价 +{g} 番茄币':{en:'Size {s}/{m} cm · Value +{g} Tomato Coins',ja:'サイズ {s}/{m} cm · 査定 +{g} トマトコイン',ko:'크기 {s}/{m} cm · 가치 +{g} 토마토 코인'},
   '售出':{en:'Sell',ja:'売る',ko:'팔기'},
+  '已锁定':{en:'Locked',ja:'ロック中',ko:'잠김'},
+  '点击锁定（锁定后不会被卖出）':{en:'Tap to lock (won’t be sold)',ja:'タップでロック（売却されません）',ko:'탭하여 잠금 (판매되지 않음)'},
+  '点击解锁':{en:'Tap to unlock',ja:'タップで解除',ko:'탭하여 잠금 해제'},
+  '已锁定 · 这条鱼不会被卖出':{en:'Locked · this fish won’t be sold',ja:'ロックしました · この魚は売却されません',ko:'잠금 · 이 물고기는 판매되지 않아요'},
+  '已解锁 · 可以售出了':{en:'Unlocked · ready to sell',ja:'解除しました · 売却できます',ko:'잠금 해제 · 판매할 수 있어요'},
+  '这条鱼已锁定 —— 先解锁再售出':{en:'This fish is locked — unlock it before selling.',ja:'この魚はロック中——解除してから売ろう',ko:'이 물고기는 잠겨 있어요 — 잠금 해제 후 판매하세요'},
+  '鱼篓里的鱼都锁定了 —— 先解锁再售出':{en:'All fish in the basket are locked — unlock some to sell.',ja:'魚篭の魚はすべてロック中——解除してから売ろう',ko:'바구니의 물고기가 모두 잠겨 있어요 — 잠금 해제 후 판매하세요'},
+  '<b>{b}/{c}</b> 条 · 估价 <b>{v}</b> {t} · 锁定 <b>{l}</b> 条':{en:'<b>{b}/{c}</b> fish · Value <b>{v}</b> {t} · Locked <b>{l}</b>',ja:'<b>{b}/{c}</b> 匹 · 査定 <b>{v}</b> {t} · ロック <b>{l}</b> 匹',ko:'<b>{b}/{c}</b>마리 · 가치 <b>{v}</b> {t} · 잠금 <b>{l}</b>마리'},
+  '卖出 {n} 条 · +{g} 番茄币 · 留下 {k} 条（订单/锁定）':{en:'Sold {n} fish · +{g} Tomato Coins · kept {k} (orders/locked)',ja:'{n} 匹売却 · +{g} トマトコイン · {k} 匹は保留（依頼/ロック）',ko:'{n}마리 판매 · +{g} 토마토 코인 · {k}마리 유지 (주문/잠금)'},
+  '卖出 {n} 条 · +{g} 番茄币 · 留下 {k} 条锁定鱼':{en:'Sold {n} fish · +{g} Tomato Coins · kept {k} locked',ja:'{n} 匹売却 · +{g} トマトコイン · ロック {k} 匹は保留',ko:'{n}마리 판매 · +{g} 토마토 코인 · 잠금 {k}마리 유지'},
   '卖出 {f} · +{g} 番茄币':{en:'Sold {f} · +{g} Tomato Coins',ja:'{f} を売却 · +{g} トマトコイン',ko:'{f} 판매 · +{g} 토마토 코인'},
   '卖出 {n} 条 · +{g} 番茄币':{en:'Sold {n} fish · +{g} Tomato Coins',ja:'{n} 匹売却 · +{g} トマトコイン',ko:'{n}마리 판매 · +{g} 토마토 코인'},
 
@@ -8250,14 +8334,12 @@ var I18N_UI={
   '今天的换心愿次数用完了（{m}/{m}），明天再来':{en:'No rerolls left today ({m}/{m}). Come back tomorrow.',ja:'今日の願い変更は終了（{m}/{m}）。また明日',ko:'오늘 소원 변경 횟수를 다 썼어요 ({m}/{m}). 내일 다시 와요'},
   '番茄币不够（刷新需 50）':{en:'Not enough Tomato Coins (50 to reroll)',ja:'トマトコイン不足（更新に50）',ko:'토마토 코인 부족 (갱신 50)'},
   '订单已刷新（今天还剩 {n} 次）':{en:'Order rerolled ({n} left today)',ja:'依頼を更新（今日あと {n} 回）',ko:'주문 갱신됨 (오늘 {n}회 남음)'},
-  '📋 订单 ✓{n}':{en:'📋 Orders ✓{n}',ja:'📋 依頼 ✓{n}',ko:'📋 주문 ✓{n}'},
   '{b} 想要 {f} ×{n}':{en:'{b} wants {f} ×{n}',ja:'{b}が{f}を{n}匹ほしい',ko:'{b}가 {f} {n}마리 원해요'},
   '{g} / {n} · 报酬约 {e} 番茄币':{en:'{g} / {n} · Reward ~{e} Tomato Coins',ja:'{g} / {n} · 報酬約 {e} トマトコイン',ko:'{g} / {n} · 보상 약 {e} 토마토 코인'},
   '鱼篓里带够即可 · 卖掉这鱼就不算了':{en:'Just bring them in your basket — selling them cancels the progress',ja:'魚篭に入れて持ってくるだけ（売るとカウントされません）',ko:'바구니에 모아 오면 됩니다 (팔면 진행이 사라져요)'},
-  '✓ 已完成':{en:'✓ Done',ja:'✓ 完了',ko:'✓ 완료'},
+  '已完成':{en:'Done',ja:'完了',ko:'완료'},
   '交付':{en:'Deliver',ja:'納品',ko:'전달'},
-  '🔄 50':{en:'🔄 50',ja:'🔄 50',ko:'🔄 50'},
-  '🔄 用尽':{en:'🔄 Used up',ja:'🔄 使い切り',ko:'🔄 소진'},
+  '用尽':{en:'Used up',ja:'使い切り',ko:'소진'},
   '换一个心愿（50 番茄币 · 今天还剩 {n} 次）':{en:'Reroll this wish (50 Tomato Coins · {n} left today)',ja:'願いを変える（50 トマトコイン · 今日あと {n} 回）',ko:'소원 바꾸기 (50 토마토 코인 · 오늘 {n}회 남음)'},
   '今天的换心愿次数用完了，明天再来':{en:'No rerolls left today. Come back tomorrow.',ja:'今日の願い変更は終了。また明日',ko:'오늘 소원 변경 횟수를 다 썼어요. 내일 다시 와요'},
 
@@ -8297,7 +8379,7 @@ var I18N_UI={
   /* ---- 排行榜 / 取名 ---- */
   '今日 · {d}（北京时间）':{en:'Today · {d} (UTC+8)',ja:'今日 · {d}（北京時間）',ko:'오늘 · {d} (베이징 시간)'},
   '历史总榜':{en:'All-time board',ja:'歴代ランキング',ko:'역대 랭킹'},
-  '🏅 取个名字就能上榜，成绩会自动提交':{en:'🏅 Pick a name to join — scores submit automatically',ja:'🏅 名前をつければ参加できます。記録は自動送信',ko:'🏅 이름을 지으면 참가돼요. 기록은 자동 제출'},
+  '取个名字就能上榜，成绩会自动提交':{en:'Pick a name to join — scores submit automatically',ja:'名前をつければ参加できます。記録は自動送信',ko:'이름을 지으면 참가돼요. 기록은 자동 제출'},
   '取名':{en:'Set name',ja:'名前をつける',ko:'이름 짓기'},
   '我的最大渔获：<b>{n} cm</b>':{en:'My biggest: <b>{n} cm</b>',ja:'自分の最大漁獲：<b>{n} cm</b>',ko:'내 최대 어획: <b>{n} cm</b>'},
   '我的最贵单条：<b>{n}</b> 番茄币':{en:'My priciest: <b>{n}</b> Tomato Coins',ja:'自分の最高値：<b>{n}</b> トマトコイン',ko:'내 최고가: <b>{n}</b> 토마토 코인'},
@@ -8305,7 +8387,7 @@ var I18N_UI={
   '我完成的订单：<b>{n}</b> 单':{en:'My orders: <b>{n}</b>',ja:'自分の依頼達成：<b>{n}</b> 件',ko:'내 주문 완료: <b>{n}</b>건'},
   '最后一单 {t}':{en:'Last order {t}',ja:'最後の依頼 {t}',ko:'마지막 주문 {t}'},
   '今天还没钓到鱼':{en:'No fish yet today',ja:'今日はまだ釣っていない',ko:'오늘 아직 못 잡았어요'},
-  '☁️ 已含云存档':{en:'☁️ Cloud save included',ja:'☁️ クラウド保存を含む',ko:'☁️ 클라우드 저장 포함'},
+  '已含云存档':{en:'Cloud save included',ja:'クラウド保存を含む',ko:'클라우드 저장 포함'},
   '排行榜暂时连不上，稍后再试':{en:'Leaderboard unreachable. Try again later.',ja:'ランキングに接続できません。あとで再試行',ko:'랭킹에 연결할 수 없어요. 나중에 다시 시도'},
   '还没有人上榜，快来抢占第一名！':{en:'No one on the board yet — claim first place!',ja:'まだ誰もいません。1位を取ろう！',ko:'아직 아무도 없어요. 1등을 차지해요!'},
   '加载中…':{en:'Loading…',ja:'読み込み中…',ko:'불러오는 중…'},
@@ -8386,7 +8468,7 @@ var I18N_UI={
   '番茄币':{en:'Tomato Coin',ja:'トマトコイン',ko:'토마토 코인'},
   '自动 开':{en:'Auto On',ja:'自動 入',ko:'자동 켜짐'},
   '自动 关':{en:'Auto Off',ja:'自動 切',ko:'자동 꺼짐'},
-  '自动 🔒':{en:'Auto 🔒',ja:'自動 🔒',ko:'자동 🔒'},
+  '自动':{en:'Auto',ja:'自動',ko:'자동'},
   '商店购入「自动收线器」后可用（需成就「渔获五十」）':{en:'Buy the Auto-Reeler in the shop (needs “Catch 50”)',ja:'ショップで「自動巻き器」を購入（実績「漁獲五十」が必要）',ko:'상점에서 “자동 감기 장치” 구매 (“어획 50” 업적 필요)'},
   '自动收线器还没装——达成成就「渔获五十」后可在商店购入':{en:'No Auto-Reeler yet — unlock “Catch 50” then buy it in the shop',ja:'自動巻き器は未装着——実績「漁獲五十」達成後にショップで購入できます',ko:'자동 감기 장치가 없어요 — “어획 50” 달성 후 상점에서 구매하세요'},
   '自动收线开启：交给我吧':{en:'Auto-reel on: leave it to me',ja:'自動巻き ON：任せて',ko:'자동 감기 켜짐: 맡겨 주세요'},
@@ -8404,10 +8486,9 @@ var I18N_UI={
   '传说':{en:'Legendary',ja:'レジェンド',ko:'전설'},
   '传家宝':{en:'Heirloom',ja:'家宝',ko:'가보'},
 
-  /* ---- 玩法说明（右上角 ❔） ---- */
+  /* ---- 玩法说明（右上角问号） ---- */
   '玩法':{en:'Guide',ja:'遊び方',ko:'가이드'},
   '玩法说明':{en:'How to Play',ja:'遊び方',ko:'플레이 안내'},
-  '❔ 玩法说明':{en:'❔ How to Play',ja:'❔ 遊び方',ko:'❔ 플레이 안내'},
   '知道了':{en:'Got it',ja:'わかりました',ko:'알겠어요'},
   '怎么钓':{en:'How to Fish',ja:'釣り方',ko:'낚시 방법'},
   '选好钓点，点「下竿」抛出浮标，等它动。':{en:'Pick a spot, tap Cast to throw the float, and wait for it to move.',ja:'釣り場を選び、「投げる」で浮きを投げて、動くのを待ちます。',ko:'낚시터를 고르고 “던지기”로 찌를 던진 뒤 움직일 때까지 기다려요.'},
@@ -8432,6 +8513,8 @@ var I18N_UI={
   '鱼篓满了 —— 卖鱼后自动继续':{en:'Basket full — auto resumes after you sell',ja:'魚篭がいっぱい — 売ると自動再開',ko:'바구니가 가득 — 팔면 자동 재개'},
   '鱼篓满了（{n}/{m}）—— 自动已暂停，卖鱼后自动继续':{en:'Basket full ({n}/{m}) — auto paused; it resumes after you sell.',ja:'魚篭がいっぱいです（{n}/{m}）— 自動を一時停止しました。売ると再開します。',ko:'바구니가 가득 찼어요 ({n}/{m}) — 자동을 잠시 멈췄어요. 팔면 다시 시작해요.'},
   '确认全部售出（含订单鱼）':{en:'Confirm Sell All (incl. order fish)',ja:'すべて売る（依頼魚を含む）を確認',ko:'전부 팔기 확인 (주문 물고기 포함)'},
+  '确认全部售出（订单鱼也卖 · 锁定保留）':{en:'Confirm Sell All (order fish too · locks kept)',ja:'すべて売る（依頼魚も · ロックは保留）を確認',ko:'전부 팔기 확인 (주문 물고기도 · 잠금 유지)'},
+  '能卖的全是订单要的鱼 —— 再点一次「全部售出」才会卖掉（锁定 {l} 条保留）':{en:'Everything sellable is needed by orders — tap “Sell All” again to sell (the {l} locked stay).',ja:'売れる魚はすべて依頼に必要です — もう一度「すべて売る」で売却（ロック {l} 匹は保留）',ko:'팔 수 있는 물고기가 전부 주문에 필요해요 — “전부 팔기”를 한 번 더 누르면 판매 (잠금 {l}마리는 유지)'},
   '鱼篓里全是订单要的鱼 —— 再点一次「全部售出」才会卖掉':{en:'Every fish here is needed by an order — tap “Sell All” again to sell them anyway.',ja:'魚篭は依頼に必要な魚ばかりです — もう一度「すべて売る」を押すと売れます。',ko:'바구니가 전부 주문에 필요한 물고기예요 — “전부 팔기”를 한 번 더 누르면 팔려요.'},
   '卖出 {n} 条 · +{g} 番茄币 · 保留 {k} 条订单鱼':{en:'Sold {n} fish · +{g} Tomato Coins · kept {k} order fish',ja:'{n} 匹売却 · +{g} トマトコイン · 依頼魚 {k}匹を保留',ko:'{n}마리 판매 · +{g} 토마토 코인 · 주문 물고기 {k}마리 보관'},
   '省电模式：装饰动效已关闭':{en:'Low power: decorative effects off',ja:'省電力モード：装飾エフェクトを停止',ko:'저전력 모드: 장식 효과 꺼짐'},
@@ -9102,6 +9185,7 @@ var I18N_FISH={
 
 /* ---------- 启动 ---------- */
 applyStaticI18n();   /* 先把静态文案按当前语言铺好 */
+paintIcons();        /* 再把静态骨架里的 emoji 位置换成自绘图标 */
 TOMATO='<img class="timg" src="'+COIN_URL+'" alt="'+$t('番茄币')+'">';
 loadSave();
 /* 低功耗未设置时跟随系统“减少动效”偏好，只决定一次并写入存档 */
