@@ -3611,6 +3611,11 @@
     filter:drop-shadow(0 2px 3px rgba(0,0,0,.30));}
   .gbcard .gbnm{font-size:12px;font-weight:800;color:var(--gbtxt,var(--purple2));text-align:center;line-height:1.35;}
   .gbcard .gbsub{font-size:10px;font-weight:700;color:var(--dim);}
+  /* 数织新题提示：玩家点进过一次数织后就不再显示 */
+  .gbcard .gbnew{margin-top:1px;padding:2px 7px;border-radius:99px;
+    font-size:9.5px;font-weight:800;line-height:1.5;letter-spacing:.02em;white-space:nowrap;
+    color:#fff;background:linear-gradient(180deg,#f0a24a,#df8734);
+    box-shadow:0 2px 6px rgba(223,135,52,.35);}
   /* 需解锁的小游戏：图标角上挂锁，卡片整体压暗，点开在箱内显示解锁条件 */
   .gbcard .gbico{position:relative;}
   .gbcard .gblock{position:absolute;right:1px;bottom:1px;width:20px;height:20px;border-radius:50%;
@@ -5447,6 +5452,7 @@ const I18N_UI={
   '🧱 进入俄罗斯巴块':{en:'🧱 Enter Tetris Banny',ja:'🧱 テトリスバニーへ',ko:'🧱 테트리스배니 시작'},
   '🧩 月巴数织':{en:'🧩 Banny Nonogram',ja:'🧩 バニーピクロス',ko:'🧩 배니 노노그램'},
   '🧩 进入月巴数织':{en:'🧩 Enter Banny Nonogram',ja:'🧩 バニーピクロスへ',ko:'🧩 배니 노노그램 시작'},
+  '🆕 新增 45 道题':{en:'🆕 45 new puzzles',ja:'🆕 新規パズル 45 問',ko:'🆕 새 퍼즐 45개'},
   '🎃 进入月巴追茄':{en:'🎃 Enter Banny Chase',ja:'🎃 バニーチェイスへ',ko:'🎃 배니 체이스 입장'},
   '✕ 返回图鉴':{en:'✕ Back to Codex',ja:'✕ 図鑑に戻る',ko:'✕ 도감으로 돌아가기'},
   '巴巴博弈':{en:'Baba Gambit',ja:'ババゲーム',ko:'바바 겜블'},
@@ -15635,6 +15641,14 @@ function updateGbDailyBadge(){
   }
   b.style.display=any?'':'none';
 }
+/* 数织新题提示：点进过一次数织就记下标记，之后不再显示这条提示 */
+const NONO_NEW_KEY='yueba-nono-new-v1';
+function nonoNewSeen(){
+  try{ return localStorage.getItem(NONO_NEW_KEY)==='1'; }catch(e){ return false; }
+}
+function nonoNewMark(){
+  try{ localStorage.setItem(NONO_NEW_KEY,'1'); }catch(e){}
+}
 function gbRender(){
   const grid=$('gbGrid'); if(!grid) return;
   let out='';
@@ -15650,6 +15664,7 @@ function gbRender(){
       +(dl?'<span class="gbdaily'+(dl.done?' done':'')+'">'+dl.icon+'</span>':'')
       +'<span class="gbnm">'+escHTML($t(g.name))+'</span>'
       +((g.sub||t.name!==g.name)?'<span class="gbsub">🐰 '+escHTML(t.name)+'</span>':'')
+      +((g.id==='nonogram'&&!nonoNewSeen())?'<span class="gbnew">'+escHTML($t('🆕 新增 45 道题'))+'</span>':'')
       +'</button>';
   }
   grid.innerHTML=out;
@@ -15704,6 +15719,7 @@ window.addEventListener('message',function(e){
 const GB_FRAME_SEED={nonogram:'crow',gold:'gold',tetris:'tet',diner:'diner',gomoku:'gomo',memory:'mem'};
 function gbFrameOpen(g,back){
   gbFrameId=g.id;
+  if(g.id==='nonogram') nonoNewMark();   /* 点开过一次数织，箱子里的新题提示就不再出现 */
   gbFrameBack=(back==='dex')?'dex':'box';
   const ov=$('gbGameOverlay'), fr=$('gbGameFrame'), ttl=$('gbGameTitle');
   /* 数织每次都先播「群鸦筑笼」开场，功能栏先按开场页配色 */
