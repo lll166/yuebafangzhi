@@ -29,7 +29,12 @@
      MoonIcons.paintIcons(root,'cool');
      MoonIcons.svg('sparkle','cool');
 
-     可用名字见 MoonIcons.names（浅色）、MoonIcons.warmNames（暖棕）与 MoonIcons.coolNames（冷调）。
+     // 月巴贪吃蛇等深空霓虹 UI 用第四套主题（单色线条，跟随 currentColor 电光青）：
+     MoonIcons.icon('trophy','only','neon');
+     MoonIcons.paintIcons(root,'neon');
+     MoonIcons.svg('tomato','neon');
+
+     可用名字见 MoonIcons.names（浅色）、MoonIcons.warmNames（暖棕）、MoonIcons.coolNames（冷调）与 MoonIcons.neonNames（霓虹）。
    ============================================================ */
 (function(g){
   var INK='#5b5343', PANEL='#fffdf5', ACC='#3e8e7e', ACC2='#6fb7a8', WOOD='#c9a06a',
@@ -275,7 +280,85 @@
     back:S('<path d="M13 8H3.6M7.8 3.8L3.6 8l4.2 4.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square"/>')
   };
 
-  /* 生成 <i class="ico">…</i>；cls 传 'only' 时不带右侧间距；theme 传 'warm' / 'cool' 切换主题 */
+  /* ---------- 霓虹主题：月巴贪吃蛇（深空底 / 电光青，单色线条跟随 currentColor） ---------- */
+  var NEON_ICONS={
+    /* 成就 / 解锁横幅：奖杯 */
+    trophy:S('<path d="M4.6 2.2h6.8v3.4a3.4 3.4 0 0 1-6.8 0z" fill="none" stroke="currentColor" stroke-width="1.5"/>'+
+      '<path d="M4.6 3.4H3v1.1a2.2 2.2 0 0 0 1.9 2.2M11.4 3.4H13v1.1a2.2 2.2 0 0 1-1.9 2.2" fill="none" stroke="currentColor" stroke-width="1.2"/>'+
+      '<rect x="7.1" y="9.2" width="1.8" height="2.4" fill="currentColor"/>'+
+      '<path d="M4.4 13.4h7.2M5.8 11.6h4.4" fill="none" stroke="currentColor" stroke-width="1.5"/>'),
+    /* 暂停 */
+    pause:S('<rect x="4.4" y="3.2" width="2.4" height="9.6" fill="currentColor"/>'+
+      '<rect x="9.2" y="3.2" width="2.4" height="9.6" fill="currentColor"/>'),
+    /* 关闭 */
+    close:S('<path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square"/>'),
+    /* 方向键 */
+    up:S('<path d="M8 3.4l4.9 6.6H3.1z" fill="currentColor"/>'),
+    left:S('<path d="M3.4 8l6.6-4.9v9.8z" fill="currentColor"/>'),
+    right:S('<path d="M12.6 8L6 12.9V3.1z" fill="currentColor"/>'),
+    down:S('<path d="M8 12.6L3.1 6h9.8z" fill="currentColor"/>'),
+    /* 番茄：吃一口变长 */
+    tomato:S('<circle cx="8" cy="9.4" r="4.4" fill="none" stroke="currentColor" stroke-width="1.5"/>'+
+      '<path d="M8 5V2.6M5.4 6.2L8 7.7M10.6 6.2L8 7.7" fill="none" stroke="currentColor" stroke-width="1.3"/>'),
+    /* 蛇：初次上路 */
+    snake:S('<path d="M12.8 11.8c-2.4 0-2.4-3.6-4.8-3.6s-2.4 3.6-4.8 3.6" fill="none" stroke="currentColor" stroke-width="1.5"/>'+
+      '<circle cx="14.1" cy="11.8" r="1.4" fill="currentColor"/>'),
+    /* 星：小有成就 */
+    star:S('<path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 1.3 4.3-3.8-2.1-3.8 2.1 1.3-4.3-3.1-3 4.3-.6z" fill="currentColor"/>'),
+    /* 火：单局高分 */
+    flame:S('<path d="M8 2.1c.4 2.6-2.9 3.4-2.9 6.4a3.3 3.3 0 0 0 6.6 0c0-1.7-.9-3-2-4.1-.2 1.2-.8 1.9-1.7 2.4.5-1.7.4-3.1 0-4.7z" fill="none" stroke="currentColor" stroke-width="1.5"/>'+
+      '<path d="M8 9.2c.7.8 1.1 1.3 1.1 1.9a1.1 1.1 0 0 1-2.2 0c0-.6.3-1.1 1.1-1.9z" fill="currentColor"/>'),
+    /* 旗：长蛇 */
+    ribbon:S('<path d="M3.6 1.8v12.4" fill="none" stroke="currentColor" stroke-width="1.5"/>'+
+      '<path d="M4.8 2.4h7.8l-2 2.6 2 2.6H4.8z" fill="currentColor" opacity=".9"/>'+
+      '<path d="M4.8 9h5.8l-1.5 2 1.5 2H4.8z" fill="none" stroke="currentColor" stroke-width="1.2"/>'),
+    /* 手套：贴墙漂移 */
+    glove:S('<path d="M4.2 9.6V5.6a1.5 1.5 0 0 1 3 0v.8h.2V4.4a1.5 1.5 0 0 1 3 0v5.2a4.2 4.2 0 0 1-4.2 4.2h-.6a2.8 2.8 0 0 1-2.4-1.4" fill="none" stroke="currentColor" stroke-width="1.4"/>'+
+      '<path d="M4.3 9.4L2.7 8.1" fill="none" stroke="currentColor" stroke-width="1.3"/>'),
+    /* 靶心：毫厘之间 */
+    target:S('<circle cx="8" cy="8" r="5.6" fill="none" stroke="currentColor" stroke-width="1.4"/>'+
+      '<circle cx="8" cy="8" r="2.9" fill="none" stroke="currentColor" stroke-width="1.2"/>'+
+      '<circle cx="8" cy="8" r="1.2" fill="currentColor"/>'),
+    /* 静音：静默猎手 */
+    hush:S('<path d="M2.8 6.2h2.4L8.4 3v10L5.2 9.8H2.8z" fill="none" stroke="currentColor" stroke-width="1.4"/>'+
+      '<path d="M10.6 5.6l3.2 4.8M13.8 5.6l-3.2 4.8" fill="none" stroke="currentColor" stroke-width="1.5"/>'),
+    /* 循环箭头：指尖微操 */
+    swirl:S('<path d="M8 2.4a5.6 5.6 0 1 0 4.9 7.9" fill="none" stroke="currentColor" stroke-width="1.5"/>'+
+      '<path d="M12.9 2.6v3.2H9.7" fill="none" stroke="currentColor" stroke-width="1.5"/>'),
+    /* 筷子：自食其果 */
+    chopsticks:S('<path d="M2.8 13.2L11.4 3.2M5.8 14L13.8 5" fill="none" stroke="currentColor" stroke-width="1.5"/>'+
+      '<path d="M11.4 3.2l1.6-.2M13.8 5l1.2-.4" fill="none" stroke="currentColor" stroke-width="1"/>'),
+    /* 满分：累计百口 */
+    perfect:S('<circle cx="8" cy="8" r="4.8" fill="none" stroke="currentColor" stroke-width="1.4"/>'+
+      '<path d="M5.6 8.2l1.8 1.9 3.1-3.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>'+
+      '<path d="M8 .8v1.4M8 13.8v1.4M.8 8h1.4M13.8 8h1.4" stroke="currentColor" stroke-width="1.2"/>'),
+    /* 日历：常客 */
+    calendar:S('<rect x="2.4" y="3.4" width="11.2" height="10.2" fill="none" stroke="currentColor" stroke-width="1.4"/>'+
+      '<path d="M2.4 6.8h11.2" stroke="currentColor" stroke-width="1.2"/>'+
+      '<path d="M5.4 2v3M10.6 2v3" stroke="currentColor" stroke-width="1.4"/>'+
+      '<rect x="4.8" y="8.6" width="1.9" height="1.9" fill="currentColor"/>'+
+      '<rect x="9.2" y="8.6" width="1.9" height="1.9" fill="currentColor"/>'+
+      '<rect x="4.8" y="11" width="1.9" height="1.9" fill="currentColor" opacity=".55"/>'+
+      '<rect x="9.2" y="11" width="1.9" height="1.9" fill="currentColor" opacity=".55"/>'),
+    /* 奖牌：老手 */
+    medal:S('<path d="M4.6 1.6h2.2l1.2 4.2H4.8zM11.4 1.6h-2.2l-1.2 4.2h3.2z" fill="none" stroke="currentColor" stroke-width="1.2"/>'+
+      '<circle cx="8" cy="10.2" r="3.8" fill="none" stroke="currentColor" stroke-width="1.4"/>'+
+      '<circle cx="8" cy="10.2" r="1.6" fill="currentColor"/>'),
+    /* 砖墙：满屏月巴 */
+    brick:S('<rect x="2" y="3.2" width="12" height="9.6" fill="none" stroke="currentColor" stroke-width="1.4"/>'+
+      '<path d="M2 6.4h12M2 9.6h12M5.8 3.2v3.2M10.2 3.2v3.2M4 6.4v3.2M8 6.4v3.2M12 6.4v3.2M5.8 9.6v3.2M10.2 9.6v3.2" fill="none" stroke="currentColor" stroke-width="1.1"/>'),
+    /* 问号：隐藏成就 */
+    help:S('<path d="M6.1 5.5a2 2 0 1 1 3.3 1.8c-.9.5-1.4 1.1-1.4 2.1" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square"/>'+
+      '<circle cx="8" cy="12.4" r="1.1" fill="currentColor"/>'),
+    /* 锁：墨镜未解锁 */
+    lock:S('<rect x="3.4" y="7" width="9.2" height="6.4" rx=".6" fill="none" stroke="currentColor" stroke-width="1.5"/>'+
+      '<path d="M5.6 7V5.2a2.4 2.4 0 0 1 4.8 0V7" fill="none" stroke="currentColor" stroke-width="1.4"/>'+
+      '<rect x="7.2" y="9.3" width="1.6" height="2.4" fill="currentColor"/>'),
+    /* 对勾：已达成 */
+    check:S('<path d="M3.2 8.4l3.4 3.4 6.2-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"/>')
+  };
+
+  /* 生成 <i class="ico">…</i>；cls 传 'only' 时不带右侧间距；theme 传 'warm' / 'cool' / 'neon' 切换主题 */
   function icon(name,cls,theme){
     var set=themeOf(theme);
     return '<i class="ico'+(cls?' '+cls:'')+'">'+(set[name]||'')+'</i>';
@@ -285,7 +368,10 @@
     return themeOf(theme)[name]||'';
   }
   function themeOf(theme){
-    return theme==='warm'?WARM_ICONS:(theme==='cool'?COOL_ICONS:ICONS);
+    if(theme==='warm') return WARM_ICONS;
+    if(theme==='cool') return COOL_ICONS;
+    if(theme==='neon') return NEON_ICONS;
+    return ICONS;
   }
   /* 给静态骨架里的 [data-ico] 填图标：只换图形，不碰文字，切语言后仍保留 */
   function paintIcons(root,theme){
@@ -316,13 +402,15 @@
     ICONS:ICONS,
     warm:WARM_ICONS,
     cool:COOL_ICONS,
+    neon:NEON_ICONS,
     icon:icon,
     svg:svg,
     paintIcons:paintIcons,
     css:CSS,
     names:Object.keys(ICONS),
     warmNames:Object.keys(WARM_ICONS),
-    coolNames:Object.keys(COOL_ICONS)
+    coolNames:Object.keys(COOL_ICONS),
+    neonNames:Object.keys(NEON_ICONS)
   };
   g.MoonIcons=api;
 })(window);
