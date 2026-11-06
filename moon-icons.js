@@ -439,6 +439,33 @@
       '<path d="M8 4.95C6.8 4.05 5.6 3.75 4.4 3.85M8 4.95C9.2 4.05 10.4 3.75 11.6 3.85M8 4.95V2.7" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round"/>'+
       /* 刘海：起笔细、收笔粗，向右下弯的一捺 */
       '<path d="M4.9 6.6C5.9 6.05 7.2 6.35 8.9 7.15C8.55 7.7 7.95 7.75 7.3 7.3C6.4 6.95 5.6 6.75 4.9 6.6Z" fill="currentColor"/>'),
+    /* 桃子：圆润果实 + 中间一道浅沟 + 斜插的叶子（与番茄区分：无三片萼、有果沟） */
+    peach:S('<path d="M8 4.7C9.6 3.9 11.4 4.6 12.3 6.2C13.4 8.1 12.9 11 11 12.8C10 13.7 9 14.1 8 14.1C7 14.1 6 13.7 5 12.8C3.1 11 2.6 8.1 3.7 6.2C4.6 4.6 6.4 3.9 8 4.7Z" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/>'+
+      '<path d="M8 5.3C7.6 7.2 7.6 10.6 8 13.4" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round"/>'+
+      '<path d="M8.2 4.6C9.2 3.2 10.6 2.6 12.1 2.9C11.9 4.3 10.9 5.3 9.4 5.6" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linejoin="round"/>'),
+    /* 樱桃：两颗果实 + 汇于一点的果梗 + 一片叶（与番茄区分：双果、梗细长） */
+    cherry:S('<circle cx="5.3" cy="11" r="2.7" fill="none" stroke="currentColor" stroke-width="1.35"/>'+
+      '<circle cx="11.2" cy="11.6" r="2.35" fill="none" stroke="currentColor" stroke-width="1.35"/>'+
+      '<path d="M5.5 8.3C6.3 5.6 7.3 3.6 8.3 2.5M11.2 9.3C10.6 6.6 9.4 3.7 8.3 2.5" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>'+
+      '<path d="M8.3 2.5C9.7 1.9 11.1 2.2 12 3.1C10.9 4 9.4 4 8.3 3.3Z" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linejoin="round"/>'),
+    /* 草莓：上宽下尖的果身 + 叶冠 + 三点果籽（与番茄区分：心形轮廓、带籽） */
+    berry:S('<path d="M8 14C8 14 3.4 11 3.4 7.6C3.4 5.5 5.2 4.4 8 4.4C10.8 4.4 12.6 5.5 12.6 7.6C12.6 11 8 14 8 14Z" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/>'+
+      '<path d="M6.2 4.8L4.9 3M8 4.5V2.3M9.8 4.8L11.1 3" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>'+
+      '<circle cx="6.3" cy="8" r=".52" fill="currentColor"/>'+
+      '<circle cx="9.7" cy="8" r=".52" fill="currentColor"/>'+
+      '<circle cx="8" cy="10.4" r=".52" fill="currentColor"/>'),
+    /* 苹果：顶部带凹口的果实 + 短梗 + 一片叶（与番茄区分：无三片萼、顶部下凹） */
+    apple:S('<path d="M8 5.4C9.4 4.5 10.6 4.5 11.6 5.3C13 6.4 13.4 8.6 12.6 10.6C11.9 12.4 10.5 13.9 9.1 13.9C8.6 13.9 8.3 13.7 8 13.7C7.7 13.7 7.4 13.9 6.9 13.9C5.5 13.9 4.1 12.4 3.4 10.6C2.6 8.6 3 6.4 4.4 5.3C5.4 4.5 6.6 4.5 8 5.4Z" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/>'+
+      '<path d="M8 5.2C8 4.2 8.2 3.2 8.8 2.4" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round"/>'+
+      '<path d="M8.8 2.6C9.7 1.7 11 1.6 12 2.1C11.6 3.3 10.4 3.9 9.2 3.6Z" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linejoin="round"/>'),
+    /* 番茄罐头：玻璃瓶身 + 瓶盖 + 瓶内两颗番茄 + 左侧玻璃高光（与碗区分：有瓶颈与瓶盖） */
+    jar:S('<rect x="5.1" y="1.7" width="5.8" height="1.8" rx="0.5" fill="none" stroke="currentColor" stroke-width="1.2"/>'+
+      '<path d="M4.5 5.4L5.55 3.5H10.45L11.5 5.4" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round"/>'+
+      '<path d="M4.5 5.4h7v6.3c0 1.2-.95 2.1-2.1 2.1H6.6c-1.15 0-2.1-.9-2.1-2.1Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>'+
+      '<circle cx="6.55" cy="8.7" r="1.25" fill="none" stroke="currentColor" stroke-width="1.05"/>'+
+      '<circle cx="9.45" cy="9.15" r="1.05" fill="none" stroke="currentColor" stroke-width="1.05"/>'+
+      '<path d="M6.55 7.45v-.5M6.2 7.15l-.3-.28M6.9 7.15l.3-.28M9.45 8.1v-.45" fill="none" stroke="currentColor" stroke-width=".9" stroke-linecap="round"/>'+
+      '<path d="M5.35 7.1v3.1" fill="none" stroke="currentColor" stroke-width=".85" stroke-linecap="round" opacity=".45"/>'),
     /* 快长肥：牛皮纸袋 + 露出袋口的番茄（沿用上面番茄的三片萼与一捺刘海） */
     tomatobag:S('<path d="M4.5 8.2C3.7 6.95 4 5.35 5.15 4.45C6.05 3.8 7 3.6 8 3.7C9 3.6 9.95 3.8 10.85 4.45C12 5.35 12.3 6.95 11.5 8.2Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>'+
       '<path d="M8 3.75C6.95 3 5.9 2.75 4.9 2.85M8 3.75C9.05 3 10.1 2.75 11.1 2.85M8 3.75V2" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round"/>'+

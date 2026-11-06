@@ -402,6 +402,8 @@
   .bsearchbtn{flex:0 0 auto;width:32px;height:32px;padding:0;border-radius:10px;border:1px solid var(--line);
     background:rgba(255,255,255,.6);color:var(--dim);font-size:14px;line-height:1;cursor:pointer;}
   .bsearchbtn.on{background:var(--purple2);color:#fff;border-color:var(--purple2);}
+  /* 按钮里只有图标时会被 UA 的 text-align:center 居中，默认 margin-right 会把图形挤偏 */
+  .bsearchbtn .ico{margin-right:0;}
   .bsearchrow{margin:-3px 0 10px;}
   .bsearchin{width:100%;box-sizing:border-box;padding:9px 12px;border-radius:11px;border:1px solid var(--line);
     background:var(--panel2);color:var(--text);font-size:13px;outline:none;}
@@ -648,6 +650,8 @@
   .tvg-reel{width:62px;height:62px;background:var(--panel);border:2px solid var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:700;color:var(--gold);box-shadow:0 3px 0 var(--line);overflow:hidden;position:relative;}
   .tvg-strip{position:absolute;left:0;top:0;width:100%;}
   .tvg-strip>div{height:62px;display:flex;align-items:center;justify-content:center;font-size:34px;}
+  /* 转轮里的图标由 emoji 换成 SVG，默认带 margin-right:.3em，会把图形挤偏 */
+  .tvg-reel .ico,.tvg-strip .ico{margin-right:0;}
   .tvg-reel.land{animation:tvsb .4s cubic-bezier(.2,1.6,.4,1);}
   @keyframes tvsb{0%{transform:scale(1.25)}100%{transform:scale(1)}}
   .tvhome{position:absolute;inset:0;overflow:hidden;contain:content;}
@@ -1616,6 +1620,8 @@
     font-size:13px;font-weight:800;color:var(--purple2);background:rgba(255,255,255,.7);
     border:1.5px solid var(--line);transition:.15s;box-shadow:0 2px 6px rgba(100,80,160,.05);}
   .wopt .wico{font-size:24px;}
+  /* 天气格是居中的纯图标，默认 margin-right 会让图形偏左 */
+  .wopt .wico .ico{margin-right:0;}
   .wopt small{font-size:10px;color:var(--good);font-weight:700;}
   .wopt:hover{border-color:var(--purple);}
   .wopt.on{background:linear-gradient(180deg,#b39ddb,#9575cd);color:#fff;border-color:var(--purple);
@@ -4156,7 +4162,7 @@ var LEMOJI={
   /* 天降事件台词：蜡烛/爱心/花/饮品/戒指/钥匙/彩虹/警察，其余按语义归类 */
   '🕯':'candle','💘':'heart','🫀':'heart','🖤':'heart','🌻':'flower','🌸':'flower','🌹':'flower','🥀':'flower',
   '🍵':'cup','🥛':'cup','🥂':'cup','🫖':'cup','💍':'ring','🗝':'key','🔑':'key','🌈':'rainbow','👮':'police',
-  '🍓':'tomato','🍒':'tomato','🍬':'gift','🎀':'ribbon','🧣':'ribbon','🎐':'sound','🎶':'sound','🎏':'flag','🎪':'flag',
+  '🍓':'berry','🍒':'cherry','🍬':'gift','🎀':'ribbon','🧣':'ribbon','🎐':'sound','🎶':'sound','🎏':'flag','🎪':'flag',
   '🫧':'drop','🩸':'drop','🧂':'drop','⛲':'drop','💧':'drop','🐚':'wave','🌰':'leaf','🥢':'chopsticks','🌠':'star',
   '💤':'newmoon','🌒':'newmoon','🌖':'newmoon','🌗':'newmoon','⛅':'cloud','🌫':'cloud','🌩':'storm',
   '🚧':'warn','😤':'warn','✊':'glove','🤝':'check','🔪':'swords','✒':'journal','♻':'rotate','⛓':'lock',
@@ -4173,9 +4179,9 @@ var LEMOJI={
   '🕸':'web','🧥':'case','👤':'user','💗':'heart','💛':'heart','🗡':'swords','⛏':'swords','🪨':'stone',
   '🏺':'bowl','🖼':'journal','👁':'target','🦐':'fish','🔱':'anchor','⚓':'anchor','♟':'chess','⚫':'gomoku','🗿':'stone',
   '🦴':'bone','🏳':'flag','🧱':'brick','🛡':'shield','🥥':'shell','🐬':'fish','🐳':'fish','🐋':'fish',
-  '🏵':'medal','🎖':'medal','⚜':'crown','🧿':'crystal','🔷':'crystal','💎':'crystal','🌁':'column','🫙':'bowl','🍎':'tomato',
-  '🍑':'tomato','🐝':'bug','🧺':'basket','🐿':'paw','🌞':'sun','🌅':'sunrise','🌇':'sunset','🦋':'bug',
-  '🧚':'sparkle','🌟':'star','⭐':'star','🍜':'bowl','🍲':'bowl','🍢':'bowl','🍪':'bowl','🥚':'bowl','🥫':'bowl',
+  '🏵':'medal','🎖':'medal','⚜':'crown','🧿':'crystal','🔷':'crystal','💎':'crystal','🌁':'column','🫙':'bowl','🍎':'apple',
+  '🍑':'peach','🐝':'bug','🧺':'basket','🐿':'paw','🌞':'sun','🌅':'sunrise','🌇':'sunset','🦋':'bug',
+  '🧚':'sparkle','🌟':'star','⭐':'star','🍜':'bowl','🍲':'bowl','🍢':'bowl','🍪':'bowl','🥚':'bowl','🥫':'jar',
   '🦪':'shell','🌴':'palm','✉':'mail','🎈':'balloon','🎠':'houses','🧵':'ribbon','☂':'umbrella','⛄':'snowman',
   '⛷':'snow','🛷':'snow','⛸':'snow','🦌':'paw','🧤':'glove','🏔':'stone','⛰':'stone','🪦':'stone',
   '🦢':'dove','🦉':'dove','🦆':'dove','🐦':'dove','🐧':'dove','🦜':'dove','🐓':'dove','🐤':'dove',
