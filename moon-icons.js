@@ -466,6 +466,382 @@
       '<circle cx="9.45" cy="9.15" r="1.05" fill="none" stroke="currentColor" stroke-width="1.05"/>'+
       '<path d="M6.55 7.45v-.5M6.2 7.15l-.3-.28M6.9 7.15l.3-.28M9.45 8.1v-.45" fill="none" stroke="currentColor" stroke-width=".9" stroke-linecap="round"/>'+
       '<path d="M5.35 7.1v3.1" fill="none" stroke="currentColor" stroke-width=".85" stroke-linecap="round" opacity=".45"/>'),
+    /* ===== 旅行特产：拆分重复映射用的独立图标（16×16 单色线条） ===== */
+    /* 松果：竖向锥形果身 + 三道鳞片弧 */
+    pinecone:S('<path d="M8 1.9c2.2 1.8 3.4 4.2 3.4 6.6 0 3.1-1.4 5.8-3.4 7.1-2-1.3-3.4-4-3.4-7.1 0-2.4 1.2-4.8 3.4-6.6Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>'+
+      '<path d="M5.5 5.9c1.7.6 3.3.6 5 0M5 8.4c2 .7 4 .7 6 0M5.4 10.9c1.7.5 3.4.5 5.1 0" fill="none" stroke="currentColor" stroke-width=".95" stroke-linecap="round"/>'),
+    /* 雪松果：同锥形果身，改用雪点与顶部落雪线区分 */
+    frostcone:S('<path d="M8 2.4c2.1 1.9 3.2 4.3 3.2 6.4 0 3-1.3 5.5-3.2 6.7-1.9-1.2-3.2-3.7-3.2-6.7 0-2.1 1.1-4.5 3.2-6.4Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>'+
+      '<path d="M5.4 5.2c1.7.8 3.5.8 5.2 0" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>'+
+      '<circle cx="6.5" cy="8" r=".5" fill="currentColor"/><circle cx="9.3" cy="7.5" r=".5" fill="currentColor"/><circle cx="8" cy="10.3" r=".5" fill="currentColor"/>'),
+    /* 幻梦露：水滴 + 内部四角星 */
+    dreamdrop:S('<path d="M8 1.9c2.3 2.5 4.1 4.8 4.1 7.1A4.1 4.1 0 0 1 3.9 9C3.9 6.7 5.7 4.4 8 1.9Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>'+
+      '<path d="M7 5.2l.5 1.5 1.5.5-1.5.5L7 9.2l-.5-1.5L5 7.2l1.5-.5z" fill="currentColor" opacity=".6"/>'),
+    /* 青苔团：三峰苔团 + 苔点 */
+    moss:S('<path d="M2.8 11.9c0-1.4 1-2.4 2.2-2.4.2-1.4 1.3-2.4 2.8-2.4 1.6 0 2.8 1.1 3 2.6 1.2.1 2.2 1.1 2.2 2.4 0 .9-.7 1.5-1.6 1.5H4.4c-.9 0-1.6-.6-1.6-1.7Z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
+      '<circle cx="5.5" cy="11.6" r=".45" fill="currentColor"/><circle cx="8" cy="10.8" r=".45" fill="currentColor"/><circle cx="10.4" cy="11.7" r=".45" fill="currentColor"/>'),
+    /* 月桂枝：斜向枝条 + 两侧叶片 */
+    laurel:S('<path d="M4.4 13.4C4.2 9.9 6 6.2 9.6 3.2" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round"/>'+
+      '<path d="M5.3 10.9C3.9 10.7 3 9.9 2.6 8.7c1.4-.2 2.5.3 3.2 1.4Z" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linejoin="round"/>'+
+      '<path d="M6.1 8.6C5.4 7.4 5.4 6.3 6.1 5.2c1.2.6 1.8 1.6 1.6 2.9Z" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linejoin="round"/>'+
+      '<path d="M7.7 6.2C7.3 4.9 7.5 3.8 8.3 2.8c1 .8 1.4 1.9 1.1 3.1Z" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linejoin="round"/>'+
+      '<path d="M10.2 5.2c.7-1.1 1.7-1.6 3-1.5-.1 1.3-.9 2.2-2.3 2.5Z" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linejoin="round"/>'+
+      '<path d="M10.6 8.2c1-1 2.1-1.3 3.3-.9-.4 1.3-1.4 2-2.8 2Z" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linejoin="round"/>'),
+    /* 海藻：两条波浪藻叶 + 海底线 */
+    seaweed:S('<path d="M5.6 13.8C4.6 11.7 4.8 9.6 6 7.5c.9-1.6.8-3.2 0-4.9" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>'+
+      '<path d="M10 13.8c1-2.1.8-4.2-.4-6.3-.9-1.6-.8-3.2 0-4.9" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>'+
+      '<path d="M5.9 10.3C4.6 10.2 3.7 9.6 3.1 8.5c1.2-.4 2.3 0 3.1 1M10 8.6c1.3-.2 2.3-.8 2.9-1.9-1.3-.3-2.4.2-3.1 1.2" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>'+
+      '<path d="M3.8 14h8.4" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>'),
+    /* 冰羽：菱形羽片 + 折断感羽枝 + 冰点 */
+    icefeather:S('<path d="M12.2 2.6C12.9 7 10 11.4 5.3 12.6L3 12.1C4.1 7.4 7.7 3.7 12.2 2.6Z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
+      '<path d="M11.6 3.3L3.3 12.4" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>'+
+      '<path d="M9.8 4.4L8.6 2.9M9.4 6.2L7.6 4.5M8.4 8L6.3 6.3M7 9.9L4.8 8.2" fill="none" stroke="currentColor" stroke-width=".9" stroke-linecap="round"/>'+
+      '<circle cx="12.1" cy="5" r=".5" fill="currentColor" opacity=".7"/>'),
+    /* 萤石：六棱宝石 + 外侧辉光 */
+    glowgem:S('<path d="M8 2.6l4 2.4v6l-4 2.4-4-2.4v-6z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>'+
+      '<path d="M8 2.6v10.8M4 5l4 2.6L12 5" fill="none" stroke="currentColor" stroke-width=".95" opacity=".7"/>'+
+      '<path d="M8 1.1v1.1M1.3 8h1.1M13.6 8h1.1M3.1 3.1l.8.8M12.1 3.1l-.8.8" fill="none" stroke="currentColor" stroke-width=".85" stroke-linecap="round" opacity=".65"/>'),
+    /* 深海珠：圆珠 + 水线 + 气泡 */
+    deeporb:S('<circle cx="8" cy="8.4" r="4.7" fill="none" stroke="currentColor" stroke-width="1.3"/>'+
+      '<path d="M4.6 10.5c1.8 1 4.2.9 6.4-.4" fill="none" stroke="currentColor" stroke-width="1" opacity=".6"/>'+
+      '<circle cx="6.4" cy="6.6" r=".55" fill="currentColor"/>'+
+      '<circle cx="10.4" cy="5.3" r=".95" fill="none" stroke="currentColor" stroke-width=".85"/>'+
+      '<circle cx="11.6" cy="7.2" r=".45" fill="none" stroke="currentColor" stroke-width=".8"/>'),
+    /* 湖心石：扁圆石 + 两圈水纹 */
+    lakestone:S('<path d="M8 3.6c2.8 0 4.9 1.8 4.9 4.3 0 2.6-2.1 4.5-4.9 4.5S3.1 10.5 3.1 7.9c0-2.5 2.1-4.3 4.9-4.3Z" fill="none" stroke="currentColor" stroke-width="1.3"/>'+
+      '<path d="M2 10.9c1.5 1.7 3.6 2.6 6 2.6s4.5-.9 6-2.6" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity=".6"/>'+
+      '<path d="M3.7 13.2c1.2.9 2.6 1.4 4.3 1.4s3.1-.5 4.3-1.4" fill="none" stroke="currentColor" stroke-width=".9" stroke-linecap="round" opacity=".35"/>'+
+      '<path d="M6.3 7.7c1.1-.5 2.3-.5 3.4 0" fill="none" stroke="currentColor" stroke-width=".9" stroke-linecap="round" opacity=".7"/>'),
+    /* 明信片：横版卡片 + 右上邮票 + 书写线 */
+    postcard:S('<rect x="2.2" y="4.1" width="11.6" height="8.4" rx="1" fill="none" stroke="currentColor" stroke-width="1.3"/>'+
+      '<rect x="9.9" y="5.5" width="2.6" height="2.6" rx=".3" fill="none" stroke="currentColor" stroke-width=".9"/>'+
+      '<path d="M4.2 6.4h4.2M4.2 8.3h4.2M4.2 10.2h3" fill="none" stroke="currentColor" stroke-width=".95" stroke-linecap="round"/>'+
+      '<path d="M10.1 5.7l2.2 2.2M12.3 5.7l-2.2 2.2" fill="none" stroke="currentColor" stroke-width=".6" opacity=".5"/>'),
+    /* 星屑糖：星形糖块 + 糖屑 */
+    starcandy:S('<path d="M8 2.3l1.7 3.6 3.9.5-2.9 2.7.8 3.9L8 11l-3.5 2 .8-3.9-2.9-2.7 3.9-.5z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
+      '<circle cx="8" cy="7.6" r=".55" fill="currentColor"/>'+
+      '<circle cx="2.5" cy="11.4" r=".42" fill="currentColor"/><circle cx="13.5" cy="11.9" r=".42" fill="currentColor"/><circle cx="12.1" cy="2.4" r=".38" fill="currentColor"/>'),
+    /* 糖果：椭圆糖体 + 两端拧结 */
+    candy:S('<ellipse cx="8" cy="8" rx="2.9" ry="2.6" fill="none" stroke="currentColor" stroke-width="1.3"/>'+
+      '<path d="M5.1 8L2.3 5.7v4.6L5.1 8Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>'+
+      '<path d="M10.9 8l2.8-2.3v4.6L10.9 8Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>'+
+      '<path d="M6.6 6.5c.9.45 1.9.45 2.8 0M6.6 9.5c.9-.45 1.9-.45 2.8 0" fill="none" stroke="currentColor" stroke-width=".9" stroke-linecap="round" opacity=".7"/>'),
+    /* 手作糖：螺旋糖球 + 糖棍 */
+    lollipop:S('<circle cx="6.9" cy="6.9" r="3.7" fill="none" stroke="currentColor" stroke-width="1.3"/>'+
+      '<path d="M6.6 4.2a2.8 2.8 0 1 0 2.9 2.7 1.7 1.7 0 0 0-2.6-1.5" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>'+
+      '<path d="M9.5 9.6l3.3 3.3" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/>'),
+    /* 龙鳞：单枚鳞片 + 三道鳞纹（与蛇区分：无蛇身） */
+    scale:S('<path d="M8 2.3c2.7 1.4 4.3 3.6 4.3 6.1 0 2.6-1.8 4.8-4.3 5.9-2.5-1.1-4.3-3.3-4.3-5.9 0-2.5 1.6-4.7 4.3-6.1Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>'+
+      '<path d="M4.2 7.6c1.3.55 2.5.55 3.8 0s2.5-.55 3.8 0M4.5 10c1.2.45 2.3.45 3.5 0s2.3-.45 3.5 0" fill="none" stroke="currentColor" stroke-width=".95" stroke-linecap="round"/>'+
+      '<path d="M8 2.6v11.4" fill="none" stroke="currentColor" stroke-width=".8" opacity=".4"/>'),
+    /* 无月之尘：弯月 + 尘点 */
+    moondust:S('<path d="M10.8 2.7a5.4 5.4 0 1 0 0 10.6 6 6 0 0 1 0-10.6Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>'+
+      '<circle cx="4.1" cy="4.6" r=".5" fill="currentColor"/><circle cx="2.8" cy="8.6" r=".42" fill="currentColor"/><circle cx="5.2" cy="12.3" r=".45" fill="currentColor"/>'+
+      '<circle cx="9.6" cy="13" r=".4" fill="currentColor" opacity=".6"/>'),
+    /* 极光尘：三条弧状极光带 + 尘点 */
+    aurora:S('<path d="M2.1 9.8C4.2 5.9 7.2 3.7 10.8 3.2" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/>'+
+      '<path d="M3.3 12.4C5.4 8.7 8.2 6.5 11.7 6" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" opacity=".7"/>'+
+      '<path d="M6.1 13.9c1.5-2.6 3.6-4.2 6.2-4.9" fill="none" stroke="currentColor" stroke-width=".95" stroke-linecap="round" opacity=".45"/>'+
+      '<circle cx="4.6" cy="5.4" r=".4" fill="currentColor" opacity=".6"/><circle cx="8.1" cy="10.9" r=".4" fill="currentColor" opacity=".6"/>'),
+    /* 潮汐沙：浪线 + 沙粒 */
+    tidesand:S('<path d="M2 8.9c1.2-1 2.4-1 3.6 0s2.4 1 3.6 0 2.4-1 3.6 0" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>'+
+      '<path d="M4.1 13.5h7.8" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>'+
+      '<circle cx="6.3" cy="11.6" r=".45" fill="currentColor"/><circle cx="8.4" cy="10.8" r=".38" fill="currentColor"/><circle cx="10" cy="11.9" r=".42" fill="currentColor"/>'),
+    /* 沙漏：上下框 + 双锥玻璃 + 落沙 */
+    hourglass:S('<path d="M4.1 2.1h7.8M4.1 13.9h7.8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>'+
+      '<path d="M5 2.3c0 2.5 1.3 4.4 3 5.7-1.7 1.3-3 3.2-3 5.7M11 2.3c0 2.5-1.3 4.4-3 5.7 1.7 1.3 3 3.2 3 5.7" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>'+
+      '<path d="M6.9 12.4c.8-.5 1.4-.5 2.2 0" fill="currentColor" stroke="none" opacity=".5"/>'),
+    /* 阵眼碎片：带棱碎片 + 核心点 */
+    shard:S('<path d="M8.7 2.1l4.2 4.7-3 7.1-4.8-1.5-1.6-5.7z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
+      '<path d="M8.7 2.1L7.5 7.9l4.6 6M7.5 7.9l-3.9.4" fill="none" stroke="currentColor" stroke-width=".95" stroke-linecap="round" opacity=".6"/>'+
+      '<circle cx="7.5" cy="7.9" r=".65" fill="currentColor"/>'),
+    /* 古神符：竖纸条 + 顶部缺口 + 符文 */
+    talisman:S('<path d="M5.3 2.7h5.4v11.1l-2.7-1.7-2.7 1.7z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>'+
+      '<path d="M6.8 2.7L8 1.5l1.2 1.2" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/>'+
+      '<path d="M7 5.2h2M6.6 7h2.8M8 8.8v2.4M6.7 9.7h2.6" fill="none" stroke="currentColor" stroke-width=".9" stroke-linecap="round"/>'),
+    /* 星图残卷：摊开的图纸 + 星座连线 */
+    starmap:S('<path d="M3.6 2.9h8.8v10.2H3.6z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>'+
+      '<path d="M5.4 5.4l1.2 2.6 2.5-1.2 2.7 2.6" fill="none" stroke="currentColor" stroke-width=".85" opacity=".55"/>'+
+      '<circle cx="5.4" cy="5.4" r=".55" fill="currentColor"/><circle cx="6.6" cy="8" r=".5" fill="currentColor"/><circle cx="9.1" cy="6.8" r=".55" fill="currentColor"/><circle cx="11.8" cy="9.4" r=".5" fill="currentColor"/>'+
+      '<path d="M3.6 4.1h-1M13.4 11.9h-1" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity=".6"/>'),
+    /* 诅咒石：裂纹石块 + 咒点 */
+    cursedstone:S('<path d="M5.4 3.4l4.3-.8 3.1 3.6-.5 4.6-4.4 2.1-3.8-2.8-.6-4.3z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
+      '<path d="M7.9 4.8L6.9 7.4l1.9 1.1-1.2 2.5" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round"/>'+
+      '<circle cx="6.4" cy="6.1" r=".4" fill="currentColor"/>'),
+    /* 珊瑚碑：圆顶石碑 + 右上珊瑚枝 */
+    coralstele:S('<path d="M5.3 13.5V6.1c0-1.8 1.1-3.1 2.6-3.1s2.6 1.3 2.6 3.1v7.4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>'+
+      '<path d="M4.3 13.5h7.4" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>'+
+      '<path d="M10.3 6.2c1.2-.5 1.9-1.4 2-2.7M10.3 8.2c1.3.1 2.3-.4 3-1.5M10.3 6.2c.4-.9.3-1.8-.2-2.6" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>'+
+      '<path d="M6.8 8h2.4" fill="none" stroke="currentColor" stroke-width=".85" stroke-linecap="round" opacity=".45"/>'),
+    /* 冰裂纹石：石块 + 贯通折线裂纹 */
+    crackedstone:S('<path d="M3.3 10.7l1.1-4.5 3-1.9 4.6 1.3 1 4-2.5 2.9H5.9z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
+      '<path d="M8.4 4.5L7.1 7.5l2 1.4-1.2 3.1" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round"/>'+
+      '<path d="M4.4 10.9c1.7.55 3.5.55 5.2 0" fill="none" stroke="currentColor" stroke-width=".8" opacity=".4"/>'),
+    /* 灰烬：灰堆 + 两缕余烟 */
+    ash:S('<path d="M3.1 12.9c.7-2 2.6-3.3 4.9-3.3s4.2 1.3 4.9 3.3z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>'+
+      '<path d="M6.4 8.5c-1-1.2-.7-2.4.3-3.4M9.6 8.5c1-1.2.7-2.4-.3-3.4" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity=".65"/>'+
+      '<circle cx="6.6" cy="12" r=".35" fill="currentColor" opacity=".55"/><circle cx="9.4" cy="12.1" r=".35" fill="currentColor" opacity=".55"/>'),
+    /* 清醒之种：斜置种子 + 顶端嫩芽 */
+    seed:S('<ellipse cx="8" cy="8.6" rx="3" ry="4.1" transform="rotate(-20 8 8.6)" fill="none" stroke="currentColor" stroke-width="1.3"/>'+
+      '<path d="M8.6 4.6C9.4 3.7 10.4 3.4 11.5 3.6c-.2 1.1-.8 1.8-1.9 2.1" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linejoin="round"/>'+
+      '<circle cx="7.1" cy="9.6" r=".5" fill="currentColor" opacity=".7"/>'),
+    /* 海贝：扇形贝壳 + 放射肋 */
+    seashell:S('<path d="M8 13.8C4.5 12.6 2.4 10 2.4 7.1 2.4 4.8 4.9 3 8 3s5.6 1.8 5.6 4.1c0 2.9-2.1 5.5-5.6 6.7Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>'+
+      '<path d="M8 13.4V4.2M5.6 12.5l1-8M10.4 12.5l-1-8M3.3 9.4l4-4.2M12.7 9.4l-4-4.2" fill="none" stroke="currentColor" stroke-width=".85" stroke-linecap="round" opacity=".6"/>'),
+    /* 鲸歌螺：螺旋螺壳 + 螺尾 */
+    conch:S('<path d="M12.9 8.6c0 2.6-2.2 4.8-4.9 4.8S3.1 11.2 3.1 8.6c0-2.2 1.8-4 4-4 1.8 0 3.2 1.4 3.2 3.1 0 1.4-1.1 2.5-2.5 2.5-1 0-1.8-.8-1.8-1.8 0-.7.5-1.2 1.2-1.4" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>'+
+      '<path d="M12.9 8.6c.4-1.7 0-3.3-1.1-4.7" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity=".6"/>'),
+    /* 岛民陶偶：圆头人偶 + 裙身 + 双臂 */
+    idol:S('<circle cx="8" cy="4.6" r="2.1" fill="none" stroke="currentColor" stroke-width="1.25"/>'+
+      '<circle cx="7.2" cy="4.4" r=".32" fill="currentColor"/><circle cx="8.8" cy="4.4" r=".32" fill="currentColor"/>'+
+      '<path d="M4.7 13.5c0-2.5 1.4-4.3 3.3-4.3s3.3 1.8 3.3 4.3z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
+      '<path d="M5.5 9.9L4 11.6M10.5 9.9L12 11.6" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round"/>'),
+    /* 无字诗碑：圆顶空白碑 + 底座 */
+    stele:S('<path d="M5.2 13.5V6.4c0-2 1.2-3.5 2.8-3.5s2.8 1.5 2.8 3.5v7.1" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>'+
+      '<path d="M3.9 13.5h8.2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>'+
+      '<path d="M6.4 6.6c.9 1.1 2.3 1.1 3.2 0" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity=".35"/>'),
+    /* 海心灯：水波灯座 + 火焰 + 波光 */
+    sealamp:S('<path d="M4.5 12.5h7l-1-3.3H5.5z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
+      '<path d="M8 9.1c1.3 0 2.3-1 2.3-2.2C10.3 5.4 8 4.6 8 2.9 8 4.6 5.7 5.4 5.7 6.9c0 1.2 1 2.2 2.3 2.2Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>'+
+      '<path d="M2.6 8.2c1.3 1.5 3.2 2.4 5.4 2.4s4.1-.9 5.4-2.4" fill="none" stroke="currentColor" stroke-width=".9" stroke-linecap="round" opacity=".5"/>'),
+    /* 夜市灯：悬挂灯笼 + 提梁 + 流苏 */
+    nightlantern:S('<path d="M8 1.3v1.1" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>'+
+      '<path d="M5.9 2.4h4.2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>'+
+      '<path d="M5 4h6l.9 5.2H4.1z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
+      '<path d="M8 9.2v2.6M7.1 13.3h1.8" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>'+
+      '<path d="M6.6 5.6v2.9M8 5.6v2.9M9.4 5.6v2.9" fill="none" stroke="currentColor" stroke-width=".7" opacity=".4"/>'),
+    /* 王城钥：环形钥柄内嵌王冠 + 长齿钥杆 */
+    royalkey:S('<circle cx="5.4" cy="8" r="2.7" fill="none" stroke="currentColor" stroke-width="1.3"/>'+
+      '<path d="M4.2 8.3l.7-2 1.1 1.1 1.1-1.1.7 2z" fill="currentColor" opacity=".5"/>'+
+      '<path d="M8.1 8h5.6M11.1 8v2M13.2 8v1.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>'),
+    /* 熄灭的灯芯：短蜡烛 + 无焰灯芯 + 余烟 */
+    deadwick:S('<path d="M5.5 13.4h5V8.6c0-.7-.5-1.2-1.1-1.2H6.6c-.6 0-1.1.5-1.1 1.2z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
+      '<path d="M8 7.4V5.8" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>'+
+      '<path d="M8 5.5c-1.1-.8-.7-1.9.3-2.5M9.5 4.4c.8-.7.6-1.5.1-2.1" fill="none" stroke="currentColor" stroke-width=".9" stroke-linecap="round" opacity=".65"/>'),
+    /* 蓝冰：冰块 + 水面线 + 内裂面 */
+    blueice:S('<path d="M4 12.6l1-5.2 3-3 3.4 3.2.6 5z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>'+
+      '<path d="M5 7.4l3.2 1.9 4.8-1.9M8.2 9.3v3.3M2.2 12.9h11.6" fill="none" stroke="currentColor" stroke-width=".95" stroke-linecap="round" opacity=".6"/>'+
+      '<path d="M6.2 5.2l1.2 2.1" fill="none" stroke="currentColor" stroke-width=".8" stroke-linecap="round" opacity=".45"/>'),
+    /* 野果：三颗浆果 + 双叶 */
+    wildberry:S('<circle cx="5.8" cy="9.6" r="2.3" fill="none" stroke="currentColor" stroke-width="1.2"/>'+
+      '<circle cx="10" cy="9.2" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/>'+
+      '<circle cx="8" cy="12" r="1.9" fill="none" stroke="currentColor" stroke-width="1.2"/>'+
+      '<path d="M8 7.3V4.6M8 4.8C6.4 4.6 5.4 3.8 5.1 2.6c1.5-.1 2.6.6 3 2.2Zm0 0c1.6-.2 2.6-1 2.9-2.2-1.5-.1-2.6.6-3 2.2Z" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round"/>'),
+    /* 海盐：盐罐 + 撒出的盐粒 */
+    salt:S('<path d="M6.1 13.3V6.4c0-1.3 1-2.3 2.3-2.3h.4c1.3 0 2.3 1 2.3 2.3v6.9z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
+      '<path d="M6.1 6.5h5.1M6.1 9.4h5.1" fill="none" stroke="currentColor" stroke-width=".85" opacity=".5"/>'+
+      '<path d="M8.6 4.2V2.9M7.2 3.6l-.7-.9M10 3.6l.7-.9" fill="none" stroke="currentColor" stroke-width=".95" stroke-linecap="round" opacity=".7"/>'+
+      '<path d="M3.4 13.4h9.2" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>'),
+    /* 人鱼泡沫：大小气泡 */
+    foam:S('<circle cx="5.2" cy="9.2" r="2.5" fill="none" stroke="currentColor" stroke-width="1.2"/>'+
+      '<circle cx="9.9" cy="7.4" r="1.9" fill="none" stroke="currentColor" stroke-width="1.15"/>'+
+      '<circle cx="10.3" cy="11.4" r="1.4" fill="none" stroke="currentColor" stroke-width="1.1"/>'+
+      '<path d="M3.6 4.8c.4-1.1 1.3-1.9 2.4-2.1" fill="none" stroke="currentColor" stroke-width=".9" stroke-linecap="round" opacity=".6"/>'),
+    /* 蜂蜜：蜜罐 + 罐身蜜纹 */
+    honey:S('<path d="M5.1 5.4h5.8l-.8 8H5.9z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
+      '<path d="M4.5 5.4h7" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>'+
+      '<path d="M6.5 8.3c.9-.7 2.1-.7 3 0 .6.5.6 1.4 0 1.9-.9.7-2.1.7-3 0-.6-.5-.6-1.4 0-1.9Z" fill="currentColor" opacity=".4"/>'+
+      '<path d="M8 3.3V2.1" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round"/>'+
+      '<circle cx="8" cy="1.8" r=".7" fill="currentColor"/>'),
+    /* 星砂瓶：小瓶 + 星砂 */
+    starbottle:S('<path d="M7.1 2.3h1.8v1.9l1.5 2v6.4c0 .6-.5 1.1-1.1 1.1H6.7c-.6 0-1.1-.5-1.1-1.1V6.2l1.5-2z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>'+
+      '<path d="M7.1 2.3h1.8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>'+
+      '<path d="M7.1 11.7h3.9" fill="none" stroke="currentColor" stroke-width=".9" opacity=".5"/>'+
+      '<path d="M8 7.4l.5 1.1 1.1.2-.8.8.2 1.1-1-.6-1 .6.2-1.1-.8-.8 1.1-.2z" fill="currentColor"/>'+
+      '<circle cx="6.9" cy="10" r=".35" fill="currentColor" opacity=".6"/><circle cx="9.3" cy="10.4" r=".3" fill="currentColor" opacity=".6"/>'),
+    /* 桂花糕：切块方糕 + 桂花点 */
+    cake:S('<path d="M4.2 12.6l1.1-6.5h5.4l1.1 6.5z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
+      '<path d="M4.9 9.3h6.2" fill="none" stroke="currentColor" stroke-width="1" opacity=".55"/>'+
+      '<circle cx="6.8" cy="7" r=".5" fill="currentColor"/><circle cx="9.2" cy="6.7" r=".45" fill="currentColor"/><circle cx="8" cy="8" r=".4" fill="currentColor"/>'+
+      '<path d="M3.4 13.1h9.2" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round" opacity=".55"/>'),
+    /* 陶片：带裂纹的陶罐 */
+    pottery:S('<path d="M5.3 4.2h5.4l-.5 7.5c-.1.8-.8 1.5-1.6 1.5H7.4c-.8 0-1.5-.7-1.6-1.5z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
+      '<path d="M4.7 4.2h6.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>'+
+      '<path d="M8.1 4.5l-1 2 1.5 1.5-1.1 2.1 1.2 1.7" fill="none" stroke="currentColor" stroke-width=".9" stroke-linecap="round" opacity=".6"/>'),
+    /* 橡子：果帽 + 果身 */
+    acorn:S('<path d="M4.6 6.5C4.6 4.5 6.1 3 8 3s3.4 1.5 3.4 3.5z" fill="currentColor" opacity=".35"/>'+
+      '<path d="M4.6 6.5C4.6 4.5 6.1 3 8 3s3.4 1.5 3.4 3.5" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
+      '<path d="M8 3V1.9" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>'+
+      '<path d="M5 7.1h6c0 3.2-1.2 5.4-3 6.7-1.8-1.3-3-3.5-3-6.7Z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
+      '<path d="M8 8.2v5" fill="none" stroke="currentColor" stroke-width=".75" opacity=".4"/>'),
+    /* 幸运签：签纸 + 签文 */
+    omikuji:S('<path d="M6.1 2.3h3.8v1.9l-1 .9v8c0 .4-.3.7-.7.7H7.8c-.4 0-.7-.3-.7-.7v-8l-1-.9z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>'+
+      '<path d="M5.5 4.1h5" fill="none" stroke="currentColor" stroke-width="1" opacity=".55"/>'+
+      '<path d="M7.4 7.1h1.2M7.4 9h1.2M7.4 10.9h1" fill="none" stroke="currentColor" stroke-width=".85" stroke-linecap="round" opacity=".6"/>'),
+    /* 阴影碎片：半实心棱片 */
+    shadowshard:S('<path d="M9.7 2.4l3.3 3.1-1.6 7.5-4.1 1.1-2.4-2.2 1.4-6.3z" fill="currentColor" opacity=".25"/>'+
+      '<path d="M9.7 2.4l3.3 3.1-1.6 7.5-4.1 1.1-2.4-2.2 1.4-6.3z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>'+
+      '<path d="M9.7 2.4L8.5 7.2l2.9.6M8.5 7.2l-1.1 4.4" fill="none" stroke="currentColor" stroke-width=".85" stroke-linecap="round" opacity=".6"/>'),
+    /* 琥珀心：琥珀块 + 内嵌星芒 */
+    amber:S('<path d="M8 2.1c1.9 0 3.6 1.2 4.3 3 .7 1.9.2 4-1.3 5.3L8 13.6l-3-3.2C3.5 9.1 3 7 3.7 5.1 4.4 3.3 6.1 2.1 8 2.1Z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
+      '<path d="M8 5.2l.9 1.8 1.8.3-1.3 1.3.3 1.8L8 9.5l-1.7.9.3-1.8-1.3-1.3 1.8-.3z" fill="currentColor" opacity=".5"/>'),
+    /* 纽扣：圆扣 + 四孔 */
+    button:S('<circle cx="8" cy="8" r="5.4" fill="none" stroke="currentColor" stroke-width="1.3"/>'+
+      '<circle cx="8" cy="8" r="3" fill="none" stroke="currentColor" stroke-width=".8" opacity=".45"/>'+
+      '<circle cx="6.8" cy="6.8" r=".6" fill="currentColor"/><circle cx="9.2" cy="6.8" r=".6" fill="currentColor"/>'+
+      '<circle cx="6.8" cy="9.2" r=".6" fill="currentColor"/><circle cx="9.2" cy="9.2" r=".6" fill="currentColor"/>'),
+    /* 风铃草：弯曲花茎 + 两朵钟形花 */
+    bellflower:S('<path d="M3.4 2.8c3.1 0 6.3 1.6 7.5 4.4" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>'+
+      '<path d="M5.3 6.3c-.9.5-1.3 1.5-1 2.6.3 1 1.2 1.6 2.2 1.4.9-.2 1.5-1 1.4-1.9-.1-.6-.3-1.2-.5-2z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>'+
+      '<path d="M9.3 9.3c-.6.9-.6 1.9 0 2.7.6.8 1.7 1 2.5.4.7-.5.9-1.4.5-2.1-.2-.4-.4-.8-.5-1.3z" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linejoin="round"/>'),
+    /* 潮汐石：圆石 + 潮纹 */
+    tideorb:S('<circle cx="8" cy="8.4" r="4.8" fill="none" stroke="currentColor" stroke-width="1.3"/>'+
+      '<path d="M4.2 9.6c1.2-.9 2.4-.9 3.6 0s2.4.9 3.6 0" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity=".7"/>'+
+      '<path d="M5 7.1c1.1-.7 2.1-.7 3.2 0s2.1.7 3.2 0" fill="none" stroke="currentColor" stroke-width=".85" stroke-linecap="round" opacity=".45"/>'),
+    /* 海蓝宝石：切面宝石 */
+    gem:S('<path d="M6 2.6h4l3 3.5-5 7.3-5-7.3z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
+      '<path d="M3 6.1h10M6 2.6L5 6.1M10 2.6L11 6.1" fill="none" stroke="currentColor" stroke-width=".85" stroke-linecap="round" opacity=".55"/>'),
+    /* 枯骨花：低垂花头 + 残枝 */
+    wilted:S('<path d="M8.4 13.4c0-2.4-.7-4.1-2.1-5.3" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round"/>'+
+      '<path d="M6.3 8.1c-1.4-.1-2.4-.9-2.7-2.2 1.4-.3 2.5.3 2.9 1.6m-.2.6c.6-1.2 1.6-1.7 2.9-1.4-.2 1.3-1.1 2.1-2.4 2.2" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/>'+
+      '<path d="M8.4 10.6c1.4.2 2.4 1 2.8 2.3-1.4.3-2.5-.3-2.9-1.6" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linejoin="round" opacity=".7"/>'+
+      '<path d="M4.6 13.4h7" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity=".5"/>'),
+    /* 雪莲：层叠花瓣 */
+    lotus:S('<path d="M8 12.7c-2.5 0-4.3-1.2-4.8-3 1.2-.5 2.4-.2 3.3.8M8 12.7c2.5 0 4.3-1.2 4.8-3-1.2-.5-2.4-.2-3.3.8" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linejoin="round"/>'+
+      '<path d="M8 12.5c-1.6-1.2-2.1-2.7-1.4-4.3 1.4.9 1.9 2.3 1.4 4.3Zm0 0c1.6-1.2 2.1-2.7 1.4-4.3-1.4.9-1.9 2.3-1.4 4.3Z" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linejoin="round"/>'+
+      '<path d="M8 8.7c-.8-1.1-.8-2.2 0-3.4.8 1.2.8 2.3 0 3.4Z" fill="currentColor" opacity=".5"/>'),
+    /* 玫瑰：螺旋花心 + 花萼 */
+    rose:S('<path d="M8 3.2c2.3 0 4.1 1.7 4.1 3.9 0 2.6-2 4.8-4.1 5.4-2.1-.6-4.1-2.8-4.1-5.4 0-2.2 1.8-3.9 4.1-3.9Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>'+
+      '<path d="M8 5.5c1.2 0 2 .8 2 1.8 0 1.2-1 2.2-2 2.5-1-.3-2-1.3-2-2.5 0-1 .8-1.8 2-1.8Z" fill="none" stroke="currentColor" stroke-width=".9" opacity=".7"/>'+
+      '<path d="M8 7.6c-.4 0-.7-.3-.7-.6 0-.4.4-.7.8-.7" fill="none" stroke="currentColor" stroke-width=".8" opacity=".6"/>'+
+      '<path d="M8 12.6v1.1M6.1 13.1c.7-.4 1.3-.4 1.9 0M9.9 13.1c-.7-.4-1.3-.4-1.9 0" fill="none" stroke="currentColor" stroke-width=".95" stroke-linecap="round"/>'),
+    /* 珊瑚：分叉珊瑚枝 */
+    coral:S('<path d="M8 13.4V7.2M8 9.9c-1.4-.2-2.4-1-3-2.4M8 8.6c1.4-.2 2.4-1 3-2.4M8 7.2C7.4 5.8 7.5 4.6 8.1 3.5M8 7.2c.7-1.4.7-2.6.2-3.7" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>'+
+      '<path d="M4.2 13.3h7.6" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity=".5"/>'),
+    /* 贝壳风铃：横杆 + 垂挂贝壳 */
+    chime:S('<path d="M4.4 3.2h7.2M5.4 3.2v2.4M8 3.2v3.3M10.6 3.2v2.4" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>'+
+      '<path d="M4.4 5.9c1 0 1.7.8 1.7 1.9 0 1.3-1.7 2.7-1.7 2.7s-1.7-1.4-1.7-2.7c0-1.1.7-1.9 1.7-1.9Z" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linejoin="round"/>'+
+      '<path d="M8 6.9c.9 0 1.6.8 1.6 1.8 0 1.4-1.6 2.8-1.6 2.8s-1.6-1.4-1.6-2.8c0-1 .7-1.8 1.6-1.8Z" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linejoin="round"/>'+
+      '<path d="M10.6 5.9v5.1" fill="none" stroke="currentColor" stroke-width=".95" stroke-linecap="round" opacity=".55"/>'),
+    /* 竖琴：琴框 + 琴弦 */
+    harp:S('<path d="M4.7 3.2c-.9 3.4-.9 6.5 0 9.5M4.7 3.2c3.6.2 6.5 3 6.9 6.6l-1.2 2.9" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>'+
+      '<path d="M6.4 4.4v8M8.2 5.3v7M10 6.6v5.4" fill="none" stroke="currentColor" stroke-width=".8" opacity=".65"/>'+
+      '<path d="M4.7 12.7h6.9" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>'),
+    /* 铜钱：圆钱 + 方孔 */
+    coppercoin:S('<circle cx="8" cy="8" r="5.4" fill="none" stroke="currentColor" stroke-width="1.3"/>'+
+      '<rect x="6.4" y="6.4" width="3.2" height="3.2" fill="none" stroke="currentColor" stroke-width="1.1"/>'+
+      '<path d="M8 2.6v1.5M8 11.9v1.5M2.6 8h1.5M11.9 8h1.5" fill="none" stroke="currentColor" stroke-width=".75" stroke-linecap="round" opacity=".45"/>'),
+    /* 断梦短刃：短刃 + 护手 */
+    dagger:S('<path d="M8 2.2l1.9 2.6v5.1H6.1V4.8z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>'+
+      '<path d="M5.2 9.9h5.6M8 9.9v3.9" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>'+
+      '<path d="M8 3.4v6.3" fill="none" stroke="currentColor" stroke-width=".75" opacity=".45"/>'),
+    /* 茶盏：杯 + 把手 + 托盘 + 热气 */
+    teacup:S('<path d="M4.2 7h6.1v2.2c0 1.7-1.3 3-3 3s-3.1-1.3-3.1-3z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
+      '<path d="M10.3 7.7h.9c.7 0 1.3.6 1.3 1.3s-.6 1.3-1.3 1.3h-.9" fill="none" stroke="currentColor" stroke-width="1.05"/>'+
+      '<path d="M3.2 13.2h9.6" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>'+
+      '<path d="M6.5 5.6c-.5-.7-.5-1.4 0-2.1M8.6 5.6c-.5-.7-.5-1.4 0-2.1" fill="none" stroke="currentColor" stroke-width=".9" stroke-linecap="round" opacity=".6"/>'),
+    /* 冻虾：弯身 + 长须 */
+    shrimp:S('<path d="M10.9 3.5c-2.9-.7-5.6.5-6.7 2.9-1 2.3.2 4.9 2.5 5.8 1.7.7 3.6.3 4.8-1" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>'+
+      '<path d="M11 3.5l2.1-1M11.1 3.6l2.3.5" fill="none" stroke="currentColor" stroke-width=".95" stroke-linecap="round"/>'+
+      '<path d="M4.4 6.7c1.2-.6 2.4-.4 3.4.6M6.2 10c1.1.2 2.1-.1 2.9-.9M8.7 5.7c.2 1 .8 1.7 1.7 2.1" fill="none" stroke="currentColor" stroke-width=".8" stroke-linecap="round" opacity=".55"/>'),
+    /* 印玺：印座 + 拱柄 */
+    seal:S('<rect x="4.2" y="10.5" width="7.6" height="2.7" rx=".5" fill="none" stroke="currentColor" stroke-width="1.2"/>'+
+      '<path d="M5.3 10.5V8.2c0-1.3 1-2.3 2.3-2.3h.8c1.3 0 2.3 1 2.3 2.3v2.3" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>'+
+      '<path d="M6.4 5.9c0-1.7.5-3 1.6-4 1.1 1 1.6 2.3 1.6 4" fill="none" stroke="currentColor" stroke-width="1.05"/>'+
+      '<path d="M5.6 11.8h4.8" fill="none" stroke="currentColor" stroke-width=".85" opacity=".5"/>'),
+    /* 收音机：机身 + 喇叭 + 天线 */
+    radio:S('<rect x="2.6" y="6.1" width="10.8" height="7.3" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/>'+
+      '<path d="M9.2 6.1l2.4-3.5" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round"/>'+
+      '<circle cx="5.8" cy="9.8" r="1.7" fill="none" stroke="currentColor" stroke-width="1"/>'+
+      '<path d="M9.2 8.6h2.9M9.2 10.5h2.9" fill="none" stroke="currentColor" stroke-width=".95" stroke-linecap="round" opacity=".6"/>'+
+      '<path d="M4.3 13.4v.8M11.7 13.4v.8" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>'),
+    /* 号角：弯管 + 扩口 */
+    horn:S('<path d="M3.6 5.2c2.6 0 4.9 1.4 6.1 3.6l1.2 2.2c.5.9-.1 2-1.2 2-3.1 0-5.8-2-6.7-5-.2-.7.1-1.4.7-1.8z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
+      '<path d="M9.7 8.9l2.9-1.2c.9-.4 1.9.1 2.2 1 .3 1-.2 2-1.2 2.3l-2.3.7" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linejoin="round"/>'+
+      '<path d="M4.7 7.2c1.3.4 2.3 1.3 2.9 2.5" fill="none" stroke="currentColor" stroke-width=".8" opacity=".5"/>'),
+    /* 符文石：立石 + 刻纹 */
+    runestone:S('<path d="M5.2 13.2l.6-8.2c.1-1.2 1-2.1 2.2-2.1s2.1.9 2.2 2.1l.6 8.2z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
+      '<path d="M8 5.6v4.4M6.6 7.2l2.8 1.4M9.4 7.2L6.6 8.6" fill="none" stroke="currentColor" stroke-width=".9" stroke-linecap="round" opacity=".7"/>'+
+      '<path d="M4.4 13.3h7.2" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity=".5"/>'),
+    /* 椰壳灯：半壳灯座 + 火焰 */
+    coconutlamp:S('<path d="M3.4 10.3c0-2.6 2.1-4.6 4.6-4.6s4.6 2 4.6 4.6c0 1.5-1.3 2.7-2.8 2.7H6.2c-1.5 0-2.8-1.2-2.8-2.7Z" fill="none" stroke="currentColor" stroke-width="1.25"/>'+
+      '<path d="M8 5.9c-.9-.9-.8-2 .2-3 1.1.9 1.3 2 .5 3" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/>'+
+      '<path d="M8 4c-.4-.5-.4-1 0-1.6.5.5.5 1 0 1.6Z" fill="currentColor"/>'+
+      '<path d="M4.6 8.3c.9-.4 1.8-.4 2.7 0M8.7 8.3c.9-.4 1.8-.4 2.7 0" fill="none" stroke="currentColor" stroke-width=".8" stroke-linecap="round" opacity=".5"/>'),
+    /* 藤编环：环形 + 编织纹 */
+    wreath:S('<circle cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="1.3"/>'+
+      '<path d="M4.6 5.2c1.5.9 4.3 1.3 6.7.5M3.4 8.2c1.7 1 5.4 1.1 8.2.1M4.2 11.1c1.6.9 4.6 1.1 7.1.2" fill="none" stroke="currentColor" stroke-width=".85" stroke-linecap="round" opacity=".55"/>'+
+      '<path d="M9.4 3.4c.9.4 1.6 1 2.1 1.7M4.6 12.6c.6.4 1.3.7 2 1" fill="none" stroke="currentColor" stroke-width=".8" stroke-linecap="round" opacity=".45"/>'),
+    /* 浪花糖：糖块 + 浪纹 + 两侧糖纸 */
+    wavecandy:S('<ellipse cx="8" cy="8" rx="4" ry="3" fill="none" stroke="currentColor" stroke-width="1.2"/>'+
+      '<path d="M4.8 8.6c.9-.8 1.8-.8 2.7 0s1.8.8 2.7 0" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>'+
+      '<path d="M4 6.4L2.2 5v6l1.8-1.4M12 6.4L13.8 5v6l-1.8-1.4" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/>'),
+    /* 独角兽毛：根部束带 + 三缕垂落的鬃毛 */
+    unicornhair:S('<path d="M5.9 2.2c1.3.8 2.6.8 3.9 0l1 1.9c-1.8 1.1-3.9 1.1-5.7 0z" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/>'+
+      '<path d="M6 4.1c-.7 2.4-.5 4.7.7 6.8.9 1.5 1 2.5.6 3.5" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round"/>'+
+      '<path d="M7.8 4.4c-.5 2.3-.3 4.5.8 6.4.7 1.2.8 2.1.5 2.9" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round"/>'+
+      '<path d="M9.6 4.3c-.8 2-1 3.9-.2 5.8.5 1.1.6 1.8.4 2.5" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>'),
+    /* 珍珠：圆珠 + 高光 + 星芒 */
+    pearl:S('<circle cx="8" cy="8.4" r="4.4" fill="none" stroke="currentColor" stroke-width="1.2"/>'+
+      '<path d="M5.6 7a3.4 3.4 0 0 1 2.2-1.6" fill="none" stroke="currentColor" stroke-width=".9" stroke-linecap="round"/>'+
+      '<path d="M12.6 3.6v1.6M11.8 4.4h1.6" stroke="currentColor" stroke-width=".8" stroke-linecap="round"/>'),
+    /* 漂流木：横置浮木 + 年轮断面 + 木纹 */
+    driftwood:S('<path d="M3.2 9.8V7.4c0-.9.7-1.6 1.6-1.6h7.1c1.6 0 2.8 1.5 2.8 3.4 0 1.3-.9 2.2-2.2 2.2H4.4c-.7 0-1.2-.6-1.2-1.6z" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linejoin="round"/>'+
+      '<path d="M4.4 5.8c.7 0 1.2 1.1 1.2 2.5s-.5 2.5-1.2 2.5" fill="none" stroke="currentColor" stroke-width=".95"/>'+
+      '<path d="M7.4 6.7h4.3M7.4 9.8h3.8" stroke="currentColor" stroke-width=".75" stroke-linecap="round" opacity=".55"/>'),
+    /* 果子面包：圆顶面包 + 割口 */
+    bread:S('<path d="M2.8 11.8V8.2C2.8 5.6 5.1 3.8 8 3.8s5.2 1.8 5.2 4.4v3.6z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>'+
+      '<path d="M2.8 11.8h10.4" stroke="currentColor" stroke-width="1.2"/>'+
+      '<path d="M5.6 6.2c.6-.8 1.4-1.2 2.4-1.2M5.6 8.6c.6-.8 1.4-1.2 2.4-1.2" fill="none" stroke="currentColor" stroke-width=".85" stroke-linecap="round" opacity=".7"/>'),
+    /* 糖画：竹签 + 盘绕糖龙 + 龙头 */
+    sugardragon:S('<path d="M8 14.2V9.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>'+
+      '<path d="M8 9.4a3.4 3.4 0 1 1 3.5-3.6 2.3 2.3 0 1 1-2.7-2" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>'+
+      '<path d="M8.8 3.8l-.5-2.2 2.1 1" fill="none" stroke="currentColor" stroke-width=".9" stroke-linejoin="round"/>'+
+      '<circle cx="9.1" cy="3.4" r=".5" fill="currentColor"/>'),
+    /* 噩梦残片：锯齿碎片 + 外溢黑雾 */
+    nightmareshard:S('<path d="M8.4 1.6l3.2 4.4-1.4 1.2 1.2 3-3.2 4.2-1-3.6-1.8-2.4z" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/>'+
+      '<path d="M7.2 5.8c-1.6.6-2.4 2-2.2 3.6M9.8 7.2c.8 1 .8 2.4 0 3.4" fill="none" stroke="currentColor" stroke-width=".8" stroke-linecap="round" opacity=".55"/>'),
+    /* 斗篷残片：连帽披风 + 撕裂下摆 */
+    cloakscrap:S('<path d="M8 2.4c-1.4 0-2.5 1-2.7 2.2l-1.7 8.2 2-.9 1.4 1.1 1-1.2 1 1.2 1.4-1.1 2 .9-1.7-8.2C10.5 3.4 9.4 2.4 8 2.4z" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linejoin="round"/>'+
+      '<path d="M8 2.4c-.9 0-1.7.5-2.1 1.3.6.5 1.3.8 2.1.8s1.5-.3 2.1-.8c-.4-.8-1.2-1.3-2.1-1.3z" fill="none" stroke="currentColor" stroke-width=".85"/>'+
+      '<path d="M6.9 6.6v3.2M9.1 6.6v3.2" stroke="currentColor" stroke-width=".7" stroke-linecap="round" opacity=".5"/>'),
+    /* 雪绒花：六枚窄瓣 + 花心 + 茎叶 */
+    edelweiss:S('<g fill="none" stroke="currentColor" stroke-width="1.05">'+
+      '<ellipse cx="8" cy="4.6" rx="1.2" ry="2.3"/>'+
+      '<ellipse cx="8" cy="4.6" rx="1.2" ry="2.3" transform="rotate(60 8 8)"/>'+
+      '<ellipse cx="8" cy="4.6" rx="1.2" ry="2.3" transform="rotate(120 8 8)"/>'+
+      '<ellipse cx="8" cy="4.6" rx="1.2" ry="2.3" transform="rotate(180 8 8)"/>'+
+      '<ellipse cx="8" cy="4.6" rx="1.2" ry="2.3" transform="rotate(240 8 8)"/>'+
+      '<ellipse cx="8" cy="4.6" rx="1.2" ry="2.3" transform="rotate(300 8 8)"/>'+
+      '</g><circle cx="8" cy="8" r="1.2" fill="none" stroke="currentColor" stroke-width="1"/>'),
+    /* 壁画拓片：纸页 + 卷角 + 浮雕纹 */
+    rubbing:S('<path d="M3 2.6h8.2l1.8 1.8v9H3z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>'+
+      '<path d="M11.2 2.6v1.8H13" fill="none" stroke="currentColor" stroke-width=".9"/>'+
+      '<path d="M5.4 6.2c1.2-.8 2.4-.8 3.6 0M5.4 8.4c1.2-.8 2.4-.8 3.6 0M5.4 10.6c.9-.6 1.8-.6 2.7 0" fill="none" stroke="currentColor" stroke-width=".85" stroke-linecap="round" opacity=".75"/>'),
+    /* 石像眼：方形石块 + 浮雕眼 */
+    stoneeye:S('<path d="M2.6 4.2h10.8v7.6H2.6z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>'+
+      '<path d="M4.6 8c1.6-2 5.2-2 6.8 0-1.6 2-5.2 2-6.8 0z" fill="none" stroke="currentColor" stroke-width="1.1"/>'+
+      '<circle cx="8" cy="8" r=".9" fill="currentColor"/>'+
+      '<path d="M3.4 5.2h1M11.8 10.8h1" stroke="currentColor" stroke-width=".7" opacity=".5"/>'),
+    /* 寒铁：铁锭 + 冷光 */
+    iron:S('<path d="M4.4 5.2h7.2l2 5.2H2.4z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>'+
+      '<path d="M5.6 9.6l.8-1.6M9.2 9.6l.8-1.6" stroke="currentColor" stroke-width=".8" stroke-linecap="round" opacity=".65"/>'+
+      '<path d="M6.4 3.6h3.2" stroke="currentColor" stroke-width=".8" stroke-linecap="round" opacity=".5"/>'),
+    /* 海豚哨：哨身 + 吹孔 + 声波 */
+    whistle:S('<path d="M2.6 6.2h6.2v4.2H5.4L2.6 12.4z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>'+
+      '<circle cx="7" cy="8.4" r="1.1" fill="none" stroke="currentColor" stroke-width="1"/>'+
+      '<path d="M11.8 4.8a4 4 0 0 1 0 6.4M13.4 3.2a6.2 6.2 0 0 1 0 9.6" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>'),
+    /* 岛花：五瓣花 + 花心 */
+    islandflower:S('<g fill="none" stroke="currentColor" stroke-width="1.1">'+
+      '<ellipse cx="8" cy="5" rx="1.5" ry="2.6"/>'+
+      '<ellipse cx="8" cy="5" rx="1.5" ry="2.6" transform="rotate(72 8 8)"/>'+
+      '<ellipse cx="8" cy="5" rx="1.5" ry="2.6" transform="rotate(144 8 8)"/>'+
+      '<ellipse cx="8" cy="5" rx="1.5" ry="2.6" transform="rotate(216 8 8)"/>'+
+      '<ellipse cx="8" cy="5" rx="1.5" ry="2.6" transform="rotate(288 8 8)"/>'+
+      '</g><circle cx="8" cy="8" r="1.1" fill="currentColor"/>'),
+    /* 人鱼鳞：交错叠压的鳞片 */
+    merscale:S('<path d="M2.4 12.4a2.6 2.6 0 0 1 5.2 0M8.4 12.4a2.6 2.6 0 0 1 5.2 0" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round"/>'+
+      '<path d="M5.4 9.6a2.6 2.6 0 0 1 5.2 0M2.4 9.6a2.6 2.6 0 0 1 5.2 0M8.4 9.6a2.6 2.6 0 0 1 5.2 0" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round"/>'+
+      '<path d="M5.4 6.8a2.6 2.6 0 0 1 5.2 0" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round"/>'),
+    /* 海雾纱：飘动纱幔 */
+    seamist:S('<path d="M2.4 5.2c1.8 1 3.6-1 5.4 0s3.6 1 5.4 0M2.4 8.4c1.8 1 3.6-1 5.4 0s3.6 1 5.4 0M2.4 11.6c1.8 1 3.6-1 5.4 0s3.6 1 5.4 0" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>'+
+      '<path d="M4 3.4c1.2.7 2.4-.7 3.6 0s2.4.7 3.6 0" fill="none" stroke="currentColor" stroke-width=".7" stroke-linecap="round" opacity=".5"/>'),
+    /* 布丁：杯装焦糖布丁（玻璃杯 + 深色焦糖顶层 + 浅色奶冻 + 小勺） */
+    pudding:S('<path d="M4.85 4.85h6.3l-.62 7.45c-.05.6-.55 1.05-1.15 1.05H6.62c-.6 0-1.1-.45-1.15-1.05z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>'+
+      '<path d="M5.15 5.3h5.7l-.14 1.5c-.9.5-1.8-.4-2.71 0-.9.4-1.8.4-2.7 0z" fill="currentColor"/>'+
+      '<path d="M5.3 7.15 5.42 12.1c.03.32.3.55.62.55h3.92c.32 0 .59-.23.62-.55l.12-4.95z" fill="currentColor" fill-opacity=".16"/>'+
+      '<path d="M10.15 4.75 12.15 1.75" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>'+
+      '<ellipse cx="12.6" cy="1.4" rx=".95" ry=".68" transform="rotate(-33 12.6 1.4)" fill="none" stroke="currentColor" stroke-width=".9"/>'),
     /* 快长肥：牛皮纸袋 + 露出袋口的番茄（沿用上面番茄的三片萼与一捺刘海） */
     tomatobag:S('<path d="M4.5 8.2C3.7 6.95 4 5.35 5.15 4.45C6.05 3.8 7 3.6 8 3.7C9 3.6 9.95 3.8 10.85 4.45C12 5.35 12.3 6.95 11.5 8.2Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>'+
       '<path d="M8 3.75C6.95 3 5.9 2.75 4.9 2.85M8 3.75C9.05 3 10.1 2.75 11.1 2.85M8 3.75V2" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round"/>'+
@@ -847,8 +1223,10 @@
     kite:S('<path d="M8 1.2l4.8 5.4-4.8 6.2-4.8-6.2z" fill="none" stroke="currentColor" stroke-width="1.3"/>'+
       '<path d="M8 1.2v11.6M3.2 6.6h9.6" stroke="currentColor" stroke-width=".9" opacity=".65"/>'+
       '<path d="M8 12.8c1 1.2-.8 2.2.4 3.2" fill="none" stroke="currentColor" stroke-width=".9" opacity=".6"/>'),
-    chess:S('<path d="M6 13.2h4M6.8 12.2h2.4" stroke="currentColor" stroke-width="1.2"/>'+
-      '<path d="M6.2 11.4c-1.4-1.2-.8-2.6.2-3.6-.8-.9-.6-2.6.6-3.4 0-1 .6-1.8 1-1.8s1 .8 1 1.8c1.2.8 1.4 2.5.6 3.4 1 1 1.6 2.4.2 3.6z" fill="none" stroke="currentColor" stroke-width="1.2"/>'),
+    /* 石纹象棋：国际象棋国王（十字 + 冠底台阶 + 窄腰 + 宽底座） */
+    chess:S('<path d="M8 1.1V4.55M6.85 2.15h2.3" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>'+
+      '<path d="M4.75 7.05C4.75 5.55 6.2 4.6 8 4.6s3.25.95 3.25 2.45L10.5 7.1v.85c-.55.8-.95 1.25-.95 1.8 0 .85.8 1.25 1.4 2.1H5.05c.6-.85 1.4-1.25 1.4-2.1 0-.55-.4-1-.95-1.8V7.1Z" fill="currentColor"/>'+
+      '<rect x="3.7" y="11.95" width="8.6" height="1.35" rx=".35" fill="currentColor"/>'),
     /* 五子棋：棋盘网格 + 一颗棋子 */
     gomoku:S('<rect x="2.4" y="2.4" width="11.2" height="11.2" fill="none" stroke="currentColor" stroke-width="1.1" opacity=".55"/>'+
       '<path d="M6.1 2.4v11.2M9.9 2.4v11.2M2.4 6.1h11.2M2.4 9.9h11.2" stroke="currentColor" stroke-width=".8" opacity=".5"/>'+
@@ -894,7 +1272,11 @@
       '<rect x="7.1" y="1.1" width="1.8" height="2" fill="currentColor"/><rect x="3.1" y="5.5" width="1.8" height="1.8" fill="currentColor"/><rect x="11.1" y="5.5" width="1.8" height="1.8" fill="currentColor"/>'),
     sunset:S('<rect x="1.8" y="6.2" width="12.4" height="1.4" fill="currentColor"/>'+
       '<path d="M4.4 6.2a3.6 3.6 0 0 0 7.2 0" fill="currentColor"/>'+
-      '<rect x="3.4" y="9.2" width="9.2" height="1" fill="currentColor" opacity=".8"/><rect x="5.2" y="11.2" width="5.6" height="1" fill="currentColor" opacity=".8"/><rect x="6.8" y="13.1" width="2.4" height="1" fill="currentColor" opacity=".8"/>')
+      '<rect x="3.4" y="9.2" width="9.2" height="1" fill="currentColor" opacity=".8"/><rect x="5.2" y="11.2" width="5.6" height="1" fill="currentColor" opacity=".8"/><rect x="6.8" y="13.1" width="2.4" height="1" fill="currentColor" opacity=".8"/>'),
+    /* 多立绘：两张叠放的画片（后张露出右上角，前张带一枚星点），图鉴「共 n 张立绘」角标用 */
+    arts:S('<path d="M4.9 5.3V3.4c0-.66.54-1.2 1.2-1.2h6.3c.66 0 1.2.54 1.2 1.2v6.3c0 .66-.54 1.2-1.2 1.2h-1.2" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" opacity=".55"/>'+
+      '<rect x="2.4" y="6.1" width="8.3" height="7.6" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.3"/>'+
+      '<path d="M6.55 8l.5 1.4 1.4.5-1.4.5-.5 1.4-.5-1.4-1.4-.5 1.4-.5z" fill="currentColor"/>')
   });
 
   /* 生成 <i class="ico">…</i>；cls 传 'only' 时不带右侧间距；theme 传 'warm' / 'cool' / 'neon' / 'tetris' / 'index' 切换主题 */
