@@ -1988,6 +1988,13 @@ var ctx=els.cv.getContext('2d');
    4. 音频
    ========================================================= */
 var AC=null, master=null, noiseBuf=null, audioBroken=false;
+/* 低端音频设备：手机 UA 或核数 ≤4，混响等贵节点自动降档，防音频线程过载爆音 */
+var lowEndAudio=(function(){
+  try{
+    if(/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)) return true;
+    return (navigator.hardwareConcurrency||8)<=4;
+  }catch(e){ return false; }
+})();
 var musicBus=null, musicWet=null;
 
 /* 给长曲和声用的简易混响脉冲，让铺底和弦有引导页那种空气感 */
@@ -2301,7 +2308,8 @@ function accOffline(L,t0,t1,combo,rate,dur,ph){
     musicBus=off.createGain(); musicBus.gain.value=0.9;
     var dry=off.createGain(); dry.gain.value=0.9; dry.connect(master);
     var rev=off.createConvolver();
-    try{ rev.buffer=makeImpulse(1.4,2.6); }catch(e){}
+    /* 烘焙用的脉冲长度跟随实时链降档：低端设备对齐，避免音色不一致 */
+    try{ rev.buffer=makeImpulse(lowEndAudio?0.7:1.4,2.6); }catch(e){}
     musicWet=off.createGain(); musicWet.gain.value=0.2; musicWet.connect(master);
     musicBus.connect(dry); musicBus.connect(rev); rev.connect(musicWet);
     noiseBuf=off.createBuffer(1,Math.ceil(off.sampleRate*0.2),off.sampleRate);
@@ -2368,7 +2376,8 @@ function ensureAudio(){
     musDry.gain.value=0.9;
     musDry.connect(master);
     var rev=AC.createConvolver();
-    try{ rev.buffer=makeImpulse(1.4,2.6); }catch(e){}
+    /* 低端设备（手机 / 少核）用短脉冲混响，防音频线程过载爆音（与引导页同款降档） */
+    try{ rev.buffer=makeImpulse(lowEndAudio?0.7:1.4,2.6); }catch(e){}
     musicWet=AC.createGain();
     musicWet.gain.value=0.2;
     musicWet.connect(master);
@@ -5925,7 +5934,7 @@ if(DEBUG){
         musicBus=off.createGain(); musicBus.gain.value=0.9;
         var dry=off.createGain(); dry.gain.value=0.9; dry.connect(master);
         var rev=off.createConvolver();
-        try{ rev.buffer=makeImpulse(1.4,2.6); }catch(e){}
+        try{ rev.buffer=makeImpulse(lowEndAudio?0.7:1.4,2.6); }catch(e){}
         musicWet=off.createGain(); musicWet.gain.value=0.2; musicWet.connect(master);
         musicBus.connect(dry); musicBus.connect(rev); rev.connect(musicWet);
         noiseBuf=off.createBuffer(1,Math.ceil(off.sampleRate*0.2),off.sampleRate);
