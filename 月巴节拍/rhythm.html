@@ -2176,9 +2176,15 @@ function decodeOrch(){
           try{
             var data=b64buf(n.b);
             AC.decodeAudioData(data.buffer.slice(0), function(buf){
-              var ch=buf.getChannelData(0), pk=0, st=Math.max(1,Math.floor(ch.length/96));
-              for(var j=0;j<ch.length;j+=st){ var a=ch[j]<0?-ch[j]:ch[j]; if(a>pk) pk=a; }
-              rows.push({m:n.m,buf:buf,peak:pk||1});
+              /* 峰值必须全量扫描：稀疏采样会估低瞬态峰值，播放时按低估的 peak 归一
+                 会把采样放大过头，多轨一叠就是「炸麦」。
+                 扫出 NaN（个别机型 AAC 解码出坏数据）直接弃用该采样，退回合成音色 */
+              var ch=buf.getChannelData(0), pk=0, bad=false;
+              for(var j=0;j<ch.length;j++){
+                var a=ch[j]; if(a!==a){ bad=true; break; }
+                a=a<0?-a:a; if(a>pk) pk=a;
+              }
+              if(!bad&&pk>0.001) rows.push({m:n.m,buf:buf,peak:pk});
               noteDone();
             }, function(){ noteDone(); });
           }catch(e){ noteDone(); }
@@ -2284,7 +2290,14 @@ function accOffline(L,t0,t1,combo,rate,dur,ph){
   var sAC=AC,sMaster=master,sBus=musicBus,sWet=musicWet,sNoise=noiseBuf,sMuted=muted,ok=true;
   try{
     AC=off; muted=false;
-    master=off.createGain(); master.gain.value=1; master.connect(off.destination);
+    /* 离线链路也要带压缩器 + 余量：多轨叠加（鼓组+贝斯+和弦+弦乐铜管齐奏）超过 1.0 时
+       会在烘焙阶段被硬削波，烧进缓存后每次播放都是「炸麦」失真（手机外放尤其明显）。
+       与实时链同款压缩参数，再留 0.9 倍余量；渲染完成后还有峰值兜底归一。 */
+    master=off.createGain(); master.gain.value=0.9;
+    var ocomp=off.createDynamicsCompressor();
+    ocomp.threshold.value=-18; ocomp.knee.value=18; ocomp.ratio.value=4;
+    ocomp.attack.value=0.004; ocomp.release.value=0.18;
+    master.connect(ocomp); ocomp.connect(off.destination);
     musicBus=off.createGain(); musicBus.gain.value=0.9;
     var dry=off.createGain(); dry.gain.value=0.9; dry.connect(master);
     var rev=off.createConvolver();
@@ -2311,6 +2324,12 @@ function renderAccPhrase(L,ph,lvl,cb){
   if(!job) return;
   ACCJOB[key]=1;
   job.then(function(buf){
+    /* 峰值兜底：压缩器起音前 4ms 的瞬态仍可能过冲，超 0.95 的整段按比例压回，杜绝削波 */
+    try{
+      var ch=buf.getChannelData(0), pk=0, i, a;
+      for(i=0;i<ch.length;i++){ a=ch[i]<0?-ch[i]:ch[i]; if(a>pk) pk=a; }
+      if(pk>0.95){ var k=0.95/pk; for(i=0;i<ch.length;i++) ch[i]*=k; }
+    }catch(e){}
     ACCBUF[key]=buf; delete ACCJOB[key];
     if(cb) cb(buf);
   }).catch(function(){ delete ACCJOB[key]; });
@@ -2334,7 +2353,14 @@ function ensureAudio(){
     comp.threshold.value=-18; comp.knee.value=18; comp.ratio.value=4;
     comp.attack.value=0.004; comp.release.value=0.18;
     master.connect(comp);
-    comp.connect(AC.destination);
+    /* 压缩器自带 makeup 增益，命中音+鼓组+伴奏垫同时叠响时输出可能冲过 1.0，
+       在部分机型（手机 Edge 外放尤其明显）听感就是「炸麦」。
+       后面再串一道 brickwall 限幅兜底，把输出钉在 -2dB 以内，削波不再可能。 */
+    var lim=AC.createDynamicsCompressor();
+    lim.threshold.value=-2; lim.knee.value=0; lim.ratio.value=20;
+    lim.attack.value=0.001; lim.release.value=0.06;
+    comp.connect(lim);
+    lim.connect(AC.destination);
     /* 音乐总线：干声 + 一点混响，只给长曲的旋律与和声走这条路 */
     musicBus=AC.createGain();
     musicBus.gain.value=0.9;
@@ -5875,6 +5901,45 @@ if(DEBUG){
       },function(e){
         if(seeded){ G.runSeed=savedSeed; L._song=savedSong; }
         throw e;
+      });
+    },
+    /* 诊断：用「旧烘焙链路」（master 1.0 直连、无压缩器）渲染整关，逐样本量峰值与削波数，
+       用于对照确认离线烘焙是否真的削波（炸麦排查用） */
+    rawPeak:function(idx,opt){
+      opt=opt||{};
+      var L=LEVELS[idx];
+      if(!L) return Promise.reject('no level');
+      if(!AC) return Promise.reject('no audio');
+      var savedSeed=G.runSeed, savedSong=L._song, seeded=opt.seed!=null;
+      if(seeded){ G.runSeed=opt.seed; L._song=null; }
+      var ch=compileLevel(L), rate=Math.min(44100,(AC&&AC.sampleRate)||44100), dur=ch.duration+0.9;
+      var O=window.OfflineAudioContext||window.webkitOfflineAudioContext, off;
+      try{ off=new O(1,Math.ceil(dur*rate),rate); }catch(e){ return Promise.reject('no offline ctx'); }
+      var savedPh=TR.phrase, savedStat=G.stat, ev=[];
+      try{ TR.phrase=null; G.stat={combo:0}; ev=buildAccRange(L,0,ch.duration); }catch(e){ ev=[]; }
+      TR.phrase=savedPh; G.stat=savedStat;
+      var sAC=AC,sMaster=master,sBus=musicBus,sWet=musicWet,sNoise=noiseBuf,sMuted=muted,ok=true;
+      try{
+        AC=off; muted=false;
+        master=off.createGain(); master.gain.value=1; master.connect(off.destination);
+        musicBus=off.createGain(); musicBus.gain.value=0.9;
+        var dry=off.createGain(); dry.gain.value=0.9; dry.connect(master);
+        var rev=off.createConvolver();
+        try{ rev.buffer=makeImpulse(1.4,2.6); }catch(e){}
+        musicWet=off.createGain(); musicWet.gain.value=0.2; musicWet.connect(master);
+        musicBus.connect(dry); musicBus.connect(rev); rev.connect(musicWet);
+        noiseBuf=off.createBuffer(1,Math.ceil(off.sampleRate*0.2),off.sampleRate);
+        var nd=noiseBuf.getChannelData(0);
+        for(var i=0;i<nd.length;i++) nd[i]=Math.random()*2-1;
+        for(var pi=0;pi<ev.length;pi++) playAcc(ev[pi],ev[pi].t);
+      }catch(e){ ok=false; }
+      AC=sAC; master=sMaster; musicBus=sBus; musicWet=sWet; noiseBuf=sNoise; muted=sMuted;
+      if(seeded){ G.runSeed=savedSeed; L._song=savedSong; }
+      if(!ok) return Promise.reject('render setup failed');
+      return off.startRendering().then(function(buf){
+        var d=buf.getChannelData(0), pk=0, over=0, i, a;
+        for(i=0;i<d.length;i++){ a=d[i]<0?-d[i]:d[i]; if(a>pk) pk=a; if(a>=0.999) over++; }
+        return {id:L.id, peak:+pk.toFixed(3), clippedSamples:over, samples:d.length};
       });
     },
     report:function(){

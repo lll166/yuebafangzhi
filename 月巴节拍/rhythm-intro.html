@@ -888,7 +888,16 @@ function ensureAudio(){
     comp.ratio.value=3;
     comp.attack.value=0.012;
     comp.release.value=0.28;
-    comp.connect(audioCtx.destination);
+    /* 压缩器自带 makeup 增益，多声部叠响时输出可能冲过 1.0（手机外放听感即「炸麦」），
+       串一道 brickwall 限幅把输出钉在 -2dB 以内 */
+    var lim=audioCtx.createDynamicsCompressor();
+    lim.threshold.value=-2;
+    lim.knee.value=0;
+    lim.ratio.value=20;
+    lim.attack.value=0.001;
+    lim.release.value=0.06;
+    comp.connect(lim);
+    lim.connect(audioCtx.destination);
 
     audioMaster=audioCtx.createGain();
     audioMaster.gain.value=0.0001;
