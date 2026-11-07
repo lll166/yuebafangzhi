@@ -486,6 +486,12 @@
   .galsub{display:flex;gap:6px;margin:0 0 10px;}
   .galsub .btab{flex:1 1 0;min-width:0;padding:9px 8px;}
   .galsub .btab small{font-size:10px;font-weight:700;opacity:.75;margin-left:4px;}
+  /* 画廊「新增」数量角标：图鉴「画廊」页签 / 「投稿画廊」子页签右上角的小红标，
+     新增投稿且玩家还没打开过投稿画廊时显示，打开后清除；选中态反白保证对比度 */
+  .tab-badge{display:inline-block;min-width:15px;height:15px;padding:0 4px;margin-left:5px;border-radius:999px;
+    background:linear-gradient(180deg,#ff8a80,#e53935);color:#fff;font-size:9px;font-weight:800;line-height:15px;
+    vertical-align:1px;box-shadow:0 1px 3px rgba(229,57,53,.4);}
+  .btab.on .tab-badge{background:#fff;color:#e53935;box-shadow:none;}
   /* 画廊详情悬浮层（与图鉴详情同一套视觉，叠在弹窗之上） */
   #galOverlay{position:absolute;inset:0;display:none;z-index:31;}
   #galOverlay.show{display:flex;align-items:center;justify-content:center;}
@@ -3874,7 +3880,7 @@
 </div>
 
 <div id="dock" class="frost">
-  <button class="dockbtn" id="btnBook"><b class="ico" data-ico="book"></b><small data-i18n="图鉴">图鉴</small></button>
+  <button class="dockbtn hasbadge" id="btnBook"><b class="ico" data-ico="book"></b><small data-i18n="图鉴">图鉴</small><span class="dock-badge" id="galBadge" style="display:none"></span></button>
   <button class="dockbtn pomo" id="btnPomo"><b class="ico" data-ico="tomato"></b><small data-i18n="番茄钟">番茄钟</small></button>
   <button class="dockbtn hasbadge" id="btnTask"><b class="ico" data-ico="check"></b><small data-i18n="待办">待办</small><span class="dock-badge" id="taskBadge" style="display:none"></span></button>
   <button class="dockbtn" id="btnStats"><b class="ico" data-ico="chart"></b><small data-i18n="统计">统计</small></button>
@@ -5341,7 +5347,9 @@ const ART_GALLERY=[
   {id:'art_05',name:'Tomato Story',author:'200',imgs:[
     'https://origin.picgo.net/2026/11/04/Tomato_story168a0f101ac1906f0.md.png',
     'https://origin.picgo.net/2026/11/04/Tomato_story2e51f95fd0d2cc91d.md.png'
-  ],text:"I like Nyaomi's 月巴 about night market so I drew this"}
+  ],text:"I like Nyaomi's 月巴 about night market so I drew this"},
+  {id:'art_06',name:'Fishing',author:'200',img:'https://origin.picgo.net/2026/11/07/Fishingb19508eff9a91c5b.md.png'},
+  {id:'art_07',name:'Mines Deep Clean',author:'200',img:'https://origin.picgo.net/2026/11/07/minesdeepcleanf64e0c57faad3c25.md.png'}
 ];
                                // 条目结构：{ id, name, imgs:[…] 或 img, author, text, r18 }；imgs 多张时缩略图显示张数角标，点开可翻页
 let galTab='story';            // 画廊子页：story=故事画廊 art=投稿画廊
@@ -5417,7 +5425,8 @@ function galGridHTML(){
 }
 /* 投稿画廊：预留给以后的投稿 CG，当前不放任何内容。
    ART_GALLERY 条目结构：{ id:'art_01', name:'作品名', imgs:['https://…','https://…'], author:'画师', text:'画家留言…', r18:true }
-   单张时也可写 img:'https://…'；imgs 数组有多张时缩略图显示张数角标，点开可翻页 */
+   单张时也可写 img:'https://…'；imgs 数组有多张时缩略图显示张数角标，点开可翻页。
+   展示按倒序排列：新投稿追加到数组末尾，网格里显示在最前面（slice 后 reverse，不动源数组） */
 function galArtList(){
   return ART_GALLERY.filter(e=>e).map(e=>{
     const raw = Array.isArray(e.imgs) ? e.imgs : (Array.isArray(e.img) ? e.img : [e.img]);
@@ -5425,7 +5434,40 @@ function galArtList(){
     return {
       id:e.id, name:e.name||$t('投稿作品'), pics, author:e.author||$t('匿名'), text:e.text||'', r18:!!e.r18
     };
-  }).filter(e=>e.pics.length);
+  }).filter(e=>e.pics.length).reverse();
+}
+/* ---- 投稿画廊「新增」角标 ----
+   新增投稿后、玩家打开投稿画廊前：首页「图鉴」图标、图鉴「画廊」页签、
+   「投稿画廊」子页签都显示新增数量；打开投稿画廊后全部记为已读并清除。
+   ART_SEEN_BASE=角标功能上线时已存在的投稿（视为已知，不再提示）。
+   之后的扩稿只往 ART_GALLERY 追加条目即可，角标自动生效 */
+const ART_SEEN_BASE=['art_01','art_02','art_03','art_04','art_05'];
+function galSeenInit(){          // 旧存档没有 artSeen 字段：先种入上线时已有的投稿 id
+  if(!S.artSeen) S.artSeen={};
+  let ch=false;
+  for(const id of ART_SEEN_BASE) if(!S.artSeen[id]){ S.artSeen[id]=1; ch=true; }
+  if(ch) save();
+}
+function galNewCount(){          // 当前「还没看过」的投稿数量
+  return galArtList().filter(e=>!(S.artSeen&&S.artSeen[e.id])).length;
+}
+function galMarkArtSeen(){       // 打开投稿画廊：全部记为已读，并同步刷新首页角标
+  if(!S.artSeen) S.artSeen={};
+  let ch=false;
+  for(const e of galArtList()) if(!S.artSeen[e.id]){ S.artSeen[e.id]=1; ch=true; }
+  if(ch) save();
+  updateGalBadge();
+}
+function galNewBadgeHTML(){      // 页签上的数量小标（首页图标用 #galBadge，见 updateGalBadge）
+  const n=galNewCount();
+  return n>0?`<span class="tab-badge">${n>99?'99+':n}</span>`:'';
+}
+function updateGalBadge(){       // 首页底部「图鉴」图标右上角的新增数量
+  galSeenInit();
+  const b=$('galBadge'); if(!b) return;
+  const n=galNewCount();
+  b.textContent=n>99?'99+':String(n);
+  b.style.display=n>0?'':'none';
 }
 /* 投稿画廊缩略图网格 */
 function galArtGridHTML(list){
@@ -5484,7 +5526,7 @@ function galArtPage(d){
 function galSubTabsHTML(storyGot,artCount){
   return `<div class="galsub">
     <button class="btab ${galTab==='story'?'on':''}" onclick="setGalTab('story')">${$t('🖼 故事画廊')}${GALLERY.length?`<small>${storyGot}/${GALLERY.length}</small>`:''}</button>
-    <button class="btab ${galTab==='art'?'on':''}" onclick="setGalTab('art')">${$t('🎨 投稿画廊')}${artCount?`<small>${artCount}</small>`:''}</button>
+    <button class="btab ${galTab==='art'?'on':''}" onclick="setGalTab('art')">${$t('🎨 投稿画廊')}${artCount?`<small>${artCount}</small>`:''}${galNewBadgeHTML()}</button>
   </div>`;
 }
 function setGalTab(t){ if(t===galTab) return; galTab=t; closeGalDetail(); openBook(); }
@@ -8998,6 +9040,8 @@ function defaultState(){
     seenHelp:false, starter:true, dexPending:null, code4099:false, code1001:false, codeHallo:false,
     skins:{unlocked:[], active:null},
     galFirst:{},
+    artSeen:{},   // 投稿画廊已看过的作品 id（galSeenInit 会补种上线时已有的投稿）
+
     ach:{got:{}, seen:0},
     /* 斗月巴成就：每日 / 每周 / 总成就。dayDone/weekDone 随日/周 key 重置，total 为累计计数 */
     ddAch:{seeded:false, day:'', dayDone:{}, week:'', weekDone:{}, totalDone:{}, seen:{day:'',week:'',n:0},
@@ -10284,6 +10328,7 @@ function updateHeader(){
   const wb=$('btnWeather');
   if(wb) wb.innerHTML= weatherActive()?'<b>'+mico('cloud')+'</b><small>'+stripEmo($t('🌦️ 自选天气'))+'</small>':'<b>'+mico('cloud')+'</b><small>'+stripEmo($t('🌦️ 天气瓶'))+' '+fmt(WEATHER_COST)+'<i class="cico"></i></small>';
   updateTaskBadge();
+  updateGalBadge();   // 投稿画廊有新作品且未看过时，首页「图鉴」图标亮数量角标
 }
 /* 场景顶栏道具按钮标注价格 */
 function updateSceneBar(){
@@ -10934,12 +10979,13 @@ function openBook(){
       <button class="btab ${dexPage===1?'on':''}" onclick="switchDexPage(1)">${$t('📕 第一图鉴')}</button>
       <button class="btab ${dexPage===2?'on':''} ${unlocked?'':'lock'}" onclick="${unlocked?'switchDexPage(2)':''}" title="${unlocked?'':$tf('第一图鉴集齐 {n} 个月巴后开启',{n:DEX1_MIN})}">${$t('📕 第二图鉴')} ${unlocked?'':'🔒'}</button>
       <button class="btab ${dexPage===3?'on':''}" onclick="switchDexPage(3)">${$t('📕 第三图鉴')}</button>
-      <button class="btab ${dexPage===4?'on':''}" onclick="switchDexPage(4)" title="${$t('收集旅途中的画面')}">${$t('🖼 画廊')}</button>
+      <button class="btab ${dexPage===4?'on':''}" onclick="switchDexPage(4)" title="${$t('收集旅途中的画面')}">${$t('🖼 画廊')}${galNewBadgeHTML()}</button>
     </div>
     ${searchHTML}
   </div>`;
   if(dexPage===4){
     galSync(true);
+    if(galTab==='art') galMarkArtSeen();   // 玩家点开投稿画廊：新增角标全部记为已读
     const arts=galArtList();
     const gg=GALLERY.filter(e=>galUnlocked(e.id)).length;
     const title=galTab==='art'
