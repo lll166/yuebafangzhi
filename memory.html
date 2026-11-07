@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>月巴记忆</title>
+<style>
+  :root{
+    --paper:#F5F0E6; --paper2:#E8E1D1; --ink:#2B2723; --ink2:#6E6459;
+    --accent:#D25B45; --ok:#5D8F78; --warn:#B8912F;
+    --line:rgba(43,39,35,.30);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;}
+  html,body{height:100%;overflow:hidden;background:var(--paper);color:var(--ink);}
+  body{font-family:"SF Mono","Cascadia Mono",Consolas,system-ui,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    touch-action:manipulation;overscroll-behavior:none;}
+  /* 试卷纸点状纹理（纯 CSS，零图片） */
+  body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(rgba(43,39,35,.055) 1px,transparent 1px);
+    background-size:8px 8px;}
+  #stage{position:fixed;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;
+    padding:calc(8px + env(safe-area-inset-top)) 10px calc(8px + env(safe-area-inset-bottom));}
+  #wrap{display:flex;flex-direction:column;gap:8px;width:min(96vw,460px);height:100%;max-height:780px;}
+
+  /* 切角（借 snake.html 手法：单层 clip-path 小切角） */
+  .cut{clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px);}
+  .cutL{clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);}
+  /* 双层切角面板：外层当墨线，内层当纸面 */
+  .panel{background:var(--ink);clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);padding:2px;}
+  .panel>.pin{background:var(--paper2);clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px);
+    width:100%;height:100%;display:flex;flex-direction:column;overflow:hidden;}
+
+  /* ---------- 顶部 HUD（借 snake.html 同构：品牌 + 数据片 + 暂停） ---------- */
+  #topbar{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0;flex:0 0 auto;height:36px;padding:0 2px;}
+  .brand{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:14px;font-weight:900;letter-spacing:2px;white-space:nowrap;}
+  .brand .bpre{font-style:normal;color:var(--accent);}
+  .stats{display:flex;align-items:stretch;gap:4px;margin-left:auto;flex:0 0 auto;}
+  .stat{display:flex;flex-direction:column;justify-content:center;gap:1px;padding:2px 7px;background:var(--paper2);
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%);}
+  .stat span{font-size:8px;font-weight:800;letter-spacing:1.2px;color:var(--ink2);}
+  .stat b{font-size:13px;line-height:1;text-align:right;font-variant-numeric:tabular-nums;}
+  .stat b em{font-style:normal;color:var(--ink2);font-size:10px;}
+  #btnPause{width:32px;height:32px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+    background:var(--paper2);border:0;cursor:pointer;font:inherit;font-weight:900;color:var(--ink);
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%);}
+  #btnPause:active{transform:translate(1px,1px);}
+  body.narrow .brand .bpre{display:none;}
+  body.narrow .stat span{letter-spacing:.4px;}
+  body.narrow .stat{padding:2px 5px;}
+
+  /* ---------- 考官席 ---------- */
+  #examiner{flex:0 0 auto;display:flex;align-items:stretch;gap:8px;height:64px;}
+  #examiner .pin{flex-direction:row;align-items:stretch;gap:8px;padding:4px 6px;}
+  #exAvatar{flex:0 0 56px;display:flex;align-items:center;justify-content:center;}
+  #exAvatar img,#exAvatar .fb{width:44px;height:44px;object-fit:contain;image-rendering:pixelated;
+    background:#FBFAF6;border:2px solid var(--ink);}
+  #exAvatar .fb{display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;color:var(--ink);background:var(--fbc,#9e9e9e);}
+  #exMain{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px;padding:2px 0;}
+  #exName{font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--ink2);}
+  #exBubble{position:relative;flex:1 1 auto;min-height:0;background:var(--paper2);border:2px solid var(--ink);
+    padding:3px 8px;font-size:12px;font-weight:700;line-height:1.35;display:flex;align-items:center;}
+  #exBubble::before{content:'';position:absolute;left:-7px;top:14px;width:8px;height:8px;background:var(--paper2);
+    border-left:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:rotate(45deg);}
+
+  /* ---------- 卡盘 ---------- */
+  #boardPanel{flex:1 1 auto;min-height:0;}
+  #board{margin:auto;display:grid;gap:6px;--cs:72px;}
+  .card{position:relative;border:0;background:transparent;padding:0;cursor:pointer;font:inherit;
+    width:var(--cs);height:var(--cs);}
+  .cflip{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .25s ease-out;}
+  .card.open .cflip{transform:rotateY(180deg);}
+  .cface{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;}
+  .ccover{background:var(--ink);
+    background-image:repeating-linear-gradient(45deg,rgba(245,240,230,.13) 0 2px,transparent 2px 8px);
+    display:flex;align-items:center;justify-content:center;}
+  .ccover b{color:var(--paper);font-size:calc(var(--cs)*.22);letter-spacing:2px;font-weight:900;opacity:.85;}
+  .cback{background:#FBFAF6;border:2px solid var(--ink);transform:rotateY(180deg);
+    display:flex;align-items:center;justify-content:center;padding:3px;}
+  .cback img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated;}
+  /* 兜底块：图鉴主色都是浅色系，字用墨色才看得清 */
+  .fb{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+    font-weight:900;font-size:calc(var(--cs)*.32);color:var(--ink);background:var(--fbc,#9e9e9e);}
+
+  /* ---------- 底部 ---------- */
+  #botbar{flex:0 0 auto;display:flex;flex-direction:column;gap:6px;}
+  .seg{display:flex;gap:4px;}
+  .btn{flex:1 1 0;min-width:0;height:30px;display:flex;align-items:center;justify-content:center;gap:3px;
+    background:var(--paper2);border:2px solid var(--ink);color:var(--ink);cursor:pointer;font:inherit;
+    font-size:11px;font-weight:800;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%);}
+  .btn:active{transform:translate(1px,1px);}
+  .btn.on{background:var(--ink);color:var(--paper);}
+  .btn.wide{flex:0 0 auto;padding:0 14px;}
+
+  /* ---------- M2：判定 / 惩罚 / 结算 ---------- */
+  #boardPanel .pin{position:relative;}
+  .card.done{cursor:default;transform:translateY(2px);}
+  .card.done .cback::after{content:'✓';position:absolute;right:3px;bottom:3px;width:34%;height:34%;
+    display:flex;align-items:center;justify-content:center;background:var(--accent);color:var(--paper);
+    font-weight:900;font-size:calc(var(--cs)*.15);transform:rotate(-12deg);
+    box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--accent);}
+  .bstamp{position:absolute;left:50%;top:50%;z-index:6;pointer-events:none;
+    width:72px;height:72px;margin:-36px 0 0 -36px;display:flex;align-items:center;justify-content:center;
+    background:var(--accent);color:var(--paper);font-size:36px;font-weight:900;transform:rotate(-12deg);
+    box-shadow:0 0 0 3px var(--paper),0 0 0 5px var(--accent);
+    clip-path:polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px);
+    animation:stampIn .5s ease-out;}
+  @keyframes stampIn{0%{transform:scale(2.2) rotate(8deg);opacity:0}
+    55%{transform:scale(.92) rotate(-14deg);opacity:.95}
+    75%{transform:scale(1.05) rotate(-11deg)}
+    100%{transform:scale(1) rotate(-12deg);opacity:.92}}
+  .splat{position:absolute;z-index:5;pointer-events:none;background:var(--ink);
+    border-radius:46% 54% 52% 48%/52% 46% 54% 48%;
+    animation:splatIn 2s ease-in forwards;}
+  @keyframes splatIn{0%{transform:scale(.15);opacity:0}14%{transform:scale(1.08);opacity:.94}
+    26%{transform:scale(1)}80%{opacity:.94}100%{opacity:0}}
+  @keyframes exshake{0%,100%{transform:translateX(0)}25%{transform:translateX(-2px)}
+    50%{transform:translateX(3px)}75%{transform:translateX(-1px)}}
+  #examiner.shake .pin{animation:exshake .5s;}
+  .fullOv{position:fixed;inset:0;z-index:10;display:none;align-items:center;justify-content:center;
+    background:rgba(43,39,35,.62);}
+  .fullOv.show{display:flex;}
+  #introCard,#settleCard{width:min(88vw,320px);padding:2px;}
+  #introCard .pin,#settleCard .pin{padding:14px 12px;gap:8px;align-items:center;}
+  #introAvatar{width:56px;height:56px;display:flex;align-items:center;justify-content:center;}
+  #introAvatar img{width:48px;height:48px;object-fit:contain;image-rendering:pixelated;
+    background:#FBFAF6;border:2px solid var(--ink);}
+  #introAvatar .fb{width:48px;height:48px;display:flex;align-items:center;justify-content:center;
+    font-weight:900;font-size:22px;color:var(--ink);background:var(--fbc,#9e9e9e);border:2px solid var(--ink);}
+  #introName{font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--ink2);}
+  #introText,#settleQuote{font-size:12px;font-weight:700;line-height:1.5;text-align:center;}
+  .introBtns,.settleBtns{display:flex;gap:6px;width:100%;}
+  #settleStamp{padding:4px 10px;border:3px solid currentColor;color:var(--ok);
+    font-size:22px;font-weight:900;letter-spacing:6px;text-indent:6px;transform:rotate(-6deg);}
+  #settleStamp.bad{color:var(--accent);}
+  #settleRecord{display:none;color:var(--accent);font-weight:900;font-size:12px;letter-spacing:2px;}
+  #settleRecord.show{display:block;animation:recIn .4s ease-out;}
+  @keyframes recIn{0%{transform:scale(1.8) rotate(-6deg);opacity:0}100%{transform:scale(1) rotate(-6deg);opacity:1}}
+  #settleLines{width:100%;display:flex;flex-direction:column;gap:3px;}
+  #settleLines .row{display:flex;justify-content:space-between;font-size:11px;font-weight:700;}
+  #settleLines .row span{color:var(--ink2);}
+  #settleLines .row b{font-variant-numeric:tabular-nums;}
+  #settleDex{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;max-width:100%;}
+  #settleDex .mini{width:26px;height:26px;background:#FBFAF6;border:2px solid var(--ink);
+    display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  #settleDex .mini img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated;}
+  #settleDex .mini .fb{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+    font-weight:900;font-size:12px;color:var(--ink);background:var(--fbc,#9e9e9e);}
+  #tomatoFlick{display:none;position:relative;width:36px;height:36px;margin:0 auto;}
+  #tomatoFlick.show{display:block;animation:flick 1.1s ease-in .3s forwards;}
+  #tomatoFlick::before{content:'';position:absolute;inset:5px;border-radius:50%;background:var(--accent);
+    box-shadow:inset -5px -5px 0 rgba(43,39,35,.22);}
+  #tomatoFlick::after{content:'';position:absolute;top:1px;left:14px;width:8px;height:7px;background:var(--ok);
+    clip-path:polygon(0 100%,50% 0,100% 100%);}
+  @keyframes flick{0%{transform:translate(0,0) rotate(0)}20%{transform:translate(10px,-8px) rotate(24deg)}
+    100%{transform:translate(170px,-54px) rotate(330deg);opacity:0}}
+
+  /* ---------- M3：围观干扰 / 当堂重考 / 考官生气 / 罚抄橡皮 ---------- */
+  #exAvatar{position:relative;}
+  #examiner.angry #exAvatar img{filter:sepia(1) saturate(2.8) hue-rotate(-45deg) brightness(.92);}
+  #examiner.angry #exAvatar::after{content:'怒';position:absolute;right:-6px;top:-6px;width:18px;height:18px;
+    background:var(--accent);color:var(--paper);font-size:11px;font-weight:900;
+    display:flex;align-items:center;justify-content:center;transform:rotate(12deg);
+    box-shadow:0 0 0 2px var(--paper);}
+  #examiner.angry .pin{animation:exshake .45s ease-in-out 2;}
+  .crowd{position:absolute;left:0;right:0;height:50px;display:flex;gap:5px;align-items:center;
+    z-index:6;pointer-events:none;animation:crowdPass 1.5s ease-in-out forwards;}
+  @keyframes crowdPass{0%{transform:translateX(-115%)}100%{transform:translateX(115%)}}
+  .crowd span{width:44px;height:44px;flex:0 0 auto;background:#FBFAF6;border:2px solid var(--ink);
+    display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .crowd span img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated;}
+  .crowd span .fb{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+    font-weight:900;font-size:14px;color:var(--ink);background:var(--fbc,#9e9e9e);}
+  .eraser{position:absolute;inset:0;z-index:7;display:flex;align-items:center;justify-content:center;
+    background:rgba(43,39,35,.45);}
+  #erCard{width:min(78vw,220px);padding:2px;}
+  #erCard .pin{padding:10px;gap:6px;align-items:center;}
+  #erCard h4{font-size:12px;font-weight:900;letter-spacing:2px;}
+  #erBtn{width:88px;height:52px;background:var(--paper2);border:3px solid var(--ink);cursor:pointer;
+    font:inherit;font-weight:900;letter-spacing:3px;font-size:16px;color:var(--ink2);
+    clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px);}
+  #erBtn:active{transform:translate(2px,2px);}
+  .erDots{display:flex;gap:4px;}
+  .erDots i{width:10px;height:10px;background:var(--paper);border:2px solid var(--ink);}
+  .erDots i.on{background:var(--accent);}
+  #erCard p{font-size:9px;color:var(--ink2);}
+
+  /* ---------- 暂停遮罩（M2 起同时冻结倒计时与输入） ---------- */
+  #pauseOv{position:fixed;inset:0;z-index:9;display:none;align-items:center;justify-content:center;
+    background:rgba(43,39,35,.55);}
+  #pauseOv.show{display:flex;}
+  #pauseCard{width:min(78vw,240px);text-align:center;padding:2px;}
+  #pauseCard .pin{padding:16px 12px;gap:10px;align-items:center;}
+  #pauseCard h3{font-size:15px;letter-spacing:4px;}
+  #pauseCard p{font-size:10px;color:var(--ink2);}
+  #btnResume{width:100%;height:32px;}
+
+  @media (prefers-reduced-motion:reduce){
+    .cflip{transition:none;}
+    .bstamp,.splat,.crowd,#examiner.shake .pin,#examiner.angry .pin,#tomatoFlick.show,#settleRecord.show{animation:none!important;}
+  }
+  /* 父页下发的低功耗（M4 名册桥），效果同上 */
+  body.lowpower .cflip{transition:none;}
+  body.lowpower .bstamp,body.lowpower .splat,body.lowpower .crowd,
+  body.lowpower #examiner.shake .pin,body.lowpower #examiner.angry .pin,
+  body.lowpower #tomatoFlick.show,body.lowpower #settleRecord.show{animation:none!important;}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="wrap">
+
+    <!-- 顶部 HUD -->
+    <header id="topbar">
+      <b class="brand"><i class="bpre">MEM·</i>月巴记忆</b>
+      <div class="stats">
+        <div class="stat"><span>PAIRS</span><b id="stPairs">0<em>/8</em></b></div>
+        <div class="stat"><span id="stResLabel">STEPS</span><b id="stRes">20</b></div>
+        <div class="stat"><span>COMBO</span><b id="stCombo">×0</b></div>
+        <div class="stat"><span>BEST</span><b id="stBest">--</b></div>
+      </div>
+      <button id="btnPause" type="button" aria-label="暂停">❚❚</button>
+    </header>
+
+    <!-- 考官席 -->
+    <section id="examiner" class="panel" aria-label="考官席">
+      <div class="pin">
+        <div id="exAvatar"><img id="exImg" alt="考官月巴"></div>
+        <div id="exMain">
+          <div id="exName">监考 · WINK月巴</div>
+          <div id="exBubble">番茄，认得这些月巴吗？两张一样的配一对——配错了，可要受罚的哦～</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 卡盘 -->
+    <main id="boardPanel" class="panel">
+      <div class="pin"><div id="board"></div></div>
+    </main>
+
+    <!-- 底部：考级 / 模式 / 重开 -->
+    <footer id="botbar">
+      <div class="seg" id="segDiff"></div>
+      <div class="seg">
+        <div class="seg" id="segMode" style="flex:1;"></div>
+        <button class="btn wide" id="btnRestart" type="button">↻ 重开</button>
+      </div>
+    </footer>
+
+  </div>
+</div>
+
+<!-- 暂停遮罩（M2 起同时冻结倒计时与输入） -->
+<div id="pauseOv">
+  <div id="pauseCard" class="panel"><div class="pin">
+    <h3>暂停中</h3>
+    <p>月巴考官在等你翻牌……</p>
+    <button class="btn on" id="btnResume" type="button">▶ 继续考试</button>
+  </div></div>
+</div>
+
+<!-- 开场白（每存档一次，可跳过） -->
+<div id="introOv" class="fullOv">
+  <div id="introCard" class="panel"><div class="pin">
+    <div id="introAvatar"></div>
+    <div id="introName">监考 · WINK月巴</div>
+    <div id="introText"></div>
+    <div class="introBtns">
+      <button class="btn" id="btnIntroSkip" type="button">跳过</button>
+      <button class="btn on" id="btnIntroNext" type="button">继续 ▶</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- 结算：合格成绩单 / 不合格弹脑门 -->
+<div id="settleOv" class="fullOv">
+  <div id="settleCard" class="panel"><div class="pin">
+    <div id="settleStamp">合格</div>
+    <div id="settleRecord">★ 新纪录 ★</div>
+    <div id="tomatoFlick"></div>
+    <div id="settleLines"></div>
+    <div id="settleDex"></div>
+    <div id="settleQuote"></div>
+    <div class="settleBtns">
+      <button class="btn on" id="btnAgain" type="button">↻ 再考一次</button>
+      <button class="btn" id="btnSettleBack" type="button">返回</button>
+    </div>
+  </div></div>
+</div>
+
+<script>
+'use strict';
+/* ============================================================
+   月巴记忆 M5：上线版
+   - M1 试卷纸骨架 / M2 核心玩法 / M3 惩罚完整 / M4 首页接入
+   - M5：四语（zh/en/ja/ko，照 snake.html 的 TXT/t() 口径）
+   调试：?nofetch=1 强制所有立绘走「加载失败」分支（断网验收用）
+   ============================================================ */
+
+const $=function(s){ return document.querySelector(s); };
+const SAVE_KEY='yueba-memory-v1';
+
+/* 考级四档：cols×rows 盘面；steps/time 为资源基准。
+   M3 调参：限时高档位收紧（60/85/110/135），约 11s/对，仍是宽松通关预算 */
+const DIFFS=[
+  {key:'quiz', name:'随堂小考', cols:4, rows:3, pairs:6,  steps:15, time:60},
+  {key:'unit', name:'单元测验', cols:4, rows:4, pairs:8,  steps:20, time:85},
+  {key:'mid',  name:'期中考试', cols:5, rows:4, pairs:10, steps:26, time:110},
+  {key:'final',name:'期末大考', cols:6, rows:4, pairs:12, steps:32, time:135},
+];
+const MODES=[
+  {key:'step', stat:'STEPS'},
+  {key:'time', stat:'TIME'},
+];
+const EXAMINER_ID='mb_xin'; /* 考官：wink月巴（codex 同款） */
+
+/* ---------- 多语言（照 snake.html 的 TXT/t() 口径：zh 兜底；
+   语言解析：?lang= → 主存档只读 lang → 浏览器语言；父页名册可再覆盖） ---------- */
+const TXT={
+  zh:{
+    docTitle:'月巴记忆', brand:'月巴记忆', exName:'监考 · WINK月巴',
+    restart:'↻ 重开', again:'↻ 再考一次', back:'返回',
+    skip:'跳过', next:'继续 ▶', startExam:'开考！▶', resume:'▶ 继续考试',
+    pauseAria:'暂停', pauseTitle:'暂停中', pauseSub:'月巴考官在等你翻牌……',
+    stampOk:'合格', stampBad:'不合格', record:'★ 新纪录 ★',
+    rExam:'考级', rStepsLeft:'剩余步数', rTimeLeft:'剩余用时', rCombo:'最大连击', rPenalty:'受罚',
+    unitStep:' 步', unitSec:' 秒', unitTimes:' 次',
+    erTitle:'罚抄 ×5！', erBtn:'擦', erHint:'快点擦掉，不然墨渍干透（{n} 秒）',
+    cardAria:'卡牌',
+    d_quiz:'随堂小考', d_unit:'单元测验', d_mid:'期中考试', d_final:'期末大考',
+    m_step:'限步', m_time:'限时',
+    intro:[
+      '番茄！听说你天天守着百巴箱，看我们月巴看得可熟了？',
+      '今天月巴出题考考你——把这些立绘配对，让我看看你是不是真的认识所有月巴！',
+      '两张一样的算配对成功……配错了？嘿嘿，那就别怪月巴不讲情面，受罚吧！',
+    ],
+    start:['开考！翻吧翻吧～','让我看看你的记性，番茄。','翻错可是要受罚的哦～'],
+    mock:[
+      '哟～这不认识啊？罚！',
+      '这都配错？番茄的脑子是装饰吗～',
+      '上个月才见过的月巴，忘得比翻牌还快。',
+      '想好了再点哦？算了，反正你还要罚一次。',
+      '墨渍伺候！让你看清楚点（并没有）。',
+      '月巴很生气，后果很……轻，但很烦！',
+    ],
+    win:['哼、哼！算你走运，这次出的题偏简单！','都配对了又怎样，还不是月巴教得好。'],
+    lose:['不合格～回家背图鉴去吧！','看吧看吧，我就知道你认不全！弹个脑门再走～'],
+    angry:['三连错！当堂重考！全部盖回去重新洗！','番茄同学，请你站起来回答！','再错下去，罚你把图鉴抄一百遍！'],
+    calm:['哼，算你识相。','这才像话，继续。'],
+  },
+  en:{
+    docTitle:'Banny Memory', brand:'Banny Memory', exName:'Proctor · WINK Banny',
+    restart:'↻ Restart', again:'↻ Retake', back:'Back',
+    skip:'Skip', next:'Next ▶', startExam:'Begin! ▶', resume:'▶ Resume',
+    pauseAria:'Pause', pauseTitle:'Paused', pauseSub:'The proctor Banny is waiting……',
+    stampOk:'PASS', stampBad:'FAIL', record:'★ NEW RECORD ★',
+    rExam:'Exam', rStepsLeft:'Steps left', rTimeLeft:'Time left', rCombo:'Best combo', rPenalty:'Penalties',
+    unitStep:' steps', unitSec:' s', unitTimes:' times',
+    erTitle:'Copy lines ×5!', erBtn:'RUB', erHint:'Rub it off before the ink dries ({n} s)',
+    cardAria:'Card',
+    d_quiz:'Pop Quiz', d_unit:'Unit Test', d_mid:'Midterm', d_final:'Final Exam',
+    m_step:'Steps', m_time:'Time',
+    intro:[
+      'Tomato! They say you guard the Banny Box all day and know every Banny by sight?',
+      'Today the Bannies set the exam — pair the portraits and prove you truly know us all!',
+      'Two of a kind make a pair... Get it wrong? Hehe. Then you take the penalty!',
+    ],
+    start:['Exam begins! Flip away~','Show me that memory, Tomato.','Flip wrong and you WILL be punished~'],
+    mock:[
+      'Oh? Cannot tell us apart? Penalty!',
+      'Wrong again? Is that brain just decoration~',
+      'Met them last month, forgotten faster than a flip.',
+      'Think before you tap... never mind, one more penalty for you.',
+      'Ink splash! Now you can see clearly (not really).',
+      'The Banny is cross. The consequence is... mild, but very annoying!',
+    ],
+    win:['Hmph! Lucky you — this exam was an easy one!','So you paired them all? Only because the Banny taught you well.'],
+    lose:['Failed~ Go home and study the dex!','See? I knew you could not recognize us all! A flick on the forehead before you go~'],
+    angry:['Three misses in a row! Retake! Shuffle them all back!','Tomato, stand up and answer!','Keep this up and you will copy the dex a hundred times!'],
+    calm:['Hmph, that is more like it.','Now we are talking. Continue.'],
+  },
+  ja:{
+    docTitle:'バニメモリ', brand:'バニメモリ', exName:'試験官 · WINKバニ',
+    restart:'↻ やり直し', again:'↻ もう一度', back:'戻る',
+    skip:'スキップ', next:'つぎへ ▶', startExam:'試験開始！▶', resume:'▶ つづける',
+    pauseAria:'一時停止', pauseTitle:'一時停止', pauseSub:'試験官バニが待っています……',
+    stampOk:'合格', stampBad:'不合格', record:'★ 新記録 ★',
+    rExam:'試験', rStepsLeft:'残り手数', rTimeLeft:'残り時間', rCombo:'最大連続', rPenalty:'おしおき',
+    unitStep:' 手', unitSec:' 秒', unitTimes:' 回',
+    erTitle:'書き取り ×5！', erBtn:'消し', erHint:'インクが乾く前に消して（{n} 秒）',
+    cardAria:'カード',
+    d_quiz:'小テスト', d_unit:'単元テスト', d_mid:'中間試験', d_final:'期末試験',
+    m_step:'手数制', m_time:'タイム制',
+    intro:[
+      'トマト！バニボックスに毎日いて、バニたちをぜんぶ見てるって本当？',
+      'きょうはバニが出題！この立ち絵をペアにして、ぜんぶのバニを覚えてるか見せてもらうよ！',
+      '同じ2枚でペア成立……まちがえた？ふっふっ、容赦しないよ。おしおき！',
+    ],
+    start:['試験開始！めくってめくって～','トマトの記憶力、見せてもらうよ。','まちがえたら、おしおきだからね～'],
+    mock:[
+      'おや、わからないの？罰！',
+      'これをまちがえるの？トマトの頭は飾り？',
+      '先月会ったばかりなのに、めくるより早く忘れるんだね。',
+      'よく考えてから押して？もう遅いけど、もう一回罰ね。',
+      '墨でおしおき！よく見えるでしょう？（見えない）',
+      'バニはおこってる。けっかは……たいしたことない、でもうるさい！',
+    ],
+    win:['ふん、運がよかっただけ！今回は簡単だったし！','ぜんぶ合ったって、バニが教えうまいからでしょ。'],
+    lose:['不合格～図鑑に帰って勉強して！','ほらね、ぜんいん覚えてないでしょ！おでこ弾いてかえりな～'],
+    angry:['三連ミス！試験やり直し！ぜんぶめくって洗い直し！','トマトさん、立って答えて！','このままなら図鑑を百回書き写し！'],
+    calm:['ふん、その調子。','それでこそ、つづけて。'],
+  },
+  ko:{
+    docTitle:'바니 메모리', brand:'바니 메모리', exName:'감독관 · WINK 바니',
+    restart:'↻ 다시', again:'↻ 다시 응시', back:'돌아가기',
+    skip:'건너뛰기', next:'다음 ▶', startExam:'시험 시작! ▶', resume:'▶ 계속하기',
+    pauseAria:'일시정지', pauseTitle:'일시정지', pauseSub:'감독관 바니가 기다리고 있어요……',
+    stampOk:'합격', stampBad:'불합격', record:'★ 신기록 ★',
+    rExam:'시험', rStepsLeft:'남은 횟수', rTimeLeft:'남은 시간', rCombo:'최대 연속', rPenalty:'벌칙',
+    unitStep:' 회', unitSec:' 초', unitTimes:' 회',
+    erTitle:'벌칙 닦기 ×5!', erBtn:'닦기', erHint:'잉크가 마르기 전에 닦아요({n}초)',
+    cardAria:'카드',
+    d_quiz:'쪽지시험', d_unit:'단원시험', d_mid:'중간고사', d_final:'기말고사',
+    m_step:'횟수제', m_time:'시간제',
+    intro:[
+      '토마토! 바니 박스를 매일 지키며 바니를 다 외웠다고?',
+      '오늘은 바니가 출제! 이 초상화를 짝지어 모든 바니를 알아보는지 보여줘!',
+      '같은 두 장이면 성공……틀리면? 헤헤, 가차 없어. 벌칙!',
+    ],
+    start:['시험 시작! 뒤집어 뒤집어~','토마토의 기억력을 보여줘봐.','틀리면 벌칙이야~'],
+    mock:[
+      '어라, 모른다고? 벌칙!',
+      '이것도 틀려? 토마토 머리는 장식이야~',
+      '지난달에 봤는데, 뒤집는 것보다 빨리 잊네.',
+      '생각하고 눌러라……늦었어, 한 번 더 벌칙.',
+      '잉크 벌칙! 이제 잘 보이지?(안 보임)',
+      '바니는 화났다. 결과는……약하지만 성가셔!',
+    ],
+    win:['흥, 운이 좋았을 뿐! 이번 시험은 쉬웠잖아!','다 맞췄다고? 바니가 잘 가르쳐줬으니까지.'],
+    lose:['불합격~ 도감 보러 가서 공부해!','보라고, 다 못 알아보잖아! 이마 팡 하고 간다~'],
+    angry:['삼연속 실패! 시험 다시! 전부 다시 센다!','토마토 학생, 일어나서 답해!','더 틀리면 도감 백 번 베끼기다!'],
+    calm:['흥, 그럴듯하네.','그거야, 계속해.'],
+  },
+};
+function t(k){
+  const d=TXT[LANG]||TXT.zh; const v=d[k];
+  return v==null?(TXT.zh[k]||k):v;
+}
+function tf(k,map){
+  let s=t(k);
+  Object.keys(map||{}).forEach(function(key){ s=s.split('{'+key+'}').join(map[key]); });
+  return s;
+}
+/* 台词池按当前语言取（缺键回退 zh） */
+function line(k){
+  const d=TXT[LANG]||TXT.zh;
+  return (d[k]&&d[k].length)?d[k]:(TXT.zh[k]||[]);
+}
+function resolveLang(){
+  let q='';
+  try{ q=(new URLSearchParams(location.search).get('lang')||'').toLowerCase(); }catch(e){}
+  if(TXT[q]) return q;
+  try{
+    const raw=JSON.parse(localStorage.getItem('idle-yueba-save-v2')||'null');
+    const l=raw&&raw.lang;
+    if(l&&TXT[l]) return l;
+  }catch(e){}
+  const nav=((navigator&&navigator.language)||'zh-CN').toLowerCase();
+  if(nav.indexOf('zh')===0) return 'zh';
+  if(nav.indexOf('ja')===0) return 'ja';
+  if(nav.indexOf('ko')===0) return 'ko';
+  if(nav.indexOf('en')===0) return 'en';
+  return 'zh';
+}
+let LANG=resolveLang();
+
+const NOFETCH=(new URLSearchParams(location.search).get('nofetch')==='1');
+
+/* ---------- 存档（独立键；M1 只存设置与读取 BEST，不碰主存档） ---------- */
+function loadSave(){
+  try{ return JSON.parse(localStorage.getItem(SAVE_KEY)||'')||{}; }catch(e){ return {}; }
+}
+let SAVE=loadSave();
+function persist(){
+  try{ localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE)); }catch(e){ /* 静默降级：不存档也能玩 */ }
+}
+SAVE.settings=SAVE.settings||{};
+SAVE.best=SAVE.best||{};
+
+/* ---------- 工具 ---------- */
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const t=a[i]; a[i]=a[j]; a[j]=t; }
+  return a;
+}
+/* 兜底字：取名字里第一个中日韩字符（跳过 wink 这类拉丁前缀），没有就用「？」 */
+function fallbackChar(name){
+  const m=(name||'').match(/[\u3400-\u9fff\uf900-\ufaff]/);
+  return m?m[0]:'？';
+}
+
+/* ---------- 立绘（下方 DEX_ART 由 sync-dex-art.js 生成，勿手改） ---------- */
+var DEX_ART = {
+    'mb_xiaoyue':['https://origin.picgo.net/2026/09/03/1512e4bde4713ba02.th.png','#c9b2e8','小月巴'],
+    'mb_xian':['https://origin.picgo.net/2026/09/03/4059f70dff59ca4a4.th.png','#d9c7f2','尴尬月巴'],
+    'mb_chi':['https://origin.picgo.net/2026/09/03/15b077f9364349ae92.th.png','#e8c39e','进食月巴'],
+    'mb_shui':['https://origin.picgo.net/2026/09/29/4d2c34425dd356082928e5e796a603fcd01d1cbc5324c06f.gif','#e3b8c9','睡觉月巴'],
+    'mb_wan':['https://origin.picgo.net/2026/09/03/1512e4bde4713ba02.th.png','#c9b2e8','微笑月巴'],
+    'mb_pang':['https://origin.picgo.net/2026/10/21/62bc9b437f18c5e1f6f712a8e7a58ecbb2356f889dde89eb.th.png','#e7a3b8','胖月巴'],
+    'mb_xin':['https://origin.picgo.net/2026/09/03/37e1be2540efa2177.th.png','#f0a8c0','wink月巴'],
+    'mb_gao':['https://origin.picgo.net/2026/09/29/849e3c845e52aac2178af913058025cdd214e98968e45101.gif','#b8a9e0','高月巴'],
+    'mb_ku':['https://origin.picgo.net/2026/09/29/19daf98c7a185e7e0c3d529a5f921058d74092d7a8ab4c37.gif','#a9c7ea','背头月巴'],
+    'mb_lan':['https://origin.picgo.net/2026/09/03/10a99395fea8f81ac7.th.png','#c3a7c9','休闲月巴'],
+    'mb_tan':['https://origin.picgo.net/2026/10/21/41befbe6b2be042271d7ae7805b64f598d5d887397481fdf.th.png','#a5c3e8','一坨月巴'],
+    'mb_jian':['https://origin.picgo.net/2026/09/03/9935aafd50857466b.th.png','#9ec48f','健身月巴'],
+    'mb_zao':['https://origin.picgo.net/2026/10/27/c77a0c0f38f6185cc62fb344b3dd306ff1b4d124e037e6ac.th.png','#e8c39e','晨月巴'],
+    'mb_lu':['https://origin.picgo.net/2026/10/27/47f37ba2b22b037038cc10f1e10b819287b3aabf07476a9b.th.png','#9fd4e8','露月巴'],
+    'mb_yun':['https://origin.picgo.net/2026/10/21/087c43501b9bd20deb354672a8a79e4ae6b8b7c2a0cfba2c.th.png','#b9b2c9','云月巴'],
+    'mb_xue':['https://origin.picgo.net/2026/10/23/e978b592d6dc67debfa6782c325544cbd87a36af9154021a.th.png','#eef1f7','雪月巴'],
+    'mb_caihong':['https://origin.picgo.net/2026/10/21/9895b41be4c58da373fcc95f6d8cc5ba0883411035f2a8d7.th.png','#e06b9c','彩虹月巴'],
+    'mb_chun':['https://origin.picgo.net/2026/10/22/d7b3e18460b8e44f1964d75b983ef69ac589f56a2b9a3392.th.webp','#8fc48a','春月巴'],
+    'mb_xia':['https://origin.picgo.net/2026/10/22/---Yidi-Nyaomi-Lia67b10aba5615cbe.th.png','#f0857f','夏月巴'],
+    'mb_qiu':['https://origin.picgo.net/2026/10/23/---Yidi-Nyaomi-Li085363c8afe0790e.th.png','#e89b52','秋月巴'],
+    'mb_dong':['https://origin.picgo.net/2026/10/23/720cc39489c1fe7d040a16a0a74e5492adb703c20326203b.th.png','#7fa0b8','冬月巴'],
+    'mb_wenshi':['https://origin.picgo.net/2026/10/25/a4de870a23ff1f883c8454cb72ef80d762cde2ab6de81042.th.png','#6fbe7a','温室月巴'],
+    'mb_wuding':['https://origin.picgo.net/2026/10/24/ddb838b24b14c9bc66c93f3e145393e1f054aa99f643d304.th.png','#5f9ed1','屋顶月巴'],
+    'mb_senlin':['https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li6e93cacca933846d.th.png','#5c8a64','森系月巴'],
+    'mb_bing':['https://origin.picgo.net/2026/10/23/434e565b3ade1792842da6c6e5e0778552a35682cf6024b1.th.png','#7cc4e8','冰冷月巴'],
+    'mb_yunduan':['https://origin.picgo.net/2026/10/25/0c49c146c2e1b0322b58ede6c45ace220be030c873f439d5.th.png','#b39ddb','会飞月巴'],
+    'mb_kafei':['https://origin.picgo.net/2026/10/21/coffee-yue---KoTofu4bfeb46ff6179820.th.png','#b98a76','咖啡月巴'],
+    'mb_wanou':['https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Lib2c078bd058ef48c.th.png','#e88aa8','玩偶月巴'],
+    'mb_jin':['https://origin.picgo.net/2026/10/23/1396cf3c90108f3f96217f2c35d5092323f3425ef247f9cb.th.png','#e6c44c','金月巴'],
+    'mb_xing':['https://origin.picgo.net/2026/09/03/127d7a0746c5de2434.th.png','#c9a8ea','巴中月巴'],
+    'mb_ju':['https://origin.picgo.net/2026/10/23/7445849475a1a67a9510637d9dd722c0ce1589688044ee9c.th.png','#d98a86','巨月巴'],
+    'mb_chao':['https://origin.picgo.net/2026/10/22/6e242d94aa9b07b9117479ec78fd53985fd887bb68d8fa62.th.png','#e0a34e','超巨月巴'],
+    'mb_lian':['https://origin.picgo.net/2026/10/23/f18fc86039bab18c60f2e5a640a82994256efe02bbe849d2.th.png','#e8a8c4','幸运月巴'],
+    'mb_shenlian':['https://origin.picgo.net/2026/10/23/75cb6c3c872e0ab0ae24ad2a1d4d16217560c98278e9c3c2.th.png','#b54b7e','神运月巴'],
+    'mb_fanben':['https://origin.picgo.net/2026/09/03/1115555fb4ab3b2731.th.png','#d9b45a','墨镜月巴'],
+    'mb_guai':['https://origin.picgo.net/2026/10/23/4a09ea559862b2830f46cc64b0f4211487bfa91c46fddbcf.th.png','#b89a55','奇怪月巴'],
+    'mb_shizhe':['https://origin.picgo.net/2026/09/03/2b384c6d07a3d397b.th.png','#5f44a6','归家月巴'],
+    'mb_zhoumo':['https://origin.picgo.net/2026/10/22/---a60a7636bd80eb9e.th.png','#8fc9c9','双休月巴'],
+    'mb_zhengdian':['https://origin.picgo.net/2026/10/25/444672cea81dc05a5326f57baf4a41062d4fd68fc76f8de6.th.png','#e0d24e','整点月巴'],
+    'mb_qingren':['https://origin.picgo.net/2026/10/26/69714dc9fe002189c5f15a53b29ca57ace1060194b60a47b.th.png','#e06b9c','爱情月巴'],
+    'mb_wansheng':['https://origin.picgo.net/2026/10/25/---Yidi-Nyaomi-Lib4ec70c5a69d6d5a.th.png','#8f74c9','万圣月巴'],
+    'mb_wen':['https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li5760b9af6a34d812.th.png','#8fb4c9','蚊月巴'],
+    'mb_pingguo':['https://origin.picgo.net/2026/09/03/1618abd45272691005.th.png','#c96a73','吃茄月巴'],
+    'mb_chaos':['https://origin.picgo.net/2026/10/24/8f4ccf5a7a4813d86478b59c05bd7c80e45b28cbcfd280ec.th.png','#5a5470','混沌月巴'],
+    'mb_gungun':['https://origin.picgo.net/2026/10/30/dafc48b943e8cd2a60fb3b27909bc4bcd3bc0e92a97d1ba8.th.png','#f0b27a','滚滚巴'],
+    'mb_jiu':['https://origin.picgo.net/2026/09/20/jiuba7578b776f8c4c528.th.png','#b08a6a','酒巴'],
+    'mb_shilaimu':['https://origin.picgo.net/2026/10/21/75dd505aa51f9864c2dc215b349253592891b6d6ef024a79.th.png','#8fce7f','史莱姆巴'],
+    'mb_liti':['https://origin.picgo.net/2026/09/19/litiyueba0f6fd2bd28b7cc83.th.png','#8e9baf','立体月巴'],
+    'mb_xiaoma':['https://origin.picgo.net/2026/09/19/xiaoma59a91dd50534ac93.th.png','#e6c9f0','小马月巴'],
+    'mb_tomato':['https://origin.picgo.net/2026/09/20/fanqiedazhan9861d01c9113a3f3.th.png','#e05b4f','番茄大战月巴'],
+    'mb_powa':['https://origin.picgo.net/2026/10/24/bbe23930e0a5236e05eca1b6bef4230a8a7078b7a228f913.th.png','#e0a64e','抛瓦月巴'],
+    'mb_laba':['https://origin.picgo.net/2026/09/20/laba8ce98439c56d3f6d.th.png','#dbb3e8','拉巴'],
+    'mb_tangyuan':['https://origin.picgo.net/2026/09/21/e0a73ec5f90f4b1d90fd1ce444e15c18df5827ccea2e46c6.th.png','#f5e6ee','汤圆月巴'],
+    'mb_bashan':['https://origin.picgo.net/2026/09/21/shanbf57ea8c56a98c78.th.png','#5c8a64','巴山'],
+    'mb_xiba':['https://origin.picgo.net/2026/10/23/c4de9f2c487932b531a8b80294b7d5512139e617afc6aa6c.th.png','#a5c8e8','西巴'],
+    'xitong':['https://origin.picgo.net/2026/09/22/xitong3fa4bdcf7695b190.th.png','#8fd0de','系统月巴'],
+    'huaba':['https://origin.picgo.net/2026/10/23/46597ef9da8ed5c1d86cce52418c84d57c6da995fbc68f8c.th.png','#f8a8c8','花巴'],
+    'dabus':['https://origin.picgo.net/2026/10/21/f696279cfe514001d304e826c68f44f3596857784003a73a.th.png','#f2b639','大巴车'],
+    'youling':['https://origin.picgo.net/2026/10/23/9e6b571fe9657417f255527bf3c34cc1963ee4f0f46e3e06.th.png','#beb5e6','幽灵月巴'],
+    'xinba':['https://origin.picgo.net/2026/10/21/3f4dfef1286bc40c7002f3d2e220cb36f63b0332ebc9acd3.th.png','#ff6f91','心巴'],
+    'yinxiang':['https://origin.picgo.net/2026/10/23/-16ec08b0ad53bd48c.th.png','#6b7280','音响月巴'],
+    'jieba':['https://origin.picgo.net/2026/10/23/8a2dd3078a8a2c919d0a8fa208ec9dfdfba03c4be9bcfa05.th.png','#4e9f8d','戒巴'],
+    'bazong':['https://origin.picgo.net/2026/10/21/8ff3d46600bd7fcfb5dcab98f93cbd9bbeef26b25b073ec3.th.png','#c68a3a','巴总'],
+    'mojing':['https://origin.picgo.net/2026/09/27/4d64284ab6f23425f9dda44f0fc540bef12552ef47074e5e.th.png','#8a97a8','墨镜笑巴'],
+    'bukeming':['https://origin.picgo.net/2026/09/27/20c78b17ef4b3fa235abaad68362f4b3e9cd9e87eb7bc133.th.png','#5d4a7a','不可名状巴'],
+    'canglong':['https://origin.picgo.net/2026/09/29/cfdcb713bec9bd6b5307fd8a9edfc1fb421e9a1529506bb0.th.png','#8e9aa8','苍龙月巴'],
+    'bairixuan':['https://origin.picgo.net/2026/10/22/1aaddaa947c51b53b8f61b776ecf86e331d724a72b40ec07.th.png','#f2c14e','白日宣巴'],
+    'niaoba':['https://origin.picgo.net/2026/09/29/5333d8fdca76c3b083802650fd853975e1e6162696fd5812.th.png','#7fa8c8','鸟巴'],
+    'mb_fanzhuan':['https://origin.picgo.net/2026/10/11/c81c459acde3c23c8697414890a13e0ca4b5043931a9a27e.th.png','#8f8fce','反转月巴'],
+    'mb_zhongyi':['https://origin.picgo.net/2026/10/11/b8ab7bdd789538f043b260d47e4181c4c7feca6cf8eb591c.th.png','#e88aa8','中意月巴'],
+    'mb_lba':['https://origin.picgo.net/2026/10/11/7f08d97c6eb3a1eac43b80c797216c3893370759f78d1666.th.png','#dbb3e8','喇巴'],
+    'mb_jinju':['https://origin.picgo.net/2026/10/21/---akai0255d6362d123bd3.th.png','#8a8a8a','进局子巴'],
+    'mb_zuanshi':['https://origin.picgo.net/2026/10/26/23b4e2cfd09ac95577efbd3a4d646cbba0bd6b5198a6a674.th.png','#9be7ff','钻石月巴'],
+    'mb_huang':['https://origin.picgo.net/2026/10/23/485bfcabf6eaea8ea294ead8e520a0ada29d48a19c9197d6.th.png','#ffd94a','黄月巴'],
+    'mb_qiezhi':['https://origin.picgo.net/2026/10/21/07de58ae22de5c368964182b7b78934969a8e2ed84c5ab60.th.png','#e5533d','茄汁月巴'],
+    'mb_gaoya':['https://origin.picgo.net/2026/10/29/efe0df586c4c004111696f268f68aae61c403392db6a810a.th.png','#6b5b95','高雅月巴'],
+    'mb_long':['https://origin.picgo.net/2026/10/23/longlongd4f08c948bb96bfa.th.png','#f0a868','long～long～巴～'],
+    'm2_dou':['https://origin.picgo.net/2026/10/23/308a1b31062d7f87283f644cf4d74d71f1a7c076db6cdd2d.th.png','#aed581','豆月巴'],
+    'm2_men':['https://origin.picgo.net/2026/10/23/a8cee4c77e6970bf2821d353c3feffbaa138951bc8498773.th.png','#f8bbd0','萌月巴'],
+    'm2_dundun':['https://origin.picgo.net/2026/10/22/chubby-bannyb70ce7f942be59f2.th.png','#c9c9f0','墩墩月巴'],
+    'm2_mao':['https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li578400427d700c6a.th.png','#b0bec5','猫月巴'],
+    'm2_bai':['https://origin.picgo.net/2026/10/25/---Yidi-Nyaomi-Li4119506dc8fd2b36.th.png','#eceff1','白月巴'],
+    'm2_hei':['https://origin.picgo.net/2026/10/23/6a0b54faa9b43d05a7365ff404ff7c63b834626b88cbfb9f.th.png','#5d6670','黑月巴'],
+    'm2_lan':['https://origin.picgo.net/2026/10/29/ef468ec9599397d2bf267adf7e751a91c7bfedd28f0f21ae.th.png','#90caf9','蓝月巴'],
+    'm2_hudie':['https://origin.picgo.net/2026/10/29/6fd6fc08c6b78e151c3c1f910f91f0b230e86560c516c5e5.th.png','#f48fb1','蝴蝶月巴'],
+    'm2_she':['https://origin.picgo.net/2026/10/22/snake-banny1537e823f87200c1.th.png','#ff8a65','蛇月巴'],
+    'm2_xiongmao':['https://origin.picgo.net/2026/10/26/f38a329f6c5cf9c790e8ceb26ca786f4e2e3376ee50e1c03.th.png','#a1887f','熊猫月巴'],
+    'm2_wo':['https://origin.picgo.net/2026/10/23/2ffd65af799fc8080d8a9b2af57ac89782a5d6d5f70cda63.th.png','#b0bec5','蜗牛月巴'],
+    'm2_xiangjiao':['https://origin.picgo.net/2026/10/30/choco---KoTofuf6ec1174c00258e1.th.png','#ffe082','香蕉月巴'],
+    'm2_bingqilin':['https://origin.picgo.net/2026/10/21/756357abf125a8cd0c6f532836a233717fd3a810900d0252.th.png','#e1bee7','冰淇淋月巴'],
+    'm2_buman':['https://origin.picgo.net/2026/10/28/051c12c0fb7af8c0266c5cc7cecfaee2c9ad91197e010d28.th.png','#9e9e9e','不满月巴'],
+    'm2_tanwu':['https://origin.picgo.net/2026/10/22/ab151905162c9192567261cab1173c3d9475509a44cc77a9.th.png','#6d4c41','贪污月巴'],
+    'm2_zhangyu':['https://origin.picgo.net/2026/10/25/c4f8a236ca6bb1f1573ece00b879665a74de6380444e8b58.th.png','#7e57c2','章鱼月巴'],
+    'm2_xianyi':['https://origin.picgo.net/2026/10/21/71e32b7a3e54e6bba0d145f9b63d36bc6b5a368bce3d301e.th.png','#546e7a','嫌疑月巴'],
+    'm2_fanqie':['https://origin.picgo.net/2026/10/23/3dece9cc3c952ea2b0615a90ddc71dd43132a85a21517244.th.png','#e57373','番茄月巴'],
+    'm2_zanmei':['https://origin.picgo.net/2026/10/25/350d1a2f432db9855a59e819d8f01a925cf17eb669228ca4.th.png','#fff176','赞美月巴'],
+    'm2_bingling':['https://origin.picgo.net/2026/10/25/cd0ab132ab8fadac2558f031c9ad1ccf28fe2f886155509e.th.png','#bfe8f2','冰灵月巴'],
+    'm2_wangting':['https://origin.picgo.net/2026/10/29/e7f506a5124889278f9a50f018cf7d5919030e43e6d02f45.th.png','#8f7bb5','王庭月巴'],
+    'm2_guowang':['https://origin.picgo.net/2026/10/21/e878f7fde5e72bfa6bad2f681dca742eef9b8997548df54a.th.png','#c9a227','执政王月巴'],
+    'm2_zuochen':['https://origin.picgo.net/2026/10/21/8b6b66f067f39adb13298d8927fbd7eae7f9ab72fac6c4c6.th.png','#7e6a9e','佐臣月巴'],
+    'm2_bingzang':['https://origin.picgo.net/2026/10/29/295ff96efd9113687e62b2cae3e6ad32b4286fc8948f9447.th.png','#a7d8e8','冰葬月巴'],
+    'm2_yizhao':['https://origin.picgo.net/2026/10/29/74e8b94867c706e828efe458f52b4627113d4e0517bbc535.th.png','#e8dcb0','羊皮卷月巴'],
+    'm2_digong':['https://origin.picgo.net/2026/10/30/b0ab7a09932d8503ce16faa23e6ec4c45b88d2a10d87ea4c.th.png','#5d5a6e','地宫月巴'],
+    'm2_gulong':['https://origin.picgo.net/2026/10/27/6ec23650d9c4ccc4d7a65e0b71a57edb2ba0bd14acfd55de.th.png','#4f8f7a','古龙月巴'],
+    'm2_kuji':['https://origin.picgo.net/2026/10/28/48bf5c5a3f40d87fa322d3660b325cf53bd45781a4814da5.th.png','#9b7fb0','枯寂月巴'],
+    'm2_xinsheng':['https://origin.picgo.net/2026/10/27/4bbe6aedc42df8f9eb240155538bedc9b64b287a006dfd45.th.png','#7ec98a','新生月巴'],
+    'm2_yingmeng':['https://origin.picgo.net/2026/10/26/---Yidi-Nyaomi-Li71ed6a1aadb0f706.th.png','#5a4a8a','噩梦月巴'],
+    'm2_island':['https://origin.picgo.net/2026/10/29/ca5dae8e8af396dead2e65a5f74e53629616550b183a98a8.th.png','#3fb5a6','海岛月巴'],
+    'm2_chuqian':['https://origin.picgo.net/2026/10/21/6f0a351bc37096a61e980e6e5d6da80446da29ffafa7a5b8.th.png','#2f8f72','出千月巴'],
+    'm2_tracker':['https://origin.picgo.net/2026/10/21/acf7a9ec0fbe767f840a205e24730017da0d83a3264ec36f.th.png','#8bc34a','追踪器月巴'],
+    'm2_baqi':['https://origin.picgo.net/2026/10/21/00ad700c36c3d7131ffe4fcfae4e5a0cee3d2f4e74eec9cd.th.png','#5f8f6f','巴岐大蛇'],
+    'm2_qingchun':['https://origin.picgo.net/2026/10/21/cfbed82590fddf492012ef5aa1349f983ae998abddf56193.th.png','#aea8ae','青春败犬立体巴'],
+    'm2_zuoqi':['https://origin.picgo.net/2026/10/21/c78c4be6d1ad05b71428d20e99d80e43ef4bf36af33cc07a.th.png','#c8a165','坐骑月巴'],
+    'm2_teatime':['https://origin.picgo.net/2026/10/21/teatime-buny---Felimika490cd7af24e32b96.th.png','#c9a77c','下午茶月巴'],
+    'm2_baboyi':['https://origin.picgo.net/2026/10/22/67415055497e212216f64fbf52efd52849aeb4517d115733.th.png','#c9c4dc','巴巴博弈'],
+    'm2_rainy':['https://origin.picgo.net/2026/10/22/umbrella-bunny0f0ec74e10bac4fc.th.png','#a9c7e8','雨伞月巴'],
+    'm3_cangshu':['https://origin.picgo.net/2026/10/23/22cdbf9144b586bf272c4cb61f533bc853372133deea585a.th.png','#d8b17a','仓鼠月巴'],
+    'm2_yinan':['https://origin.picgo.net/2026/10/21/7b935eb5528f9cc67c194fe5d47c4a367229b91b95e86400.th.png','#b7b0cc','阴暗巴'],
+    'm3_eluosi':['https://origin.picgo.net/2026/10/25/5184c509e7017738e29c29fd93540a98dc98667d5767b52a.th.png','#7ec8e3','俄罗斯巴块'],
+    'm3_you':['https://origin.picgo.net/2026/10/25/fa99573013c8914358ccc065c6cb7bf3d161a11cf298572f.th.png','#c98bd0','鱿巴'],
+    'm3_egg':['https://origin.picgo.net/2026/10/25/new-banny---Phuong-Uyen-Nguyenf4a2e131c7ef8d69.th.png','#a8c8b8','电子宠物巴'],
+    'm3_badaba':['https://origin.picgo.net/2026/10/25/---Yidi-Nyaomi-Li343d957950ab0548.th.png','#9a8fa8','巴拉巴巴巴'],
+    'm3_guzhang':['https://origin.picgo.net/2026/10/27/cef136c721e61caa1e6e045fd49dae0f098040d960280d80.th.png','#5b6ee8','故障月巴'],
+    'm3_candy':['https://origin.picgo.net/2026/10/29/c027b30582384fdcb49c1a29a8a9e6e089134f5b0e68d115.th.png','#f2e6c9','大巴兔奶糖'],
+    'm3_banini':['https://origin.picgo.net/2026/10/29/a171d47a19cba017dcac07b8277d861d7c5760f8595c52cd.th.png','#f5c4c9','巴尼尼'],
+    'm3_gummy':['https://origin.picgo.net/2026/10/30/c10b899599909fbe8c00b823514b0d1186af9f31d5e83a76.th.png','#e8f0fa','软糖月巴'],
+    'm2_wuyue':['https://origin.picgo.net/2026/10/31/0fc698411a43fda2befaa164d741ad449499809deb531985.th.png','#6b5f8a','无月月巴'],
+    'm3_liberty':['https://origin.picgo.net/2026/10/31/1e2434fad7de64997443bb347252032d39d7215970404fd9.th.png','#c8ccc0','自由女神巴'],
+    'mb_xinnian':['https://origin.picgo.net/2026/10/31/6cc021c8752ea5605c71f670842c2203ca53d231ebe4d5b6.th.png','#d94a6b','新年月巴'],
+    'm2_xinglai':['https://origin.picgo.net/2026/10/31/e49cc43aeee1e35be6f6424f785183bd2eaaa3c401aef606.th.png','#b9a8e0','清醒月巴'],
+    'm2_shouling':['https://origin.picgo.net/2026/10/31/316e2150f0312750f4d7cd4fcc4f6303a4ad69ec8e464c65.th.png','#9aa0a6','守陵月巴'],
+    'm2_linyao':['https://origin.picgo.net/2026/10/31/c170f2a1fb785896827b8b22af3900de3695f964760288bf.th.png','#7fc9a6','林妖月巴'],
+    'm2_zuojia':['https://origin.picgo.net/2026/11/01/1b95e58782df282eba180dd0fddea8e89d19a8c7ce048ff8.th.png','#90a4ae','作家月巴'],
+    'm2_huanmeng':['https://origin.picgo.net/2026/11/01/3a376135483b78d18b13848a6cf5e07ccadc0dfa354ea302.th.png','#c9a6d8','幻梦月巴'],
+    'mb_shan':['https://origin.picgo.net/2026/11/01/74963261b78193e1e743deb60efee14cb15473c1ed2a08cf.png','#e0d24e','闪电月巴'],
+    'm2_gou':['https://origin.picgo.net/2026/11/01/d4fb5d4acd0144900c631e8556cce20a0b21511ef0b18500.png','#d7ccc8','狗月巴'],
+    'm3_train':['https://origin.picgo.net/2026/11/01/train-banny358505b4dab5544e.th.png','#e8e4dc','火车月巴'],
+    'm3_16bit':['https://origin.picgo.net/2026/11/01/16-bit-Bannyb4bff354ec834210.th.png','#c9c2e8','16位月巴'],
+    'm2_shoudeng':['https://origin.picgo.net/2026/11/02/97292342221ee2ec8ea222d67d271a6b8118c2737398e2ef.th.png','#d99a3c','守灯月巴'],
+    'm2_yingzi':['https://origin.picgo.net/2026/11/02/f0d18daabf88c898b70270fdf9a7ff8510fc0c8849d4fd41.th.png','#4a4458','阴影月巴'],
+    'm2_mengyan':['https://origin.picgo.net/2026/11/02/ab775743f8267d63d65b81c28917666e56f8ef46bb82723e.th.png','#8a5fd8','梦魇月巴'],
+    'm2_sunkcity':['https://origin.picgo.net/2026/11/02/b241fdcc94f78a8b329c05fb8b649e228685080cf550e065.th.png','#3f7fb5','沉城月巴'],
+    'm2_tian':['https://origin.picgo.net/2026/11/02/0be64feec62e91f984a6ce9091d5eede1fc8a35132b5626f.th.png','#f8bbd0','甜月巴'],
+    'm2_shamo':['https://origin.picgo.net/2026/11/02/0059847a33461c9b05dbed513a3a7498201fc69bcf6582ba.th.png','#ffcc80','沙漠月巴'],
+    'm2_yueshi':['https://origin.picgo.net/2026/11/02/2775d34d4123537c87ae900e911636e4d04587a79becc9f6.th.png','#e0a94f','夜市月巴'],
+    'm2_xian':['https://origin.picgo.net/2026/11/02/8279f00c7323e443ce5cc5eadee6c0c845655ca09396480c.th.png','#90a4ae','盐月巴'],
+    'm3_dango':['https://origin.picgo.net/2026/11/03/Dango-Bannyf17dda020ef5ea00.th.png','#f2a7c3','团子月巴'],
+    'm3_burger':['https://origin.picgo.net/2026/11/03/Hamburger-bannye89eb71b8b666d03.th.png','#d98a5f','汉堡月巴'],
+    'm3_omurice':['https://origin.picgo.net/2026/11/03/Omurice-Banny454726f84ceb7a01.th.png','#e8b96a','蛋包饭月巴']
+  };
+function artOf(id){
+  if(POOL){ const p=POOL[id]; return p?{url:p.url,color:p.color,name:p.name||id}:null; }
+  const e=DEX_ART[id];
+  return e?{url:e[0],color:e[1],name:e[2]||id}:null;
+}
+/* 卡池来源：父页名册（已解锁过滤）优先；离线/独立打开回退内置 DEX_ART 全量 */
+function poolEntries(){
+  if(POOL){
+    return Object.keys(POOL).map(function(id){ return {id:id,url:POOL[id].url,color:POOL[id].color,name:POOL[id].name}; });
+  }
+  return Object.keys(DEX_ART).map(function(id){ const e=DEX_ART[id]; return {id:id,url:e[0],color:e[1],name:e[2]||id}; });
+}
+/* 兜底块：主色 + 名字首字（图没了游戏照样能玩） */
+function fbHTML(a){
+  return '<div class="fb" style="--fbc:'+((a&&a.color)||'#9e9e9e')+'">'+fallbackChar(a?a.name:'')+'</div>';
+}
+/* 往 el 里放立绘：img 失败重试一次 → 仍失败换兜底块；nofetch 直接全员兜底 */
+function mountArt(el,id){
+  const a=artOf(id);
+  if(!a||a.url===''||NOFETCH){ el.innerHTML=fbHTML(a); return; }
+  el.innerHTML='';
+  const img=document.createElement('img');
+  img.alt=a.name; img.loading='lazy'; img.decoding='async';
+  let retried=false;
+  img.onerror=function(){
+    if(!retried){ retried=true; setTimeout(function(){ img.src=a.url; },300); return; }
+    el.innerHTML=fbHTML(a);
+  };
+  img.src=a.url;
+  el.appendChild(img);
+}
+
+/* ---------- 音效（WebAudio 零素材；muted 只读主存档，M4 起由父页桥覆盖） ---------- */
+const SOUND=(function(){
+  let ctx=null, muted=false;
+  try{
+    const main=JSON.parse(localStorage.getItem('idle-yueba-save-v2')||'null');
+    if(main&&main.muted) muted=true;               /* 只读，绝不写主存档 */
+  }catch(e){}
+  function ac(){
+    if(!ctx){ try{ ctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } }
+    if(ctx&&ctx.state==='suspended'){ const p=ctx.resume(); if(p&&p.catch) p.catch(function(){}); }
+    return ctx;
+  }
+  function tone(f,dur,type,vol,at){
+    const c=ac(); if(!c||muted) return;
+    const t=c.currentTime+(at||0);
+    const o=c.createOscillator(), g=c.createGain();
+    o.type=type||'square'; o.frequency.value=f;
+    g.gain.setValueAtTime(vol||.05,t);
+    g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    o.connect(g); g.connect(c.destination);
+    o.start(t); o.stop(t+dur+.02);
+  }
+  return {
+    setMuted:function(v){ muted=!!v; },            /* M4 桥接入口 */
+    get muted(){ return muted; },
+    flip:function(){ tone(660,.05,'square',.03); },
+    match:function(){ tone(523,.09,'square',.05); tone(784,.12,'square',.05,.09); },
+    wrong:function(){ tone(196,.2,'sawtooth',.06); },
+    stamp:function(){ tone(98,.09,'square',.08); },
+    win:function(){ [523,659,784,1046].forEach(function(f,i){ tone(f,.12,'square',.05,i*.11); }); },
+    lose:function(){ [330,247,175].forEach(function(f,i){ tone(f,.16,'sawtooth',.05,i*.14); }); },
+    reshuffle:function(){ tone(220,.08,'square',.06); tone(180,.08,'square',.06,.09); }
+  };
+})();
+
+/* ---------- 台词池：已并入 TXT（zh/en/ja/ko），line() 按当前语言取 ---------- */
+function rand(a){ return a[(Math.random()*a.length)|0]; }
+
+/* ---------- 状态 ---------- */
+let diff=DIFFS[0], mode=MODES[0];
+if(DIFFS.some(function(d){ return d.key===SAVE.settings.diff; })) diff=DIFFS.filter(function(d){ return d.key===SAVE.settings.diff; })[0];
+if(MODES.some(function(m){ return m.key===SAVE.settings.mode; })) mode=MODES.filter(function(m){ return m.key===SAVE.settings.mode; })[0];
+let deck=[];        /* [{id,uid}] 两两成对后洗牌 */
+let st=null;        /* {phase,res,matched,combo,maxCombo,penalties,first,lock} */
+let paused=false, introOpen=false, tickTimer=null;
+const REDUCED=(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+let LOWP=false;                   /* 父页下发的低功耗开关（M4 名册桥） */
+function lockMs(){ return (REDUCED||LOWP)?450:1000; }   /* 惩罚演出锁输入时长 */
+function eraserMs(){ return (REDUCED||LOWP)?1200:2500; }
+
+function saveStats(){
+  SAVE.stats=SAVE.stats||{clears:0,fails:0,penalties:0,maxCombo:0};
+  return SAVE.stats;
+}
+
+/* ---------- HUD ---------- */
+function fmtBest(){
+  const b=SAVE.best&&SAVE.best[mode.key]&&SAVE.best[mode.key][diff.key];
+  return (b==null)?'--':String(b);
+}
+function updateHUD(){
+  if(!st) return;
+  $('#stPairs').innerHTML=st.matched+'<em>/'+diff.pairs+'</em>';
+  $('#stResLabel').textContent=mode.stat;
+  $('#stRes').textContent=String(Math.max(0,st.res));
+  $('#stCombo').textContent='×'+st.combo;
+  $('#stBest').textContent=fmtBest();
+}
+function setBubble(t){ $('#exBubble').textContent=t; }
+function shakeExaminer(){
+  const ex=$('#examiner');
+  ex.classList.remove('shake'); void ex.offsetWidth; ex.classList.add('shake');
+}
+
+/* ---------- 卡盘 ---------- */
+function buildDeck(){
+  const pool=shuffle(poolEntries().filter(function(t){ return !!t.url; }).map(function(t){ return t.id; })).slice(0,diff.pairs);
+  deck=[];
+  pool.forEach(function(id,idx){
+    deck.push({id:id,uid:idx+'a'},{id:id,uid:idx+'b'});
+  });
+  shuffle(deck);
+}
+function renderBoard(){
+  const bd=$('#board');
+  bd.style.gridTemplateColumns='repeat('+diff.cols+',var(--cs))';
+  bd.innerHTML='';
+  deck.forEach(function(c){
+    const card=document.createElement('button');
+    card.type='button'; card.className='card'; card.dataset.uid=c.uid; card.dataset.id=c.id;
+    card.setAttribute('aria-label',t('cardAria'));
+    card.innerHTML='<div class="cflip"><div class="cface ccover"><b>？？</b></div><div class="cface cback"></div></div>';
+    mountArt(card.querySelector('.cback'),c.id);
+    card.addEventListener('click',function(){ onCard(card); });
+    bd.appendChild(card);
+  });
+  layoutBoard();
+}
+/* 盘面自适应：在 boardPanel 可用区内取「整卡」尺寸，避免半张卡被裁 */
+function layoutBoard(){
+  const panel=$('#boardPanel .pin');
+  const gap=6;
+  const availW=Math.max(80,panel.clientWidth-16), availH=Math.max(80,panel.clientHeight-16);
+  const cs=Math.floor(Math.min((availW-gap*(diff.cols-1))/diff.cols,(availH-gap*(diff.rows-1))/diff.rows));
+  $('#board').style.setProperty('--cs',Math.max(40,cs)+'px');
+}
+
+/* ---------- 一局 ---------- */
+function stopTick(){ if(tickTimer){ clearInterval(tickTimer); tickTimer=null; } }
+function startTick(){
+  stopTick();
+  if(mode.key!=='time') return;
+  tickTimer=setInterval(function(){
+    if(paused||introOpen||!st||st.phase!=='play') return;
+    st.res--; updateHUD();
+    if(st.res<=0) lose();
+  },1000);
+}
+function newRound(){
+  hideOv('#settleOv');
+  clearFx();
+  $('#examiner').classList.remove('angry');
+  st={phase:'play',res:(mode.key==='step')?diff.steps:diff.time,
+      matched:0,combo:0,maxCombo:0,penalties:0,wrongStreak:0,first:null,lock:false};
+  buildDeck(); renderBoard(); updateHUD(); startTick();
+  setBubble(rand(line('start')));
+}
+
+/* ---------- 翻牌与判定 ---------- */
+function onCard(card){
+  if(!st||st.phase!=='play'||st.lock||paused||introOpen) return;
+  if(card.classList.contains('open')||card.classList.contains('done')) return;
+  SOUND.flip();
+  card.classList.add('open');
+  if(!st.first){ st.first=card; return; }
+  const a=st.first,b=card;
+  st.first=null; st.lock=true;
+  setTimeout(function(){ judge(a,b); },260);     /* 等翻牌动画转到正面 */
+}
+function judge(a,b){
+  if(mode.key==='step') st.res--;                /* 每翻一对扣 1 步（成败都算） */
+  if(a.dataset.id===b.dataset.id){
+    a.classList.add('done'); b.classList.add('done');
+    st.matched++; st.combo++;
+    st.maxCombo=Math.max(st.maxCombo,st.combo);
+    if(st.wrongStreak>0){
+      st.wrongStreak=0;
+      const wasAngry=$('#examiner').classList.contains('angry');
+      $('#examiner').classList.remove('angry');
+      if(wasAngry) setBubble(rand(line('calm')));
+    }
+    SOUND.match(); updateHUD();
+    if(st.matched>=diff.pairs){ win(); return; }
+    if(st.res<=0){ lose(); return; }             /* 还有牌没配但步数已尽 */
+    st.lock=false;
+  }else{
+    penalty(a,b);
+  }
+}
+
+/* ---------- 惩罚：答错必罚（台词 + ✗章 + 代价 + 随机小惩罚 / 连错×3 当堂重考） ---------- */
+function penalty(a,b){
+  st.penalties++; st.combo=0; st.wrongStreak++;
+  const big=(st.wrongStreak%3===0);              /* 连错 ×3 → 当堂重考 */
+  if(mode.key==='step') st.res-=1; else st.res-=3;   /* 代价：在翻牌消耗之外额外扣 */
+  setBubble(rand(big?line('angry'):line('mock')));
+  shakeExaminer();
+  SOUND.wrong();
+  boardStamp();
+  setTimeout(function(){ SOUND.stamp(); },140);
+  [splat,crowdPenalty,eraserPenalty][(Math.random()*3)|0]();
+  updateHUD();
+  setTimeout(function(){
+    a.classList.remove('open'); b.classList.remove('open');
+    if(big){
+      reshuffleUnmatched();                      /* 大惩罚：未配对牌全部洗牌重盖 */
+      $('#examiner').classList.add('angry');     /* 生气状态：配对成功才平息 */
+      SOUND.reshuffle();
+    }
+    if(st.res<=0){ lose(); return; }
+    st.lock=false;
+  },lockMs());
+}
+/* 未配对的牌：id 集合不变，位置重新洗（已配对的牌不动） */
+function reshuffleUnmatched(){
+  const unmatched=Array.prototype.slice.call(document.querySelectorAll('.card:not(.done)'));
+  const ids=shuffle(unmatched.map(function(c){ return c.dataset.id; }));
+  unmatched.forEach(function(c,i){
+    if(c.dataset.id===ids[i]) return;
+    c.dataset.id=ids[i];
+    mountArt(c.querySelector('.cback'),ids[i]);
+  });
+}
+function clearFx(){
+  const pin=$('#boardPanel .pin');
+  ['bstamp','splat','crowd','eraser'].forEach(function(cls){
+    Array.prototype.forEach.call(pin.querySelectorAll('.'+cls),function(n){ n.remove(); });
+  });
+}
+function boardStamp(){
+  const s=document.createElement('div');
+  s.className='bstamp'; s.textContent='✗';
+  $('#boardPanel .pin').appendChild(s);
+  setTimeout(function(){ s.remove(); },900);
+}
+function splat(){
+  const pin=$('#boardPanel .pin');
+  const d=document.createElement('div');
+  d.className='splat';
+  const w=pin.clientWidth,h=pin.clientHeight;
+  d.style.width=Math.round(w*.42)+'px';
+  d.style.height=Math.round(w*.42)+'px';
+  d.style.left=Math.round(w*(.12+Math.random()*.34))+'px';
+  d.style.top=Math.round(h*(.14+Math.random()*.4))+'px';
+  pin.appendChild(d);
+  setTimeout(function(){ d.remove(); },2100);    /* 墨渍自己淡出（约 2s），锁输入只 1s */
+}
+/* 围观干扰：一排月巴立绘横幅从卡盘前掠过 1.5s，掩护牌面 */
+function crowdPenalty(){
+  const pin=$('#boardPanel .pin');
+  const ids=shuffle(poolEntries().filter(function(t){ return !!t.url; }).map(function(t){ return t.id; })).slice(0,7);
+  const cr=document.createElement('div');
+  cr.className='crowd';
+  cr.style.top=Math.round(18+Math.random()*42)+'%';
+  cr.innerHTML=ids.map(function(id){
+    const a=artOf(id);
+    return '<span>'+(a&&a.url
+      ?'<img src="'+a.url+'" alt="">'
+      :'<div class="fb" style="--fbc:'+((a&&a.color)||'#9e9e9e')+'">'+fallbackChar(a?a.name:'')+'</div>')+'</span>';
+  }).join('');
+  pin.appendChild(cr);
+  setTimeout(function(){ cr.remove(); },1600);
+}
+/* 罚抄橡皮：点 5 下立即继续；不点 2.5s 后自动擦完（低功耗 1.2s） */
+function eraserPenalty(){
+  const pin=$('#boardPanel .pin');
+  if(pin.querySelector('.eraser')) return;
+  const ov=document.createElement('div');
+  ov.className='eraser';
+  ov.innerHTML='<div id="erCard" class="panel"><div class="pin">'
+    +'<h4>'+t('erTitle')+'</h4>'
+    +'<button type="button" id="erBtn">'+t('erBtn')+'</button>'
+    +'<div class="erDots"><i></i><i></i><i></i><i></i><i></i></div>'
+    +'<p>'+tf('erHint',{n:Math.round(eraserMs()/100)/10})+'</p>'
+    +'</div></div>';
+  pin.appendChild(ov);
+  let taps=0;
+  const dots=ov.querySelectorAll('.erDots i');
+  const done=function(){ if(ov.parentNode) ov.remove(); };
+  ov.querySelector('#erBtn').addEventListener('click',function(){
+    taps++; SOUND.flip();
+    if(dots[taps-1]) dots[taps-1].classList.add('on');
+    if(taps>=5) done();
+  });
+  setTimeout(done,eraserMs());
+}
+
+/* ---------- 结算 ---------- */
+function row(k,v){ return '<div class="row"><span>'+k+'</span><b>'+v+'</b></div>'; }
+function showSettle(ok){
+  st.phase='settle'; stopTick();
+  /* 记录：BEST=剩余资源（步/秒），越大越好 */
+  const stats=saveStats();
+  let rec=false;
+  if(ok){
+    const bm=SAVE.best[mode.key]||(SAVE.best[mode.key]={});
+    const prev=bm[diff.key];
+    if(prev==null||st.res>prev){ bm[diff.key]=st.res; rec=true; }
+  }
+  stats[ok?'clears':'fails']++;
+  stats.penalties+=st.penalties;
+  stats.maxCombo=Math.max(stats.maxCombo||0,st.maxCombo);
+  persist();
+  /* 面板 */
+  const stamp=$('#settleStamp');
+  stamp.textContent=ok?t('stampOk'):t('stampBad');
+  stamp.classList.toggle('bad',!ok);
+  $('#settleRecord').textContent=t('record');
+  $('#settleRecord').classList.toggle('show',rec);
+  $('#tomatoFlick').classList.toggle('show',!ok);
+  $('#settleLines').innerHTML=
+    row(t('rExam'),t('d_'+diff.key)+' · '+t('m_'+mode.key))
+    +row(t(mode.key==='step'?'rStepsLeft':'rTimeLeft'),
+      Math.max(0,st.res)+(mode.key==='step'?t('unitStep'):t('unitSec')))
+    +row(t('rCombo'),'×'+st.maxCombo)
+    +row(t('rPenalty'),st.penalties+t('unitTimes'));
+  const dex=$('#settleDex'); dex.innerHTML='';
+  deck.filter(function(c,i){ return deck.findIndex(function(x){ return x.id===c.id; })===i; })
+    .forEach(function(c){ const m=document.createElement('div'); m.className='mini'; mountArt(m,c.id); dex.appendChild(m); });
+  $('#settleQuote').textContent=rand(ok?line('win'):line('lose'));
+  setBubble(rand(ok?line('win'):line('lose')));
+  (ok?SOUND.win:SOUND.lose)();
+  updateHUD();
+  $('#settleOv').classList.add('show');
+}
+function win(){ showSettle(true); }
+function lose(){ showSettle(false); }
+
+/* ---------- 分段按钮 ---------- */
+function renderSegs(){
+  const sd=$('#segDiff'); sd.innerHTML='';
+  DIFFS.forEach(function(d){
+    const b=document.createElement('button');
+    b.type='button'; b.className='btn'+(d.key===diff.key?' on':''); b.textContent=t('d_'+d.key);
+    b.addEventListener('click',function(){
+      if(diff.key===d.key) return;
+      diff=d; SAVE.settings.diff=d.key; persist();
+      renderSegs(); newRound();
+    });
+    sd.appendChild(b);
+  });
+  const sm=$('#segMode'); sm.innerHTML='';
+  MODES.forEach(function(m){
+    const b=document.createElement('button');
+    b.type='button'; b.className='btn'+(m.key===mode.key?' on':''); b.textContent=t('m_'+m.key);
+    b.addEventListener('click',function(){
+      if(mode.key===m.key) return;
+      mode=m; SAVE.settings.mode=m.key; persist();
+      renderSegs(); newRound();
+    });
+    sm.appendChild(b);
+  });
+}
+
+/* ---------- 开场白（每存档一次，可跳过） ---------- */
+let introStep=0;
+function showIntro(){
+  introOpen=true; introStep=0;
+  renderIntro();
+  $('#introOv').classList.add('show');
+}
+function renderIntro(){
+  const pool=line('intro');
+  $('#introText').textContent=pool[introStep]||'';
+  $('#btnIntroNext').textContent=(introStep>=pool.length-1)?t('startExam'):t('next');
+}
+function introNext(){
+  SOUND.flip();
+  if(introStep>=line('intro').length-1){ finishIntro(); return; }
+  introStep++; renderIntro();
+}
+function finishIntro(){
+  introOpen=false;
+  SAVE.introSeen=true; persist();
+  $('#introOv').classList.remove('show');
+  setBubble(rand(line('start')));
+}
+
+/* ---------- 暂停与浮层按钮 ---------- */
+function hideOv(sel){ $(sel).classList.remove('show'); }
+function setPaused(p){ paused=!!p; $('#pauseOv').classList.toggle('show',paused); }
+$('#btnPause').addEventListener('click',function(){ setPaused(true); });
+$('#btnResume').addEventListener('click',function(){ setPaused(false); });
+$('#btnAgain').addEventListener('click',function(){ newRound(); });
+$('#btnRestart').addEventListener('click',function(){ newRound(); });
+$('#btnSettleBack').addEventListener('click',function(){ hideOv('#settleOv'); });
+$('#btnIntroNext').addEventListener('click',introNext);
+$('#btnIntroSkip').addEventListener('click',function(){ SOUND.flip(); finishIntro(); });
+
+/* ---------- 考官头像 ---------- */
+function renderExaminer(){
+  mountArt($('#exAvatar'),EXAMINER_ID);
+}
+
+/* ---------- 父页名册桥（M4：iframe 内由首页下发已解锁名册/静音/低功耗/语言） ---------- */
+let POOL=null;    /* {id:{url,color,name}}；null=离线模式，用内置 DEX_ART 全量 */
+const IN_FRAME=(function(){ try{ return !!(window.parent&&window.parent!==window); }catch(e){ return false; } })();
+window.addEventListener('message',function(e){
+  const d=e&&e.data;
+  if(!d||d.type!=='yueba-memory-roster') return;
+  const list=Array.isArray(d.list)?d.list:[];
+  const map={};
+  list.forEach(function(t){
+    if(!t||!t.id||!t.art) return;
+    map[t.id]={url:t.art,color:t.color||'#9e9e9e',name:t.name||t.id};
+  });
+  if(Object.keys(map).length<6) return;          /* 名册太小（不足一局），继续用 DEX_ART */
+  POOL=map;
+  SOUND.setMuted(!!d.muted);
+  LOWP=!!d.lowPower;
+  document.body.classList.toggle('lowpower',LOWP);
+  if(d.lang&&TXT[String(d.lang).toLowerCase()]){
+    LANG=String(d.lang).toLowerCase();
+    applyTexts();                                /* 父页语言变化：刷新全部静态文案 */
+    setBubble(rand(line('start')));
+  }
+  if(st&&st.phase==='play') newRound();          /* 开局时名册迟到：按已解锁池重发牌 */
+});
+
+/* ---------- 启动 ---------- */
+/* 静态文案按当前语言刷新（启动与父页改语言时调用） */
+function applyTexts(){
+  document.title=t('docTitle');
+  $('.brand').innerHTML='<i class="bpre">MEM·</i>'+t('brand');
+  $('#exName').textContent=t('exName');
+  $('#introName').textContent=t('exName');
+  $('#btnRestart').textContent=t('restart');
+  $('#btnAgain').textContent=t('again');
+  $('#btnSettleBack').textContent=t('back');
+  $('#btnIntroSkip').textContent=t('skip');
+  $('#btnResume').textContent=t('resume');
+  $('#btnPause').setAttribute('aria-label',t('pauseAria'));
+  $('#pauseCard h3').textContent=t('pauseTitle');
+  $('#pauseCard p').textContent=t('pauseSub');
+  renderSegs();
+  if(introOpen) renderIntro();
+}
+function applyNarrow(){ document.body.classList.toggle('narrow',window.innerWidth<=360); }
+window.addEventListener('resize',function(){ applyNarrow(); layoutBoard(); });
+window.addEventListener('orientationchange',function(){ setTimeout(layoutBoard,150); });
+applyNarrow();
+applyTexts();
+renderExaminer();
+mountArt($('#introAvatar'),EXAMINER_ID);
+newRound();
+if(!SAVE.introSeen) showIntro();
+/* 名册请求放最后：监听已注册、盘面已就绪，父页名册到达后自动重发牌 */
+if(IN_FRAME){ try{ window.parent.postMessage({type:'yueba-memory-ready'},'*'); }catch(e){} }
+/* 只读调试快照（控制台/验收脚本用，不影响玩法） */
+window.__MEM=function(){
+  return {inFrame:IN_FRAME,rostered:!!POOL,pool:Object.keys(POOL||{}).length,
+    dex:Object.keys(DEX_ART).length,muted:!!SOUND.muted,lowPower:LOWP,lang:LANG,
+    phase:st?st.phase:'',pairs:diff.pairs,diff:diff.key,mode:mode.key};
+};
+</script>
+</body>
+</html>

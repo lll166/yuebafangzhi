@@ -1,0 +1,3663 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0d0e0e">
+<title>月巴蛋 · M4 庭院访客</title>
+<style>
+  :root{
+    --shell:#8FB3A6; --bezel:#5E7C72; --lcd:#B9C9A8;
+    --ink:#26332A; --ghost:#93A585; --label:#33473D;
+    --key-ink:#EAF2EA;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;
+    -webkit-user-select:none;user-select:none;}
+  html,body{height:100%;overflow:hidden;background:#0d0e0e;
+    font-family:"SF Mono","Cascadia Mono",Consolas,system-ui,"PingFang SC","Microsoft YaHei",sans-serif;}
+  body::after{content:'';position:fixed;inset:0;pointer-events:none;
+    background:radial-gradient(78% 62% at 50% 38%,transparent 40%,rgba(0,0,0,.58) 100%);}
+  #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    padding:8px;}
+
+  /* ---------- 机身 ---------- */
+  #device{position:relative;width:360px;padding:14px 14px 12px;border-radius:26px;
+    background:var(--shell);color:var(--label);
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.28),inset 0 -5px 12px rgba(0,0,0,.28),
+      0 26px 64px rgba(0,0,0,.62);
+    transform-origin:center center;}
+  #brand{font-size:10px;font-weight:900;letter-spacing:3.2px;text-align:center;
+    opacity:.62;margin:1px 0 9px;white-space:nowrap;}
+  #brand i{font-style:normal;letter-spacing:1px;opacity:.7;}
+
+  /* ---------- 屏幕 ---------- */
+  #screenWrap{position:relative;padding:6px;border-radius:7px;background:var(--bezel);
+    box-shadow:inset 0 3px 9px rgba(0,0,0,.42),inset 0 -1px 0 rgba(255,255,255,.08);
+    transition:filter .08s;}
+  #lcd{display:block;width:320px;height:288px;border-radius:2px;
+    image-rendering:pixelated;image-rendering:crisp-edges;
+    background:var(--lcd);}
+  #lcdText{position:absolute;left:10px;right:10px;bottom:9px;text-align:center;
+    color:var(--ink);font-size:10.5px;line-height:1.25;letter-spacing:.3px;
+    white-space:pre-line;pointer-events:none;transition:opacity .2s;}
+  /* 详情页五行统计：缩一号字，仍落在宠物脚下的留白里 */
+  #lcdText.compact{font-size:9px;line-height:1.2;letter-spacing:.2px;}
+  /* 访客台词气泡：DOM 文本，放在宠物脚下、图标行上方，不遮脸 */
+  #bubble{position:absolute;left:16px;right:16px;bottom:40px;padding:4px 7px 5px;
+    border:1px solid var(--ink);background:var(--lcd);color:var(--ink);
+    font-size:10px;line-height:1.25;letter-spacing:.2px;text-align:center;
+    pointer-events:none;opacity:0;transform:translateY(5px) scale(.94);
+    transform-origin:50% 100%;transition:opacity .12s ease-out,transform .14s ease-out;}
+  #bubble.show{opacity:1;transform:none;}
+  #bubble .sub{font-size:8.5px;line-height:1.2;opacity:.72;margin-top:2px;}
+  /* 庭院访客：直接用原立绘（不是像素画）走进屏幕，Q 弹动效全靠 CSS */
+  #visitor{position:absolute;left:6px;top:6px;width:320px;height:288px;
+    overflow:hidden;pointer-events:none;}
+  #visitor .vb{position:absolute;bottom:88px;width:72px;height:72px;
+    transition:left .08s linear;will-change:left;}
+  #visitor .vb::after{content:'';position:absolute;left:50%;bottom:-2px;width:44px;height:5px;
+    border-radius:50%;background:var(--ink);opacity:.16;transform:translateX(-50%);}
+  #visitor .vbArt{width:100%;height:100%;transform-origin:50% 100%;
+    animation:vbIdle 1.7s ease-in-out infinite;}
+  #visitor img,#visitor svg{display:block;width:100%;height:100%;object-fit:contain;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.2));}
+  #visitor .vb.walk .vbArt{animation:vbWalk .44s ease-in-out infinite;}
+  #visitor .vb.pop .vbArt{animation:vbPop .46s cubic-bezier(.25,1.6,.4,1) both;}
+  #visitor .vb.hop .vbArt{animation:vbHop .42s ease-out both;}
+  @keyframes vbWalk{
+    0%{transform:translateY(0) scale(1,1);}
+    22%{transform:translateY(-5px) scale(.97,1.06);}
+    48%{transform:translateY(0) scale(1.06,.93);}
+    70%{transform:translateY(-2px) scale(.99,1.02);}
+    100%{transform:translateY(0) scale(1,1);}
+  }
+  @keyframes vbIdle{
+    0%,100%{transform:translateY(0) scale(1,1);}
+    50%{transform:translateY(-1px) scale(1.025,.985);}
+  }
+  @keyframes vbPop{
+    0%{transform:translateY(-6px) scale(.72,.72);}
+    55%{transform:translateY(0) scale(1.1,.9);}
+    78%{transform:translateY(-2px) scale(.99,1.03);}
+    100%{transform:translateY(0) scale(1,1);}
+  }
+  @keyframes vbHop{
+    0%{transform:translateY(0) scale(1,1);}
+    28%{transform:translateY(-12px) scale(.94,1.08);}
+    52%{transform:translateY(0) scale(1.09,.91);}
+    68%{transform:translateY(-4px) scale(.99,1.02);}
+    84%{transform:translateY(0) scale(1.03,.97);}
+    100%{transform:translateY(0) scale(1,1);}
+  }
+  @media (prefers-reduced-motion:reduce){
+    #visitor .vbArt,#visitor .vb.walk .vbArt,#visitor .vb.pop .vbArt,#visitor .vb.hop .vbArt{
+      animation:none;}
+  }
+  #screenWrap.dim #bubble{opacity:.55;}
+  #screenWrap.dim{filter:brightness(.62) saturate(.85);}
+  @keyframes screenShake{
+    0%,100%{transform:translate(0,0);}
+    25%{transform:translate(-2px,1px);}
+    50%{transform:translate(2px,-1px);}
+    75%{transform:translate(-1px,0);}
+  }
+  #screenWrap.shake{animation:screenShake .32s linear;}
+
+  /* ---------- 按键 ---------- */
+  #keys{display:flex;justify-content:center;gap:28px;margin:17px 0 20px;}
+  .key{width:54px;height:54px;border-radius:50%;border:0;cursor:pointer;
+    font-family:inherit;font-size:15px;font-weight:900;letter-spacing:1px;
+    color:var(--key-ink);background:var(--bezel);
+    box-shadow:inset 0 3px 0 rgba(255,255,255,.22),inset 0 -4px 8px rgba(0,0,0,.34),
+      0 4px 0 rgba(0,0,0,.28);
+    transition:transform .06s,box-shadow .06s;
+    position:relative;}
+  .key:active,.key.press{transform:translateY(3px);
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.16),inset 0 -2px 6px rgba(0,0,0,.4),
+      0 1px 0 rgba(0,0,0,.3);}
+  .key small{position:absolute;left:0;right:0;bottom:-13px;font-size:7px;font-weight:800;
+    letter-spacing:1px;color:var(--label);opacity:.55;}
+
+  /* ---------- 底部配色 ---------- */
+  #foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:11px;}
+  #swatches{display:flex;gap:6px;}
+  .swatch{width:17px;height:17px;padding:0;border-radius:50%;cursor:pointer;
+    border:2px solid transparent;background:var(--sw);box-shadow:inset 0 0 0 1px rgba(0,0,0,.2);
+    transition:transform .12s;}
+  .swatch[aria-pressed="true"]{border-color:var(--label);transform:scale(1.14);}
+  .swatch:active{transform:scale(.92);}
+  .key:focus-visible,.swatch:focus-visible{outline:2px solid var(--label);outline-offset:2px;}
+  #model{font-size:7.5px;font-weight:800;letter-spacing:1.6px;opacity:.66;white-space:nowrap;}
+  #model b{font-weight:900;opacity:1;}
+
+  /* ---------- 机身小装饰 ---------- */
+  #hint{position:fixed;left:0;right:0;bottom:9px;text-align:center;pointer-events:none;
+    font-size:10px;letter-spacing:.6px;color:#7f837e;white-space:nowrap;}
+  @media (max-height:520px){#hint{display:none;}}
+  @media (max-width:350px){#hint{display:none;}}
+  /* 独立打开时的存档工具：iframe 内隐藏 */
+  #tools{position:fixed;left:0;right:0;bottom:25px;display:flex;justify-content:center;gap:14px;
+    font-size:9.5px;letter-spacing:.5px;color:#6f736e;}
+  #tools[hidden]{display:none;}
+  #tools button{background:none;border:0;padding:0;cursor:pointer;font:inherit;color:inherit;
+    text-decoration:underline;text-underline-offset:2px;}
+  #tools button:focus-visible{outline:1px solid currentColor;outline-offset:2px;}
+  @media (max-height:520px){#tools{display:none;}}
+
+  /* ---------- 低功耗（M5）：关抖屏 / 关访客 Q 弹 / 关过渡 ---------- */
+  body.low #screenWrap.shake{animation:none;}
+  body.low #visitor .vbArt,body.low #visitor .vb.walk .vbArt,
+  body.low #visitor .vb.pop .vbArt,body.low #visitor .vb.hop .vbArt{animation:none;}
+  body.low #screenWrap,body.low #lcdText,body.low #bubble,
+  body.low .key,body.low .swatch{transition:none;}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="device" aria-label="月巴蛋电子宠物机">
+    <div id="brand">BANNY TAMAGO <i>/ MODEL 01</i></div>
+
+    <div id="screenWrap">
+      <canvas id="lcd" width="160" height="144" aria-label="单色液晶屏"></canvas>
+      <div id="visitor" aria-hidden="true"></div>
+      <div id="lcdText" aria-live="polite"></div>
+      <div id="bubble" aria-live="polite"><div id="bubbleMain"></div><div class="sub" id="bubbleSub"></div></div>
+    </div>
+
+    <div id="keys">
+      <button class="key" data-k="A" aria-label="A 键">A<small>选择</small></button>
+      <button class="key" data-k="B" aria-label="B 键">B<small>确认</small></button>
+      <button class="key" data-k="C" aria-label="C 键">C<small>取消</small></button>
+    </div>
+
+    <div id="foot">
+      <div id="swatches" role="group" aria-label="外壳配色"></div>
+      <div id="model">SHELL <b id="shellName">初代青</b></div>
+    </div>
+  </div>
+</div>
+<div id="tools" hidden>
+  <button type="button" id="btnExport">导出存档</button>
+  <button type="button" id="btnImport">导入存档</button>
+  <button type="button" id="btnReset">重置</button>
+  <input id="importFile" type="file" accept=".json,application/json" hidden>
+</div>
+<div id="hint">M4 庭院访客 · A 切换 · B 确认/敲玻璃 · C 返回/无视 · 点顶部看状态</div>
+
+<script>
+'use strict';
+/* ============================================================
+   月巴蛋 · M6 养成深度 + P2 访客叙事
+   本阶段：氛围粒子（爱心/小花/星星，不加表情）、成体形态（圆润/精瘦/倔强）、
+   过喂惩罚、详情统计页、好感 + 性格阈值解锁命名。
+   P2：常客语气 / 10 次礼物 / 3 次无视偷番茄、1-3-7 天分层离线、睡眠梦、来访记录页。
+   此前已有：蛋与孵化 / 养成循环 / 生老病死与归档 / 庭院访客 / 四语言 / 音效 / 低功耗。
+   ============================================================ */
+
+const THEMES=[
+  {id:'teal',   name:'初始青', shell:'#8FB3A6', bezel:'#5E7C72', lcd:'#B9C9A8', ink:'#26332A', ghost:'#93A585', label:'#33473D', keyInk:'#EAF2EA'},
+  {id:'sakura', name:'樱花粉', shell:'#E8B7C4', bezel:'#B8869A', lcd:'#D8E2C0', ink:'#3A2E33', ghost:'#B7C29C', label:'#6E4653', keyInk:'#FFF2F6'},
+  {id:'purple', name:'眼眸紫', shell:'#B9A6D8', bezel:'#7E6BA6', lcd:'#C9D3E8', ink:'#2C2A3D', ghost:'#AAB4C9', label:'#453A5E', keyInk:'#F6F2FF'},
+  {id:'midnight',name:'午夜黑', shell:'#2B2B33', bezel:'#15151A', lcd:'#9AA79E', ink:'#1B201C', ghost:'#7E8A82', label:'#C9D3C9', keyInk:'#C9D3C9'},
+  {id:'cream',  name:'奶油白', shell:'#EDE5D4', bezel:'#C9BEA8', lcd:'#C8D2B8', ink:'#33382C', ghost:'#A8B39A', label:'#5C5546', keyInk:'#FFFDF6'},
+  {id:'tomato', name:'番茄红', shell:'#CE5349', bezel:'#8E332D', lcd:'#E6D9BE', ink:'#3A2A22', ghost:'#C4B79C', label:'#5A241F', keyInk:'#FFEDE9'}
+];
+
+/* ---------- 性格：决定命名解锁阈值与偏好氛围 ----------
+   同一物种的哈希固定，所以同一只月巴每次开机性格一致。 */
+const PERSONAS={
+  clingy:{id:'clingy',nickBond:40,amb:'heart'},
+  steady:{id:'steady',nickBond:50,amb:'flower'},
+  proud:{id:'proud',nickBond:60,amb:'star'}
+};
+const PERSONA_KEYS=['clingy','steady','proud'];
+function personaFor(id){
+  return PERSONAS[PERSONA_KEYS[hashId(id||'')%PERSONA_KEYS.length]];
+}
+function personaOf(pet){
+  if(!pet) return PERSONAS.steady;
+  return PERSONAS[pet.persona]||personaFor(pet.species);
+}
+function personaLabel(pet){ return t('persona_'+personaOf(pet).id); }
+/* 三组候选名：A 换、B 确定、C 再说；不接输入法，保持三键操作 */
+const NAME_POOL={
+  zh:['团子','小豆','麻薯'],
+  en:['Mochi','Bean','Bun'],
+  ja:['だんご','まめ','もち'],
+  ko:['모치','콩','찐빵']
+};
+function nameChoices(){ return NAME_POOL[LANG]||NAME_POOL.zh; }
+function petName(pet){ return (pet&&pet.nickname)||(pet&&pet.name)||''; }
+function recName(r){ return (r&&r.nickname)||(r&&r.name)||''; }
+
+const SAVE_KEY='yueba-tamago-v1';
+const SAVE_BROKEN_KEY=SAVE_KEY+'-broken';
+const SAVE_VER=2;
+const HOLD_MS=1200, HATCH_MS=3000;
+/* 访客时序（§6.1–6.2） */
+const VISIT_FIRST=45000, VISIT_GAP=8*60000, VISIT_CHECK=3*60000;
+const VISIT_IN=2400, VISIT_OPEN=300, VISIT_STAY=12000, VISIT_OUT=1800;
+const VISIT_TURN=60000;
+/* 图鉴为空 / 未连接主游戏时使用的样机，不进入归档 */
+const SAMPLES=[
+  {id:'mb_xiaoyue',name:'小月巴',shape:'round',r:1,color:'#c9b2e8',
+   art:'https://origin.picgo.net/2026/09/03/1512e4bde4713ba02.th.png'},
+  {id:'mb_xian',   name:'尴尬月巴',shape:'round',r:1,color:'#d9c7f2',
+   art:'https://origin.picgo.net/2026/09/03/4059f70dff59ca4a4.th.png'},
+  {id:'mb_chi',    name:'进食月巴',shape:'wide', r:1,color:'#e8c39e',
+   art:'https://origin.picgo.net/2026/09/03/15b077f9364349ae92.th.png'}
+];
+/* ---------- 四语言（M5）：zh 原文逐字沿用，其余三语同键 ---------- */
+const I18N={
+zh:{
+  title:'月巴蛋',
+  hint:'A 切换 · B 确认/敲玻璃 · C 返回/无视 · 点顶部看状态',
+  ariaDevice:'月巴蛋电子宠物机',ariaLcd:'单色液晶屏',ariaShell:'外壳配色',
+  keyA:'A 键',keyB:'B 键',keyC:'C 键',keySelect:'选择',keyConfirm:'确认',keyCancel:'取消',
+  theme_teal:'初始青',theme_sakura:'樱花粉',theme_purple:'眼眸紫',
+  theme_midnight:'午夜黑',theme_cream:'奶油白',theme_tomato:'番茄红',
+  stage_egg:'蛋',stage_baby:'幼体',stage_grow:'成长期',stage_adult:'成体',
+  sick_ok:'好',sick_sick:'病',sick_crit:'重症',
+  form_plump:'圆润',form_lean:'精瘦',form_stubborn:'倔强',
+  persona_clingy:'黏人',persona_steady:'慢热',persona_proud:'傲娇',
+  sample_xiaoyue:'小月巴',sample_xian:'尴尬月巴',sample_chi:'进食月巴',
+  feed_cookie:'空白饼',feed_grain:'数据粒',feed_tomato:'番茄',
+  unit_min:'{n} 分钟',unit_sec:'{n} 秒',unit_hour:'{n} 小时',unit_day:'{n} 天',sep:'、',
+  agoJust:'刚刚',agoMin:'{n} 分钟前',agoHour:'{n} 小时前',agoDay:'{n} 天前',
+  connecting:'连接主游戏…',demoEggs:'样机模式 · 按 B 孵化',
+  demoEggsLine:'样机模式 · 未连接到主游戏',eggPrompt:'长按 B 孵化 · A 选择',
+  tutTip:'长按 B 孵化 · A 换蛋\n点顶部看状态 · A 详情\n庭院月巴会来看它',
+  hatchTailDup:' · 重复',hatchTailDemo:' · 样机',boot:'重新通电…',
+  growMsg:'它长大了一点。',adultMsg:'它成年了。\n可以准备归档。',
+  offlineMsg:'离线 {gap}。\n它还记得你。',
+  offlineLong1:'你离开了 {gap}。\n它一直看着门口。',
+  offlineLong3:'你离开了 {gap}。\n它把番茄推到了一边。',
+  offlineLong7:'你离开了 {gap}。\n它以为你搬走了。',
+  asleepSay:'（睡着了）\n按「灯」叫醒它。',
+  lightOff:'灯关了。\n（它睡着了）',lightOn:'灯亮了。\n它眯了眯眼。',
+  waitSec:'还要等 {n} 秒。',cleanDone:'扫干净了。\n（一坨）',cleanAlready:'屏幕挺干净的。',
+  petWait:'（已经摸过了）',
+  eatCookie:'它啃了三口。\n（饱了）',eatGrain:'一颗 0 掉进嘴里。\n（它喜欢）',
+  tomatoRefuse:'「……不」\n番茄一个也没吃。',
+  medNoSick:'它没生病。',medMore:'一颗不够。\n{n} 秒后再来一颗。',
+  medSecond:'第二颗下肚。\n它缓过来了。',medCured:'它痊愈了。\n（药很苦）',
+  rescuePress:'用力按　{n}/8',rescueLine:'快按 B 抢救　{n}/8\n还剩 {time}',
+  rescueDone:'它撑住了。\n先别走开。',
+  cause_hunger:'饿坏了',cause_dirty:'太脏了',cause_neglect:'被忽视了',
+  grDemo:'样机不能归档。',grNeed:'还不能归档。\n需要：{need}',
+  grAdult:'成体',grBond:'亲密 60',grCure:'先治好',
+  playSick:'它病着。\n先吃药再说。',playWait:'它有点累了。\n{time}后再玩。',
+  playStart:'接住月巴球！',playRound:'第 {n} 回合 · 看准按 B',
+  playHit:'命中！',playMiss:'差了点。',playNoCatch:'没接住。',
+  playGood:'玩得不错。',playBad:'它跑掉了。',playHint:'看准了按 B',
+  playEndGood:'它跳了起来。\n（玩得开心）',playEndBad:'它有点泄气。\n（还是想玩）',
+  playCancel:'（收起了球）',
+  endShutdown:'……',endArchiving:'正在归档…',
+  endDead:'{name}　{age}\n亲密 {bond}　被嘲 {taunt} 次\n死因：{cause}\n按 B 继续',
+  endGrad:'{name}　毕业了\n活了 {age}　亲密 {bond}\n已收入相册。\n按 B 继续',
+  endGradReward:'{name}　毕业了\n活了 {age}　亲密 {bond}\n主游戏 +{n} 金币\n按 B 继续',
+  statusGrad:'B 归档　A 详情　C 返回',statusAlbum:'A 详情({n})　C 返回',
+  statusLine2:'亲密 {bond}　健康 {hp}　{state}',
+  albumEmpty:'相册还是空的。\nC 返回',albumGrad:'毕业',albumDead:'离开',
+  albumLine1:'相册 {i}/{n}　{name}',albumLineGrad:'亲密 {bond}',albumLineDead:'死因：{cause}',
+  albumBack:'B 访客　C 返回',
+  visitorTitle:'来访记录',
+  visitorBack:'A 相册　B 返回　C 退出',
+  visitorEmpty:'还没有访客来过。\nA 相册　C 退出',
+  statsLine1:'{name} · {stage}　{age}',
+  statsLine2:'亲密 {bond}　最高 {max}　{persona}',
+  statsLine3:'喂 {feed}　玩 {play}　净 {clean}　摸 {pet}',
+  statsLine4:'药 {med}　救 {rescue}　客 {visit}　病 {sick}',
+  statsLine5:'照顾 {care}　被嘲 {taunt}',
+  statsHint:'A 相册　B 返回　C 退出',
+  statsHintName:'A 相册　B 取名　C 退出',
+  nameUnlock:'它愿意让你取名字了。\n（详情页按 B）',
+  namePrompt:'想给它取个名字吗？',
+  nameHint:'A 换　B 确定　C 再说',
+  nameDone:'{name}\n（它记住了）',
+  nameLater:'（它没说什么）',
+  eatOver:'它吃撑了。\n（别再喂了）',
+  sleepLine:'{name}　zzZ\n按「灯」叫醒它',
+  critLine:'{name} · {stage}　重症\n健康 {hp}　快喂药',
+  petStat:'{name} · {stage}{sick}\n饱 {h}　心 {m}　净 {c}',sickSuffix:'　病',
+  lbl_bond:'亲密',lbl_hp:'健康',lbl_food:'饱',lbl_mood:'心',lbl_clean:'净',
+  feedPrompt:'喂点什么？',cancelSay:'（算了）',grWait:'再等等',
+  visitorHint:'B 敲玻璃　C 无视\n点左下角喂番茄',
+  tomatoStock:'番茄 {n}',
+  focusStart:'专注中。\n它安静地陪着你。',
+  focusEnd:'专注结束。\n它陪了你 {n} 分钟。',
+  focusEndShort:'专注结束。\n它眨了眨眼。',
+  focusTag:'专注中 · 它陪着你',
+  muteOn:'已静音。',muteOff:'声音开了。',
+  toolExport:'导出存档',toolImport:'导入存档',toolReset:'重置',
+  ioExportOk:'存档已导出。',ioExportFail:'导出失败。',ioImportFail:'导入失败。',
+  ioTooBig:'存档文件太大。',ioResetConfirm:'确定清空存档？此操作不可撤销。',
+  nobody:'今天没人来看你。',visitorLeft:'（它走了）',yardBanny:'庭院月巴',
+  pet_quiet:'「……」',pet_turn:'「？」（扭头）',pet_hop:'「！」（跳了一下）',
+  pet_watch:'「！」（还在看它）',pet_relief:'「……」（松了口气）',
+  pet_follow:'「……」（目送）',
+  pet_shrug:'「……」（装作不在意）',pet_lean:'「……」（靠过来一点）'
+},
+en:{
+  title:'Banny Tamago',
+  hint:'A switch · B confirm/knock · C back/ignore · tap top for status',
+  ariaDevice:'Banny Tamago virtual pet',ariaLcd:'Monochrome LCD',ariaShell:'Shell colors',
+  keyA:'Key A',keyB:'Key B',keyC:'Key C',keySelect:'SELECT',keyConfirm:'OK',keyCancel:'BACK',
+  theme_teal:'Teal',theme_sakura:'Sakura',theme_purple:'Iris',
+  theme_midnight:'Midnight',theme_cream:'Cream',theme_tomato:'Tomato',
+  stage_egg:'Egg',stage_baby:'Baby',stage_grow:'Growing',stage_adult:'Adult',
+  sick_ok:'Fine',sick_sick:'Sick',sick_crit:'Critical',
+  form_plump:'Plump',form_lean:'Lean',form_stubborn:'Stubborn',
+  persona_clingy:'Clingy',persona_steady:'Steady',persona_proud:'Proud',
+  sample_xiaoyue:'Little Banny',sample_xian:'Awkward Banny',sample_chi:'Snacking Banny',
+  feed_cookie:'Plain cookie',feed_grain:'Data grain',feed_tomato:'Tomato',
+  unit_min:'{n} min',unit_sec:'{n} s',unit_hour:'{n} h',unit_day:'{n} d',sep:', ',
+  agoJust:'just now',agoMin:'{n}m ago',agoHour:'{n}h ago',agoDay:'{n}d ago',
+  connecting:'Connecting…',demoEggs:'Demo mode · press B',
+  demoEggsLine:'Demo mode · not connected',eggPrompt:'Hold B to hatch · A to switch',
+  tutTip:'Hold B to hatch · A switch\nTap top for status · A details\nYard Bannies will visit',
+  hatchTailDup:' · Dup',hatchTailDemo:' · Demo',boot:'Powering on…',
+  growMsg:'It grew a little.',adultMsg:'It is an adult.\nReady to archive.',
+  offlineMsg:'Away {gap}.\nIt still remembers you.',
+  offlineLong1:'You were gone {gap}.\nIt kept watching the door.',
+  offlineLong3:'You were gone {gap}.\nIt pushed the tomato aside.',
+  offlineLong7:'You were gone {gap}.\nIt thought you moved away.',
+  asleepSay:'(Asleep)\nPress LIGHT to wake it.',
+  lightOff:'Light off.\n(It sleeps)',lightOn:'Light on.\nIt squints.',
+  waitSec:'Wait {n}s.',cleanDone:'Cleaned up.\n(One pile)',cleanAlready:'The screen is clean.',
+  petWait:'(Already petted)',
+  eatCookie:'It nibbles three times.\n(Full)',eatGrain:'A 0 drops into its mouth.\n(It likes it)',
+  tomatoRefuse:'「……No」\nIt ate zero tomatoes.',
+  medNoSick:'It is not sick.',medMore:'One is not enough.\nAnother in {n}s.',
+  medSecond:'Second pill down.\nIt recovers.',medCured:'It is cured.\n(The pill is bitter)',
+  rescuePress:'Press hard  {n}/8',rescueLine:'Press B to rescue  {n}/8\n{time} left',
+  rescueDone:'It held on.\nStay close.',
+  cause_hunger:'Starved',cause_dirty:'Too dirty',cause_neglect:'Neglected',
+  grDemo:'Demo pets cannot be archived.',grNeed:'Not ready.\nNeed: {need}',
+  grAdult:'Adult',grBond:'Bond 60',grCure:'Heal first',
+  playSick:'It is sick.\nMedicine first.',playWait:'It is tired.\nPlay again in {time}.',
+  playStart:'Catch the Banny ball!',playRound:'Round {n} · press B on time',
+  playHit:'Hit!',playMiss:'Close.',playNoCatch:'Missed.',
+  playGood:'Nice play.',playBad:'It ran off.',playHint:'Press B on time',
+  playEndGood:'It jumps up.\n(Happy)',playEndBad:'It looks down.\n(Still wants to play)',
+  playCancel:'(Put the ball away)',
+  endShutdown:'……',endArchiving:'Archiving…',
+  endDead:'{name}  {age}\nBond {bond}  Taunts {taunt}\nCause: {cause}\nPress B',
+  endGrad:'{name} graduated\nLived {age}  Bond {bond}\nAdded to album.\nPress B',
+  endGradReward:'{name} graduated\nLived {age}  Bond {bond}\nMain game +{n} coins\nPress B',
+  statusGrad:'B archive　A details　C back',statusAlbum:'A details({n})　C back',
+  statusLine2:'Bond {bond}　HP {hp}　{state}',
+  albumEmpty:'Album is empty.\nC back',albumGrad:'Graduated',albumDead:'Gone',
+  albumLine1:'Album {i}/{n}  {name}',albumLineGrad:'Bond {bond}',albumLineDead:'Cause: {cause}',
+  albumBack:'B visitors　C back',
+  visitorTitle:'Visitors',
+  visitorBack:'A album　B back　C exit',
+  visitorEmpty:'No visitors yet.\nA album　C exit',
+  statsLine1:'{name} · {stage}　{age}',
+  statsLine2:'Bond {bond}　Max {max}　{persona}',
+  statsLine3:'Feed {feed}　Play {play}　Clean {clean}　Pet {pet}',
+  statsLine4:'Med {med}　Save {rescue}　Guests {visit}　Sick {sick}',
+  statsLine5:'Care {care}　Taunts {taunt}',
+  statsHint:'A album　B back　C exit',
+  statsHintName:'A album　B name　C exit',
+  nameUnlock:'It will let you name it.\n(Stats page: B)',
+  namePrompt:'Give it a name?',
+  nameHint:'A change　B OK　C later',
+  nameDone:'{name}\n(It remembers)',
+  nameLater:'(It says nothing)',
+  eatOver:'It overate.\n(Stop feeding)',
+  sleepLine:'{name}  zzZ\nPress LIGHT to wake',
+  critLine:'{name} · {stage}  Critical\nHP {hp}  Give medicine',
+  petStat:'{name} · {stage}{sick}\nFood {h}　Mood {m}　Clean {c}',sickSuffix:' (sick)',
+  lbl_bond:'Bond',lbl_hp:'HP',lbl_food:'Food',lbl_mood:'Mood',lbl_clean:'Clean',
+  feedPrompt:'Feed what?',cancelSay:'(Never mind)',grWait:'Not yet',
+  visitorHint:'B knock　C ignore\nTap lower-left to feed tomato',
+  tomatoStock:'Tomato {n}',
+  focusStart:'Focusing.\nIt stays quietly with you.',
+  focusEnd:'Focus over.\nIt stayed with you for {n} min.',
+  focusEndShort:'Focus over.\nIt blinks.',
+  focusTag:'Focus · It stays with you',
+  muteOn:'Muted.',muteOff:'Sound on.',
+  toolExport:'Export save',toolImport:'Import save',toolReset:'Reset',
+  ioExportOk:'Save exported.',ioExportFail:'Export failed.',ioImportFail:'Import failed.',
+  ioTooBig:'Save file is too large.',ioResetConfirm:'Clear the save? This cannot be undone.',
+  nobody:'Nobody came to see you today.',visitorLeft:'(It left)',yardBanny:'Yard Banny',
+  pet_quiet:'「……」',pet_turn:'「?」(turns away)',pet_hop:'「!」(hops)',
+  pet_watch:'「!」(still watching)',pet_relief:'「……」(relieved)',
+  pet_follow:'「……」(watching it leave)',
+  pet_shrug:'「……」(acting cool)',pet_lean:'「……」(leans closer)'
+},
+ja:{
+  title:'バニたま',
+  hint:'A 切替 · B 決定/ガラスを叩く · C 戻る/無視 · 上をタップで状態',
+  ariaDevice:'バニたま電子ペット',ariaLcd:'モノクロ液晶',ariaShell:'シェルカラー',
+  keyA:'A ボタン',keyB:'B ボタン',keyC:'C ボタン',keySelect:'選択',keyConfirm:'決定',keyCancel:'戻る',
+  theme_teal:'青緑',theme_sakura:'桜',theme_purple:'アイリス',
+  theme_midnight:'ミッドナイト',theme_cream:'クリーム',theme_tomato:'トマト',
+  stage_egg:'たまご',stage_baby:'幼体',stage_grow:'成長期',stage_adult:'成体',
+  sick_ok:'元気',sick_sick:'病気',sick_crit:'重症',
+  form_plump:'まるまる',form_lean:'ほっそり',form_stubborn:'いじっぱり',
+  persona_clingy:'甘えん坊',persona_steady:'マイペース',persona_proud:'ツンデレ',
+  sample_xiaoyue:'小バニー',sample_xian:'気まずいバニー',sample_chi:'食事中バニー',
+  feed_cookie:'空クッキー',feed_grain:'データ粒',feed_tomato:'トマト',
+  unit_min:'{n}分',unit_sec:'{n}秒',unit_hour:'{n}時間',unit_day:'{n}日',sep:'・',
+  agoJust:'たった今',agoMin:'{n}分前',agoHour:'{n}時間前',agoDay:'{n}日前',
+  connecting:'接続中…',demoEggs:'デモモード · Bで孵化',
+  demoEggsLine:'デモモード · 未接続',eggPrompt:'B長押しで孵化 · Aで選択',
+  tutTip:'B長押しで孵化 · Aで切替\n上をタップで状態 · Aで詳細\n庭のバニーが会いに来る',
+  hatchTailDup:' · 重複',hatchTailDemo:' · デモ',boot:'再通電…',
+  growMsg:'少し育った。',adultMsg:'成体になった。\nそろそろ記録できる。',
+  offlineMsg:'オフライン {gap}。\nまだ君を覚えてる。',
+  offlineLong1:'{gap}ぶり。\nずっと入口を見てた。',
+  offlineLong3:'{gap}ぶり。\nトマトを端に寄せてた。',
+  offlineLong7:'{gap}ぶり。\n引っ越したと思ってた。',
+  asleepSay:'（寝てる）\nライトで起こして。',
+  lightOff:'ライト消灯。\n（寝た）',lightOn:'ライト点灯。\n目を細めた。',
+  waitSec:'あと {n} 秒。',cleanDone:'きれいにした。\n（ひとつ）',cleanAlready:'画面はきれいだ。',
+  petWait:'（もう触った）',
+  eatCookie:'三口かじった。\n（満腹）',eatGrain:'0 がひとつ口に落ちた。\n（気に入った）',
+  tomatoRefuse:'「……いや」\nトマトは一口も食べない。',
+  medNoSick:'病気じゃない。',medMore:'一錠じゃ足りない。\nあと {n} 秒でもう一錠。',
+  medSecond:'二錠目。\n落ち着いた。',medCured:'治った。\n（薬は苦い）',
+  rescuePress:'強く押す　{n}/8',rescueLine:'B連打で救急　{n}/8\n残り {time}',
+  rescueDone:'持ちこたえた。\n離れないで。',
+  cause_hunger:'餓死',cause_dirty:'汚すぎ',cause_neglect:'放置',
+  grDemo:'デモは記録できない。',grNeed:'まだ記録できない。\n必要：{need}',
+  grAdult:'成体',grBond:'なつき60',grCure:'先に治療',
+  playSick:'病気だ。\nまず薬。',playWait:'疲れてる。\n{time}後に遊ぼう。',
+  playStart:'バニーボールを取れ！',playRound:'第 {n} ラウンド · Bを狙え',
+  playHit:'ヒット！',playMiss:'惜しい。',playNoCatch:'取れなかった。',
+  playGood:'いい感じ。',playBad:'逃げられた。',playHint:'狙ってB',
+  playEndGood:'跳ねた。\n（楽しそう）',playEndBad:'しょんぼり。\n（まだ遊びたい）',
+  playCancel:'（ボールをしまった）',
+  endShutdown:'……',endArchiving:'記録中…',
+  endDead:'{name}　{age}\nなつき {bond}　嘲笑 {taunt} 回\n死因：{cause}\nBで続行',
+  endGrad:'{name}　卒業\n生存 {age}　なつき {bond}\nアルバムに保存。\nBで続行',
+  endGradReward:'{name}　卒業\n生存 {age}　なつき {bond}\n本編 +{n} コイン\nBで続行',
+  statusGrad:'B 記録　A 詳細　C 戻る',statusAlbum:'A 詳細({n})　C 戻る',
+  statusLine2:'なつき {bond}　元気 {hp}　{state}',
+  albumEmpty:'アルバムは空。\nCで戻る',albumGrad:'卒業',albumDead:'死亡',
+  albumLine1:'アルバム {i}/{n}　{name}',albumLineGrad:'なつき {bond}',albumLineDead:'死因：{cause}',
+  albumBack:'B 来訪　C で戻る',
+  visitorTitle:'来訪記録',
+  visitorBack:'A アルバム　B 戻る　C 終了',
+  visitorEmpty:'まだ誰も来ていない。\nA アルバム　C 終了',
+  statsLine1:'{name} · {stage}　{age}',
+  statsLine2:'なつき {bond}　最高 {max}　{persona}',
+  statsLine3:'餌 {feed}　遊 {play}　清 {clean}　撫 {pet}',
+  statsLine4:'薬 {med}　救 {rescue}　客 {visit}　病 {sick}',
+  statsLine5:'世話 {care}　嘲笑 {taunt}',
+  statsHint:'A アルバム　B 戻る　C 終了',
+  statsHintName:'A アルバム　B 命名　C 終了',
+  nameUnlock:'名前をつけてもいいって。\n（詳細で B）',
+  namePrompt:'名前をつける？',
+  nameHint:'A 変　B 決定　C あとで',
+  nameDone:'{name}\n（覚えた）',
+  nameLater:'（何も言わない）',
+  eatOver:'食べすぎた。\n（もうあげないで）',
+  sleepLine:'{name}　zzZ\nライトで起こす',
+  critLine:'{name} · {stage}　重症\n元気 {hp}　薬を',
+  petStat:'{name} · {stage}{sick}\n満 {h}　心 {m}　清 {c}',sickSuffix:'　病気',
+  lbl_bond:'なつき',lbl_hp:'元気',lbl_food:'満',lbl_mood:'心',lbl_clean:'清',
+  feedPrompt:'何をあげる？',cancelSay:'（やめた）',grWait:'まだ',
+  visitorHint:'B 叩く　C 無視\n左下タップでトマト',
+  tomatoStock:'トマト {n}',
+  focusStart:'集中中。\n静かにそばにいる。',
+  focusEnd:'集中終了。\n{n}分そばにいた。',
+  focusEndShort:'集中終了。\nまばたきした。',
+  focusTag:'集中中 · そばにいる',
+  muteOn:'ミュート。',muteOff:'音を出した。',
+  toolExport:'セーブを書き出す',toolImport:'セーブを読み込む',toolReset:'リセット',
+  ioExportOk:'書き出した。',ioExportFail:'書き出し失敗。',ioImportFail:'読み込み失敗。',
+  ioTooBig:'ファイルが大きすぎる。',ioResetConfirm:'セーブを消す？元に戻せない。',
+  nobody:'今日は誰も来なかった。',visitorLeft:'（帰った）',yardBanny:'庭のバニー',
+  pet_quiet:'「……」',pet_turn:'「？」（そむく）',pet_hop:'「！」（跳ねた）',
+  pet_watch:'「！」（まだ見てる）',pet_relief:'「……」（ほっとした）',
+  pet_follow:'「……」（見送る）',
+  pet_shrug:'「……」（気にしないふり）',pet_lean:'「……」（少し近づく）'
+},
+ko:{
+  title:'버니알',
+  hint:'A 전환 · B 확인/유리 두드리기 · C 뒤로/무시 · 위를 눌러 상태',
+  ariaDevice:'버니알 전자 펫',ariaLcd:'모노 LCD',ariaShell:'셸 색상',
+  keyA:'A 키',keyB:'B 키',keyC:'C 키',keySelect:'선택',keyConfirm:'확인',keyCancel:'취소',
+  theme_teal:'청록',theme_sakura:'벚꽃',theme_purple:'아이리스',
+  theme_midnight:'미드나잇',theme_cream:'크림',theme_tomato:'토마토',
+  stage_egg:'알',stage_baby:'유체',stage_grow:'성장기',stage_adult:'성체',
+  sick_ok:'좋음',sick_sick:'아픔',sick_crit:'위중',
+  form_plump:'통통',form_lean:'홀쭉',form_stubborn:'고집',
+  persona_clingy:'애교',persona_steady:'느긋',persona_proud:'새침',
+  sample_xiaoyue:'꼬마 월바',sample_xian:'어색한 월바',sample_chi:'먹는 월바',
+  feed_cookie:'빈 쿠키',feed_grain:'데이터 알갱이',feed_tomato:'토마토',
+  unit_min:'{n}분',unit_sec:'{n}초',unit_hour:'{n}시간',unit_day:'{n}일',sep:', ',
+  agoJust:'방금',agoMin:'{n}분 전',agoHour:'{n}시간 전',agoDay:'{n}일 전',
+  connecting:'연결 중…',demoEggs:'데모 모드 · B로 부화',
+  demoEggsLine:'데모 모드 · 미연결',eggPrompt:'B 길게 눌러 부화 · A 선택',
+  tutTip:'B 길게 눌러 부화 · A 전환\n위를 눌러 상태 · A 상세\n마당 월바가 보러 와',
+  hatchTailDup:' · 중복',hatchTailDemo:' · 데모',boot:'다시 전원…',
+  growMsg:'조금 자랐다.',adultMsg:'성체가 되었다.\n기록할 준비 완료.',
+  offlineMsg:'오프라인 {gap}.\n아직 너를 기억해.',
+  offlineLong1:'{gap} 만에 왔네.\n계속 문을 보고 있었어.',
+  offlineLong3:'{gap} 만에 왔네.\n토마토를 옆으로 밀어 뒀어.',
+  offlineLong7:'{gap} 만에 왔네.\n이사 간 줄 알았대.',
+  asleepSay:'(잠듦)\n불 켜서 깨우기.',
+  lightOff:'불 껐다.\n(잠들었다)',lightOn:'불 켰다.\n눈을 가늘게 떴다.',
+  waitSec:'{n}초 더 기다려.',cleanDone:'치웠다.\n(하나)',cleanAlready:'화면은 깨끗하다.',
+  petWait:'(이미 쓰다듬음)',
+  eatCookie:'세 입 깨물었다.\n(배부름)',eatGrain:'0 하나가 입에 떨어졌다.\n(좋아함)',
+  tomatoRefuse:'「……싫어」\n토마토는 한 입도 안 먹었다.',
+  medNoSick:'아프지 않다.',medMore:'하나로 부족하다.\n{n}초 뒤 한 알 더.',
+  medSecond:'두 번째 약.\n회복했다.',medCured:'나았다.\n(약이 쓰다)',
+  rescuePress:'힘껏 누르기  {n}/8',rescueLine:'B 연타 구조  {n}/8\n남은 {time}',
+  rescueDone:'버텼다.\n떠나지 마.',
+  cause_hunger:'굶어 죽음',cause_dirty:'너무 더러움',cause_neglect:'방치',
+  grDemo:'데모는 기록할 수 없다.',grNeed:'아직 기록 불가.\n필요: {need}',
+  grAdult:'성체',grBond:'친밀 60',grCure:'먼저 치료',
+  playSick:'아프다.\n약부터.',playWait:'피곤하다.\n{time} 뒤에 놀자.',
+  playStart:'월바 공을 잡아라!',playRound:'{n} 라운드 · B를 노려라',
+  playHit:'명중!',playMiss:'아깝다.',playNoCatch:'놓쳤다.',
+  playGood:'잘했다.',playBad:'도망갔다.',playHint:'노려서 B',
+  playEndGood:'폴짝 뛰었다.\n(즐거움)',playEndBad:'풀이 죽었다.\n(그래도 놀고 싶음)',
+  playCancel:'(공을 치웠다)',
+  endShutdown:'……',endArchiving:'기록 중…',
+  endDead:'{name}  {age}\n친밀 {bond}  조롱 {taunt}회\n사인: {cause}\nB로 계속',
+  endGrad:'{name}  졸업\n생존 {age}  친밀 {bond}\n앨범에 저장.\nB로 계속',
+  endGradReward:'{name}  졸업\n생존 {age}  친밀 {bond}\n본편 +{n} 코인\nB로 계속',
+  statusGrad:'B 기록　A 상세　C 뒤로',statusAlbum:'A 상세({n})　C 뒤로',
+  statusLine2:'친밀 {bond}　건강 {hp}　{state}',
+  albumEmpty:'앨범이 비었다.\nC 뒤로',albumGrad:'졸업',albumDead:'떠남',
+  albumLine1:'앨범 {i}/{n}  {name}',albumLineGrad:'친밀 {bond}',albumLineDead:'사인: {cause}',
+  albumBack:'B 방문　C 뒤로',
+  visitorTitle:'방문 기록',
+  visitorBack:'A 앨범　B 뒤로　C 종료',
+  visitorEmpty:'아직 방문한 월바가 없다.\nA 앨범　C 종료',
+  statsLine1:'{name} · {stage}　{age}',
+  statsLine2:'친밀 {bond}　최고 {max}　{persona}',
+  statsLine3:'먹 {feed}　놀 {play}　청 {clean}　쓰 {pet}',
+  statsLine4:'약 {med}　구 {rescue}　손 {visit}　병 {sick}',
+  statsLine5:'돌봄 {care}　조롱 {taunt}',
+  statsHint:'A 앨범　B 뒤로　C 종료',
+  statsHintName:'A 앨범　B 이름　C 종료',
+  nameUnlock:'이제 이름을 지어도 된대.\n(상세에서 B)',
+  namePrompt:'이름을 지을까?',
+  nameHint:'A 변경　B 확인　C 나중에',
+  nameDone:'{name}\n(기억했다)',
+  nameLater:'(아무 말 없다)',
+  eatOver:'너무 많이 먹었다.\n(그만 먹이기)',
+  sleepLine:'{name}  zzZ\n불 켜서 깨우기',
+  critLine:'{name} · {stage}  위중\n건강 {hp}  약 먹이기',
+  petStat:'{name} · {stage}{sick}\n포 {h}　기 {m}　청 {c}',sickSuffix:' (아픔)',
+  lbl_bond:'친밀',lbl_hp:'건강',lbl_food:'포',lbl_mood:'기',lbl_clean:'청',
+  feedPrompt:'뭘 먹일까?',cancelSay:'(그만두기)',grWait:'조금 더',
+  visitorHint:'B 두드리기　C 무시\n왼쪽 아래 탭=토마토',
+  tomatoStock:'토마토 {n}',
+  focusStart:'집중 중.\n조용히 곁에 있어.',
+  focusEnd:'집중 끝.\n{n}분 동안 곁에 있었어.',
+  focusEndShort:'집중 끝.\n눈을 깜빡였어.',
+  focusTag:'집중 중 · 곁에 있어',
+  muteOn:'음소거.',muteOff:'소리 켬.',
+  toolExport:'세이브 내보내기',toolImport:'세이브 불러오기',toolReset:'초기화',
+  ioExportOk:'내보냈다.',ioExportFail:'내보내기 실패.',ioImportFail:'불러오기 실패.',
+  ioTooBig:'파일이 너무 크다.',ioResetConfirm:'세이브를 지울까? 되돌릴 수 없다.',
+  nobody:'오늘은 아무도 보러 오지 않았다.',visitorLeft:'(갔다)',yardBanny:'마당 월바',
+  pet_quiet:'「……」',pet_turn:'「?」(고개 돌림)',pet_hop:'「!」(폴짝)',
+  pet_watch:'「!」(계속 봄)',pet_relief:'「……」(안도)',
+  pet_follow:'「……」(바라봄)',
+  pet_shrug:'「……」(무관심한 척)',pet_lean:'「……」(조금 다가옴)'
+}
+};
+function normLang(v){
+  const s=String(v||'').toLowerCase().slice(0,2);
+  return I18N[s]?s:'zh';
+}
+function t(key,params){
+  const tbl=I18N[LANG]||I18N.zh;
+  let s=Object.prototype.hasOwnProperty.call(tbl,key)?tbl[key]:
+        (Object.prototype.hasOwnProperty.call(I18N.zh,key)?I18N.zh[key]:key);
+  if(params){
+    for(const k in params) s=String(s).split('{'+k+'}').join(params[k]);
+  }
+  return s;
+}
+function stageLabel(stage){
+  return t('stage_'+(stage||'baby'));
+}
+function formLabel(form){ return form?t('form_'+form):''; }
+/* 成体后缀：成体 · 圆润 / 精瘦 / 倔强 */
+function stageText(pet){
+  if(!pet) return '';
+  const s=stageLabel(pet.stage);
+  const f=(pet.stage==='adult'&&pet.form)?formLabel(pet.form):'';
+  return f?s+' · '+f:s;
+}
+function sampleName(id){
+  return t('sample_'+String(id||'').replace(/^mb_/,''));
+}
+/* ---------- 访客台词池（四语言，zh 与计划书原文逐字一致） ---------- */
+const TAUNTS={
+zh:{
+  open:['「你这只，连番茄都不吃。也算月巴？」',
+        '「你在这里养着它的时候，我已经在庭院里吃掉了番茄。」',
+        '「它才不会饿，都是假的。」',
+        '「人类真可怕，对着一串数据这么上心。」',
+        '「它眨眼睛是画出来的。」',
+        '「觉得它很丑吗？」',
+        '「你说它叫什么？真的假的……」',
+        '「它不会死吧？哦，会。那更没意思了。」',
+        '「别养了。来庭院陪我。」',
+        '「就按下面那三个按钮？好廉价的爱。」'],
+  knock:['「别敲了，它听不见。」',
+         '「玻璃上全是你的指纹，真脏。」',
+         '「吵死了，再敲，我就把你的番茄吃了。」'],
+  ignore:['「……行吧。你继续。」','「哦，那我走了。」','「人类真是没意思。」'],
+  leave:['「回来的时候见。」',
+         '「我明天再来看看，你肯定已经把它养死了。」',
+         '「这种东西还是赶紧关机吧。」'],
+  tomato:'「你居然真的喂了假的番茄……」',
+  sick:'「它病了。你连个假货都养不好。还好我们会自己去找番茄吃，不会被你养死。」',
+  crit:'「要关机了，还能救吗？」',
+  death:'「看，关机了。我就说嘛。」',
+  friendly:['「今天也来了。它好像胖了点。」',
+            '「别老喂饼干，偶尔也摸摸它。」',
+            '「我在庭院给你留了个位置。」'],
+  gift:'「这个给你。别告诉别的月巴。」',
+  steal:'「你三次没理我。你的番茄，我拿走了。」'
+},
+en:{
+  open:['"That one won\'t even eat a tomato. And you call it a Banny?"',
+        '"While you keep it in there, I\'ve already eaten tomatoes in the yard."',
+        '"It never gets hungry. All fake."',
+        '"Humans are terrifying. So attached to a string of data."',
+        '"Even its blinking is drawn on."',
+        '"You think it\'s ugly?"',
+        '"What did you name it? Seriously...?"',
+        '"It won\'t die, right? Oh. It will. Even more boring."',
+        '"Stop raising it. Come keep me company in the yard."',
+        '"Just those three buttons below? Cheap love."'],
+  knock:['"Stop knocking. It can\'t hear you."',
+         '"Your fingerprints are all over the glass. Gross."',
+         '"So loud. Knock again and I\'ll eat your tomatoes."'],
+  ignore:['"...Fine. Carry on."','"Oh. I\'ll go then."','"Humans really are boring."'],
+  leave:['"See you when I get back."',
+         '"I\'ll check again tomorrow. You\'ll have killed it by then."',
+         '"You should just turn that thing off."'],
+  tomato:'"You actually fed it a fake tomato..."',
+  sick:'"Sick. Can\'t even raise a fake. We find our own tomatoes."',
+  crit:'"It\'s shutting down. Can it still be saved?"',
+  death:'"See? Powered off. Told you."',
+  friendly:['"Came by again. It looks a little rounder."',
+            '"Less cookies, more head pats."',
+            '"Saved you a spot in the yard."'],
+  gift:'"Take this. Don\'t tell the others."',
+  steal:'"Ignored me three times. I\'m taking your tomatoes."'
+},
+ja:{
+  open:['「それ、トマトも食べないのにバニー名乗るの？」',
+        '「君がここで育ててる間に、ボクは庭でトマトを食べたよ。」',
+        '「腹なんて減らない。全部ニセモノ。」',
+        '「人間って怖いね、データの文字列にこんな真剣で。」',
+        '「まばたきだって描いてあるんだよ。」',
+        '「それ、ブサイクだと思う？」',
+        '「名前は？……本気？」',
+        '「死なないでしょ？あ、死ぬんだ。もっとつまらないね。」',
+        '「やめなよ。庭でボクと一緒にいれば。」',
+        '「下のボタン三つだけ？安い愛情だね。」'],
+  knock:['「叩くなよ、聞こえないんだから。」',
+         '「ガラス、指紋だらけ。汚いね。」',
+         '「うるさい。もう叩いたら、君のトマト食べちゃうよ。」'],
+  ignore:['「……まあいい。続けて。」','「あ、じゃあ帰るね。」','「人間って本当につまらない。」'],
+  leave:['「戻ったらまた会おう。」',
+         '「明日も見に来るよ。どうせもう死んでるだろうけど。」',
+         '「そんなもの、さっさと電源切れば。」'],
+  tomato:'「ホントにニセのトマトあげたんだ……」',
+  sick:'「病気だよ。ニセモノすらまともに育てられないなんて。ボクたちは自分でトマトを探すから、君に飢え死にさせられないけどね。」',
+  crit:'「電源が落ちる。まだ助かるのかな？」',
+  death:'「ほら、電源が切れた。言ったでしょ。」',
+  friendly:['「今日も来たよ。ちょっと丸くなったね。」',
+            '「クッキーばかりじゃなく、たまには撫でてあげて。」',
+            '「庭に君の場所、取ってあるよ。」'],
+  gift:'「これ、あげる。他のには内緒だよ。」',
+  steal:'「三回も無視したね。トマト、もらうよ。」'
+},
+ko:{
+  open:['"이 녀석, 토마토도 안 먹으면서 월바라고?"',
+        '"네가 여기서 키우는 동안 난 마당에서 토마토를 먹었어."',
+        '"배고프지도 않아. 전부 가짜야."',
+        '"인간은 무서워. 데이터 문자열 하나에 이렇게 진심이라니."',
+        '"눈 깜빡이는 것도 그려 놓은 거야."',
+        '"이거 못생겼다고 생각해?"',
+        '"이름이 뭐야? 진짜? …정말?"',
+        '"죽지 않겠지? 아, 죽는구나. 더 재미없네."',
+        '"그만 키워. 마당에 와서 나랑 있어."',
+        '"아래 버튼 세 개만? 참 싸구려 사랑이네."'],
+  knock:['"그만 두드려. 들리지도 않아."',
+         '"유리창에 지문이 잔뜩이야. 더러워."',
+         '"시끄러워. 또 두드리면 네 토마토 먹어버릴 거야."'],
+  ignore:['"……그래. 계속 해."','"아, 그럼 갈게."','"인간은 정말 재미없어."'],
+  leave:['"돌아올 때 보자."',
+         '"내일 또 볼게. 분명 그때쯤엔 죽여 놨겠지."',
+         '"그런 건 빨리 꺼 버려."'],
+  tomato:'"진짜로 가짜 토마토를 먹였구나……"',
+  sick:'"아파. 가짜 하나도 제대로 못 키우다니. 우린 스스로 토마토를 찾으니까."',
+  crit:'"전원이 꺼져. 아직 살릴 수 있나?"',
+  death:'"봐, 꺼졌어. 내가 그랬잖아."',
+  friendly:['"오늘도 왔어. 조금 통통해진 것 같아."',
+            '"쿠키만 주지 말고 가끔은 쓰다듬어 줘."',
+            '"마당에 네 자리 남겨 뒀어."'],
+  gift:'"이거 줄게. 다른 애들한텐 비밀."',
+  steal:'"세 번이나 무시했네. 토마토, 가져갈게."'
+}
+};
+function tauntList(kind){
+  const tb=TAUNTS[LANG]||TAUNTS.zh;
+  const v=tb[kind];
+  return Array.isArray(v)?v:(TAUNTS.zh[kind]||[]);
+}
+function tauntOne(kind){
+  const v=(TAUNTS[LANG]||TAUNTS.zh)[kind];
+  if(Array.isArray(v)) return pickFrom(v);
+  return v!==undefined?v:TAUNTS.zh[kind];
+}
+/* 兼容 M4 回归脚本：默认中文下的原名全局变量 */
+const TAUNT_OPEN=TAUNTS.zh.open, TAUNT_KNOCK=TAUNTS.zh.knock,
+      TAUNT_IGNORE=TAUNTS.zh.ignore, TAUNT_LEAVE=TAUNTS.zh.leave,
+      TAUNT_TOMATO=TAUNTS.zh.tomato, TAUNT_SICK=TAUNTS.zh.sick,
+      TAUNT_CRIT=TAUNTS.zh.crit, TAUNT_DEATH=TAUNTS.zh.death;
+
+function freshState(){
+  return {v:SAVE_VER,shell:'teal',eggs:[],pet:null,gallery:[],sampleMode:false,
+    visitLog:[],visitorSeen:{},pendingDeathTaunt:false,tutorialDone:false};
+}
+/* 存档迁移：以后加字段就在这里按 v 递增补默认值 */
+function migrateSave(){
+  const v=num(state.v,1);
+  if(v<2){
+    if(!Array.isArray(state.visitLog)) state.visitLog=[];
+    state.pendingDeathTaunt=!!state.pendingDeathTaunt;
+  }
+  state.v=Math.max(v,SAVE_VER);
+}
+let state=freshState();
+function loadState(){
+  let rawText=null;
+  try{ rawText=localStorage.getItem(SAVE_KEY); }catch(e){}
+  let parsed=null, broken=false;
+  if(rawText!==null&&rawText!==''){
+    try{
+      parsed=JSON.parse(rawText);
+      if(!parsed||typeof parsed!=='object'||Array.isArray(parsed)) broken=true;
+    }catch(e){ broken=true; }
+  }
+  if(broken){
+    /* 坏档先留原串，方便排查；不静默丢掉玩家数据 */
+    try{ localStorage.setItem(SAVE_BROKEN_KEY,rawText); }catch(e){}
+    parsed=null;
+  }
+  state=parsed||freshState();
+  migrateSave();
+  if(!THEMES.some(function(t){return t.id===state.shell;})) state.shell='teal';
+  if(!Array.isArray(state.eggs)) state.eggs=[];
+  state.eggs=state.eggs.filter(function(e){
+    return e&&typeof e==='object'&&e.species&&(e.slot===1||e.slot===2||e.slot===3);
+  });
+  if(state.eggs.length!==3) state.eggs=[];
+  if(state.pet&&!state.pet.species) state.pet=null;
+  if(state.pet) ensurePet(state.pet);
+  /* 蛋位为空时，剩下的蛋要能开；三枚都孵过则在启动时重抽 */
+  if(!state.pet&&state.eggs.length){
+    if(state.eggs.every(function(e){ return e&&e.hatched; })) state.eggs=[];
+    else state.eggs.forEach(function(e){ if(e&&!e.hatched) e.sealed=false; });
+  }
+  state.sampleMode=!!state.sampleMode;
+  /* 访客：最近 2 只不复用；死亡后的下一次开机要补一句嘲讽 */
+  state.visitLog=Array.isArray(state.visitLog)?state.visitLog.filter(function(id){
+    return typeof id==='string'&&id;
+  }).slice(-2):[];
+  state.pendingDeathTaunt=!!state.pendingDeathTaunt;
+  state.tutorialDone=!!state.tutorialDone;
+  /* 访客累计：常客/礼物/来访记录；最多留 40 位，按最后来访时间取新的 */
+  const seen=(state.visitorSeen&&typeof state.visitorSeen==='object'&&
+    !Array.isArray(state.visitorSeen))?state.visitorSeen:{};
+  const seenOut={};
+  Object.keys(seen).forEach(function(id){
+    const r=seen[id];
+    if(typeof id!=='string'||!id||!r||typeof r!=='object') return;
+    seenOut[id]={count:clamp(num(r.count,0),0,9999),lastAt:num(r.lastAt,0)};
+  });
+  state.visitorSeen={};
+  Object.keys(seenOut).sort(function(a,b){
+    return seenOut[b].lastAt-seenOut[a].lastAt;
+  }).slice(0,40).forEach(function(id){ state.visitorSeen[id]=seenOut[id]; });
+  /* 相册：只保留结构完整的记录，最多 40 条 */
+  state.gallery=Array.isArray(state.gallery)?state.gallery.filter(function(r){
+    return r&&typeof r==='object'&&r.species&&isFinite(Number(r.endedAt));
+  }).slice(-40):[];
+}
+/* 导入/重置前先关掉自动存盘，避免 beforeunload 把旧内存状态写回 */
+let suppressSave=false;
+function saveState(){
+  if(suppressSave) return;
+  try{ localStorage.setItem(SAVE_KEY,JSON.stringify(state)); }catch(e){}
+}
+function num(v,d){
+  const n=Number(v);
+  return isFinite(n)?n:d;
+}
+function clamp(v,a,b){
+  return v<a?a:(v>b?b:v);
+}
+/* 老存档 / 损坏字段兜底，保证所有数值都是有限数（M2 无 NaN 验收） */
+function ensurePet(p){
+  p.hunger=clamp(num(p.hunger,70),0,100);
+  p.mood=clamp(num(p.mood,70),0,100);
+  p.clean=clamp(num(p.clean,80),0,100);
+  p.health=clamp(num(p.health,100),0,100);
+  p.bond=clamp(num(p.bond,0),0,100);
+  p.bornAt=num(p.bornAt,Date.now());
+  p.lastSeen=num(p.lastSeen,Date.now());
+  p.stage=p.stage||'baby';
+  p.poopAcc=clamp(num(p.poopAcc,0),0,9999);
+  p.poopNext=clamp(num(p.poopNext,90+Math.random()*30),30,240);
+  p.sleeping=!!p.sleeping;
+  p.sick=!!p.sick;
+  p.critical=!!p.critical;
+  if(!p.sick) p.critical=false;
+  p.riskAcc=clamp(num(p.riskAcc,0),0,9999);
+  p.sickSince=num(p.sickSince,0);
+  p.rescueUntil=num(p.rescueUntil,0);
+  p.rescuePresses=clamp(num(p.rescuePresses,0),0,8);
+  p.rescueWindow=!!p.rescueWindow;
+  if(!p.critical){ p.rescueWindow=false; p.rescueUntil=0; p.rescuePresses=0; }
+  p.medsGiven=clamp(num(p.medsGiven,0),0,2);
+  p.tauntCount=clamp(num(p.tauntCount,0),0,99999);
+  p.ignoredCount=clamp(num(p.ignoredCount,0),0,999);
+  p.careCount=clamp(num(p.careCount,0),0,999999);
+  /* 性格 / 命名 / 成体形态 / 照顾质量 / 统计 */
+  p.persona=PERSONAS[p.persona]?p.persona:personaFor(p.species).id;
+  p.nickname=typeof p.nickname==='string'?p.nickname.slice(0,12):'';
+  p.nickUnlocked=!!p.nickUnlocked;
+  p.form=(p.form==='plump'||p.form==='lean'||p.form==='stubborn')?p.form:'';
+  const q=(p.q&&typeof p.q==='object')?p.q:{};
+  p.q={hunger:clamp(num(q.hunger,0),0,1e9),mood:clamp(num(q.mood,0),0,1e9),
+    clean:clamp(num(q.clean,0),0,1e9),n:clamp(num(q.n,0),0,1e9),
+    sick:clamp(num(q.sick,0),0,9999)};
+  p.stats=(p.stats&&typeof p.stats==='object')?p.stats:{};
+  ['feed','play','clean','pet','med','rescue','visit','sick'].forEach(function(k){
+    p.stats[k]=clamp(num(p.stats[k],0),0,999999);
+  });
+  p.stats.maxBond=clamp(Math.max(num(p.stats.maxBond,0),p.bond),0,100);
+  p.feedLog=Array.isArray(p.feedLog)?p.feedLog.filter(function(t){
+    return isFinite(Number(t));
+  }).slice(-8):[];
+  if(p.stage==='adult'&&!p.form) p.form=computeForm(p);
+  /* 访客排期：首访在孵化后 45 秒；老存档缺字段时从本次开机起排 45 秒 */
+  if(!isFinite(Number(p.nextVisitAt))) p.nextVisitAt=Date.now()+VISIT_FIRST;
+  else p.nextVisitAt=Math.max(0,num(p.nextVisitAt,0));
+  p.nextVisitCheck=num(p.nextVisitCheck,0);
+  p.lastVisitAt=num(p.lastVisitAt,0);
+  p.afterVisitUntil=num(p.afterVisitUntil,0);
+  p.poops=Array.isArray(p.poops)?p.poops.filter(function(i){ return i===0||i===1||i===2; }).slice(0,3):[];
+  p.bondLog=Array.isArray(p.bondLog)?p.bondLog.filter(function(t){ return isFinite(Number(t)); }):[];
+  ['lastFeed','lastPlay','lastClean','lastPet','med'].forEach(function(k){ p[k]=num(p[k],0); });
+  p.actionAt=(p.actionAt&&typeof p.actionAt==='object')?p.actionAt:{};
+  ['feedCookie','feedGrain','feedTomato','play','clean','pet','light','med'].forEach(function(k){
+    p.actionAt[k]=num(p.actionAt[k],0);
+  });
+  return p;
+}
+loadState();
+
+const $=function(id){return document.getElementById(id);};
+const device=$('device'), swatches=$('swatches'), lcdText=$('lcdText');
+const bubbleEl=$('bubble'), bubbleMain=$('bubbleMain'), bubbleSub=$('bubbleSub');
+const visitorEl=$('visitor');
+let theme=THEMES[0];
+
+/* ---------- 点阵表（'#'=墨，'+'=网点，其余透明） ---------- */
+const PIX={
+  egg:[
+    '........####........',
+    '.......#++++#.......',
+    '......#++++++#......',
+    '.....#++++++++#.....',
+    '....#++++++++++#....',
+    '....#++++++++++#....',
+    '...#++++++++++++#...',
+    '...#++++++++++++#...',
+    '..#++++++++++++++#..',
+    '..#++++++++++++++#..',
+    '..#++++++++++++++#..',
+    '..#++++++++++++++#..',
+    '.#++++++++++++++++#.',
+    '.#++++++++++++++++#.',
+    '.#++++++++++++++++#.',
+    '.#++++++++++++++++#.',
+    '.#++++++++++++++++#.',
+    '.#++++++++++++++++#.',
+    '.#++++++++++++++++#.',
+    '.#++++++++++++++++#.',
+    '..#++++++++++++++#..',
+    '..#++++++++++++++#..',
+    '...#++++++++++++#...',
+    '....#++++++++++#....',
+    '.....#++++++++#.....',
+    '......########......'
+  ],
+  heartFull:[
+    '.##.##.',
+    '#######',
+    '#######',
+    '.#####.',
+    '..###..',
+    '...#...'
+  ],
+  heartEmpty:[
+    '.##.##.',
+    '#..#..#',
+    '#.....#',
+    '.#...#.',
+    '..#.#..',
+    '...#...'
+  ],
+  /* 氛围粒子：开心时冒爱心 / 小花 / 星星；不改造月巴的五官 */
+  flower:[
+    '..#.#..',
+    '.#...#.',
+    '#..#..#',
+    '.#...#.',
+    '..#.#..',
+    '...#...',
+    '..###..'
+  ],
+  star:[
+    '...#...',
+    '..###..',
+    '.#####.',
+    '#######',
+    '.#####.',
+    '..#.#..',
+    '.#...#.'
+  ],
+  digits:{
+    '0':['###','#.#','#.#','#.#','###'],
+    '1':['.#.','##.','.#.','.#.','###'],
+    '2':['###','..#','###','#..','###'],
+    '3':['###','..#','###','..#','###'],
+    '4':['#.#','#.#','###','..#','..#'],
+    '5':['###','#..','###','..#','###'],
+    '6':['###','#..','###','#.#','###'],
+    '7':['###','..#','..#','..#','..#'],
+    '8':['###','#.#','###','#.#','###'],
+    '9':['###','#.#','###','..#','###'],
+    ':':['...','.#.','...','.#.','...']
+  },
+  z:['###','..#','.#.','#..','###'],
+  poop:[
+    '........',
+    '...##...',
+    '..####..',
+    '.##++##.',
+    '##++++##',
+    '#++++++#',
+    '.######.',
+    '........'
+  ],
+  cookie:[
+    '..##..',
+    '.####.',
+    '##++##',
+    '##++##',
+    '.####.',
+    '..##..'
+  ],
+  broom:[
+    '....###...',
+    '...#+++#..',
+    '...#+++#..',
+    '...#+++#..',
+    '..##+++##.',
+    '.##+++++##',
+    '##+++++++#',
+    '##########',
+    '.##....##.',
+    '..#....#..'
+  ],
+  feed:[
+    '................',
+    '.....######.....',
+    '...##++++++##...',
+    '..#++++++++++#..',
+    '..#+++#+++#++#..',
+    '.#++++++++++++#.',
+    '.#++++#++#++++#.',
+    '.#++++++++++++#.',
+    '.#++++++#+++++#.',
+    '..#++++++++++#..',
+    '..#+++#++++#+#..',
+    '...##++++++##...',
+    '.....######.....',
+    '................',
+    '................',
+    '................'
+  ],
+  play:[
+    '................',
+    '.....######.....',
+    '...##++++++##...',
+    '..#++++++++++#..',
+    '..#++++##++++#..',
+    '.#++++#++#++++#.',
+    '.#+++#++++#+++#.',
+    '.#+++#++++#+++#.',
+    '.#++++#++#++++#.',
+    '..#++++##++++#..',
+    '..#++++++++++#..',
+    '...##++++++##...',
+    '.....######.....',
+    '................',
+    '................',
+    '................'
+  ],
+  clean:[
+    '................',
+    '.............###',
+    '............###.',
+    '...........###..',
+    '..........###...',
+    '.........###....',
+    '........###.....',
+    '.....#++++++#...',
+    '..##++++++++##..',
+    '..##++++++++##..',
+    '..##++++++++##..',
+    '...##++++++##...',
+    '....########....',
+    '................',
+    '................',
+    '................'
+  ],
+  light:[
+    '................',
+    '.....######.....',
+    '...##++++++##...',
+    '..#++++++++++#..',
+    '..#++++++++++#..',
+    '..#++++++++++#..',
+    '..#++++++++++#..',
+    '...##++++++##...',
+    '.....######.....',
+    '......####......',
+    '.....######.....',
+    '......####......',
+    '................',
+    '................',
+    '................',
+    '................'
+  ],
+  /* 生病头顶的 × */
+  cross:[
+    '#.....#',
+    '.#...#.',
+    '..#.#..',
+    '...#...',
+    '..#.#..',
+    '.#...#.',
+    '#.....#'
+  ],
+  /* 隐患期的汗滴 */
+  sweat:[
+    '..#..',
+    '.###.',
+    '.###.',
+    '#####',
+    '#####',
+    '.###.'
+  ],
+  /* 被敲玻璃时的「！」 */
+  bang:[
+    '.##.',
+    '.##.',
+    '.##.',
+    '.##.',
+    '....',
+    '.##.'
+  ],
+  /* 药丸：中间一道刻痕 */
+  pill:[
+    '................',
+    '................',
+    '.....######.....',
+    '...##++++++##...',
+    '..#++++++++++#..',
+    '..#++######++#..',
+    '..#++++++++++#..',
+    '...##++++++##...',
+    '.....######.....',
+    '................',
+    '................',
+    '................'
+  ],
+  /* 墓碑卡 */
+  tomb:[
+    '......########......',
+    '....##++++++++##....',
+    '...#++++++++++++#...',
+    '..#++++++++++++++#..',
+    '..#++++++##++++++#..',
+    '..#++++++##++++++#..',
+    '..#++++++##++++++#..',
+    '..#++++######++++#..',
+    '..#++++++##++++++#..',
+    '..#++++++##++++++#..',
+    '..#++++++++++++++#..',
+    '..#++++++++++++++#..',
+    '..#++++++++++++++#..',
+    '..#++++++++++++++#..',
+    '.##################.',
+    '..################..'
+  ],
+  /* 孵化后剩下的破蛋壳 */
+  shellBroken:[
+    '..##..##..##....',
+    '.##############.',
+    '.#++++++++++++#.',
+    '.#++++++++++++#.',
+    '..#++++++++++#..',
+    '...##########...'
+  ]
+};
+
+/* ---------- 画布 ---------- */
+const cv=$('lcd'), ctx=cv.getContext('2d');
+const W=160, H=144;
+cv.width=W; cv.height=H;
+ctx.imageSmoothingEnabled=false;
+
+function clearLcd(){
+  ctx.fillStyle=theme.lcd;
+  ctx.fillRect(0,0,W,H);
+}
+function drawMap(map,x,y,mode,s){
+  const ink=(mode==='ghost')?theme.ghost:theme.ink;
+  s=s||1;
+  for(let r=0;r<map.length;r++){
+    const row=map[r];
+    for(let c=0;c<row.length;c++){
+      const ch=row.charAt(c);
+      if(ch==='#'){ ctx.fillStyle=ink; ctx.fillRect(x+c*s,y+r*s,s,s); }
+      else if(ch==='+'){ ctx.fillStyle=theme.ghost; ctx.fillRect(x+c*s,y+r*s,s,s); }
+    }
+  }
+}
+function digitWidth(str){
+  let n=0;
+  for(let i=0;i<str.length;i++){ n+=3+(i?1:0); }
+  return n;
+}
+function drawDigits(str,x,y,mode){
+  const ink=(mode==='ghost')?theme.ghost:theme.ink;
+  ctx.fillStyle=ink;
+  let cx=x;
+  for(let i=0;i<str.length;i++){
+    const g=PIX.digits[str.charAt(i)];
+    if(g){
+      for(let r=0;r<g.length;r++){
+        for(let c=0;c<3;c++){
+          if(g[r].charAt(c)==='#') ctx.fillRect(cx+c,y+r,1,1);
+        }
+      }
+    }
+    cx+=4;
+  }
+}
+
+/* ---------- 名册桥 ---------- */
+let inFrame=false;
+try{ inFrame=!!(window.parent&&window.parent!==window); }catch(e){ inFrame=false; }
+const QLANG=(location.search.match(/[?&]lang=([^&]+)/)||[])[1]||'';
+let ROSTER=null, YARD=[], TOMATO=0,
+    LANG=normLang(decodeURIComponent(QLANG||'zh')),
+    MUTED=false, LOW=matchMedia('(prefers-reduced-motion: reduce)').matches,
+    FOCUS=false, FOCUS_MINS=0;
+let readyTry=0, readyTimer=null;
+function sendReady(){
+  try{ window.parent.postMessage({type:'yueba-tamago-ready'},'*'); }catch(e){}
+}
+function handshake(){
+  sendReady();
+  readyTimer=setInterval(function(){
+    readyTry++;
+    if(readyTry>=3){
+      clearInterval(readyTimer); readyTimer=null;
+      useSamples();
+      return;
+    }
+    sendReady();
+  },2000);
+}
+window.addEventListener('message',function(e){
+  const d=e&&e.data;
+  if(!d||typeof d!=='object') return;
+  if(inFrame&&e.source!==window.parent) return;
+  /* 毕业回写主游戏后的金币回执：直接补在毕业卡上 */
+  if(d.type==='yueba-tamago-graduate-ack'){
+    const n=Math.max(0,parseInt(d.coins,10)||0);
+    if(ui.endCard) ui.endCard.reward=n;
+    render();
+    return;
+  }
+  /* 主游戏番茄钟：专注期间心情不掉、访客不打扰 */
+  if(d.type==='yueba-tamago-focus'){
+    FOCUS=!!d.on;
+    FOCUS_MINS=Math.max(0,parseInt(d.mins,10)||0);
+    if(FOCUS){
+      ui.msg=t('focusStart');
+      ui.msgUntil=Date.now()+2600;
+    }else{
+      ui.msg=FOCUS_MINS>0?t('focusEnd',{n:FOCUS_MINS}):t('focusEndShort');
+      ui.msgUntil=Date.now()+2600;
+    }
+    render();
+    return;
+  }
+  if(d.type!=='yueba-tamago-roster') return;
+  if(readyTimer){ clearInterval(readyTimer); readyTimer=null; }
+  ROSTER=Array.isArray(d.list)?d.list.filter(function(t){return t&&t.id;}):[];
+  for(const k in speciesArtCache) delete speciesArtCache[k];
+  YARD=Array.isArray(d.yard)?d.yard:[];
+  TOMATO=parseInt(d.tomato,10)||0;
+  LANG=normLang(d.lang||LANG);
+  MUTED=!!d.muted;
+  LOW=!!d.lowPower||matchMedia('(prefers-reduced-motion: reduce)').matches;
+  FOCUS=!!d.focus;
+  FOCUS_MINS=Math.max(0,parseInt(d.focusMins,10)||0);
+  applyLangDom();
+  buildSwatches();
+  localizeEggs();
+  applyLowPower();
+  if(ROSTER.length){
+    if(!state.eggs.length||(state.sampleMode&&!state.pet)) drawEggs(ROSTER,false);
+  }else if(!state.eggs.length){
+    useSamples();
+  }
+  render();
+  restartIdle();
+});
+function useSamples(){
+  if(state.eggs.length) return;
+  drawEggs(SAMPLES,true);
+}
+function localizeEggs(){
+  if(!state.sampleMode) return;
+  if(Array.isArray(state.eggs)){
+    for(let i=0;i<state.eggs.length;i++){
+      const e=state.eggs[i];
+      if(e&&e.species&&SAMPLES.some(function(s){return s.id===e.species;})) e.name=sampleName(e.species);
+    }
+  }
+  if(state.pet&&SAMPLES.some(function(s){return s.id===state.pet.species;})){
+    state.pet.name=sampleName(state.pet.species);
+  }
+}
+function applyLowPower(){
+  document.body.classList.toggle('low',!!LOW);
+}
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t; }
+  return a;
+}
+function chooseSpecies(pool){
+  const out=shuffle(pool.slice()).slice(0,3);
+  while(out.length<3&&pool.length) out.push(pool[Math.floor(Math.random()*pool.length)]);
+  return out;
+}
+/* 像素月巴只挑「有外链立绘」的月巴：没有立绘的只留给庭院访客当 SVG 兜底 */
+function artOnly(pool){
+  const out=(Array.isArray(pool)?pool:[]).filter(function(t){ return t&&t.id&&t.art; });
+  if(out.length) return out;
+  return SAMPLES.filter(function(t){ return t.art; });
+}
+function drawEggs(pool,isSample){
+  pool=artOnly(pool);
+  const picked=chooseSpecies(pool);
+  state.eggs=picked.map(function(t,i){
+    return {
+      slot:i+1,
+      species:t.id,
+      name:(isSample?sampleName(t.id):(t.name||t.id)),
+      shape:t.shape||'round',
+      r:t.r||1,
+      sealed:false,
+      hatched:false
+    };
+  });
+  state.sampleMode=!!isSample;
+  sel=0;
+  /* 第一次看到蛋：给一次三行上手提示，孵化开始即收掉 */
+  if(!state.tutorialDone&&!state.pet) ui.tut=1;
+  saveState();
+  render();
+}
+
+/* 首次开机：有蛋就显示三行上手提示；老档已有宠物则视为已上手 */
+function initTutorial(){
+  if(state.tutorialDone) return;
+  if(state.pet){ state.tutorialDone=true; saveState(); return; }
+  if(state.eggs.length) ui.tut=1;
+}
+
+/* ---------- 宠物像素生成 ----------
+   轮廓与 index.html 的立绘 shapeBody() 同源：同一套 40×40 几何，
+   用 Path2D 超采样后压成 32×32 点阵，保证像素月巴的形状与立绘一模一样。 */
+const SHAPE_GEOM={
+  round:  [['c',20,21,13]],
+  tall:   [['e',20,22,9.5,14]],
+  wide:   [['e',20,22,15,10.5]],
+  squish: [['e',20,24,13.5,9]],
+  cube:   [['r',8,9,24,25,5]],
+  big:    [['e',20,22,16,13]],
+  bean:   [['c',15.5,22,9.5],['c',24.5,22,9.5]],
+  heart:  [['p','M20 32 C10 24 6 17 9 12 C12 7.5 17 8 20 12 C23 8 28 7.5 31 12 C34 17 30 24 20 32 Z']],
+  drop:   [['p','M20 7 C26 15 29 20 29 25 A9 9 0 1 1 11 25 C11 20 14 15 20 7 Z']],
+  star:   [['p','M20 8 L23.6 16.8 L32.6 17.2 L25.6 22.9 L28.4 31.4 L20 26.6 L11.6 31.4 L14.4 22.9 L7.4 17.2 L16.4 16.8 Z']],
+  spike:  [['c',20,25,10],['p','M14 11 L16 4 L20 10 L24 3 L27 11 L25 14 L15 14 Z']],
+  crown:  [['c',20,25,11],['p','M13 13 L16 6 L20 11 L24 5 L27 12 Z']],
+  moon:   [['p','M27 5 A14 14 0 1 0 27 35 A11 11 0 1 1 27 5 Z']],
+  ghost:  [['p','M8 12 A12 12 0 0 1 32 12 L32 30 L27 25 L22 30 L17 25 L12 30 L8 26 Z']],
+  rainbow:[['p','M12 27 A10 10 0 0 1 28 27 L25 27 A7 7 0 0 0 15 27 Z']],
+  chaos:  [['c',20,21,12.5]]
+};
+const MASK_SS=4, ART_W=40, SPRITE=32;
+const maskCache={};
+function hashId(s){
+  let h=0;
+  for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))|0;
+  return Math.abs(h);
+}
+function buildMask(shape){
+  if(maskCache[shape]) return maskCache[shape];
+  const geom=SHAPE_GEOM[shape]||SHAPE_GEOM.round;
+  const cv=document.createElement('canvas');
+  cv.width=SPRITE*MASK_SS; cv.height=SPRITE*MASK_SS;
+  const g=cv.getContext('2d');
+  const k=cv.width/ART_W;
+  g.setTransform(k,0,0,k,0,0);
+  g.fillStyle='#000'; g.strokeStyle='#000'; g.lineWidth=1.4;
+  for(const part of geom){
+    const p=new Path2D();
+    if(part[0]==='c'){
+      p.moveTo(part[1]+part[3],part[2]);
+      p.arc(part[1],part[2],part[3],0,Math.PI*2);
+    }else if(part[0]==='e'){
+      p.ellipse(part[1],part[2],part[3],part[4],0,0,Math.PI*2);
+    }else if(part[0]==='r'){
+      const x=part[1], y=part[2], w=part[3], h=part[4], r=part[5];
+      p.moveTo(x+r,y);
+      p.lineTo(x+w-r,y); p.quadraticCurveTo(x+w,y,x+w,y+r);
+      p.lineTo(x+w,y+h-r); p.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+      p.lineTo(x+r,y+h); p.quadraticCurveTo(x,y+h,x,y+h-r);
+      p.lineTo(x,y+r); p.quadraticCurveTo(x,y,x+r,y);
+      p.closePath();
+    }else{
+      p.addPath(new Path2D(part[1]));
+    }
+    g.fill(p); g.stroke(p);
+  }
+  const data=g.getImageData(0,0,cv.width,cv.height).data;
+  const m=[];
+  for(let y=0;y<SPRITE;y++){
+    const row=[];
+    for(let x=0;x<SPRITE;x++){
+      let n=0;
+      for(let sy=0;sy<MASK_SS;sy++){
+        const base=((y*MASK_SS+sy)*cv.width+x*MASK_SS)*4+3;
+        for(let sx=0;sx<MASK_SS;sx++) if(data[base+sx*4]>127) n++;
+      }
+      row.push(n*2>=MASK_SS*MASK_SS?1:0);
+    }
+    m.push(row);
+  }
+  maskCache[shape]=m;
+  return m;
+}
+const spriteCache={};
+/* 五官与立绘同源：眼睛 x 按形状（tall 11 / wide 12 / 其余 10，40 单位制），
+   y=18；眼型与嘴型由 id 哈希决定，与 index.html 的 eye/mouth 取法一致。 */
+function drawFace(g,shape,variant,blink){
+  const eye=variant%4, mouth=(variant>>2)%4;
+  const exBase=shape==='tall'?11:shape==='wide'?12:10;
+  const ex1=Math.round(exBase*0.8), ex2=Math.round((30-exBase)*0.8);
+  const ey=Math.round(18*0.8);
+  g.fillStyle=theme.ink;
+  for(const ex of [ex1,ex2]){
+    if(blink||eye===3){ g.fillRect(ex-2,ey,4,1); }
+    else if(eye===1){
+      g.fillRect(ex-1,ey-2,2,1);
+      g.fillRect(ex-2,ey-1,4,3);
+      g.fillRect(ex-1,ey+2,2,1);
+    }
+    else if(eye===2){ g.fillRect(ex,ey-1,1,1); g.fillRect(ex-1,ey,3,1); g.fillRect(ex,ey+1,1,1); }
+    else {
+      g.fillRect(ex-1,ey-1,2,1);
+      g.fillRect(ex-2,ey,4,2);
+      g.fillRect(ex-1,ey+2,2,1);
+    }
+  }
+  const mx=Math.round(20*0.8), my=Math.round(24.5*0.8);
+  if(mouth===0){
+    g.fillRect(mx-5,my-1,2,1); g.fillRect(mx,my-1,2,1); g.fillRect(mx+4,my-1,2,1);
+    g.fillRect(mx-3,my,2,1);   g.fillRect(mx+2,my,2,1);
+  }else if(mouth===1){
+    g.fillRect(mx-1,my-2,2,1);
+    g.fillRect(mx-2,my-1,4,2);
+    g.fillRect(mx-1,my+1,2,1);
+  }else if(mouth===2){
+    g.fillRect(mx-4,my,9,1); g.fillRect(mx-3,my+1,7,1); g.fillRect(mx-2,my+2,5,1);
+  }else{
+    g.fillRect(mx-4,my,9,1); g.fillRect(mx-1,my-1,3,1);
+  }
+}
+function petSprite(shape,id,blink){
+  const variant=hashId(id||'');
+  const key=theme.id+'|'+shape+'|'+variant+'|'+(blink?'b':'o');
+  if(spriteCache[key]) return spriteCache[key];
+  const mask=buildMask(shape);
+  const c=document.createElement('canvas'); c.width=32; c.height=32;
+  const g=c.getContext('2d');
+  for(let y=0;y<32;y++){
+    for(let x=0;x<32;x++){
+      if(!mask[y][x]) continue;
+      const edge=!mask[y-1]||!mask[y-1][x]||!mask[y+1]||!mask[y+1][x]||!mask[y][x-1]||!mask[y][x+1];
+      g.fillStyle=edge?theme.ink:theme.ghost;
+      g.fillRect(x,y,1,1);
+    }
+  }
+  drawFace(g,shape,variant,blink);
+  spriteCache[key]=c;
+  return c;
+}
+/* ---------- 原立绘单色像素化 ----------
+   游戏里的像素月巴只用「有外链立绘」的月巴：把立绘等比压到 32×32，
+   用亮度阈值二值化后整只染成一种墨色（ghost），深色五官/耳尖保留为更深的点。
+   跨域图片不能读像素，所以全程只用 canvas 滤镜与合成，不做 getImageData。 */
+const artSpriteCache={};
+const speciesArtCache={};
+function speciesArt(id){
+  if(speciesArtCache[id]!==undefined) return speciesArtCache[id];
+  const t=rosterById(id);
+  const url=(t&&t.art)?String(t.art):'';
+  speciesArtCache[id]=url;
+  return url;
+}
+function monoPixelSprite(img){
+  const S=SPRITE;
+  const c=document.createElement('canvas'); c.width=S; c.height=S;
+  const g=c.getContext('2d');
+  /* 关掉插值做最近邻采样，保证压到 32×32 后是硬边像素方块，而不是糊成一团的半透明边 */
+  g.imageSmoothingEnabled=false;
+  const k=Math.min(S/img.naturalWidth,S/img.naturalHeight);
+  const w=Math.max(1,Math.round(img.naturalWidth*k));
+  const h=Math.max(1,Math.round(img.naturalHeight*k));
+  const x=Math.round((S-w)/2), y=Math.round((S-h)/2);
+  /* 亮度二值化：白身体留下，眼睫毛/嘴/耳尖变深 */
+  g.filter='grayscale(1) brightness(.7) contrast(20)';
+  g.drawImage(img,x,y,w,h);
+  g.filter='none';
+  /* 只保留立绘不透明区域，再整体乘上同一种墨色 */
+  g.globalCompositeOperation='multiply';
+  g.fillStyle=theme.ghost;
+  g.fillRect(0,0,S,S);
+  g.globalCompositeOperation='destination-in';
+  g.drawImage(img,x,y,w,h);
+  /* 1px 墨线描边：沿用像素月巴原有的「墨线边 + 浅墨身体」观感 */
+  const sil=document.createElement('canvas'); sil.width=S; sil.height=S;
+  const sg=sil.getContext('2d');
+  sg.drawImage(c,0,0);
+  sg.globalCompositeOperation='source-in';
+  sg.fillStyle=theme.ink; sg.fillRect(0,0,S,S);
+  const out=document.createElement('canvas'); out.width=S; out.height=S;
+  const og=out.getContext('2d');
+  const off=[[1,0],[-1,0],[0,1],[0,-1]];
+  for(const o of off) og.drawImage(sil,o[0],o[1]);
+  og.drawImage(c,0,0);
+  return out;
+}
+function artSprite(url){
+  const key=theme.id+'|'+url;
+  const rec=artSpriteCache[key];
+  if(rec) return rec.cv||null;
+  artSpriteCache[key]={cv:null,failed:false};
+  const img=new Image();
+  img.decoding='async';
+  img.onload=function(){
+    try{ artSpriteCache[key].cv=monoPixelSprite(img); }
+    catch(e){ artSpriteCache[key].failed=true; }
+    render();
+  };
+  img.onerror=function(){ artSpriteCache[key].failed=true; };
+  img.src=url;
+  return null;
+}
+function drawPetSprite(pet,x,y,scale,blink){
+  const url=speciesArt(pet.species);
+  const art=url?artSprite(url):null;
+  /* 立绘还没加载好时先按形状兜底，加载完自动换成单色像素立绘 */
+  const sp=art||petSprite(pet.shape,pet.species,!!blink);
+  /* 成体形态只做轮廓微调 + 一枚小装饰，不改五官 */
+  const form=pet.form||'';
+  if(form==='plump'){
+    ctx.drawImage(sp,x-scale,y+scale,34*scale,31*scale);
+    drawMap(PIX.heartFull,x+13*scale,y-5*scale,'ink');
+  }else if(form==='lean'){
+    ctx.drawImage(sp,x+scale,y-scale,30*scale,33*scale);
+    drawMap(PIX.flower,x+13*scale,y-5*scale,'ink');
+  }else{
+    ctx.drawImage(sp,x,y,32*scale,32*scale);
+    if(form==='stubborn') drawMap(PIX.star,x+13*scale,y-5*scale,'ink');
+  }
+}
+
+/* ---------- 氛围粒子：开心时冒爱心 / 小花 / 星星 ----------
+   只画环境，不改造月巴的五官；低功耗与页面态一律关闭。 */
+const AMBIENT_MAP={heart:'heartFull',flower:'flower',star:'star'};
+const AMBIENT_KINDS=['heart','flower','star'];
+let ambient=[], ambientNext=0;
+function makeAmbient(pet,now){
+  const p=personaOf(pet);
+  const kind=(Math.random()<0.55)?p.amb:pickFrom(AMBIENT_KINDS);
+  return {kind:kind,x:34+Math.random()*92,y:58+Math.random()*22,t0:now,
+    life:1300+Math.random()*600,drift:(Math.random()<0.5?-1:1)*(3+Math.random()*7)};
+}
+function ambientTick(now,active){
+  const pet=state.pet;
+  if(!active||LOW||!pet||pet.sleeping||pet.sick||pet.critical||
+     ui.play||ui.page||vis||ui.endCard||hatchState){
+    ambient=[]; ambientNext=now+2500; return;
+  }
+  const mood=num(pet.mood,0);
+  if(mood<45){ ambient=[]; ambientNext=now+4000; return; }
+  if(!ambientNext) ambientNext=now+1200;
+  const gap=mood>=85?2200:(mood>=65?4200:7000);
+  if(now>=ambientNext){
+    ambientNext=now+gap+Math.random()*1800;
+    ambient.push(makeAmbient(pet,now));
+  }
+  ambient=ambient.filter(function(p){ return now-p.t0<p.life; });
+}
+function ambientBurst(kind,n){
+  const pet=state.pet;
+  if(LOW||!pet||pet.sleeping||pet.sick||pet.critical||ui.page||ui.endCard||hatchState) return;
+  const now=Date.now();
+  for(let i=0;i<(n||1);i++){
+    ambient.push({kind:kind,x:58+Math.random()*44,y:52+Math.random()*18,t0:now+i*60,
+      life:1200+Math.random()*500,drift:(Math.random()<0.5?-1:1)*(4+Math.random()*8)});
+  }
+}
+function drawAmbient(now){
+  for(let i=0;i<ambient.length;i++){
+    const a=ambient[i], k=clamp((now-a.t0)/a.life,0,1);
+    drawMap(PIX[AMBIENT_MAP[a.kind]],Math.round(a.x+a.drift*k),Math.round(a.y-18*k),
+      k<0.55?'ink':'ghost');
+  }
+}
+
+/* ---------- 屏幕绘制 ---------- */
+let frame=0, sel=0, holdP=0, hatchState=null;
+const EGG_X=[20,70,120];
+
+/* ---------- 养成常量与界面状态（M2–M3） ---------- */
+const MIN=60000, OFFLINE_CAP=12*60*MIN, OFFLINE_RATE=0.6;
+const GROW_MS=2*60*MIN, ADULT_MS=120*60*MIN;
+const RISK_SHOW=20, SICK_AT=30, MED_CD=8000;
+const ICON_X=[10,50,90,130];
+const FEED=[
+  {key:'cookie',cd:45000,hunger:18,mood:2, bond:0},
+  {key:'grain', cd:30000,hunger:10,mood:5, bond:1},
+  {key:'tomato',cd:20000,hunger:0, mood:-3,bond:1,tomato:true}
+];
+const FEED_CD_KEY={cookie:'feedCookie',grain:'feedGrain',tomato:'feedTomato'};
+let ui={sel:0,menu:false,menuSel:0,msg:'',msgUntil:0,bootUntil:0,anim:null,play:null,
+  page:null,albumIdx:0,nameSel:0,endCard:null,tut:null};
+let vis=null, visitTimer=null;
+function pickFrom(a){ return a[Math.floor(Math.random()*a.length)]; }
+/* 生病时第 2 个图标从「玩」变成「药」 */
+function iconsNow(){
+  const sick=!!(state.pet&&state.pet.sick);
+  return [
+    {id:'feed', map:'feed'},
+    {id:sick?'med':'play', map:sick?'pill':'play'},
+    {id:'clean',map:'clean'},
+    {id:'light',map:'light'}
+  ];
+}
+let animTimer=null, playTimer=null, clockTimer=null, lastTick=Date.now(), saveAcc=0;
+/* 蛋壳裂纹：逐行 1px 的竖裂缝，左右错位 1px 形成之字；末端分叉 */
+const CRACK_MAIN=[
+  [9,3],[9,4],[10,5],[10,6],[9,7],[9,8],[8,9],[8,10],
+  [9,11],[9,12],[10,13],[10,14],[11,15],[11,16],[10,17],[10,18],[9,19]
+];
+const CRACK_BRANCH=[[7,10],[6,11],[5,12],[13,15],[14,16],[15,17]];
+
+function currentMode(){
+  if(ui.endCard) return 'end';
+  if(hatchState) return 'hatch';
+  if(state.pet) return 'pet';
+  return 'eggs';
+}
+function drawTop(showSlot){
+  for(let i=0;i<4;i++) drawMap(PIX.heartEmpty,5+i*9,5,'ghost');
+  if(showSlot){
+    const label=String(sel+1);
+    drawDigits(label,W-6-digitWidth(label),6,'ink');
+  }
+}
+function drawEggsScreen(){
+  drawTop(true);
+  const bobs=[0,-1,0,1];
+  for(let i=0;i<3;i++){
+    const e=state.eggs[i];
+    const x=EGG_X[i], y=40+bobs[(frame+i*2)%4];
+    if(e&&e.hatched){
+      /* 已经孵过的蛋位只留破壳 */
+      drawMap(PIX.shellBroken,x+3,y+17,'ghost');
+      drawDigits(String(i+1),x+8,70,'ghost');
+      continue;
+    }
+    const mode=(e&&e.sealed)?'ghost':'ink';
+    drawMap(PIX.egg,x,y,mode);
+    if(e&&e.sealed) drawSealCrack(x,y,theme.lcd);
+    drawDigits(String(i+1),x+8,70,mode);
+  }
+  /* 选择框：只框住还能孵的蛋 */
+  const cur=state.eggs[sel];
+  if(!state.pet&&cur&&!cur.sealed&&!cur.hatched){
+    const x=EGG_X[sel], y=38, bw=20, bh=30;
+    if(LOW||frame%4<2){
+      ctx.fillStyle=theme.ink;
+      ctx.fillRect(x-2,y,4,1); ctx.fillRect(x-2,y,1,3);
+      ctx.fillRect(x+bw-2,y,4,1); ctx.fillRect(x+bw+1,y,1,3);
+      ctx.fillRect(x-2,y+bh-1,4,1); ctx.fillRect(x-2,y+bh-3,1,3);
+      ctx.fillRect(x+bw-2,y+bh-1,4,1); ctx.fillRect(x+bw+1,y+bh-3,1,3);
+    }
+    /* 长按进度条 */
+    if(holdP>0){
+      ctx.fillStyle=theme.ghost; ctx.fillRect(x,84,20,2);
+      ctx.fillStyle=theme.ink; ctx.fillRect(x,84,Math.round(20*holdP),2);
+    }
+  }
+}
+function drawSealCrack(x,y,color){
+  ctx.fillStyle=color||theme.ghost;
+  for(let i=0;i<CRACK_MAIN.length;i++) ctx.fillRect(x+CRACK_MAIN[i][0],y+CRACK_MAIN[i][1],1,1);
+}
+function ageText(pet){
+  let m=Math.floor((Date.now()-num(pet.bornAt,Date.now()))/MIN);
+  if(!isFinite(m)||m<0) m=0;
+  const hh=Math.min(99,Math.floor(m/60)), mm=m%60;
+  return (hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
+}
+function drawPetScreen(chrome){
+  const pet=state.pet;
+  const nowAmb=Date.now();
+  ambientTick(nowAmb,chrome!==false);
+  const heartCount=clamp(Math.ceil(num(pet.mood,0)/25),0,4);
+  for(let i=0;i<4;i++){
+    drawMap(i<heartCount?PIX.heartFull:PIX.heartEmpty,5+i*9,5,i<heartCount?'ink':'ghost');
+  }
+  const age=ageText(pet);
+  drawDigits(age,W-6-digitWidth(age),6,'ink');
+
+  const a=ui.anim;
+  const at=a?clamp((Date.now()-a.t0)/a.dur,0,1):0;
+  const asleep=!!pet.sleeping;
+  /* 重症每 6 秒抖 2px（低功耗关闭） */
+  let shx=0;
+  if(pet.critical&&!LOW){
+    const ph=Date.now()%6000;
+    if(ph<320) shx=(Math.floor(ph/80)%2)?2:-2;
+  }
+  /* 生病时动作变慢 */
+  let bob=asleep?0:(pet.sick?[0,0,-1,0][frame%4]:[0,-1,0,1][frame%4]);
+  if(a&&a.type==='feed'&&at>0.45) bob+=(Math.floor(at*10)%2)?-1:0;
+  if(a&&a.type==='refuse') bob+=(Math.floor(at*6)%2)?1:0;
+  if(a&&a.type==='pet') bob-=1;
+  if(a&&a.type==='startle') bob-=Math.round(Math.sin(at*Math.PI)*6);
+  /* 访客在场时宠物向它偏 2px，像扭头看 */
+  const turn=vis?(vis.side==='left'?2:-2):0;
+  const blink=asleep||(Date.now()%5200)<150;
+  drawPetSprite(pet,48+shx+turn,32+bob,2,blink);
+
+  /* 生病头顶的 ×；隐患期偶尔冒汗 */
+  if(pet.sick){
+    drawMap(PIX.cross,76+shx,14,'ink');
+  }else if(num(pet.riskAcc,0)>=RISK_SHOW&&(LOW||frame%4<2)){
+    drawMap(PIX.sweat,106+shx,33,'ink');
+  }
+
+  /* 地面与便便槽（便便落在线上，正面压在脚边） */
+  ctx.fillStyle=theme.ghost;
+  ctx.fillRect(8,100,144,1);
+  const slots=[16,76,128];
+  for(let i=0;i<pet.poops.length;i++){
+    const slot=pet.poops[i];
+    if(slot===0||slot===1||slot===2) drawMap(PIX.poop,slots[slot],92,'ink');
+  }
+
+  /* 底部图标（选中上提 1px + 下划线）；状态页/相册页隐藏 */
+  if(chrome!==false){
+    const icons=iconsNow();
+    for(let i=0;i<icons.length;i++){
+      const on=(i===ui.sel)&&!ui.play;
+      drawMap(PIX[icons[i].map],ICON_X[i],on?109:110,'ink');
+      if(on){
+        ctx.fillStyle=theme.ink;
+        ctx.fillRect(ICON_X[i],127,16,2);
+      }
+    }
+  }
+
+  /* 睡眠：闭眼 + 飘 Z + 一个缓慢轮换的梦（爱心/小花/星星） */
+  if(asleep){
+    drawMap(PIX.z,102,28,'ghost');
+    drawMap(PIX.z,112,19,'ghost');
+    if(!LOW){
+      const ph=Math.floor(Date.now()/2600)%AMBIENT_KINDS.length;
+      drawMap(PIX[AMBIENT_MAP[AMBIENT_KINDS[ph]]],86,20,'ghost');
+    }
+  }
+
+  /* 动画层 */
+  if(a&&a.type==='feed'&&at<0.5){
+    drawMap(PIX.cookie,76,Math.round(6+at*2*46),'ink');
+  }
+  if(a&&a.type==='refuse'){
+    drawMap(PIX.cookie,76,Math.round(18+at*8),'ghost');
+    drawDigits('0',76,60,'ink');
+  }
+  if(a&&a.type==='pet'){
+    drawMap(PIX.heartFull,36,Math.round(30-at*14),'ink');
+    drawMap(PIX.heartFull,116,Math.round(26-at*14),'ink');
+  }
+  if(a&&a.type==='clean'){
+    drawMap(PIX.broom,Math.round(-14+at*188),92,'ink');
+  }
+  if(a&&a.type==='med'){
+    drawMap(PIX.pill,72,Math.round(10+at*46),'ink');
+  }
+  if(a&&a.type==='startle'){
+    drawMap(PIX.bang,112,18,'ink');
+  }
+
+  if(chrome!==false) drawAmbient(nowAmb);
+
+  if(ui.play) drawPlayBar(ui.play);
+
+  /* 重症：四周黑边 */
+  if(pet.critical){
+    ctx.fillStyle=theme.ink;
+    ctx.fillRect(0,0,W,2); ctx.fillRect(0,H-2,W,2);
+    ctx.fillRect(0,0,2,H); ctx.fillRect(W-2,0,2,H);
+  }
+}
+function drawPlayBar(p){
+  const x=20,y=80,w=120,h=12;
+  ctx.fillStyle=theme.ink;
+  ctx.fillRect(x,y,w,1); ctx.fillRect(x,y+h-1,w,1);
+  ctx.fillRect(x,y,1,h); ctx.fillRect(x+w-1,y,1,h);
+  ctx.fillStyle=theme.ghost;
+  ctx.fillRect(x+Math.round(p.zone*w),y+1,Math.max(2,Math.round(p.zw*w)),h-2);
+  const cxp=x+Math.round(p.pos*(w-1));
+  ctx.fillStyle=theme.ink;
+  ctx.fillRect(cxp,y-2,2,h+4);
+  for(let i=0;i<3;i++){
+    const done=i<p.round||(i===p.round&&p.phase==='result'&&p.lastHit);
+    ctx.fillStyle=done?theme.ink:theme.ghost;
+    ctx.fillRect(21+i*6,56,3,3);
+  }
+}
+/* 相册页：显示记录里的那一只，而不是当前宠物 */
+function drawAlbumScreen(){
+  const g=state.gallery;
+  if(!g.length){ drawMap(PIX.cross,76,62,'ghost',2); return; }
+  const r=g[clamp(ui.albumIdx,0,g.length-1)];
+  drawMap(r.kind==='graduate'?PIX.heartFull:PIX.cross,6,6,'ink');
+  drawPetSprite(r,48,32,2,false);
+  ctx.fillStyle=theme.ghost;
+  ctx.fillRect(8,100,144,1);
+}
+function drawLcd(){
+  clearLcd();
+  const mode=currentMode();
+  if(mode==='end') drawEndScreen();
+  else if(mode==='pet'){
+    if(ui.page==='album') drawAlbumScreen();
+    else drawPetScreen(!ui.page&&!vis);
+  }
+  else if(mode==='hatch') drawHatch(Date.now()-hatchState.t0);
+  else drawEggsScreen();
+}
+/* 死亡逐行关机 / 毕业断电，然后滑出记录卡 */
+function drawEndScreen(){
+  const e=ui.endCard, t=Date.now()-e.t0;
+  if(e.phase!=='card'){
+    drawPetSprite(e.record,48,32,2,true);
+    if(e.kind==='dead'){
+      if(LOW){
+        /* 低功耗：不逐行、不画中间心形，260ms 后直接黑屏 */
+        if(t>=260){ ctx.fillStyle=theme.ink; ctx.fillRect(0,0,W,H); }
+      }else if(t<1100){
+        const rows=Math.min(H,Math.floor(t/110)*8);
+        ctx.fillStyle=theme.lcd; ctx.fillRect(0,0,W,rows);
+      }else if(t<1900){
+        drawMap(PIX.heartEmpty,76,64,'ghost');
+      }else{
+        ctx.fillStyle=theme.ink; ctx.fillRect(0,0,W,H);
+      }
+    }else{
+      const rows=Math.min(H,Math.floor(t/150)*H);
+      ctx.fillStyle=theme.lcd; ctx.fillRect(0,0,W,rows);
+    }
+    return;
+  }
+  if(e.kind==='dead'){
+    drawMap(PIX.tomb,60,10,'ink',2);
+    ctx.fillStyle=theme.ghost;
+    ctx.fillRect(24,48,112,1);
+  }else{
+    drawMap(PIX.heartFull,66,12,'ink',4);
+    ctx.fillStyle=theme.ghost;
+    ctx.fillRect(24,44,112,1);
+  }
+  /* 卡面留一张淡淡的遗照 */
+  ctx.save();
+  ctx.globalAlpha=0.26;
+  drawPetSprite(e.record,64,62,1,false);
+  ctx.restore();
+}
+function drawHatch(t){
+  const e=state.eggs[hatchState.slot]||{shape:'round',species:'',name:'',r:1};
+  const x=EGG_X[hatchState.slot]||70, y=40;
+  if(t<900){
+    /* 另外两枚蛋保持暗色留在原位，避免屏幕上只剩一枚 */
+    drawOtherEggs(hatchState.slot);
+    const shake=[0,-1,1,0][Math.floor(t/70)%4];
+    drawMap(PIX.egg,x+shake,y,'ink');
+    drawCrackStage(x+shake,y,Math.min(3,Math.floor(t/300)+1));
+  }else if(t<1080){
+    /* 反色闪 2 次：整屏墨色 ↔ 空白（低功耗跳过） */
+    if(!LOW&&Math.floor((t-900)/60)%2===0){
+      ctx.fillStyle=theme.ink; ctx.fillRect(0,0,W,H);
+    }
+  }else if(t<2100){
+    /* 拼合阶段撤掉暗蛋，避免蛋的轮廓从宠物身体里透出来 */
+    const d=Math.max(0,Math.round((2100-t)/110));
+    if(d>1){
+      const sp=petSprite(e.shape,e.species,false);
+      const parts=[[0,0,-1,-1],[16,0,1,-1],[0,16,-1,1],[16,16,1,1]];
+      for(let i=0;i<4;i++){
+        const p=parts[i];
+        ctx.drawImage(sp,p[0],p[1],16,16,48+p[0]*2+p[2]*d,32+p[1]*2+p[3]*d,32,32);
+      }
+      drawDigits(String(e.r),74,84,'ghost');
+    }else{
+      /* 末段直接画整只，避免四块拼合留下十字缝隙 */
+      drawPetSprite(e,48,32,2,false);
+    }
+  }else{
+    drawPetSprite(e,48,32,2,false);
+  }
+}
+function drawOtherEggs(except){
+  for(let i=0;i<3;i++){
+    if(i===except||!state.eggs[i]) continue;
+    drawMap(PIX.egg,EGG_X[i],40,'ghost');
+    drawSealCrack(EGG_X[i],40,theme.lcd);
+    drawDigits(String(i+1),EGG_X[i]+8,70,'ghost');
+  }
+}
+function drawCrackStage(x,y,stage){
+  ctx.fillStyle=theme.ink;
+  const all=CRACK_MAIN.concat(CRACK_BRANCH);
+  const n=Math.ceil(all.length*stage/3);
+  for(let i=0;i<Math.min(n,all.length);i++) ctx.fillRect(x+all[i][0],y+all[i][1],1,1);
+}
+
+/* ============================================================
+   养成模拟（M2）
+   ============================================================ */
+function cdLeft(pet,key,cd){
+  const t=num(pet.actionAt&&pet.actionAt[key],0);
+  return Math.max(0,t+cd-Date.now());
+}
+function markAction(pet,key){
+  pet.actionAt=pet.actionAt||{};
+  pet.actionAt[key]=Date.now();
+}
+/* 同类互动每分钟最多计入 6 次亲密度 */
+function bondAdd(pet,n){
+  const now=Date.now();
+  pet.bondLog=pet.bondLog.filter(function(t){ return now-t<MIN; });
+  if(pet.bondLog.length>=6) return;
+  pet.bondLog.push(now);
+  pet.bond=clamp(pet.bond+(n||1),0,100);
+  if(pet.stats) pet.stats.maxBond=clamp(Math.max(num(pet.stats.maxBond,0),pet.bond),0,100);
+}
+/* 照顾次数与分类统计：只做统计埋点，不参与数值结算 */
+function careTick(pet,kind){
+  if(!pet) return;
+  pet.careCount=clamp(num(pet.careCount,0)+1,0,999999);
+  if(kind&&pet.stats) pet.stats[kind]=clamp(num(pet.stats[kind],0)+1,0,999999);
+}
+function addPoop(pet){
+  for(let i=0;i<3;i++){
+    if(pet.poops.indexOf(i)<0){
+      pet.poops.push(i);
+      pet.clean=clamp(pet.clean-5,0,100);
+      return;
+    }
+  }
+}
+/* 成体形态由幼体/成长期的照顾质量决定：圆润 / 精瘦 / 倔强 */
+function computeForm(pet){
+  const q=pet.q||{};
+  const n=num(q.n,0);
+  if(n<=0) return 'plump';
+  const h=num(q.hunger,0)/n, m=num(q.mood,0)/n, c=num(q.clean,0)/n;
+  if(m<55||num(pet.tauntCount,0)>=5) return 'stubborn';
+  if(h>=70&&c>=65&&num(q.sick,0)<=1) return 'plump';
+  return 'lean';
+}
+/* 成长阶段按存活时长实时推进 */
+function refreshStage(pet){
+  const age=Date.now()-num(pet.bornAt,Date.now());
+  const ns=age>=ADULT_MS?'adult':(age>=GROW_MS?'grow':'baby');
+  if(ns!==pet.stage){
+    pet.stage=ns;
+    if(ns==='adult'&&!pet.form) pet.form=computeForm(pet);
+    if(ns==='grow'){ ui.msg=t('growMsg'); ui.msgUntil=Date.now()+2200; }
+    else if(ns==='adult'){ ui.msg=t('adultMsg'); ui.msgUntil=Date.now()+3000; }
+  }
+}
+function simulateStep(ms,offline){
+  const pet=state.pet;
+  const mins=(ms/MIN)*(offline?OFFLINE_RATE:1);
+  const asleep=!!pet.sleeping;
+  pet.hunger-=mins/(asleep?12:6);
+  if(!asleep){
+    /* 主游戏番茄钟专注中：心情不下降，其它衰减照常 */
+    if(!FOCUS) pet.mood-=mins/(pet.sick?2:((pet.hunger<15||pet.clean<15)?4:8));
+    pet.clean-=mins/10;
+    pet.poopAcc+=mins;
+    while(pet.poopAcc>=pet.poopNext&&pet.poops.length<3){
+      pet.poopAcc-=pet.poopNext;
+      addPoop(pet);
+      pet.poopNext=90+Math.random()*30;
+    }
+    if(pet.poops.length>=3) pet.poopAcc=Math.min(pet.poopAcc,pet.poopNext);
+  }
+  /* 隐患：低饱食 / 低清洁 / 两坨以上便便持续累积，满 30 分钟转生病 */
+  const risk=pet.hunger<15||pet.clean<15||pet.poops.length>=2;
+  if(risk) pet.riskAcc=clamp(num(pet.riskAcc,0)+mins,0,9999);
+  else pet.riskAcc=0;
+  if(!pet.sick&&pet.riskAcc>=SICK_AT){
+    pet.sick=true; pet.sickSince=Date.now(); pet.riskAcc=0; pet.medsGiven=0;
+    if(pet.q) pet.q.sick=clamp(num(pet.q.sick,0)+1,0,9999);
+    if(pet.stats) pet.stats.sick=clamp(num(pet.stats.sick,0)+1,0,999999);
+    sfx('sick');
+  }
+  if(pet.sick){
+    pet.health-=mins/5;
+    if(!pet.critical&&pet.health<35){
+      pet.critical=true;
+      pet.rescueWindow=false;
+      pet.rescuePresses=0;
+      pet.rescueUntil=offline?0:Date.now()+60*MIN;
+    }
+  }else if(asleep){
+    pet.health+=mins/30;
+  }
+  /* 离线期间不会静默死亡，最低压到 1 */
+  if(offline&&pet.health<1) pet.health=1;
+  pet.hunger=clamp(pet.hunger,0,100);
+  pet.mood=clamp(pet.mood,0,100);
+  pet.clean=clamp(pet.clean,0,100);
+  pet.health=clamp(pet.health,0,100);
+  pet.bond=clamp(pet.bond,0,100);
+  pet.poopAcc=clamp(pet.poopAcc,0,9999);
+  /* 幼体/成长期按分钟累计照顾质量，成体时结算形态 */
+  if(pet.stage!=='adult'&&mins>0&&pet.q){
+    pet.q.hunger+=pet.hunger*mins;
+    pet.q.mood+=pet.mood*mins;
+    pet.q.clean+=pet.clean*mins;
+    pet.q.n+=mins;
+  }
+  refreshStage(pet);
+}
+/* 每 5 分钟切一段，让「饱食/清洁 <15 心情掉更快」的阈值即时生效 */
+function simulate(ms,offline){
+  if(!state.pet||!isFinite(ms)||ms<=0) return;
+  let left=Math.min(ms,offline?OFFLINE_CAP:12*60*MIN);
+  while(left>0){
+    const step=Math.min(left,5*MIN);
+    simulateStep(step,offline);
+    left-=step;
+  }
+}
+function fmtGap(ms){
+  const mins=Math.max(0,Math.floor(ms/MIN));
+  if(mins<60) return t('unit_min',{n:mins});
+  if(mins>=24*60){
+    const d=Math.floor(mins/(24*60)), h=Math.floor((mins%(24*60))/60);
+    return t('unit_day',{n:d})+(h?' '+t('unit_hour',{n:h}):'');
+  }
+  const h=Math.floor(mins/60), m=mins%60;
+  return t('unit_hour',{n:h})+(m?' '+t('unit_min',{n:m}):'');
+}
+/* 长离线的分层台词：1 天 / 3 天 / 7 天 */
+function offlineMessage(raw){
+  const gap=fmtGap(raw);
+  if(raw>=7*24*60*MIN) return t('offlineLong7',{gap:gap});
+  if(raw>=3*24*60*MIN) return t('offlineLong3',{gap:gap});
+  if(raw>=24*60*MIN) return t('offlineLong1',{gap:gap});
+  return t('offlineMsg',{gap:gap});
+}
+function fmtAgo(ms){
+  const m=Math.max(0,Math.floor(num(ms,0)/MIN));
+  if(m<1) return t('agoJust');
+  if(m<60) return t('agoMin',{n:m});
+  const h=Math.floor(m/60);
+  if(h<24) return t('agoHour',{n:h});
+  return t('agoDay',{n:Math.floor(h/24)});
+}
+/* 常客计数：startVisit 时累加，openVisit 用它切换语气/礼物 */
+function visitCount(id){
+  const r=state.visitorSeen&&state.visitorSeen[id];
+  return r?num(r.count,0):0;
+}
+function visitorRecords(){
+  const seen=state.visitorSeen||{};
+  const out=[];
+  Object.keys(seen).forEach(function(id){
+    const r=seen[id];
+    if(!r||!num(r.count,0)) return;
+    const item=rosterById(id);
+    out.push({id:id,name:(item&&item.name)||t('yardBanny'),
+      count:num(r.count,0),lastAt:num(r.lastAt,0)});
+  });
+  out.sort(function(a,b){ return b.count-a.count||b.lastAt-a.lastAt; });
+  return out;
+}
+function settleOffline(){
+  const pet=state.pet;
+  if(!pet) return;
+  const now=Date.now();
+  const raw=Math.max(0,now-num(pet.lastSeen,now));
+  const gap=clamp(raw,0,OFFLINE_CAP);
+  pet.lastSeen=now;
+  if(gap>5000){
+    simulate(gap,true);
+    /* 离线回来仍处重症：给 60 秒抢救窗口，不直接判死 */
+    if(pet.sick&&pet.critical){
+      pet.rescueUntil=now+60000;
+      pet.rescuePresses=0;
+      pet.rescueWindow=true;
+    }
+    if(raw>MIN){
+      ui.bootUntil=now+800;
+      ui.msg=offlineMessage(raw);
+      ui.msgUntil=now+4200;
+      setTimeout(render,860);
+      setTimeout(render,4260);
+    }
+    saveState();
+  }
+}
+function syncDim(){
+  const w=$('screenWrap');
+  if(!w) return;
+  const on=!!(state.pet&&state.pet.sleeping);
+  if(on!==w.classList.contains('dim')) w.classList.toggle('dim',on);
+}
+/* canvas 的读屏描述跟着状态走，但不重复整段 LDC 文本 */
+function syncLcdAria(){
+  if(!cv) return;
+  let label=t('ariaLcd');
+  const pet=state.pet;
+  if(pet){
+    label+=' · '+petName(pet)+' · '+stageText(pet);
+    if(pet.sick) label+=' · '+t(pet.critical?'sick_crit':'sick_sick');
+  }else if(state.eggs.length){
+    label+=' · '+t('eggPrompt').split('\n')[0];
+  }
+  if(vis) label+=' · '+t('visitorHint').split('\n')[0];
+  if(cv.getAttribute('aria-label')!==label) cv.setAttribute('aria-label',label);
+}
+function say(msg,ms){
+  ui.msg=msg||'';
+  ui.msgUntil=Date.now()+(ms||1800);
+  render();
+}
+function startAnim(type,ms){
+  ui.anim={type:type,t0:Date.now(),dur:ms};
+  if(animTimer){ clearInterval(animTimer); animTimer=null; }
+  animTimer=setInterval(function(){
+    if(!ui.anim){ clearInterval(animTimer); animTimer=null; return; }
+    if(Date.now()-ui.anim.t0>=ui.anim.dur){ ui.anim=null; clearInterval(animTimer); animTimer=null; }
+    drawLcd();
+  },LOW?120:50);
+}
+function refuseAsleep(){
+  if(!state.pet||!state.pet.sleeping) return false;
+  say(t('asleepSay'),1500);
+  return true;
+}
+
+/* ---------- 五个行动 ---------- */
+function toggleLight(){
+  const pet=state.pet;
+  if(!pet) return;
+  pet.sleeping=!pet.sleeping;
+  ui.menu=false;
+  if(ui.play) cancelPlay();
+  sfx('light');
+  if(pet.sleeping) say(t('lightOff'),1800);
+  else say(t('lightOn'),1600);
+  saveState();
+  render();
+}
+function doClean(){
+  const pet=state.pet;
+  const left=cdLeft(pet,'clean',10000);
+  if(left>0){ say(t('waitSec',{n:Math.ceil(left/1000)}),1100); return; }
+  markAction(pet,'clean');
+  if(pet.poops.length){
+    pet.poops.pop();
+    pet.clean=clamp(pet.clean+15,0,100);
+    careTick(pet,'clean');
+    say(t('cleanDone'),1600);
+    sfx('clean');
+  }else{
+    pet.clean=clamp(pet.clean+3,0,100);
+    say(t('cleanAlready'),1500);
+    sfx('clean');
+  }
+  startAnim('clean',800);
+  saveState();
+  render();
+}
+function confirmFeed(){
+  const pet=state.pet;
+  const item=FEED[ui.menuSel];
+  if(!pet||!item) return;
+  const left=cdLeft(pet,FEED_CD_KEY[item.key],item.cd);
+  if(left>0){ say(t('waitSec',{n:Math.ceil(left/1000)}),1100); return; }
+  markAction(pet,FEED_CD_KEY[item.key]);
+  ui.menu=false;
+  if(item.tomato){
+    pet.mood=clamp(pet.mood+item.mood,0,100);
+    bondAdd(pet,item.bond);
+    say(t('tomatoRefuse'),2200);
+    sfx('refuse');
+    startAnim('refuse',900);
+    saveState();
+    render();
+    return;
+  }
+  /* 10 分钟内第 4 次喂食算吃撑：收益减半、掉心情、加速便便 */
+  const now=Date.now();
+  pet.feedLog=Array.isArray(pet.feedLog)?pet.feedLog.filter(function(t){
+    return now-Number(t)<10*MIN;
+  }):[];
+  const over=pet.feedLog.length>=3;
+  pet.feedLog.push(now);
+  careTick(pet,'feed');
+  if(over){
+    pet.hunger=clamp(pet.hunger+Math.max(1,Math.ceil(item.hunger/2)),0,100);
+    pet.mood=clamp(pet.mood-3,0,100);
+    pet.poopAcc=clamp(num(pet.poopAcc,0)+60,0,9999);
+    say(t('eatOver'),1800);
+    sfx('refuse');
+    startAnim('feed',900);
+  }else{
+    pet.hunger=clamp(pet.hunger+item.hunger,0,100);
+    pet.mood=clamp(pet.mood+item.mood,0,100);
+    if(item.bond) bondAdd(pet,item.bond);
+    say(t(item.key==='cookie'?'eatCookie':'eatGrain'),1800);
+    sfx('eat');
+    startAnim('feed',1200);
+    ambientBurst('flower',2);
+  }
+  saveState();
+  render();
+}
+function petHead(){
+  const pet=state.pet;
+  if(!pet||ui.play||vis) return;
+  if(refuseAsleep()) return;
+  const left=cdLeft(pet,'pet',20000);
+  if(left>0){ say(t('petWait'),1100); return; }
+  ui.menu=false;
+  markAction(pet,'pet');
+  /* 访客刚走：心情 +5，宠物装作不在意 */
+  const bonus=num(pet.afterVisitUntil,0)>Date.now();
+  pet.mood=clamp(pet.mood+(bonus?5:2),0,100);
+  if(bonus) pet.afterVisitUntil=0;
+  bondAdd(pet,1);
+  careTick(pet,'pet');
+  say(t(bonus?'pet_shrug':'pet_lean'),1500);
+  sfx('pet');
+  startAnim('pet',600);
+  ambientBurst('heart',3);
+  saveState();
+  render();
+}
+
+/* ============================================================
+   生老病死（M3）：吃药 / 抢救 / 死亡 / 毕业 / 相册
+   ============================================================ */
+function shakeScreen(){
+  if(LOW) return;
+  const w=$('screenWrap');
+  if(!w) return;
+  w.classList.remove('shake');
+  void w.offsetWidth;
+  w.classList.add('shake');
+  setTimeout(function(){ w.classList.remove('shake'); },360);
+}
+function curePet(pet){
+  pet.sick=false;
+  pet.critical=false;
+  pet.riskAcc=0;
+  pet.sickSince=0;
+  pet.medsGiven=0;
+  pet.rescueUntil=0;
+  pet.rescuePresses=0;
+  pet.rescueWindow=false;
+  pet.health=clamp(num(pet.health,0)+12,0,100);
+}
+function takeMedicine(){
+  const pet=state.pet;
+  if(!pet||ui.endCard) return;
+  if(!pet.sick){ say(t('medNoSick'),1200); return; }
+  const left=cdLeft(pet,'med',MED_CD);
+  if(left>0){ say(t('waitSec',{n:Math.ceil(left/1000)}),1100); return; }
+  markAction(pet,'med');
+  careTick(pet,'med');
+  ui.page=null;
+  ui.menu=false;
+  shakeScreen();
+  startAnim('med',700);
+  sfx('med');
+  if(pet.critical){
+    pet.medsGiven=clamp(num(pet.medsGiven,0)+1,0,2);
+    if(pet.medsGiven>=2){
+      curePet(pet);
+      say(t('medSecond'),2000);
+    }else{
+      pet.health=clamp(pet.health+6,0,100);
+      say(t('medMore',{n:8}),1800);
+    }
+  }else{
+    curePet(pet);
+    say(t('medCured'),1800);
+  }
+  saveState();
+  render();
+}
+/* 重症抢救：连按 B 八下 */
+function pressRescue(){
+  const pet=state.pet;
+  if(!pet||!pet.critical) return;
+  pet.rescuePresses=clamp(num(pet.rescuePresses,0)+1,0,8);
+  sfx('rescue');
+  haptic(8);
+  if(pet.rescuePresses>=8){
+    pet.critical=false;
+    pet.rescueUntil=0;
+    pet.rescuePresses=0;
+    pet.rescueWindow=false;
+    pet.health=Math.max(num(pet.health,0),40);
+    careTick(pet,'rescue');
+    say(t('rescueDone'),2200);
+    ambientBurst('heart',2);
+  }else{
+    say(t('rescuePress',{n:pet.rescuePresses}),650);
+  }
+  startAnim('pet',300);
+  saveState();
+  render();
+}
+function petCause(pet){
+  if(pet.hunger<15) return t('cause_hunger');
+  if(pet.clean<15||pet.poops.length>=2) return t('cause_dirty');
+  return t('cause_neglect');
+}
+function fmtAge(ms){
+  const m=Math.max(0,Math.floor(num(ms,0)/MIN));
+  if(m<60) return t('unit_min',{n:Math.max(1,m)});
+  const h=Math.floor(m/60), mm=m%60;
+  if(h<24) return t('unit_hour',{n:h})+(mm?' '+t('unit_min',{n:mm}):'');
+  return t('unit_day',{n:Math.floor(h/24)})+' '+t('unit_hour',{n:h%24});
+}
+function makeRecord(pet,kind){
+  const now=Date.now();
+  return {
+    species:pet.species, name:pet.name, nickname:pet.nickname||'',
+    shape:pet.shape, r:pet.r||1, kind:kind,
+    form:pet.form||'', persona:pet.persona||personaFor(pet.species).id,
+    cause:kind==='dead'?petCause(pet):'',
+    bornAt:num(pet.bornAt,now), endedAt:now,
+    ageMs:Math.max(0,now-num(pet.bornAt,now)),
+    bond:Math.round(num(pet.bond,0)),
+    tauntCount:Math.round(num(pet.tauntCount,0)),
+    sample:!!state.sampleMode
+  };
+}
+/* 命名：好感达到本性格阈值后解锁；详情页按 B 进入 */
+function nameReady(pet){
+  if(!pet||pet.nickname) return false;
+  return !!pet.nickUnlocked||num(pet.bond,0)>=personaOf(pet).nickBond;
+}
+function checkNameUnlock(now){
+  const pet=state.pet;
+  if(!pet||pet.nickname||pet.nickUnlocked) return;
+  if(num(pet.bond,0)>=personaOf(pet).nickBond){
+    pet.nickUnlocked=true;
+    /* 生病/重症时只解锁不播报，避免盖掉病情；详情页仍可取名 */
+    if(!pet.sick&&!pet.critical){
+      ui.msg=t('nameUnlock');
+      /* 给一分钟，避免正好被访客/动作台词盖掉 */
+      ui.msgUntil=(now||Date.now())+60000;
+    }
+    saveState();
+  }
+}
+function confirmName(){
+  const pet=state.pet;
+  if(!pet||!nameReady(pet)){ ui.page=null; render(); return; }
+  const list=nameChoices();
+  const nm=list[clamp(ui.nameSel,0,list.length-1)];
+  pet.nickname=nm;
+  pet.nickUnlocked=true;
+  pet.mood=clamp(num(pet.mood,0)+3,0,100);
+  bondAdd(pet,2);
+  ui.page=null;
+  say(t('nameDone',{name:nm}),2200);
+  ambientBurst('heart',4);
+  saveState();
+  render();
+}
+function canGraduate(){
+  const p=state.pet;
+  if(!p||state.sampleMode) return false;
+  return p.stage==='adult'&&num(p.bond,0)>=60&&!p.sick&&!p.critical&&!ui.play;
+}
+function doGraduate(){
+  const pet=state.pet;
+  if(!pet) return;
+  if(!canGraduate()){
+    ui.page=null;
+    if(state.sampleMode){ say(t('grDemo'),1500); return; }
+    const need=[];
+    if(pet.stage!=='adult') need.push(t('grAdult'));
+    if(num(pet.bond,0)<60) need.push(t('grBond'));
+    if(pet.sick||pet.critical) need.push(t('grCure'));
+    say(t('grNeed',{need:need.join(t('sep'))||t('grWait')}),2200);
+    return;
+  }
+  endPet('graduate');
+}
+/* 死亡 / 毕业：清空蛋位并进入演出 */
+function endPet(kind){
+  const pet=state.pet;
+  if(!pet) return;
+  if(visitTimer){ clearInterval(visitTimer); visitTimer=null; }
+  vis=null; hideBubble();
+  if(kind==='dead') state.pendingDeathTaunt=true;
+  const rec=makeRecord(pet,kind);
+  /* 毕业回写主游戏：只发一次，父页按 id 去重后发金币；死亡不发 */
+  if(kind==='graduate'&&!rec.sample&&inFrame){
+    try{
+      window.parent.postMessage({
+        type:'yueba-tamago-graduate',
+        id:'tg-'+rec.endedAt+'-'+rec.species+'-'+rec.bond,
+        kind:kind, species:rec.species, bond:rec.bond, ageMs:rec.ageMs
+      },'*');
+    }catch(e){}
+  }
+  if(!rec.sample){
+    state.gallery=Array.isArray(state.gallery)?state.gallery:[];
+    state.gallery.push(rec);
+    if(state.gallery.length>40) state.gallery=state.gallery.slice(state.gallery.length-40);
+  }
+  state.pet=null;
+  if(playTimer){ clearInterval(playTimer); playTimer=null; }
+  if(animTimer){ clearInterval(animTimer); animTimer=null; }
+  ui.play=null; ui.menu=false; ui.page=null; ui.anim=null;
+  ui.msg=''; ui.msgUntil=0;
+  ambient=[]; ambientNext=0;
+  ui.endCard={kind:kind,record:rec,t0:Date.now(),phase:'shutdown'};
+  saveState();
+  sfx(kind==='dead'?'death':'graduate');
+  if(kind==='dead') haptic(30);
+  const cardAt=kind==='dead'?2600:1600;
+  setTimeout(function(){
+    if(ui.endCard&&ui.endCard.record===rec&&ui.endCard.phase==='shutdown'){
+      ui.endCard.phase='card';
+      render();
+    }
+  },cardAt);
+  /* 关机 / 断电期间用 20fps 逐行刷新，避免只有 320ms 的待机帧 */
+  startAnim('end',cardAt);
+  /* 低功耗死亡：260ms 后补一帧黑屏，保证 300ms 内全黑 */
+  if(kind==='dead'&&LOW) setTimeout(function(){
+    if(ui.endCard&&ui.endCard.record===rec&&ui.endCard.phase==='shutdown') drawLcd();
+  },270);
+  render();
+}
+/* 蛋位空出：解封剩下的蛋；三枚都用完则重新抽三枚 */
+function releaseEggs(){
+  const left=state.eggs.filter(function(e){ return e&&!e.hatched; });
+  if(!left.length){
+    const pool=(ROSTER&&ROSTER.length)?ROSTER:SAMPLES;
+    drawEggs(pool,!(ROSTER&&ROSTER.length));
+    return;
+  }
+  for(let i=0;i<state.eggs.length;i++){
+    if(state.eggs[i]&&!state.eggs[i].hatched) state.eggs[i].sealed=false;
+  }
+  sel=Math.max(0,state.eggs.findIndex(function(e){ return e&&!e.hatched; }));
+  saveState();
+}
+function dismissEnd(){
+  if(!ui.endCard||ui.endCard.phase!=='card') return;
+  ui.endCard=null;
+  releaseEggs();
+  saveState();
+  render();
+}
+function checkEnd(){
+  const p=state.pet;
+  if(!p||ui.endCard) return;
+  if(p.health<=0){ endPet('dead'); return; }
+  if(p.critical&&p.rescueUntil&&Date.now()>p.rescueUntil) endPet('dead');
+}
+
+/* ============================================================
+   庭院访客（M4）：触发 / 入场 / 敲玻璃 / 无视 / 退场
+   ============================================================ */
+function rosterById(id){
+  const fromRoster=function(list){
+    if(!Array.isArray(list)) return null;
+    for(let i=0;i<list.length;i++){
+      if(list[i]&&list[i].id===id) return list[i];
+    }
+    return null;
+  };
+  return fromRoster(ROSTER)||fromRoster(SAMPLES);
+}
+/* 数据源：庭院当前 3 只；过滤最近 2 只；不足时在庭院内回退；单机用样机。
+   庭院非空时绝不回退到全名册——否则会抽到没来庭院的月巴。 */
+function visitorPool(){
+  const recent=Array.isArray(state.visitLog)?state.visitLog:[];
+  const out=[], seen={};
+  function add(t,ignoreRecent){
+    if(!t||!t.id||seen[t.id]) return false;
+    if(!ignoreRecent&&recent.indexOf(t.id)>=0) return false;
+    seen[t.id]=1;
+    out.push({id:t.id,name:t.name||t.id,shape:t.shape||'round',r:t.r||1,
+      color:t.color||'#8fb3a6',art:t.art||''});
+    return true;
+  }
+  const yard=Array.isArray(YARD)?YARD:[];
+  function yardRec(i){
+    const id=typeof yard[i]==='string'?yard[i]:(yard[i]&&yard[i].id);
+    if(!id) return null;
+    return rosterById(id)||{id:id,name:t('yardBanny'),shape:'round',r:1,color:'#8fb3a6',art:''};
+  }
+  /* 连上主游戏但庭院为空：不生成访客（走「今天没人来看你」） */
+  if(!yard.length&&inFrame&&!state.sampleMode) return [];
+  for(let i=0;i<yard.length;i++) add(yardRec(i));
+  /* 庭院有月巴但都刚来过：只在庭院内回退，挑最久没来的那只 */
+  if(yard.length&&!out.length){
+    let best=null, bestIdx=Infinity;
+    for(let i=0;i<yard.length;i++){
+      const rec=yardRec(i);
+      if(!rec) continue;
+      const idx=recent.indexOf(rec.id);
+      if(idx<0){ best=rec; break; }
+      if(idx<bestIdx){ bestIdx=idx; best=rec; }
+    }
+    if(best) add(best,true);
+    return out;
+  }
+  if(!yard.length&&!out.length&&ROSTER&&ROSTER.length){
+    for(let i=0;i<ROSTER.length;i++) add(ROSTER[i]);
+  }
+  if(!yard.length&&!out.length&&(state.sampleMode||!inFrame)){
+    for(let i=0;i<SAMPLES.length;i++) add(SAMPLES[i]);
+  }
+  return out;
+}
+/* ---------- 访客原立绘：DOM 层渲染，不做像素化 ----------
+   有主游戏下发的 PNG 就原样用 <img>；离线 / 没图时按同一套立绘几何本地重建 SVG。 */
+function shadeHex(hex,amt){
+  const n=parseInt(hex.slice(1),16);
+  const r=clamp((n>>16)+amt,0,255), g=clamp(((n>>8)&255)+amt,0,255), b=clamp((n&255)+amt,0,255);
+  return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
+function bodySVG(sh,c,dk){
+  const f='fill="'+c+'"', s='stroke="'+dk+'" stroke-width="1.4"';
+  switch(sh){
+    case 'round':  return '<circle cx="20" cy="21" r="13" '+f+' '+s+'/>';
+    case 'tall':   return '<ellipse cx="20" cy="22" rx="9.5" ry="14" '+f+' '+s+'/>';
+    case 'wide':   return '<ellipse cx="20" cy="22" rx="15" ry="10.5" '+f+' '+s+'/>';
+    case 'squish': return '<ellipse cx="20" cy="24" rx="13.5" ry="9" '+f+' '+s+'/>';
+    case 'cube':   return '<rect x="8" y="9" width="24" height="25" rx="5" '+f+' '+s+'/>';
+    case 'big':    return '<ellipse cx="20" cy="22" rx="16" ry="13" '+f+' '+s+'/>';
+    case 'bean':   return '<circle cx="15.5" cy="22" r="9.5" '+f+' '+s+'/><circle cx="24.5" cy="22" r="9.5" '+f+' '+s+'/>';
+    case 'heart':  return '<path d="M20 32 C10 24 6 17 9 12 C12 7.5 17 8 20 12 C23 8 28 7.5 31 12 C34 17 30 24 20 32 Z" '+f+' '+s+'/>';
+    case 'drop':   return '<path d="M20 7 C26 15 29 20 29 25 A9 9 0 1 1 11 25 C11 20 14 15 20 7 Z" '+f+' '+s+'/>';
+    case 'star':   return '<path d="M20 8 L23.6 16.8 L32.6 17.2 L25.6 22.9 L28.4 31.4 L20 26.6 L11.6 31.4 L14.4 22.9 L7.4 17.2 L16.4 16.8 Z" '+f+' '+s+'/>';
+    case 'spike':  return '<circle cx="20" cy="25" r="10" '+f+' '+s+'/><path d="M14 11 L16 4 L20 10 L24 3 L27 11 L25 14 L15 14 Z" '+f+' '+s+'/>';
+    case 'crown':  return '<circle cx="20" cy="25" r="11" '+f+' '+s+'/><path d="M13 13 L16 6 L20 11 L24 5 L27 12 Z" '+f+' '+s+'/>';
+    case 'moon':   return '<path d="M27 5 A14 14 0 1 0 27 35 A11 11 0 1 1 27 5 Z" '+f+' '+s+'/>';
+    case 'ghost':  return '<path d="M8 12 A12 12 0 0 1 32 12 L32 30 L27 25 L22 30 L17 25 L12 30 L8 26 Z" '+f+' '+s+'/>';
+    case 'rainbow':return '<path d="M12 27 A10 10 0 0 1 28 27 L25 27 A7 7 0 0 0 15 27 Z" '+f+' '+s+'/>';
+    case 'chaos':  return '<circle cx="20" cy="21" r="12.5" '+f+' '+s+'/>';
+    default:       return '<circle cx="20" cy="21" r="13" '+f+' '+s+'/>';
+  }
+}
+function visitorSvg(who){
+  const shape=who.shape||'round';
+  const c=/^#[0-9a-f]{6}$/i.test(who.color||'')?who.color:'#8fb3a6';
+  const body=bodySVG(shape,c,shadeHex(c,-26));
+  const h=hashId(who.id||'');
+  const eye=h%4, mouth=(h>>2)%4;
+  const ex1=shape==='tall'?11:shape==='wide'?12:10, ex2=30-ex1;
+  let eyes, mm;
+  if(eye===0) eyes='<circle cx="'+ex1+'" cy="18" r="2.4" fill="#3b3654"/><circle cx="'+ex2+'" cy="18" r="2.4" fill="#3b3654"/>';
+  else if(eye===1) eyes='<ellipse cx="'+ex1+'" cy="18" rx="2.5" ry="3" fill="#3b3654"/><ellipse cx="'+ex2+'" cy="18" rx="2.5" ry="3" fill="#3b3654"/>';
+  else if(eye===2) eyes='<path d="M'+ex1+' 15.5 l2.4 2.5 l-2.4 2.5 l-2.4 -2.5 z" fill="#3b3654"/><path d="M'+ex2+' 15.5 l2.4 2.5 l-2.4 2.5 l-2.4 -2.5 z" fill="#3b3654"/>';
+  else eyes='<path d="M'+(ex1-2)+' 18 h4 M'+(ex2-2)+' 18 h4" stroke="#3b3654" stroke-width="1.8" stroke-linecap="round"/>';
+  if(mouth===0) mm='<path d="M14 23.5 Q17 27 20 23.5 Q23 27 26 23.5" stroke="#3b3654" stroke-width="1.8" fill="none" stroke-linecap="round"/>';
+  else if(mouth===1) mm='<circle cx="20" cy="24.5" r="2.4" fill="#3b3654"/>';
+  else if(mouth===2) mm='<path d="M15 25.5 Q20 29 25 25.5 L25 26.5 Q20 30 15 26.5 Z" fill="#3b3654"/>';
+  else mm='<path d="M15 26 Q20 24.5 25 26" stroke="#3b3654" stroke-width="1.8" fill="none" stroke-linecap="round"/>';
+  const hi='<circle cx="13.5" cy="10.5" r="2.1" fill="rgba(255,255,255,.5)"/>';
+  return '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">'+body+eyes+mm+hi+'</svg>';
+}
+let visitorNode=null, visitorKey='', visitorPopTimer=null, visitorHopTimer=null;
+function clearVisitor(){
+  if(visitorPopTimer){ clearTimeout(visitorPopTimer); visitorPopTimer=null; }
+  if(visitorHopTimer){ clearTimeout(visitorHopTimer); visitorHopTimer=null; }
+  if(visitorEl) visitorEl.innerHTML='';
+  visitorNode=null; visitorKey='';
+}
+function mountVisitor(who){
+  clearVisitor();
+  const vb=document.createElement('div'); vb.className='vb';
+  const art=document.createElement('div'); art.className='vbArt';
+  if(who.art){
+    const img=document.createElement('img');
+    img.alt=''; img.decoding='async';
+    img.onerror=function(){ art.innerHTML=visitorSvg(who); };
+    img.src=who.art;
+    art.appendChild(img);
+  }else{
+    art.innerHTML=visitorSvg(who);
+  }
+  vb.appendChild(art);
+  visitorEl.appendChild(vb);
+  visitorNode=vb;
+  visitorKey=(who.id||'')+'|'+(who.art||'')+'|'+(who.shape||'');
+}
+function syncVisitor(){
+  if(!visitorEl) return;
+  if(!vis||!state.pet||ui.endCard||ui.page){
+    if(visitorNode) clearVisitor();
+    return;
+  }
+  const key=(vis.pet.id||'')+'|'+(vis.pet.art||'')+'|'+(vis.pet.shape||'');
+  if(!visitorNode||visitorKey!==key) mountVisitor(vis.pet);
+  visitorNode.style.left=Math.round(vis.x*2)+'px';
+  const walking=vis.phase==='in'||vis.phase==='out';
+  visitorNode.classList.toggle('walk',walking);
+  if(walking){ visitorNode.classList.remove('pop'); return; }
+  if(vis.phase==='open'&&!visitorNode.classList.contains('pop')&&!visitorPopTimer){
+    visitorNode.classList.add('pop');
+    visitorPopTimer=setTimeout(function(){
+      visitorPopTimer=null;
+      if(visitorNode) visitorNode.classList.remove('pop');
+    },480);
+  }
+}
+/* 敲玻璃：访客原地 Q 弹一下 */
+function visitorHop(){
+  if(!visitorNode) return;
+  visitorNode.classList.remove('hop');
+  void visitorNode.offsetWidth;
+  visitorNode.classList.add('hop');
+  if(visitorHopTimer) clearTimeout(visitorHopTimer);
+  visitorHopTimer=setTimeout(function(){
+    visitorHopTimer=null;
+    if(visitorNode) visitorNode.classList.remove('hop');
+  },440);
+}
+function syncBubble(){
+  if(!vis||!vis.line){ bubbleEl.classList.remove('show'); return; }
+  if(bubbleMain.textContent!==vis.line) bubbleMain.textContent=vis.line;
+  const sub=vis.petLine||'';
+  if(bubbleSub.textContent!==sub) bubbleSub.textContent=sub;
+  bubbleEl.classList.add('show');
+}
+function hideBubble(){ bubbleEl.classList.remove('show'); }
+function clearVisit(){
+  if(visitTimer){ clearInterval(visitTimer); visitTimer=null; }
+  vis=null;
+  hideBubble();
+}
+function startVisit(){
+  const pet=state.pet;
+  if(!pet||vis||ui.endCard||hatchState) return false;
+  const pool=visitorPool();
+  if(!pool.length){
+    if(!YARD.length&&!state.sampleMode) say(t('nobody'),3200);
+    pet.nextVisitAt=0;
+    pet.nextVisitCheck=Date.now()+VISIT_CHECK;
+    saveState();
+    return false;
+  }
+  const who=pool[Math.floor(Math.random()*pool.length)];
+  const side=Math.random()<0.5?'left':'right';
+  const entry=side==='left'?-40:168;
+  const stop=side==='left'?4:124;
+  vis={
+    pet:who, side:side, phase:'in', t0:Date.now(), x:entry,
+    startX:entry, endX:stop, line:'', petLine:'', knocks:0, tomato:false
+  };
+  state.visitLog=Array.isArray(state.visitLog)?state.visitLog:[];
+  state.visitLog.push(who.id);
+  if(state.visitLog.length>2) state.visitLog=state.visitLog.slice(-2);
+  /* 累计来访次数：5 次换常客语气，10 次带礼物 */
+  state.visitorSeen=state.visitorSeen||{};
+  const seen=state.visitorSeen[who.id]||{count:0,lastAt:0};
+  seen.count=clamp(num(seen.count,0)+1,0,9999);
+  seen.lastAt=Date.now();
+  state.visitorSeen[who.id]=seen;
+  pet.nextVisitAt=0;
+  pet.nextVisitCheck=Date.now()+VISIT_CHECK;
+  pet.lastVisitAt=Date.now();
+  saveState();
+  if(visitTimer) clearInterval(visitTimer);
+  visitTimer=setInterval(visitTick,80);
+  render();
+  return true;
+}
+/* 开口：选一句嘲讽，首次被嘲讽心情 −2，累计被嘲次数 */
+function openVisit(){
+  const pet=state.pet;
+  vis.phase='open'; vis.t0=Date.now();
+  const count=visitCount(vis.pet&&vis.pet.id);
+  let line=tauntOne('open'), kind='open';
+  if(state.pendingDeathTaunt){ line=tauntOne('death'); kind='death'; state.pendingDeathTaunt=false; }
+  else if(pet&&pet.critical){ line=tauntOne('crit'); kind='crit'; }
+  else if(pet&&pet.sick){ line=tauntOne('sick'); kind='sick'; }
+  else if(pet&&num(pet.ignoredCount,0)>=3){
+    line=tauntOne('steal'); kind='steal';
+    pet.ignoredCount=0;
+  }else if(count>=10&&count%10===0){
+    line=tauntOne('gift'); kind='gift';
+    vis.gift=true;
+    if(pet){
+      pet.mood=clamp(num(pet.mood,70)+5,0,100);
+      bondAdd(pet,1);
+    }
+  }else if(count>=5){
+    line=tauntOne('friendly'); kind='friendly';
+  }
+  vis.kind=kind;
+  vis.line=line;
+  vis.petLine=t('pet_quiet');
+  sfx('taunt');
+  if(pet){
+    if(kind!=='friendly'&&kind!=='gift'){
+      pet.tauntCount=clamp(num(pet.tauntCount,0)+1,0,99999);
+    }
+    if(pet.stats) pet.stats.visit=clamp(num(pet.stats.visit,0)+1,0,999999);
+    if(kind==='friendly') pet.mood=clamp(num(pet.mood,70)+1,0,100);
+    else if(kind!=='gift') pet.mood=clamp(num(pet.mood,70)-2,0,100);
+  }
+  syncBubble();
+  saveState();
+  render();
+}
+function stayVisit(){
+  vis.phase='stay'; vis.t0=Date.now();
+  render();
+}
+function beginOut(line,petLine){
+  if(!vis) return;
+  vis.phase='out'; vis.t0=Date.now();
+  if(line) vis.line=line;
+  if(petLine) vis.petLine=petLine;
+  syncBubble();
+  render();
+}
+function finishVisit(){
+  const pet=state.pet;
+  clearVisit();
+  if(pet){
+    pet.afterVisitUntil=Date.now()+VISIT_TURN;
+    pet.nextVisitAt=0;
+    pet.nextVisitCheck=Date.now()+VISIT_CHECK;
+    saveState();
+  }
+  ui.msg=t('visitorLeft');
+  ui.msgUntil=Date.now()+2000;
+  render();
+}
+function visitTick(){
+  if(!vis){
+    if(visitTimer){ clearInterval(visitTimer); visitTimer=null; }
+    return;
+  }
+  if(document.hidden) return;
+  if(!state.pet||ui.endCard){ clearVisit(); render(); return; }
+  const el=Date.now()-vis.t0;
+  if(vis.phase==='in'){
+    const k=clamp(el/VISIT_IN,0,1);
+    vis.x=vis.startX+(vis.endX-vis.startX)*k;
+    if(el>=VISIT_IN) openVisit();
+  }else if(vis.phase==='open'){
+    if(el>=VISIT_OPEN) stayVisit();
+  }else if(vis.phase==='stay'){
+    if(el>=VISIT_STAY) beginOut(tauntOne('leave'),t('pet_follow'));
+  }else if(vis.phase==='out'){
+    const k=clamp(el/VISIT_OUT,0,1);
+    vis.x=vis.endX+(vis.startX-vis.endX)*k;
+    if(el>=VISIT_OUT){ finishVisit(); return; }
+  }
+  syncVisitor();
+  drawLcd();
+}
+/* 敲玻璃：1–3 次回更欠的台词，第 3 次提前退场（心情 +4） */
+function knockVisit(){
+  const pet=state.pet;
+  if(!vis||vis.phase!=='stay') return;
+  vis.knocks++;
+  vis.line=tauntList('knock')[Math.min(vis.knocks,3)-1];
+  vis.petLine=t('pet_hop');
+  sfx('knock');
+  haptic(10);
+  startAnim('startle',420);
+  visitorHop();
+  if(vis.knocks>=3){
+    if(pet){
+      pet.mood=clamp(num(pet.mood,70)+4,0,100);
+      saveState();
+    }
+    beginOut(tauntOne('leave'),t('pet_watch'));
+  }else{
+    syncBubble();
+    render();
+  }
+}
+/* 无视：访客自嘲一句后离开 */
+function ignoreVisit(){
+  if(!vis||vis.phase!=='stay') return;
+  const pet=state.pet;
+  if(pet) pet.ignoredCount=clamp(num(pet.ignoredCount,0)+1,0,99);
+  vis.line=tauntOne('ignore');
+  beginOut('',t('pet_relief'));
+  saveState();
+}
+/* 访客在场时喂番茄：只走这条专属台词，不扣番茄、不写主存档 */
+function visitTomato(){
+  const pet=state.pet;
+  if(!pet||!vis||vis.phase==='in'||vis.phase==='out') return;
+  if(cdLeft(pet,'feedTomato',20000)>0) return;
+  markAction(pet,'feedTomato');
+  pet.mood=clamp(num(pet.mood,70)-3,0,100);
+  bondAdd(pet,1);
+  vis.tomato=true;
+  vis.line=tauntOne('tomato');
+  vis.petLine=t('pet_turn');
+  startAnim('refuse',900);
+  syncBubble();
+  saveState();
+  render();
+}
+/* 每秒检查：首访 45 秒；之后 3 分钟一次 35%，两次至少隔 8 分钟 */
+function tickVisit(now){
+  const pet=state.pet;
+  if(!pet||vis||ui.endCard||hatchState) return;
+  if(now<ui.bootUntil) return;
+  if(FOCUS) return;
+  if(pet.sleeping||pet.critical||ui.play||ui.menu||ui.page) return;
+  const first=num(pet.nextVisitAt,0);
+  if(first&&now>=first){ startVisit(); return; }
+  const at=num(pet.nextVisitCheck,0);
+  if(at&&now>=at){
+    pet.nextVisitCheck=now+VISIT_CHECK;
+    if(pet.lastVisitAt&&now-pet.lastVisitAt<VISIT_GAP){ saveState(); return; }
+    if(Math.random()<0.35) startVisit();
+    else saveState();
+  }
+}
+
+/* ---------- 小游戏：三回合节奏条 ---------- */
+function startPlay(){
+  const pet=state.pet;
+  if(!pet) return;
+  if(pet.sick){ say(t('playSick'),1600); return; }
+  const left=cdLeft(pet,'play',5*MIN);
+  if(left>0){
+    const s=Math.ceil(left/1000);
+    say(t('playWait',{time:s>=60?t('unit_min',{n:Math.ceil(s/60)}):t('unit_sec',{n:s})}),1600);
+    return;
+  }
+  markAction(pet,'play');
+  ui.menu=false;
+  ui.play={round:0,hits:0,phase:'run',t0:0,dur:1600,pos:0,zone:0.3,zw:0.2,
+    nextAt:0,lastHit:null,msg:t('playStart')};
+  startRound(0);
+  if(playTimer) clearInterval(playTimer);
+  playTimer=setInterval(playTick,33);
+  saveState();
+  render();
+}
+function startRound(i){
+  const p=ui.play;
+  if(!p) return;
+  const now=Date.now();
+  if(i>=3){
+    p.phase='end';
+    p.nextAt=now+800;
+    p.msg=p.hits>=2?t('playGood'):t('playBad');
+    return;
+  }
+  p.round=i; p.phase='run'; p.t0=now; p.pos=0; p.lastHit=null;
+  p.dur=1600-i*250;
+  p.zw=0.2-i*0.02;
+  p.zone=0.12+Math.random()*(0.76-p.zw);
+  p.msg=t('playRound',{n:i+1});
+}
+function pressPlay(){
+  const p=ui.play;
+  if(!p||p.phase!=='run') return;
+  const center=p.zone+p.zw/2;
+  const hit=Math.abs(p.pos-center)<=p.zw/2;
+  if(hit) p.hits++;
+  p.lastHit=hit;
+  p.phase='result';
+  p.nextAt=Date.now()+480;
+  p.msg=hit?t('playHit'):t('playMiss');
+  sfx(hit?'hit':'miss');
+  drawLcd();
+  updateText();
+}
+function playTick(){
+  const p=ui.play;
+  if(!p) return;
+  const now=Date.now();
+  if(p.phase==='run'){
+    p.pos=clamp((now-p.t0)/p.dur,0,1);
+    if(p.pos>=1){
+      p.lastHit=false;
+      p.phase='result';
+      p.nextAt=now+480;
+      p.msg=t('playNoCatch');
+    }
+  }else if(p.phase==='result'&&now>=p.nextAt){
+    startRound(p.round+1);
+  }else if(p.phase==='end'&&now>=p.nextAt){
+    finishPlay();
+    return;
+  }
+  drawLcd();
+  updateText();
+}
+function finishPlay(){
+  const p=ui.play;
+  if(!p) return;
+  const pet=state.pet;
+  ui.play=null;
+  if(playTimer){ clearInterval(playTimer); playTimer=null; }
+  if(pet){
+    if(p.hits>=2){
+      pet.mood=clamp(pet.mood+8,0,100);
+      bondAdd(pet,3);
+      say(t('playEndGood'),2000);
+      sfx('good');
+      ambientBurst('star',3);
+    }else{
+      pet.mood=clamp(pet.mood+1,0,100);
+      bondAdd(pet,1);
+      say(t('playEndBad'),2000);
+      sfx('bad');
+      ambientBurst('star',1);
+    }
+    careTick(pet,'play');
+    saveState();
+  }
+  render();
+}
+function cancelPlay(){
+  if(!ui.play) return;
+  ui.play=null;
+  if(playTimer){ clearInterval(playTimer); playTimer=null; }
+  say(t('playCancel'),1200);
+}
+
+/* ---------- 时钟：在线结算 / 自动存盘 ---------- */
+function startClock(){
+  if(clockTimer) clearInterval(clockTimer);
+  lastTick=Date.now();
+  clockTimer=setInterval(function(){
+    if(document.hidden) return;
+    const now=Date.now();
+    let dt=clamp(now-lastTick,0,60*MIN);
+    lastTick=now;
+    if(state.pet){
+      if(!ui.play&&!ui.endCard) simulate(dt,false);
+      if(state.pet){
+        state.pet.lastSeen=now;
+        saveAcc+=dt;
+        if(saveAcc>=10000){ saveAcc=0; saveState(); }
+        checkEnd();
+        if(state.pet) tickVisit(now);
+      }
+      if(state.pet) checkNameUnlock(now);
+      updateText();
+      drawLcd();
+    }
+  },1000);
+}
+
+/* ---------- 屏幕文字 ---------- */
+function setText(s){
+  if(lcdText.textContent!==s) lcdText.textContent=s;
+}
+let bubbleTimer=null;
+function updateText(){
+  syncDim();
+  syncLcdAria();
+  lcdText.classList.toggle('compact',ui.page==='stats'||ui.page==='visitors');
+  const mode=currentMode();
+  if(mode==='end'){
+    const e=ui.endCard, r=e.record;
+    if(e.phase!=='card'){
+      setText(e.kind==='dead'?t('endShutdown'):t('endArchiving'));
+      return;
+    }
+    if(e.kind==='dead'){
+      setText(t('endDead',{name:recName(r),age:fmtAge(r.ageMs),bond:r.bond,
+        taunt:r.tauntCount,cause:r.cause||''}));
+    }else{
+      const n=Math.max(0,parseInt(e.reward,10)||0);
+      setText(n?t('endGradReward',{name:recName(r),age:fmtAge(r.ageMs),bond:r.bond,n:n}):
+        t('endGrad',{name:recName(r),age:fmtAge(r.ageMs),bond:r.bond}));
+    }
+    return;
+  }
+  if(ui.tut){ setText(t('tutTip')); return; }
+  if(mode==='pet'){
+    const pet=state.pet;
+    const now=Date.now();
+    if(now<ui.bootUntil){ setText(t('boot')); return; }
+    /* 重症抢救窗口：最优先显示连按进度 */
+    if(pet.critical&&pet.rescueWindow&&num(pet.rescueUntil,0)>now){
+      const sec=Math.max(0,Math.ceil((pet.rescueUntil-now)/1000));
+      setText(t('rescueLine',{n:pet.rescuePresses,
+        time:sec>=120?t('unit_min',{n:Math.ceil(sec/60)}):t('unit_sec',{n:sec})}));
+      return;
+    }
+    /* 访客在场：气泡说台词，底部只留操作提示；连着主游戏时顺手带一眼番茄库存 */
+    if(vis){
+      let hint=t('visitorHint');
+      if(vis.phase==='stay'&&TOMATO>0){
+        hint=hint.replace('\n','　'+t('tomatoStock',{n:TOMATO})+'\n');
+      }
+      setText(vis.phase==='stay'?hint:'……');
+      return;
+    }
+    if(ui.page==='status'){
+      const st=stageText(pet);
+      const sick=pet.critical?t('sick_crit'):(pet.sick?t('sick_sick'):t('sick_ok'));
+      const line3=canGraduate()?t('statusGrad'):t('statusAlbum',{n:state.gallery.length});
+      setText(petName(pet)+' · '+st+'　'+ageText(pet)+'\n'+
+        t('statusLine2',{bond:Math.round(pet.bond),hp:Math.round(pet.health),state:sick})+'\n'+line3);
+      return;
+    }
+    if(ui.page==='stats'){
+      const st=pet.stats||{};
+      const hint=nameReady(pet)?t('statsHintName'):t('statsHint');
+      setText(t('statsLine1',{name:petName(pet),stage:stageText(pet),age:ageText(pet)})+'\n'+
+        t('statsLine2',{bond:Math.round(pet.bond),max:Math.round(num(st.maxBond,0)),
+          persona:personaLabel(pet)})+'\n'+
+        t('statsLine3',{feed:Math.round(num(st.feed,0)),play:Math.round(num(st.play,0)),
+          clean:Math.round(num(st.clean,0)),pet:Math.round(num(st.pet,0))})+'\n'+
+        t('statsLine4',{med:Math.round(num(st.med,0)),rescue:Math.round(num(st.rescue,0)),
+          visit:Math.round(num(st.visit,0)),sick:Math.round(num(st.sick,0))})+'\n'+
+        t('statsLine5',{care:Math.round(num(pet.careCount,0)),
+          taunt:Math.round(num(pet.tauntCount,0))})+'\n'+
+        hint);
+      return;
+    }
+    if(ui.page==='visitors'){
+      const list=visitorRecords();
+      if(!list.length){ setText(t('visitorEmpty')); return; }
+      let line=t('visitorTitle');
+      const n=Math.min(4,list.length);
+      for(let i=0;i<n;i++){
+        const r=list[i];
+        const ago=r.lastAt>0?fmtAgo(now-r.lastAt):t('agoJust');
+        line+='\n'+(i+1)+' '+r.name+' ×'+r.count+'　'+ago;
+      }
+      setText(line+'\n'+t('visitorBack'));
+      return;
+    }
+    if(ui.page==='name'){
+      const list=nameChoices();
+      let line='';
+      for(let i=0;i<list.length;i++) line+=(i?'　':'')+(i===ui.nameSel?'▶':'　')+list[i];
+      setText(t('namePrompt')+'\n'+line+'\n'+t('nameHint'));
+      return;
+    }
+    if(ui.page==='album'){
+      const g=state.gallery;
+      if(!g.length){ setText(t('albumEmpty')); return; }
+      const i=clamp(ui.albumIdx,0,g.length-1);
+      const r=g[i];
+      setText(t('albumLine1',{i:i+1,n:g.length,name:recName(r)})+'\n'+
+        (r.kind==='graduate'?t('albumGrad'):t('albumDead'))+'　'+fmtAge(r.ageMs)+'\n'+
+        (r.kind==='graduate'?t('albumLineGrad',{bond:r.bond}):
+          t('albumLineDead',{cause:r.cause||'——'}))+'\n'+t('albumBack'));
+      return;
+    }
+    if(ui.play){
+      setText(ui.play.msg+'\n'+(ui.play.phase==='run'?t('playHint'):'……'));
+      return;
+    }
+    if(ui.msg&&now<ui.msgUntil){ setText(ui.msg); return; }
+    if(ui.menu){
+      let line='';
+      for(let i=0;i<FEED.length;i++){
+        line+=(i?'　':'')+(i===ui.menuSel?'▶':'　')+t('feed_'+FEED[i].key);
+      }
+      setText(t('feedPrompt')+'\n'+line);
+      return;
+    }
+    if(pet.sleeping){
+      setText(t('sleepLine',{name:petName(pet)}));
+      return;
+    }
+    if(pet.critical){
+      setText(t('critLine',{name:petName(pet),stage:stageText(pet),hp:Math.round(pet.health)}));
+      return;
+    }
+    setText(t('petStat',{name:petName(pet),stage:stageText(pet),
+      sick:pet.sick?t('sickSuffix'):'',h:Math.round(pet.hunger),
+      m:Math.round(pet.mood),c:Math.round(pet.clean)})+(FOCUS?'\n'+t('focusTag'):''));
+  }else if(mode==='hatch'){
+    /* 文字在演出末段由 hatchTick 写入 */
+  }else if(state.eggs.length){
+    setText((state.sampleMode?t('demoEggsLine')+'\n':'')+t('eggPrompt'));
+  }else{
+    setText(state.sampleMode?t('demoEggs'):t('connecting'));
+  }
+}
+
+/* ---------- 语言落 DOM（M5） ---------- */
+function applyLangDom(){
+  document.documentElement.lang=LANG==='zh'?'zh-CN':LANG;
+  document.title=t('title');
+  if(device) device.setAttribute('aria-label',t('ariaDevice'));
+  if(cv) cv.setAttribute('aria-label',t('ariaLcd'));
+  if(swatches) swatches.setAttribute('aria-label',t('ariaShell'));
+  [['A','keyA','keySelect'],['B','keyB','keyConfirm'],['C','keyC','keyCancel']].forEach(function(k){
+    const b=document.querySelector('.key[data-k="'+k[0]+'"]');
+    if(!b) return;
+    b.setAttribute('aria-label',t(k[1]));
+    const s=b.querySelector('small');
+    if(s) s.textContent=t(k[2]);
+  });
+  [['btnExport','toolExport'],['btnImport','toolImport'],['btnReset','toolReset']].forEach(function(pair){
+    const b=$(pair[0]);
+    if(b) b.textContent=t(pair[1]);
+  });
+  const h=$('hint');
+  if(h) h.textContent=t('hint');
+  const sn=$('shellName');
+  if(sn&&state.shell) sn.textContent=t('theme_'+state.shell);
+}
+
+/* ---------- 配色 ---------- */
+function applyTheme(id){
+  const th=THEMES.filter(function(x){return x.id===id;})[0]||THEMES[0];
+  theme=th;
+  state.shell=th.id;
+  spriteCacheKeysClear();
+  document.documentElement.style.setProperty('--shell',th.shell);
+  document.documentElement.style.setProperty('--bezel',th.bezel);
+  document.documentElement.style.setProperty('--lcd',th.lcd);
+  document.documentElement.style.setProperty('--ink',th.ink);
+  document.documentElement.style.setProperty('--ghost',th.ghost);
+  document.documentElement.style.setProperty('--label',th.label);
+  document.documentElement.style.setProperty('--key-ink',th.keyInk);
+  $('shellName').textContent=t('theme_'+th.id);
+  document.querySelector('meta[name="theme-color"]').setAttribute('content',th.shell);
+  const btns=swatches.children;
+  for(let i=0;i<btns.length;i++){
+    btns[i].setAttribute('aria-pressed',btns[i].dataset.id===th.id?'true':'false');
+  }
+  saveState();
+  render();
+}
+function spriteCacheKeysClear(){
+  for(const k in spriteCache) delete spriteCache[k];
+}
+function buildSwatches(){
+  let html='';
+  for(let i=0;i<THEMES.length;i++){
+    const th=THEMES[i], name=t('theme_'+th.id);
+    html+='<button class="swatch" data-id="'+th.id+'" title="'+name+'" aria-label="'+name+'"'+
+      ' style="--sw:'+th.shell+'" onclick="pickShell(\''+th.id+'\')"></button>';
+  }
+  swatches.innerHTML=html;
+}
+function pickShell(id){ applyTheme(id); }
+window.pickShell=pickShell;
+
+/* ---------- 渲染与动画 ---------- */
+function render(){
+  syncBubble();
+  updateText();
+  syncVisitor();
+  drawLcd();
+}
+let idleTimer=null;
+function idleTick(){
+  if(document.hidden) return;
+  if(hatchState) return;
+  frame=(frame+1)%4;
+  drawLcd();
+}
+function restartIdle(){
+  if(idleTimer) clearInterval(idleTimer);
+  idleTimer=setInterval(idleTick,LOW?500:320);
+}
+let holdTimer=null, holdStart=0;
+function startHold(){
+  if(currentMode()!=='eggs'||!state.eggs.length||holdTimer) return;
+  const e=state.eggs[sel];
+  if(!e||e.sealed||e.hatched) return;
+  holdStart=Date.now();
+  holdTimer=setInterval(function(){
+    holdP=Math.min(1,(Date.now()-holdStart)/HOLD_MS);
+    drawLcd();
+    if(holdP>=1) endHold(true);
+  },60);
+}
+function endHold(complete){
+  if(!holdTimer) return;
+  clearInterval(holdTimer); holdTimer=null;
+  holdP=0;
+  if(complete) beginHatch();
+  else drawLcd();
+}
+
+/* ---------- 孵化 ---------- */
+let hatchTimer=null, hatchTextShown=false;
+function beginHatch(){
+  const e=state.eggs[sel];
+  if(!e||e.sealed||e.hatched) return;
+  if(ui.tut){ ui.tut=null; state.tutorialDone=true; saveState(); }
+  hatchState={slot:sel,t0:Date.now()};
+  hatchTextShown=false;
+  setText('');
+  sfx('hatch');
+  if(hatchTimer) clearInterval(hatchTimer);
+  hatchTimer=setInterval(hatchTick,55);
+  drawLcd();
+}
+function hatchTick(){
+  const el=Date.now()-hatchState.t0;
+  drawLcd();
+  if(el>=2200&&!hatchTextShown){
+    hatchTextShown=true;
+    const e=hatchStateEgg();
+    const dup=state.eggs.filter(function(x){ return x.species===e.species; }).length>1;
+    const tail=(dup?t('hatchTailDup'):'')+(state.sampleMode?t('hatchTailDemo'):'');
+    setText(e.name+tail+'\n'+stageLabel('baby'));
+  }
+  if(el>=HATCH_MS) finishHatch();
+}
+function hatchStateEgg(){
+  return state.eggs[hatchState.slot]||{species:'',shape:'round',name:'',r:1};
+}
+function skipHatch(){
+  if(!hatchState) return;
+  hatchState.t0=Date.now()-HATCH_MS;
+  finishHatch();
+}
+function finishHatch(){
+  if(!hatchState) return;
+  const e=hatchStateEgg();
+  if(hatchTimer){ clearInterval(hatchTimer); hatchTimer=null; }
+  for(let i=0;i<3;i++){
+    if(i!==hatchState.slot&&state.eggs[i]) state.eggs[i].sealed=true;
+  }
+  e.sealed=false; e.hatched=true;
+  state.pet=makePet(e);
+  hatchState=null;
+  saveState();
+  render();
+}
+function makePet(egg){
+  return ensurePet({
+    species:egg.species, name:egg.name, shape:egg.shape, r:egg.r||1,
+    bornAt:Date.now(), stage:'baby',
+    hunger:70, mood:70, clean:80, health:100, bond:0,
+    sick:false, critical:false, sickSince:0,
+    riskAcc:0, rescueUntil:0, rescuePresses:0, medsGiven:0,
+    poops:[], sleeping:false, lightOff:false,
+    poopAcc:0, poopNext:90+Math.random()*30,
+    lastFeed:0, lastPlay:0, lastClean:0, lastPet:0,
+    bondLog:[],
+    careCount:0, tauntCount:0, ignoredCount:0, lastSeen:Date.now(),
+    nickname:'', nickUnlocked:false, persona:personaFor(egg.species).id,
+    form:'', q:{hunger:0,mood:0,clean:0,n:0,sick:0},
+    stats:{feed:0,play:0,clean:0,pet:0,med:0,rescue:0,visit:0,sick:0,maxBond:0},
+    feedLog:[],
+    nextVisitAt:Date.now()+VISIT_FIRST, nextVisitCheck:0, lastVisitAt:0, afterVisitUntil:0
+  });
+}
+
+/* ---------- 交互 ---------- */
+function selectNext(){
+  if(currentMode()!=='eggs'||!state.eggs.length) return;
+  for(let i=1;i<=3;i++){
+    const s=(sel+i)%3;
+    const e=state.eggs[s];
+    if(e&&!e.sealed&&!e.hatched){ sel=s; break; }
+  }
+  drawLcd();
+}
+function activateIcon(id){
+  const pet=state.pet;
+  if(!pet||ui.play||ui.endCard) return;
+  ui.page=null;
+  if(ui.menu&&id!=='feed') ui.menu=false;
+  /* 访客在场：只保留「喂番茄」这一条专属分支 */
+  if(vis){
+    if(id==='feed') visitTomato();
+    return;
+  }
+  if(id==='light'){ toggleLight(); return; }
+  if(id==='med'){ takeMedicine(); return; }
+  if(refuseAsleep()) return;
+  if(id==='feed'){
+    ui.menu=true; ui.menuSel=0; ui.sel=0;
+    ui.msgUntil=0;
+    render();
+    return;
+  }
+  if(id==='clean'){ doClean(); return; }
+  if(id==='play'){ startPlay(); }
+}
+function onA(){
+  const mode=currentMode();
+  if(mode==='end') return;
+  if(mode==='eggs'){ selectNext(); return; }
+  if(mode!=='pet'||ui.play) return;
+  if(ui.page==='status'){
+    ui.page='stats';
+    render();
+    return;
+  }
+  if(ui.page==='stats'){
+    ui.page='album';
+    ui.albumIdx=Math.max(0,state.gallery.length-1);
+    render();
+    return;
+  }
+  if(ui.page==='name'){
+    ui.nameSel=(ui.nameSel+1)%nameChoices().length;
+    render();
+    return;
+  }
+  if(ui.page==='visitors'){
+    ui.page='album';
+    ui.albumIdx=Math.max(0,state.gallery.length-1);
+    render();
+    return;
+  }
+  if(ui.page==='album'){
+    if(state.gallery.length) ui.albumIdx=(ui.albumIdx-1+state.gallery.length)%state.gallery.length;
+    render();
+    return;
+  }
+  if(ui.menu){
+    ui.menuSel=(ui.menuSel+1)%FEED.length;
+    ui.msgUntil=0;
+    render();
+    return;
+  }
+  ui.sel=(ui.sel+1)%4;
+  drawLcd();
+}
+function onB(){
+  const mode=currentMode();
+  if(mode==='end'){ dismissEnd(); return; }
+  if(mode==='hatch'){ skipHatch(); return; }
+  if(mode!=='pet') return;
+  if(ui.page==='status'){ doGraduate(); return; }
+  if(ui.page==='stats'){
+    if(nameReady(state.pet)){ ui.page='name'; ui.nameSel=0; render(); }
+    else { ui.page='status'; render(); }
+    return;
+  }
+  if(ui.page==='name'){ confirmName(); return; }
+  if(ui.page==='visitors'){ ui.page='stats'; render(); return; }
+  if(ui.page==='album'){ ui.page='visitors'; render(); return; }
+  if(ui.play){ pressPlay(); return; }
+  const pet=state.pet;
+  if(pet&&pet.critical&&pet.rescueWindow&&num(pet.rescueUntil,0)>Date.now()){ pressRescue(); return; }
+  if(vis){ if(vis.phase==='stay') knockVisit(); return; }
+  if(ui.menu){ confirmFeed(); return; }
+  activateIcon(iconsNow()[ui.sel].id);
+}
+function onC(){
+  if(ui.endCard) return;
+  if(vis){ if(vis.phase==='stay') ignoreVisit(); return; }
+  if(ui.page==='name'){ ui.page='stats'; say(t('nameLater'),1400); return; }
+  if(ui.page){ ui.page=null; render(); return; }
+  if(ui.play){ cancelPlay(); return; }
+  if(ui.menu){ ui.menu=false; say(t('cancelSay'),900); return; }
+}
+/* ---------- 音效（M5）：WebAudio 合成，无外部资源 ---------- */
+let audioCtx=null, audioMaster=null, audioLive=0;
+function audioReady(){
+  if(MUTED) return null;
+  try{
+    if(!audioCtx){
+      const AC=window.AudioContext||window.webkitAudioContext;
+      if(!AC) return null;
+      audioCtx=new AC();
+      audioMaster=audioCtx.createGain();
+      audioMaster.gain.value=0.28;
+      audioMaster.connect(audioCtx.destination);
+    }
+    if(audioCtx.state==='suspended'&&audioCtx.resume) audioCtx.resume();
+    return audioCtx;
+  }catch(e){ return null; }
+}
+function note(c,f0,f1,dur,type,vol,delay){
+  if(!c||audioLive>=2) return;
+  const t0=c.currentTime+(delay||0);
+  const o=c.createOscillator(), g=c.createGain();
+  o.type=type||'square';
+  o.frequency.setValueAtTime(f0,t0);
+  if(f1&&f1!==f0) o.frequency.linearRampToValueAtTime(f1,t0+dur);
+  g.gain.setValueAtTime(0.0001,t0);
+  g.gain.linearRampToValueAtTime(vol===undefined?0.4:vol,t0+0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  o.connect(g); g.connect(audioMaster);
+  audioLive++;
+  o.onended=function(){
+    audioLive=Math.max(0,audioLive-1);
+    try{ g.disconnect(); }catch(e){}
+  };
+  o.start(t0); o.stop(t0+dur+0.02);
+}
+const SFX={
+  click:function(c){ note(c,440,440,0.04,'square',0.35); },
+  hatch:function(c){ note(c,300,620,0.22,'triangle',0.5); },
+  eat:function(c){ note(c,520,700,0.09,'triangle',0.45); },
+  refuse:function(c){ note(c,200,200,0.09,'square',0.4); },
+  pet:function(c){ note(c,780,980,0.08,'triangle',0.4); },
+  clean:function(c){ note(c,620,300,0.1,'triangle',0.4); },
+  med:function(c){ note(c,880,880,0.06,'square',0.35); },
+  rescue:function(c){ note(c,300,300,0.05,'square',0.35); },
+  hit:function(c){ note(c,880,880,0.06,'square',0.4); },
+  miss:function(c){ note(c,220,220,0.09,'square',0.3); },
+  good:function(c){ note(c,660,880,0.16,'triangle',0.45); },
+  bad:function(c){ note(c,330,220,0.18,'triangle',0.4); },
+  taunt:function(c){ note(c,360,360,0.07,'triangle',0.35); },
+  knock:function(c){ note(c,180,180,0.05,'square',0.35); },
+  sick:function(c){ note(c,240,240,0.12,'square',0.35); },
+  death:function(c){ note(c,110,110,0.9,'triangle',0.45); },
+  graduate:function(c){ note(c,660,440,0.2,'triangle',0.4); },
+  light:function(c){ note(c,500,500,0.05,'square',0.32); }
+};
+/* 触觉：只在支持 vibrate 的设备上轻震，失败静默 */
+function haptic(ms){
+  try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){}
+}
+function sfx(kind){
+  if(MUTED) return;
+  const fn=SFX[kind];
+  if(!fn) return;
+  const c=audioReady();
+  if(c) fn(c);
+}
+
+/* ---------- 独立打开：导出 / 导入 / 重置 ---------- */
+function flash(msg){
+  if(!lcdText) return;
+  setText(msg);
+  clearTimeout(flash._t);
+  flash._t=setTimeout(function(){ render(); },1600);
+}
+function exportSave(){
+  try{
+    const blob=new Blob([JSON.stringify(state)],{type:'application/json'});
+    const a=document.createElement('a');
+    const d=new Date(), pad=function(n){ return (n<10?'0':'')+n; };
+    a.href=URL.createObjectURL(blob);
+    a.download='yueba-tamago-'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ try{ URL.revokeObjectURL(a.href); }catch(e){} },1000);
+    flash(t('ioExportOk'));
+  }catch(e){ flash(t('ioExportFail')); }
+}
+function bindTools(){
+  const ex=$('btnExport'), im=$('btnImport'), rs=$('btnReset'), file=$('importFile');
+  if(!ex||!im||!rs||!file) return;
+  ex.addEventListener('click',function(){ exportSave(); });
+  im.addEventListener('click',function(){ try{ file.value=''; file.click(); }catch(e){} });
+  file.addEventListener('change',function(){
+    const f=file.files&&file.files[0];
+    if(!f) return;
+    if(f.size>2*1024*1024){ flash(t('ioTooBig')); return; }
+    const fr=new FileReader();
+    fr.onload=function(){
+      try{
+        const txt=String(fr.result||'');
+        const obj=JSON.parse(txt);
+        if(!obj||typeof obj!=='object'||Array.isArray(obj)) throw new Error('bad');
+        localStorage.setItem(SAVE_KEY,txt);
+        suppressSave=true;
+        location.reload();
+      }catch(e){ flash(t('ioImportFail')); }
+    };
+    fr.onerror=function(){ flash(t('ioImportFail')); };
+    fr.readAsText(f);
+  });
+  rs.addEventListener('click',function(){
+    if(!window.confirm(t('ioResetConfirm'))) return;
+    suppressSave=true;
+    try{ localStorage.removeItem(SAVE_KEY); localStorage.removeItem(SAVE_BROKEN_KEY); }catch(e){}
+    location.reload();
+  });
+}
+
+function bindKeys(){
+  const bBtn=document.querySelector('.key[data-k="B"]');
+  bBtn.addEventListener('pointerdown',function(e){
+    e.preventDefault();
+    try{ if(bBtn.setPointerCapture) bBtn.setPointerCapture(e.pointerId); }catch(err){}
+    if(currentMode()==='eggs') startHold();
+    else onB();
+  });
+  bBtn.addEventListener('pointerup',function(){ endHold(false); });
+  bBtn.addEventListener('pointercancel',function(){ endHold(false); });
+  window.addEventListener('pointerup',function(){ endHold(false); });
+  window.addEventListener('blur',function(){ endHold(false); });
+  document.querySelectorAll('.key').forEach(function(btn){
+    btn.addEventListener('pointerdown',function(){
+      sfx('click');
+      btn.classList.add('press');
+      setTimeout(function(){btn.classList.remove('press');},90);
+    });
+  });
+  document.querySelector('.key[data-k="A"]').addEventListener('click',function(){ onA(); });
+  document.querySelector('.key[data-k="C"]').addEventListener('click',function(){ onC(); });
+
+  /* 直接点屏幕：点宠物摸头，点图标执行 */
+  cv.addEventListener('pointerdown',function(e){
+    if(currentMode()!=='pet') return;
+    sfx('click');
+    const r=cv.getBoundingClientRect();
+    if(!r.width||!r.height) return;
+    const lx=(e.clientX-r.left)/r.width*W;
+    const ly=(e.clientY-r.top)/r.height*H;
+    if(ui.page){ ui.page=null; render(); return; }
+    if(ui.play){ pressPlay(); return; }
+    /* 访客在场：只有左下角的喂食槽能点（喂番茄），其余不响应 */
+    if(vis){
+      if(ly>=106&&lx<40) visitTomato();
+      return;
+    }
+    /* 点顶部：状态页（含相册与归档入口） */
+    if(ly<=24){
+      ui.page='status'; ui.albumIdx=0; render(); return;
+    }
+    if(ly>=106){
+      const idx=Math.min(3,Math.max(0,Math.floor(lx/40)));
+      ui.sel=idx;
+      activateIcon(iconsNow()[idx].id);
+      return;
+    }
+    if(lx>=42&&lx<=118&&ly>=26&&ly<=100) petHead();
+  });
+}
+let bHeld=false;
+document.addEventListener('keydown',function(e){
+  const k=String(e.key||'').toLowerCase();
+  if(k==='a'||k==='arrowleft'||k==='arrowright'||k==='b'||k==='arrowup'||k==='c'||k==='arrowdown') sfx('click');
+  if(k==='a'||k==='arrowleft'||k==='arrowright'){
+    const btn=document.querySelector('.key[data-k="A"]');
+    if(btn){ btn.classList.add('press'); setTimeout(function(){btn.classList.remove('press');},90); }
+    onA();
+    e.preventDefault(); return;
+  }
+  if(k==='b'||k==='arrowup'){
+    if(e.repeat) return;
+    const btn=document.querySelector('.key[data-k="B"]');
+    if(btn){ btn.classList.add('press'); setTimeout(function(){btn.classList.remove('press');},90); }
+    if(currentMode()==='eggs'){ bHeld=true; startHold(); } else onB();
+    e.preventDefault(); return;
+  }
+  if(k==='c'||k==='arrowdown'){
+    const btn=document.querySelector('.key[data-k="C"]');
+    if(btn){ btn.classList.add('press'); setTimeout(function(){btn.classList.remove('press');},90); }
+    onC();
+    e.preventDefault(); return;
+  }
+  /* 键盘快捷：S 看状态；独立打开时 M 静音 */
+  if(k==='s'){
+    if(currentMode()==='pet'&&!ui.endCard){
+      ui.page='status'; ui.albumIdx=0; render();
+    }
+    e.preventDefault(); return;
+  }
+  if(k==='m'&&!inFrame){
+    MUTED=!MUTED;
+    setText(t(MUTED?'muteOn':'muteOff'));
+    setTimeout(function(){ render(); },1200);
+    e.preventDefault(); return;
+  }
+  if(k>='1'&&k<='6'){ applyTheme(THEMES[Number(k)-1].id); return; }
+  if(k==='t'){
+    const i=THEMES.findIndex(function(t){return t.id===theme.id;});
+    applyTheme(THEMES[(i+1)%THEMES.length].id);
+  }
+});
+document.addEventListener('keyup',function(e){
+  const k=String(e.key||'').toLowerCase();
+  if(k==='b'||k==='arrowup'){
+    if(bHeld){ bHeld=false; endHold(false); }
+  }
+});
+
+/* ---------- 适配 ---------- */
+let fitTimer=null;
+function fit(){
+  const s=Math.min(1,(window.innerWidth-16)/360,(window.innerHeight-20)/Math.max(1,device.offsetHeight));
+  device.style.transform='scale('+Math.round(s*1000)/1000+')';
+}
+window.addEventListener('resize',function(){
+  clearTimeout(fitTimer);
+  fitTimer=setTimeout(fit,80);
+});
+document.addEventListener('visibilitychange',function(){
+  applyLowPower();
+  if(document.hidden){
+    if(holdTimer){ clearInterval(holdTimer); holdTimer=null; holdP=0; }
+    saveState();
+    return;
+  }
+  lastTick=Date.now();
+  if(state.pet){
+    const now=Date.now();
+    const raw=Math.max(0,now-num(state.pet.lastSeen,now));
+    const gap=clamp(raw,0,OFFLINE_CAP);
+    if(gap>MIN){
+      simulate(gap,true);
+      if(state.pet&&state.pet.sick&&state.pet.critical){
+        state.pet.rescueUntil=now+60000;
+        state.pet.rescuePresses=0;
+        state.pet.rescueWindow=true;
+      }
+    }
+    if(state.pet){
+      state.pet.lastSeen=now;
+      /* 切回标签页超过 1 小时：同样给分层离线台词 */
+      if(raw>=60*MIN){
+        ui.msg=offlineMessage(raw);
+        ui.msgUntil=now+4200;
+      }
+    }
+    render();
+  }
+});
+window.addEventListener('beforeunload',function(){ saveState(); });
+/* 首次手势解锁音频；卸载时释放 AudioContext */
+window.addEventListener('pointerdown',function(){ audioReady(); },{once:true,capture:true});
+window.addEventListener('pagehide',function(){
+  if(audioCtx){ try{ audioCtx.close(); }catch(e){} }
+  audioCtx=null; audioMaster=null; audioLive=0;
+});
+
+/* ---------- 启动 ---------- */
+applyLangDom();
+applyLowPower();
+buildSwatches();
+bindKeys();
+bindTools();
+const toolsEl=$('tools');
+if(toolsEl) toolsEl.hidden=!!inFrame;
+settleOffline();
+initTutorial();
+applyTheme(state.shell);
+fit();
+restartIdle();
+startClock();
+if(inFrame) handshake();
+else useSamples();
+</script>
+</body>
+</html>
