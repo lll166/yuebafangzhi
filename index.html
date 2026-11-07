@@ -15823,6 +15823,8 @@ function openFlyFromDex(id){
    卡片图标取图鉴月巴（有外链立绘则用外链，否则用 SVG）。
    game:'fly' -> 复用页内飞行浮层；html:'xxx.html' -> 内嵌 iframe（同幸存者）。 */
 const GB_GAMES=[
+  /* 月巴节拍：与音响月巴（yinxiang）绑定，测试期上线（非正式版本） */
+  {id:'rhythm', codex:'yinxiang', name:'🎵 月巴节拍', sub:true, html:'月巴节拍/rhythm.html'},
   /* 月巴五子棋：与熊猫月巴（m2_xiongmao）绑定。立绘与名字由父页按图鉴下发（127 只有外链立绘的月巴都能上场） */
   {id:'gomoku', codex:'m2_xiongmao', name:'⚫ 月巴五子棋', sub:true, html:'五子棋/gomoku.html'},
   {id:'fishing', codex:'m2_zhangyu', name:'🎣 月巴垂钓', sub:true, html:'fishing.html'},
@@ -15846,8 +15848,6 @@ const GB_GAMES=[
   /* 月巴快跑：开发期 hidden:true 不显示，验收后删除该标记即上线 */
   {id:'run', codex:'mb_pingguo', name:'🍅 月巴快跑', sub:true, html:'run.html', hidden:true},
   {id:'fight', codex:'m2_baboyi', name:'巴巴博弈', sub:true, html:'fight.html'},
-  /* 月巴节拍：与音响月巴（yinxiang）绑定，测试期上线（非正式版本） */
-  {id:'rhythm', codex:'yinxiang', name:'🎵 月巴节拍', sub:true, html:'月巴节拍/rhythm.html'},
   /* 月巴记忆：M5 已验收；等接口（成绩回传/奖励）就绪前在百巴箱隐藏，到时删掉 hidden 即上线 */
   {id:'memory', codex:'mb_xin', name:'🧠 月巴记忆', sub:true, html:'memory.html', hidden:true},
 ];
