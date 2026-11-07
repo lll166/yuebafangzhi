@@ -9336,6 +9336,8 @@ function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioCont
   return AC; }
 function tone(freq,dur,type,vol,when,slide){
   if(S.muted)return; if(_tones>=8)return; /* 并发上限，防止瞬时过多音效叠加变爆音 */
+  /* 月巴节拍打开期间：主页提示音全部静默，不干扰节奏试听与演奏 */
+  if(typeof gbFrameId!=='undefined'&&gbFrameId==='rhythm')return;
   const c=ac(); if(!c)return; const out=(_ddBus&&ACdd)?ACdd:(ACmaster||(AC?AC.destination:null)); if(!out)return; /* 斗月巴期间的音效走专属增益总线 */
   const o=c.createOscillator(), g=c.createGain();
   const t0=c.currentTime+(when||0);
