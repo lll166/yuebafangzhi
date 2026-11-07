@@ -882,7 +882,8 @@ function persist(){
   })); }catch(e){}
 }
 var menuTab=save.tab||'easy';
-var muted=!!mainSave.muted;
+/* 静音独立于主页：主存档的 muted 不继承，每次打开月巴节拍默认出声，页内可随时再静音 */
+var muted=false;
 /* 节拍的省电开关独立于主页面：不读 mainSave.lowPower，也不跟随系统「减少动态」，默认开启动态 */
 var lowPower=save.low===true;
 if(lowPower) document.body.classList.add('low');
