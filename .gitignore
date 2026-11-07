@@ -12,3 +12,28 @@
 /cloud-sync/.wrangler/
 /cloud-sync/
 /云存档看板.url
+/* ---------- 本地工具缓存 / 会话临时文件，不入库 ---------- */
+.mimosa/
+.zcode/
+.v2c/
+.ai_doc_bak/
+.screenshots/
+.video_agent/
+__pycache__/
+/shots/
+/nul
+/视频/
+/* 会话中间产物（下划线开头的临时抓取/计算文件） */
+/_fishsim/
+/_gbsim/
+/_names/
+/_gen_events.js
+/_prob_calc.js
+/_prob_verify.js
+/_events_code.txt
+/_events_txt.txt
+/_fish_index_block.md
+/_letter_summaries.txt
+/_travel_raw.md
+/* 数织题库生成器的工作缓存 */
+/数织游戏-月巴数织/tools/nonogram/cache/
