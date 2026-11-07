@@ -842,7 +842,7 @@ var audioCtx=null, audioMaster=null, audioBus=null, audioWet=null, audioAnalyser
 var audioStarted=false, musicInit=false, musicKey=0, musicBPM=80;
 var musStep=0, musBar=0, musNext=0, musTimer=0, musPaused=false;
 var PERF_BARS=12;
-var perfOrder=[], perfIdx=0, perfDir=1, perfEnding=false, perfEndTimer=0;
+var perfOrder=[], perfIdx=0, perfDir=1, perfRev=false, perfEnding=false, perfEndTimer=0;
 var hitQueue=[], toastTimer=0;
 var MUS_PENT=[0,2,4,7,9];
 var MUS_SCALE=[0,2,4,5,7,9,11];
@@ -1086,9 +1086,33 @@ function buildPerfOrder(){
   perfOrder.sort(function(a,b){
     return (a.sysIdx-b.sysIdx)||(a.x-b.x);
   });
-  if(perfOrder.length>1&&Math.random()<0.5) perfOrder.reverse();
+  perfRev=perfOrder.length>1&&Math.random()<0.5;
+  if(perfRev) perfOrder.reverse();
   perfDir=Math.random()<0.5?1:-1;
   perfIdx=perfDir>0?-1:perfOrder.length;
+}
+
+/* 补充刷新：把新加载完成/淡入结束的月巴并入演奏顺序。
+   自动播放开局时立绘大多还没加载完，顺序里只有最先就绪的前几只；
+   若不刷新，后面加载完的月巴永远排不进来（只要还有旧月巴可弹，
+   nextPerfBani 的重建分支就永远不触发）——表现为「只有前两排在演奏」。 */
+function refreshPerfOrder(){
+  if(!scene.banis.length) return;
+  var eligible=[];
+  for(var i=0;i<scene.banis.length;i++){
+    var b=scene.banis[i];
+    if(b.alpha<0.25) continue;
+    var rec=IMG[b.url];
+    if(!rec||rec.state===0) continue;
+    eligible.push(b);
+  }
+  if(eligible.length<=perfOrder.length) return;   /* 没有新增就不动 */
+  eligible.sort(function(a,b){ return (a.sysIdx-b.sysIdx)||(a.x-b.x); });
+  if(perfRev) eligible.reverse();                 /* 与初始排序同向，扫描方向不翻转 */
+  var cur=perfOrder[perfIdx]||null;
+  perfOrder=eligible;
+  perfIdx=cur?(perfOrder.indexOf(cur)):0;
+  if(perfIdx<0) perfIdx=0;
 }
 
 function nextPerfBani(avoid){
@@ -1165,8 +1189,12 @@ function scheduleStep(s,t){
   }
 }
 
+var _perfRefreshT=0;
 function scheduler(){
   if(!audioStarted||!audioCtx) return;
+  /* 演奏中周期性补充新就绪的月巴（图片加载/淡入完成），每 ~600ms 查一次 */
+  var now=performance.now();
+  if(now-_perfRefreshT>600){ _perfRefreshT=now; refreshPerfOrder(); }
   var horizon=audioCtx.currentTime+0.30;
   var guard=0;
   while(musNext<horizon&&guard<24){
