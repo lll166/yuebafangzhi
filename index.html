@@ -823,6 +823,8 @@
     border-radius:7px;color:var(--dim);background:var(--panel);border:1px solid var(--line);pointer-events:none;
     display:inline-flex;align-items:center;gap:1px;}
   .artn .ico{width:11px;height:11px;vertical-align:baseline;}
+  /* 角标图标不受 .bcard .pic svg{42px!important} 影响，锁定 11px */
+  .bcard .pic .artn .ico, .bcard .pic .artn .ico svg{width:11px!important;height:11px!important;}
   .bcard .nm{font-size:12px;font-weight:800;color:var(--purple2);margin-top:2px;}
   .bcard .cnt{font-size:11px;color:var(--dim);}
   .bcard .stats{font-size:10px;color:var(--dim);margin-top:4px;line-height:1.5;text-align:left;background:rgba(149,117,205,.08);border-radius:8px;padding:4px 6px;}
