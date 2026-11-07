@@ -4127,7 +4127,7 @@
       <span class="gbs" data-i18n="小游戏合集">小游戏合集</span>
       <button id="gbClose" class="btn" onclick="gbBoxClose()"><span class="ico" data-ico="close"></span><span class="noemo" data-i18n="✕ 收起">✕ 收起</span></button>
     </div>
-    <div id="gbNote"><span class="ico" data-ico="rod"></span><span class="noemo" data-i18n="🎣 钓鱼系统测试中，可能随时会删除存档。">🎣 钓鱼系统测试中，可能随时会删除存档。</span></div>
+    <div id="gbNote"><span class="ico" data-ico="sound"></span><span class="noemo" data-i18n="🎵 月巴节拍测试中，非正式版本。">🎵 月巴节拍测试中，非正式版本。</span></div>
     <div id="gbGrid"></div>
     <div id="gbLockTip" style="display:none"></div>
     <div id="gbEmpty" style="display:none" data-i18n="箱子还空着，新的月巴游戏正在装箱…">箱子还空着，新的月巴游戏正在装箱…</div>
@@ -4139,7 +4139,7 @@
     <span id="gbGameTitle"><span class="ico" data-ico="gift"></span><span class="noemo" data-i18n="🎁 百巴箱">🎁 百巴箱</span></span>
     <button id="gbGameClose" onclick="gbFrameClose()"><span class="ico" data-ico="close"></span><span class="noemo" data-i18n="✕ 返回百巴箱">✕ 返回百巴箱</span></button>
   </div>
-  <iframe id="gbGameFrame" title="百巴箱小游戏"></iframe>
+  <iframe id="gbGameFrame" title="百巴箱小游戏" allow="autoplay"></iframe>
 </div>
 
 <script src="moon-icons.js"></script>
@@ -4175,7 +4175,9 @@ var LEMOJI={
   /* 旅行：信件/笔记/商店/行囊/机关/道具 */
   '📄':'journal','📈':'chart','🕒':'clock','🍙':'onigiri','🍱':'veggiebento','🐟':'seabento','🥡':'deluxebento','🍀':'clover',
   /* 待办 / 统计常用 */
-  '⏰':'clock','✏':'pencil','✂':'swords','💪':'bolt','🔴':'dot','🟢':'dot',
+  '⏰':'clock','✏':'pencil','🖌':'pencil','✍':'pencil','✂':'swords','💪':'bolt','🔴':'dot','🟢':'dot',
+  /* 图鉴记录：定位 / 标尺 / 天平 */
+  '📍':'pin','📏':'ruler','⚖':'balance',
   '🔔':'bell','🧭':'compass','🎫':'ticket','🎟':'ticket','🫐':'wildberry','🍄':'mushroom','🍯':'honey','🌳':'pine',
   '🪶':'wing','💠':'gem','⭕':'wreath','⚪':'pearl','🟡':'dot','🔵':'dot','⬛':'dot','🦄':'paw','🪸':'coral',
   '🧸':'teddy','🍭':'wavecandy','🦀':'shell','🍞':'wheat','🥖':'wheat','🎵':'sound','📻':'radio','📯':'horn','🍮':'pudding',
@@ -5652,8 +5654,8 @@ const I18N_UI={
   '🔒 {a} 解锁条件：集齐第一图鉴 {n} 个月巴开启第二图鉴（当前 {c}/{n}）':{en:'🔒 {a} unlock: collect {n} Bannies in Codex I to open Codex II ({c}/{n})',ja:'🔒 {a} の解放条件：第一図鑑のバニーを {n} 匹集めて第二図鑑を解放（現在 {c}/{n}）',ko:'🔒 {a} 해금 조건: 첫 번째 도감에서 버니 {n}마리를 모아 두 번째 도감 해금 (현재 {c}/{n})'},
   '🔒 需集齐第一图鉴 {n} 个月巴开启第二图鉴':{en:'🔒 Requires {n} Bannies in Codex I to open Codex II',ja:'🔒 第一図鑑のバニー {n} 匹で第二図鑑を解放',ko:'🔒 첫 번째 도감 버니 {n}마리로 두 번째 도감 해금'},
   '小游戏合集':{en:'Mini-game Collection',ja:'ミニゲーム集',ko:'미니게임 모음'},
-  /* 钓鱼测试期提示（百巴箱入口） */
-  '🎣 钓鱼系统测试中，可能随时会删除存档。':{en:'🎣 Fishing is in testing — saves may be wiped at any time.',ja:'🎣 釣りシステムはテスト中です。セーブデータが予告なく削除される場合があります。',ko:'🎣 낚시 시스템 테스트 중 — 저장 데이터가 수시로 삭제될 수 있습니다.'},
+  /* 月巴节拍测试期提示（百巴箱入口） */
+  '🎵 月巴节拍测试中，非正式版本。':{en:'🎵 Banny Beat is in testing — unofficial version.',ja:'🎵 バニービートはテスト中です。非公式バージョン。',ko:'🎵 버니 비트 테스트 중 — 비공식 버전입니다.'},
   '飞行小游戏':{en:'Flight Mini-game',ja:'フライトミニゲーム',ko:'비행 미니게임'},
   '黄金矿工':{en:'Gold Miner',ja:'ゴールドマイナー',ko:'골드 마이너'},
   '🎃 月巴追茄':{en:'🎃 Banny Chase',ja:'🎃 バニーチェイス',ko:'🎃 버니 체이스'},
@@ -5685,6 +5687,9 @@ const I18N_UI={
   '月巴五子棋':{en:'Banny Gomoku',ja:'バニー五目並べ',ko:'버니 오목'},
   '⚫ 月巴五子棋':{en:'⚫ Banny Gomoku',ja:'⚫ バニー五目並べ',ko:'⚫ 버니 오목'},
   '⚫ 进入月巴五子棋':{en:'⚫ Play Banny Gomoku',ja:'⚫ バニー五目並べへ',ko:'⚫ 버니 오목 시작'},
+  '月巴节拍':{en:'Banny Beat',ja:'バニービート',ko:'버니 비트'},
+  '🎵 月巴节拍':{en:'🎵 Banny Beat',ja:'🎵 バニービート',ko:'🎵 버니 비트'},
+  '🎵 进入月巴节拍':{en:'🎵 Play Banny Beat',ja:'🎵 バニービートへ',ko:'🎵 버니 비트 시작'},
   '🧱 俄罗斯巴块':{en:'🧱 Tetris Banny',ja:'🧱 テトリスバニー',ko:'🧱 테트리스버니'},
   '🧱 进入俄罗斯巴块':{en:'🧱 Enter Tetris Banny',ja:'🧱 テトリスバニーへ',ko:'🧱 테트리스버니 시작'},
   '🧩 月巴数织':{en:'🧩 Banny Nonogram',ja:'🧩 バニーピクロス',ko:'🧩 버니 노노그램'},
@@ -10688,6 +10693,7 @@ const DEX_GAME={
   mb_zhoumo:{icon:'🧹', label:'🧹 月巴大扫除', enter:'🧹 进入月巴大扫除', game:'minesweeper'},
   m2_zhangyu:{icon:'🎣', label:'🎣 月巴垂钓', enter:'🎣 进入月巴垂钓', game:'fishing'},
   m2_xiongmao:{icon:'⚫', label:'⚫ 月巴五子棋', enter:'⚫ 进入月巴五子棋', game:'gomoku'},
+  yinxiang:{icon:'🎵', label:'🎵 月巴节拍', enter:'🎵 进入月巴节拍', game:'rhythm'},
 };
 function dexGameOf(id){ return DEX_GAME[id]||null; }
 /* 第二图鉴解锁条件文案（对赌 / 斗月巴 共用） */
@@ -10711,6 +10717,7 @@ function dexGameEntry(id){
   if(g.game==='minesweeper'){ dexSweeperEntry(); return; }
   if(g.game==='fishing'){ dexFishingEntry(); return; }
   if(g.game==='gomoku'){ dexGomokuEntry(); return; }
+  if(g.game==='rhythm'){ dexRhythmEntry(); return; }
 }
 function bookRowsHTML(list,quiet){
   let rows=''; let i=0;
@@ -11076,7 +11083,7 @@ function openFatDetail(id){ // 图鉴点开某月巴：悬浮层放大图 + 记�
   const ov=$('fdOverlay');
   ov.innerHTML=`<div class="fd-back" onclick="closeFatDetail()"></div>
     <div class="fd-card">
-      <div class="fd-head"><span>📖 ${t.name}</span><button class="iconbtn" onclick="closeFatDetail()">✕</button></div>
+      <div class="fd-head"><span>${mico('book')} ${t.name}</span><button class="iconbtn" onclick="closeFatDetail()">✕</button></div>
       <div class="fd">
         <div class="fd-pic ${t.r>=4?'epic':''} ${t.r===5?'legend':''}"><span style="display:inline-block;transform:scale(${picScale(t)})">${fatSVG(t)}</span></div>
         ${artList(t).length>1?`<div class="fd-arts">
@@ -11085,23 +11092,23 @@ function openFatDetail(id){ // 图鉴点开某月巴：悬浮层放大图 + 记�
           <button class="iconbtn" title="${esc($t('切换立绘'))}" onclick="switchArt('${t.id}',1)">›</button>
         </div>`:''}
         ${artNote(t)?`<div class="fd-note">
-          <div class="fd-note-h"><span>${$t('🖌 画师的话')}</span><span class="by">${esc(artBy(t)||$t('匿名'))}</span></div>
+          <div class="fd-note-h"><span>${mico('pencil')} ${stripEmo($t('🖌 画师的话'))}</span><span class="by">${esc(artBy(t)||$t('匿名'))}</span></div>
           <p>${esc(artNote(t))}</p>
-        </div>`:(artBy(t)?`<div class="fd-author">🎨 by ${esc(artBy(t))}</div>`:'')}
+        </div>`:(artBy(t)?`<div class="fd-author">${mico('palette')} by ${esc(artBy(t))}</div>`:'')}
         <div class="fd-meta">
           <span class="rar-tag ${rcl}">${$t(RAR_NAME[t.r])}</span>
           <span class="fd-cnt">${$tf('收获 x{n}',{n:rec.count})}</span>
         </div>
         <div class="fd-stats">
-          ${rec.last?$tf('📍 最近 {a}cm · {b}g',{a:rec.last.h,b:rec.last.w})+'<br>':''}
-          ${$tf('📏 最高 {a}',{a:ss(rec.tallest,gH,'cm')})} ${ts(rec.tallest)}<br>
-          ${$tf('📏 最矮 {a}',{a:ss(rec.shortest,gS,'cm')})} ${ts(rec.shortest)}<br>
-          ${$tf('⚖️ 最重 {a}',{a:ss(rec.heaviest,gW,'g')})} ${ts(rec.heaviest)}<br>
-          ${$tf('⚖️ 最轻 {a}',{a:ss(rec.lightest,gL,'g')})} ${ts(rec.lightest)}
+          ${rec.last?mico('pin')+' '+stripEmo($tf('📍 最近 {a}cm · {b}g',{a:rec.last.h,b:rec.last.w}))+'<br>':''}
+          ${mico('ruler')+' '+stripEmo($tf('📏 最高 {a}',{a:ss(rec.tallest,gH,'cm')}))} ${ts(rec.tallest)}<br>
+          ${mico('ruler')+' '+stripEmo($tf('📏 最矮 {a}',{a:ss(rec.shortest,gS,'cm')}))} ${ts(rec.shortest)}<br>
+          ${mico('balance')+' '+stripEmo($tf('⚖️ 最重 {a}',{a:ss(rec.heaviest,gW,'g')}))} ${ts(rec.heaviest)}<br>
+          ${mico('balance')+' '+stripEmo($tf('⚖️ 最轻 {a}',{a:ss(rec.lightest,gL,'g')}))} ${ts(rec.lightest)}
         </div>
-        <div class="fd-cond">${cd}</div>
-        <div class="fd-intro"><b>${$t('📜 简介')}</b><p>${$fi(t.id)}</p>${YB_TXT_AUTHOR[t.id]?`<div class="fd-author">✍️ by ${esc(YB_TXT_AUTHOR[t.id])}</div>`:''}</div>
-        ${dexGameOf(t.id)?`<button class="btn" style="width:100%;margin-top:10px" onclick="dexGameEntry('${t.id}')">${$t(dexGameOf(t.id).enter||'🪽 进入飞行小游戏')}</button>`:''}
+        <div class="fd-cond">${emoSwap(cd)}</div>
+        <div class="fd-intro"><b>${mico('scroll')} ${stripEmo($t('📜 简介'))}</b><p>${$fi(t.id)}</p>${YB_TXT_AUTHOR[t.id]?`<div class="fd-author">${mico('pencil')} by ${esc(YB_TXT_AUTHOR[t.id])}</div>`:''}</div>
+        ${dexGameOf(t.id)?`<button class="btn" style="width:100%;margin-top:10px" onclick="dexGameEntry('${t.id}')">${emoSwap($t(dexGameOf(t.id).enter||'🪽 进入飞行小游戏'))}</button>`:''}
       </div>
     </div>`;
   ov.classList.add('show');
@@ -15839,6 +15846,8 @@ const GB_GAMES=[
   /* 月巴快跑：开发期 hidden:true 不显示，验收后删除该标记即上线 */
   {id:'run', codex:'mb_pingguo', name:'🍅 月巴快跑', sub:true, html:'run.html', hidden:true},
   {id:'fight', codex:'m2_baboyi', name:'巴巴博弈', sub:true, html:'fight.html'},
+  /* 月巴节拍：与音响月巴（yinxiang）绑定，测试期上线（非正式版本） */
+  {id:'rhythm', codex:'yinxiang', name:'🎵 月巴节拍', sub:true, html:'月巴节拍/rhythm.html'},
   /* 月巴记忆：M5 已验收；等接口（成绩回传/奖励）就绪前在百巴箱隐藏，到时删掉 hidden 即上线 */
   {id:'memory', codex:'mb_xin', name:'🧠 月巴记忆', sub:true, html:'memory.html', hidden:true},
 ];
@@ -15976,7 +15985,7 @@ window.addEventListener('message',function(e){
   gbFrameTheme(d.gbTheme);
 });
 /* 打开时先按内嵌首页的色系铺好，避免青色一闪 */
-const GB_FRAME_SEED={nonogram:'crow',gold:'gold',tetris:'tet',diner:'diner',gomoku:'gomo',memory:'mem'};
+const GB_FRAME_SEED={nonogram:'crow',gold:'gold',tetris:'tet',diner:'diner',gomoku:'gomo',memory:'mem',rhythm:'diner'};
 function gbFrameOpen(g,back){
   gbFrameId=g.id;
   if(g.id==='nonogram') nonoNewMark();   /* 点开过一次数织，箱子里的新题提示就不再出现 */
@@ -16082,6 +16091,14 @@ function dexGomokuEntry(){
 /* 图鉴入口：章鱼月巴 → 月巴垂钓小游戏。关闭后同样回到图鉴 */
 function dexFishingEntry(){
   const g=GB_GAMES.filter(function(x){ return x.id==='fishing'; })[0];
+  if(!g) return;
+  try{ save(); }catch(e){}
+  sfx.click();
+  gbFrameOpen(g,'dex');
+}
+/* 图鉴入口：音响月巴 → 月巴节拍小游戏。关闭后同样回到图鉴 */
+function dexRhythmEntry(){
+  const g=GB_GAMES.filter(function(x){ return x.id==='rhythm'; })[0];
   if(!g) return;
   try{ save(); }catch(e){}
   sfx.click();

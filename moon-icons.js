@@ -112,8 +112,8 @@
       '<circle cx="8" cy="4.4" r="1.15" fill="'+ACC+'"/>'+
       '<circle cx="11.3" cy="6.1" r="1.15" fill="'+GOLD+'"/>'+
       '<circle cx="5" cy="9.2" r="1.15" fill="'+ACC2+'"/>'),
-    /* 首次捕获：星 */
-    star:S('<path d="M8 2.2l1.7 3.6 3.9.5-2.9 2.7.8 3.9L8 11.1l-3.5 1.8.8-3.9L2.4 6.3l3.9-.5z" fill="'+GOLD+'" stroke="'+INK+'" stroke-width="1"/>'),
+    /* 首次捕获：星（正五角星，五角等大） */
+    star:S('<path d="M8 1.8l1.4 4.3h4.5l-3.6 2.6 1.3 4.3-3.6-2.6-3.6 2.6 1.3-4.3-3.6-2.6h4.5z" fill="'+GOLD+'" stroke="'+INK+'" stroke-width="1"/>'),
     /* 信件 */
     mail:S('<rect x="2" y="4" width="12" height="8" fill="'+PANEL+'" stroke="'+INK+'" stroke-width="1.2"/>'+
       '<path d="M2.4 4.5L8 9l5.6-4.5" fill="none" stroke="'+ACC+'" stroke-width="1.2"/>'),
@@ -281,8 +281,8 @@
       '<path d="M6.9 2.1L4.3 4.5l2.6 2.4" fill="none" stroke="currentColor" stroke-width="1.5"/>'),
     erase:S('<path d="M5.4 3.2h7.8v9.6H5.4l-3.2-4.8z" fill="none" stroke="currentColor" stroke-width="1.5"/>'+
       '<path d="M8.2 6.2l3.4 3.4M11.6 6.2l-3.4 3.4" fill="none" stroke="currentColor" stroke-width="1.2"/>'),
-    /* 星 / 降难度 */
-    star:S('<path d="M8 1.8l1.9 3.8 4.3.6-3.1 3-1.3 4.3-3.8-2.1-3.8 2.1-1.3-4.3 3.1-3 4.3-.6z" fill="currentColor"/>'),
+    /* 星 / 降难度（正五角星，五角等大） */
+    star:S('<path d="M8 1.8l1.4 4.3h4.5l-3.6 2.6 1.3 4.3-3.6-2.6-3.6 2.6 1.3-4.3-3.6-2.6h4.5z" fill="currentColor"/>'),
     down:S('<path d="M8 2.4v11" fill="none" stroke="currentColor" stroke-width="1.5"/>'+
       '<path d="M3.7 9.3L8 13.6l4.3-4.3" fill="none" stroke="currentColor" stroke-width="1.5"/>'),
     /* 关闭 / 返回 */
@@ -313,8 +313,8 @@
     /* 蛇：初次上路 */
     snake:S('<path d="M12.8 11.8c-2.4 0-2.4-3.6-4.8-3.6s-2.4 3.6-4.8 3.6" fill="none" stroke="currentColor" stroke-width="1.5"/>'+
       '<circle cx="14.1" cy="11.8" r="1.4" fill="currentColor"/>'),
-    /* 星：小有成就 */
-    star:S('<path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 1.3 4.3-3.8-2.1-3.8 2.1 1.3-4.3-3.1-3 4.3-.6z" fill="currentColor"/>'),
+    /* 星：小有成就（正五角星，五角等大） */
+    star:S('<path d="M8 1.8l1.4 4.3h4.5l-3.6 2.6 1.3 4.3-3.6-2.6-3.6 2.6 1.3-4.3-3.6-2.6h4.5z" fill="currentColor"/>'),
     /* 火：单局高分 */
     flame:S('<path d="M8 2.1c.4 2.6-2.9 3.4-2.9 6.4a3.3 3.3 0 0 0 6.6 0c0-1.7-.9-3-2-4.1-.2 1.2-.8 1.9-1.7 2.4.5-1.7.4-3.1 0-4.7z" fill="none" stroke="currentColor" stroke-width="1.5"/>'+
       '<path d="M8 9.2c.7.8 1.1 1.3 1.1 1.9a1.1 1.1 0 0 1-2.2 0c0-.6.3-1.1 1.1-1.9z" fill="currentColor"/>'),
@@ -518,7 +518,7 @@
       '<path d="M4.2 6.4h4.2M4.2 8.3h4.2M4.2 10.2h3" fill="none" stroke="currentColor" stroke-width=".95" stroke-linecap="round"/>'+
       '<path d="M10.1 5.7l2.2 2.2M12.3 5.7l-2.2 2.2" fill="none" stroke="currentColor" stroke-width=".6" opacity=".5"/>'),
     /* 星屑糖：星形糖块 + 糖屑 */
-    starcandy:S('<path d="M8 2.3l1.7 3.6 3.9.5-2.9 2.7.8 3.9L8 11l-3.5 2 .8-3.9-2.9-2.7 3.9-.5z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
+    starcandy:S('<path d="M8 1.8l1.4 4.3h4.5l-3.6 2.6 1.3 4.3-3.6-2.6-3.6 2.6 1.3-4.3-3.6-2.6h4.5z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
       '<circle cx="8" cy="7.6" r=".55" fill="currentColor"/>'+
       '<circle cx="2.5" cy="11.4" r=".42" fill="currentColor"/><circle cx="13.5" cy="11.9" r=".42" fill="currentColor"/><circle cx="12.1" cy="2.4" r=".38" fill="currentColor"/>'),
     /* 糖果：椭圆糖体 + 两端拧结 */
@@ -1276,7 +1276,16 @@
     /* 多立绘：两张叠放的画片（后张露出右上角，前张带一枚星点），图鉴「共 n 张立绘」角标用 */
     arts:S('<path d="M4.9 5.3V3.4c0-.66.54-1.2 1.2-1.2h6.3c.66 0 1.2.54 1.2 1.2v6.3c0 .66-.54 1.2-1.2 1.2h-1.2" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" opacity=".55"/>'+
       '<rect x="2.4" y="6.1" width="8.3" height="7.6" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.3"/>'+
-      '<path d="M6.55 8l.5 1.4 1.4.5-1.4.5-.5 1.4-.5-1.4-1.4-.5 1.4-.5z" fill="currentColor"/>')
+      '<path d="M6.55 8l.5 1.4 1.4.5-1.4.5-.5 1.4-.5-1.4-1.4-.5 1.4-.5z" fill="currentColor"/>'),
+    /* 标尺：斜置直尺 + 三道刻度（图鉴身高记录用） */
+    ruler:S('<path d="M4.1 14.1L1.9 11.9 11.9 1.9l2.2 2.2z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>'+
+      '<path d="M4.9 8.9l.85.85M6.9 6.9l.85.85M8.9 4.9l.85.85" fill="none" stroke="currentColor" stroke-width=".95" stroke-linecap="round"/>'),
+    /* 天平：横梁 + 立柱 + 底座 + 两侧吊盘（图鉴体重记录用） */
+    balance:S('<path d="M2.7 4.3h10.6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>'+
+      '<path d="M8 4.3v9.1" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>'+
+      '<path d="M5.9 13.4h4.2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>'+
+      '<path d="M2.7 4.4L1.6 8M2.7 4.4L3.8 8M13.3 4.4L12.2 8M13.3 4.4l1.1 3.6" fill="none" stroke="currentColor" stroke-width=".95" stroke-linecap="round"/>'+
+      '<path d="M1.4 8a1.3 1.3 0 0 0 2.6 0M12 8a1.3 1.3 0 0 0 2.6 0" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>')
   });
 
   /* 生成 <i class="ico">…</i>；cls 传 'only' 时不带右侧间距；theme 传 'warm' / 'cool' / 'neon' / 'tetris' / 'index' 切换主题 */

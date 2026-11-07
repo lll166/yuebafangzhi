@@ -1,0 +1,2051 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#F3ECDC">
+<title>月巴节拍 · 谱面导入</title>
+<style>
+  :root{
+    --paper:#F3ECDC; --paper2:#EFE6D2;
+    --ink:#24305C; --ink2:#2C3868;
+    --red:#D4552B; --red2:#C94A24;
+    --mono:"SF Mono","Cascadia Mono",Consolas,system-ui,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    --serif:"Songti SC","STSong","SimSun","Noto Serif CJK SC","Noto Serif SC",serif;
+    --safeT:env(safe-area-inset-top,0px);
+    --safeB:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;
+    -webkit-user-select:none;user-select:none;}
+  html,body{height:100%;overflow:hidden;background:var(--paper);}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+  body{font-family:var(--mono);color:var(--ink);touch-action:none;overscroll-behavior:none;
+    position:fixed;inset:0;}
+
+  /* 纸面：canvas 画谱 + 一层极轻纸纹 */
+  #cv{position:fixed;inset:0;z-index:0;display:block;width:100%;height:100%;
+    transition:opacity .7s ease,transform .55s cubic-bezier(.2,.7,.2,1);}
+  body.boot #cv{opacity:0;}
+  body.leaving #cv{opacity:0;transform:scale(1.045);}
+  .paper{
+    position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.34;mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+    background-size:180px 180px;
+  }
+  .vignette{position:fixed;inset:0;z-index:2;pointer-events:none;
+    background:radial-gradient(125% 92% at 50% 40%,rgba(0,0,0,0) 55%,rgba(90,70,40,.07) 100%);}
+
+  /* ================= 顶部 ================= */
+  .hud{position:fixed;left:0;right:0;top:0;z-index:5;display:flex;align-items:flex-start;
+    justify-content:space-between;padding:calc(6px + var(--safeT)) 10px 0 8px;
+    pointer-events:none;transition:opacity .32s ease;}
+  #back{pointer-events:auto;width:46px;height:46px;border:0;background:none;cursor:pointer;
+    display:grid;place-items:center;color:var(--ink);border-radius:2px;}
+  #back svg{display:block;width:27px;height:19px;overflow:visible;}
+  #back svg path{fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:square;stroke-linejoin:miter;}
+  #back:hover{color:var(--red);}
+  #back:active{transform:scale(.94);}
+  #back:focus-visible{outline:1px dashed var(--red);outline-offset:2px;}
+  body.embedded #back{visibility:hidden;}
+
+  /* 演奏开关：右上角小药丸 */
+  #sound{pointer-events:auto;display:flex;align-items:center;gap:6px;height:34px;
+    margin-top:6px;padding:0 10px;border:1px solid rgba(36,48,92,.30);
+    background:rgba(243,236,220,.92);color:var(--ink);cursor:pointer;border-radius:2px;
+    font:900 9px/1 var(--mono);letter-spacing:.18em;white-space:nowrap;
+    transition:border-color .2s,color .2s,background .2s;}
+  #sound .sicon{color:var(--red);font:400 15px/1 Georgia,"Times New Roman",serif;letter-spacing:0;}
+  #sound .eq{display:none;align-items:flex-end;gap:2px;height:10px;}
+  #sound.on .eq{display:flex;}
+  #sound .eq i{display:block;width:2px;height:5px;background:var(--red);transform-origin:50% 100%;
+    animation:eq 1s ease-in-out infinite;}
+  #sound .eq i:nth-child(2){height:9px;animation-delay:.16s;}
+  #sound .eq i:nth-child(3){height:6px;animation-delay:.32s;}
+  @keyframes eq{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1.15)}}
+  #sound.on{border-color:rgba(212,85,43,.7);color:var(--red);background:rgba(255,250,240,.96);}
+  #sound:hover{border-color:var(--red);}
+  #sound:active{transform:scale(.96);}
+  #sound:focus-visible{outline:1px dashed var(--red);outline-offset:2px;}
+  body.low #sound .eq i{animation:none;}
+
+  /* 演奏提示（点月巴拨弦） */
+  .toast{position:fixed;left:50%;bottom:calc(104px + var(--safeB));z-index:6;
+    transform:translate(-50%,8px);max-width:84vw;padding:8px 13px;
+    background:rgba(243,236,220,.95);border:1px solid rgba(36,48,92,.28);
+    border-left:3px solid var(--red);color:var(--ink);
+    font:800 9.5px/1.5 var(--mono);letter-spacing:.1em;text-align:center;
+    opacity:0;pointer-events:none;box-shadow:0 8px 22px rgba(60,50,30,.12);
+    transition:opacity .25s ease,transform .25s ease;}
+  .toast.show{opacity:1;transform:translate(-50%,0);}
+  body.low .toast{transition:none;}
+
+  /* ================= 红色主标题：像印在谱面上 ================= */
+  .title{position:fixed;left:5%;right:5.4%;z-index:3;pointer-events:none;
+    display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;
+    text-align:right;
+    padding-bottom:clamp(2px,.8vh,9px);
+    transition:opacity .32s ease,transform .45s ease;}
+  .title .kick{font:800 clamp(7px,1.35vw,9.5px)/1 var(--mono);letter-spacing:.42em;
+    color:var(--red);margin-bottom:clamp(4px,1vh,10px);text-transform:uppercase;white-space:nowrap;}
+  .title h1{font-family:var(--serif);font-weight:900;color:var(--red);
+    font-size:clamp(40px,10.4vw,88px);line-height:.92;letter-spacing:.10em;
+    white-space:nowrap;}
+  .title .sub{font:900 clamp(8px,1.3vw,11.5px)/1 var(--mono);letter-spacing:.46em;
+    color:var(--ink);margin-top:clamp(5px,1.15vh,10px);white-space:nowrap;}
+
+  /* ================= 底部开始 ================= */
+  .bottom{position:fixed;left:0;right:0;bottom:calc(12px + var(--safeB));z-index:5;
+    display:flex;flex-direction:column;align-items:center;
+    transition:opacity .32s ease;pointer-events:none;}
+  #enter{pointer-events:auto;border:0;background:none;cursor:pointer;color:var(--ink);
+    min-height:50px;padding:8px 20px 6px;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:6px;border-radius:3px;}
+  #enter .tap{display:flex;align-items:center;gap:9px;
+    font:900 clamp(11px,2.7vw,14px)/1 var(--mono);letter-spacing:.34em;white-space:nowrap;}
+  #enter .dot{width:5px;height:5px;border-radius:50%;background:var(--red);
+    animation:pulse 1.9s ease-in-out infinite;flex:0 0 auto;}
+  @keyframes pulse{0%,100%{opacity:.35;transform:scale(.82)}50%{opacity:1;transform:scale(1.15)}}
+  #enter .tapSub{font:800 8px/1 var(--mono);letter-spacing:.3em;color:rgba(36,48,92,.55);}
+  #enter:hover .tap{color:var(--red);}
+  #enter:hover .dot{background:var(--ink);}
+  #enter:focus-visible{outline:1px dashed var(--red);outline-offset:3px;}
+  body.leaving .hud,body.leaving .title,body.leaving .bottom{opacity:0;}
+
+  /* 矮屏（手机横屏/小窗）：标题与底部收紧 */
+  @media (max-height:620px){
+    .title h1{font-size:clamp(27px,7.4vh,52px);letter-spacing:.07em;}
+    .title .kick{font-size:7px;margin-bottom:3px;}
+    .title .sub{font-size:8px;letter-spacing:.36em;margin-top:4px;}
+    #enter{min-height:42px;padding:4px 18px;}
+  }
+  /* 极窄竖屏 */
+  @media (max-width:360px){
+    .title h1{letter-spacing:.05em;}
+  }
+  /* 低功耗/减少动态：全部静态 */
+  body.low *{animation:none!important;transition:none!important;}
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important;}
+  }
+</style>
+</head>
+<body class="boot">
+<canvas id="cv" aria-hidden="true"></canvas>
+<div class="paper" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+
+<header class="hud">
+  <button id="back" type="button" aria-label="返回">
+    <svg viewBox="0 0 27 19" aria-hidden="true"><path d="M25 9.5H2.5M10 2.5 2.5 9.5 10 16.5"/></svg>
+  </button>
+  <button id="sound" type="button" aria-pressed="false" aria-label="试听月巴演奏">
+    <span class="sicon" aria-hidden="true">♪</span>
+    <span id="soundTxt">试听</span>
+    <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
+  </button>
+</header>
+
+<div class="title" id="titleBox">
+  <div class="kick" id="kickTxt">// 序曲 · 月巴节拍 //</div>
+  <h1>月巴节拍</h1>
+  <div class="sub">BANNY BEAT</div>
+</div>
+
+<div class="bottom">
+  <button id="enter" type="button">
+    <span class="tap"><i class="dot"></i><span id="tapTxt">进入游戏</span></span>
+    <span class="tapSub" id="tapSubTxt">TAP TO ENTER</span>
+  </button>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* =========================================================
+   0. 小工具
+   ========================================================= */
+function $(id){ return document.getElementById(id); }
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function qget(k){
+  try{ return new URLSearchParams(location.search).get(k); }catch(e){
+    var m=new RegExp('[?&]'+k+'=([^&]*)').exec(location.search);
+    return m?decodeURIComponent(m[1]):null;
+  }
+}
+/* 固定种子随机：窗口尺寸变化时仍保持同一张谱面 */
+function mulberry32(a){
+  return function(){
+    a|=0; a=a+0x6D2B79F5|0;
+    var t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  };
+}
+function shuffle(a){
+  for(var i=a.length-1;i>0;i--){
+    var j=(Math.random()*(i+1))|0, t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+
+/* =========================================================
+   1. 语言 / 文案
+   ========================================================= */
+var LANGS=['zh','en','ja','ko'];
+var LANG=(function(){
+  var q=String(qget('lang')||'').toLowerCase().slice(0,2);
+  if(LANGS.indexOf(q)>=0) return q;
+  var s='';
+  try{ s=String((JSON.parse(localStorage.getItem('idle-yueba-save-v2')||'{}')||{}).lang||'').toLowerCase().slice(0,2); }catch(e){}
+  if(LANGS.indexOf(s)>=0) return s;
+  var n=String(navigator.language||'zh').toLowerCase();
+  if(n.indexOf('ja')===0) return 'ja';
+  if(n.indexOf('ko')===0) return 'ko';
+  if(n.indexOf('zh')===0) return 'zh';
+  return 'en';
+})();
+var TX={
+  zh:{
+    kick:'// 序曲 · 月巴节拍 //',
+    tap:'进入游戏', tapSub:'TAP TO ENTER',
+    back:'返回',
+    soundOff:'试听', soundOn:'演奏中',
+    soundAriaOff:'试听月巴演奏', soundAriaOn:'关闭月巴演奏',
+    soundStart:'月巴开始演奏 · 点月巴拨弦 · 点下方进入游戏',
+    soundEnd:'演奏结束 · 点页面再来一遍',
+    soundMuted:'已静音 · 点右上角试听'
+  },
+  en:{
+    kick:'// OVERTURE · BANNY BEAT //',
+    tap:'ENTER GAME', tapSub:'TAP TO ENTER',
+    back:'Back',
+    soundOff:'LISTEN', soundOn:'PLAYING',
+    soundAriaOff:'Listen to the bannies play', soundAriaOn:'Mute the bannies',
+    soundStart:'The bannies are playing · tap one to pluck · tap below to enter',
+    soundEnd:'The performance ended · tap the page to play again',
+    soundMuted:'Muted · tap ♪ to listen'
+  },
+  ja:{
+    kick:'// 序曲 · バニービート //',
+    tap:'ゲームへ', tapSub:'TAP TO ENTER',
+    back:'戻る',
+    soundOff:'試聴', soundOn:'演奏中',
+    soundAriaOff:'バニーの演奏を聴く', soundAriaOn:'バニーの演奏をミュート',
+    soundStart:'バニーが演奏中 · タップで音 · 下のボタンでゲームへ',
+    soundEnd:'演奏終了 · ページをタップでもう一度',
+    soundMuted:'ミュート中 · 右上の♪で試聴'
+  },
+  ko:{
+    kick:'// 서곡 · 버니 비트 //',
+    tap:'게임 시작', tapSub:'TAP TO ENTER',
+    back:'돌아가기',
+    soundOff:'듣기', soundOn:'연주 중',
+    soundAriaOff:'버니 연주 듣기', soundAriaOn:'버니 연주 음소거',
+    soundStart:'버니가 연주 중 · 탭하면 소리 · 아래 버튼으로 게임 시작',
+    soundEnd:'연주 종료 · 페이지를 탭하면 다시 연주해요',
+    soundMuted:'음소거됨 · 오른쪽 위 ♪를 눌러 주세요'
+  }
+};
+var T=TX[LANG]||TX.zh;
+try{ document.documentElement.lang=(LANG==='zh'?'zh-CN':LANG); }catch(e){}
+
+/* =========================================================
+   2. 图鉴外链池
+      —— 由 _intro_sync.js 从首页 index.html 的 TYPES 自动同步：
+         只收录「有外链立绘」的月巴（img 或 imgs 任一存在）。
+   ========================================================= */
+/* ==== DEX POOL BEGIN ==== */
+var DEX_POOL=[
+  {id:"mb_xiaoyue",name:"小月巴",urls:["https://origin.picgo.net/2026/09/03/1512e4bde4713ba02.th.png"]},
+  {id:"mb_xian",name:"尴尬月巴",urls:["https://origin.picgo.net/2026/09/03/4059f70dff59ca4a4.th.png"]},
+  {id:"mb_chi",name:"进食月巴",urls:["https://origin.picgo.net/2026/09/03/15b077f9364349ae92.th.png"]},
+  {id:"mb_shui",name:"睡觉月巴",urls:["https://origin.picgo.net/2026/09/29/4d2c34425dd356082928e5e796a603fcd01d1cbc5324c06f.gif"]},
+  {id:"mb_wan",name:"微笑月巴",urls:["https://origin.picgo.net/2026/09/03/1512e4bde4713ba02.th.png"]},
+  {id:"mb_pang",name:"胖月巴",urls:["https://origin.picgo.net/2026/10/21/62bc9b437f18c5e1f6f712a8e7a58ecbb2356f889dde89eb.th.png"]},
+  {id:"mb_xin",name:"wink月巴",urls:["https://origin.picgo.net/2026/09/03/37e1be2540efa2177.th.png"]},
+  {id:"mb_gao",name:"高月巴",urls:["https://origin.picgo.net/2026/09/29/849e3c845e52aac2178af913058025cdd214e98968e45101.gif"]},
+  {id:"mb_ku",name:"背头月巴",urls:["https://origin.picgo.net/2026/09/29/19daf98c7a185e7e0c3d529a5f921058d74092d7a8ab4c37.gif"]},
+  {id:"mb_lan",name:"休闲月巴",urls:["https://origin.picgo.net/2026/09/03/10a99395fea8f81ac7.th.png"]},
+  {id:"mb_tan",name:"一坨月巴",urls:["https://origin.picgo.net/2026/10/21/41befbe6b2be042271d7ae7805b64f598d5d887397481fdf.th.png"]},
+  {id:"mb_jian",name:"健身月巴",urls:["https://origin.picgo.net/2026/09/03/9935aafd50857466b.th.png"]},
+  {id:"mb_zao",name:"晨月巴",urls:["https://origin.picgo.net/2026/10/27/c77a0c0f38f6185cc62fb344b3dd306ff1b4d124e037e6ac.th.png"]},
+  {id:"mb_lu",name:"露月巴",urls:["https://origin.picgo.net/2026/10/27/47f37ba2b22b037038cc10f1e10b819287b3aabf07476a9b.th.png"]},
+  {id:"mb_yun",name:"云月巴",urls:["https://origin.picgo.net/2026/10/21/087c43501b9bd20deb354672a8a79e4ae6b8b7c2a0cfba2c.th.png"]},
+  {id:"mb_xue",name:"雪月巴",urls:["https://origin.picgo.net/2026/10/23/e978b592d6dc67debfa6782c325544cbd87a36af9154021a.th.png"]},
+  {id:"mb_caihong",name:"彩虹月巴",urls:["https://origin.picgo.net/2026/10/21/9895b41be4c58da373fcc95f6d8cc5ba0883411035f2a8d7.th.png"]},
+  {id:"mb_chun",name:"春月巴",urls:["https://origin.picgo.net/2026/10/22/d7b3e18460b8e44f1964d75b983ef69ac589f56a2b9a3392.th.webp"]},
+  {id:"mb_xia",name:"夏月巴",urls:["https://origin.picgo.net/2026/10/22/---Yidi-Nyaomi-Lia67b10aba5615cbe.th.png"]},
+  {id:"mb_qiu",name:"秋月巴",urls:["https://origin.picgo.net/2026/10/23/---Yidi-Nyaomi-Li085363c8afe0790e.th.png"]},
+  {id:"mb_dong",name:"冬月巴",urls:["https://origin.picgo.net/2026/10/23/720cc39489c1fe7d040a16a0a74e5492adb703c20326203b.th.png","https://origin.picgo.net/2026/10/23/---Yidi-Nyaomi-Li81e0dde889812007.th.png"]},
+  {id:"mb_wenshi",name:"温室月巴",urls:["https://origin.picgo.net/2026/10/25/a4de870a23ff1f883c8454cb72ef80d762cde2ab6de81042.th.png"]},
+  {id:"mb_wuding",name:"屋顶月巴",urls:["https://origin.picgo.net/2026/10/24/ddb838b24b14c9bc66c93f3e145393e1f054aa99f643d304.th.png"]},
+  {id:"mb_senlin",name:"森系月巴",urls:["https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li6e93cacca933846d.th.png"]},
+  {id:"mb_bing",name:"冰冷月巴",urls:["https://origin.picgo.net/2026/10/23/434e565b3ade1792842da6c6e5e0778552a35682cf6024b1.th.png"]},
+  {id:"mb_yunduan",name:"会飞月巴",urls:["https://origin.picgo.net/2026/10/25/0c49c146c2e1b0322b58ede6c45ace220be030c873f439d5.th.png","https://origin.picgo.net/2026/10/25/230fb576b0a523a89.th.png","https://origin.picgo.net/2026/10/26/a29dd628925e342a2742a4064029e1f763ece61d3e2ad6d2.th.png"]},
+  {id:"mb_kafei",name:"咖啡月巴",urls:["https://origin.picgo.net/2026/10/21/coffee-yue---KoTofu4bfeb46ff6179820.th.png"]},
+  {id:"mb_wanou",name:"玩偶月巴",urls:["https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Lib2c078bd058ef48c.th.png"]},
+  {id:"mb_jin",name:"金月巴",urls:["https://origin.picgo.net/2026/10/23/1396cf3c90108f3f96217f2c35d5092323f3425ef247f9cb.th.png"]},
+  {id:"mb_xing",name:"巴中月巴",urls:["https://origin.picgo.net/2026/09/03/127d7a0746c5de2434.th.png"]},
+  {id:"mb_ju",name:"巨月巴",urls:["https://origin.picgo.net/2026/10/23/7445849475a1a67a9510637d9dd722c0ce1589688044ee9c.th.png"]},
+  {id:"mb_chao",name:"超巨月巴",urls:["https://origin.picgo.net/2026/10/22/6e242d94aa9b07b9117479ec78fd53985fd887bb68d8fa62.th.png"]},
+  {id:"mb_lian",name:"幸运月巴",urls:["https://origin.picgo.net/2026/10/23/f18fc86039bab18c60f2e5a640a82994256efe02bbe849d2.th.png"]},
+  {id:"mb_shenlian",name:"神运月巴",urls:["https://origin.picgo.net/2026/10/23/75cb6c3c872e0ab0ae24ad2a1d4d16217560c98278e9c3c2.th.png"]},
+  {id:"mb_fanben",name:"墨镜月巴",urls:["https://origin.picgo.net/2026/09/03/1115555fb4ab3b2731.th.png"]},
+  {id:"mb_guai",name:"奇怪月巴",urls:["https://origin.picgo.net/2026/10/23/4a09ea559862b2830f46cc64b0f4211487bfa91c46fddbcf.th.png"]},
+  {id:"mb_shizhe",name:"归家月巴",urls:["https://origin.picgo.net/2026/09/03/2b384c6d07a3d397b.th.png"]},
+  {id:"mb_zhoumo",name:"双休月巴",urls:["https://origin.picgo.net/2026/10/22/---a60a7636bd80eb9e.th.png"]},
+  {id:"mb_zhengdian",name:"整点月巴",urls:["https://origin.picgo.net/2026/10/25/444672cea81dc05a5326f57baf4a41062d4fd68fc76f8de6.th.png"]},
+  {id:"mb_qingren",name:"爱情月巴",urls:["https://origin.picgo.net/2026/10/26/69714dc9fe002189c5f15a53b29ca57ace1060194b60a47b.th.png"]},
+  {id:"mb_wansheng",name:"万圣月巴",urls:["https://origin.picgo.net/2026/10/25/---Yidi-Nyaomi-Lib4ec70c5a69d6d5a.th.png"]},
+  {id:"mb_wen",name:"蚊月巴",urls:["https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li5760b9af6a34d812.th.png"]},
+  {id:"mb_pingguo",name:"吃茄月巴",urls:["https://origin.picgo.net/2026/09/03/1618abd45272691005.th.png"]},
+  {id:"mb_chaos",name:"混沌月巴",urls:["https://origin.picgo.net/2026/10/24/8f4ccf5a7a4813d86478b59c05bd7c80e45b28cbcfd280ec.th.png"]},
+  {id:"mb_jiu",name:"酒巴",urls:["https://origin.picgo.net/2026/09/20/jiuba7578b776f8c4c528.th.png"]},
+  {id:"mb_shilaimu",name:"史莱姆巴",urls:["https://origin.picgo.net/2026/10/21/75dd505aa51f9864c2dc215b349253592891b6d6ef024a79.th.png"]},
+  {id:"mb_liti",name:"立体月巴",urls:["https://origin.picgo.net/2026/09/19/litiyueba0f6fd2bd28b7cc83.th.png"]},
+  {id:"mb_xiaoma",name:"小马月巴",urls:["https://origin.picgo.net/2026/09/19/xiaoma59a91dd50534ac93.th.png"]},
+  {id:"mb_tomato",name:"番茄大战月巴",urls:["https://origin.picgo.net/2026/09/20/fanqiedazhan9861d01c9113a3f3.th.png"]},
+  {id:"mb_powa",name:"抛瓦月巴",urls:["https://origin.picgo.net/2026/10/24/bbe23930e0a5236e05eca1b6bef4230a8a7078b7a228f913.th.png"]},
+  {id:"mb_laba",name:"拉巴",urls:["https://origin.picgo.net/2026/09/20/laba8ce98439c56d3f6d.th.png"]},
+  {id:"mb_tangyuan",name:"汤圆月巴",urls:["https://origin.picgo.net/2026/09/21/e0a73ec5f90f4b1d90fd1ce444e15c18df5827ccea2e46c6.th.png"]},
+  {id:"mb_bashan",name:"巴山",urls:["https://origin.picgo.net/2026/09/21/shanbf57ea8c56a98c78.th.png"]},
+  {id:"mb_xiba",name:"西巴",urls:["https://origin.picgo.net/2026/10/23/c4de9f2c487932b531a8b80294b7d5512139e617afc6aa6c.th.png"]},
+  {id:"xitong",name:"系统月巴",urls:["https://origin.picgo.net/2026/09/22/xitong3fa4bdcf7695b190.th.png"]},
+  {id:"huaba",name:"花巴",urls:["https://origin.picgo.net/2026/10/23/46597ef9da8ed5c1d86cce52418c84d57c6da995fbc68f8c.th.png"]},
+  {id:"dabus",name:"大巴车",urls:["https://origin.picgo.net/2026/10/21/f696279cfe514001d304e826c68f44f3596857784003a73a.th.png"]},
+  {id:"youling",name:"幽灵月巴",urls:["https://origin.picgo.net/2026/10/23/9e6b571fe9657417f255527bf3c34cc1963ee4f0f46e3e06.th.png"]},
+  {id:"xinba",name:"心巴",urls:["https://origin.picgo.net/2026/10/21/3f4dfef1286bc40c7002f3d2e220cb36f63b0332ebc9acd3.th.png","https://origin.picgo.net/2026/10/21/2c041a17d8e59a3cf.th.png"]},
+  {id:"yinxiang",name:"音响月巴",urls:["https://origin.picgo.net/2026/10/23/-16ec08b0ad53bd48c.th.png","https://origin.picgo.net/2026/10/23/6f22696b8370916ad8368b8c73fa5138da7cea25462febe4.th.png"]},
+  {id:"jieba",name:"戒巴",urls:["https://origin.picgo.net/2026/10/23/8a2dd3078a8a2c919d0a8fa208ec9dfdfba03c4be9bcfa05.th.png"]},
+  {id:"bazong",name:"巴总",urls:["https://origin.picgo.net/2026/10/21/8ff3d46600bd7fcfb5dcab98f93cbd9bbeef26b25b073ec3.th.png"]},
+  {id:"mojing",name:"墨镜笑巴",urls:["https://origin.picgo.net/2026/09/27/4d64284ab6f23425f9dda44f0fc540bef12552ef47074e5e.th.png"]},
+  {id:"bukeming",name:"不可名状巴",urls:["https://origin.picgo.net/2026/09/27/20c78b17ef4b3fa235abaad68362f4b3e9cd9e87eb7bc133.th.png"]},
+  {id:"canglong",name:"苍龙月巴",urls:["https://origin.picgo.net/2026/09/29/cfdcb713bec9bd6b5307fd8a9edfc1fb421e9a1529506bb0.th.png"]},
+  {id:"bairixuan",name:"白日宣巴",urls:["https://origin.picgo.net/2026/10/22/1aaddaa947c51b53b8f61b776ecf86e331d724a72b40ec07.th.png"]},
+  {id:"niaoba",name:"鸟巴",urls:["https://origin.picgo.net/2026/09/29/5333d8fdca76c3b083802650fd853975e1e6162696fd5812.th.png"]},
+  {id:"mb_fanzhuan",name:"反转月巴",urls:["https://origin.picgo.net/2026/10/11/c81c459acde3c23c8697414890a13e0ca4b5043931a9a27e.th.png"]},
+  {id:"mb_zhongyi",name:"中意月巴",urls:["https://origin.picgo.net/2026/10/11/b8ab7bdd789538f043b260d47e4181c4c7feca6cf8eb591c.th.png"]},
+  {id:"mb_lba",name:"喇巴",urls:["https://origin.picgo.net/2026/10/11/7f08d97c6eb3a1eac43b80c797216c3893370759f78d1666.th.png"]},
+  {id:"mb_jinju",name:"进局子巴",urls:["https://origin.picgo.net/2026/10/21/---akai0255d6362d123bd3.th.png"]},
+  {id:"mb_zuanshi",name:"钻石月巴",urls:["https://origin.picgo.net/2026/10/26/23b4e2cfd09ac95577efbd3a4d646cbba0bd6b5198a6a674.th.png"]},
+  {id:"mb_huang",name:"黄月巴",urls:["https://origin.picgo.net/2026/10/23/485bfcabf6eaea8ea294ead8e520a0ada29d48a19c9197d6.th.png"]},
+  {id:"mb_qiezhi",name:"茄汁月巴",urls:["https://origin.picgo.net/2026/10/21/07de58ae22de5c368964182b7b78934969a8e2ed84c5ab60.th.png","https://origin.picgo.net/2026/10/21/2deb811980dbbda80.th.png"]},
+  {id:"mb_gaoya",name:"高雅月巴",urls:["https://origin.picgo.net/2026/10/29/efe0df586c4c004111696f268f68aae61c403392db6a810a.th.png"]},
+  {id:"mb_long",name:"long～long～巴～",urls:["https://origin.picgo.net/2026/10/23/longlongd4f08c948bb96bfa.th.png"]}
+];
+/* ==== DEX POOL END ==== */
+if(!DEX_POOL.length){
+  DEX_POOL=[{id:'mb_xiaoyue',name:'小月巴',urls:[]}];
+}
+
+/* =========================================================
+   3. 环境 / DOM
+   ========================================================= */
+var cv=$('cv'), ctx=cv.getContext('2d');
+var backBtn=$('back'), enterBtn=$('enter');
+var soundBtn=$('sound'), soundTxt=$('soundTxt'), toastEl=$('toast');
+var tapEl=$('tapTxt'), tapSubEl=$('tapSubTxt');
+var kickEl=$('kickTxt'), titleBox=$('titleBox');
+
+/* 序曲同样默认开启动态，不受主页面省电模式或系统「减少动态」影响 */
+var lowPower=false;
+var motionScale=1;
+if(lowPower) document.body.classList.add('low');
+if(window.top!==window.self) document.body.classList.add('embedded');
+
+tapEl.textContent=T.tap;
+tapSubEl.textContent=T.tapSub;
+kickEl.textContent=T.kick;
+backBtn.setAttribute('aria-label',T.back);
+soundBtn.setAttribute('aria-label',T.soundAriaOff);
+soundTxt.textContent=T.soundOff;
+
+/* =========================================================
+   4. 颜色 / 数据
+   ========================================================= */
+var PAPER='#F3ECDC';
+var INK='#24305C';
+var INK_RGB='36,48,92';
+var RED='#D4552B';
+var BLACK='#0E0E12';
+var TAU=Math.PI*2;
+
+var W=0,H=0,DPR=1;
+var titleBand=[0,0,0];
+var scene={seed:0,systems:[],banis:[],sorted:[],threads:[],curls:[],ruleY:0,bgGrad:null};
+var IMG={}, loadQ=[], loading=0;
+var bag=[];
+var leaving=false, enterAt=0;
+var rzTimer=0, lastFrame=0, rafId=0;
+
+/* =========================================================
+   5. 图片加载 → 黑色剪影（只做合成，不读像素，外链无 CORS 也能用）
+   ========================================================= */
+function makeSilhouette(im){
+  var nw=im.naturalWidth||im.width||160;
+  var nh=im.naturalHeight||im.height||160;
+  var hh=Math.min(256,Math.max(120,nh));
+  var ww=Math.max(1,Math.round(hh*nw/nh));
+  if(ww>560) ww=560;
+  var c=document.createElement('canvas');
+  c.width=ww; c.height=hh;
+  var g=c.getContext('2d');
+  /* 外链立绘内部常是半透明软边：重复叠画把 alpha 压成实心，再统一染黑 */
+  for(var k=0;k<6;k++) g.drawImage(im,0,0,ww,hh);
+  g.globalCompositeOperation='source-in';
+  g.fillStyle=BLACK;
+  g.fillRect(0,0,ww,hh);
+  return {cv:c, aspect:nw/nh};
+}
+function requestImg(url){
+  if(!url||IMG[url]) return;
+  IMG[url]={state:0,sil:null,aspect:0.95,failed:false};
+  loadQ.push(url);
+  pump();
+}
+function pump(){
+  while(loading<5 && loadQ.length){
+    (function(u){
+      loading++;
+      var im=new Image();
+      im.decoding='async';
+      im.onload=function(){
+        var rec=IMG[u];
+        try{
+          var s=makeSilhouette(im);
+          rec.sil=s.cv;
+          rec.aspect=clamp(s.aspect,0.55,1.55);
+          rec.state=1;
+        }catch(e){
+          rec.state=2; rec.failed=true;
+        }
+        loading--;
+        onImg(u);
+        pump();
+      };
+      im.onerror=function(){
+        var rec=IMG[u];
+        rec.state=2; rec.failed=true;
+        loading--;
+        onImg(u);
+        pump();
+      };
+      im.src=u;
+    })(loadQ.shift());
+  }
+}
+function onImg(url){
+  for(var i=0;i<scene.banis.length;i++){
+    var b=scene.banis[i];
+    if(b.url===url){
+      var rec=IMG[url];
+      if(rec.state===1){
+        b.aspect=rec.aspect; b.w=b.h*rec.aspect;
+        var half=b.w/2+6;
+        b.x=clamp(b.x,half+6,W-half-6);
+      }
+      else b.failed=true;
+    }
+  }
+  if(lowPower) render(0);
+}
+function nextPoolItem(avoid){
+  for(var n=0;n<40;n++){
+    if(!bag.length){
+      bag=shuffle(DEX_POOL.slice());
+      if(bag.length>1&&avoid&&bag[bag.length-1]&&bag[bag.length-1].id===avoid.id){
+        var t=bag[0]; bag[0]=bag[bag.length-1]; bag[bag.length-1]=t;
+      }
+    }
+    var it=bag.pop();
+    if(!avoid||!it||it.id!==avoid.id) return it;
+  }
+  return DEX_POOL[(Math.random()*DEX_POOL.length)|0];
+}
+
+/* =========================================================
+   6. 谱面生成
+   ========================================================= */
+/* 每个系统的「上线」纵向位置（相对视口高度），标题带夹在中间 */
+var FRACS={
+  6:[0.068,0.178,0.288,0.522,0.642,0.762],
+  5:[0.075,0.195,0.315,0.600,0.720],
+  4:[0.060,0.190,0.520,0.660]
+};
+/* [标题框顶, 标题框底, 红线 y] */
+var BANDS={
+  6:[0.314,0.440,0.444],
+  5:[0.345,0.482,0.486],
+  4:[0.315,0.445,0.449]
+};
+/* 巨幅字母：只放在标题带上方/下方较远的系统，避免压住红标题 */
+var LETTERS={
+  6:[['B','A'],['N','N'],['Y'],[],['B','E'],['A','T']],
+  5:[['B','A'],['N','N'],['Y'],[],['B','E','A','T']],
+  4:[['B','A','N'],['N','Y'],[],['B','E','A','T']]
+};
+var SYL=['ba','ni','to','ma'];
+
+function makeLyric(rng){
+  var out=[];
+  var n=clamp(Math.round(W/95),5,17)+(rng()<0.5?0:1);
+  for(var i=0;i<n;i++){
+    var w='',k=2+(rng()*2|0);
+    for(var j=0;j<k;j++) w+=(j?'-':'')+SYL[(rng()*SYL.length)|0];
+    out.push(w);
+  }
+  return out.join(' · ');
+}
+
+function buildLayout(){
+  var nSys=H<560?4:(H<720?5:6);
+  var fr=FRACS[nSys];
+  var band=BANDS[nSys];
+  var pitch=(fr[1]-fr[0])*H;
+  var g=clamp(pitch*0.057,3.1,9.4);
+  var clefX=Math.max(19,W*0.028);
+  var contentX=clefX+g*6.1;
+  var xR=W+14;
+  var systems=[];
+  for(var i=0;i<fr.length;i++){
+    systems.push({
+      idx:i, y0:fr[i]*H, pitch:pitch, g:g,
+      clefX:clefX, contentX:contentX, xL:-14, xR:xR,
+      clef:'treble', ts:['4','4'], bars:[], notes:[], letters:[],
+      lyric:'', banis:[], phase:Math.random()*TAU, phase2:Math.random()*TAU,
+      wob:g*0.10
+    });
+  }
+  return {systems:systems, band:band, nSys:nSys};
+}
+
+function placeBanis(sys,n,rng,topLimit,botLimit){
+  var out=[];
+  var g=sys.g, pitch=sys.pitch;
+  var hMin=Math.max(21,pitch*0.22);
+  var hMax=Math.max(36,pitch*0.54);
+  var xMin=sys.contentX+g*2.2;
+  var xMax=W-g*1.6;
+  var tries=0;
+  while(out.length<n && tries<n*40){
+    tries++;
+    var h=hMin+rng()*(hMax-hMin);
+    if(rng()<0.16) h=Math.min(hMax*1.14,h*1.16);
+    var rr=rng();
+    var mode=rr<0.07?'float':(rr<0.30?'hang':'stand');
+    var line;
+    if(mode==='stand') line=2+(rng()*3|0);
+    else if(mode==='hang') line=0+(rng()*3|0);
+    else line=0+(rng()*5|0);
+    var footY,topY;
+    if(mode==='stand'){
+      footY=sys.y0+line*g+0.6;
+      topY=footY-h;
+    }else if(mode==='hang'){
+      topY=sys.y0+line*g-0.6;
+      footY=topY+h;
+    }else{
+      footY=sys.y0-g*(0.8+rng()*2.4);
+      topY=footY-h;
+    }
+    /* 标题带下方的系统：不许长进标题和红线 */
+    if(topLimit&&topY<topLimit&&mode!=='hang'){
+      h=footY-topLimit;
+      if(h<hMin) continue;
+      topY=topLimit;
+    }
+    /* 标题带上方的系统：倒挂的月巴不许垂进标题 */
+    if(botLimit&&mode==='hang'&&footY>botLimit){
+      h=botLimit-topY;
+      if(h<hMin) continue;
+      footY=topY+h;
+    }
+    if(topY<6) continue;
+    var w=h*1.08;
+    if(xMax-xMin<=w*1.15) break;
+    var x=xMin+w*0.55+rng()*(xMax-xMin-w*1.1);
+    var ok=true;
+    for(var i=0;i<out.length;i++){
+      if(Math.abs(out[i].x-x)<(out[i].w+w)*0.46+5){ ok=false; break; }
+    }
+    if(!ok) continue;
+    out.push({x:x,w:w,h:h,mode:mode,line:line,footY:footY,topY:topY});
+  }
+  return out;
+}
+
+/* 每只月巴挑一条五线谱线，让它从月巴身上「绕过去」 */
+function assignDetours(sys,rng){
+  var cands=[];
+  for(var i=0;i<sys.banis.length;i++){
+    if(sys.banis[i].mode!=='float') cands.push(sys.banis[i]);
+  }
+  shuffle(cands);
+  var used={}, done=0;
+  var want=Math.min(cands.length,1+(rng()<0.55?1:0));
+  for(var i=0;i<cands.length&&done<want;i++){
+    var b=cands[i];
+    var list=[];
+    for(var j=0;j<5;j++){
+      if(used[j]) continue;
+      var ly=sys.y0+j*sys.g;
+      if(b.mode==='stand'){
+        if(ly>b.topY+sys.g*0.9 && ly<b.footY-sys.g*0.15) list.push(j);
+      }else{
+        if(ly>b.topY+sys.g*0.15 && ly<b.topY+b.h-sys.g*0.9) list.push(j);
+      }
+    }
+    if(!list.length) continue;
+    var j2=list[(rng()*list.length)|0];
+    var ly2=sys.y0+j2*sys.g;
+    var dir=(b.mode==='stand')?-1:1;
+    var amp=(dir<0)?(ly2-(b.topY-sys.g*1.1)):((b.topY+b.h+sys.g*1.1)-ly2);
+    if(amp<sys.pitch*0.12) continue;
+    used[j2]=1; done++;
+    b.detourLine=j2; b.detourDir=dir;
+    b.detourAmp=Math.min(amp,sys.pitch*0.50);
+  }
+}
+
+function buildNotes(sys,rng){
+  var groups=2+(rng()*3|0);
+  for(var i=0;i<groups;i++){
+    var x=sys.contentX+26+rng()*(W-sys.contentX-80);
+    var n=1+((rng()<0.42)?1:0)+((rng()<0.14)?1:0);
+    var base=1+(rng()*7|0);
+    var steps=[];
+    for(var k=0;k<n;k++){
+      var s=base+(k===0?0:((rng()<0.5?-2:2)));
+      s=clamp(s,-2,10);
+      if(steps.indexOf(s)>=0) s=clamp(s+2,-2,10);
+      steps.push(s);
+    }
+    steps.sort(function(a,b){return a-b;});
+    sys.notes.push({
+      x:x, steps:steps, up:steps[0]>=4,
+      flag:rng()<0.58, dot:rng()<0.18, acc:rng()<0.16,
+      slur:rng()<0.26
+    });
+  }
+  if(rng()<0.60){
+    sys.rest={x:sys.contentX+26+rng()*(W-sys.contentX-80), y:sys.y0+sys.g*(1.2+rng()*2.6)};
+  }
+}
+
+function buildScene(){
+  var oldBanis=scene.banis||[];
+  var first=!oldBanis.length;
+  scene.banis=[];
+  if(!scene.seed) scene.seed=(Math.random()*2147483647)|0;
+  var rng=mulberry32(scene.seed);
+
+  var L=buildLayout();
+  var systems=L.systems;
+  scene.systems=systems;
+  titleBand=L.band;
+  scene.ruleY=L.band[2]*H;
+  titleBox.style.top=(L.band[0]*100)+'%';
+  titleBox.style.height=((L.band[1]-L.band[0])*100)+'%';
+
+  var reused=0, cursor=0, total=0;
+  for(var si=0;si<systems.length;si++){
+    var sys=systems[si];
+    sys.clef=rng()<0.74?'treble':'bass';
+    var tr=rng();
+    sys.ts=tr<0.68?['4','4']:(tr<0.88?['3','4']:['6','8']);
+    sys.lyric=makeLyric(rng);
+
+    var barStart=sys.contentX+sys.g*3.2;
+    var barEnd=W-sys.g*2.6;
+    var nb=3+(rng()*3|0);
+    for(var bi=0;bi<nb;bi++){
+      sys.bars.push(barStart+(barEnd-barStart)*((bi+0.35+rng()*0.35)/nb));
+    }
+
+    var maxN=W>900?8:(W>600?6:4);
+    var need=clamp(Math.round((W-sys.contentX-26)/150)+(rng()<0.5?0:1),3,maxN);
+    var topLimit=(si>0&&sys.y0>titleBand[1]*H)?titleBand[1]*H+16:0;
+    var botLimit=(sys.y0<titleBand[0]*H)?titleBand[0]*H-12:0;
+    var placements=placeBanis(sys,need,rng,topLimit,botLimit);
+
+    for(var pi=0;pi<placements.length;pi++){
+      var pl=placements[pi];
+      var prev=oldBanis[cursor++];
+      var item,url,keep=false;
+      if(prev&&prev.item&&!first){
+        item=prev.item; url=prev.url; keep=true; reused++;
+      }else{
+        item=nextPoolItem();
+        url=(item.urls&&item.urls.length)?item.urls[(Math.random()*item.urls.length)|0]:'';
+      }
+      var rec=IMG[url];
+      var asp=(rec&&rec.state===1)?rec.aspect:0.95;
+      var b={
+        sys:sys, sysIdx:si,
+        x:pl.x, h:pl.h, w:pl.h*asp, aspect:asp,
+        mode:pl.mode, line:pl.line, footY:pl.footY, topY:pl.topY,
+        item:item, url:url, failed:false,
+        flip:rng()<0.5, rot:(rng()-0.5)*0.05, rotAmp:0.007+rng()*0.009,
+        bobAmp:1.2+rng()*2.3, bobSpeed:0.6+rng()*0.95,
+        phase:rng()*TAU,
+        walkAmp:5+rng()*7, walkSpeed:0.35+rng()*0.55, walkPhase:rng()*TAU,
+        dance:0,
+        alpha:(lowPower||keep)?1:0, targetAlpha:1,
+        t0:lowPower?0:(first?0.22+total*0.045:0),
+        state:'live', cool:0,
+        label:false,
+        hitT:0, hitSeed:0, musLast:0,
+        noteMidi:null, musPan:0, musVel:0.1, musDur:0.7,
+        detourLine:-1, detourDir:0, detourAmp:0,
+        drawBob:0, drawX:pl.x, drawFootY:pl.footY, drawTopY:pl.topY, drawRot:0
+      };
+      sys.banis.push(b);
+      scene.banis.push(b);
+      total++;
+    }
+    assignDetours(sys,rng);
+    buildNotes(sys,rng);
+    var letterSet=LETTERS[L.nSys][si]||[];
+    if(letterSet.length) buildLetters(sys,letterSet,rng);
+  }
+
+  scene.sorted=scene.banis.slice().sort(function(a,b){ return a.h-b.h; });
+  assignLabels();
+  buildThreads(rng);
+  buildCurls(rng);
+  hitQueue.length=0;
+  if(audioStarted){
+    assignVoices();
+    buildPerfOrder();
+  }
+
+  for(var i2=0;i2<scene.banis.length;i2++){
+    var u=scene.banis[i2].url;
+    if(u) requestImg(u);
+  }
+}
+
+/* 红色小注记：最多 4 条，避开标题带与彼此 */
+function assignLabels(){
+  var cands=[];
+  for(var i=0;i<scene.banis.length;i++){
+    var b=scene.banis[i];
+    if(b.mode==='float') continue;
+    if(!b.item||b.item.name.length>6) continue;
+    cands.push(b);
+  }
+  shuffle(cands);
+  var placed=[], max=Math.min(4,cands.length);
+  var top=titleBand[0]*H-8, bot=titleBand[1]*H+8;
+  for(var i=0;i<cands.length&&placed.length<max;i++){
+    var b=cands[i];
+    if(b.footY>top&&b.topY<bot) continue;
+    var clash=false;
+    for(var k=0;k<placed.length;k++){
+      if(Math.abs(placed[k].x-b.x)<112&&Math.abs(placed[k].topY-b.topY)<34){ clash=true; break; }
+    }
+    if(clash) continue;
+    b.label=true; placed.push(b);
+  }
+}
+
+function buildLetters(sys,letters,rng){
+  var size=sys.pitch*0.92;
+  var cw=Math.max(120,W-sys.contentX-28);
+  var xs;
+  if(letters.length===1) xs=[0.40+rng()*0.10];
+  else if(letters.length===2) xs=[0.14+rng()*0.10,0.56+rng()*0.13];
+  else if(letters.length===3) xs=[0.08+rng()*0.05,0.40+rng()*0.07,0.72+rng()*0.06];
+  else xs=[0.05+rng()*0.04,0.28+rng()*0.05,0.52+rng()*0.05,0.76+rng()*0.05];
+  for(var i=0;i<letters.length&&i<xs.length;i++){
+    sys.letters.push({
+      ch:letters[i],
+      x:sys.contentX+10+cw*xs[i],
+      size:size,
+      alpha:0.86+rng()*0.11
+    });
+  }
+}
+
+function buildThreads(rng){
+  scene.threads=[];
+  var pool=[];
+  for(var i=0;i<scene.banis.length;i++){
+    if(scene.banis[i].mode!=='float') pool.push(scene.banis[i]);
+  }
+  if(!pool.length) return;
+  var count=3;
+  for(var k=0;k<count;k++){
+    var b=pool[(rng()*pool.length)|0];
+    var si=b.sysIdx;
+    var ti=si+1+(rng()*2|0);
+    if(ti>=scene.systems.length) ti=si-1-(rng()*2|0);
+    if(ti<0||ti>=scene.systems.length) continue;
+    var ts=scene.systems[ti];
+    var g=b.sys.g;
+    var dir=rng()<0.5?-1:1;
+    var w=b.w;
+    var pts=[
+      {x:b.x-w*(1.55+rng()*0.8), y:b.footY+g*(0.7+rng()*0.9)},
+      {x:b.x-w*0.8, y:b.topY-g*(2.0+rng()*1.5)},
+      {x:b.x+w*0.8, y:b.topY-g*(1.7+rng()*1.5)},
+      {x:b.x+w*(1.4+rng()*0.9), y:b.footY+g*(1.9+rng()*1.6)},
+      {x:b.x+dir*W*(0.11+rng()*0.20), y:ts.y0+g*(1.4+rng()*2.2)},
+      {x:b.x+dir*W*(0.25+rng()*0.20), y:ts.y0+g*(4.0+rng()*1.9)}
+    ];
+    for(var p=0;p<pts.length;p++){
+      pts[p].x=clamp(pts[p].x,-46,W+46);
+      pts[p].y=clamp(pts[p].y,24,H-30);
+    }
+    scene.threads.push({pts:pts, alpha:0.55+rng()*0.28, width:1.15+rng()*0.75});
+  }
+}
+
+function buildCurls(rng){
+  scene.curls=[];
+  var n=2+(rng()<0.35?1:0);
+  var order=shuffle(scene.systems.slice());
+  for(var i=0;i<n&&i<order.length;i++){
+    var s=order[i];
+    var y=s.y0-s.g*(0.9+rng()*1.8);
+    if(y>titleBand[0]*H-10&&y<titleBand[1]*H+20) y=s.y0+s.g*4.9;
+    scene.curls.push({
+      x:W*(0.58+rng()*0.34),
+      y:y,
+      s:s.g*(1.35+rng()*0.95),
+      a:0.72+rng()*0.25
+    });
+  }
+}
+
+/* =========================================================
+   6b. 月巴演奏：Web Audio 生成式五声音阶
+       —— 每只月巴按所处谱线的位置分到一个音；
+          刷新后站位随机，曲子也随之不同。
+   ========================================================= */
+var AUDIO_MUTE_KEY='yueba-rhythm-intro-muted-v1';
+var introMuted=(function(){
+  try{ var v=localStorage.getItem(AUDIO_MUTE_KEY); if(v!=null) return v==='1'; }catch(e){}
+  return false;
+})();
+var audioSupported=!!(window.AudioContext||window.webkitAudioContext);
+var audioCtx=null, audioMaster=null, audioBus=null, audioWet=null, audioAnalyser=null;
+var audioStarted=false, musicInit=false, musicKey=0, musicBPM=80;
+var musStep=0, musBar=0, musNext=0, musTimer=0, musPaused=false;
+var PERF_BARS=12;
+var perfOrder=[], perfIdx=0, perfDir=1, perfEnding=false, perfEndTimer=0;
+var hitQueue=[], toastTimer=0;
+var MUS_PENT=[0,2,4,7,9];
+var MUS_SCALE=[0,2,4,5,7,9,11];
+var MUS_PROG=[0,5,3,4];
+var MUS_KEYS=[0,2,5,7,9];
+
+if(!audioSupported&&soundBtn) soundBtn.style.display='none';
+
+function midiHz(m){ return 440*Math.pow(2,(m-69)/12); }
+function scaleMidi(deg,base){
+  var oct=Math.floor(deg/7), d=((deg%7)+7)%7;
+  return base+12*oct+MUS_SCALE[d];
+}
+function showToast(msg,ms){
+  if(!toastEl||!msg) return;
+  toastEl.textContent=msg;
+  toastEl.classList.add('show');
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){ toastEl.classList.remove('show'); },ms||3800);
+}
+function updateSoundUI(){
+  if(!soundBtn) return;
+  var on=!!audioStarted;
+  soundBtn.classList.toggle('on',on);
+  soundBtn.setAttribute('aria-pressed',on?'true':'false');
+  soundBtn.setAttribute('aria-label',on?T.soundAriaOn:T.soundAriaOff);
+  if(soundTxt) soundTxt.textContent=on?T.soundOn:T.soundOff;
+}
+function makeImpulse(sec,decay){
+  var rate=audioCtx.sampleRate;
+  var len=Math.max(1,Math.floor(rate*sec));
+  var buf=audioCtx.createBuffer(2,len,rate);
+  for(var ch=0;ch<2;ch++){
+    var d=buf.getChannelData(ch);
+    for(var i=0;i<len;i++){
+      d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay);
+    }
+  }
+  return buf;
+}
+function ensureAudio(){
+  if(audioCtx) return audioCtx;
+  if(!audioSupported) return null;
+  try{
+    var Ctx=window.AudioContext||window.webkitAudioContext;
+    audioCtx=new Ctx();
+    var comp=audioCtx.createDynamicsCompressor();
+    comp.threshold.value=-20;
+    comp.knee.value=24;
+    comp.ratio.value=3;
+    comp.attack.value=0.012;
+    comp.release.value=0.28;
+    comp.connect(audioCtx.destination);
+
+    audioMaster=audioCtx.createGain();
+    audioMaster.gain.value=0.0001;
+    audioMaster.connect(comp);
+
+    audioAnalyser=audioCtx.createAnalyser();
+    audioAnalyser.fftSize=512;
+    audioMaster.connect(audioAnalyser);
+
+    audioBus=audioCtx.createGain();
+    audioBus.gain.value=0.85;
+    var dry=audioCtx.createGain();
+    dry.gain.value=0.92;
+    dry.connect(audioMaster);
+    audioWet=audioCtx.createGain();
+    audioWet.gain.value=0.24;
+    audioWet.connect(audioMaster);
+    var rev=audioCtx.createConvolver();
+    rev.buffer=makeImpulse(2.1,2.8);
+    rev.connect(audioWet);
+    audioBus.connect(dry);
+    audioBus.connect(rev);
+    return audioCtx;
+  }catch(e){
+    audioCtx=null;
+    return null;
+  }
+}
+
+/* 每只月巴 = 一个音：上面的谱线更高，越靠上的谱表整体提高一个八度 */
+function assignVoices(){
+  for(var i=0;i<scene.banis.length;i++){
+    var b=scene.banis[i];
+    var line=clamp(b.line||0,0,4);
+    var deg=4-line;
+    var base=60+musicKey+(b.sysIdx<2?12:0);
+    b.noteMidi=base+MUS_PENT[deg];
+    b.musPan=clamp((b.x/W)*1.4-0.7,-0.7,0.7);
+    var sz=clamp(b.h/(b.sys.pitch*0.62),0.3,1.5);
+    b.musVel=clamp(0.075+0.085*sz,0.07,0.19)*(b.noteMidi>84?0.72:1);
+    b.musDur=0.50+0.42*sz;
+    if(b.hitT==null) b.hitT=0;
+  }
+}
+
+function pluckVoice(b,when,manual){
+  if(!audioCtx||!b||b.noteMidi==null) return;
+  var t=Math.max(when||0,audioCtx.currentTime+0.001);
+  var f=midiHz(b.noteMidi);
+  var vel=(b.musVel||0.1)*(manual?1.18:1);
+  var dur=(b.musDur||0.7)*(manual?1.25:1)*(b.noteMidi>84?0.78:1);
+  var pan=b.musPan||0;
+
+  var filt=audioCtx.createBiquadFilter();
+  filt.type='lowpass';
+  filt.frequency.value=Math.min(7200,1000+f*4);
+  filt.Q.value=0.6;
+  var panner=null;
+  if(audioCtx.createStereoPanner){
+    panner=audioCtx.createStereoPanner();
+    panner.pan.value=pan;
+    filt.connect(panner);
+    panner.connect(audioBus);
+  }else{
+    filt.connect(audioBus);
+  }
+
+  function voice(type,freq,amp,life,detune){
+    var o=audioCtx.createOscillator();
+    var g=audioCtx.createGain();
+    o.type=type;
+    o.frequency.value=freq;
+    o.detune.value=detune||0;
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002,amp),t+0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+life);
+    o.connect(g);
+    g.connect(filt);
+    o.start(t);
+    o.stop(t+life+0.03);
+    return o;
+  }
+  var main=voice('sine',f,vel*0.92,dur,(Math.random()-0.5)*8);
+  voice('sine',f*2.004,vel*0.20,dur*0.58,(Math.random()-0.5)*7);
+  voice('triangle',f*3.008,vel*0.055,dur*0.34,(Math.random()-0.5)*6);
+  main.onended=function(){
+    try{
+      filt.disconnect();
+      if(panner) panner.disconnect();
+    }catch(e){}
+  };
+}
+
+function bassVoice(deg,when){
+  if(!audioCtx) return;
+  var t=when;
+  var f=midiHz(scaleMidi(deg,36+musicKey));
+  var g=audioCtx.createGain();
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.linearRampToValueAtTime(0.105,t+0.035);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+1.65);
+  var filt=audioCtx.createBiquadFilter();
+  filt.type='lowpass';
+  filt.frequency.value=420;
+  filt.Q.value=0.4;
+  g.connect(filt);
+  filt.connect(audioBus);
+  var o=audioCtx.createOscillator();
+  o.type='sine';
+  o.frequency.value=f;
+  var h=audioCtx.createOscillator();
+  h.type='triangle';
+  h.frequency.value=f*2;
+  var hg=audioCtx.createGain();
+  hg.gain.value=0.16;
+  o.connect(g);
+  h.connect(hg);
+  hg.connect(g);
+  o.start(t); o.stop(t+1.7);
+  h.start(t); h.stop(t+1.7);
+  o.onended=function(){ try{ filt.disconnect(); }catch(e){} };
+}
+
+function padVoice(deg,when,dur){
+  if(!audioCtx) return;
+  var t=when;
+  var tones=[0,2,4,6].map(function(k){ return scaleMidi(deg+k,48+musicKey); });
+  var filt=audioCtx.createBiquadFilter();
+  filt.type='lowpass';
+  filt.frequency.value=1350;
+  filt.Q.value=0.4;
+  filt.connect(audioBus);
+  var left=tones.length;
+  for(var i=0;i<tones.length;i++){
+    var f=midiHz(tones[i]);
+    var g=audioCtx.createGain();
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.linearRampToValueAtTime(0.020,t+1.15);
+    g.gain.setValueAtTime(0.020,t+dur*0.72);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur+1.5);
+    var o=audioCtx.createOscillator();
+    o.type=(i%2)?'triangle':'sine';
+    o.frequency.value=f;
+    o.detune.value=(i-1.5)*3.2;
+    var pan=null;
+    if(audioCtx.createStereoPanner){
+      pan=audioCtx.createStereoPanner();
+      pan.pan.value=(i-1.5)*0.17;
+      o.connect(g); g.connect(pan); pan.connect(filt);
+    }else{
+      o.connect(g); g.connect(filt);
+    }
+    o.start(t); o.stop(t+dur+1.55);
+    (function(gn,pn){
+      o.onended=function(){
+        try{ gn.disconnect(); if(pn) pn.disconnect(); }catch(e){}
+        left--;
+        if(left<=0){ try{ filt.disconnect(); }catch(e){} }
+      };
+    })(g,pan);
+  }
+}
+
+/* 演奏顺序：按谱表从上到下、从左到右排好，再左右来回扫；
+   音符与跳跃都按这个顺序走，看起来是这些月巴在依次演奏。 */
+function buildPerfOrder(){
+  perfOrder=[];
+  for(var i=0;i<scene.banis.length;i++){
+    var b=scene.banis[i];
+    if(b.alpha<0.25) continue;
+    var rec=IMG[b.url];
+    if(!rec||rec.state===0) continue;
+    perfOrder.push(b);
+  }
+  perfOrder.sort(function(a,b){
+    return (a.sysIdx-b.sysIdx)||(a.x-b.x);
+  });
+  if(perfOrder.length>1&&Math.random()<0.5) perfOrder.reverse();
+  perfDir=Math.random()<0.5?1:-1;
+  perfIdx=perfDir>0?-1:perfOrder.length;
+}
+
+function nextPerfBani(avoid){
+  if(!perfOrder.length) buildPerfOrder();
+  if(!perfOrder.length) return null;
+  var now=performance.now();
+  if(perfOrder.length===1){
+    var only=perfOrder[0];
+    var r0=IMG[only.url];
+    if(only===avoid||only.alpha<0.25||!r0||r0.state===0) return null;
+    if(only.musLast&&now-only.musLast<850) return null;
+    only.musLast=now;
+    return only;
+  }
+  for(var tries=0;tries<perfOrder.length*2;tries++){
+    perfIdx+=perfDir;
+    if(perfIdx>=perfOrder.length){ perfIdx=perfOrder.length-2; perfDir=-1; }
+    else if(perfIdx<0){ perfIdx=1; perfDir=1; }
+    var b=perfOrder[perfIdx];
+    if(!b||b===avoid||b.alpha<0.25) continue;
+    var rec=IMG[b.url];
+    if(!rec||rec.state===0) continue;
+    if(b.musLast&&now-b.musLast<850) continue;
+    b.musLast=now;
+    return b;
+  }
+  buildPerfOrder();
+  return null;
+}
+
+function schedulePluck(b,when){
+  if(!audioCtx||!b) return;
+  if(b.noteMidi==null) assignVoices();
+  b.musLast=performance.now();
+  var t=Math.max(when,audioCtx.currentTime+0.001);
+  pluckVoice(b,t,false);
+  hitQueue.push({
+    b:b,
+    at:performance.now()+Math.max(0,(t-audioCtx.currentTime)*1000),
+    seed:Math.random()
+  });
+  if(hitQueue.length>26) hitQueue.shift();
+}
+
+function scheduleStep(s,t){
+  if(!audioCtx||!audioStarted) return;
+  if(musBar>=PERF_BARS){
+    if(!perfEnding){
+      perfEnding=true;
+      var wait=Math.max(0,(t-audioCtx.currentTime)*1000)+140;
+      perfEndTimer=setTimeout(finishPerformance,wait);
+    }
+    return;
+  }
+  var beat=60/musicBPM;
+  if(s===0){
+    var chord=MUS_PROG[musBar%MUS_PROG.length];
+    padVoice(chord,t,beat*4*0.92);
+    bassVoice(chord,t);
+    bassVoice(chord+4,t+beat*2);
+  }
+  var p;
+  if(s===0||s===8) p=0.95;
+  else if(s%4===0) p=0.56;
+  else if(s%4===2) p=0.30;
+  else p=0.06;
+  if(Math.random()<p){
+    var b=nextPerfBani();
+    if(b) schedulePluck(b,t+(s%2?0.012:0));
+    if((s===0||s===8)&&Math.random()<0.15){
+      var b2=nextPerfBani(b);
+      if(b2&&b2!==b) schedulePluck(b2,t+0.014);
+    }
+  }
+}
+
+function scheduler(){
+  if(!audioStarted||!audioCtx) return;
+  var horizon=audioCtx.currentTime+0.30;
+  var guard=0;
+  while(musNext<horizon&&guard<24){
+    scheduleStep(musStep,musNext);
+    musNext+=60/musicBPM/4;
+    musStep++;
+    if(musStep>=16){ musStep=0; musBar++; }
+    guard++;
+  }
+}
+function startScheduler(reset){
+  if(!audioCtx) return;
+  if(musTimer){ clearInterval(musTimer); musTimer=0; }
+  if(reset){
+    musStep=0; musBar=0;
+    hitQueue.length=0;
+    if(perfEndTimer){ clearTimeout(perfEndTimer); perfEndTimer=0; }
+    perfEnding=false;
+    buildPerfOrder();
+  }
+  musPaused=false;
+  musNext=audioCtx.currentTime+0.12;
+  musTimer=setInterval(scheduler,70);
+  scheduler();
+}
+
+function finishPerformance(){
+  perfEndTimer=0;
+  if(!audioStarted) return;
+  stopMusic(true,2.0);
+  showToast(T.soundEnd,4200);
+}
+
+function startMusic(){
+  if(!audioSupported) return;
+  if(!ensureAudio()) return;
+  if(!musicInit){
+    var sd=Math.abs(scene.seed)||1;
+    musicKey=MUS_KEYS[sd%MUS_KEYS.length];
+    musicBPM=72+(Math.floor(sd/7)%13);
+    musicInit=true;
+  }
+  assignVoices();
+  audioStarted=true;
+  introMuted=false;
+  ensureAnimating();
+  try{ if(audioCtx.state==='suspended') audioCtx.resume(); }catch(e){}
+  var now=audioCtx.currentTime;
+  audioMaster.gain.cancelScheduledValues(now);
+  audioMaster.gain.setValueAtTime(Math.max(0.0001,audioMaster.gain.value),now);
+  audioMaster.gain.linearRampToValueAtTime(0.85,now+0.5);
+  startScheduler(true);
+  updateSoundUI();
+  try{ localStorage.setItem(AUDIO_MUTE_KEY,'0'); }catch(e){}
+  showToast(T.soundStart,3800);
+}
+function stopMusic(silent,fadeSec){
+  audioStarted=false;
+  if(musTimer){ clearInterval(musTimer); musTimer=0; }
+  if(perfEndTimer){ clearTimeout(perfEndTimer); perfEndTimer=0; }
+  perfEnding=false;
+  musPaused=false;
+  hitQueue.length=0;
+  if(audioCtx&&audioMaster){
+    var now=audioCtx.currentTime;
+    var fade=fadeSec||0.35;
+    audioMaster.gain.cancelScheduledValues(now);
+    audioMaster.gain.setValueAtTime(Math.max(0.0001,audioMaster.gain.value),now);
+    audioMaster.gain.linearRampToValueAtTime(0.0001,now+fade);
+  }
+  if(!silent){
+    introMuted=true;
+    try{ localStorage.setItem(AUDIO_MUTE_KEY,'1'); }catch(e){}
+  }
+  updateSoundUI();
+}
+function toggleMusic(){
+  if(leaving) return;
+  if(audioStarted){
+    stopMusic(false);
+  }else{
+    introMuted=false;
+    startMusic();
+  }
+}
+/* 默认自动播放试听：百巴箱内嵌时带着父页的用户手势，浏览器放行就直接响；
+   被自动播放策略拦下（AudioContext 停在 suspended）就静默退回「点一下开始」，不弹提示 */
+function tryAutoplay(){
+  if(!audioSupported||audioStarted||leaving) return;
+  var ctx=ensureAudio();
+  if(!ctx) return;
+  var confirm=function(){
+    setTimeout(function(){
+      try{
+        if(audioCtx&&audioCtx.state==='running'&&!audioStarted&&!leaving) startMusic();
+      }catch(e){}
+    },120);
+  };
+  try{
+    if(ctx.state==='running'){ confirm(); return; }
+    var p=ctx.resume();
+    if(p&&p.then) p.then(confirm,function(){});
+    else confirm();
+  }catch(e){}
+}
+
+function baniAt(cx,cy){
+  var best=null,bd=1e9;
+  for(var i=0;i<scene.banis.length;i++){
+    var b=scene.banis[i];
+    if(b.alpha<0.2) continue;
+    var rec=IMG[b.url];
+    if(!rec||rec.state===0) continue;
+    var bw=b.h*(rec.state===1?rec.aspect:0.95);
+    var half=bw*0.58+6;
+    var bx=(b.drawX!=null?b.drawX:b.x);
+    var y0=Math.min(b.drawTopY,b.drawFootY)-7;
+    var y1=Math.max(b.drawTopY,b.drawFootY)+6;
+    if(cx>=bx-half&&cx<=bx+half&&cy>=y0&&cy<=y1){
+      var dx=bx-cx,dy=(b.drawTopY+b.drawFootY)*0.5-cy;
+      var d=dx*dx+dy*dy;
+      if(d<bd){ bd=d; best=b; }
+    }
+  }
+  return best;
+}
+function tapBani(b){
+  if(introMuted){
+    showToast(T.soundMuted,2600);
+    return;
+  }
+  if(!audioStarted) startMusic();
+  if(!audioCtx||!audioStarted) return;
+  if(b.noteMidi==null) assignVoices();
+  b.hitT=1;
+  b.hitSeed=Math.random();
+  pluckVoice(b,audioCtx.currentTime+0.005,true);
+}
+
+function processHits(dt){
+  var now=performance.now();
+  for(var i=hitQueue.length-1;i>=0;i--){
+    if(now>=hitQueue[i].at){
+      var h=hitQueue[i], b=h.b;
+      b.hitT=1;
+      b.hitSeed=h.seed;
+      hitQueue.splice(i,1);
+    }
+  }
+  for(var k=0;k<scene.banis.length;k++){
+    var bb=scene.banis[k];
+    if(bb.hitT>0) bb.hitT=Math.max(0,bb.hitT-dt*1.9);
+  }
+}
+
+/* =========================================================
+   7. 谱线变形：月巴把五线谱「压弯 / 绕开」
+   ========================================================= */
+function staffWarp(sys,j,x){
+  var baseY=sys.y0+j*sys.g;
+  var dy=Math.sin(x*0.012+sys.phase+j*0.7)*sys.wob
+       + Math.sin(x*0.027+sys.phase2-j*1.1)*sys.wob*0.45;
+  var list=sys.banis;
+  for(var i=0;i<list.length;i++){
+    var b=list[i];
+    if(b.alpha<0.04) continue;
+    var rec=IMG[b.url];
+    if(!rec||rec.state===0) continue;
+    var bw=b.h*(rec.state===1?rec.aspect:0.95);
+    var big=Math.max(bw,b.w);
+    var bx=(b.drawX!=null?b.drawX:b.x);
+
+    /* 一条线专门从月巴头顶/脚底绕过去 */
+    if(j===b.detourLine){
+      var half=big*1.42+sys.g*2.6;
+      var u=(x-bx)/half;
+      if(u>-1&&u<1){
+        var kk=0.5+0.5*Math.cos(Math.PI*u);
+        dy+=b.detourDir*b.detourAmp*kk*kk;
+      }
+    }
+
+    /* 其余线被身体轻轻推开，形成「谱面被弄乱」的张力 */
+    var top=b.drawTopY, foot=b.drawFootY;
+    var center=top+b.h*0.54;
+    var rel=(baseY-center)/(b.h*0.62);
+    if(rel>-1.65&&rel<1.65){
+      var half2=big*0.98+sys.g*1.9;
+      var u2=(x-bx)/half2;
+      if(u2>-1&&u2<1){
+        var k2=0.5+0.5*Math.cos(Math.PI*u2);
+        var f=rel*(1-Math.abs(rel)/1.65);
+        var guard=1;
+        if(Math.abs(baseY-foot)<b.h*0.16) guard=0;
+        if(b.mode==='hang'&&Math.abs(baseY-top)<b.h*0.16) guard=0;
+        dy+=f*b.h*0.16*k2*guard*(b.mode==='float'?0.4:1);
+      }
+    }
+  }
+  var lim=sys.pitch*0.55;
+  if(dy>lim) dy=lim;
+  if(dy<-lim) dy=-lim;
+  return dy;
+}
+
+function drawStaff(sys){
+  var g=sys.g;
+  var step=Math.max(3,Math.round(W/240));
+  var i,j,x,y;
+
+  /* 五线 */
+  ctx.save();
+  ctx.lineCap='round';
+  ctx.lineJoin='round';
+  for(j=0;j<5;j++){
+    ctx.beginPath();
+    var first=true;
+    for(x=sys.xL;x<=sys.xR;x+=step){
+      y=sys.y0+j*g+staffWarp(sys,j,x);
+      if(first){ ctx.moveTo(x,y); first=false; }
+      else ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle=INK;
+    ctx.globalAlpha=0.16;
+    ctx.lineWidth=1.9;
+    ctx.stroke();
+    ctx.globalAlpha=0.92;
+    ctx.lineWidth=1.15;
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  /* 小节线 */
+  ctx.save();
+  ctx.strokeStyle=INK;
+  ctx.globalAlpha=0.80;
+  ctx.lineWidth=1.05;
+  for(i=0;i<sys.bars.length;i++){
+    var bx=sys.bars[i];
+    var top=sys.y0-sys.g*0.5+staffWarp(sys,0,bx);
+    var bot=sys.y0+sys.g*4.5+staffWarp(sys,4,bx);
+    ctx.beginPath(); ctx.moveTo(bx,top); ctx.lineTo(bx,bot); ctx.stroke();
+  }
+  /* 终止双纵线 */
+  var ebx=W-14;
+  ctx.beginPath();
+  ctx.moveTo(ebx,sys.y0-sys.g*0.5); ctx.lineTo(ebx,sys.y0+sys.g*4.5);
+  ctx.stroke();
+  ctx.lineWidth=3.1;
+  ctx.beginPath();
+  ctx.moveTo(ebx+6,sys.y0-sys.g*0.5); ctx.lineTo(ebx+6,sys.y0+sys.g*4.5);
+  ctx.stroke();
+  ctx.restore();
+
+  /* 谱号（Segoe UI Symbol 的 U+1D11E / U+1D122） */
+  ctx.save();
+  ctx.fillStyle=INK;
+  ctx.globalAlpha=0.94;
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  var isTreble=sys.clef==='treble';
+  ctx.font=Math.round(g*(isTreble?9.6:8.0))+'px "Segoe UI Symbol","Apple Symbols","Noto Music","Bravura",serif';
+  ctx.fillText(isTreble?'\uD834\uDD1E':'\uD834\uDD22',sys.clefX+0.5,sys.y0+g*2.0);
+  ctx.restore();
+
+  /* 拍号 */
+  ctx.save();
+  ctx.fillStyle=INK;
+  ctx.globalAlpha=0.92;
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.font='900 '+Math.round(g*1.55)+'px Georgia,"Times New Roman",serif';
+  var tsx=sys.clefX+g*3.5;
+  ctx.fillText(sys.ts[0],tsx,sys.y0+g*1.52);
+  ctx.fillText(sys.ts[1],tsx,sys.y0+g*3.50);
+  ctx.restore();
+
+  /* 小节号 + 第一系统的速度记号 */
+  ctx.save();
+  ctx.fillStyle=INK;
+  ctx.globalAlpha=0.46;
+  ctx.textAlign='left';
+  ctx.textBaseline='alphabetic';
+  ctx.font='700 '+Math.round(g*1.08)+'px Georgia,"Times New Roman",serif';
+  ctx.fillText(String(11+sys.idx*4),sys.contentX+2,sys.y0-g*0.75);
+  if(sys.idx===0){
+    ctx.globalAlpha=0.62;
+    ctx.font='italic 700 '+Math.round(g*1.15)+'px Georgia,"Times New Roman",serif';
+    ctx.fillText('Allegretto',sys.contentX+Math.round(W*0.10),sys.y0-g*1.5);
+    var tx=sys.contentX+Math.round(W*0.10)+Math.round(g*9.4);
+    ctx.beginPath();
+    ctx.ellipse(tx,sys.y0-g*1.72,g*0.42,g*0.30,-0.35,0,TAU);
+    ctx.fill();
+    ctx.fillRect(tx+g*0.30,sys.y0-g*3.05,g*0.13,g*1.32);
+    ctx.font='italic 700 '+Math.round(g*1.12)+'px Georgia,"Times New Roman",serif';
+    ctx.fillText('= 96',tx+g*0.95,sys.y0-g*1.5);
+  }
+  ctx.restore();
+}
+
+function drawNotes(sys){
+  var g=sys.g;
+  ctx.save();
+  ctx.fillStyle=INK;
+  ctx.strokeStyle=INK;
+  for(var i=0;i<sys.notes.length;i++){
+    var grp=sys.notes[i];
+    var xs=[];
+    for(var k=0;k<grp.steps.length;k++) xs.push(grp.x+k*g*1.55);
+    var dir=grp.up?-1:1;
+    var stemTop=[];
+    for(var k2=0;k2<grp.steps.length;k2++){
+      var nx=xs[k2];
+      var ny=sys.y0+grp.steps[k2]*(g/2);
+      /* 加线 */
+      if(grp.steps[k2]<=-2||grp.steps[k2]>=10){
+        ctx.globalAlpha=0.82; ctx.lineWidth=0.9;
+        ctx.beginPath(); ctx.moveTo(nx-g*1.15,ny); ctx.lineTo(nx+g*1.15,ny); ctx.stroke();
+      }
+      ctx.globalAlpha=0.94;
+      ctx.save();
+      ctx.translate(nx,ny); ctx.rotate(-0.33);
+      ctx.beginPath(); ctx.ellipse(0,0,g*0.62,g*0.44,0,0,TAU); ctx.fill();
+      ctx.restore();
+      var sx=nx+g*0.56;
+      var sy=ny+dir*g*3.05;
+      ctx.lineWidth=1.05;
+      ctx.beginPath(); ctx.moveTo(sx,ny); ctx.lineTo(sx,sy); ctx.stroke();
+      stemTop.push({x:sx,y:sy});
+      if(grp.dot){
+        ctx.beginPath(); ctx.arc(nx+g*0.98,ny-g*0.08,g*0.14,0,TAU); ctx.fill();
+      }
+    }
+    if(grp.steps.length>1){
+      /* 符杠 */
+      ctx.lineWidth=g*0.40;
+      ctx.beginPath();
+      ctx.moveTo(stemTop[0].x,stemTop[0].y);
+      ctx.lineTo(stemTop[stemTop.length-1].x,stemTop[stemTop.length-1].y);
+      ctx.stroke();
+      if(grp.flag){
+        ctx.lineWidth=g*0.17;
+        var dy=g*0.62*dir*-1;
+        ctx.beginPath();
+        ctx.moveTo(stemTop[0].x,stemTop[0].y+dy);
+        ctx.lineTo(stemTop[stemTop.length-1].x,stemTop[stemTop.length-1].y+dy);
+        ctx.stroke();
+      }
+    }else if(grp.flag){
+      /* 单符尾 */
+      ctx.lineWidth=g*0.28;
+      var st=stemTop[0];
+      ctx.beginPath();
+      ctx.moveTo(st.x,st.y+dir*g*0.25);
+      ctx.bezierCurveTo(st.x-g*0.95,st.y+dir*g*0.9,st.x-g*0.55,st.y+dir*g*1.45,st.x-g*0.1,st.y+dir*g*1.55);
+      ctx.stroke();
+    }
+    /* 临时记号 */
+    if(grp.acc){
+      ctx.globalAlpha=0.8;
+      ctx.font='900 '+Math.round(g*2.1)+'px Georgia,"Times New Roman",serif';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('#',xs[0]-g*1.55,sys.y0+grp.steps[0]*(g/2)+g*0.1);
+    }
+    /* 连音线 */
+    if(grp.slur){
+      var ax=xs[0]-g*0.5, bx=xs[xs.length-1]+g*0.5;
+      var ay=sys.y0+grp.steps[0]*(g/2)+dir*g*3.45;
+      var by=sys.y0+grp.steps[grp.steps.length-1]*(g/2)+dir*g*3.45;
+      ctx.globalAlpha=0.62;
+      ctx.lineWidth=0.95;
+      ctx.beginPath();
+      ctx.moveTo(ax,ay);
+      ctx.quadraticCurveTo((ax+bx)/2,(ay+by)/2+dir*g*1.55,bx,by);
+      ctx.stroke();
+    }
+  }
+  /* 休止符 */
+  if(sys.rest){
+    var rx=sys.rest.x, ry=sys.rest.y;
+    ctx.globalAlpha=0.82;
+    ctx.lineWidth=1.25;
+    ctx.beginPath();
+    ctx.moveTo(rx,ry-g*1.45);
+    ctx.bezierCurveTo(rx+g*0.62,ry-g*1.05,rx+g*0.10,ry-g*0.30,rx+g*0.55,ry+g*0.05);
+    ctx.bezierCurveTo(rx+g*0.02,ry+g*0.38,rx+g*0.58,ry+g*0.92,rx+g*0.06,ry+g*1.42);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawLyric(sys){
+  var g=sys.g;
+  var size=Math.max(7,Math.round(g*1.30));
+  ctx.save();
+  ctx.fillStyle=INK;
+  ctx.globalAlpha=0.44;
+  ctx.font='italic '+size+'px "Times New Roman",Georgia,"SimSun",serif';
+  ctx.textAlign='left';
+  ctx.textBaseline='alphabetic';
+  var x=sys.contentX+8;
+  var y=sys.y0+g*6.55;
+  var sp=Math.max(0.7,g*0.20);
+  var limit=W-10;
+  for(var i=0;i<sys.lyric.length;i++){
+    var ch=sys.lyric.charAt(i);
+    var cw=ctx.measureText(ch).width;
+    if(x+cw>limit) break;
+    ctx.fillText(ch,x,y);
+    x+=cw+sp;
+  }
+  ctx.restore();
+}
+
+function drawLetters(sys){
+  for(var i=0;i<sys.letters.length;i++){
+    var l=sys.letters[i];
+    ctx.save();
+    ctx.fillStyle=INK;
+    ctx.globalAlpha=l.alpha;
+    ctx.textAlign='left';
+    ctx.textBaseline='alphabetic';
+    ctx.font='900 '+Math.round(l.size)+'px "Times New Roman",Georgia,"SimSun",serif';
+    ctx.fillText(l.ch,l.x,sys.y0+sys.g*4+l.size*0.22);
+    ctx.restore();
+  }
+}
+
+function drawRule(){
+  var y=scene.ruleY;
+  if(!y) return;
+  ctx.save();
+  ctx.strokeStyle=RED;
+  ctx.fillStyle=RED;
+  ctx.globalAlpha=0.92;
+  ctx.lineWidth=1.9;
+  ctx.beginPath(); ctx.moveTo(W*0.045,y); ctx.lineTo(W*0.955,y); ctx.stroke();
+  ctx.globalAlpha=0.95;
+  ctx.fillRect(W*0.045,y-4,Math.max(14,W*0.050),7);
+  ctx.restore();
+}
+
+function catmullPath(pts){
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x,pts[0].y);
+  for(var i=1;i<pts.length-1;i++){
+    var p0=pts[i-1],p1=pts[i],p2=pts[i+1];
+    var p3=pts[i+2]||p2;
+    ctx.bezierCurveTo(
+      p1.x+(p2.x-p0.x)/6, p1.y+(p2.y-p0.y)/6,
+      p2.x-(p3.x-p1.x)/6, p2.y-(p3.y-p1.y)/6,
+      p2.x, p2.y
+    );
+  }
+}
+
+function drawThreads(){
+  ctx.save();
+  ctx.lineCap='round';
+  ctx.lineJoin='round';
+  for(var i=0;i<scene.threads.length;i++){
+    var t=scene.threads[i];
+    ctx.strokeStyle=INK;
+    ctx.globalAlpha=t.alpha;
+    ctx.lineWidth=t.width;
+    catmullPath(t.pts);
+    ctx.stroke();
+    /* 尾部小钩，像手写的延音线 */
+    var e=t.pts[t.pts.length-1];
+    ctx.beginPath();
+    ctx.moveTo(e.x,e.y);
+    ctx.quadraticCurveTo(e.x-9,e.y+11,e.x+4,e.y+17);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawCurls(){
+  var list=scene.curls;
+  ctx.save();
+  ctx.strokeStyle=RED;
+  ctx.lineCap='round';
+  ctx.lineWidth=2;
+  for(var i=0;i<list.length;i++){
+    var c=list[i], s=c.s;
+    ctx.globalAlpha=c.a;
+    ctx.beginPath();
+    ctx.moveTo(c.x,c.y);
+    ctx.bezierCurveTo(c.x+s*0.15,c.y-s*0.9,c.x+s*1.05,c.y-s*1.25,c.x+s*1.12,c.y-s*0.45);
+    ctx.bezierCurveTo(c.x+s*1.18,c.y+s*0.22,c.x+s*0.48,c.y+s*0.38,c.x+s*0.32,c.y-s*0.12);
+    ctx.bezierCurveTo(c.x+s*0.20,c.y-s*0.50,c.x+s*0.64,c.y-s*0.58,c.x+s*0.72,c.y-s*0.24);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/* =========================================================
+   8. 月巴剪影
+   ========================================================= */
+function poseBanis(t){
+  for(var i=0;i<scene.banis.length;i++){
+    var b=scene.banis[i];
+    var d=b.dance||0;
+    var bob=Math.sin(t*b.bobSpeed+b.phase)*b.bobAmp*(0.65+d*1.7);
+    b.drawFootY=b.footY+bob;
+    b.drawTopY=(b.mode==='hang')?(b.topY+bob):(b.drawFootY-b.h);
+    var wa=b.walkAmp||0, ws=b.walkSpeed||0.5, wp=b.walkPhase||0;
+    b.drawX=b.x+Math.sin(t*ws+wp)*wa*d*motionScale;
+    var rot=b.rot+Math.sin(t*b.bobSpeed*0.70+b.phase*1.8)*b.rotAmp*(0.75+d*0.9);
+    if(b.hitT>0){
+      var hp=Math.sin((1-b.hitT)*Math.PI);
+      var jump=hp*(2+(audioStarted?12:0))*motionScale;
+      b.drawFootY-=jump;
+      b.drawTopY-=jump;
+      rot+=hp*(0.04+(audioStarted?0.07:0))*motionScale*(b.flip?-1:1);
+    }
+    b.drawRot=rot;
+    if(b.alpha<0&&b.alpha>-0.001) b.alpha=0;
+    if(b.alpha>1) b.alpha=1;
+  }
+}
+
+function drawBlob(w,h){
+  ctx.fillStyle=BLACK;
+  ctx.beginPath();
+  ctx.ellipse(0,-h*0.36,w*0.40,h*0.34,0,0,TAU);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(-w*0.20,-h*0.72,w*0.085,h*0.17,-0.35,0,TAU);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(w*0.20,-h*0.72,w*0.085,h*0.17,0.35,0,TAU);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(0,-h*0.15,w*0.30,h*0.10,0,0,TAU);
+  ctx.fill();
+}
+
+function drawBanis(){
+  var list=scene.sorted;
+  for(var i=0;i<list.length;i++){
+    var b=list[i];
+    var rec=IMG[b.url];
+    if(b.alpha<=0.02||!rec) continue;
+    if(rec.state===0) continue;   /* 还在下载：先不画，谱线也暂不变形 */
+    var bw=b.h*(rec.state===1?rec.aspect:0.95);
+    ctx.save();
+    ctx.globalAlpha=b.alpha;
+    ctx.translate((b.drawX!=null?b.drawX:b.x),b.drawFootY);
+    ctx.rotate(b.drawRot);
+    if(b.flip) ctx.scale(-1,1);
+    if(b.hitT>0){
+      var hp=Math.sin((1-b.hitT)*Math.PI);
+      ctx.scale(1-hp*0.09*motionScale,1+hp*0.14*motionScale);
+    }
+    if(rec.state===1&&rec.sil){
+      ctx.drawImage(rec.sil,-bw/2,-b.h,bw,b.h);
+    }else{
+      drawBlob(bw,b.h);
+    }
+    ctx.restore();
+  }
+}
+
+function drawLabels(){
+  var list=scene.sorted;
+  var size=Math.max(7,Math.round(scene.systems[0].g*1.25));
+  ctx.save();
+  ctx.fillStyle=RED;
+  ctx.textAlign='left';
+  ctx.textBaseline='middle';
+  ctx.font='italic '+size+'px "Times New Roman",Georgia,"SimSun",serif';
+  for(var i=0;i<list.length;i++){
+    var b=list[i];
+    if(!b.label||b.alpha<0.25) continue;
+    var rec=IMG[b.url];
+    if(!rec||rec.state===0) continue;
+    var bw=b.h*(rec.state===1?rec.aspect:0.95);
+    var bx=(b.drawX!=null?b.drawX:b.x);
+    var txt='/ '+b.item.name;
+    var tw=ctx.measureText(txt).width;
+    var lx=bx+bw*0.52;
+    if(lx+tw>W-8) lx=bx-bw*0.52-tw;
+    var ly=b.drawTopY+b.h*0.20;
+    ctx.globalAlpha=b.alpha*0.92;
+    ctx.fillText(txt,lx,ly);
+  }
+  ctx.restore();
+}
+
+function drawHitNotes(){
+  if(!scene.systems.length) return;
+  var size=Math.max(12,Math.round(scene.systems[0].g*2.25));
+  for(var i=0;i<scene.banis.length;i++){
+    var b=scene.banis[i];
+    if(!b.hitT||b.hitT<=0) continue;
+    var prog=1-b.hitT;
+    var bx=(b.drawX!=null?b.drawX:b.x);
+    var x=bx+(b.hitSeed-0.5)*b.w*0.55;
+    var y=b.drawTopY-3-prog*24;
+    ctx.save();
+    ctx.globalAlpha=Math.min(1,b.hitT*1.6);
+    ctx.fillStyle=RED;
+    ctx.font='700 '+size+'px "Segoe UI Symbol","Apple Symbols","Noto Music",Georgia,serif';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText('\u266A',x,y);
+    ctx.restore();
+  }
+}
+
+/* =========================================================
+   9. 主渲染 / 循环
+   ========================================================= */
+function render(t){
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle=PAPER;
+  ctx.fillRect(0,0,W,H);
+  if(scene.bgGrad){
+    ctx.fillStyle=scene.bgGrad;
+    ctx.fillRect(0,0,W,H);
+  }
+  poseBanis(t);
+  for(var i=0;i<scene.systems.length;i++) drawLyric(scene.systems[i]);
+  for(var i2=0;i2<scene.systems.length;i2++) drawStaff(scene.systems[i2]);
+  for(var i3=0;i3<scene.systems.length;i3++) drawNotes(scene.systems[i3]);
+  for(var i4=0;i4<scene.systems.length;i4++) drawLetters(scene.systems[i4]);
+  drawRule();
+  drawThreads();
+  drawCurls();
+  drawBanis();
+  drawLabels();
+  drawHitNotes();
+}
+
+function update(dt,t){
+  processHits(dt);
+  var i,b;
+  var danceTarget=audioStarted?1:0;
+  for(i=0;i<scene.banis.length;i++){
+    b=scene.banis[i];
+    b.dance=(b.dance||0)+((danceTarget-(b.dance||0))*Math.min(1,dt*2.6));
+    if(b.cool>0) b.cool-=dt;
+    if(t<b.t0) continue;
+    b.alpha+=(b.targetAlpha-b.alpha)*Math.min(1,dt*7.5);
+    if(b.alpha<0.02&&b.state==='out') respawn(b,t);
+  }
+  if(lowPower) return;
+
+  swapClock+=dt;
+  if(swapClock>swapEvery){
+    swapClock=0;
+    swapEvery=4.0+Math.random()*3.6;
+    var cands=[];
+    for(i=0;i<scene.banis.length;i++){
+      b=scene.banis[i];
+      if(b.state==='live'&&b.cool<=0&&b.alpha>0.8) cands.push(b);
+    }
+    if(cands.length){
+      var pick=cands[(Math.random()*cands.length)|0];
+      pick.state='out';
+      pick.targetAlpha=0;
+      pick.cool=8;
+    }
+  }
+}
+var swapClock=0, swapEvery=4.6;
+
+function respawn(b,t){
+  var item=null, ready=[], urls, i;
+  /* 优先挑一张已经加载好的外链，避免换人时出现空窗 */
+  for(var n=0;n<10;n++){
+    var cand=nextPoolItem(b.item);
+    urls=(cand&&cand.urls)||[];
+    ready=[];
+    for(i=0;i<urls.length;i++){
+      var rr=IMG[urls[i]];
+      if(rr&&rr.state===1) ready.push(urls[i]);
+    }
+    if(ready.length){ item=cand; break; }
+  }
+  if(!item){
+    b.state='live'; b.targetAlpha=1; b.cool=1.4;
+    return;
+  }
+  var url=ready.length?ready[(Math.random()*ready.length)|0]:(urls[0]||'');
+  b.item=item;
+  b.url=url;
+  b.failed=false;
+  var rec=IMG[url];
+  b.aspect=(rec&&rec.state===1)?rec.aspect:0.95;
+  b.w=b.h*b.aspect;
+  b.label=b.label&&item.name.length<=6;
+  b.state='in';
+  b.t0=t+0.15;
+  b.alpha=0;
+  b.targetAlpha=1;
+  b.phase=Math.random()*TAU;
+}
+
+var lastDraw=0;
+function frame(now){
+  rafId=0;
+  var t=now/1000;
+  var dt=lastFrame?Math.min(0.06,t-lastFrame):0.016;
+  lastFrame=t;
+  try{
+    update(dt,t);
+    /* 省电模式只降到 ~30fps；动画本身不能停，否则月巴会看起来完全不动 */
+    if(!lowPower || now-lastDraw>=32){
+      render(t);
+      lastDraw=now;
+    }
+  }catch(e){
+    if(!window.__rhythmIntroErr){
+      window.__rhythmIntroErr=1;
+      try{ console.error('rhythm intro frame:',e); }catch(_){}
+    }
+  }
+  rafId=requestAnimationFrame(frame);
+}
+function ensureAnimating(){
+  var now=performance.now()/1000;
+  if(!lastFrame || now-lastFrame>0.5){
+    lastFrame=0;
+    if(rafId) cancelAnimationFrame(rafId);
+    rafId=requestAnimationFrame(frame);
+  }
+}
+
+/* =========================================================
+   10. 尺寸 / 启动
+   ========================================================= */
+function doResize(){
+  var nw=window.innerWidth||document.documentElement.clientWidth||360;
+  var nh=window.innerHeight||document.documentElement.clientHeight||640;
+  var ndpr=Math.min(2,window.devicePixelRatio||1);
+  if(Math.abs(nw-W)<2&&Math.abs(nh-H)<2&&ndpr===DPR&&scene.systems.length) return;
+  W=nw; H=nh; DPR=ndpr;
+  cv.width=Math.round(W*DPR);
+  cv.height=Math.round(H*DPR);
+  cv.style.width=W+'px';
+  cv.style.height=H+'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  var gr=ctx.createRadialGradient(W*0.78,H*0.08,0,W*0.78,H*0.08,Math.max(W,H)*0.95);
+  gr.addColorStop(0,'rgba(255,252,242,.55)');
+  gr.addColorStop(0.62,'rgba(255,250,238,.12)');
+  gr.addColorStop(1,'rgba(255,250,238,0)');
+  scene.bgGrad=gr;
+  buildScene();
+  render(lastFrame?lastFrame/1000:0);
+}
+
+window.addEventListener('resize',function(){
+  if(rzTimer) clearTimeout(rzTimer);
+  rzTimer=setTimeout(function(){ rzTimer=0; doResize(); },180);
+});
+window.addEventListener('orientationchange',function(){
+  if(rzTimer) clearTimeout(rzTimer);
+  rzTimer=setTimeout(function(){ rzTimer=0; doResize(); },320);
+});
+
+/* 进入游戏 */
+function targetURL(){
+  var next='rhythm.html';
+  var v=String(qget('next')||'').trim();
+  if(/^[A-Za-z0-9_.-]+\.html$/.test(v)) next=v;
+  /* 透传 #debugall 调试开关（游戏页据此解锁全部歌曲） */
+  var dbg=String(qget('debugall')||'')==='1'?'&debugall=1':'';
+  return next+'?intro=0&lang='+encodeURIComponent(LANG)+dbg;
+}
+function enter(){
+  if(leaving||Date.now()<enterAt) return;
+  leaving=true;
+  if(audioStarted) stopMusic(true);
+  if(toastEl) toastEl.classList.remove('show');
+  document.body.classList.add('leaving');
+  try{ if(navigator.vibrate) navigator.vibrate(8); }catch(e){}
+  var url=targetURL();
+  setTimeout(function(){
+    try{ location.href=url; }catch(e){}
+  },lowPower?0:470);
+}
+function goBack(){
+  if(leaving) return;
+  if(window.top!==window.self) return;
+  leaving=true;
+  if(audioStarted) stopMusic(true);
+  if(toastEl) toastEl.classList.remove('show');
+  document.body.classList.add('leaving');
+  setTimeout(function(){ try{ location.href='../index.html'; }catch(e){} },lowPower?0:320);
+}
+enterBtn.addEventListener('click',function(e){ e.preventDefault(); enter(); });
+backBtn.addEventListener('click',function(e){ e.preventDefault(); goBack(); });
+soundBtn.addEventListener('click',function(e){ e.preventDefault(); toggleMusic(); });
+document.addEventListener('pointerdown',function(e){
+  if(leaving) return;
+  if(e.button&&e.button!==0) return;
+  var t=e.target;
+  if(t&&t.closest&&t.closest('button')) return;
+  if(audioSupported){
+    var b=baniAt(e.clientX,e.clientY);
+    if(b){
+      e.preventDefault();
+      tapBani(b);
+      return;
+    }
+  }
+  /* 点页面只开始/继续演奏；进入游戏只走下方按钮 */
+  if(!audioStarted){
+    if(introMuted){ showToast(T.soundMuted,2600); return; }
+    startMusic();
+  }
+},{passive:false});
+document.addEventListener('keydown',function(e){
+  var kt=e.target;
+  if(kt&&kt.closest&&kt.closest('button')) return;
+  if(e.key==='Enter'||e.key===' '||e.key==='Spacebar'){
+    e.preventDefault();
+    if(!audioStarted&&!introMuted) startMusic();
+  }else if(e.key==='Escape'||e.key==='Backspace'){
+    if(window.top===window.self){ e.preventDefault(); goBack(); }
+  }
+});
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden){
+    if(audioStarted&&musTimer){
+      clearInterval(musTimer);
+      musTimer=0;
+      musPaused=true;
+    }
+    hitQueue.length=0;
+  }else if(audioStarted&&musPaused){
+    if(audioCtx&&audioCtx.state==='suspended'){ try{ audioCtx.resume(); }catch(e){} }
+    startScheduler(true);
+  }
+});
+
+/* 启动 */
+try{ if(window.top!==window.self) parent.postMessage({gbTheme:'diner'},'*'); }catch(e){}
+document.body.classList.remove('low');
+if(lowPower) document.body.classList.add('low');
+updateSoundUI();
+if(!introMuted) tryAutoplay();
+doResize();
+requestAnimationFrame(function(){
+  document.body.classList.remove('boot');
+  document.body.classList.add('ready');
+});
+enterAt=Date.now()+260;
+rafId=requestAnimationFrame(frame);
+try{
+  if(document.fonts&&document.fonts.ready){
+    document.fonts.ready.then(function(){ render(lowPower?0:performance.now()/1000); });
+  }
+}catch(e){}
+
+/* 先把当前场上的月巴图加载完，再悄悄预热其余图鉴外链 */
+setTimeout(function(){
+  if(lowPower) return;
+  for(var i=0;i<DEX_POOL.length;i++){
+    var it=DEX_POOL[i];
+    for(var k=0;k<it.urls.length;k++) requestImg(it.urls[k]);
+  }
+},1500);
+
+try{
+  if(window.top!==window.self) parent.postMessage({type:'yueba-rhythm-intro-ready'},'*');
+}catch(e){}
+
+/* 调试：?debug=1 时暴露场景，方便定位外链立绘 */
+if(/[?&]debug=1/.test(location.search)){
+  try{
+    window.__intro={
+      scene:scene, pool:DEX_POOL, img:IMG, render:render, requestImg:requestImg,
+      startMusic:startMusic, toggleMusic:toggleMusic, finishPerformance:finishPerformance,
+      perf:function(){ return {idx:perfIdx,dir:perfDir,order:perfOrder.map(function(b){return b.item.name;})}; },
+      audio:function(){
+        var rms=0;
+        if(audioAnalyser){
+          var arr=new Float32Array(audioAnalyser.fftSize);
+          audioAnalyser.getFloatTimeDomainData(arr);
+          var sum=0;
+          for(var i=0;i<arr.length;i++) sum+=arr[i]*arr[i];
+          rms=Math.sqrt(sum/arr.length);
+        }
+        return {
+          supported:audioSupported,
+          state:audioCtx?audioCtx.state:'none',
+          started:audioStarted, muted:introMuted,
+          bpm:musicBPM, key:musicKey, bar:musBar, step:musStep, rms:rms
+        };
+      }
+    };
+  }catch(e){}
+}
+
+})();
+</script>
+</body>
+</html>
