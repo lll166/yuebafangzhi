@@ -37,3 +37,6 @@ __pycache__/
 /_travel_raw.md
 /* 数织题库生成器的工作缓存 */
 /数织游戏-月巴数织/tools/nonogram/cache/
+/* 月巴节拍音频构建产物（运行时只加载 audio/orch/pack.js） */
+/月巴节拍/audio/cl*.js
+/月巴节拍/export/
