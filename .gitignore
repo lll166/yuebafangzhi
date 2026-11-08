@@ -40,3 +40,26 @@ __pycache__/
 /* 月巴节拍音频构建产物（运行时只加载 audio/orch/pack.js） */
 /月巴节拍/audio/cl*.js
 /月巴节拍/export/
+/* ---------- 本地保留、GitHub 端不上传：未上线小游戏与资料文档 ---------- */
+/arcane.html
+/bejeweled.html
+/helixjump.html
+/memory.html
+/moon-swing.html
+/pvz.html
+/run.html
+/其他小游戏/
+/月巴食堂/
+/电子宠物游戏-tamago/
+/五子棋/*.md
+/其他-存档备用表格/
+/幸存者游戏-番茄幸存者/*.md
+/幸存者游戏-番茄幸存者/*.docx
+/月巴图鉴资料-给AI答客用.md
+/月巴垂钓资料-给AI答客用.md
+/月巴数据资料-给AI答客用.md
+/月巴旅行地图资料-给AI答客用.md
+/玩家知识库-给AI答客用.md
+/百日战纪资料-给AI答客用.md
+/月巴垂钓-文案总表.md
+/月巴垂钓-文案总表.csv
