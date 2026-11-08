@@ -4407,7 +4407,7 @@ const TYPES=[
     imgs:[{url:'https://origin.picgo.net/2026/10/25/a4de870a23ff1f883c8454cb72ef80d762cde2ab6de81042.th.png', by:'Nyaomi', note:'我从一开始就在外面。一直待在笼子里的人是你。'}], r:3, v:55, t:420, cond:{t:'zone',z:3}, color:'#6fbe7a', shape:'cube'},
   {id:'mb_wuding',  name:'屋顶月巴',   img:'https://origin.picgo.net/2026/10/24/ddb838b24b14c9bc66c93f3e145393e1f054aa99f643d304.th.png',
     imgs:[{url:'https://origin.picgo.net/2026/10/24/ddb838b24b14c9bc66c93f3e145393e1f054aa99f643d304.th.png', by:'hellomelody'}], r:3, v:60, t:450, cond:{t:'zone',z:4}, color:'#5f9ed1', shape:'tall'},
-  {id:'mb_senlin',  name:'森系月巴', img:'https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li6e93cacca933846d.th.png', r:3, v:70, t:480, cond:{t:'zone',z:5}, color:'#5c8a64', shape:'spike'},
+  {id:'mb_senlin',  name:'森系月巴', img:'https://origin.picgo.net/2026/10/21/---Yidi-Nyaomi-Li6e93cacca933846d.th.png', r:3, v:70, t:480, cond:{t:'zone',z:5}, color:'#5c8a64', shape:'spike', size:2},
   {id:'mb_bing',    name:'冰冷月巴',   img:'https://origin.picgo.net/2026/10/23/434e565b3ade1792842da6c6e5e0778552a35682cf6024b1.th.png', r:4, v:80, t:540, cond:{t:'zone',z:6}, color:'#7cc4e8', shape:'star'},
   {id:'mb_yanjiang',name:'滚烫月巴',   r:4, v:90, t:600, cond:{t:'zone',z:7}, color:'#d15852', shape:'spike'},
   {id:'mb_yunduan', name:'会飞月巴',   img:'https://origin.picgo.net/2026/10/25/0c49c146c2e1b0322b58ede6c45ace220be030c873f439d5.th.png',
@@ -4536,7 +4536,8 @@ const TYPES2=[
   {id:'m2_hei',    name:'黑月巴',  img:'https://origin.picgo.net/2026/10/23/6a0b54faa9b43d05a7365ff404ff7c63b834626b88cbfb9f.th.png',
     imgs:[{url:'https://origin.picgo.net/2026/10/23/6a0b54faa9b43d05a7365ff404ff7c63b834626b88cbfb9f.th.png', by:'鲸弑', note:'山西挖煤回来了。'}], r:2, v:19, t:190, cond:null, color:'#5d6670', shape:'round'},
   {id:'m2_hong',   name:'红月巴',  r:2, v:20, t:200, cond:null, color:'#ef9a9a', shape:'wide'},
-  {id:'m2_lv',     name:'绿月巴',  r:2, v:21, t:210, cond:null, color:'#a5d6a7', shape:'tall'},
+  {id:'m2_lv',     name:'绿月巴',  img:'https://origin.picgo.net/2026/11/08/82e39836d1a977eceb0a918188ca0b313660f192889e846f.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/11/08/82e39836d1a977eceb0a918188ca0b313660f192889e846f.th.png', by:'hellomelody'}], r:2, v:21, t:210, cond:null, color:'#a5d6a7', shape:'tall'},
   {id:'m2_lan',    name:'蓝月巴',  img:'https://origin.picgo.net/2026/10/29/ef468ec9599397d2bf267adf7e751a91c7bfedd28f0f21ae.th.png',
     imgs:[{url:'https://origin.picgo.net/2026/10/29/ef468ec9599397d2bf267adf7e751a91c7bfedd28f0f21ae.th.png', by:'Suwa'}], r:2, v:22, t:220, cond:null, color:'#90caf9', shape:'drop'},
   {id:'m2_hudie',  name:'蝴蝶月巴',  img:'https://origin.picgo.net/2026/10/29/6fd6fc08c6b78e151c3c1f910f91f0b230e86560c516c5e5.th.png',
@@ -4714,6 +4715,8 @@ const TYPES3=[
     imgs:[{url:'https://origin.picgo.net/2026/11/03/Hamburger-bannye89eb71b8b666d03.th.png', by:'Suwa'}], r:2, v:20, t:200, cond:null, color:'#d98a5f', shape:'wide'},
   {id:'m3_omurice',  name:'蛋包饭月巴',  img:'https://origin.picgo.net/2026/11/03/Omurice-Banny454726f84ceb7a01.th.png',
     imgs:[{url:'https://origin.picgo.net/2026/11/03/Omurice-Banny454726f84ceb7a01.th.png', by:'Suwa'}], r:2, v:20, t:200, cond:null, color:'#e8b96a', shape:'wide'},
+  {id:'m3_balloon',  name:'气球月巴',    img:'https://origin.picgo.net/2026/11/08/balloon-banny8769a1c6c5ac95e7.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/11/08/balloon-banny8769a1c6c5ac95e7.th.png', by:'hellomelody'}], r:1, v:12, t:120, cond:null, color:'#e88a9a', shape:'round', size:1.7},
 ];
 const RAR_NAME={1:'普通',2:'常见',3:'稀有',4:'史诗',5:'传说',6:'活动'};
 const R_H={1:[2,5],2:[4,8],3:[6,12],4:[10,20],5:[16,30],6:[22,40]};   // 身高 cm 范围
@@ -4813,6 +4816,8 @@ const YB_PIC_AUTHOR={
   m3_dango:'Suwa',
   m3_burger:'Suwa',
   m3_omurice:'Suwa',
+  m2_lv:'hellomelody',
+  m3_balloon:'hellomelody',
 };
 /* 每种月巴的「简介(文字)作者」by ID，图鉴详情弹窗简介末尾展示；未填则不显示文字作者 */
 const YB_TXT_AUTHOR={};
@@ -5041,6 +5046,7 @@ const FAT_INTRO={
   m3_dango:'一边看着番茄园，一边吃的小甜点。',
   m3_burger:'月巴快乐餐。用番茄园里现摘的新鲜番茄做的。',
   m3_omurice:'早餐的绝佳选择！！',
+  m3_balloon:'气球越大，对番茄的爱就越大。',
 };
 
 /* ---------------- 界面皮肤（图鉴解锁） ---------------- */
@@ -5349,7 +5355,8 @@ const ART_GALLERY=[
     'https://origin.picgo.net/2026/11/04/Tomato_story2e51f95fd0d2cc91d.md.png'
   ],text:"I like Nyaomi's 月巴 about night market so I drew this"},
   {id:'art_06',name:'Fishing',author:'200',img:'https://origin.picgo.net/2026/11/07/Fishingb19508eff9a91c5b.md.png'},
-  {id:'art_07',name:'Mines Deep Clean',author:'200',img:'https://origin.picgo.net/2026/11/07/minesdeepcleanf64e0c57faad3c25.md.png'}
+  {id:'art_07',name:'Mines Deep Clean',author:'200',img:'https://origin.picgo.net/2026/11/07/minesdeepcleanf64e0c57faad3c25.md.png'},
+  {id:'art_08',name:'Nonogram Criminals',author:'200',img:'https://origin.picgo.net/2026/11/08/Nonogramcriminals5146262e10978f29.md.png'}
 ];
                                // 条目结构：{ id, name, imgs:[…] 或 img, author, text, r18 }；imgs 多张时缩略图显示张数角标，点开可翻页
 let galTab='story';            // 画廊子页：story=故事画廊 art=投稿画廊
@@ -7967,6 +7974,7 @@ const I18N_BANNY={
   m3_dango:{n:{en:'Dango Banny',ja:'団子バニー',ko:'당고버니'}},
   m3_burger:{n:{en:'Hamburger Banny',ja:'ハンバーガーバニー',ko:'햄버거버니'}},
   m3_omurice:{n:{en:'Omurice Banny',ja:'オムライスバニー',ko:'오므라이스버니'}},
+  m3_balloon:{n:{en:'Balloon Banny',ja:'風船バニー',ko:'풍선배니'}},
 
   dest_forest:{n:{en:'Forest Edge',ja:'森のほとり',ko:'숲의 가장자리'}},
   dest_fairy:{n:{en:'Fairy Hideaway',ja:'桃源郷',ko:'무릉도원'}},
@@ -8458,6 +8466,7 @@ const I18N_BANNY={
   m3_dango_intro:{d:{en:'Sweet snack to eat while watching your tomato garden.',ja:'トマト畑を眺めながら食べる、小さな甘いおやつ。',ko:'토마토 밭을 바라보면서 먹는 달콤한 간식.'}},
   m3_burger_intro:{d:{en:'Banny Happy Meal. Made from fresh tomatoes from the garden.',ja:'バニーハッピーセット。畑で採れた新鮮なトマトで作ったよ。',ko:'버니 해피밀. 밭에서 갓 딴 신선한 토마토로 만들었어요.'}},
   m3_omurice_intro:{d:{en:'Great choice for breakfast!!',ja:'朝ごはんに最高の選択！！',ko:'아침 식사로 최고의 선택!!'}},
+  m3_balloon_intro:{d:{en:'The bigger balloon, the bigger tomato love.',ja:'風船が大きいほど、トマトへの愛も大きい。',ko:'풍선이 클수록 토마토를 향한 사랑도 커져요.'}},
   /* ---------- P5：成就描述 ach_<id>_desc（字段 d） ---------- */
   ach_h1_desc:{d:{en:'Harvest your first Banny',ja:'初めてバニーを収穫する',ko:'첫 버니를 수확하기'}},
   ach_d1_desc:{d:{en:'Unlock 10 Banny species in the Codex',ja:'図鑑で 10 種のバニーを解放する',ko:'도감에서 버니 10종 해금하기'}},
