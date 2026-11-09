@@ -4717,6 +4717,8 @@ const TYPES3=[
     imgs:[{url:'https://origin.picgo.net/2026/11/03/Omurice-Banny454726f84ceb7a01.th.png', by:'Suwa'}], r:2, v:20, t:200, cond:null, color:'#e8b96a', shape:'wide'},
   {id:'m3_balloon',  name:'气球月巴',    img:'https://origin.picgo.net/2026/11/08/balloon-banny8769a1c6c5ac95e7.th.png',
     imgs:[{url:'https://origin.picgo.net/2026/11/08/balloon-banny8769a1c6c5ac95e7.th.png', by:'hellomelody'}], r:1, v:12, t:120, cond:null, color:'#e88a9a', shape:'round', size:1.7},
+  {id:'m3_bed',      name:'床月巴',      img:'https://origin.picgo.net/2026/11/09/f9ec768138a02a3e5777e75dd2baf77265aae68488898b93.th.png',
+    imgs:[{url:'https://origin.picgo.net/2026/11/09/f9ec768138a02a3e5777e75dd2baf77265aae68488898b93.th.png', by:'匿名', note:'现在月巴变成番茄最爱的东西了。'}], r:4, v:76, t:760, cond:null, color:'#b8c8e0', shape:'wide', size:1.8},
 ];
 const RAR_NAME={1:'普通',2:'常见',3:'稀有',4:'史诗',5:'传说',6:'活动'};
 const R_H={1:[2,5],2:[4,8],3:[6,12],4:[10,20],5:[16,30],6:[22,40]};   // 身高 cm 范围
@@ -4818,6 +4820,7 @@ const YB_PIC_AUTHOR={
   m3_omurice:'Suwa',
   m2_lv:'hellomelody',
   m3_balloon:'hellomelody',
+  m3_bed:'匿名',
 };
 /* 每种月巴的「简介(文字)作者」by ID，图鉴详情弹窗简介末尾展示；未填则不显示文字作者 */
 const YB_TXT_AUTHOR={};
@@ -5047,6 +5050,7 @@ const FAT_INTRO={
   m3_burger:'月巴快乐餐。用番茄园里现摘的新鲜番茄做的。',
   m3_omurice:'早餐的绝佳选择！！',
   m3_balloon:'气球越大，对番茄的爱就越大。',
+  m3_bed:'番茄一看到就会想要躺上去，很久都下不来。',
 };
 
 /* ---------------- 界面皮肤（图鉴解锁） ---------------- */
@@ -7975,6 +7979,7 @@ const I18N_BANNY={
   m3_burger:{n:{en:'Hamburger Banny',ja:'ハンバーガーバニー',ko:'햄버거버니'}},
   m3_omurice:{n:{en:'Omurice Banny',ja:'オムライスバニー',ko:'오므라이스버니'}},
   m3_balloon:{n:{en:'Balloon Banny',ja:'風船バニー',ko:'풍선배니'}},
+  m3_bed:{n:{en:'Bed Banny',ja:'ベッドバニー',ko:'침대버니'}},
 
   dest_forest:{n:{en:'Forest Edge',ja:'森のほとり',ko:'숲의 가장자리'}},
   dest_fairy:{n:{en:'Fairy Hideaway',ja:'桃源郷',ko:'무릉도원'}},
@@ -8467,6 +8472,7 @@ const I18N_BANNY={
   m3_burger_intro:{d:{en:'Banny Happy Meal. Made from fresh tomatoes from the garden.',ja:'バニーハッピーセット。畑で採れた新鮮なトマトで作ったよ。',ko:'버니 해피밀. 밭에서 갓 딴 신선한 토마토로 만들었어요.'}},
   m3_omurice_intro:{d:{en:'Great choice for breakfast!!',ja:'朝ごはんに最高の選択！！',ko:'아침 식사로 최고의 선택!!'}},
   m3_balloon_intro:{d:{en:'The bigger balloon, the bigger tomato love.',ja:'風船が大きいほど、トマトへの愛も大きい。',ko:'풍선이 클수록 토마토를 향한 사랑도 커져요.'}},
+  m3_bed_intro:{d:{en:'The moment tomato sees it, it wants to lie down — and stays for a long, long time.',ja:'トマトは見るなり寝転びたくなって、しばらく起き上がれない。',ko:'토마토는 보자마자 눕고 싶어서 한참 동안 일어나지 못해요.'}},
   /* ---------- P5：成就描述 ach_<id>_desc（字段 d） ---------- */
   ach_h1_desc:{d:{en:'Harvest your first Banny',ja:'初めてバニーを収穫する',ko:'첫 버니를 수확하기'}},
   ach_d1_desc:{d:{en:'Unlock 10 Banny species in the Codex',ja:'図鑑で 10 種のバニーを解放する',ko:'도감에서 버니 10종 해금하기'}},
