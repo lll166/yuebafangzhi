@@ -1719,7 +1719,16 @@ var DEX_ART = {
     'm2_xian':['https://origin.picgo.net/2026/11/02/8279f00c7323e443ce5cc5eadee6c0c845655ca09396480c.th.png','#90a4ae','盐月巴'],
     'm3_dango':['https://origin.picgo.net/2026/11/03/Dango-Bannyf17dda020ef5ea00.th.png','#f2a7c3','团子月巴'],
     'm3_burger':['https://origin.picgo.net/2026/11/03/Hamburger-bannye89eb71b8b666d03.th.png','#d98a5f','汉堡月巴'],
-    'm3_omurice':['https://origin.picgo.net/2026/11/03/Omurice-Banny454726f84ceb7a01.th.png','#e8b96a','蛋包饭月巴']
+    'm3_omurice':['https://origin.picgo.net/2026/11/03/Omurice-Banny454726f84ceb7a01.th.png','#e8b96a','蛋包饭月巴'],
+    'm2_zhu':['https://origin.picgo.net/2026/11/04/11578f92423346ddb79406fe1b9b14219414d18d77311b26.th.png','#ffe0b2','猪月巴'],
+    'm2_lv':['https://origin.picgo.net/2026/11/08/82e39836d1a977eceb0a918188ca0b313660f192889e846f.th.png','#a5d6a7','绿月巴'],
+    'm2_zhimeng':['https://origin.picgo.net/2026/11/04/d652e88634b1415f75a7235ea54d252b6a06fd6848976bdf.th.png','#7b5fb0','织梦月巴'],
+    'm3_balloon':['https://origin.picgo.net/2026/11/08/balloon-banny8769a1c6c5ac95e7.th.png','#e88a9a','气球月巴'],
+    'm3_bed':['https://origin.picgo.net/2026/11/09/f9ec768138a02a3e5777e75dd2baf77265aae68488898b93.th.png','#b8c8e0','床月巴'],
+    'm2_damofa':['https://origin.picgo.net/2026/11/12/0f23ca6fe79bde5871b0417101c56303978641b59a3d149f.th.png','#8f6fd8','大魔法师月巴'],
+    'mb_shengdan':['https://origin.picgo.net/2026/11/13/d4788b910de5a46476657559d093eef9596142e95c575820.th.png','#c95f8a','圣诞月巴'],
+    'm2_wuya':['https://origin.picgo.net/2026/11/14/5562356f4528e53887adf67869f16ebd17678fabd425c78b.th.png','#ffd54f','乌鸦月巴'],
+    'm2_shanhu':['https://origin.picgo.net/2026/11/18/13a42cf1d1d023dc9d294d4e336075d551c66a42f233e114.th.png','#f06292','珊瑚月巴']
   };
 function artOf(id){
   var e=DEX_ART[id];
@@ -7092,12 +7101,36 @@ function toggleBagLock(it,row,btn,lk){
 }
 var bagRenderLen=-1;                 /* 上次渲染时 save.bag 的长度，用于增量追加 */
 var bagSellArmAt=0, bagSellArmT=0;   /* 「全部售出」二次确认 */
+/* 鱼篓懒渲染：开面板时只建行骨架，鱼的贴图等这一行滚到可视区附近（预渲染 360px ≈ 8 行）
+   才画。鱼篓最多 360 条，这样开面板 / 挂机上鱼都不用一次画几百张 canvas。
+   不支持 IntersectionObserver 的旧浏览器直接同步绘制，行为不变。 */
+var bagObs=null;
+function bagObsGet(){
+  if(bagObs||typeof IntersectionObserver!=='function') return bagObs;
+  bagObs=new IntersectionObserver(function(ents){
+    for(var i=0;i<ents.length;i++){
+      var en=ents[i];
+      if(!en.isIntersecting) continue;
+      var cv=en.target, f=cv.__bagFish;
+      bagObs.unobserve(cv);
+      if(!f) continue;
+      drawFishCached(cv.getContext('2d'),f,6,1,2,false);
+    }
+  },{root:$('bagBody'),rootMargin:'360px 0px'});
+  return bagObs;
+}
+function bagPaintFish(cv,f){
+  var ob=bagObsGet();
+  if(!ob){ drawFishCached(cv.getContext('2d'),f,6,1,2,false); return; }
+  cv.__bagFish=f;
+  ob.observe(cv);
+}
 function bagRowEl(it){
   var f=fishById(it.id); if(!f) return null;
   var rr=RARITY[f.r];
   var row=document.createElement('div'); row.className='bagRow';
   var cv=document.createElement('canvas'); cv.width=60; cv.height=28;
-  drawFishCached(cv.getContext('2d'),f,6,1,2,false);
+  bagPaintFish(cv,f);
   row.appendChild(cv);
   var si=document.createElement('div'); si.className='si';
   var nm=document.createElement('b');
@@ -7128,22 +7161,12 @@ function bagSummary(){
   $('bagSum').innerHTML=bagSumText();
   $('bagSellAll').disabled=!(save.bag.length-bagLockCount());
 }
-function bagOverflowNote(){
-  var body=$('bagBody'), note=body.querySelector('.bagNote');
-  if(save.bag.length>120){
-    if(!note){
-      note=document.createElement('div'); note.className='shopCat bagNote';
-      body.insertBefore(note,body.firstChild);
-    }
-    note.textContent=$tf('仅显示最近 120 条 · 其余 {n} 条可一并「全部售出」',
-      {n:Math.max(0,save.bag.length-120)});
-  }else if(note){ note.remove(); }
-}
 function buildBag(preserveScroll){
   var body=$('bagBody');
   var sc=preserveScroll?body.scrollTop:0;
   body.style.overflowAnchor='none';      /* 自己控制滚动位置，避免浏览器锚定把 scrollTop 改掉 */
   body.innerHTML='';
+  if(bagObs) bagObs.disconnect();        /* 整页重建：丢掉旧行上的观察，随后按新行重新挂 */
   resetSellArm();
   bagRenderLen=save.bag.length;
   bagSummary();
@@ -7153,9 +7176,10 @@ function buildBag(preserveScroll){
     body.appendChild(em);
     return;
   }
-  bagOverflowNote();
+  /* 鱼篓容量最大 360 条，全部列出（以前截断到 120 条，容量升到 125 后多出来的鱼看不到、
+     也没法单独卖）。行骨架全部建好，鱼贴图由 bagPaintFish 懒绘制，开面板不卡。 */
   var list=save.bag.slice().reverse();          /* 最新钓到的排最前 */
-  list.slice(0,120).forEach(function(it){
+  list.forEach(function(it){
     var row=bagRowEl(it); if(row) body.appendChild(row);
   });
   if(preserveScroll) body.scrollTop=sc;
@@ -7176,9 +7200,6 @@ function bagSync(){
       var row=bagRowEl(save.bag[i]);
       if(row) body.insertBefore(row,first);
     }
-    var rows=body.querySelectorAll('.bagRow');
-    for(var j=rows.length-1;j>=120;j--) rows[j].remove();
-    bagOverflowNote();
   }
   bagSummary();
   bagRenderLen=save.bag.length;
@@ -8305,7 +8326,6 @@ var I18N_UI={
   /* ---- 鱼篓 ---- */
   '<b>{b}/{c}</b> 条 · 估价 <b>{v}</b> {t}':{en:'<b>{b}/{c}</b> fish · Value <b>{v}</b> {t}',ja:'<b>{b}/{c}</b> 匹 · 査定 <b>{v}</b> {t}',ko:'<b>{b}/{c}</b>마리 · 가치 <b>{v}</b> {t}'},
   '鱼篓是空的——去钓点钓几条鱼吧':{en:'The basket is empty — go catch some fish.',ja:'魚篭は空——釣り場で釣ってこよう',ko:'바구니가 비었어요 — 낚시터에서 잡아 와요'},
-  '仅显示最近 120 条 · 其余 {n} 条可一并「全部售出」':{en:'Showing the latest 120 · the other {n} can be sold with “Sell All”',ja:'最新120匹のみ表示 · 残り{n}匹は「すべて売る」でまとめて売れます',ko:'최근 120마리만 표시 · 나머지 {n}마리는 “전부 팔기”로 판매'},
   '尺寸 {s}/{m} cm · 估价 +{g} 番茄币':{en:'Size {s}/{m} cm · Value +{g} Tomato Coins',ja:'サイズ {s}/{m} cm · 査定 +{g} トマトコイン',ko:'크기 {s}/{m} cm · 가치 +{g} 토마토 코인'},
   '售出':{en:'Sell',ja:'売る',ko:'팔기'},
   '已锁定':{en:'Locked',ja:'ロック中',ko:'잠김'},
