@@ -4115,7 +4115,7 @@
   <iframe id="svFrame" title="番茄幸存者"></iframe>
 </div>
 
-<!-- （贪吃）蛇月巴：独立页 snake.html，同样内嵌在首页之上，游玩不跳出原网页 -->
+<!-- （贪吃）蛇月巴：独立页 其他小游戏/snake.html，同样内嵌在首页之上，游玩不跳出原网页 -->
 <div id="snOverlay">
   <div id="snBar">
     <span id="snTitle">🐍 <span data-i18n="（贪吃）蛇月巴">（贪吃）蛇月巴</span></span>
@@ -16306,7 +16306,7 @@ window.addEventListener('message',function(e){
   }
 });
 /* ================= 番茄幸存者（独立页入口） =================
-   游戏本体在 survivor.html，index 只保留入口与存档/成就字段。
+   游戏本体在 幸存者游戏-番茄幸存者/survivor.html，index 只保留入口与存档/成就字段。
    入口改为内嵌 iframe：首页保持可见，番茄钟/月巴生长继续运行。
    #test：测试入口。测试使用独立存档 idle-yueba-svtest-v1，
           正式版上线（SV_PUBLIC=true）后由首页自动清空。
@@ -16340,7 +16340,7 @@ function svOpen(mode){
   if(test) hash='#test';
   else if(DR_DEBUG) hash=DR_SV_UNLOCK?'#debugall-1':'#debugall';
   else if(DR_SV_UNLOCK) hash='#debugall-1';
-  fr.src='survivor.html'+hash;
+  fr.src='幸存者游戏-番茄幸存者/survivor.html'+hash;
   ov.classList.add('show');
   document.body.classList.add('sv-lock');
   setTimeout(function(){ try{ fr.focus(); }catch(e){} },300);
@@ -16367,7 +16367,7 @@ function svClose(){
   if(exitCoins>0) toast($tf('中途退出结算 · 金币 +{a}', {a:exitCoins}));
 }
 /* ================= （贪吃）蛇月巴（独立页入口） =================
-   游戏本体在 snake.html；图鉴「蛇月巴」与百巴箱都从这里进。
+   游戏本体在 其他小游戏/snake.html；图鉴「蛇月巴」与百巴箱都从这里进。
    用 iframe 内嵌在首页之上：游玩不跳出原网页，关掉即卸载（停掉计时与音效）。 */
 let snOpenFlag=false;
 function snakeEntry(){
@@ -16375,7 +16375,7 @@ function snakeEntry(){
   snOpenFlag=true;
   sfx.click();
   const ov=$('snOverlay'), fr=$('snFrame');
-  if(fr) fr.src='snake.html?lang='+curLang();
+  if(fr) fr.src='其他小游戏/snake.html?lang='+curLang();
   if(ov) ov.classList.add('show');
   document.body.classList.add('sv-lock');
   setTimeout(function(){ try{ fr.focus(); }catch(e){} },300);
