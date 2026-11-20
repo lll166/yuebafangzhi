@@ -16312,10 +16312,13 @@ window.addEventListener('message',function(e){
           正式版上线（SV_PUBLIC=true）后由首页自动清空。
    SV_PUBLIC=false：调试期只有 #debugall / #debugall-1 / #test 能看到入口；上线时改为 true。 */
 const SV_PUBLIC=false;
+/* GitHub 公开站（*.github.io）上，未上线的番茄幸存者入口一律关闭：
+   本地 file:// / localhost 调试不受影响；正式上线（SV_PUBLIC=true）时自动放开。 */
+const SV_GH_OFF=!SV_PUBLIC && /(^|\.)github\.io$/i.test(location.hostname);
 const SV_TEST_KEY='idle-yueba-svtest-v1';
 let SV_TEST=/(^|[#&?])test\b/.test(location.hash+location.search);
 let svMode=null;   // null=未打开；'prod'=正式版；'test'=测试版
-function svVisible(){ return SV_PUBLIC || DR_DEBUG || DR_SV_UNLOCK || (SV_TEST && !SV_PUBLIC); }
+function svVisible(){ if(SV_GH_OFF) return false; return SV_PUBLIC || DR_DEBUG || DR_SV_UNLOCK || (SV_TEST && !SV_PUBLIC); }
 function updateSurvivorIcon(){
   const el=$('btnSurvivor'); if(!el)return;
   const test=SV_TEST && !SV_PUBLIC;
@@ -16330,7 +16333,7 @@ function survivorEntry(){
   svOpen((SV_TEST && !SV_PUBLIC)?'test':'prod');
 }
 function svOpen(mode){
-  if(svMode)return;
+  if(svMode || SV_GH_OFF)return;
   try{ save(); }catch(e){}   // 先落盘，避免独立页读到旧存档
   svMode=(mode==='test')?'test':'prod';
   const ov=$('svOverlay'), fr=$('svFrame');
